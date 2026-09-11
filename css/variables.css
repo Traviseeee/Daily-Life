@@ -1,0 +1,26 @@
+:root {
+  --bg-main: #070512;
+  --bg-secondary: #120b24;
+  --glass: rgba(34, 24, 55, 0.62);
+  --glass-hover: rgba(46, 32, 75, 0.76);
+  --border: rgba(199, 255, 104, 0.12);
+  --border-light: rgba(199, 255, 104, 0.22);
+  --text-primary: #f7f4ff;
+  --text-secondary: #b5acc8;
+  --text-muted: #746b88;
+  --accent: #b8ff5a;
+  --accent-light: #d9ff8c;
+  --success: #9dff6e;
+  --danger: #ff6f9c;
+  --warning: #fff06a;
+  --blue: #64f4d2;
+  --purple: #9b6dff;
+  --radius-lg: 22px;
+  --radius-md: 16px;
+  --radius-sm: 10px;
+  --ease: 180ms ease;
+  --gradient-main:
+    radial-gradient(circle at 12% 8%, rgba(155, 109, 255, 0.20), transparent 32%),
+    radial-gradient(circle at 84% 18%, rgba(184, 255, 90, 0.12), transparent 28%),
+    linear-gradient(135deg, #070512, #120b24 48%, #080514);
+}

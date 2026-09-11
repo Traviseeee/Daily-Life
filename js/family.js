@@ -1,0 +1,98 @@
+function renderFamily() {
+  const familyEvents = appData.calendarEvents.filter(event => event.category === "Family");
+  return `
+    <section class="page">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">${t("family")}</h1>
+          <p class="page-subtitle">${t("familySubtitle")}</p>
+        </div>
+        <button class="button" data-action="add-family">${Icons.plus()} ${t("addFamilyMember")}</button>
+      </div>
+      ${appData.family.length ? `<div class="grid three-col">${appData.family.map(memberCard).join("")}</div>` : emptyState(t("noFamilyYet"), t("noFamilyBody"), t("addFamilyMember"), "add-family")}
+      <div class="grid two-col" style="margin-top:18px">
+        <article class="glass-card card-pad">
+          <div class="between">
+            <h2 class="section-title">${t("familyEvents")}</h2>
+            <button class="button ghost-button" data-action="add-event">${Icons.plus()} ${t("addEvent")}</button>
+          </div>
+          <div class="list">
+            ${familyEvents.map(event => `<div class="list-row"><span class="icon-badge green">${Icons.calendar()}</span><strong>${event.title}</strong><span class="secondary">${formatDate(event.date)}</span><button class="icon-button" data-edit-event="${event.id}" aria-label="${t("editEvent")}">${Icons.edit()}</button><button class="icon-button" data-delete-event="${event.id}" aria-label="${t("deleteEvent")}">${Icons.trash()}</button></div>`).join("") || emptyState(t("noFamilyEvents"), t("noFamilyEventsBody"), t("addEvent"), "add-event")}
+          </div>
+        </article>
+        <article class="glass-card card-pad">
+          <h2 class="section-title">${t("familySnapshot")}</h2>
+          <div class="kv">
+            <div><span>${t("members")}</span><strong>${appData.family.length}</strong></div>
+            <div><span>${t("events")}</span><strong>${familyEvents.length}</strong></div>
+            <div><span>${t("upcomingBirthdays")}</span><strong>${appData.family.filter(member => member.birthday).length}</strong></div>
+          </div>
+        </article>
+      </div>
+    </section>
+  `;
+}
+
+function memberCard(member) {
+  return `
+    <article class="glass-card card-pad">
+      <div class="between">
+        <span class="thumb">${member.photo ? `<img src="${member.photo}" alt="">` : initials(member.name)}</span>
+        <span class="action-row">
+          <button class="icon-button" data-edit-family="${member.id}" aria-label="Edit ${member.name}">${Icons.edit()}</button>
+          <button class="icon-button" data-delete-family="${member.id}" aria-label="Delete ${member.name}">${Icons.trash()}</button>
+        </span>
+      </div>
+      <h2>${escapeHtml(member.name)}</h2>
+      <p class="secondary">${escapeHtml(member.relationship)}</p>
+      <div class="kv">
+        <div><span>${t("birthday")}</span><strong>${formatDate(member.birthday)}</strong></div>
+        <div><span>${t("phone")}</span><strong>${escapeHtml(member.phone || t("notSet"))}</strong></div>
+      </div>
+      <p class="muted">${escapeHtml(member.notes || "")}</p>
+    </article>
+  `;
+}
+
+function familyFields(member = {}) {
+  return [
+    { name: "name", label: t("name"), value: member.name, required: true },
+    { name: "relationship", label: t("relationship"), value: member.relationship, required: true },
+    { name: "birthday", label: t("birthday"), type: "date", value: member.birthday },
+    { name: "phone", label: t("phone"), value: member.phone },
+    { name: "notes", label: t("notes"), type: "textarea", value: member.notes },
+    { name: "photo", label: t("photo"), type: "file", value: member.photo }
+  ];
+}
+
+function openFamilyModal(member) {
+  Modal.open({
+    title: member ? t("editFamilyMember") : t("addFamilyMember"),
+    submitText: member ? t("saveFamilyMember") : t("addFamilyMember"),
+    fields: familyFields(member),
+    onSubmit(data) {
+      if (member) Store.edit("family", member.id, data);
+      else Store.add("family", data);
+      Toast.show(member ? t("familyMemberSaved") : t("familyMemberAdded"));
+    }
+  });
+}
+
+function bindFamily() {
+  document.querySelectorAll('[data-action="add-family"]').forEach(button => button.addEventListener("click", () => openFamilyModal()));
+  document.querySelectorAll("[data-edit-family]").forEach(button => button.addEventListener("click", () => openFamilyModal(appData.family.find(item => item.id === button.dataset.editFamily))));
+  document.querySelectorAll("[data-delete-family]").forEach(button => button.addEventListener("click", () => {
+    Modal.confirm({ title: t("deleteFamilyMember"), message: t("deleteFamilyMessage"), confirmText: t("delete"), onConfirm: () => {
+      Store.delete("family", button.dataset.deleteFamily);
+      Toast.show(t("familyMemberDeleted"));
+    }});
+  }));
+  document.querySelectorAll('[data-action="add-event"]').forEach(button => button.addEventListener("click", () => App.openEventModal({ category: "Family" })));
+  document.querySelectorAll("[data-edit-event]").forEach(button => button.addEventListener("click", () => App.openEventModal(appData.calendarEvents.find(item => item.id === button.dataset.editEvent))));
+  document.querySelectorAll("[data-delete-event]").forEach(button => button.addEventListener("click", () => {
+    Modal.confirm({ title: t("deleteEvent"), message: t("deleteEventMessage"), confirmText: t("delete"), onConfirm: () => {
+      Store.delete("calendarEvents", button.dataset.deleteEvent);
+      Toast.show(t("eventDeleted"));
+    }});
+  }));
+}

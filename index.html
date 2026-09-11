@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>MYLIFE</title>
+  <meta name="theme-color" content="#070512">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="MYLIFE">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="assets/icons/mylife-icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/icons/mylife-icon-180.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Khmer:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/global.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+  <div class="ambient ambient-one"></div>
+  <div class="ambient ambient-two"></div>
+
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Primary navigation">
+      <a class="brand" href="#home" aria-label="MYLIFE Home"><span>MY</span><strong>LIFE</strong></a>
+      <nav class="nav-list" id="sideNav"></nav>
+      <nav class="nav-list nav-bottom" id="utilityNav"></nav>
+    </aside>
+
+    <div class="app-main">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="icon-button menu-toggle" id="menuToggle" aria-label="Open navigation"></button>
+          <a class="brand mobile-brand" href="#home"><span>MY</span><strong>LIFE</strong></a>
+          <button class="profile-button" id="profileButton" type="button" aria-label="Profile">
+            <span class="avatar" id="profileAvatar">MY</span>
+            <span><strong id="profileName">Set up profile</strong><small>Personal account</small></span>
+          </button>
+        </div>
+        <div class="search-wrap">
+          <label class="sr-only" for="globalSearch">Search MYLIFE</label>
+          <span id="searchIcon"></span>
+          <input id="globalSearch" type="search" placeholder="Search MYLIFE..." autocomplete="off">
+          <div class="search-results glass-card" id="searchResults" hidden></div>
+        </div>
+        <div class="topbar-right">
+          <div class="topbar-weather" aria-label="Weather">
+            <span>☁</span>
+            <strong>29°</strong>
+          </div>
+          <div class="topbar-clock" aria-label="Local time">
+            <span id="topbarClock">--:--</span>
+          </div>
+          <button class="icon-button smart-assistant-button" id="smartAssistantButton" type="button" aria-label="Smart Assistant"></button>
+          <button class="icon-button privacy-toggle" id="moneyPrivacyButton" type="button" aria-label="Hide money amounts"></button>
+          <div class="language-switch" id="languageSwitch" aria-label="Language switch">
+            <button type="button" data-language="English">EN</button>
+            <button type="button" data-language="Khmer">KH</button>
+          </div>
+          <button class="icon-button" id="bellButton" aria-label="Notifications"></button>
+        </div>
+      </header>
+
+      <main id="app" tabindex="-1"></main>
+    </div>
+  </div>
+
+  <nav class="mobile-nav" id="mobileNav" aria-label="Mobile navigation"></nav>
+  <div class="drawer-backdrop" id="drawerBackdrop"></div>
+  <div class="toast-stack" id="toastStack" aria-live="polite" aria-atomic="true"></div>
+  <div class="modal-root" id="modalRoot"></div>
+
+  <script src="js/components/icons.js?v=12"></script>
+  <script src="js/data.js?v=12"></script>
+  <script src="js/i18n.js?v=12"></script>
+  <script src="js/components/toast.js?v=12"></script>
+  <script src="js/components/modal.js?v=12"></script>
+  <script src="js/login.js?v=12"></script>
+  <script src="js/components/charts.js?v=12"></script>
+  <script src="js/smart-assistant.js?v=12"></script>
+  <script src="js/navigation.js?v=12"></script>
+  <script src="js/dashboard.js?v=12"></script>
+  <script src="js/launcher.js?v=12"></script>
+  <script src="js/family.js?v=12"></script>
+  <script src="js/goals.js?v=12"></script>
+  <script src="js/money.js?v=12"></script>
+  <script src="js/calendar.js?v=12"></script>
+  <script src="js/memories.js?v=12"></script>
+  <script src="js/settings.js?v=12"></script>
+  <script src="js/app.js?v=12"></script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("sw.js?v=12").catch(() => {});
+      });
+    }
+  </script>
+</body>
+</html>
