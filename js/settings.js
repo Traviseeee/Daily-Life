@@ -238,6 +238,11 @@ function buildUserDataFields(mode = "create") {
 }
 
 function openCreateUserModal() {
+  const hasExistingData = Boolean(appData.profile.name || ["family", "goals", "income", "expenses", "savings", "loans", "bills", "calendarEvents", "memories"].some(key => appData[key].length));
+  if (hasExistingData) {
+    openEditUserDataModal();
+    return;
+  }
   Modal.open({
     title: t("createUser"),
     submitText: t("createUser"),

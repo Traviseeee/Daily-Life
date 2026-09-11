@@ -2,9 +2,13 @@
 
 html { background: var(--bg-main); }
 
-html { scroll-behavior: smooth; }
+html {
+  scroll-behavior: smooth;
+  overflow-x: clip;
+}
 
 body {
+  width: 100%;
   min-height: 100vh;
   min-height: 100dvh;
   margin: 0;
