@@ -145,13 +145,17 @@
   .topbar-weather { display: none; }
   .topbar-right .smart-assistant-button { display: none; }
 
-  #app { padding: 18px 14px calc(100px + env(safe-area-inset-bottom)); }
+  #app { padding: 18px 14px calc(118px + env(safe-area-inset-bottom)); }
   .page-header { align-items: flex-start; flex-direction: column; }
   .home-hero {
-    min-height: auto;
+    min-height: 360px;
     padding: 28px;
     align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
   }
+  .home-hero-copy,
+  .home-hero .action-row { width: 100%; }
   .home-hero .action-row {
     justify-content: flex-start;
     flex-wrap: wrap;
@@ -219,10 +223,18 @@
 
 @media (max-width: 640px) {
   .summary-grid, .four-col { grid-template-columns: 1fr; }
+  .financial-content .summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .financial-content .summary-grid > article {
+    min-height: 142px;
+    padding: 12px;
+  }
   .topbar {
     grid-template-columns: auto minmax(0, 1fr) auto;
     gap: 6px;
-    min-height: 60px;
+    min-height: 68px;
     padding: 8px 10px;
   }
   .topbar-clock { display: none; }
@@ -237,7 +249,7 @@
     font-size: 0.86rem;
   }
   .search-wrap > span { left: 10px; }
-  #app { padding: 16px 10px calc(88px + env(safe-area-inset-bottom)); }
+  #app { padding: 16px 10px calc(118px + env(safe-area-inset-bottom)); }
   .page-header { gap: 10px; margin-bottom: 16px; }
   .page-header .button { width: 100%; justify-content: center; }
   .page-title {
@@ -251,9 +263,27 @@
     color: var(--text-secondary);
   }
   .home-hero {
-    padding: 20px;
+    min-height: 360px;
+    padding: 18px;
     border-radius: 16px;
     margin-bottom: 14px;
+    justify-content: flex-start;
+    gap: 0;
+  }
+  .home-hero::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 18px;
+    right: 18px;
+    height: 3px;
+    border-radius: 0 0 8px 8px;
+    background: linear-gradient(90deg, var(--accent), var(--purple), transparent);
+  }
+  .home-hero .date-line { margin-top: 14px; }
+  .home-hero .action-row {
+    margin-top: 24px;
+    gap: 8px;
   }
   .home-hero .page-title {
     font-size: clamp(1.8rem, 13vw, 2.8rem);
@@ -274,6 +304,21 @@
     grid-template-columns: minmax(0, 1fr) auto;
     gap: 12px;
   }
+  .settings-grid .kv {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .settings-grid .kv div {
+    display: grid;
+    align-content: center;
+    gap: 3px;
+    min-height: 48px;
+    padding: 8px;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 10px;
+    background: rgba(255,255,255,0.025);
+  }
+  .settings-grid .kv strong { text-align: left; }
   .kv strong {
     min-width: 0;
     overflow-wrap: anywhere;
@@ -398,12 +443,35 @@
   }
   .modal-setup,
   .modal-wide { width: 100%; }
+  .modal-setup {
+    display: flex;
+    flex-direction: column;
+    height: calc(100dvh - 20px);
+    max-height: none;
+    overflow: hidden;
+  }
+  .modal-setup .setup-layout {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-height: 0;
+  }
+  .modal-setup .setup-panels {
+    flex: 1;
+    max-height: none;
+    min-height: 0;
+  }
   .toast-stack { left: calc(14px + env(safe-area-inset-left)); right: calc(14px + env(safe-area-inset-right)); bottom: calc(92px + env(safe-area-inset-bottom)); }
   .toast { min-width: 0; }
 }
 
 @media (max-width: 430px) {
-  .topbar-right { gap: 6px; }
+  .topbar {
+    gap: 4px;
+    padding-inline: 8px;
+  }
+  .topbar-left,
+  .topbar-right { gap: 4px; }
   .language-switch {
     width: 72px;
     min-height: 40px;
@@ -420,6 +488,7 @@
     min-height: 40px;
     font-size: 0.82rem;
   }
+  #app { padding-inline: 8px; }
   .summary-card,
   .glass-card {
     border-radius: 18px;
@@ -517,4 +586,23 @@
   .topbar {
     padding-top: max(44px, env(safe-area-inset-top));
   }
+}
+
+@media (max-width: 360px) {
+  .topbar {
+    min-height: 72px;
+    gap: 6px;
+    padding-inline: 10px;
+  }
+  .topbar .privacy-toggle { display: none; }
+  .search-wrap input {
+    min-height: 42px;
+    font-size: 0.86rem;
+  }
+  .icon-button,
+  .language-switch {
+    min-width: 42px;
+    min-height: 42px;
+  }
+  .language-switch { width: 64px; }
 }

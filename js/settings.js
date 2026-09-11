@@ -4,7 +4,7 @@ function renderSettings() {
     <section class="page">
       <div class="page-header">
         <div>
-          <h1 class="page-title">${t("settings")}</h1>
+          <h1 class="page-title page-title-with-icon"><span class="page-title-icon">${Icons.settings()}</span>${t("settings")}</h1>
           <p class="page-subtitle">${t("manageSettings")}</p>
         </div>
         <button class="button" data-action="edit-profile">${Icons.edit()} ${t("editUserData")}</button>
@@ -24,7 +24,7 @@ function renderSettings() {
           <div class="grid two-col settings-grid">
             <article class="glass-card card-pad">
               <div class="between">
-                <h2 class="section-title">${t("profile")}</h2>
+                <h2 class="section-title section-title-with-icon"><span class="section-title-icon">${Icons.user()}</span>${t("profile")}</h2>
                 <span class="thumb">${appData.profile.photo ? `<img src="${appData.profile.photo}" alt="">` : initials(appData.profile.name)}</span>
               </div>
               <div class="kv">
@@ -44,11 +44,11 @@ function renderSettings() {
               [t("bills"), appData.bills.length],
               [t("calendarEvents"), appData.calendarEvents.length],
               [t("memories"), appData.memories.length]
-            ])}
+            ], Icons.chart())}
             <article class="glass-card card-pad settings-data-card">
               <div class="between">
                 <div>
-                  <h2 class="section-title">${t("data")}</h2>
+                  <h2 class="section-title section-title-with-icon"><span class="section-title-icon">${Icons.wallet()}</span>${t("data")}</h2>
                   <p class="secondary">${t("localStorageNote")}</p>
                 </div>
                 <span class="icon-badge">${Icons.wallet()}</span>
@@ -73,7 +73,7 @@ function renderSettings() {
               [t("totalExpenses"), money(stats.totalExpenses)],
               [t("totalSavings"), money(stats.totalSavings)],
               [t("loanBalance"), money(stats.loanBalance)]
-            ])}
+            ], Icons.money())}
           </div>
         </div>
         <input class="sr-only" id="importJsonInput" type="file" accept="application/json,.json">
@@ -82,8 +82,8 @@ function renderSettings() {
   `;
 }
 
-function settingsCard(title, rows) {
-  return `<article class="glass-card card-pad"><h2 class="section-title">${title}</h2><div class="kv">${rows.map(row => `<div><span>${row[0]}</span><strong>${row[1]}</strong></div>`).join("")}</div></article>`;
+function settingsCard(title, rows, icon) {
+  return `<article class="glass-card card-pad"><h2 class="section-title section-title-with-icon"><span class="section-title-icon">${icon}</span>${title}</h2><div class="kv">${rows.map(row => `<div><span>${row[0]}</span><strong>${row[1]}</strong></div>`).join("")}</div></article>`;
 }
 
 function settingsAction(action, icon, title, description) {
@@ -380,7 +380,7 @@ function renderHelp() {
     <section class="page">
       <div class="page-header">
         <div>
-          <h1 class="page-title">${t("help")}</h1>
+          <h1 class="page-title page-title-with-icon"><span class="page-title-icon">${Icons.help()}</span>${t("help")}</h1>
           <p class="page-subtitle">${t("helpSubtitle")}</p>
         </div>
       </div>

@@ -45,7 +45,32 @@ const App = {
     }
 
     this.bindPage(route);
+    this.bindScrollReveal();
     app.focus({ preventScroll: true });
+  },
+  bindScrollReveal() {
+    const elements = document.querySelectorAll(".page > *:not(.home-hero), .tool-launcher-item");
+    if (!elements.length) return;
+
+    elements.forEach((element, index) => {
+      element.classList.add("reveal-on-scroll");
+      element.style.setProperty("--reveal-delay", `${Math.min(index * 55, 330)}ms`);
+    });
+
+    if (!("IntersectionObserver" in window)) {
+      elements.forEach(element => element.classList.add("is-visible"));
+      return;
+    }
+
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add("is-visible");
+        observer.unobserve(entry.target);
+      });
+    }, { threshold: 0.12, rootMargin: "0px 0px -8%" });
+
+    elements.forEach(element => observer.observe(element));
   },
   renderProfile() {
     const avatar = document.getElementById("profileAvatar");

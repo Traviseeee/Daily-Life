@@ -9,7 +9,7 @@ function renderGoals(goalId) {
     <section class="page">
       <div class="page-header">
         <div>
-          <h1 class="page-title">${t("goals")}</h1>
+          <h1 class="page-title page-title-with-icon"><span class="page-title-icon">${Icons.goal()}</span>${t("goals")}</h1>
           <p class="page-subtitle">${t("goalsSubtitle")}</p>
         </div>
         <button class="button" data-action="add-goal">${Icons.plus()} ${t("createGoal")}</button>

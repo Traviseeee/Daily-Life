@@ -17,7 +17,7 @@ function renderMoney(tab = "overview") {
     <section class="page">
       <div class="page-header financial-header">
         <div>
-          <h1 class="page-title">${t("money")}</h1>
+          <h1 class="page-title page-title-with-icon"><span class="page-title-icon">${Icons.money()}</span>${t("money")}</h1>
           <p class="page-subtitle">${t("moneySubtitle")}</p>
         </div>
         <button class="button" data-action="add-expense">${Icons.plus()} ${t("addExpense")}</button>

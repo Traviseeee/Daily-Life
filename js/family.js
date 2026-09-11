@@ -4,7 +4,7 @@ function renderFamily() {
     <section class="page">
       <div class="page-header">
         <div>
-          <h1 class="page-title">${t("family")}</h1>
+          <h1 class="page-title page-title-with-icon"><span class="page-title-icon">${Icons.family()}</span>${t("family")}</h1>
           <p class="page-subtitle">${t("familySubtitle")}</p>
         </div>
         <button class="button" data-action="add-family">${Icons.plus()} ${t("addFamilyMember")}</button>
@@ -13,7 +13,7 @@ function renderFamily() {
       <div class="grid two-col" style="margin-top:18px">
         <article class="glass-card card-pad">
           <div class="between">
-            <h2 class="section-title">${t("familyEvents")}</h2>
+            <h2 class="section-title section-title-with-icon"><span class="section-title-icon">${Icons.calendar()}</span>${t("familyEvents")}</h2>
             <button class="button ghost-button" data-action="add-event">${Icons.plus()} ${t("addEvent")}</button>
           </div>
           <div class="list">
@@ -21,7 +21,7 @@ function renderFamily() {
           </div>
         </article>
         <article class="glass-card card-pad">
-          <h2 class="section-title">${t("familySnapshot")}</h2>
+          <h2 class="section-title section-title-with-icon"><span class="section-title-icon">${Icons.chart()}</span>${t("familySnapshot")}</h2>
           <div class="kv">
             <div><span>${t("members")}</span><strong>${appData.family.length}</strong></div>
             <div><span>${t("events")}</span><strong>${familyEvents.length}</strong></div>

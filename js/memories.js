@@ -13,7 +13,7 @@ function renderMemories() {
     <section class="page">
       <div class="page-header">
         <div>
-          <h1 class="page-title">${t("memories")}</h1>
+          <h1 class="page-title page-title-with-icon"><span class="page-title-icon">${Icons.memory()}</span>${t("memories")}</h1>
           <p class="page-subtitle">${t("memoriesSubtitle")}</p>
         </div>
         <button class="button" data-action="add-memory">${Icons.plus()} ${t("addMemory")}</button>

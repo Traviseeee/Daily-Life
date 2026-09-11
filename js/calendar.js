@@ -21,7 +21,7 @@ function renderCalendar(view = "month") {
     <section class="page">
       <div class="page-header">
         <div>
-          <h1 class="page-title">${t("calendar")}</h1>
+          <h1 class="page-title page-title-with-icon"><span class="page-title-icon">${Icons.calendar()}</span>${t("calendar")}</h1>
           <p class="page-subtitle">${t("calendarSubtitle")}</p>
         </div>
         <button class="button" data-action="add-calendar">${Icons.plus()} ${t("addEvent")}</button>
