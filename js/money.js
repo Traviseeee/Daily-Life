@@ -61,12 +61,26 @@ function renderMoneyTab(tab, stats) {
           { label: t("expenses"), value: stats.totalExpenses, color: "linear-gradient(90deg,#ff6f9c,#9b6dff)" },
           { label: t("monthlyContribution"), value: stats.monthlySavings, color: "linear-gradient(90deg,#64f4d2,#b8ff5a)" },
           { label: t("monthlyPayment"), value: stats.monthlyLoanPayments, color: "linear-gradient(90deg,#9b6dff,#b8ff5a)" }
-        ]) : emptyState(t("noMoneyYet"), t("noMoneyBody"), t("addIncome"), "add-income")}
+        ]) : moneyEmptyCard()}
       </article>
       <article class="glass-card card-pad">
         <h2 class="section-title">${t("recentTransactions")}</h2>
         <div class="list">${appData.expenses.slice(0, 5).map(expenseRow).join("") || emptyState(t("noExpensesYet"), t("noExpensesBody"), t("addExpense"), "add-expense")}</div>
       </article>
+    </div>
+  `;
+}
+
+function moneyEmptyCard() {
+  return `
+    <div class="image-empty-card money-empty-card">
+      <img src="https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=900&q=78" alt="" loading="lazy">
+      <div class="image-empty-content">
+        <span class="icon-badge orange">${Icons.money()}</span>
+        <h2>${escapeHtml(t("noMoneyYet"))}</h2>
+        <p class="secondary">${escapeHtml(t("noMoneyBody"))}</p>
+        <button class="button" data-action="add-income">${Icons.plus()} ${t("addIncome")}</button>
+      </div>
     </div>
   `;
 }

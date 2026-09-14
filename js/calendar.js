@@ -44,8 +44,22 @@ function renderCalendar(view = "month") {
           ${cells.join("")}
         </div>
       </article>
-      <article class="glass-card card-pad" style="margin-top:18px"><h2 class="section-title">${t("allEvents")}</h2><div class="list">${monthEvents.map(eventRow).join("") || emptyState(t("noCalendarEvents"), t("noCalendarEventsBody"), t("addEvent"), "add-calendar")}</div></article>
+      <article class="glass-card card-pad" style="margin-top:18px"><h2 class="section-title">${t("allEvents")}</h2><div class="list">${monthEvents.map(eventRow).join("") || calendarEmptyCard()}</div></article>
     </section>
+  `;
+}
+
+function calendarEmptyCard() {
+  return `
+    <div class="image-empty-card calendar-empty-card">
+      <img src="https://images.unsplash.com/photo-1506784983877-45594efa4cbe?auto=format&fit=crop&w=900&q=78" alt="" loading="lazy">
+      <div class="image-empty-content">
+        <span class="icon-badge pink">${Icons.calendar()}</span>
+        <h2>${escapeHtml(t("noCalendarEvents"))}</h2>
+        <p class="secondary">${escapeHtml(t("noCalendarEventsBody"))}</p>
+        <button class="button" data-action="add-calendar">${Icons.plus()} ${t("addEvent")}</button>
+      </div>
+    </div>
   `;
 }
 

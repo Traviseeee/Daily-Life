@@ -17,6 +17,7 @@ function renderSettings() {
           <button class="settings-tool" data-action="import-json">${Icons.arrowUp()} <span>${t("importJson")}</span></button>
           <button class="settings-tool" data-action="export-excel">${Icons.chart()} <span>${t("exportExcel")}</span></button>
           <button class="settings-tool" data-action="load-demo">${Icons.plus()} <span>${t("loadDemo")}</span></button>
+          <button class="settings-tool settings-tool-icon-only" data-action="edit-footer" aria-label="${languageCode() === "km" ? "កែប្រែ Footer" : "Customize footer"}" title="${languageCode() === "km" ? "កែប្រែ Footer" : "Customize footer"}">${Icons.edit()}</button>
           <button class="settings-tool danger" data-action="clear-data">${Icons.trash()} <span>${t("clearData")}</span></button>
         </aside>
 
@@ -273,6 +274,10 @@ function openEditUserDataModal() {
 
 function bindSettings() {
   bindSettingsAction("edit-profile", openEditUserDataModal);
+  bindSettingsAction("edit-footer", () => {
+    sessionStorage.setItem("mylife:open-footer-editor", "1");
+    location.hash = "#launcher";
+  });
   bindSettingsAction("create-user", openCreateUserModal);
   bindSettingsAction("export-json", exportJsonData);
   bindSettingsAction("export-excel", exportExcelData);

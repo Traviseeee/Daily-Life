@@ -31,8 +31,22 @@ function renderMemories() {
             `).join("")}`).join("")}
           </article>
         </div>
-      ` : emptyState(t("noMemoriesYet"), t("noMemoriesBody"), t("addMemory"), "add-memory")}
+      ` : memoriesEmptyCard()}
     </section>
+  `;
+}
+
+function memoriesEmptyCard() {
+  return `
+    <article class="glass-card image-empty-card memories-empty-card">
+      <img src="https://images.unsplash.com/photo-1500534623283-312aade485b7?auto=format&fit=crop&w=900&q=78" alt="" loading="lazy">
+      <div class="image-empty-content">
+        <span class="icon-badge blue">${Icons.memory()}</span>
+        <h2>${escapeHtml(t("noMemoriesYet"))}</h2>
+        <p class="secondary">${escapeHtml(t("noMemoriesBody"))}</p>
+        <button class="button" data-action="add-memory">${Icons.plus()} ${t("addMemory")}</button>
+      </div>
+    </article>
   `;
 }
 

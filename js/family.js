@@ -9,7 +9,8 @@ function renderFamily() {
         </div>
         <button class="button" data-action="add-family">${Icons.plus()} ${t("addFamilyMember")}</button>
       </div>
-      ${appData.family.length ? `<div class="grid three-col">${appData.family.map(memberCard).join("")}</div>` : emptyState(t("noFamilyYet"), t("noFamilyBody"), t("addFamilyMember"), "add-family")}
+      ${appData.family.length ? `<div class="grid three-col">${appData.family.map(memberCard).join("")}</div>` : familyEmptyCard()}
+      ${familyPhotoCard()}
       <div class="grid two-col" style="margin-top:18px">
         <article class="glass-card card-pad">
           <div class="between">
@@ -30,6 +31,47 @@ function renderFamily() {
         </article>
       </div>
     </section>
+  `;
+}
+
+function familyPhotoCard() {
+  const image = getFamilyPhoto();
+  return `
+    <article class="glass-card family-photo-card">
+      <div class="family-photo-heading">
+        <div>
+          <span class="eyebrow">${languageCode() === "km" ? "រូបថតគ្រួសារ" : "FAMILY PHOTO"}</span>
+          <h2>${languageCode() === "km" ? "រូបថតរបស់យើង" : "A photo of us"}</h2>
+        </div>
+        <span class="icon-badge green">${Icons.memory()}</span>
+      </div>
+      <div class="family-photo-frame">
+        ${image ? `<img src="${escapeAttr(image)}" alt="${languageCode() === "km" ? "រូបថតគ្រួសារ" : "Family photo"}">` : `<span>${Icons.family()}</span>`}
+      </div>
+      <label class="button family-photo-upload">${image ? (languageCode() === "km" ? "ប្តូររូបថត" : "Change photo") : (languageCode() === "km" ? "បន្ថែមរូបថត" : "Add photo")}<input type="file" accept="image/*" data-family-photo></label>
+    </article>
+  `;
+}
+
+function getFamilyPhoto() {
+  try {
+    return localStorage.getItem("mylife:family-photo") || "";
+  } catch (error) {
+    return "";
+  }
+}
+
+function familyEmptyCard() {
+  return `
+    <article class="glass-card family-empty-card">
+      <img src="https://images.unsplash.com/photo-1491438590914-bc09fcaaf77a?auto=format&fit=crop&w=900&q=78" alt="" loading="lazy">
+      <div class="family-empty-content">
+        <span class="icon-badge green">${Icons.plus()}</span>
+        <h2>${escapeHtml(t("noFamilyYet"))}</h2>
+        <p class="secondary">${escapeHtml(t("noFamilyBody"))}</p>
+        <button class="button" data-action="add-family">${Icons.plus()} ${t("addFamilyMember")}</button>
+      </div>
+    </article>
   `;
 }
 
@@ -79,6 +121,16 @@ function openFamilyModal(member) {
 }
 
 function bindFamily() {
+  document.querySelector("[data-family-photo]")?.addEventListener("change", async event => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    try {
+      localStorage.setItem("mylife:family-photo", await readImageFile(file));
+      App.render();
+    } catch (error) {
+      Toast.show(languageCode() === "km" ? "មិនអាចបញ្ចូលរូបថតបានទេ" : "The photo could not be uploaded.");
+    }
+  });
   document.querySelectorAll('[data-action="add-family"]').forEach(button => button.addEventListener("click", () => openFamilyModal()));
   document.querySelectorAll("[data-edit-family]").forEach(button => button.addEventListener("click", () => openFamilyModal(appData.family.find(item => item.id === button.dataset.editFamily))));
   document.querySelectorAll("[data-delete-family]").forEach(button => button.addEventListener("click", () => {

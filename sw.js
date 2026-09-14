@@ -1,4 +1,4 @@
-const CACHE_NAME = "mylife-pwa-v12";
+const CACHE_NAME = "mylife-pwa-v13";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -70,3 +70,4 @@ self.addEventListener("fetch", event => {
     })
   );
 });
+

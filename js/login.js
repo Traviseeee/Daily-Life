@@ -1,6 +1,33 @@
+const LOGIN_SESSION_KEY = "mylife:login-session:v1";
+
 const Login = {
   isOpen: false,
   authenticated: false,
+
+  getRememberedSession() {
+    try {
+      const raw = localStorage.getItem(LOGIN_SESSION_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      const expiresAt = Number(parsed?.expiresAt || 0);
+      if (!Number.isFinite(expiresAt) || Date.now() > expiresAt) {
+        localStorage.removeItem(LOGIN_SESSION_KEY);
+        return null;
+      }
+      return parsed;
+    } catch (error) {
+      localStorage.removeItem(LOGIN_SESSION_KEY);
+      return null;
+    }
+  },
+
+  setRememberedSession(rememberMe) {
+    if (!rememberMe) {
+      localStorage.removeItem(LOGIN_SESSION_KEY);
+      return;
+    }
+    localStorage.setItem(LOGIN_SESSION_KEY, JSON.stringify({ expiresAt: Date.now() + 24 * 60 * 60 * 1000 }));
+  },
 
   open(mode = "login") {
     if (this.isOpen) return;
@@ -38,6 +65,12 @@ const Login = {
           </div>
           ${isReset || !hasAccount ? `<div class="login-input-group"><label for="loginPasswordConfirm">${t("confirmPassword")}</label><input id="loginPasswordConfirm" type="password" placeholder="${t("confirmPassword")}" autocomplete="new-password" minlength="4" required /></div>` : ""}
           ${!hasAccount ? `<div class="login-input-group"><label for="loginRecoveryAnswer">${t("dogNameQuestion")}</label><input id="loginRecoveryAnswer" type="text" placeholder="${t("dogNamePlaceholder")}" autocomplete="off" required /></div>` : ""}
+          <div class="login-input-group login-remember-row">
+            <label for="loginRemember" class="login-remember">
+              <input id="loginRemember" type="checkbox" checked>
+              <span>${t("rememberMe")}</span>
+            </label>
+          </div>
           <p class="login-error" id="loginError" role="alert"></p>
           <button type="submit" class="button login-button">${isReset ? t("saveNewPassword") : hasAccount ? t("unlock") : isLegacy ? t("secureAccount") : t("createAccount")}</button>
           ${hasAccount && !isReset ? `<button type="button" class="login-reset-link" id="loginResetButton">${t("forgotPassword")}</button>` : ""}
@@ -68,6 +101,7 @@ const Login = {
     const password = document.getElementById("loginPassword").value;
     const confirmation = document.getElementById("loginPasswordConfirm")?.value;
     const recoveryAnswer = document.getElementById("loginRecoveryAnswer")?.value.trim();
+    const rememberMe = document.getElementById("loginRemember")?.checked ?? true;
     const error = document.getElementById("loginError");
     const showError = message => { error.textContent = message; };
 
@@ -80,6 +114,7 @@ const Login = {
     if (!hasAccount) Store.updateProfile({ name: name || appData.profile.name, passwordHash: hash, recoveryAnswerHash: await this.hash(recoveryAnswer.toLowerCase()) });
     if (isReset) Store.updateProfile({ passwordHash: hash });
     this.authenticated = true;
+    this.setRememberedSession(rememberMe);
     this.close();
     App.render();
   },
@@ -97,11 +132,16 @@ const Login = {
   },
 
   showIfNeeded() {
-    if (this.isOpen || this.authenticated) return;
+    if (this.isOpen) return;
+    if (this.getRememberedSession()) {
+      this.authenticated = true;
+      return;
+    }
+    if (this.authenticated) return;
     const modalRoot = document.getElementById("modalRoot");
     if (!modalRoot) return;
     requestAnimationFrame(() => {
-      if (!this.isOpen && !this.authenticated) {
+      if (!this.isOpen && !this.authenticated && !this.getRememberedSession()) {
         this.open();
       }
     });

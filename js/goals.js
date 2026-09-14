@@ -23,10 +23,24 @@ function renderGoals(goalId) {
           }).join("")}
         </aside>
         <div class="financial-content">
-          ${visibleGoals.length ? `<div class="grid three-col">${visibleGoals.map(goalCard).join("")}</div>` : emptyState(t("noGoalsYet"), t("noGoalsBody"), t("createGoal"), "add-goal")}
+          ${visibleGoals.length ? `<div class="grid three-col">${visibleGoals.map(goalCard).join("")}</div>` : goalEmptyCard()}
         </div>
       </div>
     </section>
+  `;
+}
+
+function goalEmptyCard() {
+  return `
+    <article class="glass-card image-empty-card goal-empty-card">
+      <img src="https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&w=900&q=78" alt="" loading="lazy">
+      <div class="image-empty-content">
+        <span class="icon-badge purple">${Icons.goal()}</span>
+        <h2>${escapeHtml(t("noGoalsYet"))}</h2>
+        <p class="secondary">${escapeHtml(t("noGoalsBody"))}</p>
+        <button class="button" data-action="add-goal">${Icons.plus()} ${t("createGoal")}</button>
+      </div>
+    </article>
   `;
 }
 

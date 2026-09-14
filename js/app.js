@@ -36,6 +36,7 @@ const App = {
     else if (route === "money") app.innerHTML = renderMoney(this.param || "overview");
     else if (route === "calendar") app.innerHTML = renderCalendar(this.param || "month");
     else if (route === "memories") app.innerHTML = renderMemories();
+    else if (route === "tips") app.innerHTML = renderTips();
     else if (route === "settings") app.innerHTML = renderSettings();
     else if (route === "help") app.innerHTML = renderHelp();
     else app.innerHTML = renderHome();
@@ -115,12 +116,14 @@ const App = {
     });
   },
   bindPage(route) {
+    if (route === "launcher") bindLauncher();
     if (route === "home") bindHome();
     if (route === "family") bindFamily();
     if (route === "goals") bindGoals(this.param);
     if (route === "money") bindMoney();
     if (route === "calendar") bindCalendar();
     if (route === "memories") bindMemories();
+    if (route === "tips") bindTips();
     if (route === "settings") bindSettings();
   },
   bindChrome() {
@@ -178,6 +181,27 @@ const App = {
       Toast.show(count ? `${count} ${t("reminder")}` : t("noCalendarEvents"));
     });
     document.getElementById("smartAssistantButton").addEventListener("click", () => SmartAssistant.open());
+    document.addEventListener("click", event => {
+      const pinButton = event.target.closest("[data-pin-footer]");
+      if (!pinButton) return;
+      if (event.__footerPinHandled) return;
+      event.__footerPinHandled = true;
+      event.preventDefault();
+      event.stopPropagation();
+      const routeId = pinButton.dataset.pinFooter;
+      const selected = footerRoutes().map(route => route.id);
+      if (routeId === "home") return;
+      const next = selected.includes(routeId)
+        ? selected.filter(id => id !== routeId)
+        : ["home", ...selected.filter(id => id !== "home"), routeId].slice(0, 5);
+      localStorage.setItem(FOOTER_ROUTES_KEY, JSON.stringify(next));
+      renderNavigation();
+      document.querySelectorAll("[data-pin-footer]").forEach(button => {
+        const active = next.includes(button.dataset.pinFooter);
+        button.classList.toggle("active", active);
+        button.setAttribute("aria-pressed", String(active));
+      });
+    });
     document.getElementById("moneyPrivacyButton").addEventListener("click", () => {
       Store.updateProfile({ moneyHidden: !appData.profile.moneyHidden });
       Toast.show(appData.profile.moneyHidden ? t("moneyHidden") : t("moneyVisible"));
