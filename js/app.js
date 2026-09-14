@@ -128,10 +128,27 @@ const App = {
   },
   bindChrome() {
     const menuToggle = document.getElementById("menuToggle");
+    const backToTop = document.getElementById("backToTop");
     const closeLauncher = () => {
       document.body.classList.remove("nav-open");
       menuToggle.setAttribute("aria-expanded", "false");
     };
+
+    if (backToTop) {
+      backToTop.innerHTML = Icons.arrowUp();
+
+      const updateBackToTop = () => {
+        const scrollThreshold = window.innerWidth <= 768 ? 480 : 420;
+        const visible = window.scrollY > scrollThreshold;
+        backToTop.classList.toggle("is-visible", visible);
+      };
+
+      updateBackToTop();
+      window.addEventListener("scroll", updateBackToTop, { passive: true });
+      backToTop.addEventListener("click", () => {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+    }
     const openLauncher = () => {
       document.body.classList.add("nav-open");
       menuToggle.setAttribute("aria-expanded", "true");
@@ -206,7 +223,9 @@ const App = {
       Store.updateProfile({ moneyHidden: !appData.profile.moneyHidden });
       Toast.show(appData.profile.moneyHidden ? t("moneyHidden") : t("moneyVisible"));
     });
-    document.getElementById("profileButton").addEventListener("click", () => location.hash = "#settings");
+    document.getElementById("profileButton").addEventListener("click", () => {
+      openProfileModal();
+    });
     document.querySelectorAll("#languageSwitch [data-language]").forEach(button => {
       button.addEventListener("click", () => {
         const language = button.dataset.language;

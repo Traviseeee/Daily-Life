@@ -27,18 +27,13 @@ function renderHome() {
           </div>
         </div>
 
-        <div class="home-profile-side">
+        <div class="home-profile-side home-profile-trigger" role="button" tabindex="0" data-action="setup-profile" aria-label="Edit profile">
           <div class="home-avatar-ring">
             <span class="home-user-avatar">${profilePhoto}</span>
           </div>
           <div class="home-profile-meta">
             <strong>${escapeHtml(profileName)}</strong>
           </div>
-          <button class="button button-secondary home-profile-btn home-profile-btn-hidden" type="button" data-action="setup-profile">
-            <span class="button-icon">👤</span>
-            <span>Edit Profile</span>
-            <span class="button-arrow">›</span>
-          </button>
         </div>
       </div>
 
@@ -696,5 +691,13 @@ function bindHome() {
   document.querySelectorAll('[data-action="smart-assistant"]').forEach(button => button.addEventListener("click", () => SmartAssistant.open()));
   document.querySelectorAll('[data-action="create-user"]').forEach(button => button.addEventListener("click", () => openCreateUserModal()));
   document.querySelectorAll('[data-action="add-goal"]').forEach(button => button.addEventListener("click", () => openGoalModal()));
-  document.querySelector('[data-action="setup-profile"]')?.addEventListener("click", () => openProfileModal());
+  document.querySelectorAll('[data-action="setup-profile"]').forEach(button => {
+    button.addEventListener("click", () => openProfileModal());
+    button.addEventListener("keydown", event => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        openProfileModal();
+      }
+    });
+  });
 }
