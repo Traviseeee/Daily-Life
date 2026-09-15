@@ -148,11 +148,52 @@ const App = {
         setTimeout(() => {
           const event = appData.calendarEvents.find(entry => entry.id === item.id);
           if (event) {
-            App.openEventModal(event);
+            App.openNotificationDetail(event, item);
           }
         }, 200);
       });
     });
+  },
+  openNotificationDetail(record, item) {
+    const root = document.getElementById("modalRoot");
+    const isKhmer = languageCode() === "km";
+    const dateLabel = new Date(`${item.date}T00:00:00`).toLocaleDateString(isKhmer ? "km-KH" : "en-US", {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+      year: "numeric"
+    });
+    const timeLabel = record.time || (isKhmer ? "មិនបានកំណត់" : "Not set");
+    const categoryLabel = optionLabel(record.category || (isKhmer ? "ព្រឹត្តិការណ៍" : "Event"));
+
+    root.classList.add("open");
+    root.innerHTML = `
+      <div class="notification-backdrop" data-close-notification>
+        <div class="notification-panel glass-card notification-detail" role="dialog" aria-modal="true" aria-labelledby="notificationDetailTitle">
+          <div class="between notification-header">
+            <div>
+              <span class="eyebrow">${isKhmer ? "ព័ត៌មានលម្អិត" : "Event details"}</span>
+              <h2 id="notificationDetailTitle">${escapeHtml(record.title || item.title)}</h2>
+            </div>
+            <button class="icon-button" type="button" data-close-notification aria-label="${t("close")}">${Icons.close()}</button>
+          </div>
+          <div class="notification-detail-grid">
+            <div><small>${isKhmer ? "កាលបរិច្ឆេទ" : "Date"}</small><strong>${escapeHtml(dateLabel)}</strong></div>
+            <div><small>${isKhmer ? "ពេលវេលា" : "Time"}</small><strong>${escapeHtml(timeLabel)}</strong></div>
+            <div><small>${isKhmer ? "ប្រភេទ" : "Category"}</small><strong>${escapeHtml(categoryLabel)}</strong></div>
+            ${record.notes ? `<div><small>${t("notes")}</small><strong>${escapeHtml(record.notes)}</strong></div>` : ""}
+          </div>
+          <div class="notification-actions">
+            <button class="button ghost-button" type="button" data-close-notification>${t("close")}</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    root.querySelectorAll("[data-close-notification]").forEach(button => button.addEventListener("click", () => {
+      root.classList.remove("open");
+      root.innerHTML = "";
+    }));
   },
   checkHomeSuggestions() {
     if (this.route !== "home") return;
