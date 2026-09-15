@@ -1337,8 +1337,8 @@
 
 .launcher-hero-art {
   position: absolute;
-  top: 50%;
-  right: -4%;
+  top: calc(50% + var(--launcher-cover-y, 0%));
+  right: calc(-4% - var(--launcher-cover-x, 0%));
   width: min(52%, 520px);
   aspect-ratio: 1;
   object-fit: cover;
@@ -1348,6 +1348,13 @@
   animation: launcherArtFloat 8s ease-in-out 620ms infinite;
   -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0, 0, 0, 0.26) 24%, #000 58%);
   mask-image: linear-gradient(to right, transparent 0%, rgba(0, 0, 0, 0.26) 24%, #000 58%);
+  cursor: grab;
+  touch-action: none;
+}
+
+.launcher-hero-art.is-dragging {
+  cursor: grabbing;
+  animation-play-state: paused;
 }
 
 .launcher-edit-button {
