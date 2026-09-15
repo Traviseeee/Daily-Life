@@ -2,14 +2,17 @@ const App = {
   route: "home",
   param: "",
   shellClockTimer: null,
+  interactionSoundBound: false,
   init() {
     Store.load();
     Login.showIfNeeded();
     renderNavigation();
     this.bindChrome();
+    this.bindInteractionSounds();
     this.startShellClock();
     window.addEventListener("hashchange", () => this.render());
     this.render();
+    this.checkUpcomingAlerts();
   },
   parseRoute() {
     const [route = "home", param = ""] = location.hash.replace("#", "").split("/");
@@ -47,7 +50,146 @@ const App = {
 
     this.bindPage(route);
     this.bindScrollReveal();
+    this.checkUpcomingAlerts();
+    this.checkHomeSuggestions();
+    this.renderNotificationBadge();
     app.focus({ preventScroll: true });
+  },
+  renderNotificationBadge() {
+    const bell = document.getElementById("bellButton");
+    if (!bell) return;
+
+    const alerts = getUpcomingNotifications(7);
+    const count = alerts.length;
+    let badge = bell.querySelector(".notification-badge");
+
+    if (!badge) {
+      badge = document.createElement("span");
+      badge.className = "notification-badge";
+      badge.setAttribute("aria-hidden", "true");
+      bell.appendChild(badge);
+    }
+
+    const label = count > 0 ? `${count} notifications` : "Notifications";
+    badge.textContent = count > 99 ? "99+" : String(count || "");
+    badge.hidden = count === 0;
+    bell.classList.toggle("has-notifications", count > 0);
+    bell.setAttribute("aria-label", label);
+    bell.setAttribute("title", label);
+  },
+  openNotificationsPanel() {
+    const root = document.getElementById("modalRoot");
+    const alerts = getUpcomingNotifications(7);
+
+    root.classList.add("open");
+    root.innerHTML = `
+      <div class="notification-backdrop" data-close-notification>
+        <div class="notification-panel glass-card" role="dialog" aria-modal="true" aria-labelledby="notificationTitle">
+          <div class="between notification-header">
+            <div>
+              <span class="eyebrow">${t("upcoming")}</span>
+              <h2 id="notificationTitle">${alerts.length ? (languageCode() === "km" ? "ការជូនដំណឹង" : "Notifications") : (languageCode() === "km" ? "គ្មានការជូនដំណឹង" : "No notifications")}</h2>
+            </div>
+            <button class="icon-button" type="button" data-close-notification aria-label="${t("close")}">${Icons.close()}</button>
+          </div>
+
+          ${alerts.length ? `
+            <div class="notification-list">
+              ${alerts.map(item => `
+                <div class="notification-item">
+                  <div class="notification-icon ${item.kind === "bill" ? "bill" : "event"}">${item.kind === "bill" ? Icons.bill() : Icons.calendar()}</div>
+                  <div class="notification-copy">
+                    <strong>${escapeHtml(item.title)}</strong>
+                    <small>${new Date(`${item.date}T00:00:00`).toLocaleDateString(languageCode() === "km" ? "km-KH" : "en-US", { month: "short", day: "numeric" })}</small>
+                    <span>${item.daysLeft === 0 ? (languageCode() === "km" ? "ថ្ងៃនេះ" : "Today") : item.daysLeft === 1 ? (languageCode() === "km" ? "ក្នុង 1 ថ្ងៃ" : "In 1 day") : (languageCode() === "km" ? `ក្នុង ${item.daysLeft} ថ្ងៃ` : `In ${item.daysLeft} days`)}</span>
+                  </div>
+                  <button class="button ghost-button notification-view" type="button" data-view-notification="${escapeAttr(item.id)}">${languageCode() === "km" ? "មើល" : "View"}</button>
+                </div>
+              `).join("")}
+            </div>
+          ` : `
+            <div class="notification-empty">
+              <div class="notification-empty-icon">${Icons.bell()}</div>
+              <p>${languageCode() === "km" ? "អ្នកមិនមានការជូនដំណឹងក្នុង 7 ថ្ងៃទេ" : "You have no reminders in the next 7 days."}</p>
+            </div>
+          `}
+
+          <div class="notification-actions">
+            <button class="button ghost-button" type="button" data-close-notification>${t("close")}</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const closeButtons = root.querySelectorAll("[data-close-notification]");
+    closeButtons.forEach(button => button.addEventListener("click", () => {
+      root.classList.remove("open");
+      root.innerHTML = "";
+    }));
+
+    const backdrop = root.querySelector(".notification-backdrop");
+    backdrop?.addEventListener("click", event => {
+      if (event.target === backdrop) {
+        root.classList.remove("open");
+        root.innerHTML = "";
+      }
+    });
+
+    root.querySelectorAll("[data-view-notification]").forEach(button => {
+      button.addEventListener("click", () => {
+        const id = button.dataset.viewNotification;
+        const item = alerts.find(alert => alert.id === id);
+        if (!item) return;
+
+        root.classList.remove("open");
+        root.innerHTML = "";
+        location.hash = "#calendar";
+
+        setTimeout(() => {
+          const event = appData.calendarEvents.find(entry => entry.id === item.id);
+          if (event) {
+            App.openEventModal(event);
+          }
+        }, 200);
+      });
+    });
+  },
+  checkHomeSuggestions() {
+    if (this.route !== "home") return;
+
+    const todayIso = new Date().toISOString().slice(0, 10);
+    const moodMissing = !appData.mood || appData.mood.date !== todayIso;
+    const reflectionMissing = !appData.dailyReflection || appData.dailyReflection.date !== todayIso || !(appData.dailyReflection.text || "").trim();
+    const focusMissing = !appData.dailyFocus || appData.dailyFocus.date !== todayIso || !Array.isArray(appData.dailyFocus.items) || !appData.dailyFocus.items.length || appData.dailyFocus.items.every(item => !item.done);
+
+    if (!moodMissing && !reflectionMissing && !focusMissing) return;
+
+    const isKhmer = languageCode() === "km";
+    const suggestions = [];
+    if (moodMissing) suggestions.push(isKhmer ? "កត់សម្គាល់អារម្មណ៍ថ្ងៃនេះ" : "Check in with your mood");
+    if (reflectionMissing) suggestions.push(isKhmer ? "សរសេរបានផ្លឹមពីថ្ងៃនេះ" : "Write one good thing today");
+    if (focusMissing) suggestions.push(isKhmer ? "ជ្រើសរើស ៣ កិច្ចការតូចៗ" : "Pick 3 tiny wins");
+
+    const message = suggestions.slice(0, 2).join(" • ");
+    setTimeout(() => Toast.show(message, "warning", { duration: 3600, icon: Icons.spark() }), 450);
+  },
+  checkUpcomingAlerts() {
+    const alerts = getUpcomingNotifications(7);
+    if (!alerts.length) return;
+
+    const signature = alerts.map(item => `${item.type}:${item.date}`).join("|");
+    const lastViewed = sessionStorage.getItem("mylife:upcoming-alerts");
+    if (lastViewed === signature) return;
+
+    sessionStorage.setItem("mylife:upcoming-alerts", signature);
+
+    const first = alerts[0];
+    const label = first.daysLeft === 0
+      ? `${first.title} is today`
+      : `${first.title} in ${first.daysLeft} day${first.daysLeft === 1 ? "" : "s"}`;
+
+    Toast.show(alerts.length > 1 ? `${alerts.length} reminders are coming soon` : label, "warning", { duration: 3200 });
+    this.renderNotificationBadge();
   },
   bindScrollReveal() {
     const elements = document.querySelectorAll(".page > *:not(.home-hero), .tool-launcher-item");
@@ -126,6 +268,17 @@ const App = {
     if (route === "tips") bindTips();
     if (route === "settings") bindSettings();
   },
+  bindInteractionSounds() {
+    if (this.interactionSoundBound) return;
+    this.interactionSoundBound = true;
+
+    document.addEventListener("click", event => {
+      const target = event.target.closest("button, a, input, textarea, select, .mood-option, .home-action, .suggestion-button");
+      if (!target || target.closest(".toast")) return;
+      if (target.matches("input[type='checkbox'], input[type='radio']")) return;
+      Sound.play("tap");
+    }, { passive: true });
+  },
   bindChrome() {
     const menuToggle = document.getElementById("menuToggle");
     const backToTop = document.getElementById("backToTop");
@@ -194,8 +347,12 @@ const App = {
       }
     });
     document.getElementById("bellButton").addEventListener("click", () => {
-      const count = Store.calculate().upcomingBills + appData.calendarEvents.length;
-      Toast.show(count ? `${count} ${t("reminder")}` : t("noCalendarEvents"));
+      const alerts = getUpcomingNotifications(7);
+      if (!alerts.length) {
+        this.openNotificationsPanel();
+        return;
+      }
+      this.openNotificationsPanel();
     });
     document.getElementById("smartAssistantButton").addEventListener("click", () => SmartAssistant.open());
     document.addEventListener("click", event => {

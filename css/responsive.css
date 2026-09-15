@@ -221,9 +221,9 @@
   .mobile-nav .nav-item.active svg,
   .mobile-nav .nav-item.active img {
     color: var(--accent-light) !important;
-    background: rgba(184,255,90,0.08) !important;
-    border-color: rgba(184,255,90,0.28) !important;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.04) !important;
+    background: transparent !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
   }
 
   .mobile-nav .nav-item:hover { transform: none; }

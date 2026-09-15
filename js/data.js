@@ -9,6 +9,21 @@ const emptyData = {
     dateFormat: "MMM d, yyyy",
     moneyHidden: false
   },
+  mood: {
+    date: "",
+    value: "",
+    label: "",
+    robot: ""
+  },
+  moodHistory: [],
+  dailyReflection: {
+    date: "",
+    text: ""
+  },
+  dailyFocus: {
+    date: "",
+    items: []
+  },
   family: [],
   goals: [],
   income: [],
@@ -67,6 +82,50 @@ const Store = {
     appData.profile = { ...appData.profile, ...changes };
     if (this.save()) App.render();
     else restoreData(previous);
+  },
+  updateMood(mood) {
+    const previous = structuredClone(appData);
+    const today = new Date().toISOString().slice(0, 10);
+    const history = Array.isArray(appData.moodHistory) ? appData.moodHistory : [];
+
+    appData.mood = {
+      date: today,
+      value: mood.value || "",
+      label: mood.label || "",
+      robot: mood.robot || ""
+    };
+
+    appData.moodHistory = [...history.filter(entry => entry.date !== today), {
+      date: today,
+      value: mood.value || "",
+      label: mood.label || "",
+      robot: mood.robot || ""
+    }].slice(-7);
+
+    if (this.save()) App.render();
+    else restoreData(previous);
+  },
+  updateDailyReflection(text) {
+    const previous = structuredClone(appData);
+    const today = new Date().toISOString().slice(0, 10);
+    appData.dailyReflection = {
+      date: today,
+      text: (text || "").trim()
+    };
+    if (!this.save()) restoreData(previous);
+  },
+  updateDailyFocus(items) {
+    const previous = structuredClone(appData);
+    const today = new Date().toISOString().slice(0, 10);
+    appData.dailyFocus = {
+      date: today,
+      items: Array.isArray(items) ? items.map((item, index) => ({
+        id: item.id || `focus-${today}-${index}`,
+        text: String(item.text || "").trim(),
+        done: !!item.done
+      })).filter(item => item.text) : []
+    };
+    if (!this.save()) restoreData(previous);
   },
   createUser(data) {
     const previous = structuredClone(appData);
@@ -325,6 +384,7 @@ const Store = {
     const activeGoals = appData.goals.length;
     const familyEvents = appData.calendarEvents.filter(event => event.category === "Family").length;
     const calendarEvents = appData.calendarEvents.length;
+    const upcomingAlerts = getUpcomingNotifications(7);
     const available = totalIncome - totalExpenses - monthlySavings - monthlyLoanPayments;
 
     return {
@@ -338,6 +398,8 @@ const Store = {
       activeGoals,
       familyEvents,
       calendarEvents,
+      upcomingAlertsCount: upcomingAlerts.length,
+      upcomingAlerts,
       available,
       savingsRate: totalIncome ? Math.round((monthlySavings / totalIncome) * 100) : 0
     };
@@ -367,6 +429,45 @@ function id(prefix) {
 
 function result(label, href, type) {
   return { label, href, type };
+}
+
+function getUpcomingNotifications(daysAhead = 7) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const limit = new Date(today);
+  limit.setDate(limit.getDate() + daysAhead);
+
+  const items = [];
+
+  appData.calendarEvents.forEach(event => {
+    if (!event.date) return;
+    const eventDate = new Date(`${event.date}T00:00:00`);
+    if (eventDate < today || eventDate > limit) return;
+    items.push({
+      id: event.id || `event-${event.date}`,
+      type: "event",
+      title: event.title || "Event",
+      date: event.date,
+      daysLeft: Math.max(0, Math.round((eventDate - today) / 86400000)),
+      kind: "event"
+    });
+  });
+
+  appData.bills.forEach(bill => {
+    if (bill.reminder === false || !bill.due || bill.status === "Paid") return;
+    const dueDate = new Date(`${bill.due}T00:00:00`);
+    if (dueDate < today || dueDate > limit) return;
+    items.push({
+      id: bill.id || `bill-${bill.due}`,
+      type: "bill",
+      title: bill.name || "Bill",
+      date: bill.due,
+      daysLeft: Math.max(0, Math.round((dueDate - today) / 86400000)),
+      kind: "bill"
+    });
+  });
+
+  return items.sort((a, b) => a.date.localeCompare(b.date)).slice(0, 5);
 }
 
 function sum(items, key) {

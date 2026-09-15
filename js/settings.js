@@ -23,16 +23,19 @@ function renderSettings() {
 
         <div class="settings-content">
           <div class="grid two-col settings-grid">
-            <article class="glass-card card-pad">
-              <div class="between">
-                <h2 class="section-title section-title-with-icon"><span class="section-title-icon">${Icons.user()}</span>${t("profile")}</h2>
+            <article class="glass-card card-pad settings-profile-card">
+              <div class="settings-profile-header">
+                <div>
+                  <h2 class="section-title section-title-with-icon"><span class="section-title-icon">${Icons.user()}</span>${t("profile")}</h2>
+                </div>
                 <span class="thumb">${appData.profile.photo ? `<img src="${appData.profile.photo}" alt="">` : initials(appData.profile.name)}</span>
               </div>
-              <div class="kv">
-                <div><span>${t("name")}</span><strong>${escapeHtml(appData.profile.name || "Not set")}</strong></div>
-                <div><span>${t("currency")}</span><strong>${appData.profile.currency}</strong></div>
-                <div><span>${t("language")}</span><strong>${optionLabel(appData.profile.language)}</strong></div>
-                <div><span>${t("dateFormat")}</span><strong>${appData.profile.dateFormat}</strong></div>
+              <div class="settings-profile-name">${escapeHtml(appData.profile.name || "Not set")}</div>
+              <div class="settings-profile-grid">
+                <div class="settings-meta-item"><span>${t("currency")}</span><strong>${appData.profile.currency}</strong></div>
+                <div class="settings-meta-item"><span>${t("language")}</span><strong>${optionLabel(appData.profile.language)}</strong></div>
+                <div class="settings-meta-item"><span>${t("dateFormat")}</span><strong>${appData.profile.dateFormat}</strong></div>
+                <div class="settings-meta-item"><span>${t("name")}</span><strong>${escapeHtml(appData.profile.name || "Not set")}</strong></div>
               </div>
             </article>
             ${settingsCard(t("database"), [
@@ -84,7 +87,19 @@ function renderSettings() {
 }
 
 function settingsCard(title, rows, icon) {
-  return `<article class="glass-card card-pad"><h2 class="section-title section-title-with-icon"><span class="section-title-icon">${icon}</span>${title}</h2><div class="kv">${rows.map(row => `<div><span>${row[0]}</span><strong>${row[1]}</strong></div>`).join("")}</div></article>`;
+  return `
+    <article class="glass-card card-pad settings-compact-card">
+      <h2 class="section-title section-title-with-icon"><span class="section-title-icon">${icon}</span>${title}</h2>
+      <div class="settings-stat-grid">
+        ${rows.map(row => `
+          <div class="settings-stat-item">
+            <span>${row[0]}</span>
+            <strong>${row[1]}</strong>
+          </div>
+        `).join("")}
+      </div>
+    </article>
+  `;
 }
 
 function settingsAction(action, icon, title, description) {

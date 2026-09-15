@@ -8,6 +8,52 @@ function renderHome() {
   const firstName = profileName.split(/\s+/).filter(Boolean)[0] || "there";
   const profilePhoto = appData.profile.photo ? `<img src="${appData.profile.photo}" alt="${escapeHtml(profileName)}">` : initials(profileName);
   const todayLabel = new Date().toLocaleDateString(languageCode() === "km" ? "km-KH" : "en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" });
+  const moodOptions = [
+    { value: "happy", emoji: "😊", label: t("moodHappy"), robot: t("moodCheerful") },
+    { value: "calm", emoji: "😌", label: t("moodCalm"), robot: t("moodBalanced") },
+    { value: "tired", emoji: "😴", label: t("moodTired"), robot: t("moodLowEnergy") },
+    { value: "stressed", emoji: "😟", label: t("moodStressed"), robot: t("moodNeedsEase") },
+    { value: "excited", emoji: "🤩", label: t("moodExcited"), robot: t("moodMotivated") }
+  ];
+  const moodHistory = Array.isArray(appData.moodHistory) ? appData.moodHistory : [];
+  const todayMood = appData.mood?.date === todayIso ? appData.mood : null;
+  const selectedMood = todayMood ? moodOptions.find(option => option.value === todayMood.value) || moodOptions[0] : null;
+  const reflectionText = appData.dailyReflection?.date === todayIso ? (appData.dailyReflection.text || "") : "";
+  const focusDefaults = [
+    { id: "focus-move", text: t("moveMyBody"), done: false },
+    { id: "focus-water", text: t("drinkWater"), done: false },
+    { id: "focus-family", text: t("checkInWithFamily"), done: false }
+  ];
+  const newsTickerItems = [
+    t("dailyCheckIn"),
+    t("smallWins"),
+    t("dailyReflection"),
+    t("upcoming"),
+    t("bestTimeToReflect"),
+    t("dailyPulse")
+  ];
+  const focusItems = appData.dailyFocus?.date === todayIso && Array.isArray(appData.dailyFocus.items) && appData.dailyFocus.items.length
+    ? appData.dailyFocus.items
+    : focusDefaults;
+  const focusDoneCount = focusItems.filter(item => item.done).length;
+  const focusProgress = focusItems.length ? Math.round((focusDoneCount / focusItems.length) * 100) : 0;
+  const reflectionReady = (reflectionText || "").trim().length > 0;
+  const upcomingAlerts = getUpcomingNotifications(7);
+  const nextAlert = upcomingAlerts[0] || null;
+  const moodHistoryChart = Array.from({ length: 7 }, (_, index) => {
+    const date = new Date();
+    date.setHours(0, 0, 0, 0);
+    date.setDate(date.getDate() - (6 - index));
+    const iso = date.toISOString().slice(0, 10);
+    const entry = moodHistory.find(item => item.date === iso);
+    const option = entry ? moodOptions.find(item => item.value === entry.value) : null;
+    return {
+      day: date.toLocaleDateString(languageCode() === "km" ? "km-KH" : "en-US", { weekday: "short" }).slice(0, 3),
+      label: option ? option.label : "—",
+      emoji: option ? option.emoji : "·",
+      value: option ? option.value : ""
+    };
+  });
 
   return `
     <section class="page home-featured-page">
@@ -22,12 +68,12 @@ function renderHome() {
 
           <div class="home-quote-row">
             <span class="quote-mark">“</span>
-            <p>Small steps, big wins.</p>
+            <p>${t("smallStepsBigWins")}</p>
             <span class="quote-arrow">›</span>
           </div>
         </div>
 
-        <div class="home-profile-side home-profile-trigger" role="button" tabindex="0" data-action="setup-profile" aria-label="Edit profile">
+        <div class="home-profile-side home-profile-trigger" role="button" tabindex="0" data-action="setup-profile" aria-label="${t("editProfile")}">
           <div class="home-avatar-ring">
             <span class="home-user-avatar">${profilePhoto}</span>
           </div>
@@ -37,12 +83,27 @@ function renderHome() {
         </div>
       </div>
 
+      <div class="home-suggestion-banner">
+        <span class="suggestion-badge">${Icons.spark()}</span>
+        <div class="suggestion-copy">
+          <strong>${languageCode() === "km" ? "ត្រូវការជំនួយបន្តិច?" : "Need a nudge?"}</strong>
+          <span>${languageCode() === "km" ? "កត់សម្គាល់អារម្មណ៍ ឬសរសេររឿងល្អមួយយ៉ាង" : "Check in, reflect, and finish a tiny win."}</span>
+        </div>
+        <button class="suggestion-button" type="button" data-action="smart-assistant">${languageCode() === "km" ? "ជំនួយ" : "Help"}</button>
+      </div>
+
+      <div class="news-ticker" aria-label="News ticker">
+        <div class="news-ticker-track">
+          ${[...newsTickerItems, ...newsTickerItems].map(item => `<span class="ticker-item">${item}</span>`).join('<span class="ticker-divider">•</span>')}
+        </div>
+      </div>
+
       <div class="home-quick-actions">
         <button class="home-action action-green" type="button" data-action="smart-assistant">
           <span class="action-icon">${Icons.spark()}</span>
           <span class="action-content">
             <strong>${t("smartAssistant")}</strong>
-            <small>Get instant help, ideas and suggestions</small>
+            <small>${t("instantHelpPrompt")}</small>
           </span>
           <span class="action-arrow">›</span>
         </button>
@@ -51,7 +112,7 @@ function renderHome() {
           <span class="action-icon">${Icons.user()}</span>
           <span class="action-content">
             <strong>${t("createUser")}</strong>
-            <small>Add and manage your profiles</small>
+            <small>${t("manageProfilesPrompt")}</small>
           </span>
           <span class="action-arrow">›</span>
         </button>
@@ -60,7 +121,7 @@ function renderHome() {
           <span class="action-icon">${Icons.goal()}</span>
           <span class="action-content">
             <strong>${t("createGoal")}</strong>
-            <small>Set targets and track progress</small>
+            <small>${t("setTargetsPrompt")}</small>
           </span>
           <span class="action-arrow">›</span>
         </button>
@@ -69,19 +130,144 @@ function renderHome() {
           <span class="action-icon">${Icons.plus()}</span>
           <span class="action-content">
             <strong>${t("addEvent")}</strong>
-            <small>Plan your important moments</small>
+            <small>${t("planMomentsPrompt")}</small>
           </span>
           <span class="action-arrow">›</span>
         </button>
       </div>
 
+      <article class="glass-card mood-card">
+        <div class="mood-header">
+          <div>
+            <span class="eyebrow">${t("dailyCheckIn")}</span>
+            <h2>${t("howAreYouFeelingToday")}</h2>
+          </div>
+          <span class="mood-status-badge ${selectedMood ? `mood-${selectedMood.value}` : ""}">${selectedMood ? selectedMood.emoji : "✨"}</span>
+        </div>
+        <div class="mood-options" aria-label="Mood picker">
+          ${moodOptions.map(option => `
+            <button
+              type="button"
+              class="mood-option ${selectedMood && selectedMood.value === option.value ? "active" : ""}"
+              data-mood-value="${option.value}"
+              aria-label="${option.label}"
+              title="${option.label}"
+            >
+              <span class="mood-emoji">${option.emoji}</span>
+              <span class="mood-label">${option.label}</span>
+            </button>
+          `).join("")}
+        </div>
+        <div class="mood-footer">
+          <span class="mood-robot">${selectedMood ? selectedMood.robot : t("moodReadyToCheckIn")}</span>
+          <span class="mood-message">${selectedMood ? t("moodSavedForToday") : t("tapEmojiToSaveMood")}</span>
+        </div>
+
+        <div class="daily-reflection">
+          <label class="daily-reflection-label" for="dailyReflection">${t("dailyReflection")}</label>
+          <textarea id="dailyReflection" class="daily-reflection-input" rows="2" maxlength="180" data-daily-reflection placeholder="${t("dailyReflectionPlaceholder")}">${escapeHtml(reflectionText)}</textarea>
+        </div>
+      </article>
+
+      <article class="glass-card mood-history-card">
+        <div class="mood-header">
+          <div>
+            <span class="eyebrow">${t("moodRhythm")}</span>
+            <h2>${t("yourWeek")}</h2>
+          </div>
+          <span class="mood-history-score">${moodHistoryChart.filter(day => day.value).length}/7</span>
+        </div>
+        <div class="mood-history-grid">
+          ${moodHistoryChart.map(day => `
+            <div class="mood-history-day ${day.value ? "filled" : ""}">
+              <span class="mood-history-emoji">${day.emoji}</span>
+              <small>${day.day}</small>
+            </div>
+          `).join("")}
+        </div>
+      </article>
+
+      <article class="glass-card focus-card">
+        <div class="mood-header">
+          <div>
+            <span class="eyebrow">${t("todayFocus")}</span>
+            <h2>${t("smallWins")}</h2>
+          </div>
+          <span class="mood-history-score">${focusItems.filter(item => item.done).length}/${focusItems.length}</span>
+        </div>
+        <div class="focus-list">
+          ${focusItems.map(item => `
+            <label class="focus-item ${item.done ? "done" : ""}">
+              <input type="checkbox" data-focus-toggle data-focus-id="${item.id}" ${item.done ? "checked" : ""}>
+              <span>${escapeHtml(item.text)}</span>
+            </label>
+          `).join("")}
+        </div>
+      </article>
+
+      <article class="glass-card pulse-card">
+        <div class="mood-header">
+          <div>
+            <span class="eyebrow">${t("dailyPulse")}</span>
+            <h2>${t("yourRhythm")}</h2>
+          </div>
+          <span class="mood-history-score">${selectedMood ? selectedMood.label.slice(0, 3) : "OK"}</span>
+        </div>
+        <div class="pulse-grid">
+          <div class="pulse-item">
+            <span>${t("moodPulse")}</span>
+            <strong>${selectedMood ? selectedMood.label : t("moodReadyToCheckIn")}</strong>
+          </div>
+          <div class="pulse-item">
+            <span>${t("focusPulse")}</span>
+            <strong>${focusProgress}%</strong>
+          </div>
+          <div class="pulse-item">
+            <span>${t("reflectionPulse")}</span>
+            <strong>${reflectionReady ? t("reflectionSaved") : t("reflectionOpen")}</strong>
+          </div>
+        </div>
+      </article>
+
+      <article class="glass-card reminder-summary-card">
+        <div class="mood-header">
+          <div>
+            <span class="eyebrow">${t("upcoming")}</span>
+            <h2>${t("nextOnYourMind")}</h2>
+          </div>
+          <span class="mood-history-score">${upcomingAlerts.length}</span>
+        </div>
+        ${nextAlert ? `
+          <div class="next-reminder">
+            <strong>${escapeHtml(nextAlert.title)}</strong>
+            <span>${nextAlert.daysLeft === 0 ? "Today" : `${nextAlert.daysLeft} day${nextAlert.daysLeft === 1 ? "" : "s"} left`}</span>
+          </div>
+          <div class="reminder-list">
+            ${upcomingAlerts.slice(0, 3).map(item => `
+              <div class="reminder-item">
+                <span class="reminder-dot"></span>
+                <div>
+                  <strong>${escapeHtml(item.title)}</strong>
+                  <small>${new Date(`${item.date}T00:00:00`).toLocaleDateString(languageCode() === "km" ? "km-KH" : "en-US", { month: "short", day: "numeric" })}</small>
+                </div>
+              </div>
+            `).join("")}
+          </div>
+        ` : `
+          <div class="next-reminder empty-state">
+            <strong>${t("noRemindersThisWeek")}</strong>
+            <span>${t("upcomingSpaceClear")}</span>
+          </div>
+        `}
+      </article>
+
       <div class="home-reminder-panel">
         <div class="home-reminder-copy">
-          <span class="eyebrow">Life Reminder</span>
-          <h2>A Better You Everyday</h2>
-          <p>Plan. Focus. Do. Repeat.</p>
+          <span class="eyebrow">${t("lifeReminder")}</span>
+          <h2>${t("lifeReminderTitle")}</h2>
+          <p>${t("lifeReminderSubtitle")}</p>
         </div>
-        <div class="home-reminder-quote">Good Things Take Time</div>
+        <div class="home-reminder-quote">${t("lifeReminderQuote")}</div>
       </div>
 
       ${homePhotoCard()}
@@ -687,6 +873,47 @@ function bindHome() {
       Toast.show(languageCode() === "km" ? "មិនអាចបញ្ចូលរូបថតបានទេ" : "The photo could not be uploaded.");
     }
   });
+
+  document.querySelectorAll("[data-mood-value]").forEach(button => {
+    button.addEventListener("click", () => {
+      const option = button.dataset.moodValue;
+      const moodMap = {
+        happy: { label: t("moodHappy"), robot: t("moodCheerful") },
+        calm: { label: t("moodCalm"), robot: t("moodBalanced") },
+        tired: { label: t("moodTired"), robot: t("moodLowEnergy") },
+        stressed: { label: t("moodStressed"), robot: t("moodNeedsEase") },
+        excited: { label: t("moodExcited"), robot: t("moodMotivated") }
+      };
+      const choice = moodMap[option];
+      if (!choice) return;
+      Store.updateMood({ value: option, label: choice.label, robot: choice.robot });
+    });
+  });
+
+  document.querySelectorAll("[data-daily-reflection]").forEach(textarea => {
+    textarea.addEventListener("input", event => {
+      Store.updateDailyReflection(event.target.value);
+    });
+    textarea.addEventListener("blur", event => {
+      if (!event.target.value.trim()) {
+        Store.updateDailyReflection("");
+      }
+    });
+  });
+
+  document.querySelectorAll("[data-focus-toggle]").forEach(input => {
+    input.addEventListener("change", event => {
+      const items = (appData.dailyFocus?.date === new Date().toISOString().slice(0, 10) && Array.isArray(appData.dailyFocus.items) && appData.dailyFocus.items.length
+        ? appData.dailyFocus.items
+        : [
+            { id: "focus-move", text: t("moveMyBody"), done: false },
+            { id: "focus-water", text: t("drinkWater"), done: false },
+            { id: "focus-family", text: t("checkInWithFamily"), done: false }
+          ]).map(item => item.id === event.target.dataset.focusId ? { ...item, done: event.target.checked } : item);
+      Store.updateDailyFocus(items);
+    });
+  });
+
   document.querySelectorAll('[data-action="add-event"]').forEach(button => button.addEventListener("click", () => App.openEventModal()));
   document.querySelectorAll('[data-action="smart-assistant"]').forEach(button => button.addEventListener("click", () => SmartAssistant.open()));
   document.querySelectorAll('[data-action="create-user"]').forEach(button => button.addEventListener("click", () => openCreateUserModal()));
