@@ -1284,8 +1284,8 @@
 
 .tool-launcher {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
   max-width: 1120px;
 }
 
@@ -1384,20 +1384,21 @@
 .tool-launcher-item {
   position: relative;
   display: grid;
-  place-items: center;
-  align-content: center;
-  gap: 10px;
-  min-height: 120px;
-  padding: 12px 10px;
-  border: 0;
-  border-radius: 0;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  min-height: 172px;
+  padding: 24px 22px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.24);
+  border-radius: 28px;
   color: #f7f4ff;
   font-size: 0.95rem;
   font-weight: 700;
-  text-align: center;
-  background: transparent;
-  box-shadow: none;
-  transition: transform var(--ease), opacity var(--ease);
+  text-align: left;
+  background: linear-gradient(135deg, rgba(63, 42, 118, 0.64), rgba(13, 29, 63, 0.76));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.22), 0 12px 28px rgba(0,0,0,0.18);
+  transition: transform var(--ease), opacity var(--ease), border-color var(--ease);
 }
 
 .tool-footer-pin {
@@ -1471,8 +1472,9 @@
 }
 
 .tool-launcher-item:hover {
-  transform: translateY(-1px);
+  transform: translateY(-3px);
   opacity: 0.95;
+  border-color: rgba(255,255,255,0.52);
 }
 
 .tool-launcher-item.active {
@@ -3450,8 +3452,11 @@ body.money-hidden .money-value {
 .thumb {
   display: inline-grid;
   place-items: center;
-  width: 52px;
-  height: 52px;
+  position: relative;
+  z-index: 1;
+  width: 64px;
+  height: 64px;
+  border-radius: 20px;
   overflow: hidden;
   border-radius: 16px;
   color: #11160a;
@@ -3503,10 +3508,38 @@ body.money-hidden .money-value {
 .login-mark {
   display: inline-grid;
   place-items: center;
-  width: 54px;
-  height: 54px;
+  width: 38px;
+  height: 38px;
   margin-bottom: 14px;
   color: #11160a;
+
+.tool-launcher-watermark {
+  position: absolute;
+  right: 18px;
+  bottom: -10px;
+  color: rgba(255,255,255,0.1);
+  pointer-events: none;
+}
+
+.tool-launcher-watermark svg { width: 118px; height: 118px; stroke-width: 1.5; }
+
+.tool-launcher-copy { position: relative; z-index: 1; display: grid; gap: 7px; min-width: 0; }
+.tool-launcher-copy strong { color: #ffffff; font-size: 1.35rem; font-weight: 800; line-height: 1.1; }
+.tool-launcher-copy small { color: rgba(239,236,255,0.68); font-size: 0.9rem; font-weight: 400; line-height: 1.35; }
+
+.tool-launcher-arrow {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border: 1px solid rgba(255,255,255,0.22);
+  border-radius: 50%;
+  background: rgba(255,255,255,0.12);
+}
+
+.tool-launcher-arrow svg { width: 25px; height: 25px; transform: rotate(0deg); }
   border-radius: 17px;
   background: linear-gradient(135deg, var(--accent-light), var(--accent));
   box-shadow: 0 14px 28px rgba(184,255,90,0.18);

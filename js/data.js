@@ -4,6 +4,7 @@ const emptyData = {
   profile: {
     name: "",
     photo: "",
+    launcherCover: "",
     currency: "USD",
     language: "English",
     dateFormat: "MMM d, yyyy",

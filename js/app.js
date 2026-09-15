@@ -11,6 +11,7 @@ const App = {
     this.bindInteractionSounds();
     this.startShellClock();
     window.addEventListener("hashchange", () => this.render());
+    window.addEventListener("popstate", () => this.render());
     this.render();
     this.checkUpcomingAlerts();
   },
@@ -380,6 +381,17 @@ const App = {
           location.hash = href;
         }
       }
+    });
+    document.addEventListener("click", event => {
+      const financialItem = event.target.closest(".financial-nav-item");
+      if (!financialItem) return;
+
+      const href = financialItem.getAttribute("href");
+      if (!href?.startsWith("#")) return;
+      event.preventDefault();
+      if (location.hash === href) return;
+      history.pushState({}, "", href);
+      this.render();
     });
     document.addEventListener("keydown", event => {
       if (event.key === "Escape" && document.body.classList.contains("nav-open")) {
