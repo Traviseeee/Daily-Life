@@ -6,7 +6,8 @@ function renderHome() {
   const hasAnyData = appData.profile.name || ["family", "goals", "income", "expenses", "savings", "loans", "bills", "calendarEvents", "memories"].some(key => appData[key].length);
   const profileName = appData.profile.name || "Your Name";
   const firstName = profileName.split(/\s+/).filter(Boolean)[0] || "there";
-  const profilePhoto = appData.profile.photo ? `<img src="${appData.profile.photo}" alt="${escapeHtml(profileName)}">` : initials(profileName);
+  const profilePosition = imagePosition(appData.profile.photoPosition);
+  const profilePhoto = appData.profile.photo ? `<img src="${appData.profile.photo}" style="--image-position-x: ${profilePosition.x}%; --image-position-y: ${profilePosition.y}%;" alt="${escapeHtml(profileName)}">` : initials(profileName);
   const todayLabel = new Date().toLocaleDateString(languageCode() === "km" ? "km-KH" : "en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" });
   const moodOptions = [
     { value: "happy", emoji: "😊", label: t("moodHappy"), robot: t("moodCheerful") },
@@ -292,6 +293,7 @@ function homeEmptyCard() {
 function homePhotoCard() {
   const image = getFamilyPhoto();
   const isKhmer = languageCode() === "km";
+  const position = storedImagePosition("mylife:family-photo-position");
   return `
     <article class="glass-card family-photo-card home-photo-card">
       <div class="family-photo-heading">
@@ -299,7 +301,7 @@ function homePhotoCard() {
         <span class="icon-badge green">${Icons.memory()}</span>
       </div>
       <div class="family-photo-frame">
-        ${image ? `<img src="${escapeAttr(image)}" alt="${isKhmer ? "រូបថតគ្រួសារ" : "Family photo"}">` : `<img src="https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=900&q=78" alt="" loading="lazy">`}
+        ${image ? `<img src="${escapeAttr(image)}" style="--image-position-x: ${position.x}%; --image-position-y: ${position.y}%;" alt="${isKhmer ? "រូបថតគ្រួសារ" : "Family photo"}">` : `<img src="https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=900&q=78" alt="" loading="lazy">`}
       </div>
       <label class="button family-photo-upload">${image ? (isKhmer ? "ប្តូររូបថត" : "Change photo") : (isKhmer ? "បន្ថែមរូបថត" : "Add photo")}<input type="file" accept="image/*" data-family-photo></label>
     </article>
@@ -603,8 +605,24 @@ function bindTips() {
     const file = event.target.files?.[0];
     if (!file) return;
     try {
-      localStorage.setItem("mylife:tips-couple-image", await readImageFile(file));
-      App.render();
+      const dataUrl = await readImageFile(file);
+      const container = event.target.closest(".tips-day-card");
+      if (container) {
+        const editor = createImagePositionEditor({
+          src: dataUrl,
+          key: "tips-couple",
+          title: languageCode() === "km" ? "លៃតម្រូវរូបគូស្នេហ៍" : "Adjust couple photo",
+          onSave: position => {
+            localStorage.setItem("mylife:tips-couple-image", dataUrl);
+            localStorage.setItem("mylife:tips-couple-image-position", JSON.stringify(position));
+            App.render();
+          },
+          onCancel: () => {
+            event.target.value = "";
+          }
+        });
+        container.appendChild(editor);
+      }
     } catch (error) {
       Toast.show(languageCode() === "km" ? "មិនអាចបញ្ចូលរូបភាពបានទេ" : "The image could not be uploaded.");
     }

@@ -20,6 +20,7 @@ const Modal = {
 
     root.querySelectorAll("[data-close]").forEach(button => button.addEventListener("click", () => this.close()));
     if (grouped) this.bindGroups(root);
+    this.bindImageFileInputs(root);
     root.querySelector("#modalForm").addEventListener("submit", async event => {
       event.preventDefault();
       const form = event.currentTarget;
@@ -30,6 +31,14 @@ const Modal = {
       await Promise.all(fields.filter(field => field.type === "file").map(async field => {
         const file = form.elements[field.name]?.files?.[0];
         data[field.name] = file ? await readFile(file) : field.value || "";
+        const positionField = form.elements[`${field.name}Position`];
+        if (positionField) {
+          try {
+            data[`${field.name}Position`] = JSON.parse(positionField.value || "{}") || { x: 0, y: 0 };
+          } catch (error) {
+            data[`${field.name}Position`] = { x: 0, y: 0 };
+          }
+        }
       }));
 
       const errors = {};
@@ -147,6 +156,80 @@ const Modal = {
     const root = document.getElementById("modalRoot");
     root.classList.remove("open");
     root.innerHTML = "";
+  },
+  bindImageFileInputs(root) {
+    root.querySelectorAll('input[type="file"][accept*="image"]').forEach(input => {
+      input.addEventListener("change", event => {
+        const file = event.target.files?.[0];
+        if (!file || !file.type?.startsWith("image/")) return;
+
+        const field = input.closest(".field");
+        if (!field) return;
+
+        const existing = field.querySelector(".image-position-preview");
+        const frame = existing || document.createElement("div");
+        frame.className = "image-position-preview";
+        frame.innerHTML = `
+          <div class="image-position-frame" data-image-position-frame>
+            <img data-image-position="${input.name}" alt="" src="">
+          </div>
+          <div class="image-position-hint">${t("dragToAdjust") || "Drag to adjust"}</div>
+        `;
+
+        if (!existing) field.appendChild(frame);
+        const previewImage = frame.querySelector("img");
+        const previewFrame = frame.querySelector(".image-position-frame");
+        const positionField = field.querySelector(`input[name="${input.name}Position"]`) || document.createElement("input");
+        positionField.type = "hidden";
+        positionField.name = `${input.name}Position`;
+        positionField.value = JSON.stringify({ x: 0, y: 0 });
+        if (!field.querySelector(`input[name="${input.name}Position"]`)) field.appendChild(positionField);
+
+        const image = new Image();
+        const objectUrl = URL.createObjectURL(file);
+        image.onload = () => {
+          previewImage.src = image.src;
+          previewImage.onload = () => URL.revokeObjectURL(objectUrl);
+          previewImage.style.setProperty("--image-position-x", "0%");
+          previewImage.style.setProperty("--image-position-y", "0%");
+          previewImage.dataset.imagePosition = input.name;
+          previewImage.setAttribute("data-image-position", input.name);
+          previewImage.classList.add("draggable-image");
+
+          let dragStart;
+          const updatePosition = (clientX, clientY) => {
+            const bounds = previewFrame.getBoundingClientRect();
+            const x = clamp((Number.parseFloat(previewImage.style.getPropertyValue("--image-position-x")) || 0) + ((clientX - dragStart.x) / bounds.width) * 100, -50, 50);
+            const y = clamp((Number.parseFloat(previewImage.style.getPropertyValue("--image-position-y")) || 0) + ((clientY - dragStart.y) / bounds.height) * 100, -50, 50);
+            previewImage.style.setProperty("--image-position-x", `${x}%`);
+            previewImage.style.setProperty("--image-position-y", `${y}%`);
+            positionField.value = JSON.stringify({ x, y });
+          };
+
+          previewImage.addEventListener("pointerdown", event => {
+            event.preventDefault();
+            previewImage.setPointerCapture(event.pointerId);
+            dragStart = { pointerId: event.pointerId, x: event.clientX, y: event.clientY };
+            previewImage.classList.add("is-image-dragging");
+          });
+          previewImage.addEventListener("pointermove", event => {
+            if (!dragStart || dragStart.pointerId !== event.pointerId) return;
+            updatePosition(event.clientX, event.clientY);
+            dragStart = { ...dragStart, x: event.clientX, y: event.clientY };
+          });
+          previewImage.addEventListener("pointerup", () => {
+            dragStart = null;
+            previewImage.classList.remove("is-image-dragging");
+          });
+          previewImage.addEventListener("pointercancel", () => {
+            dragStart = null;
+            previewImage.classList.remove("is-image-dragging");
+          });
+        };
+        image.onerror = () => URL.revokeObjectURL(objectUrl);
+        image.src = objectUrl;
+      });
+    });
   }
 };
 

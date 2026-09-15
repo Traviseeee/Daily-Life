@@ -36,6 +36,7 @@ function renderFamily() {
 
 function familyPhotoCard() {
   const image = getFamilyPhoto();
+  const position = storedImagePosition("mylife:family-photo-position");
   return `
     <article class="glass-card family-photo-card">
       <div class="family-photo-heading">
@@ -46,7 +47,7 @@ function familyPhotoCard() {
         <span class="icon-badge green">${Icons.memory()}</span>
       </div>
       <div class="family-photo-frame">
-        ${image ? `<img src="${escapeAttr(image)}" alt="${languageCode() === "km" ? "រូបថតគ្រួសារ" : "Family photo"}">` : `<span>${Icons.family()}</span>`}
+        ${image ? `<img src="${escapeAttr(image)}" style="--image-position-x: ${position.x}%; --image-position-y: ${position.y}%;" alt="${languageCode() === "km" ? "រូបថតគ្រួសារ" : "Family photo"}">` : `<span>${Icons.family()}</span>`}
       </div>
       <label class="button family-photo-upload">${image ? (languageCode() === "km" ? "ប្តូររូបថត" : "Change photo") : (languageCode() === "km" ? "បន្ថែមរូបថត" : "Add photo")}<input type="file" accept="image/*" data-family-photo></label>
     </article>
@@ -125,8 +126,24 @@ function bindFamily() {
     const file = event.target.files?.[0];
     if (!file) return;
     try {
-      localStorage.setItem("mylife:family-photo", await readImageFile(file));
-      App.render();
+      const dataUrl = await readImageFile(file);
+      const card = event.target.closest(".family-photo-card");
+      if (!card) return;
+
+      const editor = createImagePositionEditor({
+        src: dataUrl,
+        key: "family-photo",
+        title: languageCode() === "km" ? "លៃតម្រូវរូបថត" : "Adjust photo",
+        onSave: position => {
+          localStorage.setItem("mylife:family-photo", dataUrl);
+          localStorage.setItem("mylife:family-photo-position", JSON.stringify(position));
+          App.render();
+        },
+        onCancel: () => {
+          event.target.value = "";
+        }
+      });
+      card.appendChild(editor);
     } catch (error) {
       Toast.show(languageCode() === "km" ? "មិនអាចបញ្ចូលរូបថតបានទេ" : "The photo could not be uploaded.");
     }

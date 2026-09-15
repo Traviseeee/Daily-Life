@@ -21,47 +21,77 @@ function renderLauncher() {
 
 function bindLauncher() {
   const page = document.querySelector(".launcher-page");
-  const cover = document.querySelector(".launcher-hero-art");
   const editButton = document.querySelector("[data-launcher-cover]");
   const coverInput = document.querySelector("[data-launcher-cover-input]");
   editButton?.addEventListener("click", () => coverInput?.click());
-  let dragStart;
-  cover?.addEventListener("pointerdown", event => {
-    event.preventDefault();
-    cover.setPointerCapture(event.pointerId);
-    const position = launcherCoverPosition();
-    dragStart = { pointerId: event.pointerId, x: event.clientX, y: event.clientY, position };
-    cover.classList.add("is-dragging");
-  });
-  cover?.addEventListener("pointermove", event => {
-    if (!dragStart || dragStart.pointerId !== event.pointerId) return;
-    const hero = cover.closest(".launcher-hero");
-    if (!hero) return;
-    const bounds = hero.getBoundingClientRect();
-    const x = clamp(dragStart.position.x + ((event.clientX - dragStart.x) / bounds.width) * 100, -50, 50);
-    const y = clamp(dragStart.position.y + ((event.clientY - dragStart.y) / bounds.height) * 100, -50, 50);
-    cover.style.setProperty("--launcher-cover-x", `${x}%`);
-    cover.style.setProperty("--launcher-cover-y", `${y}%`);
-  });
-  const finishCoverDrag = event => {
-    if (!dragStart || dragStart.pointerId !== event.pointerId) return;
-    const x = Number.parseFloat(cover.style.getPropertyValue("--launcher-cover-x")) || 0;
-    const y = Number.parseFloat(cover.style.getPropertyValue("--launcher-cover-y")) || 0;
-    dragStart = null;
-    cover.classList.remove("is-dragging");
-    if (x !== launcherCoverPosition().x || y !== launcherCoverPosition().y) {
-      Store.updateProfile({ launcherCoverPosition: { x, y } });
-    }
-  };
-  cover?.addEventListener("pointerup", finishCoverDrag);
-  cover?.addEventListener("pointercancel", finishCoverDrag);
   coverInput?.addEventListener("change", async event => {
     const file = event.target.files?.[0];
     if (!file) return;
     try {
-      const cover = await readFile(file);
-      Store.updateProfile({ launcherCover: cover });
-      Toast.show(languageCode() === "km" ? "បានប្តូររូបភាពផ្ទៃខាងក្រោយ" : "Launcher cover updated");
+      const coverData = await readFile(file);
+      const hero = document.querySelector(".launcher-hero");
+      if (!hero) return;
+
+      const currentImage = hero.querySelector(".launcher-hero-art");
+      const preview = document.createElement("div");
+      preview.className = "launcher-cover-editor";
+      preview.innerHTML = `
+        <div class="launcher-cover-editor-frame">
+          <img class="launcher-cover-editor-image" src="${escapeAttr(coverData)}" alt="" style="--launcher-cover-x: 0%; --launcher-cover-y: 0%;">
+        </div>
+        <div class="launcher-cover-editor-actions">
+          <button class="button ghost-button" type="button" data-launcher-cover-cancel>${languageCode() === "km" ? "បោះបង់" : "Cancel"}</button>
+          <button class="button" type="button" data-launcher-cover-save>${languageCode() === "km" ? "រក្សាទុក" : "Save"}</button>
+        </div>
+      `;
+
+      if (currentImage) currentImage.style.display = "none";
+      hero.appendChild(preview);
+
+      const editorImage = preview.querySelector(".launcher-cover-editor-image");
+      const frame = preview.querySelector(".launcher-cover-editor-frame");
+      let dragStart = null;
+      const setPosition = (x, y) => {
+        const clampedX = clamp(x, -50, 50);
+        const clampedY = clamp(y, -50, 50);
+        editorImage.style.setProperty("--launcher-cover-x", `${clampedX}%`);
+        editorImage.style.setProperty("--launcher-cover-y", `${clampedY}%`);
+      };
+
+      editorImage.addEventListener("pointerdown", event => {
+        event.preventDefault();
+        editorImage.setPointerCapture(event.pointerId);
+        dragStart = { pointerId: event.pointerId, x: event.clientX, y: event.clientY, positionX: Number.parseFloat(editorImage.style.getPropertyValue("--launcher-cover-x")) || 0, positionY: Number.parseFloat(editorImage.style.getPropertyValue("--launcher-cover-y")) || 0 };
+      });
+
+      editorImage.addEventListener("pointermove", event => {
+        if (!dragStart || dragStart.pointerId !== event.pointerId) return;
+        const bounds = frame.getBoundingClientRect();
+        const dx = ((event.clientX - dragStart.x) / bounds.width) * 100;
+        const dy = ((event.clientY - dragStart.y) / bounds.height) * 100;
+        setPosition(dragStart.positionX + dx, dragStart.positionY + dy);
+      });
+
+      editorImage.addEventListener("pointerup", () => { dragStart = null; });
+      editorImage.addEventListener("pointercancel", () => { dragStart = null; });
+
+      preview.querySelector("[data-launcher-cover-cancel]")?.addEventListener("click", () => {
+        preview.remove();
+        if (currentImage) currentImage.style.display = "";
+      });
+
+      preview.querySelector("[data-launcher-cover-save]")?.addEventListener("click", () => {
+        const previewX = Number.parseFloat(editorImage.style.getPropertyValue("--launcher-cover-x")) || 0;
+        const previewY = Number.parseFloat(editorImage.style.getPropertyValue("--launcher-cover-y")) || 0;
+        const x = clamp(-previewX, -50, 50);
+        const y = clamp(-previewY, -50, 50);
+        preview.remove();
+        Store.updateProfile({ launcherCover: coverData, launcherCoverPosition: { x, y } });
+        if (currentImage) currentImage.style.display = "";
+        Toast.show(languageCode() === "km" ? "បានប្តូររូបភាពផ្ទៃខាងក្រោយ" : "Launcher cover updated");
+      });
+
+      coverInput.value = "";
     } catch (error) {
       Toast.show(languageCode() === "km" ? "មិនអាចប្តូររូបភាពបានទេ" : "The cover image could not be changed", "danger");
     }
@@ -74,10 +104,6 @@ function launcherCoverPosition() {
     x: clamp(Number(position.x) || 0, -50, 50),
     y: clamp(Number(position.y) || 0, -50, 50)
   };
-}
-
-function clamp(value, minimum, maximum) {
-  return Math.min(Math.max(value, minimum), maximum);
 }
 
 function launcherTool(route) {

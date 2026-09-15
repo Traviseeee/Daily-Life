@@ -28,7 +28,7 @@ function renderSettings() {
                 <div>
                   <h2 class="section-title section-title-with-icon"><span class="section-title-icon">${Icons.user()}</span>${t("profile")}</h2>
                 </div>
-                <span class="thumb">${appData.profile.photo ? `<img src="${appData.profile.photo}" alt="">` : initials(appData.profile.name)}</span>
+                <span class="thumb">${appData.profile.photo ? `<img src="${appData.profile.photo}" style="--image-position-x: ${imagePosition(appData.profile.photoPosition).x}%; --image-position-y: ${imagePosition(appData.profile.photoPosition).y}%;" alt="">` : initials(appData.profile.name)}</span>
               </div>
               <div class="settings-profile-name">${escapeHtml(appData.profile.name || "Not set")}</div>
               <div class="settings-profile-grid">

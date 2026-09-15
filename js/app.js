@@ -262,7 +262,8 @@ const App = {
     const name = document.getElementById("profileName");
     if (!avatar || !name) return;
     name.textContent = appData.profile.name || t("setupProfile");
-    avatar.innerHTML = appData.profile.photo ? `<img src="${appData.profile.photo}" alt="">` : initials(appData.profile.name);
+    const position = imagePosition(appData.profile.photoPosition);
+    avatar.innerHTML = appData.profile.photo ? `<img data-image-position="profile" style="--image-position-x: ${position.x}%; --image-position-y: ${position.y}%;" src="${appData.profile.photo}" alt="">` : initials(appData.profile.name);
     document.querySelector("#profileButton small").textContent = t("personalAccount");
   },
   renderLanguageSwitch() {
@@ -485,6 +486,134 @@ const App = {
     });
   }
 };
+
+function imagePosition(value) {
+  return {
+    x: clamp(Number(value?.x) || 0, -50, 50),
+    y: clamp(Number(value?.y) || 0, -50, 50)
+  };
+}
+
+function createImagePositionEditor({ src, key, onSave, onCancel, title = "Drag to adjust" }) {
+  const wrapper = document.createElement("div");
+  wrapper.className = "image-position-preview";
+  wrapper.innerHTML = `
+    <div class="image-position-frame" data-image-position-frame>
+      <img data-image-position="${escapeAttr(key)}" class="draggable-image" src="${escapeAttr(src)}" alt="" style="--image-position-x: 0%; --image-position-y: 0%;">
+    </div>
+    <div class="image-position-hint">${escapeHtml(title)}</div>
+    <div class="action-row">
+      <button type="button" class="button ghost-button" data-image-position-cancel>${languageCode() === "km" ? "បោះបង់" : "Cancel"}</button>
+      <button type="button" class="button" data-image-position-save>${languageCode() === "km" ? "រក្សាទុក" : "Save"}</button>
+    </div>
+  `;
+
+  const previewImage = wrapper.querySelector("img");
+  const frame = wrapper.querySelector(".image-position-frame");
+  let dragStart = null;
+
+  const updatePosition = (clientX, clientY) => {
+    const bounds = frame.getBoundingClientRect();
+    const x = clamp((Number.parseFloat(previewImage.style.getPropertyValue("--image-position-x")) || 0) + ((clientX - dragStart.x) / bounds.width) * 100, -50, 50);
+    const y = clamp((Number.parseFloat(previewImage.style.getPropertyValue("--image-position-y")) || 0) + ((clientY - dragStart.y) / bounds.height) * 100, -50, 50);
+    previewImage.style.setProperty("--image-position-x", `${x}%`);
+    previewImage.style.setProperty("--image-position-y", `${y}%`);
+  };
+
+  previewImage.addEventListener("pointerdown", event => {
+    event.preventDefault();
+    previewImage.setPointerCapture(event.pointerId);
+    dragStart = { pointerId: event.pointerId, x: event.clientX, y: event.clientY };
+    previewImage.classList.add("is-image-dragging");
+  });
+
+  previewImage.addEventListener("pointermove", event => {
+    if (!dragStart || dragStart.pointerId !== event.pointerId) return;
+    updatePosition(event.clientX, event.clientY);
+    dragStart = { ...dragStart, x: event.clientX, y: event.clientY };
+  });
+
+  const finishDrag = () => {
+    dragStart = null;
+    previewImage.classList.remove("is-image-dragging");
+  };
+
+  previewImage.addEventListener("pointerup", finishDrag);
+  previewImage.addEventListener("pointercancel", finishDrag);
+
+  wrapper.querySelector("[data-image-position-cancel]")?.addEventListener("click", () => {
+    onCancel?.();
+    wrapper.remove();
+  });
+
+  wrapper.querySelector("[data-image-position-save]")?.addEventListener("click", () => {
+    const position = imagePosition({
+      x: Number.parseFloat(previewImage.style.getPropertyValue("--image-position-x")),
+      y: Number.parseFloat(previewImage.style.getPropertyValue("--image-position-y"))
+    });
+    onSave?.(position);
+    wrapper.remove();
+  });
+
+  return wrapper;
+}
+
+function clamp(value, minimum, maximum) {
+  return Math.min(Math.max(value, minimum), maximum);
+}
+
+function bindImagePositioning() {
+  document.querySelectorAll("[data-image-position]").forEach(image => {
+    let dragStart;
+    image.addEventListener("pointerdown", event => {
+      event.preventDefault();
+      image.setPointerCapture(event.pointerId);
+      dragStart = { pointerId: event.pointerId, x: event.clientX, y: event.clientY, position: imagePosition({
+        x: Number.parseFloat(image.style.getPropertyValue("--image-position-x")),
+        y: Number.parseFloat(image.style.getPropertyValue("--image-position-y"))
+      }) };
+      image.classList.add("is-image-dragging");
+    });
+    image.addEventListener("pointermove", event => {
+      if (!dragStart || dragStart.pointerId !== event.pointerId) return;
+      const bounds = image.closest("[data-image-position-frame]")?.getBoundingClientRect() || image.getBoundingClientRect();
+      const x = clamp(dragStart.position.x + ((event.clientX - dragStart.x) / bounds.width) * 100, -50, 50);
+      const y = clamp(dragStart.position.y + ((event.clientY - dragStart.y) / bounds.height) * 100, -50, 50);
+      image.style.setProperty("--image-position-x", `${x}%`);
+      image.style.setProperty("--image-position-y", `${y}%`);
+    });
+    const finish = event => {
+      if (!dragStart || dragStart.pointerId !== event.pointerId) return;
+      const position = imagePosition({
+        x: Number.parseFloat(image.style.getPropertyValue("--image-position-x")),
+        y: Number.parseFloat(image.style.getPropertyValue("--image-position-y"))
+      });
+      dragStart = null;
+      image.classList.remove("is-image-dragging");
+      saveImagePosition(image.dataset.imagePosition, position);
+    };
+    image.addEventListener("pointerup", finish);
+    image.addEventListener("pointercancel", finish);
+  });
+}
+
+function saveImagePosition(key, position) {
+  if (key === "profile") Store.updateProfile({ photoPosition: position });
+  else if (key.startsWith("family-member:")) Store.edit("family", key.slice(14), { photoPosition: position });
+  else if (key.startsWith("memory:")) Store.edit("memories", key.slice(7), { photoPosition: position });
+  else if (key === "family-photo" || key === "tips-couple") {
+    const storageKey = key === "family-photo" ? "mylife:family-photo-position" : "mylife:tips-couple-image-position";
+    localStorage.setItem(storageKey, JSON.stringify(position));
+  }
+}
+
+function storedImagePosition(key) {
+  try {
+    return imagePosition(JSON.parse(localStorage.getItem(key) || "null"));
+  } catch (error) {
+    return imagePosition();
+  }
+}
 
 function emptyState(title, body, actionLabel = "", action = "") {
   return `

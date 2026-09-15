@@ -124,6 +124,7 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: calc(50% + var(--image-position-x, 0%)) calc(50% + var(--image-position-y, 0%));
 }
 
 .home-profile-meta {
@@ -1230,11 +1231,56 @@
   width: 100%;
   height: 210px;
   object-fit: cover;
+  object-position: calc(50% + var(--image-position-x, 0%)) calc(50% + var(--image-position-y, 0%));
 }
 
 .family-photo-frame svg { width: 42px; height: 42px; }
 .family-photo-upload { justify-self: start; }
 .family-photo-upload input { display: none; }
+
+.image-position-preview {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.image-position-frame {
+  position: relative;
+  overflow: hidden;
+  width: min(100%, 520px);
+  height: 180px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.image-position-frame img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: calc(50% + var(--image-position-x, 0%)) calc(50% + var(--image-position-y, 0%));
+  cursor: grab;
+  touch-action: none;
+}
+
+.image-position-frame img.is-image-dragging {
+  cursor: grabbing;
+}
+
+.image-position-hint {
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+}
+
+[data-image-position] {
+  cursor: grab;
+  touch-action: none;
+}
+
+[data-image-position].is-image-dragging {
+  cursor: grabbing;
+}
 
 .image-empty-card {
   position: relative;
@@ -1348,6 +1394,32 @@
   animation: launcherArtFloat 8s ease-in-out 620ms infinite;
   -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0, 0, 0, 0.26) 24%, #000 58%);
   mask-image: linear-gradient(to right, transparent 0%, rgba(0, 0, 0, 0.26) 24%, #000 58%);
+  cursor: grab;
+  touch-action: none;
+}
+
+.launcher-cover-editor {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+  width: min(100%, 520px);
+}
+
+.launcher-cover-editor-frame {
+  position: relative;
+  overflow: hidden;
+  width: min(100%, 520px);
+  height: 180px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.launcher-cover-editor-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: calc(50% + var(--launcher-cover-x, 0%)) calc(50% + var(--launcher-cover-y, 0%));
   cursor: grab;
   touch-action: none;
 }
@@ -2916,7 +2988,10 @@ body.money-hidden .money-value {
   background: rgba(184, 255, 90, 0.1);
 }
 
-.tips-couple-photo { object-fit: cover; }
+.tips-couple-photo {
+  object-fit: cover;
+  object-position: calc(50% + var(--image-position-x, 0%)) calc(50% + var(--image-position-y, 0%));
+}
 .tips-couple-photo-empty svg { width: 22px; height: 22px; }
 
 .tips-photo-upload {
@@ -3430,7 +3505,7 @@ body.money-hidden .money-value {
 
 .memory-grid { columns: 3 260px; column-gap: 18px; }
 .memory-card { break-inside: avoid; margin-bottom: 18px; overflow: hidden; }
-.memory-photo { aspect-ratio: 4/3; background: linear-gradient(135deg, rgba(184,255,90,0.24), rgba(155,109,255,0.34)), var(--photo); background-size: cover; background-position: center; }
+.memory-photo { aspect-ratio: 4/3; background: linear-gradient(135deg, rgba(184,255,90,0.24), rgba(155,109,255,0.34)), var(--photo); background-size: cover; background-position: calc(50% + var(--image-position-x, 0%)) calc(50% + var(--image-position-y, 0%)); }
 .memory-card .card-pad { padding-top: 16px; }
 
 .empty-card {
