@@ -3328,15 +3328,49 @@ body.money-hidden .money-value {
 }
 
 .calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 10px; }
+.calendar-weekday.weekend { color: #ff8a9f; }
 .day {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  width: 100%;
+  min-width: 0;
   min-height: 118px;
   padding: 12px;
   border: 1px solid var(--border);
   border-radius: 16px;
+  color: var(--text-primary);
+  font: inherit;
+  text-align: center;
   background: rgba(255,255,255,0.035);
+  cursor: pointer;
+  transition: border-color var(--ease), background var(--ease), transform var(--ease);
 }
-.day strong { display: block; margin-bottom: 10px; }
+.day.has-date:hover { border-color: rgba(184,255,90,0.4); background: rgba(184,255,90,0.07); transform: translateY(-1px); }
+.day.has-date:focus-visible { outline: 2px solid var(--accent-light); outline-offset: 2px; }
+.day.selected-day { border-color: var(--accent-light); background: rgba(184,255,90,0.12); box-shadow: 0 0 0 2px rgba(184,255,90,0.14), 0 10px 24px rgba(184,255,90,0.08); }
+.day.selected-day.weekend { border-color: #ff8a9f; box-shadow: 0 0 0 2px rgba(255,111,156,0.16); }
+.day.empty-day { cursor: default; opacity: 0.45; }
+.day.weekend { border-color: rgba(255, 111, 156, 0.24); }
+.day.weekend strong { color: #ff8a9f; }
+.day.public-holiday { box-shadow: inset 0 0 0 1px rgba(255, 193, 97, 0.34); }
+.day strong { display: block; margin-bottom: 10px; font-size: 1.05rem; }
 .event-chip { display: block; margin-top: 6px; padding: 6px 8px; border-radius: 9px; font-size: 0.76rem; background: rgba(184,255,90,0.13); color: var(--accent-light); }
+.holiday-label { display: inline-block; max-width: 100%; margin-top: 4px; padding: 3px 5px; overflow: hidden; border-radius: 999px; color: #ffc161; background: rgba(255,193,97,0.13); font-size: 0.62rem; font-weight: 800; line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; }
+
+.calendar-day-details { margin-top: 18px; }
+.calendar-day-details .between { align-items: flex-start; gap: 14px; }
+.holiday-detail,
+.calendar-detail-event { display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid rgba(255,193,97,0.28); border-radius: 14px; background: rgba(255,193,97,0.08); }
+.holiday-detail { margin-top: 16px; }
+.holiday-detail-icon { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 12px; color: #ffc161; background: rgba(255,193,97,0.13); }
+.holiday-detail div,
+.calendar-detail-event div { display: grid; gap: 3px; min-width: 0; }
+.holiday-detail small,
+.calendar-detail-event small { color: var(--text-muted); font-size: 0.76rem; }
+.calendar-detail-events { display: grid; gap: 8px; margin-top: 10px; }
+.calendar-detail-event { border-color: var(--border); background: rgba(255,255,255,0.035); }
+.calendar-detail-empty { margin: 16px 0 0; }
 .event-chip.bill { color: var(--blue); background: rgba(100,244,210,0.13); }
 .event-chip.family { color: var(--success); background: rgba(69,211,154,0.12); }
 .event-chip.loan { color: var(--purple); background: rgba(164,124,255,0.13); }
@@ -3345,8 +3379,45 @@ body.money-hidden .money-value {
 .event-chip.auto { border: 1px solid rgba(255,255,255,0.08); }
 
 .calendar-event-row {
-  grid-template-columns: auto minmax(0, 1fr) auto auto auto auto;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
 }
+
+.calendar-event-row.holiday-event {
+  border-color: rgba(255,193,97,0.3);
+  background: rgba(255,193,97,0.07);
+}
+
+.calendar-event-row.holiday-event .icon-badge {
+  color: #ffc161;
+  background: rgba(255,193,97,0.14);
+  border-color: rgba(255,193,97,0.28);
+}
+
+.calendar-event-main,
+.calendar-event-meta,
+.calendar-event-actions {
+  min-width: 0;
+}
+
+.calendar-event-main {
+  display: grid;
+  gap: 4px;
+}
+
+.calendar-event-main strong {
+  overflow-wrap: anywhere;
+}
+
+.calendar-event-meta,
+.calendar-event-actions,
+.calendar-event-side {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.calendar-event-side { justify-content: flex-end; }
 
 .memory-grid { columns: 3 260px; column-gap: 18px; }
 .memory-card { break-inside: avoid; margin-bottom: 18px; overflow: hidden; }

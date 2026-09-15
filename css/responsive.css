@@ -493,15 +493,13 @@
   }
   .task-row, .list-row { grid-template-columns: auto minmax(0, 1fr); }
   .calendar-event-row {
-    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
   }
-  .calendar-event-row > .secondary,
-  .calendar-event-row > .pill,
-  .calendar-event-row > .button,
-  .calendar-event-row > .icon-button {
-    grid-column: 2;
-    justify-self: start;
-  }
+  .calendar-event-side { gap: 6px; }
+  .calendar-event-meta { display: none; }
+  .calendar-event-actions { gap: 6px; }
   .task-time, .task-row .pill { grid-column: 2; }
   .calendar-grid {
     grid-template-columns: repeat(7, minmax(0, 1fr));
@@ -524,6 +522,9 @@
     margin-bottom: 5px;
     font-size: 0.86rem;
   }
+  .holiday-label { max-width: 100%; padding: 2px 4px; font-size: 0.5rem; }
+  .calendar-day-details .between { display: grid; }
+  .calendar-day-details .between .button { justify-self: start; }
   .day .event-chip {
     width: 8px;
     height: 8px;

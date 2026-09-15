@@ -1,3 +1,7 @@
+const CAMBODIA_HOLIDAY_CACHE_KEY = "mylife:cambodia-holidays";
+let cambodiaHolidayState = { year: null, items: [], loading: false };
+let selectedCalendarDate = "";
+
 function renderCalendar(view = "month") {
   const parts = location.hash.replace("#", "").split("/");
   const current = parseCalendarCursor(parts[2]);
@@ -8,13 +12,22 @@ function renderCalendar(view = "month") {
   const visibleMonth = monthKey(current);
   const prevMonth = monthKey(new Date(year, month - 1, 1));
   const nextMonth = monthKey(new Date(year, month + 1, 1));
+  ensureCambodiaHolidays(year);
   const monthEvents = calendarItemsForMonth(current);
   const startOffset = (firstDay.getDay() + 6) % 7;
+  if (!selectedCalendarDate || !selectedCalendarDate.startsWith(visibleMonth)) {
+    const today = calendarDateInput(new Date());
+    selectedCalendarDate = today.startsWith(visibleMonth) ? today : `${visibleMonth}-01`;
+  }
   const cells = Array.from({ length: Math.ceil((startOffset + totalDays) / 7) * 7 }, (_, index) => {
     const day = index - startOffset + 1;
     const iso = day > 0 && day <= totalDays ? `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}` : "";
     const events = iso ? monthEvents.filter(event => event.date === iso) : [];
-    return `<div class="day"><strong>${iso ? day : ""}</strong>${events.map(eventChip).join("")}</div>`;
+    const date = iso ? new Date(`${iso}T00:00:00`) : null;
+    const isWeekend = date ? date.getDay() === 0 || date.getDay() === 6 : false;
+    const holiday = iso ? cambodiaHolidayState.items.find(item => item.date === iso) : null;
+    const isSelected = iso === selectedCalendarDate;
+    return `<button class="day ${iso ? "has-date" : "empty-day"} ${isWeekend ? "weekend" : ""} ${holiday ? "public-holiday" : ""} ${isSelected ? "selected-day" : ""}" type="button" ${iso ? `data-calendar-date="${iso}"` : "disabled"} aria-pressed="${isSelected}" aria-label="${iso ? formatDate(iso) : ""}"><strong>${iso ? day : ""}</strong>${holiday ? `<span class="holiday-label" title="${escapeAttr(holiday.name)}">${languageCode() === "km" ? "ថ្ងៃឈប់សម្រាក" : "Holiday"}</span>` : ""}${events.map(eventChip).join("")}</button>`;
   });
 
   return `
@@ -40,13 +53,58 @@ function renderCalendar(view = "month") {
           </div>
         </div>
         <div class="calendar-grid">
-          ${(languageCode() === "km" ? ["ចន្ទ", "អង្គារ", "ពុធ", "ព្រហ", "សុក្រ", "សៅរ៍", "អាទិត្យ"] : ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]).map(day => `<div class="calendar-weekday secondary"><strong>${day}</strong></div>`).join("")}
+          ${(languageCode() === "km" ? ["ចន្ទ", "អង្គារ", "ពុធ", "ព្រហ", "សុក្រ", "សៅរ៍", "អាទិត្យ"] : ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]).map((day, index) => `<div class="calendar-weekday secondary ${index > 4 ? "weekend" : ""}"><strong>${day}</strong></div>`).join("")}
           ${cells.join("")}
         </div>
       </article>
+      ${renderSelectedDayDetails(selectedCalendarDate, monthEvents)}
       <article class="glass-card card-pad" style="margin-top:18px"><h2 class="section-title">${t("allEvents")}</h2><div class="list">${monthEvents.map(eventRow).join("") || calendarEmptyCard()}</div></article>
     </section>
   `;
+}
+
+function renderSelectedDayDetails(date, monthEvents) {
+  const holiday = cambodiaHolidayState.items.find(item => item.date === date);
+  const events = monthEvents.filter(item => item.date === date);
+  const dateLabel = new Date(`${date}T00:00:00`).toLocaleDateString(languageCode() === "km" ? "km-KH" : "en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
+  return `
+    <article class="glass-card card-pad calendar-day-details">
+      <div class="between">
+        <div><span class="eyebrow">${languageCode() === "km" ? "ព័ត៌មានប្រចាំថ្ងៃ" : "Day details"}</span><h2 class="section-title">${escapeHtml(dateLabel)}</h2></div>
+        <button class="button ghost-button" type="button" data-action="add-calendar" data-calendar-date="${date}">${Icons.plus()} ${t("addEvent")}</button>
+      </div>
+      ${holiday ? `<div class="holiday-detail"><span class="holiday-detail-icon">${Icons.calendar()}</span><div><strong>${escapeHtml(holiday.name)}</strong><small>${languageCode() === "km" ? "ថ្ងៃឈប់សម្រាកសាធារណៈកម្ពុជា" : "Cambodia public holiday"}</small></div></div>` : ""}
+      ${events.length ? `<div class="calendar-detail-events">${events.map(event => `<div class="calendar-detail-event"><span class="icon-badge green">${Icons.calendar()}</span><div><strong>${escapeHtml(event.title)}</strong><small>${event.time ? escapeHtml(event.time) : (languageCode() === "km" ? "មិនបានកំណត់ពេល" : "Time not set")}${event.category ? ` · ${escapeHtml(optionLabel(event.category))}` : ""}</small></div></div>`).join("")}</div>` : ""}
+      ${!holiday && !events.length ? `<p class="secondary calendar-detail-empty">${languageCode() === "km" ? "មិនមានព្រឹត្តិការណ៍ ឬថ្ងៃឈប់សម្រាកសម្រាប់ថ្ងៃនេះទេ។" : "No event or public holiday is scheduled for this day."}</p>` : ""}
+    </article>
+  `;
+}
+
+function ensureCambodiaHolidays(year) {
+  if (cambodiaHolidayState.year === year || cambodiaHolidayState.loading) return;
+
+  try {
+    const cached = JSON.parse(localStorage.getItem(`${CAMBODIA_HOLIDAY_CACHE_KEY}:${year}`) || "null");
+    if (Array.isArray(cached)) {
+      cambodiaHolidayState = { year, items: cached, loading: false };
+      return;
+    }
+  } catch (error) {
+    // Fetch a fresh copy when cached holiday data is invalid.
+  }
+
+  cambodiaHolidayState = { year, items: [], loading: true };
+  fetch(`https://date.nager.at/api/v3/PublicHolidays/${year}/KH`)
+    .then(response => response.ok ? response.json() : [])
+    .then(items => {
+      const holidays = Array.isArray(items) ? items.map(item => ({ date: item.date, name: item.localName || item.name })).filter(item => item.date && item.name) : [];
+      localStorage.setItem(`${CAMBODIA_HOLIDAY_CACHE_KEY}:${year}`, JSON.stringify(holidays));
+      cambodiaHolidayState = { year, items: holidays, loading: false };
+      if (location.hash.startsWith("#calendar")) App.render();
+    })
+    .catch(() => {
+      cambodiaHolidayState = { year, items: [], loading: false };
+    });
 }
 
 function calendarEmptyCard() {
@@ -201,6 +259,17 @@ function calendarItemsForMonth(cursor) {
     notes: memory.description || ""
   }));
 
+  cambodiaHolidayState.items.forEach(holiday => add({
+    id: `holiday-${holiday.date}`,
+    title: holiday.name,
+    date: holiday.date,
+    category: languageCode() === "km" ? "ថ្ងៃឈប់សម្រាកសាធារណៈ" : "Public holiday",
+    source: "holiday",
+    auto: true,
+    href: `#calendar/day/${visibleMonth}`,
+    notes: languageCode() === "km" ? "ថ្ងៃឈប់សម្រាកសាធារណៈកម្ពុជា" : "Cambodia public holiday"
+  }));
+
   return items.sort((a, b) => `${a.date} ${a.time || ""} ${a.title}`.localeCompare(`${b.date} ${b.time || ""} ${b.title}`));
 }
 
@@ -262,17 +331,25 @@ function calendarDateInput(date) {
 }
 
 function eventChip(event) {
-  return `<span class="event-chip ${event.source || event.category?.toLowerCase() || ""} ${event.auto ? "auto" : ""}">${escapeHtml(event.title)}</span>`;
+  return `<span class="event-chip ${event.source || event.category?.toLowerCase() || ""} ${event.auto ? "auto" : ""}" title="${escapeAttr(event.title)}">${escapeHtml(event.title)}</span>`;
 }
 
 function eventRow(event) {
   const amount = event.amount ? `<span class="secondary">${money(event.amount, event.currency)}</span>` : "";
-  const actions = event.auto ? `<a class="button ghost-button" href="${event.href}">${t("view")}</a>` : `<button class="icon-button" data-edit-event="${event.id}" aria-label="${t("editEvent")}">${Icons.edit()}</button><button class="icon-button" data-delete-event="${event.id}" aria-label="${t("deleteEvent")}">${Icons.trash()}</button>`;
-  return `<div class="list-row calendar-event-row ${event.auto ? "auto" : ""}"><span class="icon-badge green">${Icons.calendar()}</span><strong>${escapeHtml(event.title)}</strong><span class="secondary">${formatDate(event.date)} ${event.time || ""}</span>${amount}<span class="pill">${optionLabel(event.category)}${event.auto ? ` · ${t("auto")}` : ""}</span>${actions}</div>`;
+  const actions = event.source === "holiday" ? "" : event.auto ? `<a class="button ghost-button" href="${event.href}">${t("view")}</a>` : `<button class="icon-button" data-edit-event="${event.id}" aria-label="${t("editEvent")}">${Icons.edit()}</button><button class="icon-button" data-delete-event="${event.id}" aria-label="${t("deleteEvent")}">${Icons.trash()}</button>`;
+  return `<div class="list-row calendar-event-row ${event.auto ? "auto" : ""} ${event.source === "holiday" ? "holiday-event" : ""}">
+    <span class="icon-badge green">${Icons.calendar()}</span>
+    <div class="calendar-event-main"><strong>${escapeHtml(event.title)}</strong><span class="secondary">${formatDate(event.date)}${event.time ? ` · ${escapeHtml(event.time)}` : ""}</span></div>
+    <div class="calendar-event-side"><div class="calendar-event-meta">${amount}<span class="pill">${optionLabel(event.category)}${event.auto ? ` · ${t("auto")}` : ""}</span></div><div class="calendar-event-actions">${actions}</div></div>
+  </div>`;
 }
 
 function bindCalendar() {
-  document.querySelectorAll('[data-action="add-calendar"]').forEach(button => button.addEventListener("click", () => App.openEventModal()));
+  document.querySelectorAll('[data-action="add-calendar"]').forEach(button => button.addEventListener("click", () => App.openEventModal({ date: button.dataset.calendarDate || "" })));
+  document.querySelectorAll(".day[data-calendar-date]").forEach(button => button.addEventListener("click", () => {
+    selectedCalendarDate = button.getAttribute("data-calendar-date");
+    App.render();
+  }));
   document.querySelectorAll("[data-edit-event]").forEach(button => button.addEventListener("click", () => App.openEventModal(appData.calendarEvents.find(item => item.id === button.dataset.editEvent))));
   document.querySelectorAll("[data-delete-event]").forEach(button => button.addEventListener("click", () => {
     Modal.confirm({ title: t("deleteEvent"), message: t("deleteEventMessage"), confirmText: t("delete"), onConfirm: () => {
