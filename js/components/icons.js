@@ -27,6 +27,8 @@ const Icons = (() => {
     bill: () => base('<path d="M6 2h12v20l-3-2-3 2-3-2-3 2V2Z"/><path d="M9 7h6M9 11h6M9 15h4"/>'),
     budget: () => base('<path d="M4 4h16v16H4z"/><path d="M4 10h16M10 20V10"/>'),
     chart: () => base('<path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 5-7"/>'),
+    sun: () => base('<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.65 17.65l1.42 1.42M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.65 6.35l1.42-1.42"/>'),
+    moon: () => base('<path d="M21 12.8A8.5 8.5 0 1 1 11.2 3 6.7 6.7 0 0 0 21 12.8Z"/>'),
     user: () => base('<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>'),
     spark: () => base('<path d="M12 2 9.6 8.6 3 11l6.6 2.4L12 20l2.4-6.6L21 11l-6.6-2.4Z"/><path d="M5 3v4M3 5h4M19 17v4M17 19h4"/>'),
     eye: () => base('<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>'),

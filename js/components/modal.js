@@ -139,7 +139,7 @@ const Modal = {
     const value = field.value ?? "";
     if (field.type === "hidden") return `<input id="${field.name}" name="${field.name}" type="hidden" value="${escapeAttr(value)}">`;
     if (field.type === "select") {
-      return `<select id="${field.name}" name="${field.name}" ${required}>${field.options.map(option => `<option value="${escapeAttr(option)}" ${option === value ? "selected" : ""}>${escapeHtml(optionLabel(option))}</option>`).join("")}</select>`;
+      return `<select id="${field.name}" name="${field.name}" ${required}>${field.options.map((option, index) => `<option value="${escapeAttr(option)}" ${option === value ? "selected" : ""}>${escapeHtml(field.optionLabels?.[index] ?? optionLabel(option))}</option>`).join("")}</select>`;
     }
     if (field.type === "textarea") {
       return `<textarea id="${field.name}" name="${field.name}" ${required}>${escapeHtml(value)}</textarea>`;

@@ -25,6 +25,7 @@ const App = {
     const app = document.getElementById("app");
     const route = this.route;
     document.documentElement.lang = languageCode();
+    this.renderTheme();
     renderNavigation();
     setActiveNav(route);
     this.renderProfile();
@@ -35,6 +36,7 @@ const App = {
     document.body.classList.toggle("launcher-page-open", route === "launcher");
 
     if (route === "launcher") app.innerHTML = renderLauncher();
+    else if (route === "summary") app.innerHTML = renderSummary();
     else if (route === "family") app.innerHTML = renderFamily();
     else if (route === "goals") app.innerHTML = renderGoals(this.param);
     else if (route === "money") app.innerHTML = renderMoney(this.param || "overview");
@@ -144,6 +146,10 @@ const App = {
 
         root.classList.remove("open");
         root.innerHTML = "";
+        if (item.source === "family") {
+          location.hash = "#family";
+          return;
+        }
         location.hash = "#calendar";
 
         setTimeout(() => {
@@ -280,6 +286,16 @@ const App = {
     button.classList.toggle("active", hidden);
     button.setAttribute("aria-label", hidden ? t("showMoney") : t("hideMoney"));
     button.setAttribute("title", hidden ? t("showMoney") : t("hideMoney"));
+  },
+  renderTheme() {
+    const theme = appData.profile.theme === "light" ? "light" : "dark";
+    document.documentElement.dataset.theme = theme;
+    const button = document.getElementById("themeToggle");
+    if (!button) return;
+    const light = theme === "light";
+    button.innerHTML = light ? Icons.moon() : Icons.sun();
+    button.setAttribute("aria-label", light ? t("useDarkTheme") : t("useLightTheme"));
+    button.setAttribute("title", light ? t("useDarkTheme") : t("useLightTheme"));
   },
   renderSmartAssistant() {
     const button = document.getElementById("smartAssistantButton");
@@ -433,6 +449,10 @@ const App = {
     document.getElementById("moneyPrivacyButton").addEventListener("click", () => {
       Store.updateProfile({ moneyHidden: !appData.profile.moneyHidden });
       Toast.show(appData.profile.moneyHidden ? t("moneyHidden") : t("moneyVisible"));
+    });
+    document.getElementById("themeToggle").addEventListener("click", () => {
+      Store.updateProfile({ theme: appData.profile.theme === "light" ? "dark" : "light" });
+      Toast.show(appData.profile.theme === "light" ? t("lightThemeEnabled") : t("darkThemeEnabled"));
     });
     document.getElementById("profileButton").addEventListener("click", () => {
       openProfileModal();
@@ -622,7 +642,7 @@ function emptyState(title, body, actionLabel = "", action = "") {
         <span class="icon-badge">${Icons.plus()}</span>
         <h2>${escapeHtml(title)}</h2>
         <p class="secondary">${escapeHtml(body)}</p>
-        ${actionLabel ? `<button class="button" data-action="${action}">${Icons.plus()} ${escapeHtml(actionLabel)}</button>` : ""}
+        ${actionLabel ? `<button class="button" type="button" data-action="${action}">${Icons.plus()} ${escapeHtml(actionLabel)}</button>` : ""}
       </div>
     </div>
   `;

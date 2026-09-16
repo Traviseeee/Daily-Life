@@ -275,6 +275,81 @@
   }
   .page-header { gap: 10px; margin-bottom: 16px; }
   .page-header .button { width: 100%; justify-content: center; }
+  .page-header .family-page-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+    width: 100%;
+    gap: 8px;
+  }
+  .page-header .family-page-actions .button {
+    width: 100%;
+    min-width: 0;
+    min-height: 42px;
+    padding: 0 8px;
+    font-size: 0.78rem;
+    white-space: nowrap;
+  }
+  .family-empty-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+    gap: 8px;
+  }
+  .family-empty-actions .button {
+    width: 100%;
+    min-width: 0;
+    padding-inline: 8px;
+    font-size: 0.78rem;
+    white-space: nowrap;
+  }
+  .launcher-snapshot-button { margin-top: 14px; padding: 9px 11px; }
+  .life-overview-card { padding: 16px; gap: 14px; }
+  .life-overview-row { grid-template-columns: minmax(88px, 0.42fr) minmax(90px, 1fr) 22px; gap: 8px; }
+  .life-overview-label { font-size: 0.74rem; gap: 5px; }
+  .life-overview-track { height: 8px; }
+  .summary-page { gap: 18px; }
+  .summary-page-header { align-items: flex-start; flex-direction: column; gap: 8px; }
+  .summary-hero { min-height: 124px; padding: 16px 6px 10px; }
+  .summary-hero .page-title { margin: 8px 0 5px; font-size: 2.1rem; }
+  .summary-hero .page-subtitle { font-size: 0.82rem; }
+  .summary-hero-mark { right: 8px; bottom: 12px; width: 44px; height: 44px; border-radius: 13px; }
+  .summary-hero-mark svg { width: 23px; height: 23px; }
+  .summary-metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .summary-metric-card { min-height: 78px; padding: 10px 11px; border-radius: 13px; }
+  .summary-metric-card > span svg { width: 20px; height: 20px; }
+  .summary-metric-card strong { margin-top: 3px; font-size: 1.35rem; }
+  .summary-metric-card small { font-size: 0.68rem; }
+  .summary-metric-card b { right: 8px; bottom: 8px; }
+  .summary-metric-card b svg { width: 14px; height: 14px; }
+  .summary-total { width: 100%; grid-template-columns: auto 1fr; align-items: center; gap: 8px; text-align: left; }
+  .summary-total span { margin-top: 0; }
+  .summary-overview-card { gap: 16px; padding: 17px; border-radius: 17px; }
+  .summary-overview-heading h2 { font-size: 1.02rem; }
+  .summary-overview-heading .icon-badge { width: 38px; height: 38px; }
+  .summary-overview-heading .icon-badge svg { width: 19px; height: 19px; }
+  .summary-bars { gap: 12px; }
+  .summary-bar-row { grid-template-columns: minmax(82px, 0.42fr) minmax(100px, 1fr) 24px; gap: 8px; }
+  .summary-bar-label { gap: 5px; font-size: 0.75rem; }
+  .summary-bar-label svg { width: 16px; height: 16px; }
+  .summary-bar-track { height: 8px; }
+  .summary-bar-row > strong { font-size: 0.85rem; }
+  .summary-links-heading h2 { font-size: 1rem; }
+  .summary-record-grid { grid-template-columns: 1fr; gap: 7px; }
+  .summary-record-card { padding: 11px; border-radius: 13px; }
+  .summary-record-icon svg { width: 19px; height: 19px; }
+  .summary-shortcuts { gap: 10px; }
+  .summary-shortcut { min-height: 68px; gap: 9px; padding: 11px; border-radius: 13px; }
+  .summary-shortcut-icon { width: 28px; height: 28px; }
+  .summary-shortcut-icon svg { width: 19px; height: 19px; }
+  .summary-shortcut-copy strong { font-size: 0.78rem; }
+  .summary-shortcut-copy small { margin-top: 4px; font-size: 0.66rem; }
+  .summary-shortcut-arrow svg { width: 14px; height: 14px; }
+  .summary-insight { min-height: 64px; align-items: flex-start; gap: 9px; padding: 11px; border-radius: 14px; }
+  .summary-insight-icon { width: 32px; height: 32px; }
+  .summary-insight-icon svg { width: 18px; height: 18px; }
+  .summary-insight strong { font-size: 0.82rem; }
+  .summary-insight p { margin-top: 2px; font-size: 0.7rem; }
+  .summary-insight-art { right: -8px; opacity: 0.5; }
   .page-title {
     line-height: 1.1;
     overflow-wrap: anywhere;
@@ -468,6 +543,13 @@
     margin-bottom: 2px;
   }
   .card-pad { padding: 14px; }
+  .family-member-card { gap: 12px; padding: 14px; }
+  .family-member-head { gap: 10px; }
+  .family-member-card .thumb { width: 56px; height: 56px; border-radius: 15px; }
+  .family-member-identity h2 { font-size: 1.15rem; }
+  .family-member-card .kv { gap: 6px; }
+  .family-member-card .kv div { padding: 8px; }
+  .family-member-card .kv strong { font-size: 0.75rem; }
   article { margin-bottom: 12px; }
   .between {
     align-items: flex-start;
@@ -618,6 +700,9 @@
   }
   .modal-setup,
   .modal-wide { width: 100%; }
+  .modal:not(.modal-setup) .form-grid { grid-template-columns: 1fr; }
+  .family-modal { padding: 18px 16px 16px; }
+  .family-modal > .between:first-child { margin-bottom: 16px; }
   .modal-setup {
     display: flex;
     flex-direction: column;

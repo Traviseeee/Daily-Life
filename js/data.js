@@ -8,6 +8,7 @@ const emptyData = {
     currency: "USD",
     language: "English",
     dateFormat: "MMM d, yyyy",
+    theme: "light",
     moneyHidden: false
   },
   mood: {
@@ -147,11 +148,16 @@ const Store = {
       appData[collection].push({ id: id(collection), createdAt: new Date().toISOString(), ...item });
     };
 
-    addIfFilled("family", ["name", "relationship", "birthday", "phone", "notes"], {
+    addIfFilled("family", ["name", "relationship", "birthday", "anniversaryDate", "phone", "characterMood", "zodiacSign", "favorite", "relationshipNote", "notes"], {
       name: data.familyName || "",
       relationship: data.familyRelationship || "",
+      characterMood: data.familyCharacterMood || "",
+      zodiacSign: data.familyZodiacSign || "",
       birthday: data.familyBirthday || "",
+      anniversaryDate: data.familyAnniversaryDate || "",
       phone: data.familyPhone || "",
+      favorite: data.familyFavorite || "",
+      relationshipNote: data.familyRelationshipNote || "",
       notes: data.familyNotes || "",
       photo: ""
     });
@@ -269,11 +275,16 @@ const Store = {
       appData[collection].push({ id: id(collection), createdAt: new Date().toISOString(), ...item });
     };
 
-    upsertFirst("family", data.familyEnabled, ["name", "relationship", "birthday", "phone", "notes"], {
+    upsertFirst("family", data.familyEnabled, ["name", "relationship", "birthday", "anniversaryDate", "phone", "characterMood", "zodiacSign", "favorite", "relationshipNote", "notes"], {
       name: data.familyName || "",
       relationship: data.familyRelationship || "",
+      characterMood: data.familyCharacterMood || "",
+      zodiacSign: data.familyZodiacSign || "",
       birthday: data.familyBirthday || "",
+      anniversaryDate: data.familyAnniversaryDate || "",
       phone: data.familyPhone || "",
+      favorite: data.familyFavorite || "",
+      relationshipNote: data.familyRelationshipNote || "",
       notes: data.familyNotes || "",
       photo: appData.family[0]?.photo || ""
     });
@@ -468,7 +479,35 @@ function getUpcomingNotifications(daysAhead = 7) {
     });
   });
 
+  appData.family.forEach(member => {
+    [
+      ["birthday", member.birthday],
+      ["anniversary", member.anniversaryDate]
+    ].forEach(([type, value]) => {
+      const date = nextYearlyDate(value, today);
+      if (!date || date > limit) return;
+      items.push({
+        id: `family-${type}-${member.id}-${calendarDateInput(date)}`,
+        type: `family-${type}`,
+        title: `${t(type)}: ${member.name}`,
+        date: calendarDateInput(date),
+        daysLeft: Math.max(0, Math.round((date - today) / 86400000)),
+        kind: "event",
+        source: "family",
+        familyId: member.id
+      });
+    });
+  });
+
   return items.sort((a, b) => a.date.localeCompare(b.date)).slice(0, 5);
+}
+
+function nextYearlyDate(value, today) {
+  const original = parseAppDate(value);
+  if (Number.isNaN(original.getTime())) return null;
+  const build = year => new Date(year, original.getMonth(), Math.min(original.getDate(), new Date(year, original.getMonth() + 1, 0).getDate()));
+  const current = build(today.getFullYear());
+  return current >= today ? current : build(today.getFullYear() + 1);
 }
 
 function sum(items, key) {

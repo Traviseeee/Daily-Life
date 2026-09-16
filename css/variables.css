@@ -24,3 +24,26 @@
     radial-gradient(circle at 84% 18%, rgba(184, 255, 90, 0.12), transparent 28%),
     linear-gradient(135deg, #070512, #120b24 48%, #080514);
 }
+
+:root[data-theme="light"] {
+  --bg-main: #f6f8f3;
+  --bg-secondary: #eef3ed;
+  --glass: rgba(255, 255, 255, 0.82);
+  --glass-hover: rgba(255, 255, 255, 0.98);
+  --border: rgba(20, 54, 65, 0.13);
+  --border-light: rgba(20, 54, 65, 0.24);
+  --text-primary: #102638;
+  --text-secondary: #5d7080;
+  --text-muted: #82919a;
+  --accent: #ff861f;
+  --accent-light: #e7680d;
+  --success: #1ca968;
+  --danger: #d94761;
+  --warning: #e5a500;
+  --blue: #18aebe;
+  --purple: #8065df;
+  --gradient-main:
+    radial-gradient(circle at 12% 8%, rgba(255, 205, 105, 0.24), transparent 30%),
+    radial-gradient(circle at 86% 18%, rgba(111, 211, 161, 0.22), transparent 32%),
+    linear-gradient(135deg, #fffdf8, #f0f7ef 52%, #f8fbf6);
+}

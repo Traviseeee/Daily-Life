@@ -235,16 +235,26 @@ function calendarItemsForMonth(cursor) {
 
   appData.family.forEach(member => {
     const birthday = yearlyDateInMonth(member.birthday, cursor);
-    if (!birthday) return;
-    add({
-      id: `auto-family-${member.id}-${birthday}`,
+    const anniversary = yearlyDateInMonth(member.anniversaryDate, cursor);
+    if (birthday) add({
+      id: `auto-family-birthday-${member.id}-${birthday}`,
       title: `${t("birthday")}: ${member.name}`,
       date: birthday,
       category: t("family"),
       source: "family",
       auto: true,
       href: "#family",
-      notes: member.notes || ""
+      notes: member.notes || member.relationshipNote || ""
+    });
+    if (anniversary) add({
+      id: `auto-family-anniversary-${member.id}-${anniversary}`,
+      title: `${t("anniversary")}: ${member.name}`,
+      date: anniversary,
+      category: t("family"),
+      source: "family",
+      auto: true,
+      href: "#family",
+      notes: member.relationshipNote || member.notes || ""
     });
   });
 

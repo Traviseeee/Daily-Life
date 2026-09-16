@@ -164,8 +164,13 @@ function buildUserDataFields(mode = "create") {
     ...(isEdit ? [sectionToggle("family", appData.family.length > 0)] : []),
     { name: "familyName", label: t("familyMemberName"), value: family.name },
     { name: "familyRelationship", label: t("relationship"), value: family.relationship },
+    { name: "familyCharacterMood", label: t("characterMood"), value: family.characterMood },
     { name: "familyBirthday", label: t("birthday"), type: "date", value: family.birthday },
+    { name: "familyZodiacSign", label: t("zodiacSign"), type: "select", options: ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"], value: family.zodiacSign },
+    { name: "familyAnniversaryDate", label: t("anniversary"), type: "date", value: family.anniversaryDate },
     { name: "familyPhone", label: t("phone"), value: family.phone },
+    { name: "familyFavorite", label: t("favorite"), value: family.favorite },
+    { name: "familyRelationshipNote", label: t("relationshipNote"), type: "textarea", value: family.relationshipNote },
     { name: "familyNotes", label: t("notes"), type: "textarea", value: family.notes },
 
     { type: "heading", label: t("goal"), icon: Icons.goal() },

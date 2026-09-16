@@ -31,6 +31,57 @@
 
 .brand strong { color: var(--accent); }
 
+:root[data-theme="light"] .sidebar {
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 8px 0 28px rgba(20, 35, 59, 0.04);
+}
+
+:root[data-theme="light"] .topbar {
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 4px 18px rgba(20, 35, 59, 0.045);
+}
+
+:root[data-theme="light"] .nav-item:hover,
+:root[data-theme="light"] .profile-button,
+:root[data-theme="light"] .topbar-clock,
+:root[data-theme="light"] .topbar-weather,
+:root[data-theme="light"] .language-switch,
+:root[data-theme="light"] .search-wrap input,
+:root[data-theme="light"] .icon-button {
+  background: #f7f8f6;
+  border-color: #e5e7e3;
+}
+
+:root[data-theme="light"] .nav-item.active {
+  color: #ff7a00 !important;
+  border-color: #ffd7aa;
+  background: #fff0dd;
+  box-shadow: none;
+  animation: none;
+}
+
+:root[data-theme="light"] .nav-item.active,
+:root[data-theme="light"] .nav-item.active span,
+:root[data-theme="light"] .nav-item.active svg,
+:root[data-theme="light"] .sidebar .nav-item.active,
+:root[data-theme="light"] .sidebar .nav-item.active span,
+:root[data-theme="light"] .sidebar .nav-item.active svg,
+:root[data-theme="light"] .mobile-nav .nav-item.active,
+:root[data-theme="light"] .mobile-nav .nav-item.active span,
+:root[data-theme="light"] .mobile-nav .nav-item.active svg {
+  color: #ff7a00 !important;
+}
+
+:root[data-theme="light"] .search-wrap input:focus {
+  border-color: #9bef4f;
+  box-shadow: 0 0 0 3px rgba(155, 239, 79, 0.16);
+}
+
+:root[data-theme="light"] .language-switch button.active {
+  color: #14233b;
+  background: #9bef4f;
+}
+
 .nav-list {
   display: grid;
   gap: 8px;
