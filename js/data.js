@@ -15,6 +15,28 @@ const getSupabaseConfig = () => {
 
 const getSupabaseClient = () => window.supabaseClient || null;
 
+const stripLargeImages = value => {
+  if (Array.isArray(value)) return value.map(stripLargeImages);
+  if (!value || typeof value !== "object") return value;
+
+  return Object.fromEntries(Object.entries(value).map(([key, item]) => [
+    key,
+    typeof item === "string" && item.startsWith("data:image/") ? "" : stripLargeImages(item)
+  ]));
+};
+
+const saveLocalSnapshot = value => {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(value));
+    return true;
+  } catch (error) {
+    const quotaError = error?.name === "QuotaExceededError" || error?.code === 22;
+    if (!quotaError) throw error;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(stripLargeImages(value)));
+    return false;
+  }
+};
+
 const isSupabaseReady = () => {
   const client = getSupabaseClient();
   const { enabled } = getSupabaseConfig();
@@ -135,7 +157,7 @@ const Store = {
 
       Object.assign(appData, structuredClone(emptyData), mergedPayload || {});
       appData.profile = { ...emptyData.profile, ...(appData.profile || {}) };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+      saveLocalSnapshot(appData);
       return true;
     } catch (error) {
       console.warn("MYLIFE could not sync from Supabase.", error);
@@ -183,7 +205,7 @@ const Store = {
         return false;
       }
 
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+      saveLocalSnapshot(appData);
       return true;
     } catch (error) {
       console.warn("MYLIFE could not sync to Supabase.", error);
@@ -250,13 +272,14 @@ const Store = {
     const merged = mergeAppData(localSnapshot, appData);
     Object.assign(appData, structuredClone(emptyData), merged || {});
     appData.profile = { ...emptyData.profile, ...(merged.profile || appData.profile || {}) };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+    saveLocalSnapshot(appData);
     return true;
   },
   save(options = {}) {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+      const savedFullSnapshot = saveLocalSnapshot(appData);
       if (options.sync !== false) this.syncToSupabase();
+      if (!savedFullSnapshot) Toast.show(t("storageFull"));
       return true;
     } catch (error) {
       handleStorageError(error);
