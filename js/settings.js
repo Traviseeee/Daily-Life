@@ -387,10 +387,11 @@ function importJsonData(event) {
         title: t("importJson"),
         message: t("importJsonMessage"),
         confirmText: t("importJson"),
-        onConfirm: () => {
+        onConfirm: async () => {
           Object.assign(appData, structuredClone(emptyData), imported);
           appData.profile = { ...emptyData.profile, ...(appData.profile || {}) };
-          Store.save();
+          const savedToSupabase = await Store.syncToSupabase();
+          if (!savedToSupabase) Store.save({ sync: false });
           App.render();
           Toast.show(t("jsonImported"));
         }

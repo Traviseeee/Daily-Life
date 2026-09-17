@@ -131,7 +131,7 @@ const Store = {
 
       const localSnapshot = this.getLocalSnapshot() || {};
       const remotePayload = !data || !data.payload ? {} : (typeof data.payload === "string" ? JSON.parse(data.payload) : data.payload);
-      const mergedPayload = mergeAppData(localSnapshot, remotePayload);
+      const mergedPayload = mergeAppData(mergeAppData(localSnapshot, appData), remotePayload);
 
       Object.assign(appData, structuredClone(emptyData), mergedPayload || {});
       appData.profile = { ...emptyData.profile, ...(appData.profile || {}) };
@@ -151,6 +151,8 @@ const Store = {
       const client = getSupabaseClient();
       const { data: { user }, error: userError } = await client.auth.getUser();
       if (userError || !user) return false;
+
+      await this.moveImagesToSupabase(user.id);
 
       const { data: existingRow, error: loadError } = await client
         .from(SUPABASE_TABLE)
@@ -181,11 +183,34 @@ const Store = {
         return false;
       }
 
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
       return true;
     } catch (error) {
       console.warn("MYLIFE could not sync to Supabase.", error);
       return false;
     }
+  },
+  async moveImagesToSupabase(userId) {
+    const upload = window.MYLIFE_SUPABASE_API?.uploadImageDataUrl;
+    if (!userId || typeof upload !== "function") return false;
+
+    const imageFields = [
+      { object: appData.profile, key: "photo", folder: `users/${userId}/profile` },
+      { object: appData.profile, key: "launcherCover", folder: `users/${userId}/covers` }
+    ];
+    appData.family.forEach(item => imageFields.push({ object: item, key: "photo", folder: `users/${userId}/family` }));
+    appData.memories.forEach(item => imageFields.push({ object: item, key: "photo", folder: `users/${userId}/memories` }));
+
+    let changed = false;
+    for (const field of imageFields) {
+      if (!String(field.object?.[field.key] || "").startsWith("data:image/")) continue;
+      const uploadedUrl = await upload(field.object[field.key], field.folder);
+      if (uploadedUrl) {
+        field.object[field.key] = uploadedUrl;
+        changed = true;
+      }
+    }
+    return changed;
   },
   load() {
     try {
