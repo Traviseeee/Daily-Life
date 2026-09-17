@@ -1,30 +1,24 @@
 function renderSettings() {
   const stats = Store.calculate();
   return `
-    <section class="page">
+    <section class="page settings-page">
       <div class="page-header">
         <div>
           <h1 class="page-title page-title-with-icon"><span class="page-title-icon">${Icons.settings()}</span>${t("settings")}</h1>
           <p class="page-subtitle">${t("manageSettings")}</p>
         </div>
-        <button class="button" data-action="edit-profile">${Icons.edit()} ${t("editUserData")}</button>
+        <button class="button ghost-button settings-edit-profile-button" data-action="edit-profile">${Icons.edit()} ${t("editUserData")}</button>
       </div>
-      <div class="settings-layout">
-        <aside class="glass-card settings-toolbar" aria-label="${t("settings")}">
-          <button class="settings-tool active" data-action="edit-profile">${Icons.edit()} <span>${t("editUserData")}</span></button>
-          <button class="settings-tool" data-action="create-user">${Icons.user()} <span>${t("createUser")}</span></button>
-          <button class="settings-tool" data-action="export-json">${Icons.arrowDown()} <span>${t("exportJson")}</span></button>
-          <button class="settings-tool" data-action="import-json">${Icons.arrowUp()} <span>${t("importJson")}</span></button>
-          <button class="settings-tool" data-action="export-excel">${Icons.chart()} <span>${t("exportExcel")}</span></button>
-          <button class="settings-tool" data-action="load-demo">${Icons.plus()} <span>${t("loadDemo")}</span></button>
-          <button class="settings-tool settings-tool-icon-only" data-action="edit-footer" aria-label="${languageCode() === "km" ? "កែប្រែ Footer" : "Customize footer"}" title="${languageCode() === "km" ? "កែប្រែ Footer" : "Customize footer"}">${Icons.edit()}</button>
-          <button class="settings-tool danger" data-action="logout">${Icons.logout ? Icons.logout() : Icons.arrowUp()} <span>Log out</span></button>
-          <button class="settings-tool danger" data-action="clear-data">${Icons.trash()} <span>${t("clearData")}</span></button>
-        </aside>
-
-        <div class="settings-content">
-          <div class="grid two-col settings-grid">
-            <article class="glass-card card-pad settings-profile-card">
+      <div class="settings-layout settings-layout-single">
+        <div class="settings-content" data-settings-view="account">
+          <nav class="settings-category-tabs" aria-label="${t("settingsCategories")}">
+            <button type="button" class="settings-category-tab active" data-settings-category="account">${Icons.user()} ${t("accountCategory")}</button>
+            <button type="button" class="settings-category-tab" data-settings-category="preferences">${Icons.settings()} ${t("preferences")}</button>
+            <button type="button" class="settings-category-tab" data-settings-category="data">${Icons.wallet()} ${t("data")}</button>
+            <button type="button" class="settings-category-tab" data-settings-category="finance">${Icons.money()} ${t("financialCalculations")}</button>
+          </nav>
+          <div class="settings-section-grid" data-settings-panel="account">
+            <article class="glass-card card-pad settings-profile-card" data-settings-section="account">
               <div class="settings-profile-header">
                 <div>
                   <h2 class="section-title section-title-with-icon"><span class="section-title-icon">${Icons.user()}</span>${t("profile")}</h2>
@@ -39,6 +33,41 @@ function renderSettings() {
                 <div class="settings-meta-item"><span>${t("name")}</span><strong>${escapeHtml(appData.profile.name || "Not set")}</strong></div>
               </div>
             </article>
+            <article class="glass-card card-pad settings-preferences-card" data-settings-section="preferences">
+              <div class="between">
+                <div>
+                  <h2 class="section-title section-title-with-icon"><span class="section-title-icon">${Icons.settings()}</span>${t("preferences")}</h2>
+                  <p class="secondary">${t("preferencesHelp")}</p>
+                </div>
+                <span class="icon-badge green">${Icons.bell()}</span>
+              </div>
+              <div class="settings-preference-list">
+                <label class="settings-preference-row"><span><strong>${t("quickActions")}</strong><small>${t("quickActionsHelp")}</small></span></label>
+                ${[
+                  ["smart-assistant", t("smartAssistant")],
+                  ["add-event", t("addEvent")],
+                  ["add-goal", t("createGoal")],
+                  ["add-expense", t("addExpense")]
+                ].map(([id, label]) => `<label class="settings-preference-row settings-quick-action-row"><span><strong>${label}</strong><small>${t("showInQuickActions")}</small></span><input type="checkbox" data-quick-action-preference="${id}" ${((appData.profile.quickActions || ["smart-assistant", "add-event", "add-goal"]).includes(id)) ? "checked" : ""}></label>`).join("")}
+                <label class="settings-preference-row"><span><strong>${t("theme")}</strong><small>${t("themeHelp")}</small></span><select data-preference="theme"><option value="dark" ${appData.profile.theme !== "light" ? "selected" : ""}>${t("darkTheme")}</option><option value="light" ${appData.profile.theme === "light" ? "selected" : ""}>${t("lightTheme")}</option></select></label>
+                <label class="settings-preference-row"><span><strong>${t("language")}</strong><small>${t("languageHelp")}</small></span><select data-preference="language"><option value="English" ${appData.profile.language !== "Khmer" ? "selected" : ""}>English</option><option value="Khmer" ${appData.profile.language === "Khmer" ? "selected" : ""}>ខ្មែរ</option></select></label>
+                <label class="settings-preference-row"><span><strong>${t("moneyPrivacy")}</strong><small>${t("moneyPrivacyHelp")}</small></span><input type="checkbox" data-preference="moneyHidden" ${appData.profile.moneyHidden ? "checked" : ""}></label>
+                <label class="settings-preference-row"><span><strong>${t("clockFormat")}</strong><small>${t("clockFormatHelp")}</small></span><select data-preference="clockFormat"><option value="12-hour" ${appData.profile.clockFormat !== "24-hour" ? "selected" : ""}>12-hour</option><option value="24-hour" ${appData.profile.clockFormat === "24-hour" ? "selected" : ""}>24-hour</option></select></label>
+                <label class="settings-preference-row"><span><strong>${t("soundEnabled")}</strong><small>${t("soundEnabledHelp")}</small></span><input type="checkbox" data-preference="soundEnabled" ${appData.profile.soundEnabled !== false ? "checked" : ""}></label>
+                <label class="settings-preference-row"><span><strong>${t("notificationsEnabled")}</strong><small>${t("notificationsEnabledHelp")}</small></span><input type="checkbox" data-preference="notificationsEnabled" ${appData.profile.notificationsEnabled !== false ? "checked" : ""}></label>
+              </div>
+            </article>
+          </div>
+          <div class="settings-section-heading" data-settings-section="data"><span class="eyebrow">${t("data")}</span><h2>${t("backupAndRestore")}</h2></div>
+          <div class="settings-section-grid settings-data-grid" data-settings-panel="data">
+            <article class="glass-card card-pad settings-data-card" data-settings-section="data">
+              <div class="between"><div><h2 class="section-title section-title-with-icon"><span class="section-title-icon">${Icons.wallet()}</span>${t("backupAndRestore")}</h2><p class="secondary">${t("backupAndRestoreHelp")}</p></div><span class="icon-badge">${Icons.wallet()}</span></div>
+              <div class="settings-action-grid">
+                ${settingsAction("export-json", Icons.arrowDown(), t("exportJson"), t("backupJsonHelp"))}
+                ${settingsAction("import-json", Icons.arrowUp(), t("importJson"), t("importJsonHelp"))}
+                ${settingsAction("export-excel", Icons.chart(), t("exportExcel"), t("excelExportHelp"))}
+              </div>
+            </article>
             ${settingsCard(t("database"), [
               [t("familyMembersCount"), appData.family.length],
               [t("goals"), appData.goals.length],
@@ -49,37 +78,21 @@ function renderSettings() {
               [t("bills"), appData.bills.length],
               [t("calendarEvents"), appData.calendarEvents.length],
               [t("memories"), appData.memories.length]
-            ], Icons.chart())}
-            <article class="glass-card card-pad settings-data-card">
-              <div class="between">
-                <div>
-                  <h2 class="section-title section-title-with-icon"><span class="section-title-icon">${Icons.wallet()}</span>${t("data")}</h2>
-                  <p class="secondary">${t("localStorageNote")}</p>
-                </div>
-                <span class="icon-badge">${Icons.wallet()}</span>
-              </div>
-              <div class="settings-backup-grid">
-                ${settingsAction("export-json", Icons.arrowDown(), t("exportJson"), t("backupJsonHelp"))}
-                ${settingsAction("import-json", Icons.arrowUp(), t("importJson"), t("importJsonHelp"))}
-                ${settingsAction("export-excel", Icons.chart(), t("exportExcel"), t("excelExportHelp"))}
-                ${settingsAction("load-demo", Icons.plus(), t("loadDemo"), t("demoHelp"))}
-              </div>
-              <div class="settings-danger-zone">
-                <div>
-                  <strong>${t("dangerZone")}</strong>
-                  <span>${t("clearDataHelp")}</span>
-                </div>
-                <button class="button danger-button" data-action="clear-data">${Icons.trash()} ${t("clearData")}</button>
-              </div>
-            </article>
+            ], Icons.chart(), "data")}
+          </div>
+          <div class="settings-finance-panel" data-settings-panel="finance">
             ${settingsCard(t("financialCalculations"), [
               [t("availableMoney"), money(stats.available)],
               [t("totalIncome"), money(stats.totalIncome)],
               [t("totalExpenses"), money(stats.totalExpenses)],
               [t("totalSavings"), money(stats.totalSavings)],
               [t("loanBalance"), money(stats.loanBalance)]
-            ], Icons.money())}
+            ], Icons.money(), "finance")}
           </div>
+          <article class="glass-card card-pad settings-danger-zone settings-danger-card">
+            <div><strong>${t("dangerZone")}</strong><span>${t("clearDataHelp")}</span></div>
+            <div class="action-row"><button class="button ghost-button" data-action="logout">${Icons.arrowUp()} ${t("logout")}</button><button class="button danger-button" data-action="clear-data">${Icons.trash()} ${t("clearData")}</button></div>
+          </article>
         </div>
         <input class="sr-only" id="importJsonInput" type="file" accept="application/json,.json">
       </div>
@@ -87,9 +100,9 @@ function renderSettings() {
   `;
 }
 
-function settingsCard(title, rows, icon) {
+function settingsCard(title, rows, icon, section = "data") {
   return `
-    <article class="glass-card card-pad settings-compact-card">
+    <article class="glass-card card-pad settings-compact-card" data-settings-section="${section}">
       <h2 class="section-title section-title-with-icon"><span class="section-title-icon">${icon}</span>${title}</h2>
       <div class="settings-stat-grid">
         ${rows.map(row => `
@@ -124,7 +137,10 @@ function openProfileModal() {
       { name: "photo", label: t("profilePhoto"), type: "file", value: appData.profile.photo },
       { name: "currency", label: t("currency"), type: "select", options: ["USD", "KHR", "EUR", "GBP", "AUD", "CAD", "JPY"], value: appData.profile.currency || "USD" },
       { name: "language", label: t("language"), type: "select", options: ["English", "Khmer"], value: appData.profile.language || "English" },
-      { name: "dateFormat", label: t("dateFormat"), type: "select", options: ["MMM d, yyyy", "dd/MM/yyyy", "MM/dd/yyyy", "yyyy-MM-dd"], value: appData.profile.dateFormat || "MMM d, yyyy" }
+      { name: "dateFormat", label: t("dateFormat"), type: "select", options: ["MMM d, yyyy", "dd/MM/yyyy", "MM/dd/yyyy", "yyyy-MM-dd"], value: appData.profile.dateFormat || "MMM d, yyyy" },
+      { name: "clockFormat", label: t("clockFormat"), type: "select", options: ["12-hour", "24-hour"], value: appData.profile.clockFormat || "12-hour" },
+      { name: "soundEnabled", label: t("soundEnabled"), type: "checkbox", value: appData.profile.soundEnabled !== false },
+      { name: "notificationsEnabled", label: t("notificationsEnabled"), type: "checkbox", value: appData.profile.notificationsEnabled !== false }
     ],
     onSubmit(data) {
       Store.updateProfile(data);
@@ -328,6 +344,24 @@ function openEditUserDataModal() {
 }
 
 function bindSettings() {
+  const settingsContent = document.querySelector(".settings-content");
+  document.querySelectorAll("[data-settings-category]").forEach(tab => tab.addEventListener("click", () => {
+    const category = tab.dataset.settingsCategory;
+    settingsContent?.setAttribute("data-settings-view", category);
+    document.querySelectorAll("[data-settings-category]").forEach(item => item.classList.toggle("active", item === tab));
+  }));
+  document.querySelectorAll("[data-preference]").forEach(control => control.addEventListener("change", () => {
+    const key = control.dataset.preference;
+    const value = control.type === "checkbox" ? control.checked : control.value;
+    Store.updateProfile({ [key]: value });
+    if (key === "notificationsEnabled" && value) NotificationManager.requestPermission().then(() => NotificationManager.sync());
+    Toast.show(t("preferenceSaved"));
+  }));
+  document.querySelectorAll("[data-quick-action-preference]").forEach(control => control.addEventListener("change", () => {
+    const quickActions = [...document.querySelectorAll("[data-quick-action-preference]:checked")].map(item => item.dataset.quickActionPreference);
+    Store.updateProfile({ quickActions });
+    Toast.show(t("preferenceSaved"));
+  }));
   bindSettingsAction("edit-profile", openEditUserDataModal);
   bindSettingsAction("edit-footer", () => {
     sessionStorage.setItem("mylife:open-footer-editor", "1");

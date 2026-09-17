@@ -50,20 +50,16 @@
           <div class="search-results glass-card" id="searchResults" hidden></div>
         </div>
         <div class="topbar-right">
-          <div class="topbar-weather" aria-label="Weather">
-            <span>☁</span>
-            <strong>29°</strong>
-          </div>
-          <div class="topbar-clock" aria-label="Local time">
-            <span id="topbarClock">--:--</span>
+          <div class="topbar-info-group" aria-label="Weather and local time">
+            <div class="topbar-weather" aria-label="Weather">
+              <span>☁</span>
+              <strong>29°</strong>
+            </div>
+            <div class="topbar-clock" aria-label="Local time">
+              <span id="topbarClock">--:--</span>
+            </div>
           </div>
           <button class="icon-button smart-assistant-button" id="smartAssistantButton" type="button" aria-label="Smart Assistant"></button>
-          <button class="icon-button theme-toggle" id="themeToggle" type="button" aria-label="Theme"></button>
-          <button class="icon-button privacy-toggle" id="moneyPrivacyButton" type="button" aria-label="Hide money amounts"></button>
-          <div class="language-switch" id="languageSwitch" aria-label="Language switch">
-            <button type="button" data-language="English">EN</button>
-            <button type="button" data-language="Khmer">KH</button>
-          </div>
           <button class="icon-button" id="bellButton" aria-label="Notifications"></button>
         </div>
       </header>
@@ -76,6 +72,10 @@
   <div class="drawer-backdrop" id="drawerBackdrop"></div>
   <div class="toast-stack" id="toastStack" aria-live="polite" aria-atomic="true"></div>
   <div class="modal-root" id="modalRoot"></div>
+  <div class="quick-action-dock" id="quickActionDock">
+    <div class="quick-action-menu" id="quickActionMenu" hidden></div>
+    <button class="quick-action-toggle" id="quickActionToggle" type="button" aria-label="Quick actions" aria-expanded="false"></button>
+  </div>
   <button class="back-to-top" id="backToTop" type="button" aria-label="Back to top"></button>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -105,6 +105,8 @@
   <script src="js/goals.js?v=15"></script>
   <script src="js/money.js?v=15"></script>
   <script src="js/calendar.js?v=22"></script>
+  <script src="js/daily.js?v=1"></script>
+  <script src="js/notifications.js?v=1"></script>
   <script src="js/memories.js?v=15"></script>
   <script src="js/settings.js?v=15"></script>
   <script src="js/app.js?v=17"></script>

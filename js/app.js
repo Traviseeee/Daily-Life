@@ -2,6 +2,7 @@ const App = {
   route: "home",
   param: "",
   shellClockTimer: null,
+  quickActionCloseTimer: null,
   interactionSoundBound: false,
   init() {
     Store.load();
@@ -15,6 +16,7 @@ const App = {
     window.addEventListener("popstate", () => this.render());
     this.render();
     this.checkUpcomingAlerts();
+    setTimeout(() => NotificationManager.sync(), 1200);
   },
   parseRoute() {
     const [route = "home", param = ""] = location.hash.replace("#", "").split("/");
@@ -27,10 +29,10 @@ const App = {
     const route = this.route;
     document.documentElement.lang = languageCode();
     this.renderTheme();
+    this.renderQuickActions();
     renderNavigation();
     setActiveNav(route);
     this.renderProfile();
-    this.renderLanguageSwitch();
     this.renderMoneyPrivacy();
     this.renderSmartAssistant();
     document.body.classList.remove("nav-open");
@@ -42,6 +44,7 @@ const App = {
     else if (route === "goals") app.innerHTML = renderGoals(this.param);
     else if (route === "money") app.innerHTML = renderMoney(this.param || "overview");
     else if (route === "calendar") app.innerHTML = renderCalendar(this.param || "month");
+    else if (route === "daily") app.innerHTML = renderDaily();
     else if (route === "memories") app.innerHTML = renderMemories();
     else if (route === "tips") app.innerHTML = renderTips();
     else if (route === "settings") app.innerHTML = renderSettings();
@@ -238,6 +241,10 @@ const App = {
       : `${first.title} in ${first.daysLeft} day${first.daysLeft === 1 ? "" : "s"}`;
 
     Toast.show(alerts.length > 1 ? `${alerts.length} reminders are coming soon` : label, "warning", { duration: 3200 });
+    if ("Notification" in window && Notification.permission === "granted") {
+      new Notification("MYLIFE reminder", { body: alerts.length > 1 ? `${alerts.length} reminders are coming soon` : label });
+    }
+    NotificationManager.sync();
     this.renderNotificationBadge();
   },
   bindScrollReveal() {
@@ -273,30 +280,13 @@ const App = {
     avatar.innerHTML = appData.profile.photo ? `<img data-image-position="profile" style="--image-position-x: ${position.x}%; --image-position-y: ${position.y}%;" src="${appData.profile.photo}" alt="">` : initials(appData.profile.name);
     document.querySelector("#profileButton small").textContent = t("personalAccount");
   },
-  renderLanguageSwitch() {
-    document.querySelectorAll("#languageSwitch [data-language]").forEach(button => {
-      button.classList.toggle("active", button.dataset.language === (appData.profile.language || "English"));
-    });
-  },
   renderMoneyPrivacy() {
-    const button = document.getElementById("moneyPrivacyButton");
     const hidden = !!appData.profile.moneyHidden;
     document.body.classList.toggle("money-hidden", hidden);
-    if (!button) return;
-    button.innerHTML = hidden ? Icons.eyeOff() : Icons.eye();
-    button.classList.toggle("active", hidden);
-    button.setAttribute("aria-label", hidden ? t("showMoney") : t("hideMoney"));
-    button.setAttribute("title", hidden ? t("showMoney") : t("hideMoney"));
   },
   renderTheme() {
     const theme = appData.profile.theme === "light" ? "light" : "dark";
     document.documentElement.dataset.theme = theme;
-    const button = document.getElementById("themeToggle");
-    if (!button) return;
-    const light = theme === "light";
-    button.innerHTML = light ? Icons.moon() : Icons.sun();
-    button.setAttribute("aria-label", light ? t("useDarkTheme") : t("useLightTheme"));
-    button.setAttribute("title", light ? t("useDarkTheme") : t("useLightTheme"));
   },
   renderSmartAssistant() {
     const button = document.getElementById("smartAssistantButton");
@@ -305,16 +295,44 @@ const App = {
     button.setAttribute("aria-label", t("smartAssistant"));
     button.setAttribute("title", t("smartAssistant"));
   },
+  renderQuickActions() {
+    const menu = document.getElementById("quickActionMenu");
+    const toggle = document.getElementById("quickActionToggle");
+    if (!menu || !toggle) return;
+
+    const actions = [
+      ["smart-assistant", Icons.spark(), t("smartAssistant")],
+      ["add-event", Icons.calendar(), t("addEvent")],
+      ["add-goal", Icons.goal(), t("createGoal")],
+      ["add-expense", Icons.expense(), t("addExpense")]
+    ];
+    const selected = Array.isArray(appData.profile.quickActions) && appData.profile.quickActions.length
+      ? appData.profile.quickActions
+      : ["smart-assistant", "add-event", "add-goal"];
+
+    toggle.innerHTML = Icons.plus();
+    menu.innerHTML = actions
+      .filter(([id]) => selected.includes(id))
+      .map(([id, icon, label]) => `<button type="button" class="quick-action-item" data-quick-action="${id}" title="${escapeAttr(label)}"><span>${icon}</span><strong>${escapeHtml(label)}</strong></button>`)
+      .join("");
+    menu.hidden = true;
+    toggle.disabled = !menu.children.length;
+    toggle.setAttribute("aria-label", t("quickActions"));
+    toggle.setAttribute("title", t("quickActions"));
+  },
   startShellClock() {
     this.updateShellClock();
     this.shellClockTimer = setInterval(() => this.updateShellClock(), 1000);
   },
   updateShellClock() {
     const clock = document.getElementById("topbarClock");
+    const locale = languageCode() === "km" ? "km-KH" : "en-US";
+    const now = new Date();
     if (!clock) return;
-    clock.textContent = new Date().toLocaleTimeString(languageCode() === "km" ? "km-KH" : "en-US", {
+    clock.textContent = now.toLocaleTimeString(locale, {
       hour: "2-digit",
-      minute: "2-digit"
+      minute: "2-digit",
+      hour12: appData.profile.clockFormat !== "24-hour"
     });
   },
   bindPage(route) {
@@ -324,6 +342,7 @@ const App = {
     if (route === "goals") bindGoals(this.param);
     if (route === "money") bindMoney();
     if (route === "calendar") bindCalendar();
+    if (route === "daily") bindDaily();
     if (route === "memories") bindMemories();
     if (route === "tips") bindTips();
     if (route === "settings") bindSettings();
@@ -342,6 +361,8 @@ const App = {
   bindChrome() {
     const menuToggle = document.getElementById("menuToggle");
     const backToTop = document.getElementById("backToTop");
+    const quickActionMenu = document.getElementById("quickActionMenu");
+    const quickActionToggle = document.getElementById("quickActionToggle");
     const closeLauncher = () => {
       document.body.classList.remove("nav-open");
       menuToggle.setAttribute("aria-expanded", "false");
@@ -362,6 +383,43 @@ const App = {
         window.scrollTo({ top: 0, behavior: "smooth" });
       });
     }
+    quickActionToggle?.addEventListener("click", event => {
+      event.stopPropagation();
+      const open = quickActionMenu?.hidden === false;
+      window.clearTimeout(this.quickActionCloseTimer);
+      if (quickActionMenu) quickActionMenu.hidden = open;
+      quickActionToggle.setAttribute("aria-expanded", String(!open));
+      quickActionToggle.closest(".quick-action-dock")?.classList.toggle("is-open", !open);
+      if (!open) {
+        this.quickActionCloseTimer = window.setTimeout(() => {
+          if (!quickActionMenu) return;
+          quickActionMenu.hidden = true;
+          quickActionToggle.setAttribute("aria-expanded", "false");
+          quickActionToggle.closest(".quick-action-dock")?.classList.remove("is-open");
+        }, 5000);
+      }
+    });
+    quickActionMenu?.addEventListener("click", event => {
+      const button = event.target.closest("[data-quick-action]");
+      if (!button) return;
+      window.clearTimeout(this.quickActionCloseTimer);
+      quickActionMenu.hidden = true;
+      quickActionToggle?.setAttribute("aria-expanded", "false");
+      quickActionToggle?.closest(".quick-action-dock")?.classList.remove("is-open");
+      const action = button.dataset.quickAction;
+      if (action === "smart-assistant") SmartAssistant.open();
+      if (action === "add-event") this.openEventModal();
+      if (action === "add-goal") openGoalModal();
+      if (action === "add-expense") openExpenseModal();
+    });
+    document.addEventListener("click", event => {
+      if (event.target.closest(".quick-action-dock")) return;
+      if (!quickActionMenu || quickActionMenu.hidden) return;
+      window.clearTimeout(this.quickActionCloseTimer);
+      quickActionMenu.hidden = true;
+      quickActionToggle?.setAttribute("aria-expanded", "false");
+      quickActionToggle?.closest(".quick-action-dock")?.classList.remove("is-open");
+    });
     const openLauncher = () => {
       document.body.classList.add("nav-open");
       menuToggle.setAttribute("aria-expanded", "true");
@@ -447,25 +505,8 @@ const App = {
         button.setAttribute("aria-pressed", String(active));
       });
     });
-    document.getElementById("moneyPrivacyButton").addEventListener("click", () => {
-      Store.updateProfile({ moneyHidden: !appData.profile.moneyHidden });
-      Toast.show(appData.profile.moneyHidden ? t("moneyHidden") : t("moneyVisible"));
-    });
-    document.getElementById("themeToggle").addEventListener("click", () => {
-      Store.updateProfile({ theme: appData.profile.theme === "light" ? "dark" : "light" });
-      Toast.show(appData.profile.theme === "light" ? t("lightThemeEnabled") : t("darkThemeEnabled"));
-    });
     document.getElementById("profileButton").addEventListener("click", () => {
       openProfileModal();
-    });
-    document.querySelectorAll("#languageSwitch [data-language]").forEach(button => {
-      button.addEventListener("click", () => {
-        const language = button.dataset.language;
-        if (appData.profile.language === language) return;
-        Store.updateProfile({ language });
-        this.updateShellClock();
-        Toast.show(t("languageSwitched"));
-      });
     });
     document.getElementById("globalSearch").addEventListener("input", event => this.search(event.target.value));
     document.addEventListener("click", event => {
@@ -503,6 +544,43 @@ const App = {
         if (event.id) Store.edit("calendarEvents", event.id, data);
         else Store.add("calendarEvents", data);
         Toast.show(event.id ? t("eventSaved") : t("eventAdded"));
+      }
+    });
+  },
+  openHobbyModal(hobby = {}) {
+    Modal.open({
+      title: hobby.id ? t("editHobby") : t("recordHobbyTitle"),
+      submitText: hobby.id ? t("saveRecord") : t("recordHobby"),
+      fields: [
+        { name: "title", label: t("hobby"), value: hobby.title || "", required: true },
+        { name: "date", label: t("date"), type: "date", value: hobby.date || new Date().toISOString().slice(0, 10), required: true },
+        { name: "minutes", label: t("minutes"), type: "number", value: hobby.minutes || "", min: 1 },
+        { name: "category", label: t("category"), type: "select", options: ["Work", "Personal", "Love", "Family", "Health", "Learning"], value: hobby.category || "Personal" },
+        { name: "mood", label: t("moodAfter"), value: hobby.mood || "" },
+        { name: "notes", label: t("notes"), type: "textarea", value: hobby.notes || "" }
+      ],
+      onSubmit(data) {
+        if (hobby.id) Store.edit("hobbyLogs", hobby.id, data);
+        else Store.add("hobbyLogs", data);
+        Toast.show(hobby.id ? t("hobbyRecordSaved") : t("hobbyRecorded"));
+      }
+    });
+  },
+  openReminderModal(reminder = {}) {
+    Modal.open({
+      title: reminder.id ? t("editReminder") : t("addReminderTitle"),
+      submitText: reminder.id ? t("saveReminder") : t("addReminder"),
+      fields: [
+        { name: "title", label: t("reminder"), value: reminder.title || "", required: true },
+        { name: "date", label: t("date"), type: "date", value: reminder.date || new Date().toISOString().slice(0, 10), required: true },
+        { name: "time", label: t("time"), type: "time", value: reminder.time || "" },
+        { name: "category", label: t("category"), type: "select", options: ["Work", "Personal", "Love", "Family", "Health", "Learning"], value: reminder.category || "Personal" },
+        { name: "notes", label: t("notes"), type: "textarea", value: reminder.notes || "" }
+      ],
+      onSubmit(data) {
+        if (reminder.id) Store.edit("reminders", reminder.id, data);
+        else Store.add("reminders", { ...data, done: false });
+        Toast.show(reminder.id ? t("reminderSaved") : t("reminderAdded"));
       }
     });
   }

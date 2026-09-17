@@ -3,6 +3,13 @@
   .two-col { grid-template-columns: 1fr; }
   .financial-layout { grid-template-columns: 1fr; }
   .settings-layout { grid-template-columns: 1fr; }
+  .settings-page .page-header { align-items: flex-start; }
+  .settings-edit-profile-button { align-self: flex-start; padding: 8px 11px; font-size: 0.76rem; }
+  .settings-section-grid, .settings-data-grid { grid-template-columns: 1fr; }
+  .settings-action-grid { grid-template-columns: 1fr; }
+  .settings-danger-card { align-items: stretch; flex-direction: column; }
+  .settings-category-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); overflow: visible; padding: 4px; }
+  .settings-category-tab { justify-content: center; min-width: 0; padding: 10px 8px; font-size: 0.82rem; white-space: nowrap; }
   .financial-sidebar {
     position: static;
     display: flex;
@@ -21,6 +28,17 @@
     flex: 0 0 auto;
     min-width: 150px;
   }
+
+  .settings-preference-row {
+    align-items: flex-start;
+    gap: 12px;
+    min-height: 70px;
+    padding: 13px 12px;
+  }
+  .settings-preference-row select,
+  .settings-preference-row input[type="checkbox"] { margin-top: 2px; }
+  .quick-action-dock { right: 14px; bottom: calc(142px + env(safe-area-inset-bottom)); }
+  .quick-action-toggle { width: 50px; height: 50px; }
 }
 
 @media (max-width: 900px) {
@@ -142,8 +160,8 @@
   .search-wrap { justify-self: stretch; width: 100%; }
   .topbar-left { gap: 8px; }
   .topbar-right { gap: 8px; }
-  .topbar-weather { display: none; }
   .topbar-right .smart-assistant-button { display: none; }
+  .back-to-top { bottom: calc(86px + env(safe-area-inset-bottom)); }
 
   #app {
     padding: 18px 14px calc(176px + env(safe-area-inset-bottom));
@@ -257,8 +275,22 @@
     min-height: 68px;
     padding: 8px 10px;
   }
-  .topbar-clock { display: none; }
-  .language-switch { width: 70px; }
+  .topbar-right { gap: 4px; }
+  .topbar-info-group { gap: 2px; padding: 2px; }
+  .topbar-clock {
+    width: 62px;
+    min-height: 38px;
+    padding-inline: 4px;
+    font-size: 0.72rem;
+  }
+  .topbar-weather {
+    width: 54px;
+    min-height: 38px;
+    gap: 3px;
+    padding-inline: 4px;
+    font-size: 0.72rem;
+  }
+  .topbar-weather span { font-size: 0.82rem; }
   .search-wrap input { min-height: 38px; }
   .icon-button { width: 38px; height: 38px; }
   .topbar-left { min-width: 0; }

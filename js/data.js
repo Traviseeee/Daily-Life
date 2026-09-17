@@ -62,8 +62,12 @@ const emptyData = {
     currency: "USD",
     language: "English",
     dateFormat: "MMM d, yyyy",
+    clockFormat: "12-hour",
+    soundEnabled: true,
+    notificationsEnabled: true,
     theme: "light",
-    moneyHidden: false
+    moneyHidden: false,
+    quickActions: ["smart-assistant", "add-event", "add-goal"]
   },
   mood: {
     date: "",
@@ -88,7 +92,9 @@ const emptyData = {
   loans: [],
   bills: [],
   calendarEvents: [],
-  memories: []
+  memories: [],
+  hobbyLogs: [],
+  reminders: []
 };
 
 const mergeAppData = (base, update) => {
@@ -140,6 +146,7 @@ const mergeAppData = (base, update) => {
 };
 
 const appData = structuredClone(emptyData);
+window.appData = appData;
 
 const Store = {
   async syncFromSupabase(options = {}) {
@@ -731,6 +738,22 @@ function getUpcomingNotifications(daysAhead = 7) {
         source: "family",
         familyId: member.id
       });
+    });
+  });
+
+  appData.reminders.forEach(reminder => {
+    if (reminder.done || !reminder.date) return;
+    const reminderDate = new Date(`${reminder.date}T00:00:00`);
+    if (reminderDate < today || reminderDate > limit) return;
+    items.push({
+      id: reminder.id || `reminder-${reminder.date}`,
+      type: "reminder",
+      title: reminder.title || "Reminder",
+      date: reminder.date,
+      daysLeft: Math.max(0, Math.round((reminderDate - today) / 86400000)),
+      kind: "reminder",
+      source: "daily",
+      category: reminder.category || "Personal"
     });
   });
 

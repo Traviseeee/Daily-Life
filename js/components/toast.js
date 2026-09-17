@@ -13,6 +13,7 @@ const Sound = {
     return this.context;
   },
   play(type = "tap") {
+    this.enabled = window.appData?.profile?.soundEnabled !== false;
     const ctx = this.ensureContext();
     if (!ctx) return;
 

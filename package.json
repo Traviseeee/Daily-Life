@@ -7,9 +7,9 @@
     "build": "node -e \"console.log('Static Vercel deployment: source files are ready')\"",
     "start": "node server.js",
     "serve": "node server.js",
-    "mobile:sync": "npm run build && npx cap sync",
-    "mobile:add:android": "npm run build && npx cap add android",
-    "mobile:add:ios": "npm run build && npx cap add ios",
+    "mobile:sync": "node tools/copy-web.js && npx cap sync",
+    "mobile:add:android": "node tools/copy-web.js && npx cap add android",
+    "mobile:add:ios": "node tools/copy-web.js && npx cap add ios",
     "mobile:android": "npx cap open android",
     "mobile:ios": "npx cap open ios"
   },
@@ -17,6 +17,7 @@
     "@capacitor/android": "^7.4.3",
     "@capacitor/core": "^7.4.3",
     "@capacitor/ios": "^7.4.3",
+    "@capacitor/local-notifications": "^7.0.7",
     "@supabase/supabase-js": "^2.55.0"
   },
   "devDependencies": {
