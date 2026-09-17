@@ -23,6 +23,12 @@ window.MYLIFE_SUPABASE = {
   enabled: supabaseEnabled
 };
 
+const getAppBaseUrl = () => {
+  const configuredUrl = String(window.MYLIFE_APP_URL || "").trim();
+  if (configuredUrl) return configuredUrl.replace(/\/$/, "");
+  return String(window.location.origin || "").replace(/\/$/, "");
+};
+
 window.MYLIFE_SUPABASE_API = {
   async signIn(email, password) {
     if (!window.supabaseClient) {
@@ -41,7 +47,7 @@ window.MYLIFE_SUPABASE_API = {
       throw new Error("Supabase is not configured.");
     }
     return window.supabaseClient.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}${window.location.pathname}`
+      redirectTo: `${getAppBaseUrl()}${window.location.pathname}`
     });
   },
   async signOut() {

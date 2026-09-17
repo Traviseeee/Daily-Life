@@ -24,6 +24,7 @@ const isSupabaseReady = () => {
 const emptyData = {
   profile: {
     name: "",
+    email: "",
     photo: "",
     launcherCover: "",
     currency: "USD",
@@ -122,6 +123,8 @@ const Store = {
     if (!isSupabaseReady()) return false;
 
     try {
+      this.migrateLegacyLocalData();
+
       const client = getSupabaseClient();
       const { data: { user }, error: userError } = await client.auth.getUser();
       if (userError || !user) return false;
@@ -170,6 +173,37 @@ const Store = {
       console.warn("MYLIFE could not load saved data.", error);
       Object.assign(appData, structuredClone(emptyData));
     }
+  },
+  getLocalSnapshot() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== "object") return null;
+      return parsed;
+    } catch (error) {
+      console.warn("MYLIFE could not read legacy local data.", error);
+      return null;
+    }
+  },
+  migrateLegacyLocalData() {
+    const localSnapshot = this.getLocalSnapshot();
+    if (!localSnapshot) return false;
+
+    const hasMeaningfulData = Object.keys(localSnapshot).some(key => {
+      const value = localSnapshot[key];
+      if (Array.isArray(value)) return value.length > 0;
+      if (value && typeof value === "object") return Object.keys(value).length > 0;
+      return Boolean(value);
+    });
+
+    if (!hasMeaningfulData) return false;
+
+    const merged = mergeAppData(localSnapshot, appData);
+    Object.assign(appData, structuredClone(emptyData), merged || {});
+    appData.profile = { ...emptyData.profile, ...(merged.profile || appData.profile || {}) };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+    return true;
   },
   save() {
     try {

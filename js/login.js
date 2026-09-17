@@ -56,32 +56,27 @@ const Login = {
           </div>
         ` : ""}
         <form id="loginForm">
-          ${supabaseConfigured && isReset ? `
+          ${isReset ? `
             <div class="login-input-group">
               <label for="loginName">Email</label>
               <input id="loginName" type="email" placeholder="you@example.com" autocomplete="email" value="${appData.profile.name || ""}" required />
             </div>
+          ` : supabaseConfigured ? `
+            <div class="login-input-group">
+              <label for="loginName">Email</label>
+              <input id="loginName" type="email" placeholder="you@example.com" autocomplete="email" value="" required />
+            </div>
+            ${isSignup ? `<div class="login-input-group"><label for="loginPassword">Password</label><input id="loginPassword" type="password" placeholder="Enter your password" autocomplete="new-password" minlength="6" required /></div><div class="login-input-group"><label for="loginPasswordConfirm">Confirm password</label><input id="loginPasswordConfirm" type="password" placeholder="Confirm your password" autocomplete="new-password" minlength="6" required /></div>` : `<div class="login-input-group"><label for="loginPassword">Password</label><input id="loginPassword" type="password" placeholder="Enter your password" autocomplete="current-password" minlength="6" required /></div>`}
           ` : `
             <div class="login-input-group">
-              <label for="loginName">${supabaseConfigured ? "Email" : t("yourName")}</label>
-              <input 
-                id="loginName" 
-                type="email" 
-                placeholder="${supabaseConfigured ? "you@example.com" : t("enterYourName")}" 
-                autocomplete="${supabaseConfigured ? "email" : "name"}"
-                value=""
-              />
+              <label for="loginName">${t("yourName")}</label>
+              <input id="loginName" type="text" placeholder="${t("enterYourName")}" autocomplete="name" value="" required />
             </div>
-          `}
-          ${isReset ? "" : isReset ? "" : ""}
-          ${isReset ? "" : isReset ? "" : ""}
-          ${supabaseConfigured && !isReset ? (isSignup ? `<div class="login-input-group"><label for="loginPassword">Password</label><input id="loginPassword" type="password" placeholder="Enter your password" autocomplete="new-password" minlength="6" required /></div><div class="login-input-group"><label for="loginPasswordConfirm">Confirm password</label><input id="loginPasswordConfirm" type="password" placeholder="Confirm your password" autocomplete="new-password" minlength="6" required /></div>` : `<div class="login-input-group"><label for="loginPassword">Password</label><input id="loginPassword" type="password" placeholder="Enter your password" autocomplete="current-password" minlength="6" required /></div>`) : `
-            ${isReset ? `<div class="login-input-group"><label for="loginRecoveryAnswer">${t("dogNameQuestion")}</label><input id="loginRecoveryAnswer" type="text" autocomplete="off" required /></div>` : ""}
             <div class="login-input-group">
               <label for="loginPassword">${t("password")}</label>
-              <input id="loginPassword" type="password" placeholder="${t("enterPassword")}" autocomplete="${hasAccount && !isReset ? "current-password" : "new-password"}" minlength="4" required />
+              <input id="loginPassword" type="password" placeholder="${t("enterPassword")}" autocomplete="${hasAccount ? "current-password" : "new-password"}" minlength="4" required />
             </div>
-            ${isReset || !hasAccount ? `<div class="login-input-group"><label for="loginPasswordConfirm">${t("confirmPassword")}</label><input id="loginPasswordConfirm" type="password" placeholder="${t("confirmPassword")}" autocomplete="new-password" minlength="4" required /></div>` : ""}
+            ${!hasAccount ? `<div class="login-input-group"><label for="loginPasswordConfirm">${t("confirmPassword")}</label><input id="loginPasswordConfirm" type="password" placeholder="${t("confirmPassword")}" autocomplete="new-password" minlength="4" required /></div>` : ""}
             ${!hasAccount ? `<div class="login-input-group"><label for="loginRecoveryAnswer">${t("dogNameQuestion")}</label><input id="loginRecoveryAnswer" type="text" placeholder="${t("dogNamePlaceholder")}" autocomplete="off" required /></div>` : ""}
           `}
           <div class="login-input-group login-remember-row">
@@ -105,7 +100,9 @@ const Login = {
 
     document.getElementById("loginForm").addEventListener("submit", (e) => {
       e.preventDefault();
-      this.submit(hasAccount, isReset, isLegacy, isSignup);
+      const currentMode = document.querySelector(".login-mode-button.active")?.dataset.authMode || (supabaseConfigured ? "login" : "create");
+      const submitIsSignup = supabaseConfigured ? currentMode === "signup" : !hasAccount;
+      this.submit(hasAccount, isReset, isLegacy, submitIsSignup);
     });
     document.querySelectorAll("[data-auth-mode]").forEach(button => {
       button.addEventListener("click", () => {
@@ -124,15 +121,23 @@ const Login = {
   },
 
   async submit(hasAccount, isReset, isLegacy, isSignup = false) {
-    const name = document.getElementById("loginName").value.trim();
-    const password = document.getElementById("loginPassword").value;
-    const confirmation = document.getElementById("loginPasswordConfirm")?.value;
-    const recoveryAnswer = document.getElementById("loginRecoveryAnswer")?.value.trim();
+    const nameInput = document.getElementById("loginName");
+    const passwordInput = document.getElementById("loginPassword");
+    const confirmationInput = document.getElementById("loginPasswordConfirm");
+    const recoveryInput = document.getElementById("loginRecoveryAnswer");
+
+    const name = (nameInput?.value || "").trim();
+    const password = passwordInput?.value || "";
+    const confirmation = confirmationInput?.value || "";
+    const recoveryAnswer = recoveryInput?.value.trim() || "";
     const rememberMe = document.getElementById("loginRemember")?.checked ?? true;
     const error = document.getElementById("loginError");
     const showError = message => { error.textContent = message; };
 
     const supabaseConfigured = Boolean(window.MYLIFE_SUPABASE?.enabled && window.supabaseClient);
+    const activeMode = document.querySelector(".login-mode-button.active")?.dataset.authMode || "login";
+    const resolvedIsSignup = supabaseConfigured ? activeMode === "signup" : !hasAccount;
+    const effectiveSignup = typeof isSignup === "boolean" ? isSignup : resolvedIsSignup;
 
     if (isReset && supabaseConfigured) {
       if (!name || !name.includes("@")) return showError("Please enter a valid email address.");
@@ -157,17 +162,17 @@ const Login = {
     if (supabaseConfigured) {
       if (!name || !name.includes("@")) return showError("Please enter a valid email address.");
       if (password.length < 6) return showError("Password must be at least 6 characters.");
-      if (isSignup && password !== confirmation) return showError(t("passwordMismatch"));
+      if (effectiveSignup && password !== confirmation) return showError(t("passwordMismatch"));
 
       try {
         const email = name;
-        const result = isSignup
+        const result = effectiveSignup
           ? await window.MYLIFE_SUPABASE_API.signUp(email, password)
           : await window.MYLIFE_SUPABASE_API.signIn(email, password);
 
         if (result.error) {
           const message = String(result.error.message || "Authentication failed.");
-          if (isSignup && /already|exists|registered/i.test(message)) {
+          if (effectiveSignup && /already|exists|registered/i.test(message)) {
             showError("This email is already in use. Please log in instead.");
             this.close();
             this.open("login");
@@ -178,10 +183,12 @@ const Login = {
         }
 
         if (name) {
-          Store.updateProfile({ name: name.split("@")?.[0] || appData.profile.name || "User" });
+          const displayName = name.split("@")?.[0] || appData.profile.name || "User";
+          Store.updateProfile({ name: displayName, email });
+          Store.migrateLegacyLocalData();
         }
 
-        if (isSignup && !result.data?.session) {
+        if (effectiveSignup && !result.data?.session) {
           showError("Account created. Please check your email to confirm, then log in.");
           this.close();
           this.open("login");
