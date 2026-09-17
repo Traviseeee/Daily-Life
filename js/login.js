@@ -195,7 +195,7 @@ const Login = {
           return;
         }
 
-        await Store.syncFromSupabase();
+        await Store.syncFromSupabase({ includeLocal: false });
         await Store.syncToSupabase();
         this.authenticated = true;
         this.setRememberedSession(rememberMe);

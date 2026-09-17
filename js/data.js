@@ -31,12 +31,18 @@ const saveLocalSnapshot = value => {
     return true;
   } catch (error) {
     const quotaError = error?.name === "QuotaExceededError" || error?.code === 22;
-    if (!quotaError) throw error;
+    if (!quotaError) return false;
     [
       "mylife:tips-couple-image",
       "mylife:family-photo"
     ].forEach(key => localStorage.removeItem(key));
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(stripLargeImages(value)));
+    const compactValue = stripLargeImages(value);
+    localStorage.removeItem(STORAGE_KEY);
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(compactValue));
+    } catch (compactError) {
+      console.warn("MYLIFE local storage is full; keeping data in memory for cloud sync.", compactError);
+    }
     return false;
   }
 };
@@ -136,7 +142,7 @@ const mergeAppData = (base, update) => {
 const appData = structuredClone(emptyData);
 
 const Store = {
-  async syncFromSupabase() {
+  async syncFromSupabase(options = {}) {
     if (!isSupabaseReady()) return false;
 
     try {
@@ -155,9 +161,10 @@ const Store = {
         return false;
       }
 
-      const localSnapshot = this.getLocalSnapshot() || {};
       const remotePayload = !data || !data.payload ? {} : (typeof data.payload === "string" ? JSON.parse(data.payload) : data.payload);
-      const mergedPayload = mergeAppData(mergeAppData(localSnapshot, appData), remotePayload);
+      const mergedPayload = options.includeLocal === false
+        ? remotePayload
+        : mergeAppData(mergeAppData(this.getLocalSnapshot() || {}, appData), remotePayload);
 
       Object.assign(appData, structuredClone(emptyData), mergedPayload || {});
       appData.profile = { ...emptyData.profile, ...(appData.profile || {}) };
@@ -172,8 +179,6 @@ const Store = {
     if (!isSupabaseReady()) return false;
 
     try {
-      this.migrateLegacyLocalData();
-
       const client = getSupabaseClient();
       const { data: { user }, error: userError } = await client.auth.getUser();
       if (userError || !user) return false;
