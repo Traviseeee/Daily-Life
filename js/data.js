@@ -32,6 +32,10 @@ const saveLocalSnapshot = value => {
   } catch (error) {
     const quotaError = error?.name === "QuotaExceededError" || error?.code === 22;
     if (!quotaError) throw error;
+    [
+      "mylife:tips-couple-image",
+      "mylife:family-photo"
+    ].forEach(key => localStorage.removeItem(key));
     localStorage.setItem(STORAGE_KEY, JSON.stringify(stripLargeImages(value)));
     return false;
   }
@@ -277,9 +281,8 @@ const Store = {
   },
   save(options = {}) {
     try {
-      const savedFullSnapshot = saveLocalSnapshot(appData);
+      saveLocalSnapshot(appData);
       if (options.sync !== false) this.syncToSupabase();
-      if (!savedFullSnapshot) Toast.show(t("storageFull"));
       return true;
     } catch (error) {
       handleStorageError(error);
