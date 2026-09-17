@@ -184,7 +184,7 @@ const Login = {
 
         if (name) {
           const displayName = name.split("@")?.[0] || appData.profile.name || "User";
-          Store.updateProfile({ name: displayName, email });
+          Store.updateProfile({ name: displayName, email }, { sync: false });
           Store.migrateLegacyLocalData();
         }
 
@@ -195,6 +195,7 @@ const Login = {
           return;
         }
 
+        await Store.syncFromSupabase();
         await Store.syncToSupabase();
         this.authenticated = true;
         this.setRememberedSession(rememberMe);

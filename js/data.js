@@ -63,6 +63,28 @@ const mergeAppData = (base, update) => {
   const baseValue = base && typeof base === "object" ? structuredClone(base) : {};
   const updateValue = update && typeof update === "object" ? update : {};
 
+  const mergeLists = (currentList, nextList) => {
+    if (!currentList.length || !nextList.length) return structuredClone(nextList.length ? nextList : currentList);
+    if (!currentList.every(item => item && typeof item === "object") || !nextList.every(item => item && typeof item === "object")) {
+      return structuredClone(nextList);
+    }
+
+    const identity = item => item.id || item.date || null;
+    if (![...currentList, ...nextList].every(item => identity(item))) return structuredClone(nextList);
+
+    const mergedList = currentList.map(item => structuredClone(item));
+    nextList.forEach(nextItem => {
+      const nextIdentity = identity(nextItem);
+      const index = mergedList.findIndex(item => identity(item) === nextIdentity);
+      if (index === -1) {
+        mergedList.push(structuredClone(nextItem));
+      } else {
+        mergedList[index] = mergeAppData(mergedList[index], nextItem);
+      }
+    });
+    return mergedList;
+  };
+
   const merged = Array.isArray(baseValue) ? [...baseValue] : { ...baseValue };
 
   Object.keys(updateValue).forEach((key) => {
@@ -70,7 +92,7 @@ const mergeAppData = (base, update) => {
     const currentValue = merged[key];
 
     if (Array.isArray(nextValue)) {
-      merged[key] = structuredClone(nextValue);
+      merged[key] = Array.isArray(currentValue) ? mergeLists(currentValue, nextValue) : structuredClone(nextValue);
       return;
     }
 
@@ -107,10 +129,11 @@ const Store = {
         return false;
       }
 
-      if (!data || !data.payload) return false;
+      const localSnapshot = this.getLocalSnapshot() || {};
+      const remotePayload = !data || !data.payload ? {} : (typeof data.payload === "string" ? JSON.parse(data.payload) : data.payload);
+      const mergedPayload = mergeAppData(localSnapshot, remotePayload);
 
-      const remotePayload = typeof data.payload === "string" ? JSON.parse(data.payload) : data.payload;
-      Object.assign(appData, structuredClone(emptyData), remotePayload || {});
+      Object.assign(appData, structuredClone(emptyData), mergedPayload || {});
       appData.profile = { ...emptyData.profile, ...(appData.profile || {}) };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
       return true;
@@ -205,10 +228,10 @@ const Store = {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
     return true;
   },
-  save() {
+  save(options = {}) {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
-      this.syncToSupabase();
+      if (options.sync !== false) this.syncToSupabase();
       return true;
     } catch (error) {
       handleStorageError(error);
@@ -235,10 +258,10 @@ const Store = {
     if (this.save()) App.render();
     else restoreData(previous);
   },
-  updateProfile(changes) {
+  updateProfile(changes, options = {}) {
     const previous = structuredClone(appData);
     appData.profile = { ...appData.profile, ...changes };
-    if (this.save()) App.render();
+    if (this.save(options)) App.render();
     else restoreData(previous);
   },
   updateMood(mood) {

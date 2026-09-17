@@ -2553,6 +2553,26 @@
 
 .ghost-button:hover { background: rgba(255,255,255,0.085); }
 
+.account-action-row {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.account-action-row .button {
+  flex: 1;
+  min-height: 44px;
+}
+
+.account-connect-button {
+  color: var(--text-primary);
+}
+
+.account-logout-button {
+  color: var(--text-primary);
+}
+
 .icon-button {
   display: inline-grid;
   place-items: center;

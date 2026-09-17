@@ -134,11 +134,24 @@ function openProfileModal() {
 
   const modalForm = document.getElementById("modalForm");
   const footer = modalForm?.querySelector(".between");
-  if (!modalForm || !footer || footer.dataset.logoutInserted === "true") return;
+  if (!modalForm || !footer || footer.dataset.accountActionsInserted === "true") return;
+
+  const accountRow = document.createElement("div");
+  accountRow.className = "account-action-row";
+
+  const connectButton = document.createElement("button");
+  connectButton.type = "button";
+  connectButton.className = "button ghost-button account-connect-button";
+  connectButton.dataset.connectAccount = "true";
+  connectButton.textContent = "Connect account";
+  connectButton.addEventListener("click", () => {
+    Modal.close();
+    Login.open("login");
+  });
 
   const logoutButton = document.createElement("button");
   logoutButton.type = "button";
-  logoutButton.className = "button ghost-button";
+  logoutButton.className = "button ghost-button account-logout-button";
   logoutButton.dataset.logoutProfile = "true";
   logoutButton.textContent = "Log out";
   logoutButton.addEventListener("click", async () => {
@@ -147,8 +160,11 @@ function openProfileModal() {
     App.render();
   });
 
-  footer.insertBefore(logoutButton, footer.firstChild);
-  footer.dataset.logoutInserted = "true";
+  accountRow.appendChild(connectButton);
+  accountRow.appendChild(logoutButton);
+  footer.innerHTML = "";
+  footer.appendChild(accountRow);
+  footer.dataset.accountActionsInserted = "true";
 }
 
 function firstRecord(collection) {
