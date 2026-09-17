@@ -234,7 +234,11 @@ const Modal = {
 };
 
 async function readFile(file) {
-  if (file.type?.startsWith("image/")) return readImageFile(file);
+  if (file.type?.startsWith("image/")) {
+    const uploadedUrl = await window.MYLIFE_SUPABASE_API?.uploadImage?.(file, "uploads");
+    if (uploadedUrl) return uploadedUrl;
+    return readImageFile(file);
+  }
   return readRawFile(file);
 }
 

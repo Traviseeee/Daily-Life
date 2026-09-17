@@ -1,4 +1,25 @@
 const STORAGE_KEY = "mylife:user-data:v1";
+const SUPABASE_TABLE = "app_data";
+
+const getSupabaseConfig = () => {
+  const config = window.MYLIFE_SUPABASE || {};
+  const url = String(config.url || window.SUPABASE_URL || "").trim();
+  const anonKey = String(config.anonKey || window.SUPABASE_ANON_KEY || "").trim();
+  const hasPlaceholder = url.includes("YOUR-PROJECT") || anonKey.includes("YOUR-");
+  return {
+    url,
+    anonKey,
+    enabled: Boolean(url && anonKey && !hasPlaceholder)
+  };
+};
+
+const getSupabaseClient = () => window.supabaseClient || null;
+
+const isSupabaseReady = () => {
+  const client = getSupabaseClient();
+  const { enabled } = getSupabaseConfig();
+  return Boolean(client && enabled);
+};
 
 const emptyData = {
   profile: {
@@ -37,9 +58,109 @@ const emptyData = {
   memories: []
 };
 
+const mergeAppData = (base, update) => {
+  const baseValue = base && typeof base === "object" ? structuredClone(base) : {};
+  const updateValue = update && typeof update === "object" ? update : {};
+
+  const merged = Array.isArray(baseValue) ? [...baseValue] : { ...baseValue };
+
+  Object.keys(updateValue).forEach((key) => {
+    const nextValue = updateValue[key];
+    const currentValue = merged[key];
+
+    if (Array.isArray(nextValue)) {
+      merged[key] = structuredClone(nextValue);
+      return;
+    }
+
+    if (nextValue && typeof nextValue === "object" && currentValue && typeof currentValue === "object" && !Array.isArray(currentValue)) {
+      merged[key] = mergeAppData(currentValue, nextValue);
+      return;
+    }
+
+    merged[key] = structuredClone(nextValue);
+  });
+
+  return merged;
+};
+
 const appData = structuredClone(emptyData);
 
 const Store = {
+  async syncFromSupabase() {
+    if (!isSupabaseReady()) return false;
+
+    try {
+      const client = getSupabaseClient();
+      const { data: { user }, error: userError } = await client.auth.getUser();
+      if (userError || !user) return false;
+
+      const { data, error } = await client
+        .from(SUPABASE_TABLE)
+        .select("payload")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (error) {
+        console.warn("MYLIFE could not load data from Supabase.", error);
+        return false;
+      }
+
+      if (!data || !data.payload) return false;
+
+      const remotePayload = typeof data.payload === "string" ? JSON.parse(data.payload) : data.payload;
+      Object.assign(appData, structuredClone(emptyData), remotePayload || {});
+      appData.profile = { ...emptyData.profile, ...(appData.profile || {}) };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+      return true;
+    } catch (error) {
+      console.warn("MYLIFE could not sync from Supabase.", error);
+      return false;
+    }
+  },
+  async syncToSupabase() {
+    if (!isSupabaseReady()) return false;
+
+    try {
+      const client = getSupabaseClient();
+      const { data: { user }, error: userError } = await client.auth.getUser();
+      if (userError || !user) return false;
+
+      const { data: existingRow, error: loadError } = await client
+        .from(SUPABASE_TABLE)
+        .select("payload")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (loadError) {
+        console.warn("MYLIFE could not load existing Supabase data before merge.", loadError);
+      }
+
+      const remotePayload = existingRow && existingRow.payload ?
+        (typeof existingRow.payload === "string" ? JSON.parse(existingRow.payload) : existingRow.payload) :
+        {};
+
+      const mergedPayload = mergeAppData(remotePayload, appData);
+
+      const { error } = await client
+        .from(SUPABASE_TABLE)
+        .upsert({
+          user_id: user.id,
+          payload: mergedPayload,
+          updated_at: new Date().toISOString()
+        }, { onConflict: "user_id" });
+
+      if (error) {
+        console.warn("MYLIFE could not save data to Supabase.", error);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.warn("MYLIFE could not sync to Supabase.", error);
+      return false;
+    }
+  },
   load() {
     try {
       const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
@@ -53,6 +174,7 @@ const Store = {
   save() {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+      this.syncToSupabase();
       return true;
     } catch (error) {
       handleStorageError(error);

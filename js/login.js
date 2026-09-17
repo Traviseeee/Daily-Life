@@ -31,6 +31,7 @@ const Login = {
 
   open(mode = "login") {
     if (this.isOpen) return;
+    const supabaseConfigured = Boolean(window.MYLIFE_SUPABASE?.enabled && window.supabaseClient);
     const hasProfile = Boolean(appData.profile.name);
     const hasAccount = Boolean(hasProfile && appData.profile.passwordHash);
     const isLegacy = hasProfile && !hasAccount;
@@ -43,17 +44,17 @@ const Login = {
       <div class="login-content">
         <div class="login-header">
           <span class="login-mark">${Icons.home()}</span>
-          <h2>${isReset ? t("resetPassword") : hasAccount ? t("unlockMylife") : isLegacy ? t("secureAccount") : t("createAccount")}</h2>
-          <p>${isReset ? t("resetPasswordHelp") : hasAccount ? t("enterPassword") : isLegacy ? t("secureAccountHelp") : t("createAccountHelp")}</p>
+          <h2>${isReset ? t("resetPassword") : hasAccount ? t("unlockMylife") : isLegacy ? t("secureAccount") : supabaseConfigured ? "Create account" : t("createAccount")}</h2>
+          <p>${isReset ? t("resetPasswordHelp") : hasAccount ? t("enterPassword") : isLegacy ? t("secureAccountHelp") : supabaseConfigured ? "Set up your MYLIFE account with email and password." : t("createAccountHelp")}</p>
         </div>
         <form id="loginForm">
           <div class="login-input-group">
-            <label for="loginName">${t("yourName")}</label>
+            <label for="loginName">${supabaseConfigured ? "Email" : t("yourName")}</label>
             <input 
               id="loginName" 
               type="text" 
-              placeholder="${t("enterYourName")}"
-              autocomplete="name"
+              placeholder="${supabaseConfigured ? "you@example.com" : t("enterYourName")}" 
+              autocomplete="${supabaseConfigured ? "email" : "name"}"
               ${(hasAccount || isReset || isLegacy) ? "readonly" : ""}
               value="${appData.profile.name || ""}"
             />
@@ -72,11 +73,11 @@ const Login = {
             </label>
           </div>
           <p class="login-error" id="loginError" role="alert"></p>
-          <button type="submit" class="button login-button">${isReset ? t("saveNewPassword") : hasAccount ? t("unlock") : isLegacy ? t("secureAccount") : t("createAccount")}</button>
+          <button type="submit" class="button login-button">${isReset ? t("saveNewPassword") : hasAccount ? t("unlock") : isLegacy ? t("secureAccount") : supabaseConfigured ? "Create account" : t("createAccount")}</button>
           ${hasAccount && !isReset ? `<button type="button" class="login-reset-link" id="loginResetButton">${t("forgotPassword")}</button>` : ""}
         </form>
         <div class="login-footer">
-          <p class="secondary">${t("noDataStored")}</p>
+          <p class="secondary">${supabaseConfigured ? "Your data is securely synced to your Supabase account." : t("noDataStored")}</p>
         </div>
       </div>
     `;
@@ -105,6 +106,40 @@ const Login = {
     const error = document.getElementById("loginError");
     const showError = message => { error.textContent = message; };
 
+    const supabaseConfigured = Boolean(window.MYLIFE_SUPABASE?.enabled && window.supabaseClient);
+
+    if (supabaseConfigured) {
+      if (!name || !name.includes("@")) return showError("Please enter a valid email address.");
+      if (password.length < 6) return showError("Password must be at least 6 characters.");
+      if ((isReset || !hasAccount) && password !== confirmation) return showError(t("passwordMismatch"));
+
+      try {
+        const email = name;
+        const result = !hasAccount && !isLegacy && !isReset
+          ? await window.MYLIFE_SUPABASE_API.signUp(email, password)
+          : await window.MYLIFE_SUPABASE_API.signIn(email, password);
+
+        if (result.error) {
+          showError(result.error.message || "Authentication failed.");
+          return;
+        }
+
+        if (name) {
+          Store.updateProfile({ name: name.split("@")?.[0] || appData.profile.name || "User" });
+        }
+
+        await Store.syncToSupabase();
+        this.authenticated = true;
+        this.setRememberedSession(rememberMe);
+        this.close();
+        App.render();
+        return;
+      } catch (authError) {
+        showError(authError.message || "Authentication failed.");
+        return;
+      }
+    }
+
     if (!hasAccount && !isLegacy && !name) return showError(t("nameRequired"));
     if (isReset && await this.hash(recoveryAnswer.toLowerCase()) !== appData.profile.recoveryAnswerHash) return showError(t("wrongRecoveryAnswer"));
     if (password.length < 4) return showError(t("passwordTooShort"));
@@ -131,13 +166,23 @@ const Login = {
     document.getElementById("modalRoot")?.classList.remove("open");
   },
 
-  showIfNeeded() {
+  async showIfNeeded() {
     if (this.isOpen) return;
     if (this.getRememberedSession()) {
       this.authenticated = true;
       return;
     }
     if (this.authenticated) return;
+
+    const supabaseSessionReady = window.MYLIFE_SUPABASE?.enabled && window.supabaseClient && window.supabaseClient.auth?.getSession;
+    if (supabaseSessionReady) {
+      const { data: { session } } = await window.supabaseClient.auth.getSession();
+      if (session) {
+        this.authenticated = true;
+        return;
+      }
+    }
+
     const modalRoot = document.getElementById("modalRoot");
     if (!modalRoot) return;
     requestAnimationFrame(() => {

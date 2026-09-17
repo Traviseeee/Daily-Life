@@ -5,6 +5,7 @@ const App = {
   interactionSoundBound: false,
   init() {
     Store.load();
+    Store.syncFromSupabase();
     Login.showIfNeeded();
     renderNavigation();
     this.bindChrome();

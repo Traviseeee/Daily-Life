@@ -3753,7 +3753,7 @@ body.money-hidden .money-value {
   padding: 16px 18px;
   border-radius: 14px;
   border-color: rgba(184, 255, 90, 0.24);
-  background: rgba(184, 255, 90, 0.07);
+  background: var(--glass);
 }
 
 .tips-day-card:hover { transform: none; }
@@ -3872,10 +3872,10 @@ body.money-hidden .money-value {
   min-height: var(--tips-card-min-height);
   padding: 18px 20px 16px;
   border-radius: 14px;
-  background: rgba(24, 18, 39, 0.72);
+  background: var(--glass);
 }
 
-.tips-compact-card:hover { transform: translateY(-2px); }
+.tips-compact-card:hover { transform: translateY(-2px); background: var(--glass-hover); }
 .tips-compact-card[open] { border-color: rgba(184, 255, 90, 0.3); }
 
 .tips-compact-card summary {
