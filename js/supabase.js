@@ -36,6 +36,14 @@ window.MYLIFE_SUPABASE_API = {
     }
     return window.supabaseClient.auth.signUp({ email, password });
   },
+  async resetPassword(email) {
+    if (!window.supabaseClient) {
+      throw new Error("Supabase is not configured.");
+    }
+    return window.supabaseClient.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}${window.location.pathname}`
+    });
+  },
   async signOut() {
     if (!window.supabaseClient) return { error: null };
     return window.supabaseClient.auth.signOut();

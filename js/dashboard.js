@@ -74,12 +74,15 @@ function renderHome() {
           </div>
         </div>
 
-        <div class="home-profile-side home-profile-trigger" role="button" tabindex="0" data-action="setup-profile" aria-label="${t("editProfile")}">
+        <div class="home-profile-side home-profile-trigger" role="button" tabindex="0" aria-label="${t("editProfile")}">
           <div class="home-avatar-ring">
             <span class="home-user-avatar">${profilePhoto}</span>
           </div>
           <div class="home-profile-meta">
             <strong>${escapeHtml(profileName)}</strong>
+          </div>
+          <div class="home-profile-menu" aria-hidden="true">
+            <button type="button" class="home-profile-menu-item" data-account-action="edit-profile">Edit profile</button>
           </div>
         </div>
       </div>
@@ -936,13 +939,39 @@ function bindHome() {
   document.querySelectorAll('[data-action="smart-assistant"]').forEach(button => button.addEventListener("click", () => SmartAssistant.open()));
   document.querySelectorAll('[data-action="create-user"]').forEach(button => button.addEventListener("click", () => openCreateUserModal()));
   document.querySelectorAll('[data-action="add-goal"]').forEach(button => button.addEventListener("click", () => openGoalModal()));
-  document.querySelectorAll('[data-action="setup-profile"]').forEach(button => {
-    button.addEventListener("click", () => openProfileModal());
+  document.querySelectorAll('[data-account-action]').forEach(button => {
+    button.addEventListener("click", async event => {
+      event.stopPropagation();
+      const action = button.dataset.accountAction;
+      if (action === "edit-profile") {
+        openProfileModal();
+        document.querySelector(".home-profile-side")?.classList.remove("menu-open");
+        return;
+      }
+      if (action === "logout") {
+        await Login.logout();
+        App.render();
+        return;
+      }
+      Login.open();
+    });
+  });
+  document.querySelectorAll('.home-profile-side').forEach(button => {
+    button.addEventListener("click", event => {
+      if (event.target.closest('[data-account-action]')) return;
+      button.classList.toggle("menu-open");
+    });
     button.addEventListener("keydown", event => {
       if (event.key === "Enter" || event.key === " ") {
         event.preventDefault();
-        openProfileModal();
+        button.classList.toggle("menu-open");
       }
     });
+  });
+
+  document.addEventListener("click", event => {
+    if (!event.target.closest(".home-profile-side")) {
+      document.querySelectorAll(".home-profile-side").forEach(panel => panel.classList.remove("menu-open"));
+    }
   });
 }

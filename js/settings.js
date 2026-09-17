@@ -18,6 +18,7 @@ function renderSettings() {
           <button class="settings-tool" data-action="export-excel">${Icons.chart()} <span>${t("exportExcel")}</span></button>
           <button class="settings-tool" data-action="load-demo">${Icons.plus()} <span>${t("loadDemo")}</span></button>
           <button class="settings-tool settings-tool-icon-only" data-action="edit-footer" aria-label="${languageCode() === "km" ? "កែប្រែ Footer" : "Customize footer"}" title="${languageCode() === "km" ? "កែប្រែ Footer" : "Customize footer"}">${Icons.edit()}</button>
+          <button class="settings-tool danger" data-action="logout">${Icons.logout ? Icons.logout() : Icons.arrowUp()} <span>Log out</span></button>
           <button class="settings-tool danger" data-action="clear-data">${Icons.trash()} <span>${t("clearData")}</span></button>
         </aside>
 
@@ -130,6 +131,24 @@ function openProfileModal() {
       Toast.show(t("profileSaved"));
     }
   });
+
+  const modalForm = document.getElementById("modalForm");
+  const footer = modalForm?.querySelector(".between");
+  if (!modalForm || !footer || footer.dataset.logoutInserted === "true") return;
+
+  const logoutButton = document.createElement("button");
+  logoutButton.type = "button";
+  logoutButton.className = "button ghost-button";
+  logoutButton.dataset.logoutProfile = "true";
+  logoutButton.textContent = "Log out";
+  logoutButton.addEventListener("click", async () => {
+    Modal.close();
+    await Login.logout();
+    App.render();
+  });
+
+  footer.insertBefore(logoutButton, footer.firstChild);
+  footer.dataset.logoutInserted = "true";
 }
 
 function firstRecord(collection) {
@@ -308,6 +327,17 @@ function bindSettings() {
       Store.loadDemoData();
       Toast.show(t("demoLoaded"));
     }});
+  });
+  bindSettingsAction("logout", async () => {
+    Modal.confirm({
+      title: "Log out",
+      message: "Log out of your Supabase account and return to the login screen?",
+      confirmText: "Log out",
+      onConfirm: async () => {
+        await Login.logout();
+        Toast.show("Logged out");
+      }
+    });
   });
   bindSettingsAction("clear-data", () => {
     Modal.confirm({ title: t("clearData"), message: t("clearDataMessage"), confirmText: t("clearData"), onConfirm: () => {
