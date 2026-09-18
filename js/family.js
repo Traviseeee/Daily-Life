@@ -1,3 +1,5 @@
+let familyMediaTimer = null;
+
 function renderFamily() {
   const familyEvents = appData.calendarEvents.filter(event => event.category === "Family");
   return `
@@ -12,7 +14,9 @@ function renderFamily() {
           <button class="button" data-action="add-family">${Icons.plus()} ${t("addFamilyMember")}</button>
         </div>
       </div>
+      ${familyMediaCard()}
       ${appData.family.length ? `<div class="grid three-col">${appData.family.map(memberCard).join("")}</div>` : familyEmptyCard()}
+      ${relationshipAnniversaryCards()}
       ${familyPhotoCard()}
       <div class="grid two-col" style="margin-top:18px">
         <article class="glass-card card-pad">
@@ -35,6 +39,84 @@ function renderFamily() {
       </div>
     </section>
   `;
+}
+
+function familyMediaCard() {
+  const media = Array.isArray(appData.familyMedia) ? appData.familyMedia : [];
+  const active = media[0];
+  return `
+    <article class="glass-card family-media-card">
+      <div class="family-photo-heading">
+        <div><h2>${escapeHtml(t("familyMediaHelp"))}</h2></div>
+        <label class="icon-button family-media-add" title="${escapeAttr(t("addFamilyMedia"))}">${Icons.plus()}<input type="file" accept="image/*,video/*" multiple data-family-media></label>
+      </div>
+      ${active ? `<div class="family-media-stage">${active.type === "video" ? `<video src="${escapeAttr(active.src)}" autoplay muted loop playsinline controls></video>` : `<img src="${escapeAttr(active.src)}" alt="${escapeAttr(t("familyMedia"))}">`}<button class="family-media-control family-media-prev" type="button" data-family-media-prev aria-label="Previous">${Icons.chevron()}</button><button class="family-media-control family-media-next" type="button" data-family-media-next aria-label="Next">${Icons.chevron()}</button></div><div class="family-media-dots">${media.map((item, index) => `<button type="button" class="family-media-dot ${index === 0 ? "active" : ""}" data-family-media-index="${index}" aria-label="${index + 1}"></button>`).join("")}</div>` : `<div class="family-media-empty">${Icons.memory()}<span>${escapeHtml(t("noFamilyMedia"))}</span></div>`}
+    </article>
+  `;
+}
+
+function relationshipAnniversaryCards() {
+  const seenPairs = new Set();
+  return appData.family.filter(member => member.relatedMemberId && member.anniversaryDate).map(member => {
+    const relatedMember = appData.family.find(item => item.id === member.relatedMemberId);
+    if (!relatedMember) return "";
+    const pairKey = [member.id, relatedMember.id].sort().join(":");
+    if (seenPairs.has(pairKey)) return "";
+    seenPairs.add(pairKey);
+    return relationshipAnniversaryCard(member);
+  }).join("");
+}
+
+function relationshipAnniversaryCard(member) {
+  const relatedMember = appData.family.find(item => item.id === member.relatedMemberId);
+  if (!relatedMember) return "";
+  const days = daysSinceDate(member.anniversaryDate);
+  const nextMilestone = Math.ceil(Math.max(days, 1) / 1000) * 1000;
+  const previousMilestone = Math.max(nextMilestone - 1000, 0);
+  const progress = Math.min(100, Math.max(0, ((days - previousMilestone) / (nextMilestone - previousMilestone || 1)) * 100));
+  const anniversaryDate = nextAnnualDate(member.anniversaryDate);
+  const birthdayDates = [nextBirthdayDate(member.birthday), nextBirthdayDate(relatedMember.birthday)].filter(Boolean).sort();
+  const upcomingBirthday = birthdayDates[0] || "";
+  return `
+    <article class="glass-card family-anniversary-card">
+      <div class="family-anniversary-heading">
+        <div><span class="eyebrow">${escapeHtml(t("ourAnniversary"))}</span><h2>${escapeHtml(member.name)} &amp; ${escapeHtml(relatedMember.name)}</h2></div>
+        <span class="icon-badge green">${Icons.spark()}</span>
+      </div>
+      <div class="family-anniversary-hero">
+        <strong>${escapeHtml(t("beenTogether"))}</strong>
+        <span>${days} ${escapeHtml(t("days"))}</span>
+      </div>
+      <div class="family-anniversary-timeline" style="--timeline-progress: ${progress}%">
+        <div class="family-anniversary-track"><span></span></div>
+        <div class="family-anniversary-milestone"><strong>${previousMilestone}</strong><span>${escapeHtml(t("days"))}</span></div>
+        <div class="family-anniversary-milestone current"><strong>${days}</strong><span>${escapeHtml(t("today"))}</span></div>
+        <div class="family-anniversary-milestone"><strong>${nextMilestone}</strong><span>${escapeHtml(t("days"))}</span></div>
+      </div>
+      <div class="family-anniversary-stats">
+        <div><span>${escapeHtml(t("relationshipStart"))}</span><strong>${formatDate(member.anniversaryDate)}</strong></div>
+        <div><span>${escapeHtml(t("nextAnniversary"))}</span><strong>${formatDate(anniversaryDate)}</strong></div>
+        ${upcomingBirthday ? `<div><span>${escapeHtml(t("upcomingBirthday"))}</span><strong>${formatDate(upcomingBirthday)}</strong></div>` : ""}
+      </div>
+    </article>
+  `;
+}
+
+function nextAnnualDate(value) {
+  const start = parseAppDate(value);
+  const next = new Date(new Date().getFullYear(), start.getMonth(), start.getDate());
+  if (next <= new Date()) next.setFullYear(next.getFullYear() + 1);
+  return next.toISOString().slice(0, 10);
+}
+
+function nextBirthdayDate(value) {
+  if (!value) return "";
+  const birthDate = parseAppDate(value);
+  if (Number.isNaN(birthDate.getTime())) return "";
+  const today = new Date();
+  let next = new Date(today.getFullYear(), birthDate.getMonth(), birthDate.getDate());
+  if (next < new Date(today.getFullYear(), today.getMonth(), today.getDate())) next.setFullYear(next.getFullYear() + 1);
+  return next.toISOString().slice(0, 10);
 }
 
 function familyPhotoCard() {
@@ -83,13 +165,15 @@ function familyEmptyCard() {
 }
 
 function memberCard(member) {
+  const relatedMember = appData.family.find(item => item.id === member.relatedMemberId);
+  const relationshipDays = relatedMember ? daysSinceDate(member.anniversaryDate) : 0;
   return `
     <article class="glass-card card-pad family-member-card">
       <div class="family-member-head">
         <span class="thumb">${member.photo ? `<img src="${member.photo}" alt="">` : initials(member.name)}</span>
         <div class="family-member-identity">
           <h2>${escapeHtml(member.name)}</h2>
-          <p class="secondary">${escapeHtml(member.relationship)}</p>
+          <p class="secondary">${escapeHtml(member.relationship)}${relatedMember ? ` · ${escapeHtml(relatedMember.name)}` : ""}</p>
         </div>
         <span class="action-row">
           <button class="icon-button" data-edit-family="${member.id}" aria-label="Edit ${member.name}">${Icons.edit()}</button>
@@ -101,6 +185,7 @@ function memberCard(member) {
         ${member.characterMood ? `<span class="pill family-mood-tag">${escapeHtml(member.characterMood)}</span>` : ""}
         ${member.favorite ? `<span class="pill family-favorite-tag">${escapeHtml(member.favorite)}</span>` : ""}
       </div>
+      ${relationshipDays ? `<p class="secondary family-relationship-duration">${escapeHtml(t("togetherFor").replace("{days}", relationshipDays))}</p>` : ""}
       <div class="kv">
         <div><span>${t("birthday")}</span><strong>${formatDate(member.birthday, { month: "short", day: "numeric" })}</strong></div>
         <div><span>${t("anniversary")}</span><strong>${formatDate(member.anniversaryDate, { month: "short", day: "numeric" })}</strong></div>
@@ -123,16 +208,18 @@ function familyFields(member = {}) {
   if (member.relationship && !relationshipOptions.includes(member.relationship)) relationshipOptions.unshift(member.relationship);
   if (member.zodiacSign && !zodiacOptions.includes(member.zodiacSign)) zodiacOptions.unshift(member.zodiacSign);
   if (member.characterMood && !moodOptions.includes(member.characterMood)) moodOptions.unshift(member.characterMood);
+  const relatedMembers = appData.family.filter(item => item.id !== member.id);
   const fields = [
     { type: "heading", label: t("familyProfileSection"), description: t("familyProfileSectionHelp") },
-    ...(appData.family.length && !member.id ? [{ name: "existingMember", label: t("chooseExistingMember"), type: "select", options: ["", ...appData.family.map(item => item.id)], optionLabels: [t("newFamilyProfile"), ...appData.family.map(item => item.name)], value: "" }] : []),
+    ...(appData.family.length ? [{ name: "existingMember", label: t("chooseExistingMember"), type: "select", options: ["", ...appData.family.map(item => item.id)], optionLabels: [t("newFamilyProfile"), ...appData.family.map(item => item.name)], value: member.id || "" }] : []),
     { name: "name", label: t("name"), value: member.name, required: true },
     { name: "relationship", label: t("relationship"), type: "select", options: relationshipOptions, value: member.relationship, required: true },
+    { name: "relatedMemberId", label: t("relatedPerson"), type: "select", options: ["", ...relatedMembers.map(item => item.id)], optionLabels: [t("noRelatedPerson"), ...relatedMembers.map(item => item.name)], value: member.relatedMemberId || "" },
     { name: "characterMood", label: t("characterMood"), type: "select", options: moodOptions, value: member.characterMood },
     { type: "heading", label: t("familyDatesSection"), description: t("familyDatesSectionHelp") },
     { name: "birthday", label: t("birthday"), type: "date", value: member.birthday },
     { name: "zodiacSign", label: t("zodiacSign"), type: "select", options: zodiacOptions, value: member.zodiacSign },
-    { name: "anniversaryDate", label: t("anniversary"), type: "date", value: member.anniversaryDate },
+    { name: "anniversaryDate", label: member.relatedMemberId ? t("relationshipStart") : t("anniversary"), type: "date", value: member.anniversaryDate },
     { type: "heading", label: t("familyCareSection"), description: t("familyCareSectionHelp") },
     { name: "phone", label: t("phone"), value: member.phone },
     { name: "favorite", label: t("favorite"), value: member.favorite },
@@ -143,8 +230,19 @@ function familyFields(member = {}) {
   return fields;
 }
 
+function daysSinceDate(value) {
+  if (!value) return 0;
+  const start = parseAppDate(value);
+  const today = new Date();
+  start.setHours(0, 0, 0, 0);
+  today.setHours(0, 0, 0, 0);
+  const days = Math.floor((today - start) / 86400000);
+  return days >= 0 ? days : 0;
+}
+
 function openFamilyModal(member) {
   const isEditing = Boolean(member?.id);
+  let activeMember = member;
   Modal.open({
     title: isEditing ? t("editFamilyMember") : t("addFamilyMember"),
     submitText: isEditing ? t("saveFamilyMember") : t("addFamilyMember"),
@@ -155,7 +253,7 @@ function openFamilyModal(member) {
       const existing = data.existingMember ? appData.family.find(item => item.id === data.existingMember) : null;
       if (existing && !data.photo) data.photo = existing.photo || "";
       delete data.existingMember;
-      if (isEditing || existing) Store.edit("family", (member || existing).id, data);
+      if (isEditing || existing) Store.edit("family", (activeMember || existing).id, data);
       else Store.add("family", data);
       Toast.show(isEditing || existing ? t("familyMemberSaved") : t("familyMemberAdded"));
     }
@@ -181,7 +279,8 @@ function openFamilyModal(member) {
   existingMemberInput?.addEventListener("change", () => {
     const selected = appData.family.find(item => item.id === existingMemberInput.value);
     if (!selected) return;
-    ["name", "relationship", "characterMood", "birthday", "zodiacSign", "anniversaryDate", "phone", "favorite", "relationshipNote", "notes"].forEach(name => {
+    activeMember = selected;
+    ["name", "relationship", "relatedMemberId", "characterMood", "birthday", "zodiacSign", "anniversaryDate", "phone", "favorite", "relationshipNote", "notes"].forEach(name => {
       const input = document.querySelector(`#${name}`);
       if (input) input.value = selected[name] || "";
     });
@@ -264,7 +363,36 @@ function zodiacSignForDate(value) {
   return "Pisces";
 }
 
-function bindFamily() {
+function bindFamily(options = {}) {
+  document.querySelector("[data-family-media]")?.addEventListener("change", async event => {
+    const files = [...(event.target.files || [])].slice(0, 8);
+    const validFiles = files.filter(file => file.size <= 15 * 1024 * 1024);
+    if (validFiles.length < files.length) Toast.show(t("mediaTooLarge"));
+    const additions = await Promise.all(validFiles.map(async file => ({
+      id: `family-media-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      type: file.type.startsWith("video/") ? "video" : "image",
+      src: file.type.startsWith("image/") ? await readImageFile(file) : await readRawFile(file)
+    })));
+    appData.familyMedia = [...(appData.familyMedia || []), ...additions].slice(-8);
+    Store.save();
+    App.render();
+  });
+  document.querySelectorAll("[data-family-media-prev], [data-family-media-next], [data-family-media-index]").forEach(button => button.addEventListener("click", () => {
+    const media = appData.familyMedia || [];
+    if (!media.length) return;
+    const current = Number(document.querySelector(".family-media-dot.active")?.dataset.familyMediaIndex || 0);
+    const next = button.dataset.familyMediaIndex !== undefined ? Number(button.dataset.familyMediaIndex) : button.hasAttribute("data-family-media-next") ? (current + 1) % media.length : (current - 1 + media.length) % media.length;
+    const selected = media[next];
+    const stage = document.querySelector(".family-media-stage");
+    if (!stage || !selected) return;
+    stage.innerHTML = `${selected.type === "video" ? `<video src="${escapeAttr(selected.src)}" autoplay muted loop playsinline controls></video>` : `<img src="${escapeAttr(selected.src)}" alt="${escapeAttr(t("familyMedia"))}">`}<button class="family-media-control family-media-prev" type="button" data-family-media-prev aria-label="Previous">${Icons.chevron()}</button><button class="family-media-control family-media-next" type="button" data-family-media-next aria-label="Next">${Icons.chevron()}</button>`;
+    document.querySelectorAll(".family-media-dot").forEach(dot => dot.classList.toggle("active", Number(dot.dataset.familyMediaIndex) === next));
+    bindFamilyMediaStage();
+  }));
+  if (options.mediaOnly) {
+    startFamilyMediaSlideshow();
+    return;
+  }
   document.querySelector("[data-family-photo]")?.addEventListener("change", async event => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -278,8 +406,10 @@ function bindFamily() {
         key: "family-photo",
         title: languageCode() === "km" ? "លៃតម្រូវរូបថត" : "Adjust photo",
         onSave: position => {
-          localStorage.setItem("mylife:family-photo", dataUrl);
-          localStorage.setItem("mylife:family-photo-position", JSON.stringify(position));
+          if (!isGuestMode()) {
+            localStorage.setItem("mylife:family-photo", dataUrl);
+            localStorage.setItem("mylife:family-photo-position", JSON.stringify(position));
+          }
           App.render();
         },
         onCancel: () => {
@@ -307,5 +437,30 @@ function bindFamily() {
       Store.delete("calendarEvents", button.dataset.deleteEvent);
       Toast.show(t("eventDeleted"));
     }});
+  }));
+  startFamilyMediaSlideshow();
+}
+
+function startFamilyMediaSlideshow() {
+  clearInterval(familyMediaTimer);
+  familyMediaTimer = null;
+  const media = appData.familyMedia || [];
+  const stage = document.querySelector(".family-media-stage");
+  if (media.length < 2 || !stage) return;
+  let paused = false;
+  stage.addEventListener("mouseenter", () => { paused = true; });
+  stage.addEventListener("mouseleave", () => { paused = false; });
+  familyMediaTimer = setInterval(() => {
+    if (!paused) document.querySelector("[data-family-media-next]")?.click();
+  }, 4500);
+}
+
+function bindFamilyMediaStage() {
+  document.querySelectorAll(".family-media-stage [data-family-media-prev], .family-media-stage [data-family-media-next]").forEach(button => button.addEventListener("click", () => {
+    const media = appData.familyMedia || [];
+    if (!media.length) return;
+    const current = Number(document.querySelector(".family-media-dot.active")?.dataset.familyMediaIndex || 0);
+    const next = button.hasAttribute("data-family-media-next") ? (current + 1) % media.length : (current - 1 + media.length) % media.length;
+    document.querySelector(`.family-media-dot[data-family-media-index="${next}"]`)?.click();
   }));
 }

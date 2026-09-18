@@ -3,6 +3,7 @@ const LOGIN_SESSION_KEY = "mylife:login-session:v1";
 const Login = {
   isOpen: false,
   authenticated: false,
+  guestMode: false,
 
   getRememberedSession() {
     try {
@@ -87,6 +88,7 @@ const Login = {
           </div>
           <p class="login-error" id="loginError" role="alert"></p>
           <button type="submit" class="button login-button">${isReset ? "Send reset link" : hasAccount ? t("unlock") : isLegacy ? t("secureAccount") : supabaseConfigured ? (isSignup ? "Create account" : "Log in") : t("createAccount")}</button>
+          <button type="button" class="login-guest-button" id="loginGuestButton">${t("continueAsGuest")}</button>
           ${(supabaseConfigured || hasAccount) && !isReset ? `<button type="button" class="login-reset-link" id="loginResetButton">${t("forgotPassword")}</button>` : ""}
         </form>
         <div class="login-footer">
@@ -116,8 +118,20 @@ const Login = {
       this.close();
       this.open("reset");
     });
+    document.getElementById("loginGuestButton")?.addEventListener("click", () => this.startGuest());
 
     document.getElementById(isReset ? "loginName" : hasAccount ? "loginPassword" : "loginName").focus();
+  },
+
+  startGuest() {
+    const language = appData.profile.language || "English";
+    Object.assign(appData, structuredClone(emptyData), demoData());
+    appData.profile = { ...emptyData.profile, ...appData.profile, name: t("guestPreview"), language };
+    this.guestMode = true;
+    this.authenticated = true;
+    this.setRememberedSession(false);
+    this.close();
+    App.render();
   },
 
   async submit(hasAccount, isReset, isLegacy, isSignup = false) {
@@ -244,6 +258,10 @@ const Login = {
     }
 
     localStorage.removeItem(LOGIN_SESSION_KEY);
+    if (this.guestMode) {
+      Object.assign(appData, structuredClone(emptyData));
+      this.guestMode = false;
+    }
     this.authenticated = false;
     this.isOpen = false;
     this.close();

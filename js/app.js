@@ -702,7 +702,7 @@ function saveImagePosition(key, position) {
   else if (key.startsWith("memory:")) Store.edit("memories", key.slice(7), { photoPosition: position });
   else if (key === "family-photo" || key === "tips-couple") {
     const storageKey = key === "family-photo" ? "mylife:family-photo-position" : "mylife:tips-couple-image-position";
-    localStorage.setItem(storageKey, JSON.stringify(position));
+    if (!isGuestMode()) localStorage.setItem(storageKey, JSON.stringify(position));
   }
 }
 

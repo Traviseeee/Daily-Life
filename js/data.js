@@ -1,5 +1,6 @@
 const STORAGE_KEY = "mylife:user-data:v1";
 const SUPABASE_TABLE = "app_data";
+const isGuestMode = () => typeof Login !== "undefined" && Login.guestMode;
 
 const getSupabaseConfig = () => {
   const config = window.MYLIFE_SUPABASE || {};
@@ -85,6 +86,7 @@ const emptyData = {
     items: []
   },
   family: [],
+  familyMedia: [],
   goals: [],
   income: [],
   expenses: [],
@@ -292,6 +294,7 @@ const Store = {
     return true;
   },
   save(options = {}) {
+    if (isGuestMode()) return true;
     try {
       saveLocalSnapshot(appData);
       if (options.sync !== false) this.syncToSupabase();
@@ -517,7 +520,8 @@ const Store = {
       appData[collection].push({ id: id(collection), createdAt: new Date().toISOString(), ...item });
     };
 
-    upsertFirst("family", data.familyEnabled, ["name", "relationship", "birthday", "anniversaryDate", "phone", "characterMood", "zodiacSign", "favorite", "relationshipNote", "notes"], {
+    const familyMemberIndex = appData.family.findIndex(member => member.id === data.familyMemberId);
+    const familyItem = {
       name: data.familyName || "",
       relationship: data.familyRelationship || "",
       characterMood: data.familyCharacterMood || "",
@@ -528,8 +532,12 @@ const Store = {
       favorite: data.familyFavorite || "",
       relationshipNote: data.familyRelationshipNote || "",
       notes: data.familyNotes || "",
-      photo: appData.family[0]?.photo || ""
-    });
+      photo: appData.family[familyMemberIndex >= 0 ? familyMemberIndex : 0]?.photo || ""
+    };
+    if (!data.familyEnabled) appData.family = [];
+    else if (!Object.values(familyItem).some(value => hasValue(value))) appData.family = [];
+    else if (familyMemberIndex >= 0) appData.family[familyMemberIndex] = { ...appData.family[familyMemberIndex], ...familyItem, updatedAt: new Date().toISOString() };
+    else upsertFirst("family", true, ["name", "relationship", "birthday", "anniversaryDate", "phone", "characterMood", "zodiacSign", "favorite", "relationshipNote", "notes"], familyItem);
     upsertFirst("goals", data.goalEnabled, ["name", "targetAmount", "currentAmount", "deadline", "description"], {
       name: data.goalName || "",
       category: data.goalCategory || "Personal",
@@ -910,7 +918,14 @@ function loanMonthlyEquivalent(loan) {
 
 function formatDate(value, options = { month: "short", day: "numeric", year: "numeric" }) {
   if (!value) return "Not set";
-  return parseAppDate(value).toLocaleDateString(languageCode() === "km" ? "km-KH" : "en-US", options);
+  const date = parseAppDate(value);
+  if (languageCode() === "km" && options.month) {
+    const months = ["មករា", "កុម្ភៈ", "មីនា", "មេសា", "ឧសភា", "មិថុនា", "កក្កដា", "សីហា", "កញ្ញា", "តុលា", "វិច្ឆិកា", "ធ្នូ"];
+    const parts = [String(date.getDate()), months[date.getMonth()]];
+    if (options.year) parts.push(String(date.getFullYear()));
+    return parts.join(" ");
+  }
+  return date.toLocaleDateString("en-US", options);
 }
 
 function parseAppDate(value) {

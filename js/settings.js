@@ -194,6 +194,10 @@ function sectionToggle(name, enabled) {
 function buildUserDataFields(mode = "create") {
   const isEdit = mode === "edit";
   const family = firstRecord("family");
+  const relationshipOptions = ["Me", "Wife", "Husband", "Girlfriend", "Boyfriend", "Mother", "Father", "Daughter", "Son", "Sister", "Brother", "Grandmother", "Grandfather", "Friend", "Other"];
+  appData.family.slice(0, 10).forEach(member => {
+    if (member.relationship && !relationshipOptions.includes(member.relationship)) relationshipOptions.unshift(member.relationship);
+  });
   const goal = firstRecord("goals");
   const income = firstRecord("income");
   const expense = firstRecord("expenses");
@@ -213,8 +217,8 @@ function buildUserDataFields(mode = "create") {
 
     { type: "heading", label: t("family"), icon: Icons.family() },
     ...(isEdit ? [sectionToggle("family", appData.family.length > 0)] : []),
-    { name: "familyName", label: t("familyMemberName"), value: family.name },
-    { name: "familyRelationship", label: t("relationship"), value: family.relationship },
+    ...(isEdit && appData.family.length ? [{ name: "familyName", label: t("familyMemberName"), type: "select", options: appData.family.map(item => item.id), optionLabels: appData.family.map(item => item.name), value: family.id }] : [{ name: "familyName", label: t("familyMemberName"), value: family.name }]),
+    { name: "familyRelationship", label: t("relationship"), type: "select", options: relationshipOptions, value: family.relationship },
     { name: "familyCharacterMood", label: t("characterMood"), value: family.characterMood },
     { name: "familyBirthday", label: t("birthday"), type: "date", value: family.birthday },
     { name: "familyZodiacSign", label: t("zodiacSign"), type: "select", options: ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"], value: family.zodiacSign },
@@ -337,9 +341,35 @@ function openEditUserDataModal() {
     grouped: true,
     fields: buildUserDataFields("edit"),
     onSubmit(data) {
+      const selectedMember = appData.family.find(item => item.id === data.familyName);
+      if (selectedMember) {
+        data.familyMemberId = selectedMember.id;
+        data.familyName = selectedMember.name;
+      }
       Store.updateUserData(data);
       Toast.show(t("userDataSaved"));
     }
+  });
+  const familyNameInput = document.querySelector("#familyName");
+  familyNameInput?.addEventListener("change", () => {
+    const selected = appData.family.find(item => item.id === familyNameInput.value);
+    if (!selected) return;
+    const fields = {
+      familyCharacterMood: selected.characterMood,
+      familyBirthday: selected.birthday,
+      familyZodiacSign: selected.zodiacSign,
+      familyAnniversaryDate: selected.anniversaryDate,
+      familyPhone: selected.phone,
+      familyFavorite: selected.favorite,
+      familyRelationshipNote: selected.relationshipNote,
+      familyNotes: selected.notes
+    };
+    Object.entries(fields).forEach(([name, value]) => {
+      const input = document.querySelector(`#${name}`);
+      if (input) input.value = value || "";
+    });
+    const relationshipInput = document.querySelector("#familyRelationship");
+    if (relationshipInput) relationshipInput.value = selected.relationship || "";
   });
 }
 

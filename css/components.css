@@ -1387,6 +1387,36 @@
   white-space: nowrap;
 }
 
+.family-anniversary-card {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 14px;
+  border-color: rgba(155, 109, 255, 0.24);
+  background: linear-gradient(145deg, rgba(155, 109, 255, 0.12), transparent 48%), var(--glass);
+  animation: anniversaryCardIn 520ms ease both;
+}
+.family-anniversary-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.family-anniversary-heading h2 { margin: 3px 0 0; font-size: 1.08rem; }
+.family-anniversary-hero { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px; border: 1px solid rgba(155, 109, 255, 0.2); border-radius: 13px; background: rgba(155, 109, 255, 0.09); }
+.family-anniversary-hero strong { font-size: 1rem; }
+.family-anniversary-hero span { padding: 6px 9px; border-radius: 999px; color: #d7c9ff; background: rgba(155, 109, 255, 0.18); font-size: 0.78rem; font-weight: 800; }
+.family-anniversary-timeline { position: relative; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; padding-top: 16px; }
+.family-anniversary-track { position: absolute; top: 5px; right: 8%; left: 8%; height: 4px; overflow: hidden; border-radius: 99px; background: rgba(155, 109, 255, 0.16); }
+.family-anniversary-track::before, .family-anniversary-track span { position: absolute; inset: 0 auto 0 0; content: ""; border-radius: inherit; }
+.family-anniversary-track::before { width: var(--timeline-progress); background: linear-gradient(90deg, #9b6dff, #ff9d2e); animation: anniversaryProgress 900ms 220ms ease both; transform-origin: left; }
+.family-anniversary-track span { top: -3px; left: var(--timeline-progress); width: 10px; height: 10px; background: #ff9d2e; box-shadow: 0 0 0 5px rgba(255,157,46,0.14); transform: translateX(-50%); }
+.family-anniversary-milestone { display: grid; gap: 3px; color: var(--text-secondary); text-align: center; }
+.family-anniversary-milestone strong { color: var(--text-primary); font-size: 0.9rem; }
+.family-anniversary-milestone span { font-size: 0.7rem; }
+.family-anniversary-milestone.current strong { color: #ff9d2e; }
+.family-anniversary-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; }
+.family-anniversary-stats div { display: grid; gap: 4px; min-width: 0; padding: 9px; border: 1px solid rgba(255,255,255,0.07); border-radius: 10px; background: rgba(255,255,255,0.035); }
+.family-anniversary-stats span { color: var(--text-secondary); font-size: 0.72rem; }
+.family-anniversary-stats strong { overflow: hidden; font-size: 0.86rem; text-overflow: ellipsis; white-space: nowrap; }
+@keyframes anniversaryCardIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes anniversaryProgress { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
 :root[data-theme="light"] .topbar,
 :root[data-theme="light"] .sidebar,
 :root[data-theme="light"] .mobile-nav {
@@ -1959,6 +1989,25 @@
 .family-photo-frame svg { width: 42px; height: 42px; }
 .family-photo-upload { justify-self: start; }
 .family-photo-upload input { display: none; }
+.family-media-card { display: grid; gap: 12px; margin-top: 14px; padding: 18px; overflow: hidden; }
+.family-media-card .family-photo-heading { min-height: 38px; align-items: center; }
+.family-media-card h2 { max-width: 100%; margin: 0; font-size: 0.94rem; line-height: 1.25; overflow-wrap: anywhere; }
+.family-media-add { position: relative; flex: 0 0 auto; color: var(--accent-light); cursor: pointer; }
+.family-media-add input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+.family-media-stage { position: relative; overflow: hidden; aspect-ratio: 16 / 6; border-radius: 14px; background: rgba(7,5,18,0.25); }
+.family-media-stage img, .family-media-stage video { display: block; width: 100%; height: 100%; object-fit: cover; }
+.family-media-stage img, .family-media-stage video { animation: familyMediaFade 360ms ease both; }
+.family-media-control { position: absolute; top: 50%; display: grid; place-items: center; width: 34px; height: 34px; border: 1px solid rgba(255,255,255,0.34); border-radius: 50%; color: #fff; background: rgba(8,12,20,0.54); transform: translateY(-50%); cursor: pointer; }
+.family-media-control svg { width: 17px; height: 17px; }
+.family-media-control:hover { background: rgba(8,12,20,0.78); }
+.family-media-prev { left: 10px; transform: translateY(-50%) rotate(180deg); }
+.family-media-next { right: 10px; }
+.family-media-dots { display: flex; justify-content: center; gap: 6px; }
+.family-media-dot { width: 7px; height: 7px; padding: 0; border: 0; border-radius: 50%; background: rgba(112,143,170,0.38); cursor: pointer; }
+.family-media-dot.active { width: 20px; border-radius: 99px; background: var(--accent-light); }
+.family-media-empty { display: grid; justify-items: center; gap: 6px; min-height: 76px; padding: 14px 16px; border: 1px dashed rgba(112,143,170,0.3); border-radius: 13px; color: var(--text-secondary); font-size: 0.82rem; text-align: center; }
+.family-media-empty svg { width: 22px; height: 22px; color: var(--accent-light); }
+@keyframes familyMediaFade { from { opacity: 0.55; transform: translateX(22px); } to { opacity: 1; transform: translateX(0); } }
 
 .image-position-preview {
   display: grid;
@@ -4785,6 +4834,20 @@ body.money-hidden .money-value {
   font-weight: 700;
   text-decoration: underline;
 }
+
+.login-guest-button {
+  align-self: center;
+  padding: 8px 14px;
+  border: 1px solid rgba(255, 138, 0, 0.28);
+  border-radius: 10px;
+  color: #9a4d00;
+  background: rgba(255, 255, 255, 0.28);
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.login-guest-button:hover { background: rgba(255, 255, 255, 0.52); }
 
 .login-footer {
   text-align: center;

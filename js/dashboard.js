@@ -8,7 +8,6 @@ function renderHome() {
   const firstName = profileName.split(/\s+/).filter(Boolean)[0] || "there";
   const profilePosition = imagePosition(appData.profile.photoPosition);
   const profilePhoto = appData.profile.photo ? `<img src="${appData.profile.photo}" style="--image-position-x: ${profilePosition.x}%; --image-position-y: ${profilePosition.y}%;" alt="${escapeHtml(profileName)}">` : initials(profileName);
-  const todayLabel = new Date().toLocaleDateString(languageCode() === "km" ? "km-KH" : "en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" });
   const moodOptions = [
     { value: "happy", emoji: "😊", label: t("moodHappy"), robot: t("moodCheerful") },
     { value: "calm", emoji: "😌", label: t("moodCalm"), robot: t("moodBalanced") },
@@ -62,11 +61,6 @@ function renderHome() {
         <div class="home-hero-copy">
           <span class="eyebrow">${t("privateDashboard")}</span>
           <h1 class="page-title">${t("goodMorning")}, ${escapeHtml(firstName)}</h1>
-          <div class="home-date-row">
-            <span class="date-icon">📅</span>
-            <span class="date-line">${todayLabel}</span>
-          </div>
-
           <div class="home-quote-row">
             <span class="quote-mark">“</span>
             <p>${t("smallStepsBigWins")}</p>
@@ -86,6 +80,7 @@ function renderHome() {
           </div>
         </div>
       </div>
+      ${typeof familyMediaCard === "function" ? familyMediaCard() : ""}
 
       <div class="home-suggestion-banner">
         <span class="suggestion-badge">${Icons.spark()}</span>
@@ -616,8 +611,10 @@ function bindTips() {
           key: "tips-couple",
           title: languageCode() === "km" ? "លៃតម្រូវរូបគូស្នេហ៍" : "Adjust couple photo",
           onSave: position => {
-            localStorage.setItem("mylife:tips-couple-image", dataUrl);
-            localStorage.setItem("mylife:tips-couple-image-position", JSON.stringify(position));
+            if (!isGuestMode()) {
+              localStorage.setItem("mylife:tips-couple-image", dataUrl);
+              localStorage.setItem("mylife:tips-couple-image-position", JSON.stringify(position));
+            }
             App.render();
           },
           onCancel: () => {
@@ -645,7 +642,7 @@ function bindTips() {
   principlesForm?.addEventListener("submit", event => {
     event.preventDefault();
     const principles = principlesForm.querySelector("textarea").value.split("\n").map(item => item.trim()).filter(Boolean).slice(0, 10);
-    localStorage.setItem("mylife:family-principles", JSON.stringify(principles));
+    if (!isGuestMode()) localStorage.setItem("mylife:family-principles", JSON.stringify(principles));
     App.render();
   });
 }
@@ -884,6 +881,7 @@ function openTipsModal() {
 }
 
 function bindHome() {
+  if (typeof bindFamily === "function") bindFamily({ mediaOnly: true });
   document.querySelector("[data-family-photo]")?.addEventListener("change", async event => {
     const file = event.target.files?.[0];
     if (!file) return;

@@ -582,6 +582,9 @@
   .family-member-card .kv { gap: 6px; }
   .family-member-card .kv div { padding: 8px; }
   .family-member-card .kv strong { font-size: 0.75rem; }
+  .family-anniversary-stats { grid-template-columns: 1fr; }
+  .family-anniversary-hero { align-items: flex-start; flex-direction: column; }
+  .family-anniversary-timeline { gap: 5px; }
   article { margin-bottom: 12px; }
   .between {
     align-items: flex-start;
