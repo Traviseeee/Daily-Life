@@ -451,11 +451,14 @@ function importJsonData(event) {
         title: t("importJson"),
         message: t("importJsonMessage"),
         confirmText: t("importJson"),
-        onConfirm: async () => {
+        onConfirm: () => {
           Object.assign(appData, structuredClone(emptyData), imported);
           appData.profile = { ...emptyData.profile, ...(appData.profile || {}) };
-          const savedToSupabase = await Store.syncToSupabase();
-          if (!savedToSupabase) Store.save({ sync: false });
+          // A restore replaces everything, so the cloud copy is replaced rather than
+          // merged — merging would keep records the backup deliberately omits, and
+          // any tombstone carried by the backup still applies to its own contents.
+          SyncState.prune(appData);
+          Store.save({ mode: "replace", reason: "import" });
           App.render();
           Toast.show(t("jsonImported"));
         }

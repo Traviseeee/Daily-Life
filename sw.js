@@ -1,4 +1,4 @@
-const CACHE_NAME = "mylife-pwa-v16";
+const CACHE_NAME = "mylife-pwa-v17";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -13,6 +13,7 @@ const APP_SHELL = [
   "./js/components/toast.js",
   "./js/components/modal.js",
   "./js/components/charts.js",
+  "./js/sync.js",
   "./js/data.js",
   "./js/i18n.js",
   "./js/smart-assistant.js",
@@ -70,4 +71,3 @@ self.addEventListener("fetch", event => {
     })
   );
 });
-

@@ -6,7 +6,10 @@ const App = {
   interactionSoundBound: false,
   init() {
     Store.load();
-    Store.syncFromSupabase();
+    // Retry scheduling starts before the first network call, so a change that never
+    // reached the cloud is pushed as soon as the app can reach the network even if
+    // the pull below fails.
+    Store.startSyncRetry();
     Login.showIfNeeded();
     renderNavigation();
     this.bindChrome();
@@ -15,8 +18,26 @@ const App = {
     window.addEventListener("hashchange", () => this.render());
     window.addEventListener("popstate", () => this.render());
     this.render();
+    this.syncWithCloud();
     this.checkUpcomingAlerts();
     setTimeout(() => NotificationManager.sync(), 1200);
+  },
+  /**
+   * Reconciles with the cloud once the shell has already rendered.
+   *
+   * Deliberately not awaited: the UI must never wait on the network. Running the
+   * pull late is safe now because it is tombstone-aware and can no longer bring a
+   * deleted record back. It only re-renders when the user has not navigated away
+   * in the meantime.
+   */
+  syncWithCloud() {
+    const routeAtStart = this.route;
+    Promise.resolve(Store.syncFromSupabase())
+      .then(applied => {
+        if (!applied || this.route !== routeAtStart) return;
+        this.render();
+      })
+      .catch(error => console.warn("MYLIFE could not reconcile with the cloud at startup.", error));
   },
   parseRoute() {
     const [route = "home", param = ""] = location.hash.replace("#", "").split("/");

@@ -96,7 +96,10 @@ const emptyData = {
   calendarEvents: [],
   memories: [],
   hobbyLogs: [],
-  reminders: []
+  reminders: [],
+  // Tombstones: { [collection]: { [recordId]: deletedAtIso } }. Synced with the
+  // payload so a deletion survives a merge with a stale cloud copy.
+  deletions: {}
 };
 
 const mergeAppData = (base, update) => {
@@ -131,6 +134,13 @@ const mergeAppData = (base, update) => {
     const nextValue = updateValue[key];
     const currentValue = merged[key];
 
+    // Tombstones merge by newest timestamp rather than by which payload wins,
+    // so neither side can silently drop the other's deletions.
+    if (key === DELETIONS_FIELD) {
+      merged[key] = SyncState.merge(currentValue, nextValue);
+      return;
+    }
+
     if (Array.isArray(nextValue)) {
       merged[key] = Array.isArray(currentValue) ? mergeLists(currentValue, nextValue) : structuredClone(nextValue);
       return;
@@ -147,14 +157,79 @@ const mergeAppData = (base, update) => {
   return merged;
 };
 
+const toPayloadObject = raw => {
+  if (!raw) return {};
+  if (typeof raw === "string") {
+    try {
+      const parsed = JSON.parse(raw);
+      return parsed && typeof parsed === "object" ? parsed : {};
+    } catch (error) {
+      console.warn("MYLIFE could not parse the stored payload.", error);
+      return {};
+    }
+  }
+  return typeof raw === "object" ? raw : {};
+};
+
+/** True when the account has nothing stored in the cloud yet. */
+const isEmptyPayload = payload => !payload || !Object.keys(payload).some(key => {
+  const value = payload[key];
+  if (Array.isArray(value)) return value.length > 0;
+  if (value && typeof value === "object") return Object.keys(value).length > 0;
+  return Boolean(value);
+});
+
+/** Key order is irrelevant when comparing a stored payload to a freshly merged one. */
+const canonicalizePayload = value => {
+  if (Array.isArray(value)) return value.map(canonicalizePayload);
+  if (!value || typeof value !== "object") return value;
+  return Object.keys(value).sort().reduce((sorted, key) => {
+    sorted[key] = canonicalizePayload(value[key]);
+    return sorted;
+  }, {});
+};
+
+const payloadsDiffer = (first, second) => {
+  try {
+    return JSON.stringify(canonicalizePayload(first)) !== JSON.stringify(canonicalizePayload(second));
+  } catch (error) {
+    return true;
+  }
+};
+
+/**
+ * Empties a collection while recording what was removed. Without the tombstones
+ * the next cloud merge would push every removed record straight back in.
+ */
+function clearCollectionWithTombstones(collection) {
+  const records = appData[collection] || [];
+  SyncState.recordAll(appData, collection, records);
+  appData[collection] = [];
+}
+
 const appData = structuredClone(emptyData);
 window.appData = appData;
 
 const Store = {
+  /** Bumped on every local mutation so an in-flight upload cannot clear a newer edit. */
+  saveSequence: 0,
+
+  /**
+   * Pulls the cloud copy and reconciles it with local data.
+   *
+   * The previous version merged `local ∪ remote` unconditionally. Because that merge
+   * only ever added records, a stale remote payload pushed deleted ones straight back
+   * in — the reported "deleted family member returns after refresh". Three things fix
+   * that: tombstones are applied after every merge, a local change that has not
+   * reached the cloud wins over the remote copy, and the merged result is written
+   * back so the stale remote is corrected instead of resurrecting the record on the
+   * next refresh as well.
+   */
   async syncFromSupabase(options = {}) {
     if (!isSupabaseReady()) return false;
 
     try {
+      const startSequence = this.saveSequence;
       const client = getSupabaseClient();
       const { data: { user }, error: userError } = await client.auth.getUser();
       if (userError || !user) return false;
@@ -170,22 +245,79 @@ const Store = {
         return false;
       }
 
-      const remotePayload = !data || !data.payload ? {} : (typeof data.payload === "string" ? JSON.parse(data.payload) : data.payload);
-      const mergedPayload = options.includeLocal === false
-        ? remotePayload
-        : mergeAppData(mergeAppData(this.getLocalSnapshot() || {}, appData), remotePayload);
+      // A cached payload belonging to another account must never be merged into this
+      // one, so drop it before anything else can read it.
+      if (SyncState.isDifferentAccount(user.id)) {
+        Object.assign(appData, structuredClone(emptyData));
+        appData.profile = { ...emptyData.profile };
+        SyncState.clearPending();
+      }
+      SyncState.setAccountId(user.id);
+
+      const remotePayload = toPayloadObject(data?.payload);
+
+      // Nothing stored in the cloud yet: the local copy is the only one, so publish
+      // it instead of pulling an empty payload over the top of it.
+      if (isEmptyPayload(remotePayload)) {
+        saveLocalSnapshot(appData);
+        SyncState.markPending({ mode: "merge", reason: "first-sync" });
+        await this.syncToSupabase();
+        return true;
+      }
+
+      // The user changed something while this request was in flight. That change is
+      // newer than anything we just fetched, so publish rather than apply.
+      if (this.saveSequence !== startSequence) {
+        SyncState.markPending({ mode: "merge", reason: "edit-during-pull" });
+        await this.syncToSupabase();
+        return true;
+      }
+
+      const pendingInfo = SyncState.pendingInfo();
+
+      // "Clear data", demo load and backup import mean local is the whole truth and
+      // the cloud copy has to be overwritten, not merged with.
+      if (pendingInfo?.mode === "replace") {
+        await this.syncToSupabase();
+        return true;
+      }
+
+      const localPayload = mergeAppData(this.getLocalSnapshot() || {}, appData);
+
+      // A pending local change (a deletion, typically) has not reached the cloud yet.
+      // Local wins so the stale remote cannot undo it, while records that only exist
+      // remotely are still adopted.
+      const mergedPayload = pendingInfo
+        ? mergeAppData(remotePayload, localPayload)
+        : mergeAppData(localPayload, remotePayload);
 
       Object.assign(appData, structuredClone(emptyData), mergedPayload || {});
       appData.profile = { ...emptyData.profile, ...(appData.profile || {}) };
+      SyncState.apply(appData);
+      SyncState.prune(appData);
       saveLocalSnapshot(appData);
+
+      // Converge the cloud copy whenever it is behind us. Without this the record
+      // would come back on the next refresh as well, not just this one.
+      if (pendingInfo || payloadsDiffer(remotePayload, mergedPayload)) {
+        SyncState.markPending({ mode: "merge", reason: "pull-converge" });
+        await this.syncToSupabase();
+      }
       return true;
     } catch (error) {
       console.warn("MYLIFE could not sync from Supabase.", error);
       return false;
     }
   },
+  /**
+   * Publishes the whole local snapshot. `appData` is already authoritative because
+   * every mutation writes it to disk before syncing, and anything that failed to
+   * upload is replayed from the pending flag. The old version re-read the remote row
+   * only to ignore it, costing an extra round trip on every single save.
+   */
   async syncToSupabase() {
     if (!isSupabaseReady()) return false;
+    if (typeof navigator !== "undefined" && navigator.onLine === false) return false;
 
     try {
       const client = getSupabaseClient();
@@ -194,39 +326,34 @@ const Store = {
 
       await this.moveImagesToSupabase(user.id);
 
-      const { data: existingRow, error: loadError } = await client
-        .from(SUPABASE_TABLE)
-        .select("payload")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (loadError) {
-        console.warn("MYLIFE could not load existing Supabase data before merge.", loadError);
-      }
-
-      const remotePayload = existingRow && existingRow.payload ?
-        (typeof existingRow.payload === "string" ? JSON.parse(existingRow.payload) : existingRow.payload) :
-        {};
-
-      const mergedPayload = structuredClone(appData);
+      const sequence = this.saveSequence;
+      const payload = structuredClone(appData);
 
       const { error } = await client
         .from(SUPABASE_TABLE)
         .upsert({
           user_id: user.id,
-          payload: mergedPayload,
+          payload,
           updated_at: new Date().toISOString()
         }, { onConflict: "user_id" });
 
       if (error) {
         console.warn("MYLIFE could not save data to Supabase.", error);
+        SyncState.noteAttempt();
+        this.notifyPendingSync();
         return false;
       }
 
+      // Only stand the pending flag down when nothing changed while uploading;
+      // otherwise a newer local edit still has to reach the cloud.
+      if (sequence === this.saveSequence) SyncState.clearPending();
+      SyncState.setAccountId(user.id);
       saveLocalSnapshot(appData);
       return true;
     } catch (error) {
       console.warn("MYLIFE could not sync to Supabase.", error);
+      SyncState.noteAttempt();
+      this.notifyPendingSync();
       return false;
     }
   },
@@ -257,6 +384,9 @@ const Store = {
       const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
       Object.assign(appData, structuredClone(emptyData), saved || {});
       appData.profile = { ...emptyData.profile, ...(appData.profile || {}) };
+      // A snapshot that still carries a record alongside its tombstone keeps the
+      // deletion: the tombstone is always the newer of the two.
+      SyncState.apply(appData);
     } catch (error) {
       console.warn("MYLIFE could not load saved data.", error);
       Object.assign(appData, structuredClone(emptyData));
@@ -293,17 +423,31 @@ const Store = {
     saveLocalSnapshot(appData);
     return true;
   },
+  /**
+   * Writes the snapshot to disk, then publishes it in the background.
+   *
+   * The upload stays fire-and-forget because the UI must never wait on the network,
+   * but it is no longer fire-and-forget *and lossy*: the pending flag is set before
+   * the request starts, so if the WebView is killed before the upsert lands — the
+   * usual case on a phone — the change is replayed on the next launch instead of
+   * being silently undone by the stale cloud copy.
+   */
   save(options = {}) {
     if (isGuestMode()) {
       if (typeof Toast !== "undefined" && typeof t === "function") Toast.show(t("guestSaveWarning"));
       return true;
     }
     try {
+      SyncState.prune(appData);
       if (!saveLocalSnapshot(appData)) {
         Toast.show(t("saveFailed"));
         return false;
       }
-      if (options.sync !== false) this.syncToSupabase();
+      this.saveSequence += 1;
+      if (options.sync !== false) {
+        SyncState.markPending({ mode: options.mode || "merge", reason: options.reason || "save" });
+        this.syncToSupabase();
+      }
       return true;
     } catch (error) {
       handleStorageError(error);
@@ -326,7 +470,11 @@ const Store = {
   },
   delete(collection, itemId) {
     const previous = structuredClone(appData);
+    const existed = appData[collection].some(item => item.id === itemId);
     appData[collection] = appData[collection].filter(item => item.id !== itemId);
+    // The tombstone is the whole point: without it the union merge in
+    // syncFromSupabase pushes the record straight back in on the next refresh.
+    if (existed) SyncState.record(appData, collection, itemId);
     if (this.save()) App.render();
     else restoreData(previous);
   },
@@ -494,7 +642,8 @@ const Store = {
       tags: data.memoryTags || ""
     });
 
-    if (this.save()) App.render();
+    // Creating a user replaces everything, so the cloud copy has to be replaced too.
+    if (this.save({ mode: "replace", reason: "create-user" })) App.render();
     else restoreData(previous);
   },
   updateUserData(data) {
@@ -510,12 +659,14 @@ const Store = {
     };
 
     const upsertFirst = (collection, enabled, keys, item) => {
+      // Clearing a section has to be recorded as a deletion, otherwise the next
+      // cloud merge treats the removed records as "missing locally" and re-adds them.
       if (!enabled) {
-        appData[collection] = [];
+        clearCollectionWithTombstones(collection);
         return;
       }
       if (!keys.some(key => hasValue(item[key]))) {
-        appData[collection] = [];
+        clearCollectionWithTombstones(collection);
         return;
       }
       const existing = appData[collection][0];
@@ -540,8 +691,8 @@ const Store = {
       notes: data.familyNotes || "",
       photo: appData.family[familyMemberIndex >= 0 ? familyMemberIndex : 0]?.photo || ""
     };
-    if (!data.familyEnabled) appData.family = [];
-    else if (!Object.values(familyItem).some(value => hasValue(value))) appData.family = [];
+    if (!data.familyEnabled) clearCollectionWithTombstones("family");
+    else if (!Object.values(familyItem).some(value => hasValue(value))) clearCollectionWithTombstones("family");
     else if (familyMemberIndex >= 0) appData.family[familyMemberIndex] = { ...appData.family[familyMemberIndex], ...familyItem, updatedAt: new Date().toISOString() };
     else upsertFirst("family", true, ["name", "relationship", "birthday", "anniversaryDate", "phone", "characterMood", "zodiacSign", "favorite", "relationshipNote", "notes"], familyItem);
     upsertFirst("goals", data.goalEnabled, ["name", "targetAmount", "currentAmount", "deadline", "description"], {
@@ -629,17 +780,49 @@ const Store = {
     if (this.save()) App.render();
     else restoreData(previous);
   },
+  /**
+   * Wiping local data is not enough on its own: without pushing the empty state the
+   * next `syncFromSupabase` pulls the old cloud copy straight back in — which is why
+   * "Clear data" also appeared to undo itself after a refresh.
+   */
   clear() {
-    localStorage.removeItem(STORAGE_KEY);
     Object.assign(appData, structuredClone(emptyData));
     appData.profile = { ...emptyData.profile };
+    localStorage.removeItem(STORAGE_KEY);
+    if (isGuestMode()) {
+      App.render();
+      return;
+    }
+    this.save({ mode: "replace", reason: "clear-data" });
     App.render();
   },
   loadDemoData() {
     const previous = structuredClone(appData);
     Object.assign(appData, demoData());
-    if (this.save()) App.render();
+    SyncState.clear(appData);
+    if (this.save({ mode: "replace", reason: "demo-data" })) App.render();
     else restoreData(previous);
+  },
+  /**
+   * The app must never look like it saved while the cloud copy stayed behind.
+   * Shown once per session so a flaky connection cannot spam the user.
+   */
+  notifyPendingSync() {
+    if (isGuestMode() || !SyncState.isPending()) return;
+    if (SyncScheduler.noticeShown()) return;
+    if (typeof Toast === "undefined") return;
+    const isKhmer = typeof languageCode === "function" && languageCode() === "km";
+    Toast.show(isKhmer
+      ? "រក្សាទុកក្នុងឧបករណ៍រួចហើយ — នឹងធ្វើសមកាលកម្មពេលមានអ៊ីនធឺណិត"
+      : "Saved on this device — it will sync when you are back online", "warning", { duration: 3600 });
+  },
+  /** Replays an upload that never landed. Called on reconnect, app resume and on a timer. */
+  flushPendingSync() {
+    if (isGuestMode() || !SyncState.isPending()) return Promise.resolve(false);
+    return this.syncToSupabase();
+  },
+  startSyncRetry() {
+    SyncScheduler.start(() => this.flushPendingSync());
   },
   calculate() {
     const totalIncome = sumMoney(appData.income, "amount");

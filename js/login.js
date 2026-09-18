@@ -209,7 +209,10 @@ const Login = {
           return;
         }
 
-        await Store.syncFromSupabase({ includeLocal: false });
+        // Local-only data is no longer discarded here: syncFromSupabase drops the
+        // cached payload only when it belongs to a different account, so signing up
+        // on a device that already holds offline data keeps that data.
+        await Store.syncFromSupabase();
         await Store.syncToSupabase();
         this.authenticated = true;
         this.setRememberedSession(rememberMe);
@@ -249,6 +252,16 @@ const Login = {
   },
 
   async logout() {
+    try {
+      // Push anything that never reached the cloud before the session disappears.
+      // The pending flag survives a failure, so it is retried after the next login.
+      if (window.MYLIFE_SUPABASE?.enabled && window.supabaseClient) {
+        await Store.flushPendingSync();
+      }
+    } catch (error) {
+      console.warn("MYLIFE could not flush pending changes before signing out.", error);
+    }
+
     try {
       if (window.MYLIFE_SUPABASE?.enabled && window.supabaseClient) {
         await window.MYLIFE_SUPABASE_API.signOut();
