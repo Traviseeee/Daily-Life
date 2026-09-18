@@ -50,7 +50,7 @@ function familyMediaCard() {
         <div><h2>${escapeHtml(t("familyMediaHelp"))}</h2></div>
         <label class="icon-button family-media-add" title="${escapeAttr(t("addFamilyMedia"))}">${Icons.plus()}<input type="file" accept="image/*,video/*" multiple data-family-media></label>
       </div>
-      ${active ? `<div class="family-media-stage">${active.type === "video" ? `<video src="${escapeAttr(active.src)}" autoplay muted loop playsinline controls></video>` : `<img src="${escapeAttr(active.src)}" alt="${escapeAttr(t("familyMedia"))}">`}<button class="family-media-control family-media-prev" type="button" data-family-media-prev aria-label="Previous">${Icons.chevron()}</button><button class="family-media-control family-media-next" type="button" data-family-media-next aria-label="Next">${Icons.chevron()}</button></div><div class="family-media-dots">${media.map((item, index) => `<button type="button" class="family-media-dot ${index === 0 ? "active" : ""}" data-family-media-index="${index}" aria-label="${index + 1}"></button>`).join("")}</div>` : `<div class="family-media-empty">${Icons.memory()}<span>${escapeHtml(t("noFamilyMedia"))}</span></div>`}
+      ${active ? `<div class="family-media-stage">${active.type === "video" ? `<video src="${escapeAttr(active.src)}" muted loop playsinline></video>` : `<img src="${escapeAttr(active.src)}" alt="${escapeAttr(t("familyMedia"))}">`}<div class="family-media-toolbar"><label class="family-media-action family-media-edit" title="${escapeAttr(t("edit"))}">${Icons.edit()}<input type="file" accept="image/*,video/*" data-family-media-edit="0"></label><button class="family-media-action family-media-remove" type="button" data-family-media-remove="0" aria-label="${escapeAttr(t("delete"))}">${Icons.trash()}</button></div><button class="family-media-control family-media-prev" type="button" data-family-media-prev aria-label="Previous">${Icons.chevron()}</button><button class="family-media-control family-media-next" type="button" data-family-media-next aria-label="Next">${Icons.chevron()}</button></div><div class="family-media-dots">${media.map((item, index) => `<button type="button" class="family-media-dot ${index === 0 ? "active" : ""}" data-family-media-index="${index}" aria-label="${index + 1}"></button>`).join("")}</div>` : `<div class="family-media-empty">${Icons.memory()}<span>${escapeHtml(t("noFamilyMedia"))}</span></div>`}
     </article>
   `;
 }
@@ -385,10 +385,11 @@ function bindFamily(options = {}) {
     const selected = media[next];
     const stage = document.querySelector(".family-media-stage");
     if (!stage || !selected) return;
-    stage.innerHTML = `${selected.type === "video" ? `<video src="${escapeAttr(selected.src)}" autoplay muted loop playsinline controls></video>` : `<img src="${escapeAttr(selected.src)}" alt="${escapeAttr(t("familyMedia"))}">`}<button class="family-media-control family-media-prev" type="button" data-family-media-prev aria-label="Previous">${Icons.chevron()}</button><button class="family-media-control family-media-next" type="button" data-family-media-next aria-label="Next">${Icons.chevron()}</button>`;
+    stage.innerHTML = `${selected.type === "video" ? `<video src="${escapeAttr(selected.src)}" muted loop playsinline></video>` : `<img src="${escapeAttr(selected.src)}" alt="${escapeAttr(t("familyMedia"))}">`}<div class="family-media-toolbar"><label class="family-media-action family-media-edit" title="${escapeAttr(t("edit"))}">${Icons.edit()}<input type="file" accept="image/*,video/*" data-family-media-edit="${next}"></label><button class="family-media-action family-media-remove" type="button" data-family-media-remove="${next}" aria-label="${escapeAttr(t("delete"))}">${Icons.trash()}</button></div><button class="family-media-control family-media-prev" type="button" data-family-media-prev aria-label="Previous">${Icons.chevron()}</button><button class="family-media-control family-media-next" type="button" data-family-media-next aria-label="Next">${Icons.chevron()}</button>`;
     document.querySelectorAll(".family-media-dot").forEach(dot => dot.classList.toggle("active", Number(dot.dataset.familyMediaIndex) === next));
     bindFamilyMediaStage();
   }));
+  bindFamilyMediaActions();
   if (options.mediaOnly) {
     startFamilyMediaSlideshow();
     return;
@@ -444,15 +445,36 @@ function bindFamily(options = {}) {
 function startFamilyMediaSlideshow() {
   clearInterval(familyMediaTimer);
   familyMediaTimer = null;
-  const media = appData.familyMedia || [];
-  const stage = document.querySelector(".family-media-stage");
-  if (media.length < 2 || !stage) return;
-  let paused = false;
-  stage.addEventListener("mouseenter", () => { paused = true; });
-  stage.addEventListener("mouseleave", () => { paused = false; });
-  familyMediaTimer = setInterval(() => {
-    if (!paused) document.querySelector("[data-family-media-next]")?.click();
-  }, 4500);
+  // Manual-only slideshow: no automatic advance to avoid distracting autoplay.
+}
+
+function bindFamilyMediaActions() {
+  document.querySelectorAll("[data-family-media-edit]").forEach(input => input.addEventListener("change", async event => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const index = Number(event.target.dataset.familyMediaEdit);
+    const media = [...(appData.familyMedia || [])];
+    if (!media[index]) return;
+    const replacement = {
+      ...media[index],
+      type: file.type.startsWith("video/") ? "video" : "image",
+      src: file.type.startsWith("image/") ? await readImageFile(file) : await readRawFile(file)
+    };
+    media[index] = replacement;
+    appData.familyMedia = media;
+    event.target.value = "";
+    Store.save();
+    App.render();
+  }));
+  document.querySelectorAll("[data-family-media-remove]").forEach(button => button.addEventListener("click", () => {
+    const index = Number(button.dataset.familyMediaRemove);
+    const media = [...(appData.familyMedia || [])];
+    if (!media[index]) return;
+    media.splice(index, 1);
+    appData.familyMedia = media;
+    Store.save();
+    App.render();
+  }));
 }
 
 function bindFamilyMediaStage() {
@@ -463,4 +485,5 @@ function bindFamilyMediaStage() {
     const next = button.hasAttribute("data-family-media-next") ? (current + 1) % media.length : (current - 1 + media.length) % media.length;
     document.querySelector(`.family-media-dot[data-family-media-index="${next}"]`)?.click();
   }));
+  bindFamilyMediaActions();
 }

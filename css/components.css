@@ -1997,9 +1997,16 @@
 .family-media-stage { position: relative; overflow: hidden; aspect-ratio: 16 / 6; border-radius: 14px; background: rgba(7,5,18,0.25); }
 .family-media-stage img, .family-media-stage video { display: block; width: 100%; height: 100%; object-fit: cover; }
 .family-media-stage img, .family-media-stage video { animation: familyMediaFade 360ms ease both; }
-.family-media-control { position: absolute; top: 50%; display: grid; place-items: center; width: 34px; height: 34px; border: 1px solid rgba(255,255,255,0.34); border-radius: 50%; color: #fff; background: rgba(8,12,20,0.54); transform: translateY(-50%); cursor: pointer; }
+.family-media-toolbar { position: absolute; top: 10px; right: 10px; display: flex; gap: 8px; z-index: 2; opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 180ms ease, visibility 180ms ease; }
+.family-media-action { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border: 1px solid rgba(255,255,255,0.3); border-radius: 50%; background: rgba(10, 14, 20, 0.64); color: #fff; cursor: pointer; box-shadow: 0 8px 20px rgba(0,0,0,0.2); }
+.family-media-action svg { width: 16px; height: 16px; }
+.family-media-action input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+.family-media-action:hover { background: rgba(10,14,20,0.82); }
+.family-media-stage:hover .family-media-toolbar, .family-media-stage:focus-within .family-media-toolbar { opacity: 1; visibility: visible; pointer-events: auto; }
+.family-media-control { position: absolute; top: 50%; display: grid; place-items: center; width: 34px; height: 34px; border: 1px solid rgba(255,255,255,0.34); border-radius: 50%; color: #fff; background: rgba(8,12,20,0.54); transform: translateY(-50%); cursor: pointer; opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 180ms ease, visibility 180ms ease; }
 .family-media-control svg { width: 17px; height: 17px; }
 .family-media-control:hover { background: rgba(8,12,20,0.78); }
+.family-media-stage:hover .family-media-control, .family-media-stage:focus-within .family-media-control { opacity: 1; visibility: visible; pointer-events: auto; }
 .family-media-prev { left: 10px; transform: translateY(-50%) rotate(180deg); }
 .family-media-next { right: 10px; }
 .family-media-dots { display: flex; justify-content: center; gap: 6px; }
