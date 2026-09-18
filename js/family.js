@@ -455,6 +455,7 @@ function bindFamilyMediaActions() {
     const index = Number(event.target.dataset.familyMediaEdit);
     const media = [...(appData.familyMedia || [])];
     if (!media[index]) return;
+    const previous = structuredClone(appData);
     const replacement = {
       ...media[index],
       type: file.type.startsWith("video/") ? "video" : "image",
@@ -463,18 +464,26 @@ function bindFamilyMediaActions() {
     media[index] = replacement;
     appData.familyMedia = media;
     event.target.value = "";
-    Store.save();
-    App.render();
+    if (Store.save()) App.render();
+    else restoreData(previous);
   }));
-  document.querySelectorAll("[data-family-media-remove]").forEach(button => button.addEventListener("click", () => {
+  const mediaCard = document.querySelector(".family-media-card");
+  if (!mediaCard || mediaCard.dataset.mediaActionsBound) return;
+  mediaCard.dataset.mediaActionsBound = "true";
+  mediaCard.addEventListener("click", event => {
+    const button = event.target.closest("[data-family-media-remove]");
+    if (!button) return;
+    event.preventDefault();
+    event.stopPropagation();
     const index = Number(button.dataset.familyMediaRemove);
     const media = [...(appData.familyMedia || [])];
     if (!media[index]) return;
+    const previous = structuredClone(appData);
     media.splice(index, 1);
     appData.familyMedia = media;
-    Store.save();
-    App.render();
-  }));
+    if (Store.save()) App.render();
+    else restoreData(previous);
+  });
 }
 
 function bindFamilyMediaStage() {

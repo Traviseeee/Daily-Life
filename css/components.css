@@ -1998,7 +1998,7 @@
 .family-media-stage img, .family-media-stage video { display: block; width: 100%; height: 100%; object-fit: cover; }
 .family-media-stage img, .family-media-stage video { animation: familyMediaFade 360ms ease both; }
 .family-media-toolbar { position: absolute; top: 10px; right: 10px; display: flex; gap: 8px; z-index: 2; opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 180ms ease, visibility 180ms ease; }
-.family-media-action { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border: 1px solid rgba(255,255,255,0.3); border-radius: 50%; background: rgba(10, 14, 20, 0.64); color: #fff; cursor: pointer; box-shadow: 0 8px 20px rgba(0,0,0,0.2); }
+.family-media-action { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border: 1px solid rgba(255,255,255,0.3); border-radius: 50%; background: rgba(10, 14, 20, 0.64); color: #fff; cursor: pointer; box-shadow: 0 8px 20px rgba(0,0,0,0.2); }
 .family-media-action svg { width: 16px; height: 16px; }
 .family-media-action input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
 .family-media-action:hover { background: rgba(10,14,20,0.82); }

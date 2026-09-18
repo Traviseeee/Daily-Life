@@ -208,7 +208,7 @@ const Store = {
         (typeof existingRow.payload === "string" ? JSON.parse(existingRow.payload) : existingRow.payload) :
         {};
 
-      const mergedPayload = mergeAppData(remotePayload, appData);
+      const mergedPayload = structuredClone(appData);
 
       const { error } = await client
         .from(SUPABASE_TABLE)
@@ -294,9 +294,15 @@ const Store = {
     return true;
   },
   save(options = {}) {
-    if (isGuestMode()) return true;
+    if (isGuestMode()) {
+      if (typeof Toast !== "undefined" && typeof t === "function") Toast.show(t("guestSaveWarning"));
+      return true;
+    }
     try {
-      saveLocalSnapshot(appData);
+      if (!saveLocalSnapshot(appData)) {
+        Toast.show(t("saveFailed"));
+        return false;
+      }
       if (options.sync !== false) this.syncToSupabase();
       return true;
     } catch (error) {
