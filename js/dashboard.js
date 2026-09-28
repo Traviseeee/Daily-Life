@@ -291,7 +291,7 @@ function homeEmptyCard() {
 function homePhotoCard() {
   const image = getFamilyPhoto();
   const isKhmer = languageCode() === "km";
-  const position = storedImagePosition("mylife:family-photo-position");
+  const position = imagePosition(appData.profile.familyPhotoPosition);
   return `
     <article class="glass-card family-photo-card home-photo-card">
       <div class="family-photo-heading">
@@ -328,11 +328,12 @@ function goalProgress(goal) {
 }
 
 function goalProgressContent(goal) {
+  const hasTarget = typeof goalHasTarget === "function" ? goalHasTarget(goal) : Number(goal?.targetAmount || 0) > 0;
   const progress = pct(goal.currentAmount, goal.targetAmount);
   return `
-    <div class="between"><strong>${goal.name}</strong><span class="pill">${progress}%</span></div>
-    <div class="secondary">${money(goal.currentAmount)} / ${money(goal.targetAmount)}</div>
-    <div class="progress-track"><div class="progress-fill" style="--progress:${progress}%"></div></div>
+    <div class="between"><strong>${goal.name}</strong><span class="pill">${hasTarget ? `${progress}%` : t("notSet")}</span></div>
+    <div class="secondary">${hasTarget ? `${money(goal.currentAmount)} / ${money(goal.targetAmount)}` : `${t("target")}: ${t("notSet")}`}</div>
+    ${hasTarget ? `<div class="progress-track"><div class="progress-fill" style="--progress:${progress}%"></div></div>` : ""}
   `;
 }
 
@@ -570,11 +571,7 @@ function getFamilyPrinciples() {
 }
 
 function getTipsCoupleImage() {
-  try {
-    return localStorage.getItem("mylife:tips-couple-image") || "";
-  } catch (error) {
-    return "";
-  }
+  return appData.profile.tipsCoupleImage || "";
 }
 
 function bindTips() {
@@ -611,11 +608,7 @@ function bindTips() {
           key: "tips-couple",
           title: languageCode() === "km" ? "លៃតម្រូវរូបគូស្នេហ៍" : "Adjust couple photo",
           onSave: position => {
-            if (!isGuestMode()) {
-              localStorage.setItem("mylife:tips-couple-image", dataUrl);
-              localStorage.setItem("mylife:tips-couple-image-position", JSON.stringify(position));
-            }
-            App.render();
+            Store.updateProfile({ tipsCoupleImage: dataUrl, tipsCoupleImagePosition: position });
           },
           onCancel: () => {
             event.target.value = "";
@@ -886,8 +879,8 @@ function bindHome() {
     const file = event.target.files?.[0];
     if (!file) return;
     try {
-      localStorage.setItem("mylife:family-photo", await readImageFile(file));
-      App.render();
+      const dataUrl = await readImageFile(file);
+      Store.updateProfile({ familyPhoto: dataUrl, familyPhotoPosition: { x: 0, y: 0 } });
     } catch (error) {
       Toast.show(languageCode() === "km" ? "មិនអាចបញ្ចូលរូបថតបានទេ" : "The photo could not be uploaded.");
     }

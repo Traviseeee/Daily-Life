@@ -45,13 +45,17 @@ function goalEmptyCard() {
 }
 
 function goalCard(goal) {
+  const hasTarget = goalHasTarget(goal);
   return `
     <article class="glass-card card-pad">
       <div class="card-title-row"><span class="icon-badge purple">${Icons.goal()}</span><span class="pill">${optionLabel(goal.category)}</span></div>
       <h2><a href="#goals/${goal.id}">${escapeHtml(goal.name)}</a></h2>
       <p class="secondary">${escapeHtml(goal.description || "")}</p>
       <div class="goal-item">${goalProgressContent(goal)}</div>
-      <div class="kv"><div><span>Deadline</span><strong>${formatDate(goal.deadline)}</strong></div></div>
+      <div class="kv">
+        <div><span>${t("deadline")}</span><strong>${formatDate(goal.deadline)}</strong></div>
+        ${hasTarget ? "" : `<div><span>${t("target")}</span><strong>${t("notSet")}</strong></div>`}
+      </div>
       <div class="action-row">
         <a class="button ghost-button" href="#goals/${goal.id}">${Icons.chevron()} ${t("open")}</a>
         <button class="button ghost-button" data-edit-goal="${goal.id}">${Icons.edit()} ${t("edit")}</button>
@@ -63,6 +67,7 @@ function goalCard(goal) {
 
 function renderGoalDetail(goal) {
   const progress = pct(goal.currentAmount, goal.targetAmount);
+  const hasTarget = goalHasTarget(goal);
   return `
     <section class="page">
       <div class="page-header">
@@ -80,12 +85,11 @@ function renderGoalDetail(goal) {
       <div class="grid two-col">
         <article class="glass-card card-pad">
           <p class="secondary">${t("progress")}</p>
-          <div class="metric">${money(goal.currentAmount)} <span class="secondary" style="font-size:1rem">of ${money(goal.targetAmount)}</span></div>
-          <div class="progress-track"><div class="progress-fill" style="--progress:${progress}%"></div></div>
-          <p class="trend">${progress}% complete</p>
+          <div class="metric">${money(goal.currentAmount)} ${hasTarget ? `<span class="secondary" style="font-size:1rem">of ${money(goal.targetAmount)}</span>` : ""}</div>
+          ${hasTarget ? `<div class="progress-track"><div class="progress-fill" style="--progress:${progress}%"></div></div><p class="trend">${progress}% complete</p>` : `<p class="trend">${t("target")}: ${t("notSet")}</p>`}
           <div class="kv">
             <div><span>${t("category")}</span><strong>${optionLabel(goal.category)}</strong></div>
-            <div><span>${t("target")}</span><strong>${money(goal.targetAmount)}</strong></div>
+            <div><span>${t("target")}</span><strong>${hasTarget ? money(goal.targetAmount) : t("notSet")}</strong></div>
             <div><span>${t("deadline")}</span><strong>${formatDate(goal.deadline)}</strong></div>
           </div>
         </article>
@@ -100,14 +104,15 @@ function renderGoalDetail(goal) {
   `;
 }
 
-function goalFields(goal = {}) {
+function goalFields(goal = null, defaultCategory = "Personal") {
+  const currentGoal = goal || {};
   return [
-    { name: "name", label: t("goalName"), value: goal.name, required: true },
-    { name: "category", label: t("category"), type: "select", options: goalCategories, value: goal.category || "Personal" },
-    { name: "targetAmount", label: t("targetAmount"), type: "number", value: goal.targetAmount || "", required: true },
-    { name: "currentAmount", label: t("currentAmount"), type: "number", value: goal.currentAmount || 0, required: true },
-    { name: "deadline", label: t("deadline"), type: "date", value: goal.deadline },
-    { name: "description", label: t("description"), type: "textarea", value: goal.description }
+    { name: "name", label: t("goalName"), value: currentGoal.name, required: true },
+    { name: "category", label: t("category"), type: "select", options: goalCategories, value: currentGoal.category || defaultCategory || "Personal" },
+    { name: "targetAmount", label: t("targetAmount"), type: "number", value: currentGoal.targetAmount || "" },
+    { name: "currentAmount", label: t("currentAmount"), type: "number", value: currentGoal.currentAmount || "" },
+    { name: "deadline", label: t("deadline"), type: "date", value: currentGoal.deadline },
+    { name: "description", label: t("description"), type: "textarea", value: currentGoal.description }
   ];
 }
 
@@ -121,11 +126,15 @@ function normalizeGoal(data, existing = {}) {
   };
 }
 
-function openGoalModal(goal) {
+function goalHasTarget(goal) {
+  return Number(goal?.targetAmount || 0) > 0;
+}
+
+function openGoalModal(goal, defaultCategory = "Personal") {
   Modal.open({
     title: goal ? t("editGoal") : t("createGoal"),
     submitText: goal ? t("saveGoal") : t("createGoal"),
-    fields: goalFields(goal),
+    fields: goalFields(goal, defaultCategory),
     onSubmit(data) {
       if (goal) Store.edit("goals", goal.id, normalizeGoal(data, goal));
       else Store.add("goals", normalizeGoal(data));
@@ -135,7 +144,8 @@ function openGoalModal(goal) {
 }
 
 function bindGoals(goalId) {
-  document.querySelectorAll('[data-action="add-goal"]').forEach(button => button.addEventListener("click", () => openGoalModal()));
+  const defaultCategory = goalCategories.includes(goalId) ? goalId : "Personal";
+  document.querySelectorAll('[data-action="add-goal"]').forEach(button => button.addEventListener("click", () => openGoalModal(null, defaultCategory)));
   document.querySelectorAll("[data-edit-goal]").forEach(button => button.addEventListener("click", () => openGoalModal(appData.goals.find(item => item.id === button.dataset.editGoal))));
   document.querySelectorAll("[data-delete-goal]").forEach(button => button.addEventListener("click", () => {
     Modal.confirm({ title: t("deleteGoal"), message: t("deleteGoalMessage"), confirmText: t("delete"), onConfirm: () => {

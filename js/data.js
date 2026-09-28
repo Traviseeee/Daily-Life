@@ -48,6 +48,32 @@ const saveLocalSnapshot = value => {
   }
 };
 
+const readLegacyJson = key => {
+  try {
+    return JSON.parse(localStorage.getItem(key) || "null");
+  } catch (error) {
+    return null;
+  }
+};
+
+const readLegacyString = key => {
+  try {
+    return localStorage.getItem(key) || "";
+  } catch (error) {
+    return "";
+  }
+};
+
+const removeLegacyKeys = keys => {
+  keys.forEach(key => {
+    try {
+      localStorage.removeItem(key);
+    } catch (error) {
+      console.warn("MYLIFE could not remove legacy local data.", error);
+    }
+  });
+};
+
 const isSupabaseReady = () => {
   const client = getSupabaseClient();
   const { enabled } = getSupabaseConfig();
@@ -60,6 +86,10 @@ const emptyData = {
     email: "",
     photo: "",
     launcherCover: "",
+    familyPhoto: "",
+    familyPhotoPosition: { x: 0, y: 0 },
+    tipsCoupleImage: "",
+    tipsCoupleImagePosition: { x: 0, y: 0 },
     currency: "USD",
     language: "English",
     dateFormat: "MMM d, yyyy",
@@ -293,6 +323,9 @@ const Store = {
 
       Object.assign(appData, structuredClone(emptyData), mergedPayload || {});
       appData.profile = { ...emptyData.profile, ...(appData.profile || {}) };
+      if (this.removeBrokenMediaRecords()) {
+        SyncState.markPending({ mode: "merge", reason: "broken-media-cleanup" });
+      }
       SyncState.apply(appData);
       SyncState.prune(appData);
       saveLocalSnapshot(appData);
@@ -363,9 +396,14 @@ const Store = {
 
     const imageFields = [
       { object: appData.profile, key: "photo", folder: `users/${userId}/profile` },
-      { object: appData.profile, key: "launcherCover", folder: `users/${userId}/covers` }
+      { object: appData.profile, key: "launcherCover", folder: `users/${userId}/covers` },
+      { object: appData.profile, key: "familyPhoto", folder: `users/${userId}/family-cover` },
+      { object: appData.profile, key: "tipsCoupleImage", folder: `users/${userId}/couple` }
     ];
     appData.family.forEach(item => imageFields.push({ object: item, key: "photo", folder: `users/${userId}/family` }));
+    appData.familyMedia.forEach(item => {
+      if (item.type === "image") imageFields.push({ object: item, key: "src", folder: `users/${userId}/family-media` });
+    });
     appData.memories.forEach(item => imageFields.push({ object: item, key: "photo", folder: `users/${userId}/memories` }));
 
     let changed = false;
@@ -384,6 +422,21 @@ const Store = {
       const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
       Object.assign(appData, structuredClone(emptyData), saved || {});
       appData.profile = { ...emptyData.profile, ...(appData.profile || {}) };
+      if (this.removeBrokenMediaRecords()) {
+        SyncState.markPending({ mode: "merge", reason: "broken-media-cleanup" });
+        saveLocalSnapshot(appData);
+      }
+      if (this.migrateLegacyImages()) {
+        SyncState.markPending({ mode: "merge", reason: "legacy-image-migration" });
+        if (saveLocalSnapshot(appData)) {
+          removeLegacyKeys([
+            "mylife:family-photo",
+            "mylife:family-photo-position",
+            "mylife:tips-couple-image",
+            "mylife:tips-couple-image-position"
+          ]);
+        }
+      }
       // A snapshot that still carries a record alongside its tombstone keeps the
       // deletion: the tombstone is always the newer of the two.
       SyncState.apply(appData);
@@ -423,6 +476,44 @@ const Store = {
     saveLocalSnapshot(appData);
     return true;
   },
+  migrateLegacyImages() {
+    if (!appData.profile || typeof appData.profile !== "object") appData.profile = { ...emptyData.profile };
+    let changed = false;
+    const familyPhoto = readLegacyString("mylife:family-photo");
+    const familyPhotoPosition = readLegacyJson("mylife:family-photo-position");
+    const tipsCoupleImage = readLegacyString("mylife:tips-couple-image");
+    const tipsCoupleImagePosition = readLegacyJson("mylife:tips-couple-image-position");
+    const shouldMigrateFamilyPhoto = familyPhoto && !appData.profile.familyPhoto;
+    const shouldMigrateTipsCoupleImage = tipsCoupleImage && !appData.profile.tipsCoupleImage;
+
+    if (shouldMigrateFamilyPhoto) {
+      appData.profile.familyPhoto = familyPhoto;
+      changed = true;
+    }
+    if (shouldMigrateFamilyPhoto && familyPhotoPosition) {
+      appData.profile.familyPhotoPosition = imagePosition(familyPhotoPosition);
+      changed = true;
+    }
+    if (shouldMigrateTipsCoupleImage) {
+      appData.profile.tipsCoupleImage = tipsCoupleImage;
+      changed = true;
+    }
+    if (shouldMigrateTipsCoupleImage && tipsCoupleImagePosition) {
+      appData.profile.tipsCoupleImagePosition = imagePosition(tipsCoupleImagePosition);
+      changed = true;
+    }
+    return changed;
+  },
+  removeBrokenMediaRecords() {
+    if (!Array.isArray(appData.familyMedia)) {
+      appData.familyMedia = [];
+      return false;
+    }
+    const usableMedia = appData.familyMedia.filter(item => item && String(item.src || "").trim());
+    if (usableMedia.length === appData.familyMedia.length) return false;
+    appData.familyMedia = usableMedia;
+    return true;
+  },
   /**
    * Writes the snapshot to disk, then publishes it in the background.
    *
@@ -438,6 +529,7 @@ const Store = {
       return true;
     }
     try {
+      this.removeBrokenMediaRecords();
       SyncState.prune(appData);
       if (!saveLocalSnapshot(appData)) {
         Toast.show(t("saveFailed"));

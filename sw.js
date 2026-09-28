@@ -1,4 +1,4 @@
-const CACHE_NAME = "mylife-pwa-v17";
+const CACHE_NAME = "mylife-pwa-v18";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -48,6 +48,10 @@ self.addEventListener("activate", event => {
 self.addEventListener("fetch", event => {
   if (event.request.method !== "GET") return;
   const url = new URL(event.request.url);
+  if (url.origin !== self.location.origin) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
   const freshExtensions = [".html", ".css", ".js", ".json", ".webmanifest"];
   const wantsFreshAsset = freshExtensions.some(extension => url.pathname.endsWith(extension)) || url.pathname.endsWith("/");
   if (wantsFreshAsset) {

@@ -42,7 +42,7 @@ function renderFamily() {
 }
 
 function familyMediaCard() {
-  const media = Array.isArray(appData.familyMedia) ? appData.familyMedia : [];
+  const media = validFamilyMedia();
   const active = media[0];
   return `
     <article class="glass-card family-media-card">
@@ -50,7 +50,7 @@ function familyMediaCard() {
         <div><h2>${escapeHtml(t("familyMediaHelp"))}</h2></div>
         <label class="icon-button family-media-add" title="${escapeAttr(t("addFamilyMedia"))}">${Icons.plus()}<input type="file" accept="image/*,video/*" multiple data-family-media></label>
       </div>
-      ${active ? `<div class="family-media-stage">${active.type === "video" ? `<video src="${escapeAttr(active.src)}" muted loop playsinline></video>` : `<img src="${escapeAttr(active.src)}" alt="${escapeAttr(t("familyMedia"))}">`}<div class="family-media-toolbar"><label class="family-media-action family-media-edit" title="${escapeAttr(t("edit"))}">${Icons.edit()}<input type="file" accept="image/*,video/*" data-family-media-edit="0"></label><button class="family-media-action family-media-remove" type="button" data-family-media-remove="0" aria-label="${escapeAttr(t("delete"))}">${Icons.trash()}</button></div><button class="family-media-control family-media-prev" type="button" data-family-media-prev aria-label="Previous">${Icons.chevron()}</button><button class="family-media-control family-media-next" type="button" data-family-media-next aria-label="Next">${Icons.chevron()}</button></div><div class="family-media-dots">${media.map((item, index) => `<button type="button" class="family-media-dot ${index === 0 ? "active" : ""}" data-family-media-index="${index}" aria-label="${index + 1}"></button>`).join("")}</div>` : `<div class="family-media-empty">${Icons.memory()}<span>${escapeHtml(t("noFamilyMedia"))}</span></div>`}
+      ${active ? `<div class="family-media-stage">${familyMediaMarkup(active, 0)}</div><div class="family-media-dots">${media.map((item, index) => `<button type="button" class="family-media-dot ${index === 0 ? "active" : ""}" data-family-media-index="${index}" aria-label="${index + 1}"></button>`).join("")}</div>` : `<div class="family-media-empty">${Icons.memory()}<span>${escapeHtml(t("noFamilyMedia"))}</span></div>`}
     </article>
   `;
 }
@@ -121,7 +121,7 @@ function nextBirthdayDate(value) {
 
 function familyPhotoCard() {
   const image = getFamilyPhoto();
-  const position = storedImagePosition("mylife:family-photo-position");
+  const position = imagePosition(appData.profile.familyPhotoPosition);
   return `
     <article class="glass-card family-photo-card">
       <div class="family-photo-heading">
@@ -140,11 +140,21 @@ function familyPhotoCard() {
 }
 
 function getFamilyPhoto() {
-  try {
-    return localStorage.getItem("mylife:family-photo") || "";
-  } catch (error) {
-    return "";
-  }
+  return appData.profile.familyPhoto || "";
+}
+
+function validFamilyMedia() {
+  return (Array.isArray(appData.familyMedia) ? appData.familyMedia : [])
+    .filter(item => item && String(item.src || "").trim());
+}
+
+function familyMediaMarkup(item, index = 0) {
+  if (!item || !String(item.src || "").trim()) return "";
+  const source = escapeAttr(item.src);
+  const media = item.type === "video"
+    ? `<video src="${source}" muted loop playsinline></video>`
+    : `<img src="${source}" alt="${escapeAttr(t("familyMedia"))}">`;
+  return `${media}<div class="family-media-toolbar"><label class="family-media-action family-media-edit" title="${escapeAttr(t("edit"))}">${Icons.edit()}<input type="file" accept="image/*,video/*" data-family-media-edit="${index}"></label><button class="family-media-action family-media-remove" type="button" data-family-media-remove="${index}" aria-label="${escapeAttr(t("delete"))}">${Icons.trash()}</button></div><button class="family-media-control family-media-prev" type="button" data-family-media-prev aria-label="Previous">${Icons.chevron()}</button><button class="family-media-control family-media-next" type="button" data-family-media-next aria-label="Next">${Icons.chevron()}</button>`;
 }
 
 function familyEmptyCard() {
@@ -378,14 +388,14 @@ function bindFamily(options = {}) {
     App.render();
   });
   document.querySelectorAll("[data-family-media-prev], [data-family-media-next], [data-family-media-index]").forEach(button => button.addEventListener("click", () => {
-    const media = appData.familyMedia || [];
+    const media = validFamilyMedia();
     if (!media.length) return;
     const current = Number(document.querySelector(".family-media-dot.active")?.dataset.familyMediaIndex || 0);
     const next = button.dataset.familyMediaIndex !== undefined ? Number(button.dataset.familyMediaIndex) : button.hasAttribute("data-family-media-next") ? (current + 1) % media.length : (current - 1 + media.length) % media.length;
     const selected = media[next];
     const stage = document.querySelector(".family-media-stage");
     if (!stage || !selected) return;
-    stage.innerHTML = `${selected.type === "video" ? `<video src="${escapeAttr(selected.src)}" muted loop playsinline></video>` : `<img src="${escapeAttr(selected.src)}" alt="${escapeAttr(t("familyMedia"))}">`}<div class="family-media-toolbar"><label class="family-media-action family-media-edit" title="${escapeAttr(t("edit"))}">${Icons.edit()}<input type="file" accept="image/*,video/*" data-family-media-edit="${next}"></label><button class="family-media-action family-media-remove" type="button" data-family-media-remove="${next}" aria-label="${escapeAttr(t("delete"))}">${Icons.trash()}</button></div><button class="family-media-control family-media-prev" type="button" data-family-media-prev aria-label="Previous">${Icons.chevron()}</button><button class="family-media-control family-media-next" type="button" data-family-media-next aria-label="Next">${Icons.chevron()}</button>`;
+    stage.innerHTML = familyMediaMarkup(selected, next);
     document.querySelectorAll(".family-media-dot").forEach(dot => dot.classList.toggle("active", Number(dot.dataset.familyMediaIndex) === next));
     bindFamilyMediaStage();
   }));
@@ -407,11 +417,7 @@ function bindFamily(options = {}) {
         key: "family-photo",
         title: languageCode() === "km" ? "លៃតម្រូវរូបថត" : "Adjust photo",
         onSave: position => {
-          if (!isGuestMode()) {
-            localStorage.setItem("mylife:family-photo", dataUrl);
-            localStorage.setItem("mylife:family-photo-position", JSON.stringify(position));
-          }
-          App.render();
+          Store.updateProfile({ familyPhoto: dataUrl, familyPhotoPosition: position });
         },
         onCancel: () => {
           event.target.value = "";
@@ -488,7 +494,7 @@ function bindFamilyMediaActions() {
 
 function bindFamilyMediaStage() {
   document.querySelectorAll(".family-media-stage [data-family-media-prev], .family-media-stage [data-family-media-next]").forEach(button => button.addEventListener("click", () => {
-    const media = appData.familyMedia || [];
+    const media = validFamilyMedia();
     if (!media.length) return;
     const current = Number(document.querySelector(".family-media-dot.active")?.dataset.familyMediaIndex || 0);
     const next = button.hasAttribute("data-family-media-next") ? (current + 1) % media.length : (current - 1 + media.length) % media.length;
