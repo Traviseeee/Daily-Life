@@ -7,6 +7,7 @@
     "build": "node -e \"console.log('Static Vercel deployment: source files are ready')\"",
     "start": "node server.js",
     "serve": "node server.js",
+    "verify:sync": "node tools/verify-sync.js",
     "mobile:sync": "node tools/copy-web.js && npx cap sync",
     "mobile:add:android": "node tools/copy-web.js && npx cap add android",
     "mobile:add:ios": "node tools/copy-web.js && npx cap add ios",

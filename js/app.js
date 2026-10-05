@@ -358,7 +358,7 @@ const App = {
   },
   bindPage(route) {
     if (route === "launcher") bindLauncher();
-    if (route === "home") bindHome();
+    if (route === "home" && typeof bindHome === "function") bindHome();
     if (route === "family") bindFamily();
     if (route === "goals") bindGoals(this.param);
     if (route === "money") bindMoney();

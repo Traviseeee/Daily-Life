@@ -35,12 +35,25 @@ function renderMoney(tab = "overview") {
 }
 
 function renderMoneyCards(stats) {
-  return `<div class="summary-grid grid">
+  return `<div class="summary-grid financial-metric-grid grid">
     ${summaryCard("Income", t("totalIncome"), money(stats.totalIncome), `${appData.income.length} ${t("income")}`, Icons.salary(), "green")}
     ${summaryCard("Expenses", t("totalExpenses"), money(stats.totalExpenses), `${appData.expenses.length} ${t("expenses")}`, Icons.expense(), "")}
     ${summaryCard("Savings", t("totalSavings"), money(stats.totalSavings), `${money(stats.monthlySavings)} ${t("monthlyContribution")}`, Icons.savings(), "blue")}
     ${summaryCard("Available", t("available"), money(stats.available), t("availableMoney"), Icons.wallet(), "purple")}
   </div>`;
+}
+
+function summaryCard(label, title, value, trend, icon, tone) {
+  return `
+    <article class="glass-card card-pad financial-metric-card">
+      <div class="card-title-row">
+        <span class="secondary">${escapeHtml(title)}</span>
+        <span class="icon-badge ${tone}">${icon}</span>
+      </div>
+      <div class="metric">${value}</div>
+      <div class="secondary">${trend}</div>
+    </article>
+  `;
 }
 
 function renderMoneyTab(tab, stats) {
@@ -54,8 +67,14 @@ function renderMoneyTab(tab, stats) {
   return `
     ${renderMoneyCards(stats)}
     <div class="grid two-col financial-overview-grid">
-      <article class="glass-card card-pad">
-        <h2 class="section-title">${t("incomeVsExpenses")}</h2>
+      <article class="glass-card card-pad financial-panel">
+        <div class="financial-panel-heading">
+          <div>
+            <span class="eyebrow">${t("overview")}</span>
+            <h2 class="section-title">${t("incomeVsExpenses")}</h2>
+          </div>
+          <span class="icon-badge blue">${Icons.chart()}</span>
+        </div>
         ${stats.totalIncome || stats.totalExpenses || stats.monthlySavings || stats.monthlyLoanPayments ? Charts.bars([
           { label: t("income"), value: stats.totalIncome, color: "linear-gradient(90deg,#9dff6e,#64f4d2)" },
           { label: t("expenses"), value: stats.totalExpenses, color: "linear-gradient(90deg,#ff6f9c,#9b6dff)" },
@@ -63,9 +82,15 @@ function renderMoneyTab(tab, stats) {
           { label: t("monthlyPayment"), value: stats.monthlyLoanPayments, color: "linear-gradient(90deg,#9b6dff,#b8ff5a)" }
         ]) : moneyEmptyCard()}
       </article>
-      <article class="glass-card card-pad">
-        <h2 class="section-title">${t("recentTransactions")}</h2>
-        <div class="list">${appData.expenses.slice(0, 5).map(expenseRow).join("") || emptyState(t("noExpensesYet"), t("noExpensesBody"), t("addExpense"), "add-expense")}</div>
+      <article class="glass-card card-pad financial-panel">
+        <div class="financial-panel-heading">
+          <div>
+            <span class="eyebrow">${t("expenses")}</span>
+            <h2 class="section-title">${t("recentTransactions")}</h2>
+          </div>
+          <span class="pill">${appData.expenses.length} ${t("expenses")}</span>
+        </div>
+        ${expenseLedger(appData.expenses.slice(0, 5))}
       </article>
     </div>
   `;
@@ -87,33 +112,49 @@ function moneyEmptyCard() {
 
 function renderIncome() {
   return `<div class="grid two-col">
-    <article class="glass-card card-pad"><div class="between"><h2 class="section-title">${t("incomeSources")}</h2><button class="button" data-action="add-income">${Icons.plus()} ${t("addIncome")}</button></div><div class="list">${appData.income.map(incomeRow).join("") || emptyState(t("noIncomeYet"), t("noIncomeBody"), t("addIncome"), "add-income")}</div></article>
-    <article class="glass-card card-pad"><h2 class="section-title">${t("incomeCategories")}</h2><div class="kv">${incomeCategories.map(cat => `<div><span>${optionLabel(cat)}</span><strong>${money(sumMoney(appData.income.filter(i => i.category === cat), "amount"))}</strong></div>`).join("")}</div></article>
+    <article class="glass-card card-pad financial-panel"><div class="between"><h2 class="section-title">${t("incomeSources")}</h2><button class="button" data-action="add-income">${Icons.plus()} ${t("addIncome")}</button></div><div class="list financial-ledger">${appData.income.map(incomeRow).join("") || emptyState(t("noIncomeYet"), t("noIncomeBody"), t("addIncome"), "add-income")}</div></article>
+    <article class="glass-card card-pad financial-panel"><h2 class="section-title">${t("incomeCategories")}</h2><div class="kv financial-kv">${incomeCategories.map(cat => `<div><span>${optionLabel(cat)}</span><strong>${money(sumMoney(appData.income.filter(i => i.category === cat), "amount"))}</strong></div>`).join("")}</div></article>
   </div>`;
 }
 
 function incomeRow(item) {
-  return `<div class="list-row"><span class="icon-badge green">${Icons.salary()}</span><strong>${escapeHtml(item.name)}</strong><span>${money(item.amount, item.currency)}</span><span class="pill">${optionLabel(item.frequency)}</span><button class="icon-button" data-edit-income="${item.id}" aria-label="${t("editIncome")}">${Icons.edit()}</button><button class="icon-button" data-delete-income="${item.id}" aria-label="${t("delete")}">${Icons.trash()}</button></div>`;
+  return `<div class="list-row financial-row"><span class="icon-badge green">${Icons.salary()}</span><div class="financial-row-main"><strong>${escapeHtml(item.name)}</strong><span class="secondary">${optionLabel(item.category || "Other")}</span></div><span class="financial-row-amount success">${money(item.amount, item.currency)}</span><span class="pill">${optionLabel(item.frequency)}</span><div class="financial-row-actions"><button class="icon-button" data-edit-income="${item.id}" aria-label="${t("editIncome")}">${Icons.edit()}</button><button class="icon-button" data-delete-income="${item.id}" aria-label="${t("delete")}">${Icons.trash()}</button></div></div>`;
 }
 
 function renderExpenses() {
-  return `<article class="glass-card card-pad"><div class="between"><h2 class="section-title">${t("expenses")}</h2><button class="button" data-action="add-expense">${Icons.plus()} ${t("addExpense")}</button></div><div class="list">${appData.expenses.map(expenseRow).join("") || emptyState(t("noExpensesYet"), t("noExpensesBody"), t("addExpense"), "add-expense")}</div></article>`;
+  return `<article class="glass-card card-pad financial-panel"><div class="between"><h2 class="section-title">${t("expenses")}</h2><button class="button" data-action="add-expense">${Icons.plus()} ${t("addExpense")}</button></div>${expenseLedger(appData.expenses)}</article>`;
+}
+
+function expenseLedger(items) {
+  if (!items.length) return emptyState(t("noExpensesYet"), t("noExpensesBody"), t("addExpense"), "add-expense");
+  return `
+    <div class="financial-ledger-table">
+      <div class="financial-ledger-head" aria-hidden="true">
+        <span>${t("expense")}</span>
+        <span>${t("category")}</span>
+        <span>${t("amount")}</span>
+        <span>${t("date")}</span>
+        <span></span>
+      </div>
+      <div class="list financial-ledger">${items.map(expenseRow).join("")}</div>
+    </div>
+  `;
 }
 
 function expenseRow(item) {
-  return `<div class="list-row"><span class="icon-badge">${Icons.expense()}</span><strong>${escapeHtml(item.description)}</strong><span class="secondary">${optionLabel(item.category)}</span><span class="danger">-${money(item.amount, item.currency)}</span><button class="icon-button" data-edit-expense="${item.id}" aria-label="${t("edit")}">${Icons.edit()}</button><button class="icon-button" data-delete-expense="${item.id}" aria-label="${t("delete")}">${Icons.trash()}</button></div>`;
+  return `<div class="list-row financial-row financial-expense-row"><div class="financial-row-main"><strong>${escapeHtml(item.description)}</strong></div><span class="pill financial-category-pill">${optionLabel(item.category)}</span><span class="financial-row-amount danger">-${money(item.amount, item.currency)}</span><span class="financial-row-date">${formatDate(item.date, { month: "short", day: "numeric" })}</span><div class="financial-row-actions"><button class="icon-button" data-edit-expense="${item.id}" aria-label="${t("edit")}">${Icons.edit()}</button><button class="icon-button" data-delete-expense="${item.id}" aria-label="${t("delete")}">${Icons.trash()}</button></div></div>`;
 }
 
 function renderSavings() {
-  return `<article class="glass-card card-pad"><div class="between"><h2 class="section-title">${t("savings")}</h2><button class="button" data-action="add-savings">${Icons.plus()} ${t("addSavings")}</button></div>${appData.savings.length ? `<div class="grid three-col">${appData.savings.map(savingCard).join("")}</div>` : emptyState(t("noSavingsYet"), t("noSavingsBody"), t("addSavings"), "add-savings")}</article>`;
+  return `<article class="glass-card card-pad financial-panel"><div class="between"><h2 class="section-title">${t("savings")}</h2><button class="button" data-action="add-savings">${Icons.plus()} ${t("addSavings")}</button></div>${appData.savings.length ? `<div class="grid three-col financial-card-grid">${appData.savings.map(savingCard).join("")}</div>` : emptyState(t("noSavingsYet"), t("noSavingsBody"), t("addSavings"), "add-savings")}</article>`;
 }
 
 function savingCard(item) {
-  return `<div class="goal-item"><div class="between"><strong>${escapeHtml(item.name)}</strong><span class="pill">${pct(item.currentAmount, item.targetAmount)}%</span></div><div class="secondary">${money(item.currentAmount, item.currency)} / ${money(item.targetAmount, item.currency)}</div><div class="progress-track"><div class="progress-fill" style="--progress:${pct(item.currentAmount, item.targetAmount)}%"></div></div><div class="secondary">${t("deadline")} ${formatDate(item.deadline)}</div><div class="action-row"><button class="button ghost-button" data-edit-savings="${item.id}">${Icons.edit()} ${t("edit")}</button><button class="icon-button" data-delete-savings="${item.id}" aria-label="${t("delete")}">${Icons.trash()}</button></div></div>`;
+  return `<div class="goal-item financial-mini-card"><div class="between"><strong>${escapeHtml(item.name)}</strong><span class="pill">${pct(item.currentAmount, item.targetAmount)}%</span></div><div class="financial-card-amount">${money(item.currentAmount, item.currency)} / ${money(item.targetAmount, item.currency)}</div><div class="progress-track"><div class="progress-fill" style="--progress:${pct(item.currentAmount, item.targetAmount)}%"></div></div><div class="financial-meta-line"><span>${t("deadline")}</span><strong>${formatDate(item.deadline)}</strong></div><div class="action-row"><button class="button ghost-button" data-edit-savings="${item.id}">${Icons.edit()} ${t("edit")}</button><button class="icon-button" data-delete-savings="${item.id}" aria-label="${t("delete")}">${Icons.trash()}</button></div></div>`;
 }
 
 function renderLoans() {
-  return `<article class="glass-card card-pad"><div class="between"><h2 class="section-title">${t("loans")}</h2><button class="button" data-action="add-loan">${Icons.plus()} ${t("addLoan")}</button></div>${appData.loans.length ? `<div class="grid loan-list">${appData.loans.map(loanCard).join("")}</div>` : emptyState(t("noLoansYet"), t("noLoansBody"))}</article>`;
+  return `<article class="glass-card card-pad financial-panel"><div class="between"><h2 class="section-title">${t("loans")}</h2><button class="button" data-action="add-loan">${Icons.plus()} ${t("addLoan")}</button></div>${appData.loans.length ? `<div class="grid loan-list">${appData.loans.map(loanCard).join("")}</div>` : emptyState(t("noLoansYet"), t("noLoansBody"))}</article>`;
 }
 
 function loanCard(loan) {
@@ -148,24 +189,24 @@ function formatPaymentDay(day) {
 }
 
 function renderBills() {
-  return `<article class="glass-card card-pad"><div class="between"><h2 class="section-title">${t("bills")}</h2><button class="button" data-action="add-bill">${Icons.plus()} ${t("addBill")}</button></div>${appData.bills.length ? `<div class="grid four-col">${appData.bills.map(billCard).join("")}</div>` : emptyState(t("noBillsYet"), t("noBillsBody"), t("addBill"), "add-bill")}</article>`;
+  return `<article class="glass-card card-pad financial-panel"><div class="between"><h2 class="section-title">${t("bills")}</h2><button class="button" data-action="add-bill">${Icons.plus()} ${t("addBill")}</button></div>${appData.bills.length ? `<div class="grid four-col financial-card-grid">${appData.bills.map(billCard).join("")}</div>` : emptyState(t("noBillsYet"), t("noBillsBody"), t("addBill"), "add-bill")}</article>`;
 }
 
 function billCard(bill) {
-  return `<div class="goal-item"><div class="between"><span class="icon-badge blue">${Icons.bill()}</span><span class="pill ${bill.status === "Paid" ? "success" : ""}">${optionLabel(bill.status || "Upcoming")}</span></div><h3>${escapeHtml(bill.name)}</h3><div class="metric">${money(bill.amount, bill.currency)}</div><p class="secondary">${t("dueDate")} ${formatDate(bill.due)}</p><p class="secondary">${optionLabel(bill.frequency)} · ${optionLabel(bill.category)}</p><div class="action-row"><button class="button ghost-button" data-edit-bill="${bill.id}">${Icons.edit()} ${t("edit")}</button><button class="icon-button" data-delete-bill="${bill.id}" aria-label="${t("delete")}">${Icons.trash()}</button></div></div>`;
+  return `<div class="goal-item financial-mini-card"><div class="between"><span class="icon-badge blue">${Icons.bill()}</span><span class="pill ${bill.status === "Paid" ? "success" : ""}">${optionLabel(bill.status || "Upcoming")}</span></div><h3>${escapeHtml(bill.name)}</h3><div class="metric compact-metric">${money(bill.amount, bill.currency)}</div><div class="financial-meta-line"><span>${t("dueDate")}</span><strong>${formatDate(bill.due)}</strong></div><p class="secondary">${optionLabel(bill.frequency)} · ${optionLabel(bill.category)}</p><div class="action-row"><button class="button ghost-button" data-edit-bill="${bill.id}">${Icons.edit()} ${t("edit")}</button><button class="icon-button" data-delete-bill="${bill.id}" aria-label="${t("delete")}">${Icons.trash()}</button></div></div>`;
 }
 
 function renderBudget() {
   const categories = [...new Set(appData.expenses.map(expense => expense.category))];
-  return `<article class="glass-card card-pad"><h2 class="section-title">${t("spendingByCategory")}</h2><div class="grid">${categories.map(category => {
+  return `<article class="glass-card card-pad financial-panel"><h2 class="section-title">${t("spendingByCategory")}</h2><div class="grid financial-card-grid">${categories.map(category => {
     const spent = sumMoney(appData.expenses.filter(e => e.category === category), "amount");
     const max = Math.max(...categories.map(cat => sumMoney(appData.expenses.filter(e => e.category === cat), "amount")), 1);
-    return `<div class="goal-item"><div class="between"><strong>${optionLabel(category)}</strong><span>${money(spent)}</span></div><div class="progress-track"><div class="progress-fill" style="--progress:${(spent / max) * 100}%"></div></div></div>`;
+    return `<div class="goal-item financial-mini-card"><div class="between"><strong>${optionLabel(category)}</strong><span class="financial-row-amount">${money(spent)}</span></div><div class="progress-track"><div class="progress-fill" style="--progress:${(spent / max) * 100}%"></div></div></div>`;
   }).join("") || emptyState(t("noBudgetYet"), t("noBudgetBody"), t("addExpense"), "add-expense")}</div></article>`;
 }
 
 function renderReports(stats) {
-  return `<div class="grid">${renderMoneyCards(stats)}<article class="glass-card card-pad"><h2 class="section-title">${t("financialAnalytics")}</h2><div class="kv"><div><span>${t("monthlyIncome")}</span><strong>${money(stats.totalIncome)}</strong></div><div><span>${t("monthlyExpenses")}</span><strong>${money(stats.totalExpenses)}</strong></div><div><span>${t("totalSavings")}</span><strong>${money(stats.totalSavings)}</strong></div><div><span>${t("savingsRate")}</span><strong>${stats.savingsRate}%</strong></div><div><span>${t("loanBalance")}</span><strong>${money(stats.loanBalance)}</strong></div></div></article></div>`;
+  return `<div class="grid">${renderMoneyCards(stats)}<article class="glass-card card-pad financial-panel"><h2 class="section-title">${t("financialAnalytics")}</h2><div class="kv financial-kv"><div><span>${t("monthlyIncome")}</span><strong>${money(stats.totalIncome)}</strong></div><div><span>${t("monthlyExpenses")}</span><strong>${money(stats.totalExpenses)}</strong></div><div><span>${t("totalSavings")}</span><strong>${money(stats.totalSavings)}</strong></div><div><span>${t("savingsRate")}</span><strong>${stats.savingsRate}%</strong></div><div><span>${t("loanBalance")}</span><strong>${money(stats.loanBalance)}</strong></div></div></article></div>`;
 }
 
 function bindMoney() {

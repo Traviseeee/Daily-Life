@@ -868,6 +868,12 @@
   gap: 10px;
 }
 
+.mood-selector {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+}
+
 .mood-option {
   display: grid;
   gap: 6px;
@@ -881,14 +887,35 @@
   transition: transform var(--ease), border-color var(--ease), background var(--ease), color var(--ease);
 }
 
+.mood-button {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 6px;
+  min-width: 0;
+  min-height: 82px;
+  padding: 10px 8px;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+  background: rgba(255,255,255,0.025);
+  color: var(--text-secondary);
+  font: inherit;
+  cursor: pointer;
+  transition: transform var(--ease), border-color var(--ease), background var(--ease), color var(--ease);
+}
+
 .mood-option:hover,
-.mood-option:focus-visible {
+.mood-option:focus-visible,
+.mood-button:hover,
+.mood-button:focus-visible {
   transform: translateY(-1px);
   border-color: rgba(184,255,90,0.32);
   color: var(--text-primary);
+  outline: none;
 }
 
-.mood-option.active {
+.mood-option.active,
+.mood-button.active {
   border-color: rgba(184,255,90,0.46);
   background: rgba(184,255,90,0.08);
   color: var(--text-primary);
@@ -899,6 +926,11 @@
 .mood-option[data-mood-value="tired"].active { border-color: rgba(188, 167, 255, 0.46); background: rgba(188, 167, 255, 0.08); }
 .mood-option[data-mood-value="stressed"].active { border-color: rgba(255, 137, 157, 0.46); background: rgba(255, 137, 157, 0.08); }
 .mood-option[data-mood-value="excited"].active { border-color: rgba(184, 255, 90, 0.46); background: rgba(184, 255, 90, 0.08); }
+.mood-button[data-mood="happy"].active { border-color: rgba(255, 204, 94, 0.46); background: rgba(255, 204, 94, 0.08); }
+.mood-button[data-mood="calm"].active { border-color: rgba(137, 215, 255, 0.46); background: rgba(137, 215, 255, 0.08); }
+.mood-button[data-mood="tired"].active { border-color: rgba(188, 167, 255, 0.46); background: rgba(188, 167, 255, 0.08); }
+.mood-button[data-mood="stressed"].active { border-color: rgba(255, 137, 157, 0.46); background: rgba(255, 137, 157, 0.08); }
+.mood-button[data-mood="excited"].active { border-color: rgba(184, 255, 90, 0.46); background: rgba(184, 255, 90, 0.08); }
 
 .mood-emoji {
   font-size: 1.9rem;
@@ -1061,6 +1093,12 @@
   gap: 8px;
 }
 
+.mood-history {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+}
+
 .mood-history-day {
   display: grid;
   justify-items: center;
@@ -1072,10 +1110,34 @@
   color: rgba(255,255,255,0.58);
 }
 
-.mood-history-day.filled {
+.mood-history-day.filled,
+.mood-history-day.active {
   background: rgba(184,255,90,0.06);
   border-color: rgba(184,255,90,0.18);
   color: var(--text-primary);
+}
+
+.mood-day {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.mood-selected {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 10px 12px;
+  border: 1px solid rgba(184,255,90,0.18);
+  border-radius: 14px;
+  background: rgba(184,255,90,0.055);
+}
+
+.mood-emoji-large {
+  font-size: 1.9rem;
+  line-height: 1;
 }
 
 .mood-history-emoji {
@@ -1089,21 +1151,84 @@
   text-transform: uppercase;
 }
 
+.reflection-card {
+  display: grid;
+  gap: 12px;
+  padding: 18px 18px 16px;
+}
+
+.reflection-textarea {
+  width: 100%;
+  min-height: 116px;
+  resize: vertical;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px;
+  background: rgba(255,255,255,0.035);
+  color: var(--text-primary);
+  padding: 12px 14px;
+  font: inherit;
+  line-height: 1.45;
+}
+
+.reflection-textarea:focus {
+  outline: none;
+  border-color: rgba(184,255,90,0.34);
+  background: rgba(255,255,255,0.055);
+}
+
+.reflection-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.reflection-stats .stat {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  padding: 6px 9px;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 999px;
+  color: var(--text-secondary);
+  background: rgba(255,255,255,0.025);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.reflection-stats .stat strong {
+  color: var(--text-primary);
+}
+
 .focus-card {
   display: grid;
   gap: 12px;
   padding: 18px 18px 16px;
 }
 
-.focus-list {
+.focus-progress {
   display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
   gap: 10px;
 }
 
-.focus-item {
-  display: flex;
-  align-items: center;
+.focus-progress-text {
+  min-width: 42px;
+  text-align: right;
+  color: var(--accent-light);
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.focus-list {
+  display: grid;
   gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.focus-item {
   padding: 10px 12px;
   border: 1px solid rgba(255,255,255,0.06);
   border-radius: 12px;
@@ -1112,10 +1237,26 @@
   transition: border-color var(--ease), background var(--ease), color var(--ease);
 }
 
+.focus-item label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  cursor: pointer;
+}
+
 .focus-item input {
+  flex: 0 0 auto;
   width: 16px;
   height: 16px;
   accent-color: var(--accent-light);
+}
+
+.focus-text {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: 0.88rem;
+  font-weight: 700;
 }
 
 .focus-item.done {
@@ -3336,6 +3477,184 @@ body.money-hidden .money-value {
 
 .financial-content .summary-grid > article {
   min-height: 180px;
+}
+
+.financial-panel {
+  overflow: hidden;
+}
+
+.financial-panel-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.financial-panel-heading .section-title {
+  margin-bottom: 0;
+}
+
+.financial-metric-grid {
+  gap: 12px;
+}
+
+.financial-metric-card {
+  position: relative;
+  min-height: 140px !important;
+  overflow: hidden;
+  border-color: rgba(184,255,90,0.11);
+}
+
+.financial-metric-card::after {
+  content: "";
+  position: absolute;
+  inset: auto 12px 0 12px;
+  height: 3px;
+  border-radius: 999px 999px 0 0;
+  background: linear-gradient(90deg, rgba(184,255,90,0.85), rgba(100,244,210,0.75), rgba(164,124,255,0.65));
+  opacity: 0.76;
+}
+
+.financial-metric-card .card-title-row {
+  align-items: flex-start;
+}
+
+.financial-metric-card .metric {
+  margin: 10px 0 4px;
+  font-size: clamp(1.28rem, 2.6vw, 2rem);
+  line-height: 1.02;
+  overflow-wrap: anywhere;
+}
+
+.financial-ledger {
+  gap: 8px;
+}
+
+.financial-row {
+  grid-template-columns: auto minmax(0, 1fr) auto auto auto;
+  gap: 10px;
+  min-height: 62px;
+  padding: 9px 10px;
+  border-radius: 14px;
+}
+
+.financial-row .icon-badge {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+}
+
+.financial-row .icon-badge svg {
+  width: 18px;
+  height: 18px;
+}
+
+.financial-row-main {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.financial-row-main strong {
+  min-width: 0;
+  overflow: hidden;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.financial-row-main .secondary {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 0.76rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.financial-row-amount {
+  justify-self: end;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.financial-row-actions {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.financial-row-actions .icon-button {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+}
+
+.financial-card-grid {
+  gap: 12px;
+}
+
+.financial-mini-card {
+  gap: 9px;
+  padding: 13px;
+  border-radius: 14px;
+}
+
+.financial-mini-card h3 {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: 1rem;
+  line-height: 1.25;
+}
+
+.financial-card-amount {
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.financial-meta-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 32px;
+  padding: 6px 9px;
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 11px;
+  background: rgba(255,255,255,0.035);
+}
+
+.financial-meta-line span {
+  color: var(--text-muted);
+  font-size: 0.74rem;
+  font-weight: 800;
+}
+
+.financial-meta-line strong {
+  color: var(--text-primary);
+  font-size: 0.82rem;
+  text-align: right;
+}
+
+.compact-metric {
+  margin: 6px 0 0;
+  font-size: clamp(1.35rem, 2.2vw, 1.8rem);
+  line-height: 1.05;
+}
+
+.financial-kv {
+  gap: 8px;
+}
+
+.financial-kv div {
+  min-height: 42px;
+  align-items: center;
+  padding: 8px 10px;
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 12px;
+  background: rgba(255,255,255,0.03);
 }
 
 .settings-layout {

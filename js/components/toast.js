@@ -1,16 +1,21 @@
 const Sound = {
   context: null,
   enabled: true,
+  unlocked: false,
   ensureContext() {
     const AudioCtor = window.AudioContext || window.webkitAudioContext;
-    if (!AudioCtor || !this.enabled) return null;
+    if (!AudioCtor || !this.enabled || !this.unlocked) return null;
     if (!this.context) {
       this.context = new AudioCtor();
     }
     if (this.context.state === "suspended") {
-      this.context.resume();
+      this.context.resume().catch(() => {});
     }
     return this.context;
+  },
+  unlock() {
+    this.unlocked = true;
+    this.ensureContext();
   },
   play(type = "tap") {
     this.enabled = window.appData?.profile?.soundEnabled !== false;
@@ -52,6 +57,9 @@ const Sound = {
 };
 
 window.Sound = Sound;
+["pointerdown", "keydown", "touchstart"].forEach(eventName => {
+  window.addEventListener(eventName, () => Sound.unlock(), { once: true, passive: true });
+});
 
 const Toast = {
   show(message, tone = "success", options = {}) {

@@ -728,6 +728,17 @@
     flex: 1 1 180px;
   }
   .financial-overview-grid { grid-template-columns: 1fr; }
+  .financial-row {
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
+  }
+  .financial-row .pill {
+    grid-column: 2;
+    justify-self: start;
+  }
+  .financial-row-actions {
+    grid-column: 4;
+    grid-row: 1 / span 2;
+  }
   .modal-root { padding: 10px; }
   .modal {
     max-height: calc(100vh - 20px);
@@ -812,6 +823,48 @@
   .loan-card {
     padding: 14px;
     gap: 14px;
+  }
+  .financial-metric-card {
+    min-height: 118px !important;
+    padding: 12px;
+  }
+  .financial-metric-card .metric {
+    font-size: 1.38rem;
+  }
+  .financial-row {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 8px;
+  }
+  .financial-row-amount {
+    grid-column: 2 / 4;
+    justify-self: start;
+    font-size: 0.9rem;
+  }
+  .financial-row .pill {
+    grid-column: 2;
+    min-height: 24px;
+    font-size: 0.7rem;
+  }
+  .financial-row-actions {
+    grid-column: 3;
+    grid-row: 1 / span 3;
+    align-self: center;
+    flex-direction: column;
+  }
+  .financial-row-actions .icon-button {
+    width: 34px;
+    height: 34px;
+  }
+  .financial-card-grid {
+    grid-template-columns: 1fr;
+  }
+  .financial-meta-line {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .financial-meta-line strong {
+    text-align: left;
   }
   .loan-card-header {
     align-items: center;

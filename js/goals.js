@@ -65,6 +65,16 @@ function goalCard(goal) {
   `;
 }
 
+function goalProgressContent(goal) {
+  const hasTarget = goalHasTarget(goal);
+  const progress = pct(goal.currentAmount, goal.targetAmount);
+  return `
+    <div class="between"><strong>${escapeHtml(goal.name)}</strong><span class="pill">${hasTarget ? `${progress}%` : t("notSet")}</span></div>
+    <div class="secondary">${hasTarget ? `${money(goal.currentAmount)} / ${money(goal.targetAmount)}` : `${t("target")}: ${t("notSet")}`}</div>
+    ${hasTarget ? `<div class="progress-track"><div class="progress-fill" style="--progress:${progress}%"></div></div>` : ""}
+  `;
+}
+
 function renderGoalDetail(goal) {
   const progress = pct(goal.currentAmount, goal.targetAmount);
   const hasTarget = goalHasTarget(goal);

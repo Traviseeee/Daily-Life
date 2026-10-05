@@ -336,7 +336,7 @@ window.MYLIFE_SUPABASE_API = {
       const blob = await response.blob();
       const extension = blob.type.split("/")[1] || "jpeg";
       const file = new File([blob], `mylife-${Date.now()}.${extension}`, { type: blob.type });
-      return this.uploadImage(file, folder);
+      return window.MYLIFE_SUPABASE_API.uploadImage(file, folder);
     } catch (error) {
       console.warn("Supabase data URL upload failed.", error);
       return null;
