@@ -208,6 +208,10 @@
   .page-title { font-size: clamp(2.1rem, 11vw, 3.3rem); }
   .three-col { grid-template-columns: 1fr; }
 
+  .quick-action-dock { right: 14px; bottom: calc(148px + env(safe-area-inset-bottom)); }
+  .quick-action-toggle { touch-action: none; cursor: grab; }
+  .quick-action-dock.is-dragging .quick-action-toggle { cursor: grabbing; }
+
   .mobile-nav {
     position: fixed;
     left: calc(10px + env(safe-area-inset-left));
@@ -217,7 +221,7 @@
     bottom: calc(10px + env(safe-area-inset-bottom));
     z-index: 30;
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+      grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 3px;
     padding: 7px;
     min-height: 64px;
@@ -629,8 +633,10 @@
   .task-time, .task-row .pill { grid-column: 2; }
   .calendar-grid {
     grid-template-columns: repeat(7, minmax(0, 1fr));
+    grid-auto-rows: minmax(64px, auto);
     gap: 5px;
   }
+  .calendar-grid.calendar-grid-day { grid-template-columns: minmax(0, 1fr); }
   .calendar-weekday {
     min-width: 0;
     overflow: hidden;
@@ -654,12 +660,14 @@
   .day .event-chip {
     width: 8px;
     height: 8px;
-    margin: 4px auto 0;
+    margin: 3px auto 0;
     overflow: hidden;
     padding: 0;
     border-radius: 999px;
     color: transparent;
   }
+  .day .calendar-event-indicators { display: flex; justify-content: center; align-items: center; gap: 2px; }
+  .day .event-more { padding: 0 4px; font-size: 0.58rem; }
   .setup-layout { grid-template-columns: 1fr; }
   .setup-sidebar {
     position: static;

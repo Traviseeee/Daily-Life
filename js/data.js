@@ -240,6 +240,31 @@ function clearCollectionWithTombstones(collection) {
 const appData = structuredClone(emptyData);
 window.appData = appData;
 
+const ensureAppDataShape = () => {
+  Object.entries(emptyData).forEach(([key, defaultValue]) => {
+    const value = appData[key];
+
+    if (Array.isArray(defaultValue)) {
+      if (!Array.isArray(value)) appData[key] = [];
+      return;
+    }
+
+    if (defaultValue && typeof defaultValue === "object") {
+      if (!value || typeof value !== "object" || Array.isArray(value)) {
+        appData[key] = structuredClone(defaultValue);
+      }
+      return;
+    }
+
+    if (value === undefined) appData[key] = defaultValue;
+  });
+};
+
+const ensureCollection = collection => {
+  if (!Array.isArray(appData[collection])) appData[collection] = [];
+  return appData[collection];
+};
+
 const Store = {
   /** Bumped on every local mutation so an in-flight upload cannot clear a newer edit. */
   saveSequence: 0,
@@ -322,6 +347,7 @@ const Store = {
         : mergeAppData(localPayload, remotePayload);
 
       Object.assign(appData, structuredClone(emptyData), mergedPayload || {});
+      ensureAppDataShape();
       appData.profile = { ...emptyData.profile, ...(appData.profile || {}) };
       if (this.removeBrokenMediaRecords()) {
         SyncState.markPending({ mode: "merge", reason: "broken-media-cleanup" });
@@ -421,6 +447,7 @@ const Store = {
     try {
       const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
       Object.assign(appData, structuredClone(emptyData), saved || {});
+      ensureAppDataShape();
       appData.profile = { ...emptyData.profile, ...(appData.profile || {}) };
       if (this.removeBrokenMediaRecords()) {
         SyncState.markPending({ mode: "merge", reason: "broken-media-cleanup" });
@@ -472,6 +499,7 @@ const Store = {
 
     const merged = mergeAppData(localSnapshot, appData);
     Object.assign(appData, structuredClone(emptyData), merged || {});
+    ensureAppDataShape();
     appData.profile = { ...emptyData.profile, ...(merged.profile || appData.profile || {}) };
     saveLocalSnapshot(appData);
     return true;
@@ -548,13 +576,15 @@ const Store = {
   },
   add(collection, item) {
     const previous = structuredClone(appData);
-    appData[collection].push({ id: id(collection), createdAt: new Date().toISOString(), ...item });
+    const records = ensureCollection(collection);
+    records.push({ id: id(collection), createdAt: new Date().toISOString(), ...item });
     if (this.save()) App.render();
     else restoreData(previous);
   },
   edit(collection, itemId, changes) {
     const previous = structuredClone(appData);
-    const item = appData[collection].find(record => record.id === itemId);
+    const records = ensureCollection(collection);
+    const item = records.find(record => record.id === itemId);
     if (!item) return;
     Object.assign(item, changes, { updatedAt: new Date().toISOString() });
     if (this.save()) App.render();
@@ -562,8 +592,9 @@ const Store = {
   },
   delete(collection, itemId) {
     const previous = structuredClone(appData);
-    const existed = appData[collection].some(item => item.id === itemId);
-    appData[collection] = appData[collection].filter(item => item.id !== itemId);
+    const records = ensureCollection(collection);
+    const existed = records.some(item => item.id === itemId);
+    appData[collection] = records.filter(item => item.id !== itemId);
     // The tombstone is the whole point: without it the union merge in
     // syncFromSupabase pushes the record straight back in on the next refresh.
     if (existed) SyncState.record(appData, collection, itemId);

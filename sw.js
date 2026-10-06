@@ -1,9 +1,12 @@
-const CACHE_NAME = "mylife-pwa-v25";
+const CACHE_NAME = "mylife-pwa-v29";
 const APP_SHELL = [
   "./",
   "./index.html",
   "./manifest.webmanifest",
   "./assets/icons/mylife-icon.svg",
+  "./assets/icons/mylife-icon-180.png",
+  "./assets/icons/mylife-icon-192.png",
+  "./assets/icons/mylife-icon-512.png",
   "./css/variables.css",
   "./css/global.css",
   "./css/layout.css",

@@ -384,6 +384,74 @@ const App = {
     const backToTop = document.getElementById("backToTop");
     const quickActionMenu = document.getElementById("quickActionMenu");
     const quickActionToggle = document.getElementById("quickActionToggle");
+    const quickActionDock = quickActionToggle?.closest(".quick-action-dock");
+    let quickActionDrag = null;
+    let suppressQuickActionClick = false;
+    document.addEventListener("click", event => {
+      if (!suppressQuickActionClick) return;
+      suppressQuickActionClick = false;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    }, true);
+    const positionQuickActionDock = (left, top) => {
+      if (!quickActionDock) return;
+      const bounds = quickActionDock.getBoundingClientRect();
+      const mobileNav = document.getElementById("mobileNav");
+      const navVisible = mobileNav && getComputedStyle(mobileNav).display !== "none";
+      const navTop = navVisible ? mobileNav.getBoundingClientRect().top : window.innerHeight;
+      const maxLeft = Math.max(8, window.innerWidth - bounds.width - 8);
+      const maxTop = Math.max(8, Math.min(window.innerHeight - bounds.height - 8, navTop - bounds.height - (navVisible ? 14 : 8)));
+      const nextLeft = Math.min(maxLeft, Math.max(8, left));
+      const nextTop = Math.min(maxTop, Math.max(8, top));
+      quickActionDock.style.left = `${nextLeft}px`;
+      quickActionDock.style.top = `${nextTop}px`;
+      quickActionDock.style.right = "auto";
+      quickActionDock.style.bottom = "auto";
+    };
+    if (quickActionDock) {
+      try {
+        const savedPosition = JSON.parse(localStorage.getItem("mylife:quick-action-position") || "null");
+        if (Number.isFinite(savedPosition?.left) && Number.isFinite(savedPosition?.top)) {
+          positionQuickActionDock(savedPosition.left, savedPosition.top);
+        }
+      } catch (error) {
+        localStorage.removeItem("mylife:quick-action-position");
+      }
+      window.addEventListener("resize", () => {
+        if (quickActionDock.style.left) positionQuickActionDock(quickActionDock.offsetLeft, quickActionDock.offsetTop);
+      }, { passive: true });
+      quickActionToggle?.addEventListener("pointerdown", event => {
+        if (!event.isPrimary || event.button !== 0) return;
+        const bounds = quickActionDock.getBoundingClientRect();
+        quickActionDrag = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, left: bounds.left, top: bounds.top, moved: false };
+        quickActionToggle.setPointerCapture(event.pointerId);
+      });
+      quickActionToggle?.addEventListener("pointermove", event => {
+        if (!quickActionDrag || quickActionDrag.pointerId !== event.pointerId) return;
+        const deltaX = event.clientX - quickActionDrag.startX;
+        const deltaY = event.clientY - quickActionDrag.startY;
+        if (Math.abs(deltaX) + Math.abs(deltaY) < 6 && !quickActionDrag.moved) return;
+        quickActionDrag.moved = true;
+        quickActionDock.classList.add("is-dragging");
+        positionQuickActionDock(quickActionDrag.left + deltaX, quickActionDrag.top + deltaY);
+      });
+      const finishQuickActionDrag = event => {
+        if (!quickActionDrag || quickActionDrag.pointerId !== event.pointerId) return;
+        if (quickActionDrag.moved) {
+          const bounds = quickActionDock.getBoundingClientRect();
+          try {
+            localStorage.setItem("mylife:quick-action-position", JSON.stringify({ left: bounds.left, top: bounds.top }));
+          } catch (error) {
+            // Keep dragging usable when browser storage is unavailable.
+          }
+          suppressQuickActionClick = true;
+        }
+        quickActionDrag = null;
+        quickActionDock.classList.remove("is-dragging");
+      };
+      quickActionToggle?.addEventListener("pointerup", finishQuickActionDrag);
+      quickActionToggle?.addEventListener("pointercancel", finishQuickActionDrag);
+    }
     const closeLauncher = () => {
       document.body.classList.remove("nav-open");
       menuToggle.setAttribute("aria-expanded", "false");

@@ -242,7 +242,13 @@ function toggleLoanScheduledPayment(input) {
   App.render();
 }
 
-function bindCollectionActions(name, modalFn, collection = `${name}s`) {
+function bindCollectionActions(name, modalFn, collection = {
+  income: "income",
+  expense: "expenses",
+  savings: "savings",
+  loan: "loans",
+  bill: "bills"
+}[name] || `${name}s`) {
   document.querySelectorAll(`[data-edit-${name}]`).forEach(button => button.addEventListener("click", () => modalFn(appData[collection].find(item => item.id === button.dataset[`edit${name[0].toUpperCase()}${name.slice(1)}`]))));
   document.querySelectorAll(`[data-delete-${name}]`).forEach(button => button.addEventListener("click", () => {
     Modal.confirm({ title: `${t("delete")} ${t(name)}`, message: t("deleteRecordMessage"), confirmText: t("delete"), onConfirm: () => {

@@ -800,9 +800,9 @@ function bindHome() {
     }
   });
 
-  document.querySelectorAll("[data-mood-value]").forEach(button => {
+  document.querySelectorAll("[data-mood]").forEach(button => {
     button.addEventListener("click", () => {
-      const option = button.dataset.moodValue;
+      const option = button.dataset.mood;
       const moodMap = {
         happy: { label: t("moodHappy"), robot: t("moodCheerful") },
         calm: { label: t("moodCalm"), robot: t("moodBalanced") },
@@ -816,7 +816,7 @@ function bindHome() {
     });
   });
 
-  document.querySelectorAll("[data-daily-reflection]").forEach(textarea => {
+  document.querySelectorAll("[data-reflection-textarea]").forEach(textarea => {
     textarea.addEventListener("input", event => {
       Store.updateDailyReflection(event.target.value);
     });
@@ -827,7 +827,7 @@ function bindHome() {
     });
   });
 
-  document.querySelectorAll("[data-focus-toggle]").forEach(input => {
+  document.querySelectorAll("[data-focus-id]").forEach(input => {
     input.addEventListener("change", event => {
       const items = (appData.dailyFocus?.date === new Date().toISOString().slice(0, 10) && Array.isArray(appData.dailyFocus.items) && appData.dailyFocus.items.length
         ? appData.dailyFocus.items
@@ -837,6 +837,24 @@ function bindHome() {
             { id: "focus-family", text: t("checkInWithFamily"), done: false }
           ]).map(item => item.id === event.target.dataset.focusId ? { ...item, done: event.target.checked } : item);
       Store.updateDailyFocus(items);
+    });
+  });
+
+  document.querySelectorAll('[data-action="save-reflection"]').forEach(button => {
+    button.addEventListener("click", () => {
+      const textarea = document.querySelector("[data-reflection-textarea]");
+      if (!textarea) return;
+      Store.updateDailyReflection(textarea.value);
+      Toast.show(t("reflectionSaved") || "Reflection saved");
+    });
+  });
+
+  document.querySelectorAll('[data-action="edit-focus"]').forEach(button => {
+    button.addEventListener("click", () => {
+      const focusList = document.querySelector(".focus-list");
+      if (!focusList) return;
+      focusList.scrollIntoView({ behavior: "smooth", block: "center" });
+      focusList.querySelectorAll("input[type='checkbox']").forEach(input => input.focus());
     });
   });
 

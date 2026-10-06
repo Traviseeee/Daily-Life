@@ -4,31 +4,81 @@ let selectedCalendarDate = "";
 
 function renderCalendar(view = "month") {
   const parts = location.hash.replace("#", "").split("/");
-  const current = parseCalendarCursor(parts[2]);
+  const routeDate = parts[2] || "";
+  const routeCursor = parseCalendarCursor(routeDate);
+  const routeHasDay = /^\d{4}-\d{2}-\d{2}$/.test(routeDate);
+  const selectedInRouteMonth = selectedCalendarDate.startsWith(monthKey(routeCursor))
+    ? new Date(`${selectedCalendarDate}T00:00:00`)
+    : null;
+  const current = view === "month"
+    ? routeCursor
+    : routeHasDay ? routeCursor : selectedInRouteMonth || routeCursor;
   const year = current.getFullYear();
   const month = current.getMonth();
   const firstDay = new Date(year, month, 1);
   const totalDays = new Date(year, month + 1, 0).getDate();
   const visibleMonth = monthKey(current);
-  const prevMonth = monthKey(new Date(year, month - 1, 1));
-  const nextMonth = monthKey(new Date(year, month + 1, 1));
   ensureCambodiaHolidays(year);
-  const monthEvents = calendarItemsForMonth(current);
+  const monthEvents = calendarItemsForMonth(firstDay);
   const startOffset = (firstDay.getDay() + 6) % 7;
   if (!selectedCalendarDate || !selectedCalendarDate.startsWith(visibleMonth)) {
     const today = calendarDateInput(new Date());
     selectedCalendarDate = today.startsWith(visibleMonth) ? today : `${visibleMonth}-01`;
   }
-  const cells = Array.from({ length: Math.ceil((startOffset + totalDays) / 7) * 7 }, (_, index) => {
-    const day = index - startOffset + 1;
-    const iso = day > 0 && day <= totalDays ? `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}` : "";
-    const events = iso ? monthEvents.filter(event => event.date === iso) : [];
+  if (view !== "month") selectedCalendarDate = calendarDateInput(current);
+
+  const periodStart = new Date(current);
+  if (view === "month") periodStart.setDate(1);
+  if (view === "week") periodStart.setDate(periodStart.getDate() - ((periodStart.getDay() + 6) % 7));
+  const periodLength = view === "week" ? 7 : view === "day" ? 1 : Math.ceil((startOffset + totalDays) / 7) * 7;
+  const dates = Array.from({ length: periodLength }, (_, index) => {
+    if (view === "month") {
+      const day = index - startOffset + 1;
+      return day > 0 && day <= totalDays ? `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}` : "";
+    }
+    const date = new Date(periodStart);
+    date.setDate(date.getDate() + index);
+    return calendarDateInput(date);
+  });
+  const periodEnd = new Date(periodStart);
+  periodEnd.setDate(periodEnd.getDate() + periodLength - 1);
+  const periodEvents = view === "month"
+    ? monthEvents
+    : [...new Map(dates.filter(Boolean).flatMap(date => {
+      const dateValue = new Date(`${date}T00:00:00`);
+      return calendarItemsForMonth(new Date(dateValue.getFullYear(), dateValue.getMonth(), 1)).map(event => [event.id, event]);
+    })).values()].filter(event => event.date >= calendarDateInput(periodStart) && event.date <= calendarDateInput(periodEnd));
+  const cells = dates.map(iso => {
+    const events = iso ? periodEvents.filter(event => event.date === iso) : [];
     const date = iso ? new Date(`${iso}T00:00:00`) : null;
     const isWeekend = date ? date.getDay() === 0 || date.getDay() === 6 : false;
     const holiday = iso ? cambodiaHolidayState.items.find(item => item.date === iso) : null;
     const isSelected = iso === selectedCalendarDate;
-    return `<button class="day ${iso ? "has-date" : "empty-day"} ${isWeekend ? "weekend" : ""} ${holiday ? "public-holiday" : ""} ${isSelected ? "selected-day" : ""}" type="button" ${iso ? `data-calendar-date="${iso}"` : "disabled"} aria-pressed="${isSelected}" aria-label="${iso ? formatDate(iso) : ""}"><strong>${iso ? day : ""}</strong>${holiday ? `<span class="holiday-label" title="${escapeAttr(holiday.name)}">${languageCode() === "km" ? "ថ្ងៃឈប់សម្រាក" : "Holiday"}</span>` : ""}${events.map(eventChip).join("")}</button>`;
+    return `<button class="day ${iso ? "has-date" : "empty-day"} ${isWeekend ? "weekend" : ""} ${holiday ? "public-holiday" : ""} ${isSelected ? "selected-day" : ""}" type="button" ${iso ? `data-calendar-date="${iso}"` : "disabled"} aria-pressed="${isSelected}" aria-label="${iso ? formatDate(iso) : ""}"><strong>${iso ? Number(iso.slice(8)) : ""}</strong>${holiday ? `<span class="holiday-label" title="${escapeAttr(holiday.name)}">${languageCode() === "km" ? "ថ្ងៃឈប់សម្រាក" : "Holiday"}</span>` : ""}<span class="calendar-event-indicators">${calendarEventIndicators(events)}</span></button>`;
   });
+
+  const locale = languageCode() === "km" ? "km-KH" : "en-US";
+  const weekdayNames = languageCode() === "km" ? ["ចន្ទ", "អង្គារ", "ពុធ", "ព្រហ", "សុក្រ", "សៅរ៍", "អាទិត្យ"] : ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const weekdayHeaders = view === "day" ? "" : weekdayNames.map((day, index) => `<div class="calendar-weekday secondary ${index > 4 ? "weekend" : ""}"><strong>${day}</strong></div>`).join("");
+  const title = view === "month"
+    ? current.toLocaleDateString(locale, { month: "long", year: "numeric" })
+    : view === "day"
+      ? periodStart.toLocaleDateString(locale, { weekday: "long", month: "long", day: "numeric", year: "numeric" })
+      : `${periodStart.toLocaleDateString(locale, { month: "short", day: "numeric" })} - ${periodEnd.toLocaleDateString(locale, { month: "short", day: "numeric", year: "numeric" })}`;
+  const previousDate = new Date(view === "month" ? firstDay : current);
+  const nextDate = new Date(view === "month" ? firstDay : current);
+  const offset = view === "week" ? 7 : view === "day" ? 1 : 0;
+  if (view === "month") {
+    previousDate.setMonth(previousDate.getMonth() - 1);
+    nextDate.setMonth(nextDate.getMonth() + 1);
+  } else {
+    previousDate.setDate(previousDate.getDate() - offset);
+    nextDate.setDate(nextDate.getDate() + offset);
+  }
+  const cursorLink = date => view === "month" ? monthKey(date) : calendarDateInput(date);
+  const today = new Date();
+  const todayLink = view === "month" ? monthKey(today) : calendarDateInput(today);
+  const selectedLinkDate = selectedCalendarDate.startsWith(visibleMonth) ? selectedCalendarDate : calendarDateInput(current);
 
   return `
     <section class="page">
@@ -39,26 +89,26 @@ function renderCalendar(view = "month") {
         </div>
         <button class="button" data-action="add-calendar">${Icons.plus()} ${t("addEvent")}</button>
       </div>
-      <div class="tabs">${[["month", "month"], ["week", "week"], ["day", "day"]].map(([id, label]) => `<a class="tab ${view === id ? "active" : ""}" href="#calendar/${id}/${visibleMonth}">${t(label)}</a>`).join("")}</div>
+      <div class="tabs">${[["month", "month"], ["week", "week"], ["day", "day"]].map(([id, label]) => `<a class="tab ${view === id ? "active" : ""}" href="#calendar/${id}/${id === "month" ? visibleMonth : selectedLinkDate}">${t(label)}</a>`).join("")}</div>
       <article class="glass-card card-pad">
         <div class="calendar-toolbar">
           <div>
-            <h2 class="section-title">${current.toLocaleDateString(languageCode() === "km" ? "km-KH" : "en-US", { month: "long", year: "numeric" })}</h2>
-            <span class="pill">${monthEvents.length} ${t("events")}</span>
+            <h2 class="section-title">${escapeHtml(title)}</h2>
+            <span class="pill">${periodEvents.length} ${t("events")}</span>
           </div>
           <div class="calendar-actions">
-            <a class="icon-button previous-month" href="#calendar/${view}/${prevMonth}" aria-label="${t("previousMonth")}">${Icons.chevron()}</a>
-            <a class="button ghost-button" href="#calendar/${view}/${monthKey(new Date())}">${t("today")}</a>
-            <a class="icon-button next-month" href="#calendar/${view}/${nextMonth}" aria-label="${t("nextMonth")}">${Icons.chevron()}</a>
+            <a class="icon-button previous-month" href="#calendar/${view}/${cursorLink(previousDate)}" aria-label="${t("previousMonth")}">${Icons.chevron()}</a>
+            <a class="button ghost-button" href="#calendar/${view}/${todayLink}">${t("today")}</a>
+            <a class="icon-button next-month" href="#calendar/${view}/${cursorLink(nextDate)}" aria-label="${t("nextMonth")}">${Icons.chevron()}</a>
           </div>
         </div>
-        <div class="calendar-grid">
-          ${(languageCode() === "km" ? ["ចន្ទ", "អង្គារ", "ពុធ", "ព្រហ", "សុក្រ", "សៅរ៍", "អាទិត្យ"] : ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]).map((day, index) => `<div class="calendar-weekday secondary ${index > 4 ? "weekend" : ""}"><strong>${day}</strong></div>`).join("")}
+        <div class="calendar-grid ${view === "day" ? "calendar-grid-day" : ""}" data-calendar-view="${escapeAttr(view)}">
+          ${weekdayHeaders}
           ${cells.join("")}
         </div>
       </article>
-      ${renderSelectedDayDetails(selectedCalendarDate, monthEvents)}
-      <article class="glass-card card-pad" style="margin-top:18px"><h2 class="section-title">${t("allEvents")}</h2><div class="list">${monthEvents.map(eventRow).join("") || calendarEmptyCard()}</div></article>
+      ${renderSelectedDayDetails(selectedCalendarDate, periodEvents)}
+      <article class="glass-card card-pad" style="margin-top:18px"><h2 class="section-title">${t("allEvents")}</h2><div class="list">${periodEvents.map(eventRow).join("") || calendarEmptyCard()}</div></article>
     </section>
   `;
 }
@@ -122,6 +172,10 @@ function calendarEmptyCard() {
 }
 
 function parseCalendarCursor(value) {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value || "")) {
+    const [year, month, day] = value.split("-").map(Number);
+    return new Date(year, month - 1, day);
+  }
   if (/^\d{4}-\d{2}$/.test(value || "")) {
     const [year, month] = value.split("-").map(Number);
     return new Date(year, month - 1, 1);
@@ -344,6 +398,14 @@ function eventChip(event) {
   return `<span class="event-chip ${event.source || event.category?.toLowerCase() || ""} ${event.auto ? "auto" : ""}" title="${escapeAttr(event.title)}">${escapeHtml(event.title)}</span>`;
 }
 
+function calendarEventIndicators(events) {
+  const visibleEvents = events.slice(0, 2).map(eventChip).join("");
+  const remaining = events.length - 2;
+  if (remaining <= 0) return visibleEvents;
+  const hiddenTitles = events.slice(2).map(event => event.title).join(", ");
+  return `${visibleEvents}<span class="event-more" title="${escapeAttr(hiddenTitles)}" aria-label="${remaining} ${escapeAttr(t("events"))}">+${remaining}</span>`;
+}
+
 function eventRow(event) {
   const amount = event.amount ? `<span class="secondary">${money(event.amount, event.currency)}</span>` : "";
   const actions = event.source === "holiday" ? "" : event.auto ? `<a class="button ghost-button" href="${event.href}">${t("view")}</a>` : `<button class="icon-button" data-edit-event="${event.id}" aria-label="${t("editEvent")}">${Icons.edit()}</button><button class="icon-button" data-delete-event="${event.id}" aria-label="${t("deleteEvent")}">${Icons.trash()}</button>`;
@@ -358,6 +420,11 @@ function bindCalendar() {
   document.querySelectorAll('[data-action="add-calendar"]').forEach(button => button.addEventListener("click", () => App.openEventModal({ date: button.dataset.calendarDate || "" })));
   document.querySelectorAll(".day[data-calendar-date]").forEach(button => button.addEventListener("click", () => {
     selectedCalendarDate = button.getAttribute("data-calendar-date");
+    const [, view] = location.hash.replace("#", "").split("/");
+    if (view === "week" || view === "day") {
+      location.hash = `#calendar/${view}/${selectedCalendarDate}`;
+      return;
+    }
     App.render();
   }));
   document.querySelectorAll("[data-edit-event]").forEach(button => button.addEventListener("click", () => App.openEventModal(appData.calendarEvents.find(item => item.id === button.dataset.editEvent))));

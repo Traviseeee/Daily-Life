@@ -5,7 +5,7 @@ function renderLauncher() {
     <section class="launcher-page page">
       <header class="launcher-hero">
         <div class="launcher-hero-copy">
-          <h1 class="launcher-brand"><span>MY</span><strong>LIFE</strong></h1>
+          <h1 class="launcher-brand"><img class="launcher-brand-mark" src="assets/icons/mylife-icon.svg?v=4" alt=""><span>MY</span><strong>LIFE</strong></h1>
           <p>${t("launcherTagline")}</p>
           <div class="launcher-hero-actions">
             <a class="launcher-snapshot-button" href="#summary">${Icons.chart()}<span>${t("dashboardSnapshot")}</span><span aria-hidden="true">${Icons.chevron()}</span></a>
