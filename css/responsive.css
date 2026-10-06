@@ -334,7 +334,9 @@
     font-size: 0.78rem;
     white-space: nowrap;
   }
-  .launcher-snapshot-button { margin-top: 14px; padding: 9px 11px; }
+  .launcher-hero-actions { margin-top: 14px; gap: 8px; }
+  .launcher-snapshot-button,
+  .launcher-footer-edit-button { padding: 9px 11px; }
   .life-overview-card { padding: 16px; gap: 14px; }
   .life-overview-row { grid-template-columns: minmax(88px, 0.42fr) minmax(90px, 1fr) 22px; gap: 8px; }
   .life-overview-label { font-size: 0.74rem; gap: 5px; }

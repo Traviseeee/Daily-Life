@@ -2300,6 +2300,13 @@
   line-height: 1.55;
 }
 
+.launcher-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+
 .launcher-hero-art {
   position: absolute;
   top: calc(50% + var(--launcher-cover-y, 0%));
@@ -2357,9 +2364,6 @@
   height: 40px;
 }
 
-.tool-footer-pin { display: none; }
-.launcher-page.launcher-editing .tool-footer-pin { display: grid; }
-
 .settings-tool-icon-only {
   width: 42px;
   min-width: 42px;
@@ -2404,7 +2408,7 @@
   top: 10px;
   left: 10px;
   z-index: 3;
-  display: grid;
+  display: none;
   place-items: center;
   width: 28px;
   height: 28px;
@@ -2413,11 +2417,14 @@
   color: var(--text-secondary);
   background: rgba(8, 11, 18, 0.56);
   font-weight: 800;
+  cursor: pointer;
+  transition: transform var(--ease), color var(--ease), border-color var(--ease), background var(--ease);
 }
 
+.launcher-page.footer-editing .tool-footer-pin { display: grid; }
 .tool-footer-pin.active { color: #11160a; border-color: var(--accent); background: var(--accent); }
-.tool-footer-pin { display: none; }
-.launcher-page.launcher-editing .tool-footer-pin { display: grid; }
+.tool-footer-pin:hover { transform: translateY(-1px); border-color: var(--accent); color: #ffffff; background: rgba(8, 11, 18, 0.78); }
+.tool-footer-pin.active:hover { color: #11160a; background: var(--accent-light); }
 
 .tool-launcher-item.reveal-on-scroll.is-visible {
   animation: launcherTileIn 520ms cubic-bezier(0.22, 1, 0.36, 1) var(--reveal-delay, 0ms) both;
@@ -2549,7 +2556,6 @@
   display: inline-flex;
   align-items: center;
   gap: 9px;
-  margin-top: 18px;
   padding: 10px 13px;
   border: 1px solid rgba(184, 255, 90, 0.28);
   border-radius: 13px;
@@ -2568,6 +2574,32 @@
 .launcher-snapshot-button span:nth-child(2) { font-size: 0.86rem; }
 .launcher-snapshot-button span:last-child { display: inline-grid; margin-left: 3px; }
 .launcher-snapshot-button span:last-child svg { width: 15px; height: 15px; }
+
+.launcher-footer-edit-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 13px;
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 13px;
+  color: rgba(247,244,255,0.84);
+  background: rgba(255,255,255,0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 800;
+  transition: transform var(--ease), color var(--ease), background var(--ease), border-color var(--ease);
+}
+.launcher-footer-edit-button svg { width: 16px; height: 16px; }
+.launcher-footer-edit-button:hover,
+.launcher-footer-edit-button.active {
+  transform: translateY(-2px);
+  color: #11160a;
+  border-color: var(--accent);
+  background: var(--accent);
+}
 
 .life-overview-card {
   display: grid;

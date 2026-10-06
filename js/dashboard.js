@@ -185,6 +185,7 @@ function renderHome() {
     '</article>' +
     (typeof homePhotoCard === "function" ? homePhotoCard() : '') +
   '</section>';
+}
 
 
 function homeEmptyCard() {
@@ -878,5 +879,4 @@ function bindHome() {
       document.querySelectorAll(".home-profile-side").forEach(panel => panel.classList.remove("menu-open"));
     }
   });
-}
 }

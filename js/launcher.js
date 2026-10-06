@@ -7,7 +7,10 @@ function renderLauncher() {
         <div class="launcher-hero-copy">
           <h1 class="launcher-brand"><span>MY</span><strong>LIFE</strong></h1>
           <p>${t("launcherTagline")}</p>
-          <a class="launcher-snapshot-button" href="#summary">${Icons.chart()}<span>${t("dashboardSnapshot")}</span><span aria-hidden="true">${Icons.chevron()}</span></a>
+          <div class="launcher-hero-actions">
+            <a class="launcher-snapshot-button" href="#summary">${Icons.chart()}<span>${t("dashboardSnapshot")}</span><span aria-hidden="true">${Icons.chevron()}</span></a>
+            <button class="launcher-footer-edit-button" type="button" data-footer-edit aria-pressed="false">${Icons.edit()}<span>${languageCode() === "km" ? "កែ footer" : "Edit footer"}</span></button>
+          </div>
         </div>
         <img class="launcher-hero-art" src="${escapeAttr(appData.profile.launcherCover || "assets/launcher-home-hero.png")}" style="--launcher-cover-x: ${launcherCoverPosition().x}%; --launcher-cover-y: ${launcherCoverPosition().y}%" alt="">
         <button class="icon-button launcher-edit-button" type="button" data-launcher-cover aria-label="${languageCode() === "km" ? "ប្តូររូបភាពផ្ទៃខាងក្រោយ" : "Change launcher cover"}" title="${languageCode() === "km" ? "ប្តូររូបភាពផ្ទៃខាងក្រោយ" : "Change launcher cover"}">${Icons.edit()}</button>
@@ -24,6 +27,13 @@ function bindLauncher() {
   const page = document.querySelector(".launcher-page");
   const editButton = document.querySelector("[data-launcher-cover]");
   const coverInput = document.querySelector("[data-launcher-cover-input]");
+  const footerEditButton = document.querySelector("[data-footer-edit]");
+  footerEditButton?.addEventListener("click", () => {
+    const editing = !page.classList.contains("footer-editing");
+    page.classList.toggle("footer-editing", editing);
+    footerEditButton.classList.toggle("active", editing);
+    footerEditButton.setAttribute("aria-pressed", String(editing));
+  });
   editButton?.addEventListener("click", () => coverInput?.click());
   coverInput?.addEventListener("change", async event => {
     const file = event.target.files?.[0];
