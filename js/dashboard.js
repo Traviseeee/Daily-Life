@@ -50,9 +50,11 @@ function renderHome() {
     const iso = date.toISOString().slice(0, 10);
     const entry = moodHistory.find(item => item.date === iso);
     const option = entry ? moodOptions.find(item => item.value === entry.value) : null;
+    const isKhmer = languageCode() === "km";
+    const khmerWeekdays = ["អាទិ", "ចន្ទ", "អង្គ", "ពុធ", "ព្រហ", "សុក្រ", "សៅរ៍"];
     return {
-      day: date.toLocaleDateString(languageCode() === "km" ? "km-KH" : "en-US", { weekday: "short" }).slice(0, 3),
-      date: date.getDate(),
+      day: isKhmer ? khmerWeekdays[date.getDay()] : date.toLocaleDateString("en-US", { weekday: "short" }).slice(0, 3),
+      date: isKhmer ? String(date.getDate()).replace(/\d/g, digit => "០១២៣៤៥៦៧៨៩"[Number(digit)]) : date.getDate(),
       isToday: iso === todayIso,
       label: option ? option.label : "—",
       emoji: option ? option.emoji : "·",
@@ -93,7 +95,7 @@ function renderHome() {
       '<div class="home-challenge-art" aria-hidden="true"><span class="shape orange"></span><span class="shape grey"></span><span class="shape dark"></span></div>' +
     '</div>' +
     '<div class="home-week-row" aria-label="' + (languageCode() === "km" ? "អារម្មណ៍ប្រចាំសប្តាហ៍" : "Mood this week") + '">' +
-      moodHistoryChart.map(day => '<div class="home-week-day ' + (day.isToday ? "active" : "") + '"' + (day.isToday ? ' aria-current="date"' : '') + '><span class="week-label">' + day.day + '</span><strong>' + day.date + '</strong><span class="week-mood" aria-label="' + escapeHtml(day.label) + '">' + day.emoji + '</span></div>').join("") +
+      moodHistoryChart.map(day => '<div class="home-week-day ' + (day.isToday ? "active" : "") + '"' + (day.isToday ? ' aria-current="date"' : '') + '><span class="week-label">' + day.day + '</span><strong>' + day.date + '</strong><span class="week-mood ' + (day.value ? "has-mood" : "no-mood") + '" aria-label="' + escapeHtml(day.label) + '">' + day.emoji + '</span></div>').join("") +
     '</div>' +
     '<div class="news-ticker" aria-label="News ticker">' +
       '<div class="news-ticker-track">' +
@@ -190,6 +192,7 @@ function renderHome() {
     '</article>' +
     (typeof homePhotoCard === "function" ? homePhotoCard() : '') +
   '</section>';
+}
 
 
 function homeEmptyCard() {
@@ -368,6 +371,30 @@ function getTipsData() {
       khmerQuick: ["មានផ្ទះដែលអាចរស់នៅបាន", "គ្រប់គ្រងហិរញ្ញវត្ថុ", "រៀនសម្របគ្នា"],
       detail: "A family needs two people willing to listen, help, adapt, and build the future together.",
       khmerDetail: "គ្រួសារមិនត្រូវការជីវិត perfect ទេ។ វាត្រូវការមនុស្សពីរនាក់ដែលចង់ស្តាប់ ជួយគ្នា សម្របគ្នា និងសាងសង់អនាគតជាមួយគ្នា។"
+    },
+    {
+      icon: Icons.help(), category: "LOVE", title: "Reset After a Disagreement", khmerTitle: "ស្តារភាពស្និទ្ធស្នាលក្រោយការមិនយល់គ្នា",
+      short: "A disagreement does not have to become distance.", khmerShort: "ការមិនយល់គ្នាមិនចាំបាច់ធ្វើឱ្យយើងឃ្លាតឆ្ងាយពីគ្នាទេ។",
+      quick: ["Take a calm pause", "Own your part", "Agree on one next step"],
+      khmerQuick: ["សម្រាកបន្តិចដើម្បីស្ងប់ចិត្ត", "ទទួលស្គាល់ចំណែករបស់ខ្លួន", "ព្រមព្រៀងលើជំហានបន្ទាប់មួយ"],
+      detail: "When both people are ready, return to the conversation gently. A sincere apology and one practical next step can help rebuild trust.",
+      khmerDetail: "នៅពេលអ្នកទាំងពីរត្រៀមខ្លួន សូមត្រឡប់មកនិយាយគ្នាដោយស្ងប់ស្ងាត់។ ការសុំទោសដោយស្មោះ និងជំហានជាក់ស្តែងមួយ អាចជួយស្តារទំនុកចិត្តឡើងវិញ។"
+    },
+    {
+      icon: Icons.spark(), category: "DAILY", title: "Notice the Good", khmerTitle: "សង្កេតឃើញអំពើល្អៗ",
+      short: "Specific appreciation helps everyday care feel seen.", khmerShort: "ការកោតសរសើរដោយជាក់លាក់ធ្វើឱ្យការយកចិត្តទុកដាក់ប្រចាំថ្ងៃមានន័យ។",
+      quick: ["Name what you appreciated", "Say thank you", "Notice effort, not only results"],
+      khmerQuick: ["ប្រាប់ថាអ្នកកោតសរសើរអ្វី", "និយាយអរគុណ", "សង្កេតការខិតខំ មិនមែនតែលទ្ធផល"],
+      detail: "Instead of a general compliment, mention the action that mattered to you. Feeling noticed can encourage both partners to keep showing care.",
+      khmerDetail: "ជំនួសឱ្យការសរសើរទូទៅ សូមប្រាប់ពីសកម្មភាពដែលមានន័យចំពោះអ្នក។ ការមានអារម្មណ៍ថាត្រូវបានគេមើលឃើញ អាចជួយឱ្យអ្នកទាំងពីរបន្តយកចិត្តទុកដាក់គ្នា។"
+    },
+    {
+      icon: Icons.calendar(), category: "WEEKLY", title: "Have a Weekly Check-In", khmerTitle: "ពិភាក្សាគ្នារៀងរាល់សប្តាហ៍",
+      short: "A short check-in can prevent small worries from piling up.", khmerShort: "ការពិភាក្សាខ្លីៗអាចជួយកុំឱ្យកង្វល់តូចៗកើនឡើង។",
+      quick: ["Ask what went well", "Share one concern", "Plan one thing together"],
+      khmerQuick: ["សួរថាមានអ្វីល្អកើតឡើង", "ចែករំលែកកង្វល់មួយ", "រៀបចំរឿងមួយជាមួយគ្នា"],
+      detail: "Choose a relaxed time and keep the conversation kind and practical. Listen to understand rather than trying to solve everything at once.",
+      khmerDetail: "ជ្រើសរើសពេលដែលស្រួលចិត្ត ហើយនិយាយគ្នាដោយសប្បុរស និងជាក់ស្តែង។ ស្តាប់ដើម្បីយល់គ្នា មិនចាំបាច់ដោះស្រាយគ្រប់យ៉ាងក្នុងពេលតែមួយទេ។"
     }
   ];
 }
@@ -398,7 +425,10 @@ function renderTips() {
     "https://images.unsplash.com/photo-1504159506876-f8338247a14a?auto=format&fit=crop&w=240&q=75",
     "https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&w=240&q=75",
     "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=240&q=75",
-    "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=240&q=75"
+    "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=240&q=75",
+    "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=240&q=75",
+    "https://images.unsplash.com/photo-1491438590914-bc09fcaaf77a?auto=format&fit=crop&w=240&q=75",
+    "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=240&q=75"
   ];
   const coupleImage = getTipsCoupleImage();
   const text = group => ({
@@ -885,5 +915,4 @@ function bindHome() {
       document.querySelectorAll(".home-profile-side").forEach(panel => panel.classList.remove("menu-open"));
     }
   });
-}
 }

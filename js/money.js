@@ -234,8 +234,34 @@ function renderSavings() {
   return `<article class="glass-card card-pad financial-panel"><div class="between"><h2 class="section-title">${t("savings")}</h2><button class="button" data-action="add-savings">${Icons.plus()} ${t("addSavings")}</button></div>${appData.savings.length ? `<div class="grid three-col financial-card-grid">${appData.savings.map(savingCard).join("")}</div>` : emptyState(t("noSavingsYet"), t("noSavingsBody"), t("addSavings"), "add-savings")}</article>`;
 }
 
+function getSavingsContributionMonth() {
+  return new Date().toISOString().slice(0, 7);
+}
+
+function formatSavingsMonth(monthKey) {
+  if (!monthKey) return "";
+  const [year, month] = monthKey.split("-").map(Number);
+  if (!year || !month) return monthKey;
+  const date = new Date(year, month - 1, 1);
+  return date.toLocaleDateString(languageCode() === "km" ? "km-KH" : "en-US", { month: "short", year: "numeric" });
+}
+
+function getSavingsContribution(item, monthKey = getSavingsContributionMonth()) {
+  const contributions = Array.isArray(item.contributions) ? item.contributions : [];
+  return contributions.find(entry => entry && entry.month === monthKey) || null;
+}
+
 function savingCard(item) {
-  return `<div class="goal-item financial-mini-card"><div class="between"><strong>${escapeHtml(item.name)}</strong><span class="pill">${pct(item.currentAmount, item.targetAmount)}%</span></div><div class="financial-card-amount">${money(item.currentAmount, item.currency)} / ${money(item.targetAmount, item.currency)}</div><div class="progress-track"><div class="progress-fill" style="--progress:${pct(item.currentAmount, item.targetAmount)}%"></div></div><div class="financial-meta-line"><span>${t("deadline")}</span><strong>${formatDate(item.deadline)}</strong></div><div class="action-row"><button class="button ghost-button" data-edit-savings="${item.id}">${Icons.edit()} ${t("edit")}</button><button class="icon-button" data-delete-savings="${item.id}" aria-label="${t("delete")}">${Icons.trash()}</button></div></div>`;
+  const monthKey = getSavingsContributionMonth();
+  const contribution = getSavingsContribution(item, monthKey);
+  const isPaidThisMonth = Boolean(contribution && contribution.paid);
+  const monthlyAmount = Number(item.monthlyContribution || 0);
+  const recentHistory = (Array.isArray(item.contributions) ? item.contributions : [])
+    .slice(0, 4)
+    .map(entry => `<div class="savings-history-row ${entry.paid ? "paid" : ""}"><span>${formatSavingsMonth(entry.month)}</span><strong>${money(Number(entry.amount || item.monthlyContribution || 0), item.currency)}</strong></div>`)
+    .join("");
+
+  return `<div class="goal-item financial-mini-card"><div class="between"><strong>${escapeHtml(item.name)}</strong><span class="pill">${pct(item.currentAmount, item.targetAmount)}%</span></div><div class="financial-card-amount">${money(item.currentAmount, item.currency)} / ${money(item.targetAmount, item.currency)}</div><div class="progress-track"><div class="progress-fill" style="--progress:${pct(item.currentAmount, item.targetAmount)}%"></div></div><div class="financial-meta-line"><span>${t("deadline")}</span><strong>${formatDate(item.deadline)}</strong></div><div class="financial-meta-line"><span>${t("monthlyContribution")}</span><strong>${money(monthlyAmount, item.currency)}</strong></div><div class="savings-smart-panel"><div class="between"><strong>${t("thisMonth")}</strong><span class="pill ${isPaidThisMonth ? "success" : ""}">${isPaidThisMonth ? t("saved") : t("pending")}</span></div><label class="payment-schedule-row ${isPaidThisMonth ? "paid" : ""}"><input class="check" type="checkbox" data-savings-contribution="${item.id}" data-savings-month="${monthKey}" ${isPaidThisMonth ? "checked" : ""}><span><strong>${formatSavingsMonth(monthKey)}</strong><small>${money(monthlyAmount, item.currency)}</small></span></label>${recentHistory ? `<div class="savings-history-list">${recentHistory}</div>` : ""}</div><div class="action-row"><button class="button ghost-button" data-edit-savings="${item.id}">${Icons.edit()} ${t("edit")}</button><button class="icon-button" data-delete-savings="${item.id}" aria-label="${t("delete")}">${Icons.trash()}</button></div></div>`;
 }
 
 function renderLoans() {
@@ -650,6 +676,38 @@ function bindMoney() {
   bindCollectionActions("bill", openBillModal);
   document.querySelectorAll("[data-payment-loan]").forEach(button => button.addEventListener("click", () => openLoanPaymentModal(appData.loans.find(loan => loan.id === button.dataset.paymentLoan))));
   document.querySelectorAll("[data-loan-schedule]").forEach(input => input.addEventListener("change", () => toggleLoanScheduledPayment(input)));
+  document.querySelectorAll("[data-savings-contribution]").forEach(input => input.addEventListener("change", () => toggleSavingsContribution(input)));
+}
+
+function toggleSavingsContribution(input) {
+  const saving = appData.savings.find(item => item.id === input.dataset.savingsContribution);
+  if (!saving) return;
+
+  const monthKey = input.dataset.savingsMonth || getSavingsContributionMonth();
+  const contributionAmount = Number(saving.monthlyContribution || 0);
+  const contributions = Array.isArray(saving.contributions) ? saving.contributions.slice() : [];
+  const existingIndex = contributions.findIndex(entry => entry && entry.month === monthKey);
+  const wasPaid = existingIndex >= 0 ? Boolean(contributions[existingIndex].paid) : false;
+
+  if (input.checked && !wasPaid) {
+    if (existingIndex >= 0) {
+      contributions[existingIndex] = { ...contributions[existingIndex], month: monthKey, amount: contributionAmount, paid: true };
+    } else {
+      contributions.unshift({ month: monthKey, amount: contributionAmount, paid: true });
+    }
+    saving.currentAmount = Number(saving.currentAmount || 0) + contributionAmount;
+  } else if (!input.checked && wasPaid) {
+    if (existingIndex >= 0) {
+      const previousAmount = Number(contributions[existingIndex].amount || contributionAmount);
+      contributions.splice(existingIndex, 1);
+      saving.currentAmount = Math.max(0, Number(saving.currentAmount || 0) - previousAmount);
+    }
+  }
+
+  saving.contributions = contributions;
+  Store.save();
+  Toast.show(input.checked ? t("savingsAdded") : t("savingsRemoved"));
+  App.render();
 }
 
 function toggleLoanScheduledPayment(input) {

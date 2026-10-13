@@ -67,7 +67,12 @@ const App = {
     else if (route === "calendar") app.innerHTML = renderCalendar(this.param || "month");
     else if (route === "daily") app.innerHTML = renderDaily();
     else if (route === "memories") app.innerHTML = renderMemories();
-    else if (route === "tips") app.innerHTML = renderTips();
+    else if (route === "tips") {
+      const renderTipsContent = typeof renderTips === "function"
+        ? renderTips
+        : (typeof renderLegacyTips === "function" ? renderLegacyTips : () => `<section class="page"><article class="glass-card card-pad"><h1 class="page-title">Tips</h1><p class="page-subtitle">This section is loading. Please refresh if it stays unavailable.</p></article></section>`);
+      app.innerHTML = renderTipsContent();
+    }
     else if (route === "settings") app.innerHTML = renderSettings();
     else if (route === "help") app.innerHTML = renderHelp();
     else app.innerHTML = renderHome();
@@ -357,16 +362,19 @@ const App = {
     });
   },
   bindPage(route) {
-    if (route === "launcher") bindLauncher();
+    if (route === "launcher" && typeof bindLauncher === "function") bindLauncher();
     if (route === "home" && typeof bindHome === "function") bindHome();
-    if (route === "family") bindFamily();
-    if (route === "goals") bindGoals(this.param);
-    if (route === "money") bindMoney();
-    if (route === "calendar") bindCalendar();
-    if (route === "daily") bindDaily();
-    if (route === "memories") bindMemories();
-    if (route === "tips") bindTips();
-    if (route === "settings") bindSettings();
+    if (route === "family" && typeof bindFamily === "function") bindFamily();
+    if (route === "goals" && typeof bindGoals === "function") bindGoals(this.param);
+    if (route === "money" && typeof bindMoney === "function") bindMoney();
+    if (route === "calendar" && typeof bindCalendar === "function") bindCalendar();
+    if (route === "daily" && typeof bindDaily === "function") bindDaily();
+    if (route === "memories" && typeof bindMemories === "function") bindMemories();
+    if (route === "tips") {
+      if (typeof bindTips === "function") bindTips();
+      else if (typeof bindLegacyTips === "function") bindLegacyTips();
+    }
+    if (route === "settings" && typeof bindSettings === "function") bindSettings();
   },
   bindInteractionSounds() {
     if (this.interactionSoundBound) return;

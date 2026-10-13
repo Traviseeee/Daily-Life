@@ -1,4 +1,4 @@
-const CACHE_NAME = "mylife-pwa-v35";
+const CACHE_NAME = "mylife-pwa-v37";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -57,6 +57,17 @@ self.addEventListener("fetch", event => {
   }
   const freshExtensions = [".html", ".css", ".js", ".json", ".webmanifest"];
   const wantsFreshAsset = freshExtensions.some(extension => url.pathname.endsWith(extension)) || url.pathname.endsWith("/");
+  const hasVersionQuery = url.searchParams.has("v");
+  if (wantsFreshAsset && hasVersionQuery) {
+    event.respondWith(
+      fetch(event.request).then(response => {
+        const copy = response.clone();
+        caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
+        return response;
+      }).catch(() => caches.match(event.request))
+    );
+    return;
+  }
   if (wantsFreshAsset) {
     event.respondWith(
       fetch(event.request).then(response => {
