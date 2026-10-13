@@ -67,10 +67,10 @@ function renderMoney(tab = "overview") {
 
 function renderMoneyCards(stats) {
   return `<div class="summary-grid financial-metric-grid grid">
-    ${summaryCard("Income", t("totalIncome"), money(stats.totalIncome), `${appData.income.length} ${t("income")}`, Icons.salary(), "green")}
-    ${summaryCard("Expenses", t("totalExpenses"), money(stats.totalExpenses), `${appData.expenses.length} ${t("expenses")}`, Icons.expense(), "")}
-    ${summaryCard("Savings", t("totalSavings"), money(stats.totalSavings), `${money(stats.monthlySavings)} ${t("monthlyContribution")}`, Icons.savings(), "blue")}
-    ${summaryCard("Available", t("available"), money(stats.available), t("availableMoney"), Icons.wallet(), "purple")}
+    ${summaryCard("Income", t("totalIncome"), money(stats.totalIncome), `${appData.income.length} ${t("income")}`, Icons.salary(), "green", "income")}
+    ${summaryCard("Expenses", t("totalExpenses"), money(stats.totalExpenses), `${appData.expenses.length} ${t("expenses")}`, Icons.expense(), "", "expenses")}
+    ${summaryCard("Savings", t("totalSavings"), money(stats.totalSavings), `${money(stats.monthlySavings)} ${t("monthlyContribution")}`, Icons.savings(), "blue", "savings")}
+    ${summaryCard("Available", t("available"), money(stats.available), t("availableMoney"), Icons.wallet(), "purple", "budget")}
   </div>`;
 }
 
@@ -110,9 +110,10 @@ function renderCategoryOverview() {
   </article>`;
 }
 
-function summaryCard(label, title, value, trend, icon, tone) {
+function summaryCard(label, title, value, trend, icon, tone, section) {
   return `
     <article class="glass-card card-pad financial-metric-card">
+      <a class="financial-metric-card-link" href="#money/${section}" aria-label="${escapeAttr(title)}"></a>
       <div class="card-title-row">
         <span class="icon-badge ${tone}">${icon}</span>
         <span class="secondary">${escapeHtml(title)}</span>
