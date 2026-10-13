@@ -9,23 +9,54 @@ const moneyTabs = [
   ["reports", "reports", "chart"]
 ];
 const incomeCategories = ["Salary", "Business", "Freelance", "Bonus", "Other"];
+const incomeCategoryColors = {
+  Salary: "#34d399",
+  Business: "#60a5fa",
+  Freelance: "#a78bfa",
+  Bonus: "#fb923c",
+  Other: "#94a3b8"
+};
 const expenseCategories = ["Food", "Home", "Family", "Transport", "Shopping", "Bills", "Education", "Health", "Entertainment", "Other"];
+const expenseCategoryColors = {
+  Food: "#fb7185",
+  Home: "#f59e0b",
+  Family: "#f472b6",
+  Transport: "#60a5fa",
+  Shopping: "#a78bfa",
+  Bills: "#f97316",
+  Education: "#2dd4bf",
+  Health: "#34d399",
+  Entertainment: "#818cf8",
+  Other: "#94a3b8"
+};
+let financeReportMonth = "";
+let financeReportCanvas = null;
+let financeReportCanvasMonth = "";
 
 function renderMoney(tab = "overview") {
   const stats = Store.calculate();
   return `
     <section class="page">
       <div class="page-header financial-header">
-        <div>
-          <h1 class="page-title page-title-with-icon"><span class="page-title-icon">${Icons.money()}</span>${t("money")}</h1>
-          <p class="page-subtitle">${t("moneySubtitle")}</p>
+        <div class="financial-header-main">
+          <div class="financial-header-copy">
+            <h1 class="page-title page-title-with-icon"><span class="page-title-icon">${Icons.money()}</span>${t("money")}</h1>
+            <p class="page-subtitle">${t("moneySubtitle")}</p>
+          </div>
+          <div class="financial-nav-dock">
+            <button class="financial-nav-toggle" type="button" data-open-financial-nav aria-label="${t("money")} sections" title="${t("money")} sections"><span class="financial-nav-toggle-lines" aria-hidden="true"><i></i><i></i><i></i></span></button>
+            <dialog class="financial-sidebar" aria-label="${t("money")} sections">
+              <div class="financial-sidebar-handle" aria-hidden="true"><span></span></div>
+              <div class="financial-sidebar-heading"><div class="financial-sidebar-heading-copy"><strong>${t("money")} ${t("sections")}</strong><span>${t("financialSectionsSubtitle")}</span></div><button class="icon-button" type="button" data-close-financial-nav aria-label="${t("close")}">${Icons.close()}</button></div>
+              <nav class="financial-sidebar-nav" aria-label="${t("money")} sections">
+              ${moneyTabs.map(([id, label, icon]) => `<a class="financial-nav-item ${tab === id ? "active" : ""}" href="#money/${id}"><span class="financial-nav-icon">${Icons[icon]()}</span><span class="financial-nav-copy"><strong>${t(label)}</strong><small>${t(`financialSection${id[0].toUpperCase()}${id.slice(1)}`)}</small></span>${Icons.chevron()}</a>`).join("")}
+              </nav>
+            </dialog>
+          </div>
         </div>
-        <button class="button" data-action="add-expense">${Icons.plus()} ${t("addExpense")}</button>
+        <button class="button financial-create-button" type="button" data-action="add-expense">${Icons.plus()} ${t("addExpense")}</button>
       </div>
       <div class="financial-layout">
-        <aside class="financial-sidebar" aria-label="${t("money")} sections">
-          ${moneyTabs.map(([id, label, icon]) => `<a class="financial-nav-item ${tab === id ? "active" : ""}" href="#money/${id}">${Icons[icon]()}<span>${t(label)}</span></a>`).join("")}
-        </aside>
         <div class="financial-content">
           ${renderMoneyTab(tab, stats)}
         </div>
@@ -43,12 +74,48 @@ function renderMoneyCards(stats) {
   </div>`;
 }
 
+function renderCategoryOverview() {
+  const categories = expenseCategories.map(category => ({
+    category,
+    amount: sumMoney(appData.expenses.filter(expense => expense.category === category), "amount"),
+    color: expenseCategoryColors[category]
+  })).filter(item => item.amount > 0).sort((left, right) => right.amount - left.amount);
+  const total = categories.reduce((sum, item) => sum + item.amount, 0);
+
+  return `<article class="glass-card card-pad financial-panel financial-category-overview">
+    <div class="financial-panel-heading">
+      <div><span class="eyebrow">${t("overview")}</span><h2 class="section-title">${t("spendingByCategory")}</h2></div>
+      <div class="financial-category-total"><span>${t("totalExpenses")}</span><strong>${money(total)}</strong></div>
+    </div>
+    ${categories.length ? `<div class="financial-category-layout">
+      <div class="financial-category-chart" role="img" aria-label="${t("spendingByCategory")}">
+        ${Charts.donut(categories.map(item => ({ value: item.amount, color: item.color })))}
+        <div class="financial-category-chart-center"><strong>${money(total)}</strong><span>${t("expenses")}</span></div>
+      </div>
+      <div class="financial-category-list">
+        ${categories.map(item => {
+          const share = Math.round((item.amount / total) * 100);
+          return `<div class="financial-category-item" style="--category-color:${item.color};--category-share:${share}%">
+            <span class="financial-category-dot" aria-hidden="true"></span>
+            <div class="financial-category-copy"><div class="financial-category-label"><span>${optionLabel(item.category)}</span><strong>${money(item.amount)}</strong></div><div class="financial-category-track"><span></span></div></div>
+            <span class="financial-category-share">${share}%</span>
+          </div>`;
+        }).join("")}
+      </div>
+    </div>` : `<div class="financial-category-empty">
+      <div class="financial-category-swatches" aria-hidden="true">${expenseCategories.slice(0, 6).map(category => `<span style="--category-color:${expenseCategoryColors[category]}"></span>`).join("")}</div>
+      <div><strong>${t("noExpensesYet")}</strong><p>${t("noExpensesBody")}</p></div>
+      <button class="button" type="button" data-action="add-expense">${Icons.plus()} ${t("addExpense")}</button>
+    </div>`}
+  </article>`;
+}
+
 function summaryCard(label, title, value, trend, icon, tone) {
   return `
     <article class="glass-card card-pad financial-metric-card">
       <div class="card-title-row">
-        <span class="secondary">${escapeHtml(title)}</span>
         <span class="icon-badge ${tone}">${icon}</span>
+        <span class="secondary">${escapeHtml(title)}</span>
       </div>
       <div class="metric">${value}</div>
       <div class="secondary">${trend}</div>
@@ -66,6 +133,7 @@ function renderMoneyTab(tab, stats) {
   if (tab === "reports") return renderReports(stats);
   return `
     ${renderMoneyCards(stats)}
+    ${renderCategoryOverview()}
     <div class="grid two-col financial-overview-grid">
       <article class="glass-card card-pad financial-panel">
         <div class="financial-panel-heading">
@@ -111,9 +179,26 @@ function moneyEmptyCard() {
 }
 
 function renderIncome() {
-  return `<div class="grid two-col">
-    <article class="glass-card card-pad financial-panel"><div class="between"><h2 class="section-title">${t("incomeSources")}</h2><button class="button" data-action="add-income">${Icons.plus()} ${t("addIncome")}</button></div><div class="list financial-ledger">${appData.income.map(incomeRow).join("") || emptyState(t("noIncomeYet"), t("noIncomeBody"), t("addIncome"), "add-income")}</div></article>
-    <article class="glass-card card-pad financial-panel"><h2 class="section-title">${t("incomeCategories")}</h2><div class="kv financial-kv">${incomeCategories.map(cat => `<div><span>${optionLabel(cat)}</span><strong>${money(sumMoney(appData.income.filter(i => i.category === cat), "amount"))}</strong></div>`).join("")}</div></article>
+  const categories = incomeCategories.map(category => ({
+    category,
+    amount: sumMoney(appData.income.filter(item => item.category === category), "amount"),
+    color: incomeCategoryColors[category]
+  }));
+  const total = categories.reduce((sum, item) => sum + item.amount, 0);
+
+  return `<div class="financial-income-layout">
+    <aside class="glass-card card-pad financial-panel financial-income-sidebar" aria-label="${t("incomeCategories")}">
+      <div class="financial-income-sidebar-heading"><span class="eyebrow">${t("overview")}</span><h2 class="section-title">${t("incomeCategories")}</h2></div>
+      <div class="financial-income-category-list">${categories.map(item => {
+        const share = total ? Math.round((item.amount / total) * 100) : 0;
+        return `<div class="financial-income-category" style="--category-color:${item.color};--category-share:${share}%">
+          <span class="financial-income-category-dot" aria-hidden="true"></span>
+          <div class="financial-income-category-content"><div class="financial-income-category-line"><span>${optionLabel(item.category)}</span><strong>${money(item.amount)}</strong></div><div class="financial-income-category-track"><span></span></div></div>
+        </div>`;
+      }).join("")}</div>
+      <div class="financial-income-total"><span>${t("totalIncome")}</span><strong>${money(total)}</strong></div>
+    </aside>
+    <article class="glass-card card-pad financial-panel financial-income-main"><div class="between"><h2 class="section-title">${t("incomeSources")}</h2><button class="button" data-action="add-income">${Icons.plus()} ${t("addIncome")}</button></div><div class="list financial-ledger">${appData.income.map(incomeRow).join("") || emptyState(t("noIncomeYet"), t("noIncomeBody"), t("addIncome"), "add-income")}</div></article>
   </div>`;
 }
 
@@ -205,11 +290,354 @@ function renderBudget() {
   }).join("") || emptyState(t("noBudgetYet"), t("noBudgetBody"), t("addExpense"), "add-expense")}</div></article>`;
 }
 
-function renderReports(stats) {
-  return `<div class="grid">${renderMoneyCards(stats)}<article class="glass-card card-pad financial-panel"><h2 class="section-title">${t("financialAnalytics")}</h2><div class="kv financial-kv"><div><span>${t("monthlyIncome")}</span><strong>${money(stats.totalIncome)}</strong></div><div><span>${t("monthlyExpenses")}</span><strong>${money(stats.totalExpenses)}</strong></div><div><span>${t("totalSavings")}</span><strong>${money(stats.totalSavings)}</strong></div><div><span>${t("savingsRate")}</span><strong>${stats.savingsRate}%</strong></div><div><span>${t("loanBalance")}</span><strong>${money(stats.loanBalance)}</strong></div></div></article></div>`;
+function renderReports() {
+  const month = financeReportMonth || new Date().toISOString().slice(0, 7);
+  const report = buildMonthlyFinanceReport(month);
+  return `<article class="glass-card card-pad financial-panel financial-report-panel">
+    <div class="financial-report-toolbar">
+      <div><span class="eyebrow">${t("reports")}</span><h2 class="section-title">${t("monthlyReport")}</h2></div>
+      <label class="field financial-report-month"><span>${t("reportMonth")}</span><input type="month" value="${escapeAttr(month)}" data-finance-report-month></label>
+      <div class="financial-report-export-actions">
+        <button class="button" type="button" data-finance-report-export="excel">${Icons.arrowDown()} ${t("exportExcel")}</button>
+        <button class="button ghost-button" type="button" data-finance-report-export="word">${Icons.arrowDown()} ${t("exportWord")}</button>
+        <button class="button ghost-button" type="button" data-finance-report-preview>${Icons.memory()} ${t("previewJpg")}</button>
+      </div>
+    </div>
+    <div class="financial-report-metadata">
+      <div><span>${t("reportOwner")}</span><strong>${escapeHtml(report.ownerName)}</strong></div>
+      <div><span>${t("reportMonth")}</span><strong>${escapeHtml(report.monthLabel)}</strong></div>
+      <div><span>${t("reportCurrency")}</span><strong>${escapeHtml(report.currency)}</strong></div>
+      <div><span>${t("generatedOn")}</span><strong>${escapeHtml(report.generatedOn)}</strong></div>
+    </div>
+    <div class="financial-report-summary">
+      <div class="financial-report-metric"><span>${t("monthlyIncome")}</span><strong>${money(report.incomeTotal)}</strong></div>
+      <div class="financial-report-metric"><span>${t("monthlyExpenses")}</span><strong>${money(report.expenseTotal)}</strong></div>
+      <div class="financial-report-metric"><span>${t("monthlyPayment")}</span><strong>${money(report.loanPaymentTotal)}</strong></div>
+      <div class="financial-report-metric"><span>${t("netCashFlow")}</span><strong>${money(report.netCashFlow)}</strong></div>
+    </div>
+    <div class="financial-report-table-wrap">
+      <table class="financial-report-table">
+        <thead><tr><th>${t("type")}</th><th>${t("description")}</th><th>${t("category")}</th><th>${t("date")} / ${t("frequency")}</th><th>${t("amount")}</th></tr></thead>
+        <tbody>${report.rows.length ? report.rows.map(row => `<tr><td>${escapeHtml(row.type)}</td><td>${escapeHtml(row.description)}</td><td>${escapeHtml(row.category)}</td><td>${escapeHtml(row.period)}</td><td class="${row.amount < 0 ? "financial-report-outflow" : ""}">${money(row.amount)}</td></tr>`).join("") : `<tr><td class="financial-report-empty" colspan="5">${t("noMonthlyTransactions")}</td></tr>`}</tbody>
+      </table>
+    </div>
+    <dialog class="financial-report-preview-dialog" data-finance-report-preview-dialog aria-labelledby="financialReportPreviewTitle">
+      <div class="financial-report-preview-content">
+        <header class="financial-report-preview-header">
+          <div><h2 id="financialReportPreviewTitle">${t("monthlyReport")}</h2><span data-finance-report-preview-month></span></div>
+          <button class="icon-button" type="button" data-close-finance-report-preview aria-label="${t("close")}">${Icons.close()}</button>
+        </header>
+        <div class="financial-report-preview-stage"><img data-finance-report-preview-image alt="${escapeAttr(t("monthlyReport"))}"></div>
+        <footer class="financial-report-preview-footer">
+          <button class="button" type="button" data-finance-report-download-jpg>${Icons.arrowDown()} ${t("downloadJpg")}</button>
+        </footer>
+      </div>
+    </dialog>
+  </article>`;
+}
+
+function buildMonthlyFinanceReport(month) {
+  const incomeRows = (appData.income || []).flatMap(item => {
+    const frequency = item.frequency || "Monthly";
+    const recurring = item.recurring !== false && frequency !== "Once";
+    const date = item.nextPaymentDate || String(item.createdAt || "").slice(0, 10);
+    if (!recurring && date.slice(0, 7) !== month) return [];
+
+    const monthlyFactor = recurring
+      ? ({ Weekly: 52 / 12, Quarterly: 1 / 3, Yearly: 1 / 12 }[frequency] || 1)
+      : 1;
+    const amount = toProfileCurrency(Number(item.amount || 0) * monthlyFactor, item.currency);
+    return [{
+      type: t("income"),
+      description: item.name || t("income"),
+      category: optionLabel(item.category || "Other"),
+      period: recurring ? `${optionLabel(frequency)} · ${t("monthlyEquivalent")}` : (date ? formatDate(date) : ""),
+      amount
+    }];
+  });
+  const monthExpenses = (appData.expenses || []).filter(item => String(item.date || "").slice(0, 7) === month);
+  const expenseRows = monthExpenses.map(item => ({
+    type: t("expense"),
+    description: item.description || t("expense"),
+    category: optionLabel(item.category || "Other"),
+    period: formatDate(item.date),
+    amount: -Math.abs(toProfileCurrency(item.amount, item.currency))
+  }));
+  const paymentRows = (appData.loans || []).flatMap(loan => (loan.payments || [])
+    .filter(payment => String(payment.date || "").slice(0, 7) === month)
+    .map(payment => ({
+      type: t("loan"),
+      description: loan.name || t("loan"),
+      category: t("paid"),
+      period: formatDate(payment.date),
+      amount: -Math.abs(toProfileCurrency(payment.amount, payment.currency || loan.currency))
+    })));
+  const outflowRows = [...expenseRows, ...paymentRows].sort((left, right) => left.period.localeCompare(right.period));
+  const incomeTotal = incomeRows.reduce((total, row) => total + row.amount, 0);
+  const expenseTotal = sumMoney(monthExpenses, "amount");
+  const loanPaymentTotal = paymentRows.reduce((total, row) => total - row.amount, 0);
+
+  return {
+    month,
+    monthLabel: new Date(`${month}-01T00:00:00`).toLocaleDateString(languageCode() === "km" ? "km-KH" : "en-US", { month: "long", year: "numeric" }),
+    ownerName: String(appData.profile.name || "").trim() || t("yourName"),
+    currency: appData.profile.currency || "USD",
+    generatedOn: new Intl.DateTimeFormat(languageCode() === "km" ? "km-KH" : "en-US", { year: "numeric", month: "long", day: "numeric" }).format(new Date()),
+    incomeTotal,
+    expenseTotal,
+    loanPaymentTotal,
+    netCashFlow: incomeTotal - expenseTotal - loanPaymentTotal,
+    rows: [...incomeRows, ...outflowRows]
+  };
+}
+
+function monthlyFinanceReportHtml(report) {
+  const headers = [t("type"), t("description"), t("category"), `${t("date")} / ${t("frequency")}`, t("amount")];
+  const summary = [
+    [t("monthlyIncome"), formatPlainMoney(report.incomeTotal)],
+    [t("monthlyExpenses"), formatPlainMoney(report.expenseTotal)],
+    [t("monthlyPayment"), formatPlainMoney(report.loanPaymentTotal)],
+    [t("netCashFlow"), formatPlainMoney(report.netCashFlow)]
+  ];
+  const details = [
+    [t("reportOwner"), report.ownerName],
+    [t("reportMonth"), report.monthLabel],
+    [t("reportCurrency"), report.currency],
+    [t("generatedOn"), report.generatedOn]
+  ];
+  const rows = report.rows.map(row => [row.type, row.description, row.category, row.period, formatPlainMoney(row.amount)]);
+  const fontStack = '"Noto Sans Khmer","Khmer OS System","Leelawadee UI",Calibri,Arial,sans-serif';
+  const table = (data, widths) => `<table style="width:100%;table-layout:fixed;border-collapse:collapse;margin:12px 0 24px;font-family:${fontStack};font-size:11pt"><colgroup>${widths.map(width => `<col style="width:${width}%">`).join("")}</colgroup><thead><tr>${data[0].map((cell, index) => `<th style="border:1px solid #aebc9f;padding:9px 10px;background:#c5ff60;color:#182313;font-family:${fontStack};font-size:10pt;font-weight:bold;text-align:${index === data[0].length - 1 ? "right" : "left"};vertical-align:top">${escapeHtml(cell)}</th>`).join("")}</tr></thead><tbody>${data.slice(1).map((row, rowIndex) => `<tr>${row.map((cell, index) => `<td style="border:1px solid #d5ddcc;padding:8px 10px;background:${rowIndex % 2 ? "#f4f7ef" : "#ffffff"};color:#20251b;font-family:${fontStack};font-size:11pt;text-align:${index === row.length - 1 ? "right" : "left"};vertical-align:top;word-wrap:break-word">${escapeHtml(cell)}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
+  const transactionRows = rows.length ? rows : [[t("noMonthlyTransactions"), "", "", "", ""]];
+  const detailTable = `<table style="width:100%;border-collapse:collapse;margin:12px 0 24px;font-family:${fontStack};font-size:11pt"><tbody>${details.map(([label, value]) => `<tr><th style="width:30%;border:1px solid #d5ddcc;padding:8px 10px;background:#f4f7ef;color:#35491b;font-family:${fontStack};text-align:left">${escapeHtml(label)}</th><td style="border:1px solid #d5ddcc;padding:8px 10px;background:#ffffff;color:#20251b;font-family:${fontStack}">${escapeHtml(value)}</td></tr>`).join("")}</tbody></table>`;
+  const inlineFont = `font-family:${fontStack};`;
+  return `<html><head><meta charset="utf-8"><style>body{${inlineFont}margin:28px 36px;color:#20251b}h1{font-size:22pt;color:#202c18;margin:0 0 6px}h2{font-size:14pt;color:#35491b;margin:24px 0 8px}p{font-size:11pt;color:#59634f;margin:0 0 18px}</style></head><body style="${inlineFont}margin:28px 36px;color:#20251b"><h1 style="${inlineFont}font-size:22pt;color:#202c18;margin:0 0 6px">${escapeHtml(t("monthlyReport"))}</h1>${detailTable}<h2 style="${inlineFont}font-size:14pt;color:#35491b;margin:24px 0 8px">${escapeHtml(t("financialAnalytics"))}</h2>${table([[t("summary"), t("amount")], ...summary], [58, 42])}<h2 style="${inlineFont}font-size:14pt;color:#35491b;margin:24px 0 8px">${escapeHtml(t("recentTransactions"))}</h2>${table([headers, ...transactionRows], [14, 25, 17, 25, 19])}</body></html>`;
+}
+
+function wrapFinanceCanvasText(context, value, maxWidth, font) {
+  context.font = font;
+  const words = String(value || "").split(/\s+/).filter(Boolean);
+  if (!words.length) return [""];
+  const lines = [];
+  let line = "";
+  words.forEach(word => {
+    const candidate = line ? `${line} ${word}` : word;
+    if (line && context.measureText(candidate).width > maxWidth) {
+      lines.push(line);
+      line = word;
+    } else {
+      line = candidate;
+    }
+  });
+  if (line) lines.push(line);
+  return lines;
+}
+
+async function createMonthlyFinanceReportCanvas(report) {
+  if (document.fonts?.ready) await document.fonts.ready;
+  const fontStack = '"Noto Sans Khmer","Khmer OS System","Leelawadee UI",Calibri,Arial,sans-serif';
+  const regularFont = `500 16px ${fontStack}`;
+  const boldFont = `700 16px ${fontStack}`;
+  const width = 1240;
+  const a5Height = 1754;
+  const margin = 56;
+  const columnWidths = [106, 292, 168, 346, 216];
+  const metadata = [
+    [t("reportOwner"), report.ownerName],
+    [t("reportMonth"), report.monthLabel],
+    [t("reportCurrency"), report.currency],
+    [t("generatedOn"), report.generatedOn]
+  ];
+  const headers = [t("type"), t("description"), t("category"), `${t("date")} / ${t("frequency")}`, t("amount")];
+  const rows = report.rows.length
+    ? report.rows.map(row => [row.type, row.description, row.category, row.period, formatPlainMoney(row.amount)])
+    : [[t("noMonthlyTransactions"), "", "", "", ""]];
+  const measureCanvas = document.createElement("canvas");
+  const measureContext = measureCanvas.getContext("2d");
+  const lineHeight = 26;
+  const horizontalCellPadding = 20;
+  const rowLines = rows.map(row => row.map((cell, index) => wrapFinanceCanvasText(measureContext, cell, columnWidths[index] - horizontalCellPadding, regularFont)));
+  const rowHeights = rowLines.map(lines => Math.max(1, ...lines.map(cellLines => cellLines.length)) * lineHeight + 22);
+  const metadataCellWidth = (width - margin * 2 - 12) / 2;
+  const metadataValueFont = `500 16px ${fontStack}`;
+  const metadataValueLines = metadata.map(([, value]) => wrapFinanceCanvasText(measureContext, value, metadataCellWidth - 28, metadataValueFont));
+  const metadataRows = [[0, 1], [2, 3]];
+  const metadataRowHeights = metadataRows.map(indices => Math.max(...indices.map(index => metadataValueLines[index].length)) * 22 + 44);
+  const metadataTop = 112;
+  const metadataBottom = metadataTop + metadataRowHeights.reduce((total, rowHeight) => total + rowHeight, 0);
+  const summaryTop = metadataBottom + 20;
+  const transactionTitleTop = summaryTop + 150;
+  const tableTop = transactionTitleTop + 46;
+  const headerHeight = 56;
+  const height = Math.max(a5Height, tableTop + headerHeight + rowHeights.reduce((total, rowHeight) => total + rowHeight, 0) + 64);
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const context = canvas.getContext("2d");
+  context.textBaseline = "top";
+  context.fillStyle = "#ffffff";
+  context.fillRect(0, 0, width, height);
+  context.fillStyle = "#c5ff60";
+  context.fillRect(0, 0, width, 18);
+
+  context.fillStyle = "#202c18";
+  context.font = `700 34px ${fontStack}`;
+  context.fillText(t("monthlyReport"), margin, 54);
+
+  let metadataY = metadataTop;
+  metadataRows.forEach((indices, rowIndex) => {
+    const rowHeight = metadataRowHeights[rowIndex];
+    indices.forEach((index, columnIndex) => {
+      const x = margin + columnIndex * (metadataCellWidth + 12);
+      const [label] = metadata[index];
+      context.fillStyle = "#f4f7ef";
+      context.fillRect(x, metadataY, metadataCellWidth, rowHeight - 6);
+      context.fillStyle = "#66715e";
+      context.font = `600 14px ${fontStack}`;
+      context.fillText(label, x + 14, metadataY + 9, metadataCellWidth - 28);
+      context.fillStyle = "#202c18";
+      context.font = metadataValueFont;
+      metadataValueLines[index].forEach((line, lineIndex) => {
+        context.fillText(line, x + 14, metadataY + 29 + lineIndex * 22, metadataCellWidth - 28);
+      });
+    });
+    metadataY += rowHeight;
+  });
+
+  const summary = [
+    [t("monthlyIncome"), formatPlainMoney(report.incomeTotal)],
+    [t("monthlyExpenses"), formatPlainMoney(report.expenseTotal)],
+    [t("monthlyPayment"), formatPlainMoney(report.loanPaymentTotal)],
+    [t("netCashFlow"), formatPlainMoney(report.netCashFlow)]
+  ];
+  const summaryWidth = (width - margin * 2) / summary.length;
+  summary.forEach(([label, value], index) => {
+    const x = margin + summaryWidth * index;
+    context.fillStyle = "#eef5e4";
+    context.fillRect(x, summaryTop, summaryWidth - 12, 112);
+    context.fillStyle = "#66715e";
+    context.font = `600 15px ${fontStack}`;
+    context.fillText(label, x + 16, summaryTop + 16, summaryWidth - 40);
+    context.fillStyle = "#1f2a19";
+    context.font = `700 22px ${fontStack}`;
+    context.fillText(value, x + 16, summaryTop + 58, summaryWidth - 40);
+  });
+
+  context.fillStyle = "#202c18";
+  context.font = `700 22px ${fontStack}`;
+  context.fillText(t("recentTransactions"), margin, transactionTitleTop);
+
+  let y = tableTop;
+  context.fillStyle = "#c5ff60";
+  context.fillRect(margin, y, width - margin * 2, headerHeight);
+  context.font = boldFont;
+  context.fillStyle = "#202c18";
+  let x = margin;
+  headers.forEach((header, index) => {
+    const lines = wrapFinanceCanvasText(context, header, columnWidths[index] - horizontalCellPadding, boldFont);
+    lines.forEach((line, lineIndex) => context.fillText(line, x + 12, y + 15 + lineIndex * lineHeight, columnWidths[index] - horizontalCellPadding));
+    x += columnWidths[index];
+  });
+  y += headerHeight;
+
+  rows.forEach((row, rowIndex) => {
+    const rowHeight = rowHeights[rowIndex];
+    context.fillStyle = rowIndex % 2 ? "#f4f7ef" : "#ffffff";
+    context.fillRect(margin, y, width - margin * 2, rowHeight);
+    context.strokeStyle = "#d5ddcc";
+    context.lineWidth = 1;
+    context.strokeRect(margin, y, width - margin * 2, rowHeight);
+    x = margin;
+    rowLines[rowIndex].forEach((lines, index) => {
+      context.font = regularFont;
+      context.fillStyle = index === row.length - 1 && String(row[index]).startsWith("-") ? "#c93d58" : "#273022";
+      lines.forEach((line, lineIndex) => context.fillText(line, x + 12, y + 12 + lineIndex * lineHeight, columnWidths[index] - horizontalCellPadding));
+      x += columnWidths[index];
+    });
+    y += rowHeight;
+  });
+
+  return canvas;
+}
+
+async function getMonthlyFinanceReportCanvas(month) {
+  if (financeReportCanvas && financeReportCanvasMonth === month) return financeReportCanvas;
+  financeReportCanvas = await createMonthlyFinanceReportCanvas(buildMonthlyFinanceReport(month));
+  financeReportCanvasMonth = month;
+  return financeReportCanvas;
+}
+
+async function previewMonthlyFinanceReport() {
+  const month = document.querySelector("[data-finance-report-month]")?.value || financeReportMonth || new Date().toISOString().slice(0, 7);
+  try {
+    const canvas = await getMonthlyFinanceReportCanvas(month);
+    const dialog = document.querySelector("[data-finance-report-preview-dialog]");
+    const image = dialog?.querySelector("[data-finance-report-preview-image]");
+    if (!dialog || !image) return;
+    image.src = canvas.toDataURL("image/jpeg", 0.94);
+    image.alt = `${t("monthlyReport")} ${buildMonthlyFinanceReport(month).monthLabel}`;
+    dialog.querySelector("[data-finance-report-preview-month]").textContent = buildMonthlyFinanceReport(month).monthLabel;
+    dialog.showModal();
+  } catch (error) {
+    Toast.show(t("imageExportFailed"), "warning");
+  }
+}
+
+async function downloadMonthlyFinanceReportJpg() {
+  const month = document.querySelector("[data-finance-report-month]")?.value || financeReportMonth || new Date().toISOString().slice(0, 7);
+  try {
+    const canvas = await getMonthlyFinanceReportCanvas(month);
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", 0.94));
+    if (!blob) throw new Error("JPG conversion failed");
+    downloadFile(`mylife-financial-report-${month}.jpg`, "image/jpeg", blob);
+    Toast.show(t("jpgExported"));
+  } catch (error) {
+    Toast.show(t("imageExportFailed"), "warning");
+  }
+}
+
+function exportMonthlyFinanceReport(format) {
+  const month = document.querySelector("[data-finance-report-month]")?.value || financeReportMonth || new Date().toISOString().slice(0, 7);
+  const report = buildMonthlyFinanceReport(month);
+  const isWord = format === "word";
+  const extension = isWord ? "doc" : "xls";
+  const mimeType = isWord ? "application/msword" : "application/vnd.ms-excel";
+  downloadFile(`mylife-financial-report-${month}.${extension}`, mimeType, monthlyFinanceReportHtml(report));
+  Toast.show(t("financialReportExported"));
 }
 
 function bindMoney() {
+  bindNavigationSheetGestures();
+  document.querySelectorAll("[data-finance-report-month]").forEach(input => input.addEventListener("change", () => {
+    financeReportMonth = input.value;
+    financeReportCanvas = null;
+    financeReportCanvasMonth = "";
+    App.render();
+  }));
+  document.querySelectorAll("[data-finance-report-export]").forEach(button => button.addEventListener("click", () => {
+    exportMonthlyFinanceReport(button.dataset.financeReportExport);
+  }));
+  document.querySelectorAll("[data-finance-report-preview]").forEach(button => button.addEventListener("click", () => {
+    previewMonthlyFinanceReport();
+  }));
+  document.querySelectorAll("[data-finance-report-download-jpg]").forEach(button => button.addEventListener("click", () => {
+    downloadMonthlyFinanceReportJpg();
+  }));
+  document.querySelectorAll("[data-close-finance-report-preview]").forEach(button => button.addEventListener("click", () => {
+    button.closest("dialog")?.close();
+  }));
+  document.querySelectorAll("[data-finance-report-preview-dialog]").forEach(dialog => dialog.addEventListener("click", event => {
+    if (event.target === dialog) dialog.close();
+  }));
+  document.querySelectorAll("[data-open-financial-nav]").forEach(button => button.addEventListener("click", () => {
+    button.closest(".financial-nav-dock")?.querySelector(".financial-sidebar")?.showModal();
+  }));
+  document.querySelectorAll("[data-close-financial-nav]").forEach(button => button.addEventListener("click", () => {
+    button.closest(".financial-sidebar")?.close();
+  }));
+  document.querySelectorAll(".financial-sidebar").forEach(dialog => dialog.addEventListener("click", event => {
+    if (event.target === dialog) dialog.close();
+  }));
   document.querySelectorAll('[data-action="add-income"]').forEach(button => button.addEventListener("click", () => openIncomeModal()));
   document.querySelectorAll('[data-action="add-expense"]').forEach(button => button.addEventListener("click", () => openExpenseModal()));
   document.querySelectorAll('[data-action="add-savings"]').forEach(button => button.addEventListener("click", () => openSavingsModal()));

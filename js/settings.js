@@ -1,28 +1,48 @@
 function renderSettings() {
   const stats = Store.calculate();
+  const settingsSections = [
+    ["account", "accountCategory", "settingsAccountSubtitle", "user"],
+    ["preferences", "preferences", "settingsPreferencesSubtitle", "settings"],
+    ["data", "data", "settingsDataSubtitle", "database"],
+    ["finance", "financialCalculations", "settingsFinanceSubtitle", "calculator"],
+    ["appearance", "appearance", "settingsAppearanceSubtitle", "palette"],
+    ["privacy", "privacySecurity", "settingsPrivacySubtitle", "shield"],
+    ["about", "about", "settingsAboutSubtitle", "info"]
+  ];
   return `
     <section class="page settings-page">
-      <div class="page-header">
-        <div>
-          <h1 class="page-title page-title-with-icon"><span class="page-title-icon">${Icons.settings()}</span>${t("settings")}</h1>
-          <p class="page-subtitle">${t("manageSettings")}</p>
+      <div class="page-header settings-header">
+        <div class="settings-header-main">
+          <div>
+            <h1 class="page-title page-title-with-icon"><span class="page-title-icon">${Icons.settings()}</span>${t("settings")}</h1>
+            <p class="page-subtitle">${t("manageSettings")}</p>
+          </div>
+          <div class="financial-nav-dock settings-nav-dock">
+            <button class="financial-nav-toggle settings-nav-toggle" type="button" data-open-settings-nav aria-label="${t("settingsCategories")}" title="${t("settingsCategories")}"><span class="financial-nav-toggle-lines" aria-hidden="true"><i></i><i></i><i></i></span></button>
+            <dialog class="financial-sidebar settings-sidebar" aria-label="${t("settingsCategories")}">
+              <div class="settings-sidebar-handle financial-sidebar-handle" aria-hidden="true"><span></span></div>
+              <div class="financial-sidebar-heading"><div class="financial-sidebar-heading-copy"><strong>${t("settingsCategories")}</strong><span>${t("manageSettings")}</span></div><button class="icon-button" type="button" data-close-settings-nav aria-label="${t("close")}">${Icons.close()}</button></div>
+              <nav class="settings-sidebar-nav" aria-label="${t("settingsCategories")}">
+                ${settingsSections.map(([id, label, subtitle, icon]) => `<button class="financial-nav-item settings-nav-item" type="button" data-settings-jump="${id}"><span class="financial-nav-icon">${Icons[icon]()}</span><span class="financial-nav-copy"><strong>${t(label)}</strong><small>${t(subtitle)}</small></span>${Icons.chevron()}</button>`).join("")}
+              </nav>
+            </dialog>
+          </div>
         </div>
-        <button class="button ghost-button settings-edit-profile-button" data-action="edit-profile">${Icons.edit()} ${t("editUserData")}</button>
       </div>
       <div class="settings-layout settings-layout-single">
-        <div class="settings-content" data-settings-view="account">
-          <nav class="settings-category-tabs" aria-label="${t("settingsCategories")}">
-            <button type="button" class="settings-category-tab active" data-settings-category="account">${Icons.user()} ${t("accountCategory")}</button>
-            <button type="button" class="settings-category-tab" data-settings-category="preferences">${Icons.settings()} ${t("preferences")}</button>
-            <button type="button" class="settings-category-tab" data-settings-category="data">${Icons.wallet()} ${t("data")}</button>
-            <button type="button" class="settings-category-tab" data-settings-category="finance">${Icons.money()} ${t("financialCalculations")}</button>
-          </nav>
-          <div class="settings-section-grid" data-settings-panel="account">
+        <div class="settings-content" data-settings-view="all">
+          ${Login.guestMode ? `<button class="settings-guest-preview" type="button" data-action="connect-guest"><span class="settings-guest-avatar">${initials(t("guestPreview"))}</span><span class="settings-guest-copy"><strong>${t("guestPreview")}</strong><small>${t("guestSaveWarning")}</small></span>${Icons.chevron()}</button>` : ""}
+          <div class="settings-accordion-list">
+          <details class="settings-accordion" id="settings-section-account" open>
+            ${settingsAccordionSummary("account", t("accountCategory"), t("settingsAccountSubtitle"), Icons.user())}
+            <div class="settings-accordion-body">
+              <div class="settings-section-grid" data-settings-panel="account">
             <article class="glass-card card-pad settings-profile-card" data-settings-section="account">
               <div class="settings-profile-header">
                 <div>
                   <h2 class="section-title section-title-with-icon"><span class="section-title-icon">${Icons.user()}</span>${t("profile")}</h2>
                 </div>
+                <button class="button ghost-button settings-edit-profile-button" type="button" data-action="edit-profile">${Icons.edit()} ${t("editUserData")}</button>
                 <span class="thumb">${appData.profile.photo ? `<img src="${appData.profile.photo}" style="--image-position-x: ${imagePosition(appData.profile.photoPosition).x}%; --image-position-y: ${imagePosition(appData.profile.photoPosition).y}%;" alt="">` : initials(appData.profile.name)}</span>
               </div>
               <div class="settings-profile-name">${escapeHtml(appData.profile.name || "Not set")}</div>
@@ -33,6 +53,12 @@ function renderSettings() {
                 <div class="settings-meta-item"><span>${t("name")}</span><strong>${escapeHtml(appData.profile.name || "Not set")}</strong></div>
               </div>
             </article>
+              </div>
+            </div>
+          </details>
+          <details class="settings-accordion" id="settings-section-preferences">
+            ${settingsAccordionSummary("preferences", t("preferences"), t("settingsPreferencesSubtitle"), Icons.settings())}
+            <div class="settings-accordion-body">
             <article class="glass-card card-pad settings-preferences-card" data-settings-section="preferences">
               <div class="between">
                 <div>
@@ -49,19 +75,20 @@ function renderSettings() {
                   ["add-goal", t("createGoal")],
                   ["add-expense", t("addExpense")]
                 ].map(([id, label]) => `<label class="settings-preference-row settings-quick-action-row"><span><strong>${label}</strong><small>${t("showInQuickActions")}</small></span><input type="checkbox" data-quick-action-preference="${id}" ${((appData.profile.quickActions || ["smart-assistant", "add-event", "add-goal"]).includes(id)) ? "checked" : ""}></label>`).join("")}
-                <label class="settings-preference-row"><span><strong>${t("theme")}</strong><small>${t("themeHelp")}</small></span><select data-preference="theme"><option value="dark" ${appData.profile.theme !== "light" ? "selected" : ""}>${t("darkTheme")}</option><option value="light" ${appData.profile.theme === "light" ? "selected" : ""}>${t("lightTheme")}</option></select></label>
                 <label class="settings-preference-row"><span><strong>${t("language")}</strong><small>${t("languageHelp")}</small></span><select data-preference="language"><option value="English" ${appData.profile.language !== "Khmer" ? "selected" : ""}>English</option><option value="Khmer" ${appData.profile.language === "Khmer" ? "selected" : ""}>ខ្មែរ</option></select></label>
-                <label class="settings-preference-row"><span><strong>${t("moneyPrivacy")}</strong><small>${t("moneyPrivacyHelp")}</small></span><input type="checkbox" data-preference="moneyHidden" ${appData.profile.moneyHidden ? "checked" : ""}></label>
                 <label class="settings-preference-row"><span><strong>${t("clockFormat")}</strong><small>${t("clockFormatHelp")}</small></span><select data-preference="clockFormat"><option value="12-hour" ${appData.profile.clockFormat !== "24-hour" ? "selected" : ""}>12-hour</option><option value="24-hour" ${appData.profile.clockFormat === "24-hour" ? "selected" : ""}>24-hour</option></select></label>
                 <label class="settings-preference-row"><span><strong>${t("soundEnabled")}</strong><small>${t("soundEnabledHelp")}</small></span><input type="checkbox" data-preference="soundEnabled" ${appData.profile.soundEnabled !== false ? "checked" : ""}></label>
                 <label class="settings-preference-row"><span><strong>${t("notificationsEnabled")}</strong><small>${t("notificationsEnabledHelp")}</small></span><input type="checkbox" data-preference="notificationsEnabled" ${appData.profile.notificationsEnabled !== false ? "checked" : ""}></label>
               </div>
             </article>
-          </div>
-          <div class="settings-section-heading" data-settings-section="data"><span class="eyebrow">${t("data")}</span><h2>${t("backupAndRestore")}</h2></div>
+            </div>
+          </details>
+          <details class="settings-accordion" id="settings-section-data">
+            ${settingsAccordionSummary("data", t("data"), t("settingsDataSubtitle"), Icons.database())}
+            <div class="settings-accordion-body">
           <div class="settings-section-grid settings-data-grid" data-settings-panel="data">
             <article class="glass-card card-pad settings-data-card" data-settings-section="data">
-              <div class="between"><div><h2 class="section-title section-title-with-icon"><span class="section-title-icon">${Icons.wallet()}</span>${t("backupAndRestore")}</h2><p class="secondary">${t("backupAndRestoreHelp")}</p></div><span class="icon-badge">${Icons.wallet()}</span></div>
+              <div class="between"><div><h2 class="section-title section-title-with-icon"><span class="section-title-icon">${Icons.database()}</span>${t("backupAndRestore")}</h2><p class="secondary">${t("backupAndRestoreHelp")}</p></div><span class="icon-badge">${Icons.database()}</span></div>
               <div class="settings-action-grid">
                 ${settingsAction("export-json", Icons.arrowDown(), t("exportJson"), t("backupJsonHelp"))}
                 ${settingsAction("import-json", Icons.arrowUp(), t("importJson"), t("importJsonHelp"))}
@@ -78,16 +105,44 @@ function renderSettings() {
               [t("bills"), appData.bills.length],
               [t("calendarEvents"), appData.calendarEvents.length],
               [t("memories"), appData.memories.length]
-            ], Icons.chart(), "data")}
+            ], Icons.database(), "data")}
           </div>
-          <div class="settings-finance-panel" data-settings-panel="finance">
+            </div>
+          </details>
+          <details class="settings-accordion" id="settings-section-finance">
+            ${settingsAccordionSummary("finance", t("financialCalculations"), t("settingsFinanceSubtitle"), Icons.calculator())}
+            <div class="settings-accordion-body settings-finance-panel" data-settings-panel="finance">
             ${settingsCard(t("financialCalculations"), [
               [t("availableMoney"), money(stats.available)],
               [t("totalIncome"), money(stats.totalIncome)],
               [t("totalExpenses"), money(stats.totalExpenses)],
               [t("totalSavings"), money(stats.totalSavings)],
               [t("loanBalance"), money(stats.loanBalance)]
-            ], Icons.money(), "finance")}
+            ], Icons.calculator(), "finance")}
+            </div>
+          </details>
+          <details class="settings-accordion" id="settings-section-appearance">
+            ${settingsAccordionSummary("appearance", t("appearance"), t("settingsAppearanceSubtitle"), Icons.palette())}
+            <div class="settings-accordion-body">
+              <div class="settings-preference-list settings-preference-list-standalone">
+                <label class="settings-preference-row"><span><strong>${t("theme")}</strong><small>${t("themeHelp")}</small></span><select data-preference="theme"><option value="dark" ${appData.profile.theme !== "light" ? "selected" : ""}>${t("darkTheme")}</option><option value="light" ${appData.profile.theme === "light" ? "selected" : ""}>${t("lightTheme")}</option></select></label>
+              </div>
+            </div>
+          </details>
+          <details class="settings-accordion" id="settings-section-privacy">
+            ${settingsAccordionSummary("privacy", t("privacySecurity"), t("settingsPrivacySubtitle"), Icons.shield())}
+            <div class="settings-accordion-body">
+              <div class="settings-preference-list settings-preference-list-standalone">
+                <label class="settings-preference-row"><span><strong>${t("moneyPrivacy")}</strong><small>${t("moneyPrivacyHelp")}</small></span><input type="checkbox" data-preference="moneyHidden" ${appData.profile.moneyHidden ? "checked" : ""}></label>
+              </div>
+            </div>
+          </details>
+          <details class="settings-accordion" id="settings-section-about">
+            ${settingsAccordionSummary("about", t("about"), t("settingsAboutSubtitle"), Icons.info())}
+            <div class="settings-accordion-body settings-about-body">
+              <strong>MYLIFE</strong><span>Version 1.0.0</span><p>${t("privateDashboard")}. ${t("localStorageNote")}</p>
+            </div>
+          </details>
           </div>
           <article class="glass-card card-pad settings-danger-zone settings-danger-card">
             <div><strong>${t("dangerZone")}</strong><span>${t("clearDataHelp")}</span></div>
@@ -98,6 +153,10 @@ function renderSettings() {
       </div>
     </section>
   `;
+}
+
+function settingsAccordionSummary(id, title, subtitle, icon) {
+  return `<summary class="settings-accordion-summary" data-settings-tone="${id}"><span class="settings-accordion-icon">${icon}</span><span class="settings-accordion-copy"><strong>${title}</strong><small>${subtitle}</small></span><span class="settings-accordion-chevron">${Icons.chevron()}</span></summary>`;
 }
 
 function settingsCard(title, rows, icon, section = "data") {
@@ -374,6 +433,23 @@ function openEditUserDataModal() {
 }
 
 function bindSettings() {
+  bindNavigationSheetGestures();
+  document.querySelectorAll("[data-open-settings-nav]").forEach(button => button.addEventListener("click", () => {
+    button.closest(".settings-nav-dock")?.querySelector(".settings-sidebar")?.showModal();
+  }));
+  document.querySelectorAll("[data-close-settings-nav]").forEach(button => button.addEventListener("click", () => {
+    button.closest(".settings-sidebar")?.close();
+  }));
+  document.querySelectorAll(".settings-sidebar").forEach(dialog => dialog.addEventListener("click", event => {
+    if (event.target === dialog) dialog.close();
+  }));
+  document.querySelectorAll("[data-settings-jump]").forEach(button => button.addEventListener("click", () => {
+    const section = document.getElementById(`settings-section-${button.dataset.settingsJump}`);
+    if (!section) return;
+    section.open = true;
+    button.closest(".settings-sidebar")?.close();
+    section.scrollIntoView({ behavior: "smooth", block: "start" });
+  }));
   const settingsContent = document.querySelector(".settings-content");
   document.querySelectorAll("[data-settings-category]").forEach(tab => tab.addEventListener("click", () => {
     const category = tab.dataset.settingsCategory;
@@ -393,6 +469,7 @@ function bindSettings() {
     Toast.show(t("preferenceSaved"));
   }));
   bindSettingsAction("edit-profile", openEditUserDataModal);
+  bindSettingsAction("connect-guest", () => Login.open("signup"));
   bindSettingsAction("edit-footer", () => {
     sessionStorage.setItem("mylife:open-footer-editor", "1");
     location.hash = "#launcher";

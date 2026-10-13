@@ -2,6 +2,16 @@ let familyMediaTimer = null;
 
 function renderFamily() {
   const familyEvents = appData.calendarEvents.filter(event => event.category === "Family");
+  const hasFamily = appData.family.length > 0;
+
+  if (!hasFamily) {
+    return `
+      <section class="page family-empty-page">
+        ${familyEmptyCard()}
+      </section>
+    `;
+  }
+
   return `
     <section class="page">
       <div class="page-header">
@@ -15,7 +25,7 @@ function renderFamily() {
         </div>
       </div>
       ${familyMediaCard()}
-      ${appData.family.length ? `<div class="grid three-col">${appData.family.map(memberCard).join("")}</div>` : familyEmptyCard()}
+      <div class="grid three-col">${appData.family.map(memberCard).join("")}</div>
       ${relationshipAnniversaryCards()}
       ${familyPhotoCard()}
       <div class="grid two-col" style="margin-top:18px">
@@ -159,16 +169,17 @@ function familyMediaMarkup(item, index = 0) {
 
 function familyEmptyCard() {
   return `
-    <article class="glass-card family-empty-card">
-      <img src="https://images.unsplash.com/photo-1491438590914-bc09fcaaf77a?auto=format&fit=crop&w=900&q=78" alt="" loading="lazy">
-      <div class="family-empty-content">
-        <span class="icon-badge green">${Icons.plus()}</span>
-        <h2>${escapeHtml(t("noFamilyYet"))}</h2>
-        <p class="secondary">${escapeHtml(t("noFamilyBody"))}</p>
-        <div class="action-row family-empty-actions">
-          <button class="button ghost-button" data-action="add-self">${Icons.user()} ${t("addMyself")}</button>
-          <button class="button" data-action="add-family">${Icons.plus()} ${t("addFamilyMember")}</button>
+    <article class="family-empty-card">
+      <div class="family-empty-hero">
+        <div class="family-empty-icon" aria-hidden="true">${Icons.family()}</div>
+        <div class="family-empty-copy">
+          <h2>${escapeHtml(t("family"))}</h2>
+          <p>${escapeHtml(t("familySubtitle"))}</p>
         </div>
+      </div>
+      <div class="family-empty-actions">
+        <button class="button ghost-button" data-action="add-self">${Icons.user()} ${t("addMyself")}</button>
+        <button class="button" data-action="add-family">${Icons.plus()} ${t("addFamilyMember")}</button>
       </div>
     </article>
   `;

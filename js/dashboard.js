@@ -52,6 +52,8 @@ function renderHome() {
     const option = entry ? moodOptions.find(item => item.value === entry.value) : null;
     return {
       day: date.toLocaleDateString(languageCode() === "km" ? "km-KH" : "en-US", { weekday: "short" }).slice(0, 3),
+      date: date.getDate(),
+      isToday: iso === todayIso,
       label: option ? option.label : "—",
       emoji: option ? option.emoji : "·",
       value: option ? option.value : ""
@@ -81,21 +83,26 @@ function renderHome() {
         '</div>' +
       '</div>' +
     '</div>' +
-    (typeof familyMediaCard === "function" ? familyMediaCard() : "") +
-    '<div class="home-suggestion-banner">' +
-      '<span class="suggestion-badge">' + Icons.spark() + '</span>' +
-      '<div class="suggestion-copy">' +
-        '<strong>' + (languageCode() === "km" ? "ត្រូវការជំនួយបន្តិច?" : "Need a nudge?") + '</strong>' +
-        '<span>' + (languageCode() === "km" ? "កត់សម្គាល់អារម្មណ៍ ឬសរសេររឿងល្អមួយយ៉ាង" : "Check in, reflect, and finish a tiny win.") + '</span>' +
+    '<div class="home-challenge-card">' +
+      '<div class="home-challenge-copy">' +
+        '<span class="home-challenge-label">' + t("dailyFocus") + '</span>' +
+        '<h2>' + (languageCode() === "km" ? "ត្រូវការជំនួយបន្តិច?" : "Need a nudge?") + '</h2>' +
+        '<p>' + (languageCode() === "km" ? "កត់សម្គាល់អារម្មណ៍ ឬសរសេររឿងល្អមួយយ៉ាង" : "Check in, reflect, and finish a tiny win.") + '</p>' +
+        '<button class="suggestion-button" type="button" data-action="smart-assistant">' + (languageCode() === "km" ? "ជំនួយ" : "Help") + '</button>' +
       '</div>' +
-      '<button class="suggestion-button" type="button" data-action="smart-assistant">' + (languageCode() === "km" ? "ជំនួយ" : "Help") + '</button>' +
+      '<div class="home-challenge-art" aria-hidden="true"><span class="shape orange"></span><span class="shape grey"></span><span class="shape dark"></span></div>' +
+    '</div>' +
+    '<div class="home-week-row" aria-label="' + (languageCode() === "km" ? "អារម្មណ៍ប្រចាំសប្តាហ៍" : "Mood this week") + '">' +
+      moodHistoryChart.map(day => '<div class="home-week-day ' + (day.isToday ? "active" : "") + '"' + (day.isToday ? ' aria-current="date"' : '') + '><span class="week-label">' + day.day + '</span><strong>' + day.date + '</strong><span class="week-mood" aria-label="' + escapeHtml(day.label) + '">' + day.emoji + '</span></div>').join("") +
     '</div>' +
     '<div class="news-ticker" aria-label="News ticker">' +
       '<div class="news-ticker-track">' +
         [...newsTickerItems, ...newsTickerItems].map(item => '<span class="ticker-item">' + item + '</span>').join('<span class="ticker-divider">•</span>') +
       '</div>' +
     '</div>' +
-    '<div class="home-quick-actions">' +
+    '<div class="home-plan-wrap">' +
+      '<h2>' + (languageCode() === "km" ? "ផែនការរបស់អ្នក" : "Your plan") + '</h2>' +
+      '<div class="home-quick-actions">' +
       '<button class="home-action action-green" type="button" data-action="smart-assistant">' +
         '<span class="action-icon">' + Icons.spark() + '</span>' +
         '<span class="action-content">' +
@@ -116,7 +123,7 @@ function renderHome() {
         '<span class="action-icon">' + Icons.goal() + '</span>' +
         '<span class="action-content">' +
           '<strong>' + t("createGoal") + '</strong>' +
-          '<small>' + t("goalPrompt") + '</small>' +
+          '<small>' + t("setTargetsPrompt") + '</small>' +
         '</span>' +
         '<span class="action-arrow">›</span>' +
       '</button>' +
@@ -124,10 +131,11 @@ function renderHome() {
         '<span class="action-icon">' + Icons.calendar() + '</span>' +
         '<span class="action-content">' +
           '<strong>' + t("addEvent") + '</strong>' +
-          '<small>' + t("eventPrompt") + '</small>' +
+          '<small>' + t("planMomentsPrompt") + '</small>' +
         '</span>' +
         '<span class="action-arrow">›</span>' +
       '</button>' +
+      '</div>' +
     '</div>' +
     '<div class="home-overview">' +
       '<article class="glass-card mood-card">' +
@@ -135,9 +143,6 @@ function renderHome() {
         '<h2 class="section-title section-title-with-icon"><span class="section-title-icon">' + Icons.mood() + '</span>' + t("mood") + '</h2>' +
         '<div class="mood-selector">' +
           moodOptions.map(option => '<button class="mood-button ' + (selectedMood && selectedMood.value === option.value ? "active" : "") + '" type="button" data-mood="' + option.value + '" aria-label="' + escapeHtml(option.label) + '"><span class="mood-emoji">' + option.emoji + '</span><span class="mood-label">' + escapeHtml(option.label) + '</span></button>').join("") +
-        '</div>' +
-        '<div class="mood-history">' +
-          moodHistoryChart.map(day => '<div class="mood-history-day ' + (day.value === selectedMood?.value ? "active" : "") + '"><span class="mood-day">' + day.day + '</span><span class="mood-emoji">' + day.emoji + '</span></div>').join("") +
         '</div>' +
         (todayMood ? '<div class="mood-selected"><span class="eyebrow">' + t("todayMood") + '</span><span class="mood-emoji-large">' + selectedMood.emoji + '</span><strong>' + escapeHtml(selectedMood.label) + '</strong></div>' : '<p class="secondary" style="margin-top:12px;text-align:center">' + t("tapToLogMood") + '</p>') +
       '</article>' +
@@ -185,7 +190,6 @@ function renderHome() {
     '</article>' +
     (typeof homePhotoCard === "function" ? homePhotoCard() : '') +
   '</section>';
-}
 
 
 function homeEmptyCard() {
@@ -800,22 +804,6 @@ function bindHome() {
     }
   });
 
-  document.querySelectorAll("[data-mood]").forEach(button => {
-    button.addEventListener("click", () => {
-      const option = button.dataset.mood;
-      const moodMap = {
-        happy: { label: t("moodHappy"), robot: t("moodCheerful") },
-        calm: { label: t("moodCalm"), robot: t("moodBalanced") },
-        tired: { label: t("moodTired"), robot: t("moodLowEnergy") },
-        stressed: { label: t("moodStressed"), robot: t("moodNeedsEase") },
-        excited: { label: t("moodExcited"), robot: t("moodMotivated") }
-      };
-      const choice = moodMap[option];
-      if (!choice) return;
-      Store.updateMood({ value: option, label: choice.label, robot: choice.robot });
-    });
-  });
-
   document.querySelectorAll("[data-reflection-textarea]").forEach(textarea => {
     textarea.addEventListener("input", event => {
       Store.updateDailyReflection(event.target.value);
@@ -897,4 +885,5 @@ function bindHome() {
       document.querySelectorAll(".home-profile-side").forEach(panel => panel.classList.remove("menu-open"));
     }
   });
+}
 }

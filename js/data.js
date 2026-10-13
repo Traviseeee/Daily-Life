@@ -445,10 +445,32 @@ const Store = {
   },
   load() {
     try {
-      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
-      Object.assign(appData, structuredClone(emptyData), saved || {});
+      const raw = localStorage.getItem(STORAGE_KEY);
+      const saved = raw ? JSON.parse(raw) : null;
+      const hasMeaningfulSavedData = saved && typeof saved === "object" && Object.keys(saved).some(key => {
+        const value = saved[key];
+        if (Array.isArray(value)) return value.length > 0;
+        if (value && typeof value === "object") return Object.keys(value).length > 0;
+        return Boolean(value);
+      });
+
+      const guestPreviewNames = new Set([
+        "Guest preview",
+        "guest preview",
+        "ការមើលជាភ្ញៀវ",
+        t("guestPreview")
+      ]);
+      const savedIsGuestPreview = saved && typeof saved === "object" && saved.profile && guestPreviewNames.has(String(saved.profile.name || ""));
+      const baseData = hasMeaningfulSavedData && !savedIsGuestPreview ? saved : demoData();
+
+      Object.assign(appData, structuredClone(emptyData), baseData || {});
       ensureAppDataShape();
       appData.profile = { ...emptyData.profile, ...(appData.profile || {}) };
+
+      if (!hasMeaningfulSavedData || savedIsGuestPreview) {
+        saveLocalSnapshot(appData);
+      }
+
       if (this.removeBrokenMediaRecords()) {
         SyncState.markPending({ mode: "merge", reason: "broken-media-cleanup" });
         saveLocalSnapshot(appData);
@@ -1280,8 +1302,35 @@ function demoData() {
   return {
     profile: { name: "Sokha Chen", photo: "", currency: "USD", language: "English", dateFormat: "MMM d, yyyy" },
     family: [
-      { id: "demo-family-1", name: "Mom", relationship: "Mother", birthday: "1968-10-12", phone: "+855 12 000 001", notes: "Likes quiet family dinners.", photo: "" },
-      { id: "demo-family-2", name: "Dad", relationship: "Father", birthday: "1966-11-04", phone: "+855 12 000 002", notes: "Call after lunch.", photo: "" }
+      {
+        id: "demo-family-mom",
+        name: "Maya Chen",
+        relationship: "Mother",
+        birthday: "1988-06-14",
+        anniversaryDate: "2012-11-22",
+        phone: "+1 (555) 201-8841",
+        favorite: "Cooking",
+        characterMood: "Caring",
+        zodiacSign: "Gemini",
+        notes: "Enjoys family dinners and planning weekend outings.",
+        relationshipNote: "Always keeps the family connected.",
+        photo: ""
+      },
+      {
+        id: "demo-family-dad",
+        name: "Daniel Chen",
+        relationship: "Father",
+        relatedMemberId: "demo-family-mom",
+        birthday: "1985-09-02",
+        anniversaryDate: "2012-11-22",
+        phone: "+1 (555) 221-0258",
+        favorite: "Fishing",
+        characterMood: "Cheerful",
+        zodiacSign: "Virgo",
+        notes: "Loves planning adventures and family traditions.",
+        relationshipNote: "Our favorite travel partner.",
+        photo: ""
+      }
     ],
     goals: [
       { id: "demo-goal-1", name: "New House", category: "Home", targetAmount: 20000, currentAmount: 8500, deadline: "2027-12-31", description: "Build a calm future home for the family.", contributions: [] },
@@ -1304,7 +1353,7 @@ function demoData() {
       { id: "demo-bill-1", name: "Electricity", amount: 45, frequency: "Monthly", due: "2026-08-25", category: "Utilities", reminder: true, notes: "", status: "Upcoming" }
     ],
     calendarEvents: [
-      { id: "demo-event-1", title: "Family Dinner", date: "2026-08-27", time: "19:00", category: "Family", familyMember: "Mom", reminder: true, notes: "" }
+      { id: "demo-family-event-1", title: "Family Dinner", date: "2026-10-15", category: "Family", notes: "Dinner at home with the family.", color: "#f08a2a" }
     ],
     memories: [
       { id: "demo-memory-1", title: "Family Trip", photo: "", date: "2026-08-15", location: "Kep", description: "Beautiful weekend with the family.", familyMembers: "Mom, Dad", tags: "travel, family" }

@@ -1,4 +1,13 @@
 const goalCategories = ["Personal", "Family", "Financial", "Home", "Travel", "Health", "Education"];
+const goalCategoryIcons = {
+  Personal: "user",
+  Family: "family",
+  Financial: "money",
+  Home: "home",
+  Travel: "plane",
+  Health: "heart",
+  Education: "graduation"
+};
 
 function renderGoals(goalId) {
   const selected = goalId ? appData.goals.find(goal => goal.id === goalId) : null;
@@ -7,22 +16,31 @@ function renderGoals(goalId) {
   const visibleGoals = selectedCategory ? appData.goals.filter(goal => goal.category === selectedCategory) : appData.goals;
   return `
     <section class="page">
-      <div class="page-header">
-        <div>
-          <h1 class="page-title page-title-with-icon"><span class="page-title-icon">${Icons.goal()}</span>${t("goals")}</h1>
-          <p class="page-subtitle">${t("goalsSubtitle")}</p>
+      <div class="page-header goals-header">
+        <div class="goals-header-main">
+          <div class="goals-header-copy">
+            <h1 class="page-title page-title-with-icon"><span class="page-title-icon">${Icons.goal()}</span>${t("goals")}</h1>
+            <p class="page-subtitle">${t("goalsSubtitle")}</p>
+          </div>
+          <div class="goals-nav-dock">
+              <button class="goals-nav-toggle" type="button" data-open-goals-nav aria-label="${t("goals")} ${t("category")}" title="${t("goals")} ${t("category")}"><span class="goals-nav-toggle-lines" aria-hidden="true"><i></i><i></i><i></i></span></button>
+            <dialog class="goals-sidebar" aria-label="${t("goals")} ${t("category")}">
+              <div class="goals-sidebar-handle" aria-hidden="true"><span></span></div>
+              <div class="goals-sidebar-heading"><div class="goals-sidebar-heading-copy"><strong>${t("goals")} ${t("category")}</strong><span>${t("goalsCategorySubtitle")}</span></div><button class="icon-button" type="button" data-close-goals-nav aria-label="${t("close")}">${Icons.close()}</button></div>
+              <nav class="goals-sidebar-nav" aria-label="${t("goals")} ${t("category")}">
+                <a class="financial-nav-item ${selectedCategory ? "" : "active"}" href="#goals"><span class="financial-nav-icon">${Icons.goal()}</span><span class="financial-nav-copy"><strong>${t("allGoals")}</strong></span><strong>${appData.goals.length}</strong>${Icons.chevron()}</a>
+                ${goalCategories.map(category => {
+                  const count = appData.goals.filter(goal => goal.category === category).length;
+                  return `<a class="financial-nav-item ${selectedCategory === category ? "active" : ""}" href="#goals/${category}"><span class="financial-nav-icon">${Icons[goalCategoryIcons[category]]()}</span><span class="financial-nav-copy"><strong>${optionLabel(category)}</strong></span><strong>${count}</strong>${Icons.chevron()}</a>`;
+                }).join("")}
+              </nav>
+            </dialog>
+          </div>
         </div>
-        <button class="button" data-action="add-goal">${Icons.plus()} ${t("createGoal")}</button>
+        <button class="button" type="button" data-action="add-goal">${Icons.plus()} ${t("createGoal")}</button>
       </div>
-      <div class="financial-layout goals-layout">
-        <aside class="financial-sidebar" aria-label="${t("goals")} ${t("category")}">
-          <a class="financial-nav-item ${selectedCategory ? "" : "active"}" href="#goals">${Icons.goal()}<span>${t("allGoals")}</span><strong>${appData.goals.length}</strong></a>
-          ${goalCategories.map(category => {
-            const count = appData.goals.filter(goal => goal.category === category).length;
-            return `<a class="financial-nav-item ${selectedCategory === category ? "active" : ""}" href="#goals/${category}">${Icons.goal()}<span>${optionLabel(category)}</span><strong>${count}</strong></a>`;
-          }).join("")}
-        </aside>
-        <div class="financial-content">
+      <div class="goals-layout">
+        <div class="goals-content">
           ${visibleGoals.length ? `<div class="grid three-col">${visibleGoals.map(goalCard).join("")}</div>` : goalEmptyCard()}
         </div>
       </div>
@@ -155,6 +173,16 @@ function openGoalModal(goal, defaultCategory = "Personal") {
 
 function bindGoals(goalId) {
   const defaultCategory = goalCategories.includes(goalId) ? goalId : "Personal";
+  bindNavigationSheetGestures();
+  document.querySelectorAll("[data-open-goals-nav]").forEach(button => button.addEventListener("click", () => {
+    button.closest(".goals-nav-dock")?.querySelector(".goals-sidebar")?.showModal();
+  }));
+  document.querySelectorAll("[data-close-goals-nav]").forEach(button => button.addEventListener("click", () => {
+    button.closest(".goals-sidebar")?.close();
+  }));
+  document.querySelectorAll(".goals-sidebar").forEach(dialog => dialog.addEventListener("click", event => {
+    if (event.target === dialog) dialog.close();
+  }));
   document.querySelectorAll('[data-action="add-goal"]').forEach(button => button.addEventListener("click", () => openGoalModal(null, defaultCategory)));
   document.querySelectorAll("[data-edit-goal]").forEach(button => button.addEventListener("click", () => openGoalModal(appData.goals.find(item => item.id === button.dataset.editGoal))));
   document.querySelectorAll("[data-delete-goal]").forEach(button => button.addEventListener("click", () => {

@@ -52,3 +52,39 @@ function setActiveNav(routeId) {
     item.classList.toggle("active", item.dataset.route === routeId);
   });
 }
+
+function bindNavigationSheetGestures() {
+  if (document.documentElement.dataset.navigationSheetGesturesBound) return;
+  let gestureStart = null;
+  const sheetSelector = ".financial-sidebar, .goals-sidebar";
+  const handleSelector = ".financial-sidebar-handle, .goals-sidebar-handle";
+
+  document.addEventListener("pointerdown", event => {
+    if (event.pointerType !== "touch") return;
+    const handle = event.target.closest(handleSelector);
+    if (handle) {
+      gestureStart = { y: event.clientY, direction: "close", dialog: handle.closest("dialog") };
+      return;
+    }
+    if (event.target.closest(`${sheetSelector}, .mobile-nav, button, a, input, select, textarea`)) return;
+    gestureStart = event.clientY >= window.innerHeight - 150
+      ? { y: event.clientY, direction: "open" }
+      : null;
+  });
+
+  document.addEventListener("pointerup", event => {
+    if (!gestureStart) return;
+    const distance = event.clientY - gestureStart.y;
+    const { direction, dialog } = gestureStart;
+    gestureStart = null;
+    if (direction === "open" && distance < -64) {
+      const sheet = document.querySelector(sheetSelector);
+      if (sheet && !sheet.open) sheet.showModal();
+    } else if (direction === "close" && distance > 64) {
+      dialog?.close();
+    }
+  });
+
+  document.addEventListener("pointercancel", () => { gestureStart = null; });
+  document.documentElement.dataset.navigationSheetGesturesBound = "true";
+}

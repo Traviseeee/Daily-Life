@@ -1,0 +1,836 @@
+const App = {
+  route: "home",
+  param: "",
+  shellClockTimer: null,
+  quickActionCloseTimer: null,
+  interactionSoundBound: false,
+  init() {
+    Store.load();
+    // Retry scheduling starts before the first network call, so a change that never
+    // reached the cloud is pushed as soon as the app can reach the network even if
+    // the pull below fails.
+    Store.startSyncRetry();
+    Login.showIfNeeded();
+    renderNavigation();
+    this.bindChrome();
+    this.bindInteractionSounds();
+    this.startShellClock();
+    window.addEventListener("hashchange", () => this.render());
+    window.addEventListener("popstate", () => this.render());
+    this.render();
+    this.syncWithCloud();
+    this.checkUpcomingAlerts();
+    setTimeout(() => NotificationManager.sync(), 1200);
+  },
+  /**
+   * Reconciles with the cloud once the shell has already rendered.
+   *
+   * Deliberately not awaited: the UI must never wait on the network. Running the
+   * pull late is safe now because it is tombstone-aware and can no longer bring a
+   * deleted record back. It only re-renders when the user has not navigated away
+   * in the meantime.
+   */
+  syncWithCloud() {
+    const routeAtStart = this.route;
+    Promise.resolve(Store.syncFromSupabase())
+      .then(applied => {
+        if (!applied || this.route !== routeAtStart) return;
+        this.render();
+      })
+      .catch(error => console.warn("MYLIFE could not reconcile with the cloud at startup.", error));
+  },
+  parseRoute() {
+    const [route = "home", param = ""] = location.hash.replace("#", "").split("/");
+    this.route = route || "home";
+    this.param = param;
+  },
+  render() {
+    this.parseRoute();
+    const app = document.getElementById("app");
+    const route = this.route;
+    document.documentElement.lang = languageCode();
+    this.renderTheme();
+    this.renderQuickActions();
+    renderNavigation();
+    setActiveNav(route);
+    this.renderProfile();
+    this.renderMoneyPrivacy();
+    this.renderSmartAssistant();
+    document.body.classList.remove("nav-open");
+    document.body.classList.toggle("launcher-page-open", route === "launcher");
+
+    if (route === "launcher") app.innerHTML = renderLauncher();
+    else if (route === "summary") app.innerHTML = renderSummary();
+    else if (route === "family") app.innerHTML = renderFamily();
+    else if (route === "goals") app.innerHTML = renderGoals(this.param);
+    else if (route === "money") app.innerHTML = renderMoney(this.param || "overview");
+    else if (route === "calendar") app.innerHTML = renderCalendar(this.param || "month");
+    else if (route === "daily") app.innerHTML = renderDaily();
+    else if (route === "memories") app.innerHTML = renderMemories();
+    else if (route === "tips") app.innerHTML = renderTips();
+    else if (route === "settings") app.innerHTML = renderSettings();
+    else if (route === "help") app.innerHTML = renderHelp();
+    else app.innerHTML = renderHome();
+
+    if (!appData.profile.name) {
+      Login.showIfNeeded();
+    }
+
+    this.bindPage(route);
+    this.bindScrollReveal();
+    this.checkUpcomingAlerts();
+    this.checkHomeSuggestions();
+    this.renderNotificationBadge();
+    app.focus({ preventScroll: true });
+  },
+  renderNotificationBadge() {
+    const bell = document.getElementById("bellButton");
+    if (!bell) return;
+
+    const alerts = getUpcomingNotifications(7);
+    const count = alerts.length;
+    let badge = bell.querySelector(".notification-badge");
+
+    if (!badge) {
+      badge = document.createElement("span");
+      badge.className = "notification-badge";
+      badge.setAttribute("aria-hidden", "true");
+      bell.appendChild(badge);
+    }
+
+    const label = count > 0 ? `${count} notifications` : "Notifications";
+    badge.textContent = count > 99 ? "99+" : String(count || "");
+    badge.hidden = count === 0;
+    bell.classList.toggle("has-notifications", count > 0);
+    bell.setAttribute("aria-label", label);
+    bell.setAttribute("title", label);
+  },
+  openNotificationsPanel() {
+    const root = document.getElementById("modalRoot");
+    const alerts = getUpcomingNotifications(7);
+
+    root.classList.add("open");
+    root.innerHTML = `
+      <div class="notification-backdrop" data-close-notification>
+        <div class="notification-panel glass-card" role="dialog" aria-modal="true" aria-labelledby="notificationTitle">
+          <div class="between notification-header">
+            <div>
+              <span class="eyebrow">${t("upcoming")}</span>
+              <h2 id="notificationTitle">${alerts.length ? (languageCode() === "km" ? "ការជូនដំណឹង" : "Notifications") : (languageCode() === "km" ? "គ្មានការជូនដំណឹង" : "No notifications")}</h2>
+            </div>
+            <button class="icon-button" type="button" data-close-notification aria-label="${t("close")}">${Icons.close()}</button>
+          </div>
+
+          ${alerts.length ? `
+            <div class="notification-list">
+              ${alerts.map(item => `
+                <div class="notification-item">
+                  <div class="notification-icon ${item.kind === "bill" ? "bill" : "event"}">${item.kind === "bill" ? Icons.bill() : Icons.calendar()}</div>
+                  <div class="notification-copy">
+                    <strong>${escapeHtml(item.title)}</strong>
+                    <small>${new Date(`${item.date}T00:00:00`).toLocaleDateString(languageCode() === "km" ? "km-KH" : "en-US", { month: "short", day: "numeric" })}</small>
+                    <span>${item.daysLeft === 0 ? (languageCode() === "km" ? "ថ្ងៃនេះ" : "Today") : item.daysLeft === 1 ? (languageCode() === "km" ? "ក្នុង 1 ថ្ងៃ" : "In 1 day") : (languageCode() === "km" ? `ក្នុង ${item.daysLeft} ថ្ងៃ` : `In ${item.daysLeft} days`)}</span>
+                  </div>
+                  <button class="button ghost-button notification-view" type="button" data-view-notification="${escapeAttr(item.id)}">${languageCode() === "km" ? "មើល" : "View"}</button>
+                </div>
+              `).join("")}
+            </div>
+          ` : `
+            <div class="notification-empty">
+              <div class="notification-empty-icon">${Icons.bell()}</div>
+              <p>${languageCode() === "km" ? "អ្នកមិនមានការជូនដំណឹងក្នុង 7 ថ្ងៃទេ" : "You have no reminders in the next 7 days."}</p>
+            </div>
+          `}
+
+          <div class="notification-actions">
+            <button class="button ghost-button" type="button" data-close-notification>${t("close")}</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const closeButtons = root.querySelectorAll("[data-close-notification]");
+    closeButtons.forEach(button => button.addEventListener("click", () => {
+      root.classList.remove("open");
+      root.innerHTML = "";
+    }));
+
+    const backdrop = root.querySelector(".notification-backdrop");
+    backdrop?.addEventListener("click", event => {
+      if (event.target === backdrop) {
+        root.classList.remove("open");
+        root.innerHTML = "";
+      }
+    });
+
+    root.querySelectorAll("[data-view-notification]").forEach(button => {
+      button.addEventListener("click", () => {
+        const id = button.dataset.viewNotification;
+        const item = alerts.find(alert => alert.id === id);
+        if (!item) return;
+
+        root.classList.remove("open");
+        root.innerHTML = "";
+        if (item.source === "family") {
+          location.hash = "#family";
+          return;
+        }
+        location.hash = "#calendar";
+
+        setTimeout(() => {
+          const event = appData.calendarEvents.find(entry => entry.id === item.id);
+          if (event) {
+            App.openNotificationDetail(event, item);
+          }
+        }, 200);
+      });
+    });
+  },
+  openNotificationDetail(record, item) {
+    const root = document.getElementById("modalRoot");
+    const isKhmer = languageCode() === "km";
+    const dateLabel = new Date(`${item.date}T00:00:00`).toLocaleDateString(isKhmer ? "km-KH" : "en-US", {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+      year: "numeric"
+    });
+    const timeLabel = record.time || (isKhmer ? "មិនបានកំណត់" : "Not set");
+    const categoryLabel = optionLabel(record.category || (isKhmer ? "ព្រឹត្តិការណ៍" : "Event"));
+
+    root.classList.add("open");
+    root.innerHTML = `
+      <div class="notification-backdrop" data-close-notification>
+        <div class="notification-panel glass-card notification-detail" role="dialog" aria-modal="true" aria-labelledby="notificationDetailTitle">
+          <div class="between notification-header">
+            <div>
+              <span class="eyebrow">${isKhmer ? "ព័ត៌មានលម្អិត" : "Event details"}</span>
+              <h2 id="notificationDetailTitle">${escapeHtml(record.title || item.title)}</h2>
+            </div>
+            <button class="icon-button" type="button" data-close-notification aria-label="${t("close")}">${Icons.close()}</button>
+          </div>
+          <div class="notification-detail-grid">
+            <div><small>${isKhmer ? "កាលបរិច្ឆេទ" : "Date"}</small><strong>${escapeHtml(dateLabel)}</strong></div>
+            <div><small>${isKhmer ? "ពេលវេលា" : "Time"}</small><strong>${escapeHtml(timeLabel)}</strong></div>
+            <div><small>${isKhmer ? "ប្រភេទ" : "Category"}</small><strong>${escapeHtml(categoryLabel)}</strong></div>
+            ${record.notes ? `<div><small>${t("notes")}</small><strong>${escapeHtml(record.notes)}</strong></div>` : ""}
+          </div>
+          <div class="notification-actions">
+            <button class="button ghost-button" type="button" data-close-notification>${t("close")}</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    root.querySelectorAll("[data-close-notification]").forEach(button => button.addEventListener("click", () => {
+      root.classList.remove("open");
+      root.innerHTML = "";
+    }));
+  },
+  checkHomeSuggestions() {
+    if (this.route !== "home") return;
+
+    const todayIso = new Date().toISOString().slice(0, 10);
+    const moodMissing = !appData.mood || appData.mood.date !== todayIso;
+    const reflectionMissing = !appData.dailyReflection || appData.dailyReflection.date !== todayIso || !(appData.dailyReflection.text || "").trim();
+    const focusMissing = !appData.dailyFocus || appData.dailyFocus.date !== todayIso || !Array.isArray(appData.dailyFocus.items) || !appData.dailyFocus.items.length || appData.dailyFocus.items.every(item => !item.done);
+
+    if (!moodMissing && !reflectionMissing && !focusMissing) return;
+
+    const isKhmer = languageCode() === "km";
+    const suggestions = [];
+    if (moodMissing) suggestions.push(isKhmer ? "កត់សម្គាល់អារម្មណ៍ថ្ងៃនេះ" : "Check in with your mood");
+    if (reflectionMissing) suggestions.push(isKhmer ? "សរសេរបានផ្លឹមពីថ្ងៃនេះ" : "Write one good thing today");
+    if (focusMissing) suggestions.push(isKhmer ? "ជ្រើសរើស ៣ កិច្ចការតូចៗ" : "Pick 3 tiny wins");
+
+    const message = suggestions.slice(0, 2).join(" • ");
+    setTimeout(() => Toast.show(message, "warning", { duration: 3600, icon: Icons.spark() }), 450);
+  },
+  checkUpcomingAlerts() {
+    const alerts = getUpcomingNotifications(7);
+    if (!alerts.length) return;
+
+    const signature = alerts.map(item => `${item.type}:${item.date}`).join("|");
+    const lastViewed = sessionStorage.getItem("mylife:upcoming-alerts");
+    if (lastViewed === signature) return;
+
+    sessionStorage.setItem("mylife:upcoming-alerts", signature);
+
+    const first = alerts[0];
+    const label = first.daysLeft === 0
+      ? `${first.title} is today`
+      : `${first.title} in ${first.daysLeft} day${first.daysLeft === 1 ? "" : "s"}`;
+
+    Toast.show(alerts.length > 1 ? `${alerts.length} reminders are coming soon` : label, "warning", { duration: 3200 });
+    if ("Notification" in window && Notification.permission === "granted") {
+      new Notification("MYLIFE reminder", { body: alerts.length > 1 ? `${alerts.length} reminders are coming soon` : label });
+    }
+    NotificationManager.sync();
+    this.renderNotificationBadge();
+  },
+  bindScrollReveal() {
+    const elements = document.querySelectorAll(".page > *:not(.home-hero), .tool-launcher-item");
+    if (!elements.length) return;
+
+    elements.forEach((element, index) => {
+      element.classList.add("reveal-on-scroll");
+      element.style.setProperty("--reveal-delay", `${Math.min(index * 55, 330)}ms`);
+    });
+
+    if (!("IntersectionObserver" in window)) {
+      elements.forEach(element => element.classList.add("is-visible"));
+      return;
+    }
+
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add("is-visible");
+        observer.unobserve(entry.target);
+      });
+    }, { threshold: 0.12, rootMargin: "0px 0px -8%" });
+
+    elements.forEach(element => observer.observe(element));
+  },
+  renderProfile() {
+    const avatar = document.getElementById("profileAvatar");
+    const name = document.getElementById("profileName");
+    if (!avatar || !name) return;
+    name.textContent = appData.profile.name || t("setupProfile");
+    const position = imagePosition(appData.profile.photoPosition);
+    avatar.innerHTML = appData.profile.photo ? `<img data-image-position="profile" style="--image-position-x: ${position.x}%; --image-position-y: ${position.y}%;" src="${appData.profile.photo}" alt="">` : initials(appData.profile.name);
+    document.querySelector("#profileButton small").textContent = t("personalAccount");
+  },
+  renderMoneyPrivacy() {
+    const hidden = !!appData.profile.moneyHidden;
+    document.body.classList.toggle("money-hidden", hidden);
+  },
+  renderTheme() {
+    const theme = appData.profile.theme === "light" ? "light" : "dark";
+    document.documentElement.dataset.theme = theme;
+  },
+  renderSmartAssistant() {
+    const button = document.getElementById("smartAssistantButton");
+    if (!button) return;
+    button.innerHTML = Icons.spark();
+    button.setAttribute("aria-label", t("smartAssistant"));
+    button.setAttribute("title", t("smartAssistant"));
+  },
+  renderQuickActions() {
+    const menu = document.getElementById("quickActionMenu");
+    const toggle = document.getElementById("quickActionToggle");
+    if (!menu || !toggle) return;
+
+    const actions = [
+      ["smart-assistant", Icons.spark(), t("smartAssistant")],
+      ["add-event", Icons.calendar(), t("addEvent")],
+      ["add-goal", Icons.goal(), t("createGoal")],
+      ["add-expense", Icons.expense(), t("addExpense")]
+    ];
+    const selected = Array.isArray(appData.profile.quickActions) && appData.profile.quickActions.length
+      ? appData.profile.quickActions
+      : ["smart-assistant", "add-event", "add-goal"];
+
+    toggle.innerHTML = Icons.plus();
+    menu.innerHTML = actions
+      .filter(([id]) => selected.includes(id))
+      .map(([id, icon, label]) => `<button type="button" class="quick-action-item" data-quick-action="${id}" title="${escapeAttr(label)}"><span>${icon}</span><strong>${escapeHtml(label)}</strong></button>`)
+      .join("");
+    menu.hidden = true;
+    toggle.disabled = !menu.children.length;
+    toggle.setAttribute("aria-label", t("quickActions"));
+    toggle.setAttribute("title", t("quickActions"));
+  },
+  startShellClock() {
+    this.updateShellClock();
+    this.shellClockTimer = setInterval(() => this.updateShellClock(), 1000);
+  },
+  updateShellClock() {
+    const clock = document.getElementById("topbarClock");
+    const locale = languageCode() === "km" ? "km-KH" : "en-US";
+    const now = new Date();
+    if (!clock) return;
+    clock.textContent = now.toLocaleTimeString(locale, {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: appData.profile.clockFormat !== "24-hour"
+    });
+  },
+  bindPage(route) {
+    if (route === "launcher") bindLauncher();
+    if (route === "home" && typeof bindHome === "function") bindHome();
+    if (route === "family") bindFamily();
+    if (route === "goals") bindGoals(this.param);
+    if (route === "money") bindMoney();
+    if (route === "calendar") bindCalendar();
+    if (route === "daily") bindDaily();
+    if (route === "memories") bindMemories();
+    if (route === "tips") bindTips();
+    if (route === "settings") bindSettings();
+  },
+  bindInteractionSounds() {
+    if (this.interactionSoundBound) return;
+    this.interactionSoundBound = true;
+
+    document.addEventListener("click", event => {
+      const moodButton = event.target.closest("[data-mood]");
+      if (moodButton) {
+        const moodMap = {
+          happy: { label: t("moodHappy"), robot: t("moodCheerful") },
+          calm: { label: t("moodCalm"), robot: t("moodBalanced") },
+          tired: { label: t("moodTired"), robot: t("moodLowEnergy") },
+          stressed: { label: t("moodStressed"), robot: t("moodNeedsEase") },
+          excited: { label: t("moodExcited"), robot: t("moodMotivated") }
+        };
+        const choice = moodMap[moodButton.dataset.mood];
+        if (choice) Store.updateMood({ value: moodButton.dataset.mood, ...choice });
+      }
+
+      const target = event.target.closest("button, a, input, textarea, select, .mood-option, .home-action, .suggestion-button");
+      if (!target || target.closest(".toast")) return;
+      if (target.matches("input[type='checkbox'], input[type='radio']")) return;
+      Sound.play("tap");
+    }, { passive: true });
+  },
+  bindChrome() {
+    const menuToggle = document.getElementById("menuToggle");
+    const backToTop = document.getElementById("backToTop");
+    const quickActionMenu = document.getElementById("quickActionMenu");
+    const quickActionToggle = document.getElementById("quickActionToggle");
+    const quickActionDock = quickActionToggle?.closest(".quick-action-dock");
+    let quickActionDrag = null;
+    let suppressQuickActionClick = false;
+    document.addEventListener("click", event => {
+      if (!suppressQuickActionClick) return;
+      suppressQuickActionClick = false;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    }, true);
+    const positionQuickActionDock = (left, top) => {
+      if (!quickActionDock) return;
+      const bounds = quickActionDock.getBoundingClientRect();
+      const mobileNav = document.getElementById("mobileNav");
+      const navVisible = mobileNav && getComputedStyle(mobileNav).display !== "none";
+      const navTop = navVisible ? mobileNav.getBoundingClientRect().top : window.innerHeight;
+      const maxLeft = Math.max(8, window.innerWidth - bounds.width - 8);
+      const maxTop = Math.max(8, Math.min(window.innerHeight - bounds.height - 8, navTop - bounds.height - (navVisible ? 14 : 8)));
+      const nextLeft = Math.min(maxLeft, Math.max(8, left));
+      const nextTop = Math.min(maxTop, Math.max(8, top));
+      quickActionDock.style.left = `${nextLeft}px`;
+      quickActionDock.style.top = `${nextTop}px`;
+      quickActionDock.style.right = "auto";
+      quickActionDock.style.bottom = "auto";
+    };
+    if (quickActionDock) {
+      try {
+        const savedPosition = JSON.parse(localStorage.getItem("mylife:quick-action-position") || "null");
+        if (Number.isFinite(savedPosition?.left) && Number.isFinite(savedPosition?.top)) {
+          positionQuickActionDock(savedPosition.left, savedPosition.top);
+        }
+      } catch (error) {
+        localStorage.removeItem("mylife:quick-action-position");
+      }
+      window.addEventListener("resize", () => {
+        if (quickActionDock.style.left) positionQuickActionDock(quickActionDock.offsetLeft, quickActionDock.offsetTop);
+      }, { passive: true });
+      quickActionToggle?.addEventListener("pointerdown", event => {
+        if (!event.isPrimary || event.button !== 0) return;
+        const bounds = quickActionDock.getBoundingClientRect();
+        quickActionDrag = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, left: bounds.left, top: bounds.top, moved: false };
+        quickActionToggle.setPointerCapture(event.pointerId);
+      });
+      quickActionToggle?.addEventListener("pointermove", event => {
+        if (!quickActionDrag || quickActionDrag.pointerId !== event.pointerId) return;
+        const deltaX = event.clientX - quickActionDrag.startX;
+        const deltaY = event.clientY - quickActionDrag.startY;
+        if (Math.abs(deltaX) + Math.abs(deltaY) < 6 && !quickActionDrag.moved) return;
+        quickActionDrag.moved = true;
+        quickActionDock.classList.add("is-dragging");
+        positionQuickActionDock(quickActionDrag.left + deltaX, quickActionDrag.top + deltaY);
+      });
+      const finishQuickActionDrag = event => {
+        if (!quickActionDrag || quickActionDrag.pointerId !== event.pointerId) return;
+        if (quickActionDrag.moved) {
+          const bounds = quickActionDock.getBoundingClientRect();
+          try {
+            localStorage.setItem("mylife:quick-action-position", JSON.stringify({ left: bounds.left, top: bounds.top }));
+          } catch (error) {
+            // Keep dragging usable when browser storage is unavailable.
+          }
+          suppressQuickActionClick = true;
+        }
+        quickActionDrag = null;
+        quickActionDock.classList.remove("is-dragging");
+      };
+      quickActionToggle?.addEventListener("pointerup", finishQuickActionDrag);
+      quickActionToggle?.addEventListener("pointercancel", finishQuickActionDrag);
+    }
+    const closeLauncher = () => {
+      document.body.classList.remove("nav-open");
+      menuToggle.setAttribute("aria-expanded", "false");
+    };
+
+    if (backToTop) {
+      backToTop.innerHTML = Icons.arrowUp();
+
+      const updateBackToTop = () => {
+        const scrollThreshold = window.innerWidth <= 768 ? 480 : 420;
+        const visible = window.scrollY > scrollThreshold;
+        backToTop.classList.toggle("is-visible", visible);
+      };
+
+      updateBackToTop();
+      window.addEventListener("scroll", updateBackToTop, { passive: true });
+      backToTop.addEventListener("click", () => {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+    }
+    quickActionToggle?.addEventListener("click", event => {
+      event.stopPropagation();
+      const open = quickActionMenu?.hidden === false;
+      window.clearTimeout(this.quickActionCloseTimer);
+      if (quickActionMenu) quickActionMenu.hidden = open;
+      quickActionToggle.setAttribute("aria-expanded", String(!open));
+      quickActionToggle.closest(".quick-action-dock")?.classList.toggle("is-open", !open);
+      if (!open) {
+        this.quickActionCloseTimer = window.setTimeout(() => {
+          if (!quickActionMenu) return;
+          quickActionMenu.hidden = true;
+          quickActionToggle.setAttribute("aria-expanded", "false");
+          quickActionToggle.closest(".quick-action-dock")?.classList.remove("is-open");
+        }, 5000);
+      }
+    });
+    quickActionMenu?.addEventListener("click", event => {
+      const button = event.target.closest("[data-quick-action]");
+      if (!button) return;
+      window.clearTimeout(this.quickActionCloseTimer);
+      quickActionMenu.hidden = true;
+      quickActionToggle?.setAttribute("aria-expanded", "false");
+      quickActionToggle?.closest(".quick-action-dock")?.classList.remove("is-open");
+      const action = button.dataset.quickAction;
+      if (action === "smart-assistant") SmartAssistant.open();
+      if (action === "add-event") this.openEventModal();
+      if (action === "add-goal") openGoalModal();
+      if (action === "add-expense") openExpenseModal();
+    });
+    document.addEventListener("click", event => {
+      if (event.target.closest(".quick-action-dock")) return;
+      if (!quickActionMenu || quickActionMenu.hidden) return;
+      window.clearTimeout(this.quickActionCloseTimer);
+      quickActionMenu.hidden = true;
+      quickActionToggle?.setAttribute("aria-expanded", "false");
+      quickActionToggle?.closest(".quick-action-dock")?.classList.remove("is-open");
+    });
+    const openLauncher = () => {
+      document.body.classList.add("nav-open");
+      menuToggle.setAttribute("aria-expanded", "true");
+    };
+
+    menuToggle.setAttribute("aria-expanded", "false");
+    menuToggle.addEventListener("click", () => {
+      location.hash = this.route === "launcher" ? "#home" : "#launcher";
+    });
+    
+    // Close nav when clicking outside the sidebar
+    document.addEventListener("click", event => {
+      const isNavOpen = document.body.classList.contains("nav-open");
+      if (!isNavOpen) return;
+      
+      const clickedInSidebar = event.target.closest(".sidebar");
+      const clickedOnMenuToggle = event.target.closest(".menu-toggle");
+      
+      // Close only if clicked outside sidebar and not on menu toggle
+      if (!clickedInSidebar && !clickedOnMenuToggle) {
+        closeLauncher();
+      }
+    });
+    
+    // Handle nav-item clicks to navigate and close sidebar
+    document.addEventListener("click", event => {
+      const navItem = event.target.closest(".nav-item");
+      if (!navItem || (!navItem.closest(".sidebar") && !navItem.closest(".mobile-nav"))) return;
+      
+      const href = navItem.getAttribute("href");
+      if (href?.startsWith("#")) {
+        event.preventDefault();
+        closeLauncher();
+        if (location.hash !== href) {
+          location.hash = href;
+        }
+      }
+    });
+    document.addEventListener("click", event => {
+      const financialItem = event.target.closest(".financial-nav-item");
+      if (!financialItem) return;
+
+      const href = financialItem.getAttribute("href");
+      if (!href?.startsWith("#")) return;
+      event.preventDefault();
+      if (location.hash === href) return;
+      history.pushState({}, "", href);
+      this.render();
+    });
+    document.addEventListener("keydown", event => {
+      if (event.key === "Escape" && document.body.classList.contains("nav-open")) {
+        closeLauncher();
+        menuToggle.focus();
+      }
+    });
+    document.getElementById("bellButton").addEventListener("click", () => {
+      const alerts = getUpcomingNotifications(7);
+      if (!alerts.length) {
+        this.openNotificationsPanel();
+        return;
+      }
+      this.openNotificationsPanel();
+    });
+    document.getElementById("smartAssistantButton").addEventListener("click", () => SmartAssistant.open());
+    document.addEventListener("click", event => {
+      const pinButton = event.target.closest("[data-pin-footer]");
+      if (!pinButton) return;
+      if (event.__footerPinHandled) return;
+      event.__footerPinHandled = true;
+      event.preventDefault();
+      event.stopPropagation();
+      const routeId = pinButton.dataset.pinFooter;
+      const selected = footerRoutes().map(route => route.id);
+      if (routeId === "home") return;
+      const next = selected.includes(routeId)
+        ? selected.filter(id => id !== routeId)
+        : ["home", ...selected.filter(id => id !== "home" && id !== routeId).slice(0, 3), routeId];
+      localStorage.setItem(FOOTER_ROUTES_KEY, JSON.stringify(next));
+      renderNavigation();
+      document.querySelectorAll("[data-pin-footer]").forEach(button => {
+        const active = next.includes(button.dataset.pinFooter);
+        const label = active ? "Remove from footer" : "Add to footer";
+        button.classList.toggle("active", active);
+        button.setAttribute("aria-pressed", String(active));
+        button.setAttribute("aria-label", label);
+        button.setAttribute("title", label);
+        button.textContent = active ? "✓" : "+";
+      });
+    });
+    document.getElementById("profileButton").addEventListener("click", () => {
+      openProfileModal();
+    });
+    document.getElementById("globalSearch").addEventListener("input", event => this.search(event.target.value));
+    document.addEventListener("click", event => {
+      if (!event.target.closest(".search-wrap")) document.getElementById("searchResults").hidden = true;
+    });
+  },
+  search(query) {
+    const panel = document.getElementById("searchResults");
+    const q = query.trim();
+    if (!q) {
+      panel.hidden = true;
+      return;
+    }
+    const html = Store.search(q).map(([title, items]) => {
+      if (!items.length) return "";
+      return `<div style="margin-bottom:12px"><strong class="eyebrow">${title}</strong>${items.slice(0, 4).map(item => `<a class="list-row" href="${item.href}"><span>${escapeHtml(item.label)}</span><span class="pill">${item.type}</span></a>`).join("")}</div>`;
+    }).join("");
+    panel.innerHTML = html || emptyState(t("noResultsFound"), t("searchSavedData"));
+    panel.hidden = false;
+  },
+  openEventModal(event = {}) {
+    Modal.open({
+      title: event.id ? t("editEvent") : t("addEvent"),
+      submitText: event.id ? t("saveEvent") : t("addEvent"),
+      fields: [
+        { name: "title", label: t("eventTitle"), value: event.title, required: true },
+        { name: "date", label: t("date"), type: "date", value: event.date || new Date().toISOString().slice(0, 10), required: true },
+        { name: "time", label: t("time"), type: "time", value: event.time },
+        { name: "category", label: t("category"), type: "select", options: ["Personal", "Family", "Goal", "Bill", "Loan", "Reminder"], value: event.category || "Personal" },
+        { name: "familyMember", label: t("familyMemberName"), type: "select", options: ["", ...appData.family.map(member => member.name)], value: event.familyMember || "" },
+        { name: "reminder", label: t("reminder"), type: "checkbox", value: event.reminder ?? true },
+        { name: "notes", label: t("notes"), type: "textarea", value: event.notes }
+      ],
+      onSubmit(data) {
+        if (event.id) Store.edit("calendarEvents", event.id, data);
+        else Store.add("calendarEvents", data);
+        Toast.show(event.id ? t("eventSaved") : t("eventAdded"));
+      }
+    });
+  },
+  openHobbyModal(hobby = {}) {
+    Modal.open({
+      title: hobby.id ? t("editHobby") : t("recordHobbyTitle"),
+      submitText: hobby.id ? t("saveRecord") : t("recordHobby"),
+      fields: [
+        { name: "title", label: t("hobby"), value: hobby.title || "", required: true },
+        { name: "date", label: t("date"), type: "date", value: hobby.date || new Date().toISOString().slice(0, 10), required: true },
+        { name: "minutes", label: t("minutes"), type: "number", value: hobby.minutes || "", min: 1 },
+        { name: "category", label: t("category"), type: "select", options: ["Work", "Personal", "Love", "Family", "Health", "Learning"], value: hobby.category || "Personal" },
+        { name: "mood", label: t("moodAfter"), value: hobby.mood || "" },
+        { name: "notes", label: t("notes"), type: "textarea", value: hobby.notes || "" }
+      ],
+      onSubmit(data) {
+        if (hobby.id) Store.edit("hobbyLogs", hobby.id, data);
+        else Store.add("hobbyLogs", data);
+        Toast.show(hobby.id ? t("hobbyRecordSaved") : t("hobbyRecorded"));
+      }
+    });
+  },
+  openReminderModal(reminder = {}) {
+    Modal.open({
+      title: reminder.id ? t("editReminder") : t("addReminderTitle"),
+      submitText: reminder.id ? t("saveReminder") : t("addReminder"),
+      fields: [
+        { name: "title", label: t("reminder"), value: reminder.title || "", required: true },
+        { name: "date", label: t("date"), type: "date", value: reminder.date || new Date().toISOString().slice(0, 10), required: true },
+        { name: "time", label: t("time"), type: "time", value: reminder.time || "" },
+        { name: "category", label: t("category"), type: "select", options: ["Work", "Personal", "Love", "Family", "Health", "Learning"], value: reminder.category || "Personal" },
+        { name: "notes", label: t("notes"), type: "textarea", value: reminder.notes || "" }
+      ],
+      onSubmit(data) {
+        if (reminder.id) Store.edit("reminders", reminder.id, data);
+        else Store.add("reminders", { ...data, done: false });
+        Toast.show(reminder.id ? t("reminderSaved") : t("reminderAdded"));
+      }
+    });
+  }
+};
+
+function imagePosition(value) {
+  return {
+    x: clamp(Number(value?.x) || 0, -50, 50),
+    y: clamp(Number(value?.y) || 0, -50, 50)
+  };
+}
+
+function createImagePositionEditor({ src, key, onSave, onCancel, title = "Drag to adjust" }) {
+  const wrapper = document.createElement("div");
+  wrapper.className = "image-position-preview";
+  wrapper.innerHTML = `
+    <div class="image-position-frame" data-image-position-frame>
+      <img data-image-position="${escapeAttr(key)}" class="draggable-image" src="${escapeAttr(src)}" alt="" style="--image-position-x: 0%; --image-position-y: 0%;">
+    </div>
+    <div class="image-position-hint">${escapeHtml(title)}</div>
+    <div class="action-row">
+      <button type="button" class="button ghost-button" data-image-position-cancel>${languageCode() === "km" ? "បោះបង់" : "Cancel"}</button>
+      <button type="button" class="button" data-image-position-save>${languageCode() === "km" ? "រក្សាទុក" : "Save"}</button>
+    </div>
+  `;
+
+  const previewImage = wrapper.querySelector("img");
+  const frame = wrapper.querySelector(".image-position-frame");
+  let dragStart = null;
+
+  const updatePosition = (clientX, clientY) => {
+    const bounds = frame.getBoundingClientRect();
+    const x = clamp((Number.parseFloat(previewImage.style.getPropertyValue("--image-position-x")) || 0) + ((clientX - dragStart.x) / bounds.width) * 100, -50, 50);
+    const y = clamp((Number.parseFloat(previewImage.style.getPropertyValue("--image-position-y")) || 0) + ((clientY - dragStart.y) / bounds.height) * 100, -50, 50);
+    previewImage.style.setProperty("--image-position-x", `${x}%`);
+    previewImage.style.setProperty("--image-position-y", `${y}%`);
+  };
+
+  previewImage.addEventListener("pointerdown", event => {
+    event.preventDefault();
+    previewImage.setPointerCapture(event.pointerId);
+    dragStart = { pointerId: event.pointerId, x: event.clientX, y: event.clientY };
+    previewImage.classList.add("is-image-dragging");
+  });
+
+  previewImage.addEventListener("pointermove", event => {
+    if (!dragStart || dragStart.pointerId !== event.pointerId) return;
+    updatePosition(event.clientX, event.clientY);
+    dragStart = { ...dragStart, x: event.clientX, y: event.clientY };
+  });
+
+  const finishDrag = () => {
+    dragStart = null;
+    previewImage.classList.remove("is-image-dragging");
+  };
+
+  previewImage.addEventListener("pointerup", finishDrag);
+  previewImage.addEventListener("pointercancel", finishDrag);
+
+  wrapper.querySelector("[data-image-position-cancel]")?.addEventListener("click", () => {
+    onCancel?.();
+    wrapper.remove();
+  });
+
+  wrapper.querySelector("[data-image-position-save]")?.addEventListener("click", () => {
+    const position = imagePosition({
+      x: Number.parseFloat(previewImage.style.getPropertyValue("--image-position-x")),
+      y: Number.parseFloat(previewImage.style.getPropertyValue("--image-position-y"))
+    });
+    onSave?.(position);
+    wrapper.remove();
+  });
+
+  return wrapper;
+}
+
+function clamp(value, minimum, maximum) {
+  return Math.min(Math.max(value, minimum), maximum);
+}
+
+function bindImagePositioning() {
+  document.querySelectorAll("[data-image-position]").forEach(image => {
+    let dragStart;
+    image.addEventListener("pointerdown", event => {
+      event.preventDefault();
+      image.setPointerCapture(event.pointerId);
+      dragStart = { pointerId: event.pointerId, x: event.clientX, y: event.clientY, position: imagePosition({
+        x: Number.parseFloat(image.style.getPropertyValue("--image-position-x")),
+        y: Number.parseFloat(image.style.getPropertyValue("--image-position-y"))
+      }) };
+      image.classList.add("is-image-dragging");
+    });
+    image.addEventListener("pointermove", event => {
+      if (!dragStart || dragStart.pointerId !== event.pointerId) return;
+      const bounds = image.closest("[data-image-position-frame]")?.getBoundingClientRect() || image.getBoundingClientRect();
+      const x = clamp(dragStart.position.x + ((event.clientX - dragStart.x) / bounds.width) * 100, -50, 50);
+      const y = clamp(dragStart.position.y + ((event.clientY - dragStart.y) / bounds.height) * 100, -50, 50);
+      image.style.setProperty("--image-position-x", `${x}%`);
+      image.style.setProperty("--image-position-y", `${y}%`);
+    });
+    const finish = event => {
+      if (!dragStart || dragStart.pointerId !== event.pointerId) return;
+      const position = imagePosition({
+        x: Number.parseFloat(image.style.getPropertyValue("--image-position-x")),
+        y: Number.parseFloat(image.style.getPropertyValue("--image-position-y"))
+      });
+      dragStart = null;
+      image.classList.remove("is-image-dragging");
+      saveImagePosition(image.dataset.imagePosition, position);
+    };
+    image.addEventListener("pointerup", finish);
+    image.addEventListener("pointercancel", finish);
+  });
+}
+
+function saveImagePosition(key, position) {
+  if (key === "profile") Store.updateProfile({ photoPosition: position });
+  else if (key.startsWith("family-member:")) Store.edit("family", key.slice(14), { photoPosition: position });
+  else if (key.startsWith("memory:")) Store.edit("memories", key.slice(7), { photoPosition: position });
+  else if (key === "family-photo" || key === "tips-couple") {
+    const profileKey = key === "family-photo" ? "familyPhotoPosition" : "tipsCoupleImagePosition";
+    Store.updateProfile({ [profileKey]: position });
+  }
+}
+
+function storedImagePosition(key) {
+  try {
+    return imagePosition(JSON.parse(localStorage.getItem(key) || "null"));
+  } catch (error) {
+    return imagePosition();
+  }
+}
+
+function emptyState(title, body, actionLabel = "", action = "") {
+  return `
+    <div class="empty-card">
+      <div>
+        <span class="icon-badge">${Icons.plus()}</span>
+        <h2>${escapeHtml(title)}</h2>
+        <p class="secondary">${escapeHtml(body)}</p>
+        ${actionLabel ? `<button class="button" type="button" data-action="${action}">${Icons.plus()} ${escapeHtml(actionLabel)}</button>` : ""}
+      </div>
+    </div>
+  `;
+}
+
+document.addEventListener("DOMContentLoaded", () => App.init());

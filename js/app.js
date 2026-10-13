@@ -373,6 +373,19 @@ const App = {
     this.interactionSoundBound = true;
 
     document.addEventListener("click", event => {
+      const moodButton = event.target.closest("[data-mood]");
+      if (moodButton) {
+        const moodMap = {
+          happy: { label: t("moodHappy"), robot: t("moodCheerful") },
+          calm: { label: t("moodCalm"), robot: t("moodBalanced") },
+          tired: { label: t("moodTired"), robot: t("moodLowEnergy") },
+          stressed: { label: t("moodStressed"), robot: t("moodNeedsEase") },
+          excited: { label: t("moodExcited"), robot: t("moodMotivated") }
+        };
+        const choice = moodMap[moodButton.dataset.mood];
+        if (choice) Store.updateMood({ value: moodButton.dataset.mood, ...choice });
+      }
+
       const target = event.target.closest("button, a, input, textarea, select, .mood-option, .home-action, .suggestion-button");
       if (!target || target.closest(".toast")) return;
       if (target.matches("input[type='checkbox'], input[type='radio']")) return;
