@@ -19,6 +19,13 @@ body {
   overflow-x: hidden;
 }
 
+:root:not([data-theme="light"]) body {
+  background:
+    radial-gradient(circle at top left, rgba(146, 201, 74, 0.18), transparent 26%),
+    radial-gradient(circle at bottom right, rgba(69, 255, 164, 0.12), transparent 30%),
+    linear-gradient(135deg, #030d0b, #081f18 44%, #061813 100%);
+}
+
 body::before {
   content: "";
   position: fixed;
@@ -29,6 +36,29 @@ body::before {
     linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
   background-size: 64px 64px;
   mask-image: linear-gradient(to bottom, black, transparent 82%);
+}
+
+:root:not([data-theme="light"]) .glass-card {
+  color: #0f1b18;
+  background: rgba(255, 255, 255, 0.97);
+  border-color: rgba(15, 27, 24, 0.08);
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255,255,255,0.78);
+}
+
+:root:not([data-theme="light"]) .glass-card .page-title,
+:root:not([data-theme="light"]) .glass-card h1,
+:root:not([data-theme="light"]) .glass-card h2,
+:root:not([data-theme="light"]) .glass-card h3,
+:root:not([data-theme="light"]) .glass-card strong,
+:root:not([data-theme="light"]) .glass-card .section-title {
+  color: #0e1816;
+}
+
+:root:not([data-theme="light"]) .glass-card p,
+:root:not([data-theme="light"]) .glass-card small,
+:root:not([data-theme="light"]) .glass-card span,
+:root:not([data-theme="light"]) .glass-card label {
+  color: inherit;
 }
 
 :root[data-theme="light"] body::before {

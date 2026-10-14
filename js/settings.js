@@ -460,7 +460,12 @@ function bindSettings() {
     const key = control.dataset.preference;
     const value = control.type === "checkbox" ? control.checked : control.value;
     Store.updateProfile({ [key]: value });
-    if (key === "notificationsEnabled" && value) NotificationManager.requestPermission().then(() => NotificationManager.sync());
+    if (key === "notificationsEnabled" && value) {
+      if (NotificationManager.getPlugin()) NotificationManager.requestPermission().then(() => NotificationManager.sync());
+      else window.PushNotifications?.enable();
+    } else if (key === "notificationsEnabled" && !value && !NotificationManager.getPlugin()) {
+      window.PushNotifications?.disable();
+    }
     Toast.show(t("preferenceSaved"));
   }));
   document.querySelectorAll("[data-quick-action-preference]").forEach(control => control.addEventListener("change", () => {

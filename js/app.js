@@ -268,7 +268,11 @@ const App = {
 
     Toast.show(alerts.length > 1 ? `${alerts.length} reminders are coming soon` : label, "warning", { duration: 3200 });
     if ("Notification" in window && Notification.permission === "granted") {
-      new Notification("MYLIFE reminder", { body: alerts.length > 1 ? `${alerts.length} reminders are coming soon` : label });
+      navigator.serviceWorker?.ready.then(registration => registration.showNotification("MYLIFE reminder", {
+        body: alerts.length > 1 ? `${alerts.length} reminders are coming soon` : label,
+        icon: "/assets/icons/mylife-icon-192.png",
+        data: { url: "/#daily" }
+      })).catch(error => console.warn("MYLIFE could not display a reminder notification.", error));
     }
     NotificationManager.sync();
     this.renderNotificationBadge();

@@ -8,6 +8,15 @@ const goalCategoryIcons = {
   Health: "heart",
   Education: "graduation"
 };
+const goalCategoryCovers = {
+  Personal: ["#f3bd83", "#dc8769"],
+  Family: ["#edaa87", "#ce7072"],
+  Financial: ["#abc5eb", "#718dbb"],
+  Home: ["#c6d99a", "#91ad71"],
+  Travel: ["#9bd7c8", "#5ba99f"],
+  Health: ["#e8aab4", "#c7798d"],
+  Education: ["#c4b2e4", "#8c78b7"]
+};
 
 function renderGoals(goalId) {
   const selected = goalId ? appData.goals.find(goal => goal.id === goalId) : null;
@@ -64,32 +73,41 @@ function goalEmptyCard() {
 
 function goalCard(goal) {
   const hasTarget = goalHasTarget(goal);
+  const cardIcon = Icons[goalCategoryIcons[goal.category]] || Icons.goal;
+  const [coverStart, coverEnd] = goalCategoryCovers[goal.category] || ["#a7cba9", "#6c9b77"];
+  const coverPosition = goal.coverImagePosition || { x: 0, y: 0 };
+  const progress = hasTarget ? pct(goal.currentAmount, goal.targetAmount) : 0;
   return `
-    <article class="glass-card card-pad">
-      <div class="card-title-row"><span class="icon-badge purple">${Icons.goal()}</span><span class="pill">${optionLabel(goal.category)}</span></div>
-      <h2><a href="#goals/${goal.id}">${escapeHtml(goal.name)}</a></h2>
-      <p class="secondary">${escapeHtml(goal.description || "")}</p>
-      <div class="goal-item">${goalProgressContent(goal)}</div>
-      <div class="kv">
-        <div><span>${t("deadline")}</span><strong>${formatDate(goal.deadline)}</strong></div>
-        ${hasTarget ? "" : `<div><span>${t("target")}</span><strong>${t("notSet")}</strong></div>`}
+    <article class="glass-card goal-profile-card" style="--goal-cover-start:${coverStart};--goal-cover-end:${coverEnd}">
+      <div class="goal-profile-cover">
+        ${goal.coverImage ? `<img class="goal-profile-cover-image" src="${escapeAttr(goal.coverImage)}" style="--image-position-x:${Number(coverPosition.x) || 0}%;--image-position-y:${Number(coverPosition.y) || 0}%" alt="">` : ""}
+        <span class="goal-profile-category">${optionLabel(goal.category)}</span>
+        <label class="goal-profile-cover-upload" title="${escapeAttr(t("photo"))}" aria-label="${escapeAttr(t("photo"))}">${goal.coverImage ? Icons.edit() : Icons.plus()}<input type="file" accept="image/*" data-goal-cover="${escapeAttr(goal.id)}"></label>
       </div>
-      <div class="action-row">
-        <a class="button ghost-button" href="#goals/${goal.id}">${Icons.chevron()} ${t("open")}</a>
-        <button class="button ghost-button" data-edit-goal="${goal.id}">${Icons.edit()} ${t("edit")}</button>
-        <button class="icon-button" data-delete-goal="${goal.id}" aria-label="Delete ${goal.name}">${Icons.trash()}</button>
+      <div class="goal-profile-body">
+        <div class="goal-profile-heading">
+          <span class="goal-profile-avatar">${cardIcon()}</span>
+          <div class="goal-profile-copy">
+            <h2><a href="#goals/${goal.id}">${escapeHtml(goal.name)}</a></h2>
+            ${goal.description ? `<p>${escapeHtml(goal.description)}</p>` : ""}
+          </div>
+          <div class="goal-profile-tools">
+            <button class="icon-button" data-edit-goal="${goal.id}" aria-label="${escapeAttr(t("edit"))} ${escapeAttr(goal.name)}">${Icons.edit()}</button>
+            <button class="icon-button" data-delete-goal="${goal.id}" aria-label="${escapeAttr(t("delete"))} ${escapeAttr(goal.name)}">${Icons.trash()}</button>
+          </div>
+        </div>
+        <div class="goal-profile-stats">
+          <div><span>${Icons.goal()}${t("progress")}</span><strong>${hasTarget ? `${progress}%` : t("notSet")}</strong></div>
+          <div><span>${Icons.savings()}${t("savings")}</span><strong>${money(goal.currentAmount)}</strong></div>
+          <div><span>${Icons.calendar()}${t("deadline")}</span><strong>${formatDate(goal.deadline, { month: "short", day: "numeric" })}</strong></div>
+        </div>
+        <div class="goal-profile-progress">
+          <div class="between"><span>${t("target")}</span><strong>${hasTarget ? money(goal.targetAmount) : t("notSet")}</strong></div>
+          ${hasTarget ? `<div class="progress-track"><div class="progress-fill" style="--progress:${progress}%"></div></div>` : ""}
+        </div>
+        <a class="goal-profile-open" href="#goals/${goal.id}">${t("open")} ${Icons.chevron()}</a>
       </div>
     </article>
-  `;
-}
-
-function goalProgressContent(goal) {
-  const hasTarget = goalHasTarget(goal);
-  const progress = pct(goal.currentAmount, goal.targetAmount);
-  return `
-    <div class="between"><strong>${escapeHtml(goal.name)}</strong><span class="pill">${hasTarget ? `${progress}%` : t("notSet")}</span></div>
-    <div class="secondary">${hasTarget ? `${money(goal.currentAmount)} / ${money(goal.targetAmount)}` : `${t("target")}: ${t("notSet")}`}</div>
-    ${hasTarget ? `<div class="progress-track"><div class="progress-fill" style="--progress:${progress}%"></div></div>` : ""}
   `;
 }
 
@@ -140,7 +158,8 @@ function goalFields(goal = null, defaultCategory = "Personal") {
     { name: "targetAmount", label: t("targetAmount"), type: "number", value: currentGoal.targetAmount || "" },
     { name: "currentAmount", label: t("currentAmount"), type: "number", value: currentGoal.currentAmount || "" },
     { name: "deadline", label: t("deadline"), type: "date", value: currentGoal.deadline },
-    { name: "description", label: t("description"), type: "textarea", value: currentGoal.description }
+    { name: "description", label: t("description"), type: "textarea", value: currentGoal.description },
+    { name: "coverImage", label: t("photo"), type: "file", value: currentGoal.coverImage || "" }
   ];
 }
 
@@ -185,6 +204,19 @@ function bindGoals(goalId) {
   }));
   document.querySelectorAll('[data-action="add-goal"]').forEach(button => button.addEventListener("click", () => openGoalModal(null, defaultCategory)));
   document.querySelectorAll("[data-edit-goal]").forEach(button => button.addEventListener("click", () => openGoalModal(appData.goals.find(item => item.id === button.dataset.editGoal))));
+  document.querySelectorAll("[data-goal-cover]").forEach(input => input.addEventListener("change", async () => {
+    const file = input.files?.[0];
+    const goal = appData.goals.find(item => item.id === input.dataset.goalCover);
+    if (!file || !goal) return;
+    try {
+      const coverImage = await readFile(file);
+      Store.edit("goals", goal.id, { coverImage, coverImagePosition: { x: 0, y: 0 } });
+      Toast.show(t("goalSaved"));
+    } catch (error) {
+      console.error("Could not upload goal cover", error);
+      Toast.show(t("saveFailed"));
+    }
+  }));
   document.querySelectorAll("[data-delete-goal]").forEach(button => button.addEventListener("click", () => {
     Modal.confirm({ title: t("deleteGoal"), message: t("deleteGoalMessage"), confirmText: t("delete"), onConfirm: () => {
       Store.delete("goals", button.dataset.deleteGoal);

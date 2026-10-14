@@ -13,7 +13,7 @@ function renderFamily() {
   }
 
   return `
-    <section class="page">
+    <section class="page family-page">
       <div class="page-header">
         <div>
           <h1 class="page-title page-title-with-icon"><span class="page-title-icon">${Icons.family()}</span>${t("family")}</h1>
@@ -189,35 +189,38 @@ function memberCard(member) {
   const relatedMember = appData.family.find(item => item.id === member.relatedMemberId);
   const relationshipDays = relatedMember ? daysSinceDate(member.anniversaryDate) : 0;
   return `
-    <article class="glass-card card-pad family-member-card">
-      <div class="family-member-head">
-        <span class="thumb">${member.photo ? `<img src="${member.photo}" alt="">` : initials(member.name)}</span>
-        <div class="family-member-identity">
-          <h2>${escapeHtml(member.name)}</h2>
-          <p class="secondary">${escapeHtml(member.relationship)}${relatedMember ? ` · ${escapeHtml(relatedMember.name)}` : ""}</p>
+    <article class="glass-card family-profile-card">
+      <div class="family-profile-cover">
+        ${member.photo ? `<img src="${escapeAttr(member.photo)}" alt="">` : `<span class="family-profile-cover-art" aria-hidden="true">${Icons.family()}</span>`}
+        <span class="family-profile-category">${escapeHtml(t("family"))}</span>
+      </div>
+      <div class="family-profile-body">
+        <div class="family-profile-heading">
+          <span class="family-profile-avatar">${escapeHtml(initials(member.name))}</span>
+          <div class="family-profile-identity">
+            <h2>${escapeHtml(member.name)}</h2>
+            <p>${escapeHtml(member.relationship)}${relatedMember ? ` · ${escapeHtml(relatedMember.name)}` : ""}</p>
+          </div>
+          <div class="family-profile-tools">
+            <button class="icon-button" data-edit-family="${escapeAttr(member.id)}" aria-label="Edit ${escapeAttr(member.name)}">${Icons.edit()}</button>
+            <button class="icon-button" data-delete-family="${escapeAttr(member.id)}" aria-label="Delete ${escapeAttr(member.name)}">${Icons.trash()}</button>
+          </div>
         </div>
-        <span class="action-row">
-          <button class="icon-button" data-edit-family="${member.id}" aria-label="Edit ${member.name}">${Icons.edit()}</button>
-          <button class="icon-button" data-delete-family="${member.id}" aria-label="Delete ${member.name}">${Icons.trash()}</button>
-        </span>
+        <div class="family-detail-tags">
+          ${member.zodiacSign ? `<span class="pill family-zodiac-tag">${escapeHtml(member.zodiacSign)}</span>` : ""}
+          ${member.characterMood ? `<span class="pill family-mood-tag">${escapeHtml(member.characterMood)}</span>` : ""}
+          ${member.favorite ? `<span class="pill family-favorite-tag">${escapeHtml(member.favorite)}</span>` : ""}
+        </div>
+        <div class="family-profile-stats">
+          <div><span>${Icons.calendar()}${t("birthday")}</span><strong>${formatDate(member.birthday, { month: "short", day: "numeric" })}</strong></div>
+          <div><span>${Icons.heart()}${t("anniversary")}</span><strong>${formatDate(member.anniversaryDate, { month: "short", day: "numeric" })}</strong></div>
+          <div><span>${Icons.user()}${t("phone")}</span><strong>${escapeHtml(member.phone || t("notSet"))}</strong></div>
+        </div>
+        ${relationshipDays ? `<div class="family-profile-duration">${Icons.heart()}<span>${escapeHtml(t("togetherFor").replace("{days}", relationshipDays))}</span></div>` : ""}
+        <div class="family-profile-insight"><span>${Icons.spark()}</span><span>${escapeHtml(familyCareIdea(member))}</span></div>
+        ${member.relationshipNote ? `<p class="family-profile-note">${escapeHtml(member.relationshipNote)}</p>` : ""}
+        ${member.notes ? `<p class="family-profile-notes">${escapeHtml(member.notes)}</p>` : ""}
       </div>
-      <div class="family-detail-tags">
-        ${member.zodiacSign ? `<span class="pill family-zodiac-tag">${escapeHtml(member.zodiacSign)}</span>` : ""}
-        ${member.characterMood ? `<span class="pill family-mood-tag">${escapeHtml(member.characterMood)}</span>` : ""}
-        ${member.favorite ? `<span class="pill family-favorite-tag">${escapeHtml(member.favorite)}</span>` : ""}
-      </div>
-      ${relationshipDays ? `<p class="secondary family-relationship-duration">${escapeHtml(t("togetherFor").replace("{days}", relationshipDays))}</p>` : ""}
-      <div class="kv">
-        <div><span>${t("birthday")}</span><strong>${formatDate(member.birthday, { month: "short", day: "numeric" })}</strong></div>
-        <div><span>${t("anniversary")}</span><strong>${formatDate(member.anniversaryDate, { month: "short", day: "numeric" })}</strong></div>
-        <div><span>${t("phone")}</span><strong>${escapeHtml(member.phone || t("notSet"))}</strong></div>
-      </div>
-      <div class="family-smart-insight">
-        <span class="family-insight-icon">${Icons.spark()}</span>
-        <span>${escapeHtml(familyCareIdea(member))}</span>
-      </div>
-      ${member.relationshipNote ? `<p class="secondary family-relationship-note">${escapeHtml(member.relationshipNote)}</p>` : ""}
-      <p class="muted">${escapeHtml(member.notes || "")}</p>
     </article>
   `;
 }

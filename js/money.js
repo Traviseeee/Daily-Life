@@ -29,6 +29,18 @@ const expenseCategoryColors = {
   Entertainment: "#818cf8",
   Other: "#94a3b8"
 };
+const expenseCategoryIcons = {
+  Food: "food",
+  Home: "home",
+  Family: "family",
+  Transport: "plane",
+  Shopping: "wallet",
+  Bills: "bill",
+  Education: "graduation",
+  Health: "heart",
+  Entertainment: "memory",
+  Other: "chart"
+};
 let financeReportMonth = "";
 let financeReportCanvas = null;
 let financeReportCanvasMonth = "";
@@ -66,7 +78,7 @@ function renderMoney(tab = "overview") {
 }
 
 function renderMoneyCards(stats) {
-  return `<div class="summary-grid financial-metric-grid grid">
+  return `<div class="summary-grid financial-metric-grid grid" role="region" aria-label="${escapeAttr(t("overview"))}" tabindex="0">
     ${summaryCard("Income", t("totalIncome"), money(stats.totalIncome), `${appData.income.length} ${t("income")}`, Icons.salary(), "green", "income")}
     ${summaryCard("Expenses", t("totalExpenses"), money(stats.totalExpenses), `${appData.expenses.length} ${t("expenses")}`, Icons.expense(), "", "expenses")}
     ${summaryCard("Savings", t("totalSavings"), money(stats.totalSavings), `${money(stats.monthlySavings)} ${t("monthlyContribution")}`, Icons.savings(), "blue", "savings")}
@@ -96,7 +108,7 @@ function renderCategoryOverview() {
         ${categories.map(item => {
           const share = Math.round((item.amount / total) * 100);
           return `<div class="financial-category-item" style="--category-color:${item.color};--category-share:${share}%">
-            <span class="financial-category-dot" aria-hidden="true"></span>
+            <span class="financial-category-icon" aria-hidden="true">${Icons[expenseCategoryIcons[item.category]]()}</span>
             <div class="financial-category-copy"><div class="financial-category-label"><span>${optionLabel(item.category)}</span><strong>${money(item.amount)}</strong></div><div class="financial-category-track"><span></span></div></div>
             <span class="financial-category-share">${share}%</span>
           </div>`;
@@ -114,6 +126,7 @@ function summaryCard(label, title, value, trend, icon, tone, section) {
   return `
     <article class="glass-card card-pad financial-metric-card">
       <a class="financial-metric-card-link" href="#money/${section}" aria-label="${escapeAttr(title)}"></a>
+      <span class="financial-metric-watermark" aria-hidden="true">${icon}</span>
       <div class="card-title-row">
         <span class="icon-badge ${tone}">${icon}</span>
         <span class="secondary">${escapeHtml(title)}</span>
@@ -144,12 +157,12 @@ function renderMoneyTab(tab, stats) {
           </div>
           <span class="icon-badge blue">${Icons.chart()}</span>
         </div>
-        ${stats.totalIncome || stats.totalExpenses || stats.monthlySavings || stats.monthlyLoanPayments ? Charts.bars([
+        ${stats.totalIncome || stats.totalExpenses || stats.monthlySavings || stats.monthlyLoanPayments ? `<div class="financial-chart-bars">${Charts.bars([
           { label: t("income"), value: stats.totalIncome, color: "linear-gradient(90deg,#9dff6e,#64f4d2)" },
           { label: t("expenses"), value: stats.totalExpenses, color: "linear-gradient(90deg,#ff6f9c,#9b6dff)" },
           { label: t("monthlyContribution"), value: stats.monthlySavings, color: "linear-gradient(90deg,#64f4d2,#b8ff5a)" },
           { label: t("monthlyPayment"), value: stats.monthlyLoanPayments, color: "linear-gradient(90deg,#9b6dff,#b8ff5a)" }
-        ]) : moneyEmptyCard()}
+        ])}</div>` : moneyEmptyCard()}
       </article>
       <article class="glass-card card-pad financial-panel">
         <div class="financial-panel-heading">

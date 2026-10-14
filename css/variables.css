@@ -1,22 +1,22 @@
 :root {
-  --bg-main: #070512;
-  --bg-secondary: #120b24;
-  --glass: rgba(34, 24, 55, 0.62);
-  --glass-strong: rgba(46, 32, 75, 0.82);
-  --glass-hover: rgba(46, 32, 75, 0.76);
-  --border: rgba(199, 255, 104, 0.12);
-  --border-light: rgba(199, 255, 104, 0.22);
-  --text-primary: #f7f4ff;
-  --text-secondary: #b5acc8;
-  --text-muted: #746b88;
-  --accent: #b8ff5a;
-  --accent-light: #d9ff8c;
-  --accent-soft: rgba(184, 255, 90, 0.16);
-  --success: #9dff6e;
-  --danger: #ff6f9c;
-  --warning: #fff06a;
-  --blue: #64f4d2;
-  --purple: #9b6dff;
+  --bg-main: #061812;
+  --bg-secondary: #0c201a;
+  --glass: rgba(255, 255, 255, 0.96);
+  --glass-strong: rgba(255, 255, 255, 0.92);
+  --glass-hover: rgba(248, 250, 247, 0.98);
+  --border: rgba(191, 255, 127, 0.12);
+  --border-light: rgba(191, 255, 127, 0.18);
+  --text-primary: #f4fff7;
+  --text-secondary: #c1d5ca;
+  --text-muted: #809386;
+  --accent: #d9ff7b;
+  --accent-light: #ebffc9;
+  --accent-soft: rgba(217, 255, 123, 0.14);
+  --success: #90e7a3;
+  --danger: #ff7a8d;
+  --warning: #f3d86a;
+  --blue: #7fe6cf;
+  --purple: #a4ef95;
   --radius-lg: 22px;
   --radius-xl: 28px;
   --radius-md: 16px;
@@ -25,14 +25,14 @@
   --ease-out: 240ms cubic-bezier(0.16, 1, 0.3, 1);
   --ease-in: 200ms cubic-bezier(0.4, 0, 0.2, 1);
   --ease-smooth: 320ms cubic-bezier(0.22, 1, 0.36, 1);
-  --shadow-glow: 0 12px 40px rgba(184, 255, 90, 0.18);
+  --shadow-glow: 0 12px 40px rgba(217, 255, 123, 0.12);
   --shadow-deep: 0 24px 70px rgba(0, 0, 0, 0.42);
   --shadow-card: 0 18px 50px rgba(0, 0, 0, 0.30), inset 0 1px 0 rgba(255, 255, 255, 0.05);
   --shadow-card-hover: 0 26px 60px rgba(0, 0, 0, 0.40), inset 0 1px 0 rgba(255, 255, 255, 0.08);
   --gradient-main:
-    radial-gradient(circle at 12% 8%, rgba(155, 109, 255, 0.20), transparent 32%),
-    radial-gradient(circle at 84% 18%, rgba(184, 255, 90, 0.12), transparent 28%),
-    linear-gradient(135deg, #070512, #120b24 48%, #080514);
+    radial-gradient(circle at 12% 8%, rgba(128, 203, 148, 0.18), transparent 32%),
+    radial-gradient(circle at 84% 18%, rgba(217, 255, 123, 0.12), transparent 28%),
+    linear-gradient(135deg, #020d0b, #071d18 42%, #081c16 100%);
   --gradient-text: linear-gradient(120deg, var(--accent-light), var(--accent) 40%, var(--purple));
   --gradient-button: linear-gradient(120deg, var(--accent), var(--accent-light));
   --font-display: "Inter", "Noto Sans Khmer", ui-sans-serif, system-ui, sans-serif;

@@ -29,6 +29,10 @@ function reminderRow(item) {
 
 function bindDaily() {
   document.querySelectorAll('[data-action="enable-alerts"]').forEach(button => button.addEventListener("click", async () => {
+    if (!NotificationManager.getPlugin()) {
+      await window.PushNotifications?.enable();
+      return;
+    }
     const permission = await NotificationManager.requestPermission();
     Toast.show(permission === "granted" ? t("alertsEnabled") : t("alertsRemainOff"), permission === "granted" ? "success" : "warning");
     if (permission === "granted") NotificationManager.sync();

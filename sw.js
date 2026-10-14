@@ -1,4 +1,4 @@
-const CACHE_NAME = "mylife-pwa-v37";
+const CACHE_NAME = "mylife-pwa-v38";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -29,6 +29,9 @@ const APP_SHELL = [
   "./js/calendar.js",
   "./js/memories.js",
   "./js/settings.js",
+  "./js/daily.js",
+  "./js/notifications.js",
+  "./js/push.js",
   "./js/app.js"
 ];
 
@@ -48,11 +51,64 @@ self.addEventListener("activate", event => {
   self.clients.claim();
 });
 
+function notificationUrl(value) {
+  try {
+    const destination = new URL(value || "/#home", self.location.origin);
+    return destination.origin === self.location.origin ? destination.href : `${self.location.origin}/#home`;
+  } catch (error) {
+    return `${self.location.origin}/#home`;
+  }
+}
+
+self.addEventListener("push", event => {
+  event.waitUntil((async () => {
+    let data = {};
+    try {
+      const parsed = event.data ? event.data.json() : {};
+      data = parsed && typeof parsed === "object" ? parsed : {};
+    } catch (error) {
+      let body = "";
+      try {
+        body = event.data?.text() || "";
+      } catch (textError) {
+        body = "";
+      }
+      data = { body };
+    }
+
+    await self.registration.showNotification(data.title || "MYLIFE", {
+      body: data.body || "You have a new reminder.",
+      icon: "/assets/icons/mylife-icon-192.png",
+      badge: "/assets/icons/mylife-icon-192.png",
+      data: { url: notificationUrl(data.url) }
+    });
+  })());
+});
+
+self.addEventListener("notificationclick", event => {
+  event.notification.close();
+  event.waitUntil((async () => {
+    const url = notificationUrl(event.notification.data?.url);
+    const windows = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+    const existing = windows.find(client => new URL(client.url).origin === self.location.origin);
+    if (existing) {
+      await existing.focus();
+      if ("navigate" in existing) await existing.navigate(url);
+      return;
+    }
+    await self.clients.openWindow(url);
+  })());
+});
+
 self.addEventListener("fetch", event => {
   if (event.request.method !== "GET") return;
   const url = new URL(event.request.url);
   if (url.origin !== self.location.origin) {
     event.respondWith(fetch(event.request));
+    return;
+  }
+  if (url.pathname.startsWith("/api/")) {
+    event.respondWith(fetch(event.request, { cache: "no-store" }));
     return;
   }
   const freshExtensions = [".html", ".css", ".js", ".json", ".webmanifest"];
