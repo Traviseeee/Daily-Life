@@ -2137,8 +2137,9 @@
 }
 
 .family-profile-body { position: relative; z-index: 1; display: grid; gap: 12px; padding: 0 16px 16px; }
-.family-profile-heading { display: flex; align-items: flex-end; gap: 10px; min-width: 0; margin-top: -28px; }
-.family-profile-avatar { display: grid; place-items: center; flex: 0 0 58px; width: 58px; height: 58px; border: 4px solid #ffffff; border-radius: 50%; color: #ffffff; background: #6c9b77; box-shadow: 0 5px 14px rgba(22,35,25,0.16); font-size: 0.82rem; font-weight: 900; }
+.family-profile-heading { display: flex; align-items: flex-end; gap: 10px; min-width: 0; margin-top: -34px; }
+.family-profile-avatar { display: grid; place-items: center; flex: 0 0 70px; width: 70px; height: 70px; overflow: hidden; border: 4px solid #ffffff; border-radius: 50%; color: #ffffff; background: #6c9b77; box-shadow: 0 5px 14px rgba(22,35,25,0.16); font-size: 0.98rem; font-weight: 900; }
+.family-profile-avatar img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .family-profile-identity { flex: 1 1 auto; min-width: 0; padding-bottom: 3px; }
 .family-profile-identity h2 { margin: 0; font-size: 1.08rem; line-height: 1.18; overflow-wrap: anywhere; }
 .family-profile-identity p { margin: 4px 0 0; color: #68746b; font-size: 0.76rem; line-height: 1.35; }
@@ -2211,7 +2212,7 @@
 
 :root[data-theme="light"] .home-hero-panel,
 :root[data-theme="light"] .summary-hero {
-  background: linear-gradient(135deg, rgba(255,255,255,0.94), rgba(231,247,235,0.92));
+  background: transparent;
 }
 
 :root[data-theme="light"] .home-suggestion-banner,
@@ -3309,7 +3310,7 @@
 }
 .summary-page-header .page-title { margin-bottom: 8px; }
 .summary-hero { position: relative; min-height: 112px; padding: 14px 4px 8px; overflow: hidden; }
-.summary-hero::after { content: ""; position: absolute; right: 7%; bottom: -70%; width: 180px; height: 180px; border-radius: 50%; background: radial-gradient(circle, rgba(184,255,90,0.18), transparent 68%); }
+.summary-hero::after { content: none; }
 .summary-hero > div:first-child { position: relative; z-index: 1; }
 .summary-hero .page-title { max-width: 700px; margin: 10px 0 8px; font-size: clamp(2.1rem, 5vw, 4.4rem); }
 .summary-hero .page-title span { color: var(--accent); }

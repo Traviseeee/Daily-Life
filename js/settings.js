@@ -81,6 +81,7 @@ function renderSettings() {
                 <label class="settings-preference-row"><span><strong>${t("notificationsEnabled")}</strong><small>${t("notificationsEnabledHelp")}</small></span><input type="checkbox" data-preference="notificationsEnabled" ${appData.profile.notificationsEnabled !== false ? "checked" : ""}></label>
               </div>
             </article>
+            ${renderAlertStatusCard()}
             </div>
           </details>
           <details class="settings-accordion" id="settings-section-data">
@@ -152,6 +153,36 @@ function renderSettings() {
         <input class="sr-only" id="importJsonInput" type="file" accept="application/json,.json">
       </div>
     </section>
+  `;
+}
+
+function renderAlertStatusCard() {
+  const notificationsOn = appData.profile.notificationsEnabled !== false;
+  const pushSupported = typeof window !== "undefined" && "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+  const permission = typeof Notification !== "undefined" ? Notification.permission : "default";
+  const backups = typeof Store.listBackups === "function" ? Store.listBackups() : [];
+  const pendingSync = typeof SyncState !== "undefined" && SyncState.isPending?.();
+  return `
+    <article class="glass-card card-pad settings-preferences-card" data-settings-section="preferences">
+      <div class="between">
+        <div>
+          <h2 class="section-title section-title-with-icon"><span class="section-title-icon">${Icons.bell()}</span>${t("alertStatus")}</h2>
+          <p class="secondary">${t("alertStatusHelp")}</p>
+        </div>
+        <span class="pill ${notificationsOn ? "success" : ""}">${notificationsOn ? t("on") : t("off")}</span>
+      </div>
+      <div class="settings-preference-list">
+        <div class="settings-preference-row"><span><strong>${t("inAppAlerts")}</strong><small>${t("inAppAlertsHelp")}</small></span><span class="pill success">${t("ready")}</span></div>
+        <div class="settings-preference-row"><span><strong>${t("lockScreenPush")}</strong><small>${t("lockScreenPushHelp")}</small></span><span class="pill">${pushSupported && permission === "granted" ? t("enabled") : t("needsSetup")}</span></div>
+        <div class="settings-preference-row"><span><strong>${t("cloudSync")}</strong><small>${t("cloudSyncHelp")}</small></span><span class="pill ${pendingSync ? "" : "success"}">${pendingSync ? t("pending") : t("synced")}</span></div>
+        <div class="settings-preference-row"><span><strong>${t("localBackups")}</strong><small>${t("localBackupsHelp")}</small></span><span class="pill ${backups.length ? "success" : ""}">${backups.length}</span></div>
+      </div>
+      <div class="settings-action-grid">
+        ${settingsAction("enable-alerts", Icons.bell(), t("enableAlerts"), t("enableAlertsHelp"))}
+        ${settingsAction("test-alert", Icons.spark(), t("sendTestAlert"), t("sendTestAlertHelp"))}
+        ${settingsAction("show-backups", Icons.database(), t("restoreLocalBackup"), t("restoreLocalBackupHelp"))}
+      </div>
+    </article>
   `;
 }
 
@@ -483,6 +514,19 @@ function bindSettings() {
   bindSettingsAction("export-json", exportJsonData);
   bindSettingsAction("export-excel", exportExcelData);
   bindSettingsAction("import-json", () => document.getElementById("importJsonInput")?.click());
+  bindSettingsAction("enable-alerts", async () => {
+    if (NotificationManager.getPlugin()) {
+      const permission = await NotificationManager.requestPermission();
+      Toast.show(permission === "granted" ? t("alertsEnabled") : t("alertsRemainOff"), permission === "granted" ? "success" : "warning");
+      if (permission === "granted") NotificationManager.sync();
+      App.render();
+      return;
+    }
+    await window.PushNotifications?.enable();
+    App.render();
+  });
+  bindSettingsAction("test-alert", sendLocalTestAlert);
+  bindSettingsAction("show-backups", openLocalBackupsModal);
   document.getElementById("importJsonInput")?.addEventListener("change", importJsonData);
   bindSettingsAction("load-demo", () => {
     Modal.confirm({ title: t("loadDemoTitle"), message: t("loadDemoMessage"), confirmText: t("loadDemo"), onConfirm: () => {
@@ -513,6 +557,72 @@ function bindSettingsAction(action, handler) {
   document.querySelectorAll(`[data-action="${action}"]`).forEach(button => {
     button.addEventListener("click", handler);
   });
+}
+
+async function sendLocalTestAlert() {
+  const title = "MYLIFE test";
+  const body = t("sendTestAlertBody");
+  Toast.show(body, "success");
+  if (!("Notification" in window) || Notification.permission !== "granted") {
+    Toast.show(t("enableAlertsFirst"), "warning");
+    return;
+  }
+  try {
+    const registration = await navigator.serviceWorker?.ready;
+    await registration?.showNotification(title, {
+      body,
+      icon: "/assets/icons/mylife-icon-192.png",
+      badge: "/assets/icons/mylife-icon-192.png",
+      data: { url: "/#settings" }
+    });
+  } catch (error) {
+    console.warn("MYLIFE could not show a local test alert.", error);
+    Toast.show(t("pushEnableFailed"), "warning");
+  }
+}
+
+function openLocalBackupsModal() {
+  const backups = typeof Store.listBackups === "function" ? Store.listBackups() : [];
+  const root = document.getElementById("modalRoot");
+  root.classList.add("open");
+  root.innerHTML = `
+    <div class="modal glass-card" aria-modal="true" role="dialog" aria-labelledby="localBackupsTitle">
+      <div class="between">
+        <div>
+          <h2 id="localBackupsTitle">${t("restoreLocalBackup")}</h2>
+          <p class="secondary">${t("restoreLocalBackupHelp")}</p>
+        </div>
+        <button class="icon-button" type="button" data-close aria-label="${t("close")}">${Icons.close()}</button>
+      </div>
+      <div class="settings-preference-list">
+        ${backups.length ? backups.map(backup => `
+          <div class="settings-preference-row">
+            <span><strong>${escapeHtml(backup.profile || t("backup"))}</strong><small>${escapeHtml(backup.createdAt)} · ${backup.counts} ${t("records")}</small></span>
+            <button class="button ghost-button" type="button" data-restore-backup="${escapeAttr(backup.key)}">${t("restore")}</button>
+          </div>
+        `).join("") : `<p class="secondary">${t("noLocalBackups")}</p>`}
+      </div>
+      <div class="between"><button class="button ghost-button" type="button" data-close>${t("close")}</button></div>
+    </div>
+  `;
+
+  root.querySelectorAll("[data-close]").forEach(button => button.addEventListener("click", () => {
+    root.classList.remove("open");
+    root.innerHTML = "";
+  }));
+  root.querySelectorAll("[data-restore-backup]").forEach(button => button.addEventListener("click", () => {
+    Modal.confirm({
+      title: t("restoreLocalBackup"),
+      message: t("restoreLocalBackupConfirm"),
+      confirmText: t("restore"),
+      onConfirm: () => {
+        const restored = Store.restoreBackup(button.dataset.restoreBackup);
+        root.classList.remove("open");
+        root.innerHTML = "";
+        Toast.show(restored ? t("backupRestored") : t("restoreFailed"), restored ? "success" : "warning");
+      }
+    });
+  }));
 }
 
 function exportJsonData() {

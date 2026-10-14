@@ -196,7 +196,7 @@ function memberCard(member) {
       </div>
       <div class="family-profile-body">
         <div class="family-profile-heading">
-          <span class="family-profile-avatar">${escapeHtml(initials(member.name))}</span>
+          <span class="family-profile-avatar">${member.photo ? `<img src="${escapeAttr(member.photo)}" alt="${escapeAttr(member.name)}">` : escapeHtml(initials(member.name))}</span>
           <div class="family-profile-identity">
             <h2>${escapeHtml(member.name)}</h2>
             <p>${escapeHtml(member.relationship)}${relatedMember ? ` · ${escapeHtml(relatedMember.name)}` : ""}</p>
