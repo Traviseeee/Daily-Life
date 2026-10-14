@@ -50,11 +50,142 @@ function parsePayload(value) {
   }
 }
 
+function parseDate(value) {
+  const normalized = /^\d{4}-\d{2}$/.test(String(value || "")) ? `${value}-01` : value;
+  const date = new Date(`${normalized}T00:00:00`);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function toDateInput(date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
+function addMonths(date, months) {
+  const result = new Date(date);
+  const day = result.getDate();
+  result.setMonth(result.getMonth() + months, 1);
+  const lastDay = new Date(result.getFullYear(), result.getMonth() + 1, 0).getDate();
+  result.setDate(Math.min(day, lastDay));
+  return result;
+}
+
+function loanNextPaymentDate(loan) {
+  const firstPaymentDate = loan.firstPaymentDate || loan.startDate;
+  const first = parseDate(firstPaymentDate);
+  if (!first) return "";
+
+  const monthlyPayment = Number(loan.monthlyPayment || 0);
+  if (!monthlyPayment) return "";
+
+  const durationMonths = Number(loan.durationMonths || 0);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  let next = new Date(first);
+  let index = 0;
+  while (next < today && (!durationMonths || index < durationMonths - 1)) {
+    index += 1;
+    next = addMonths(first, index);
+  }
+  if (durationMonths && next < today) return "";
+  const dateValue = toDateInput(next);
+  if ((loan.payments || []).some(payment => payment.date === dateValue)) return "";
+  return dateValue;
+}
+
+function currentMonthKey() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function savingsContributionPaid(saving, monthKey) {
+  return (saving.contributions || []).some(entry => entry && entry.month === monthKey && entry.paid);
+}
+
 function notificationItems(payload) {
-  return [
-    ...(Array.isArray(payload.reminders) ? payload.reminders.map(item => ({ ...item, kind: "reminder" })) : []),
-    ...(Array.isArray(payload.calendarEvents) ? payload.calendarEvents.map(item => ({ ...item, kind: "calendar" })) : [])
-  ].filter(item => item && item.date && !item.done);
+  const items = [];
+  const add = item => {
+    if (!item?.date || !item.title) return;
+    items.push({ time: "09:00", ...item });
+  };
+
+  (Array.isArray(payload.reminders) ? payload.reminders : []).forEach(item => {
+    if (item.done) return;
+    add({
+      kind: "reminder",
+      id: item.id,
+      title: item.title || "MYLIFE reminder",
+      body: item.notes || item.category || "Upcoming reminder",
+      date: item.date,
+      time: item.time || "09:00",
+      url: "/#daily"
+    });
+  });
+
+  (Array.isArray(payload.calendarEvents) ? payload.calendarEvents : []).forEach(item => {
+    if (item.reminder === false) return;
+    add({
+      kind: "calendar",
+      id: item.id,
+      title: item.title || "MYLIFE event",
+      body: item.notes || item.category || "Upcoming event",
+      date: item.date,
+      time: item.time || "09:00",
+      url: "/#calendar"
+    });
+  });
+
+  (Array.isArray(payload.bills) ? payload.bills : []).forEach(item => {
+    if (item.reminder === false || item.status === "Paid") return;
+    add({
+      kind: "bill",
+      id: item.id,
+      title: item.name || "Bill due",
+      body: item.amount ? `${item.category || "Bill"} - ${item.currency || ""} ${Number(item.amount || 0)}`.trim() : (item.notes || "Bill payment is due"),
+      date: item.due,
+      url: "/#money/bills"
+    });
+  });
+
+  (Array.isArray(payload.loans) ? payload.loans : []).forEach(item => {
+    const date = loanNextPaymentDate(item);
+    if (!date) return;
+    add({
+      kind: "loan",
+      id: item.id,
+      title: item.name || "Loan payment due",
+      body: item.monthlyPayment ? `Monthly payment: ${item.currency || ""} ${Number(item.monthlyPayment || 0)}`.trim() : "Loan payment is due",
+      date,
+      url: "/#money/loans"
+    });
+  });
+
+  const monthKey = currentMonthKey();
+  (Array.isArray(payload.savings) ? payload.savings : []).forEach(item => {
+    const monthlyAmount = Number(item.monthlyContribution || 0);
+    if (monthlyAmount && !savingsContributionPaid(item, monthKey)) {
+      add({
+        kind: "savings-contribution",
+        id: `${item.id || item.name}-${monthKey}`,
+        title: item.name || "Savings contribution",
+        body: `Monthly contribution: ${item.currency || ""} ${monthlyAmount}`.trim(),
+        date: `${monthKey}-01`,
+        url: "/#money/savings"
+      });
+    }
+    if (item.deadline) {
+      add({
+        kind: "savings-deadline",
+        id: `${item.id || item.name}-deadline`,
+        title: item.name || "Savings deadline",
+        body: item.notes || "Savings deadline",
+        date: item.deadline,
+        url: "/#money/savings"
+      });
+    }
+  });
+
+  return items;
 }
 
 function makeMarker(userId, endpoint, item) {
@@ -100,9 +231,9 @@ module.exports = async (req, res) => {
         if (!subscriptions.length) continue;
 
         for (const item of notificationItems(payload)) {
-          const title = String(item.title || (item.kind === "calendar" ? "MYLIFE event" : "MYLIFE reminder"));
-          const body = String(item.notes || item.category || (item.kind === "calendar" ? "Upcoming event" : "Upcoming reminder"));
-          const destination = item.kind === "calendar" ? "/#calendar" : "/#daily";
+          const title = String(item.title || "MYLIFE alert");
+          const body = String(item.body || item.notes || item.category || "It is time.");
+          const destination = String(item.url || "/#daily");
 
           for (const entry of subscriptions) {
             const dueAt = localDateTimeToUtc(item.date, item.time || "09:00", entry.timeZone);

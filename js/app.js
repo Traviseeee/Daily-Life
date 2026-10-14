@@ -288,25 +288,25 @@ const App = {
       }
     });
   },
-  reminderDateTime(reminder) {
-    if (!reminder?.date || !reminder.time) return null;
-    const date = new Date(`${reminder.date}T${reminder.time}:00`);
+  alertDateTime(item) {
+    if (!item?.date) return null;
+    const date = new Date(`${item.date}T${item.time || "09:00"}:00`);
     return Number.isNaN(date.getTime()) ? null : date;
   },
-  dueReminderKey(reminder) {
-    return [reminder.id || reminder.title || "reminder", reminder.date || "", reminder.time || ""].join("|");
+  dueReminderKey(item) {
+    return [item.kind || "alert", item.id || item.title || "item", item.date || "", item.time || "09:00"].join("|");
   },
-  hasSentDueReminder(reminder) {
+  hasSentDueReminder(item) {
     try {
       const sent = JSON.parse(localStorage.getItem("mylife:due-reminder-alerts") || "{}");
-      return Boolean(sent[this.dueReminderKey(reminder)]);
+      return Boolean(sent[this.dueReminderKey(item)]);
     } catch (error) {
       return false;
     }
   },
-  markDueReminderSent(reminder) {
+  markDueReminderSent(item) {
     try {
-      const key = this.dueReminderKey(reminder);
+      const key = this.dueReminderKey(item);
       const sent = JSON.parse(localStorage.getItem("mylife:due-reminder-alerts") || "{}");
       sent[key] = new Date().toISOString();
       const entries = Object.entries(sent).slice(-100);
@@ -315,15 +315,15 @@ const App = {
       console.warn("MYLIFE could not record reminder alert state.", error);
     }
   },
-  dueReminderPayload(reminder) {
+  dueReminderPayload(item) {
     return {
-      title: reminder.title || "MYLIFE reminder",
-      body: reminder.notes || reminder.category || "Reminder time",
-      url: "/#daily"
+      title: item.title || "MYLIFE alert",
+      body: item.body || item.notes || item.category || "It is time.",
+      url: item.url || "/#daily"
     };
   },
-  async showDueReminder(reminder) {
-    const payload = this.dueReminderPayload(reminder);
+  async showDueReminder(item) {
+    const payload = this.dueReminderPayload(item);
     Toast.show(`${payload.title}: ${payload.body}`, "warning", { duration: 6000 });
     if (!("Notification" in window) || Notification.permission !== "granted") return;
 
@@ -339,18 +339,106 @@ const App = {
       console.warn("MYLIFE could not display the reminder notification.", error);
     }
   },
+  collectDueAlertItems() {
+    const items = [];
+    const add = item => {
+      if (!item?.date || !item.title) return;
+      items.push({ time: "09:00", ...item });
+    };
+
+    appData.reminders.forEach(reminder => {
+      if (reminder.done) return;
+      add({
+        kind: "reminder",
+        id: reminder.id,
+        title: reminder.title || "MYLIFE reminder",
+        body: reminder.notes || reminder.category || "Reminder time",
+        date: reminder.date,
+        time: reminder.time || "09:00",
+        url: "/#daily"
+      });
+    });
+
+    appData.calendarEvents.forEach(event => {
+      if (event.reminder === false) return;
+      add({
+        kind: "calendar",
+        id: event.id,
+        title: event.title || "MYLIFE event",
+        body: event.notes || event.category || "Upcoming event",
+        date: event.date,
+        time: event.time || "09:00",
+        url: "/#calendar"
+      });
+    });
+
+    appData.bills.forEach(bill => {
+      if (bill.reminder === false || bill.status === "Paid") return;
+      add({
+        kind: "bill",
+        id: bill.id,
+        title: bill.name || "Bill due",
+        body: bill.amount ? `${optionLabel(bill.category || "Bill")} - ${typeof formatPlainMoney === "function" ? formatPlainMoney(bill.amount, bill.currency) : bill.amount}` : (bill.notes || "Bill payment is due"),
+        date: bill.due,
+        url: "/#money/bills"
+      });
+    });
+
+    appData.loans.forEach(loan => {
+      const nextPayment = typeof nextLoanPaymentDate === "function" ? nextLoanPaymentDate(loan) : "";
+      if (!nextPayment) return;
+      const alreadyPaid = (loan.payments || []).some(payment => payment.date === nextPayment);
+      if (alreadyPaid) return;
+      add({
+        kind: "loan",
+        id: loan.id,
+        title: loan.name || "Loan payment due",
+        body: loan.monthlyPayment ? `${t("monthlyPayment")}: ${typeof formatPlainMoney === "function" ? formatPlainMoney(loan.monthlyPayment, loan.currency) : loan.monthlyPayment}` : "Loan payment is due",
+        date: nextPayment,
+        url: "/#money/loans"
+      });
+    });
+
+    const currentMonth = new Date().toISOString().slice(0, 7);
+    appData.savings.forEach(saving => {
+      const monthlyAmount = Number(saving.monthlyContribution || 0);
+      const contribution = typeof getSavingsContribution === "function" ? getSavingsContribution(saving, currentMonth) : null;
+      if (monthlyAmount && !contribution?.paid) {
+        add({
+          kind: "savings-contribution",
+          id: `${saving.id || saving.name}-${currentMonth}`,
+          title: saving.name || "Savings contribution",
+          body: `${t("monthlyContribution")}: ${typeof formatPlainMoney === "function" ? formatPlainMoney(monthlyAmount, saving.currency) : monthlyAmount}`,
+          date: `${currentMonth}-01`,
+          url: "/#money/savings"
+        });
+      }
+      if (saving.deadline) {
+        add({
+          kind: "savings-deadline",
+          id: `${saving.id || saving.name}-deadline`,
+          title: saving.name || "Savings deadline",
+          body: saving.notes || t("deadline"),
+          date: saving.deadline,
+          url: "/#money/savings"
+        });
+      }
+    });
+
+    return items;
+  },
   checkDueReminderAlerts() {
     if (appData.profile?.notificationsEnabled === false) return;
     const now = new Date();
     const graceMs = 60 * 1000;
-    appData.reminders.forEach(reminder => {
-      if (reminder.done || this.hasSentDueReminder(reminder)) return;
-      const dueAt = this.reminderDateTime(reminder);
+    this.collectDueAlertItems().forEach(item => {
+      if (this.hasSentDueReminder(item)) return;
+      const dueAt = this.alertDateTime(item);
       if (!dueAt) return;
       const delta = now - dueAt;
       if (delta < 0 || delta > graceMs) return;
-      this.markDueReminderSent(reminder);
-      this.showDueReminder(reminder);
+      this.markDueReminderSent(item);
+      this.showDueReminder(item);
     });
   },
   scheduleDueReminderAlerts() {
@@ -359,9 +447,9 @@ const App = {
     if (appData.profile?.notificationsEnabled === false) return;
 
     const now = new Date();
-    const next = appData.reminders
-      .filter(reminder => !reminder.done && !this.hasSentDueReminder(reminder))
-      .map(reminder => ({ reminder, dueAt: this.reminderDateTime(reminder) }))
+    const next = this.collectDueAlertItems()
+      .filter(item => !this.hasSentDueReminder(item))
+      .map(item => ({ item, dueAt: this.alertDateTime(item) }))
       .filter(item => item.dueAt && item.dueAt >= now)
       .sort((a, b) => a.dueAt - b.dueAt)[0];
 
