@@ -5,8 +5,8 @@
   "description": "MYLIFE private life dashboard packaged for web, PWA, Android, and iOS.",
   "scripts": {
     "build": "node -e \"console.log('Static Vercel deployment: source files are ready')\"",
-    "start": "node server.js",
-    "serve": "node server.js",
+    "start": "node tools/local-server.js",
+    "serve": "node tools/local-server.js",
     "verify:sync": "node tools/verify-sync.js",
     "mobile:sync": "node tools/copy-web.js && npx cap sync",
     "mobile:add:android": "node tools/copy-web.js && npx cap add android",
