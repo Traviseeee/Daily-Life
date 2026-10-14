@@ -1,4 +1,5 @@
 const STORAGE_KEY = "mylife:user-data:v1";
+const BACKUP_PREFIX = "mylife:backup:";
 const SUPABASE_TABLE = "app_data";
 const isGuestMode = () => typeof Login !== "undefined" && Login.guestMode;
 
@@ -44,6 +45,32 @@ const saveLocalSnapshot = value => {
     } catch (compactError) {
       console.warn("MYLIFE local storage is full; keeping data in memory for cloud sync.", compactError);
     }
+    return false;
+  }
+};
+
+const hasMeaningfulAppData = value => {
+  if (!value || typeof value !== "object") return false;
+  return Object.keys(value).some(key => {
+    if (key === "profile") {
+      const profile = value.profile || {};
+      return Boolean(profile.name || profile.email || profile.photo);
+    }
+    const item = value[key];
+    if (Array.isArray(item)) return item.length > 0;
+    if (item && typeof item === "object") return Object.keys(item).length > 0;
+    return Boolean(item);
+  });
+};
+
+const saveDataBackup = (reason, value = appData) => {
+  if (!hasMeaningfulAppData(value)) return false;
+  try {
+    const key = `${BACKUP_PREFIX}${new Date().toISOString()}:${reason}`;
+    localStorage.setItem(key, JSON.stringify(value));
+    return true;
+  } catch (error) {
+    console.warn("MYLIFE could not create a local data backup.", error);
     return false;
   }
 };
@@ -303,6 +330,7 @@ const Store = {
       // A cached payload belonging to another account must never be merged into this
       // one, so drop it before anything else can read it.
       if (SyncState.isDifferentAccount(user.id)) {
+        saveDataBackup("account-switch");
         Object.assign(appData, structuredClone(emptyData));
         appData.profile = { ...emptyData.profile };
         SyncState.clearPending();
@@ -968,6 +996,46 @@ const Store = {
   },
   startSyncRetry() {
     SyncScheduler.start(() => this.flushPendingSync());
+  },
+  listBackups() {
+    const backups = [];
+    try {
+      for (let index = 0; index < localStorage.length; index += 1) {
+        const key = localStorage.key(index);
+        if (!key?.startsWith(BACKUP_PREFIX)) continue;
+        const raw = localStorage.getItem(key);
+        const data = raw ? JSON.parse(raw) : null;
+        backups.push({
+          key,
+          createdAt: key.slice(BACKUP_PREFIX.length).split(":").slice(0, 3).join(":"),
+          profile: data?.profile?.name || data?.profile?.email || "",
+          counts: ["family", "goals", "income", "expenses", "savings", "loans", "bills", "calendarEvents", "memories", "hobbyLogs", "reminders"]
+            .reduce((total, collection) => total + (Array.isArray(data?.[collection]) ? data[collection].length : 0), 0)
+        });
+      }
+    } catch (error) {
+      console.warn("MYLIFE could not list local backups.", error);
+    }
+    return backups.sort((a, b) => b.key.localeCompare(a.key));
+  },
+  restoreBackup(key) {
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) return false;
+      const backup = JSON.parse(raw);
+      if (!hasMeaningfulAppData(backup)) return false;
+      saveDataBackup("before-restore");
+      Object.assign(appData, structuredClone(emptyData), backup);
+      ensureAppDataShape();
+      appData.profile = { ...emptyData.profile, ...(appData.profile || {}) };
+      SyncState.clear(appData);
+      this.save({ mode: "replace", reason: "restore-backup" });
+      App.render();
+      return true;
+    } catch (error) {
+      console.warn("MYLIFE could not restore the selected backup.", error);
+      return false;
+    }
   },
   calculate() {
     const totalIncome = sumMoney(appData.income, "amount");
