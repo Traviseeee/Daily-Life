@@ -12,6 +12,6 @@
     }
   ],
   "crons": [
-    { "path": "/api/dispatch", "schedule": "*/5 * * * *" }
+    { "path": "/api/dispatch", "schedule": "0 0 * * *" }
   ]
 }
