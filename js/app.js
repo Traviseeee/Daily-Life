@@ -2,6 +2,8 @@ const App = {
   route: "home",
   param: "",
   shellClockTimer: null,
+  dueReminderTimer: null,
+  dueReminderInterval: null,
   quickActionCloseTimer: null,
   interactionSoundBound: false,
   init() {
@@ -20,6 +22,7 @@ const App = {
     this.render();
     this.syncWithCloud();
     this.checkUpcomingAlerts();
+    this.startDueReminderWatcher();
     setTimeout(() => NotificationManager.sync(), 1200);
   },
   /**
@@ -84,6 +87,7 @@ const App = {
     this.bindPage(route);
     this.bindScrollReveal();
     this.checkUpcomingAlerts();
+    this.scheduleDueReminderAlerts();
     this.checkHomeSuggestions();
     this.renderNotificationBadge();
     app.focus({ preventScroll: true });
@@ -267,15 +271,106 @@ const App = {
       : `${first.title} in ${first.daysLeft} day${first.daysLeft === 1 ? "" : "s"}`;
 
     Toast.show(alerts.length > 1 ? `${alerts.length} reminders are coming soon` : label, "warning", { duration: 3200 });
-    if ("Notification" in window && Notification.permission === "granted") {
-      navigator.serviceWorker?.ready.then(registration => registration.showNotification("MYLIFE reminder", {
-        body: alerts.length > 1 ? `${alerts.length} reminders are coming soon` : label,
-        icon: "/assets/icons/mylife-icon-192.png",
-        data: { url: "/#daily" }
-      })).catch(error => console.warn("MYLIFE could not display a reminder notification.", error));
-    }
     NotificationManager.sync();
     this.renderNotificationBadge();
+  },
+  startDueReminderWatcher() {
+    this.scheduleDueReminderAlerts();
+    if (this.dueReminderInterval) return;
+    this.dueReminderInterval = window.setInterval(() => {
+      this.checkDueReminderAlerts();
+      this.scheduleDueReminderAlerts();
+    }, 15000);
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") {
+        this.checkDueReminderAlerts();
+        this.scheduleDueReminderAlerts();
+      }
+    });
+  },
+  reminderDateTime(reminder) {
+    if (!reminder?.date || !reminder.time) return null;
+    const date = new Date(`${reminder.date}T${reminder.time}:00`);
+    return Number.isNaN(date.getTime()) ? null : date;
+  },
+  dueReminderKey(reminder) {
+    return [reminder.id || reminder.title || "reminder", reminder.date || "", reminder.time || ""].join("|");
+  },
+  hasSentDueReminder(reminder) {
+    try {
+      const sent = JSON.parse(localStorage.getItem("mylife:due-reminder-alerts") || "{}");
+      return Boolean(sent[this.dueReminderKey(reminder)]);
+    } catch (error) {
+      return false;
+    }
+  },
+  markDueReminderSent(reminder) {
+    try {
+      const key = this.dueReminderKey(reminder);
+      const sent = JSON.parse(localStorage.getItem("mylife:due-reminder-alerts") || "{}");
+      sent[key] = new Date().toISOString();
+      const entries = Object.entries(sent).slice(-100);
+      localStorage.setItem("mylife:due-reminder-alerts", JSON.stringify(Object.fromEntries(entries)));
+    } catch (error) {
+      console.warn("MYLIFE could not record reminder alert state.", error);
+    }
+  },
+  dueReminderPayload(reminder) {
+    return {
+      title: reminder.title || "MYLIFE reminder",
+      body: reminder.notes || reminder.category || "Reminder time",
+      url: "/#daily"
+    };
+  },
+  async showDueReminder(reminder) {
+    const payload = this.dueReminderPayload(reminder);
+    Toast.show(`${payload.title}: ${payload.body}`, "warning", { duration: 6000 });
+    if (!("Notification" in window) || Notification.permission !== "granted") return;
+
+    try {
+      const registration = await navigator.serviceWorker?.ready;
+      await registration?.showNotification(payload.title, {
+        body: payload.body,
+        icon: "/assets/icons/mylife-icon-192.png",
+        badge: "/assets/icons/mylife-icon-192.png",
+        data: { url: payload.url }
+      });
+    } catch (error) {
+      console.warn("MYLIFE could not display the reminder notification.", error);
+    }
+  },
+  checkDueReminderAlerts() {
+    if (appData.profile?.notificationsEnabled === false) return;
+    const now = new Date();
+    const graceMs = 60 * 1000;
+    appData.reminders.forEach(reminder => {
+      if (reminder.done || this.hasSentDueReminder(reminder)) return;
+      const dueAt = this.reminderDateTime(reminder);
+      if (!dueAt) return;
+      const delta = now - dueAt;
+      if (delta < 0 || delta > graceMs) return;
+      this.markDueReminderSent(reminder);
+      this.showDueReminder(reminder);
+    });
+  },
+  scheduleDueReminderAlerts() {
+    window.clearTimeout(this.dueReminderTimer);
+    this.dueReminderTimer = null;
+    if (appData.profile?.notificationsEnabled === false) return;
+
+    const now = new Date();
+    const next = appData.reminders
+      .filter(reminder => !reminder.done && !this.hasSentDueReminder(reminder))
+      .map(reminder => ({ reminder, dueAt: this.reminderDateTime(reminder) }))
+      .filter(item => item.dueAt && item.dueAt >= now)
+      .sort((a, b) => a.dueAt - b.dueAt)[0];
+
+    if (!next) return;
+    const delay = Math.max(0, Math.min(next.dueAt - now, 2147483647));
+    this.dueReminderTimer = window.setTimeout(() => {
+      this.checkDueReminderAlerts();
+      this.scheduleDueReminderAlerts();
+    }, delay);
   },
   bindScrollReveal() {
     const elements = document.querySelectorAll(".page > *:not(.home-hero), .tool-launcher-item");
