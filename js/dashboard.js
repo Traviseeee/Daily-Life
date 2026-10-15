@@ -508,7 +508,7 @@ function renderHomeSmartLists(agenda, focusItems, todayIso) {
   </section>`;
 }
 
-function markHomeBillPaid(billId) {
+function markBillPaid(billId) {
   const bill = appData.bills.find(item => item.id === billId);
   if (!bill || bill.status === "Paid") return;
   const frequency = bill.frequency || "Monthly";
@@ -1250,7 +1250,7 @@ function bindHome() {
   document.querySelectorAll('[data-action="add-expense"]').forEach(button => button.addEventListener("click", () => openExpenseModal()));
   document.querySelectorAll('[data-action="add-bill"]').forEach(button => button.addEventListener("click", () => openBillModal()));
   document.querySelectorAll('[data-action="add-reminder"]').forEach(button => button.addEventListener("click", () => App.openReminderModal()));
-  document.querySelectorAll("[data-home-mark-bill]").forEach(button => button.addEventListener("click", () => markHomeBillPaid(button.dataset.homeMarkBill)));
+  document.querySelectorAll("[data-home-mark-bill]").forEach(button => button.addEventListener("click", () => markBillPaid(button.dataset.homeMarkBill)));
   document.querySelectorAll("[data-smart-category]").forEach(button => button.addEventListener("click", () => {
     const selectedCategory = button.dataset.smartCategory;
     document.querySelectorAll("[data-smart-category]").forEach(categoryButton => {

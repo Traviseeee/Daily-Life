@@ -207,6 +207,7 @@ function renderMoneySmartOverview() {
       : [];
   });
   const billAlerts = dueBills.map(bill => ({
+    billId: bill.id,
     title: bill.name || t("bill"),
     date: bill.due,
     amount: bill.amount,
@@ -253,7 +254,7 @@ function renderMoneySmartOverview() {
     .sort((left, right) => right.change - left.change)
     .slice(0, 4);
   const attentionMarkup = attentionItems.length
-    ? `<div class="money-smart-rows">${attentionItems.map(item => `<a class="money-smart-row" href="${escapeAttr(item.href)}"><span class="money-smart-row-copy"><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(item.overdue ? t("overdue") : formatDate(item.date, { month: "short", day: "numeric" }))}</small></span><strong class="money-smart-row-amount${item.overdue ? " is-overdue" : ""}">${money(item.amount, item.currency)}</strong></a>`).join("")}</div>`
+    ? `<div class="money-smart-rows">${attentionItems.map(item => `<div class="money-smart-row"><a class="money-smart-row-copy" href="${escapeAttr(item.href)}"><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(item.overdue ? t("overdue") : formatDate(item.date, { month: "short", day: "numeric" }))}</small></a><strong class="money-smart-row-amount${item.overdue ? " is-overdue" : ""}">${money(item.amount, item.currency)}</strong>${item.billId ? `<button class="money-smart-mark-paid" type="button" data-finance-mark-bill="${escapeAttr(item.billId)}">${escapeHtml(t("markPaid"))}</button>` : ""}</div>`).join("")}</div>`
     : `<p class="money-smart-empty">${escapeHtml(t("allCaughtUp"))}</p>`;
   const changesMarkup = spendingChanges.length
     ? `<div class="money-smart-rows">${spendingChanges.map(item => `<a class="money-smart-row" href="#money/expenses"><span class="money-smart-row-copy"><strong>${escapeHtml(optionLabel(item.category))}</strong></span><strong class="money-smart-change">+${money(item.change)}</strong></a>`).join("")}</div>`
@@ -427,7 +428,8 @@ function renderBills() {
 }
 
 function billCard(bill) {
-  return `<div class="goal-item financial-mini-card"><div class="between"><span class="icon-badge blue">${Icons.bill()}</span><span class="pill ${bill.status === "Paid" ? "success" : ""}">${optionLabel(bill.status || "Upcoming")}</span></div><h3>${escapeHtml(bill.name)}</h3><div class="metric compact-metric">${money(bill.amount, bill.currency)}</div><div class="financial-meta-line"><span>${t("dueDate")}</span><strong>${formatDate(bill.due)}</strong></div><p class="secondary">${optionLabel(bill.frequency)} · ${optionLabel(bill.category)}</p><div class="action-row"><button class="button ghost-button" data-edit-bill="${bill.id}">${Icons.edit()} ${t("edit")}</button><button class="icon-button" data-delete-bill="${bill.id}" aria-label="${t("delete")}">${Icons.trash()}</button></div></div>`;
+  const paid = bill.status === "Paid";
+  return `<div class="goal-item financial-mini-card"><div class="between"><span class="icon-badge blue">${Icons.bill()}</span><span class="pill ${paid ? "success" : ""}">${optionLabel(bill.status || "Upcoming")}</span></div><h3>${escapeHtml(bill.name)}</h3><div class="metric compact-metric">${money(bill.amount, bill.currency)}</div><div class="financial-meta-line"><span>${t("dueDate")}</span><strong>${formatDate(bill.due)}</strong></div><p class="secondary">${optionLabel(bill.frequency)} · ${optionLabel(bill.category)}</p><div class="action-row"><button class="button ${paid ? "ghost-button" : ""} bill-payment-action" data-finance-toggle-bill="${escapeAttr(bill.id)}" aria-pressed="${paid}">${escapeHtml(t(paid ? "markUnpaid" : "markPaid"))}</button><button class="button ghost-button" data-edit-bill="${escapeAttr(bill.id)}">${Icons.edit()} ${t("edit")}</button><button class="icon-button" data-delete-bill="${escapeAttr(bill.id)}" aria-label="${escapeAttr(t("delete"))}">${Icons.trash()}</button></div></div>`;
 }
 
 function renderBudget() {
@@ -806,6 +808,8 @@ function bindMoney() {
   document.querySelectorAll('[data-action="add-savings"]').forEach(button => button.addEventListener("click", () => openSavingsModal()));
   document.querySelectorAll('[data-action="add-loan"]').forEach(button => button.addEventListener("click", () => openLoanModal()));
   document.querySelectorAll('[data-action="add-bill"]').forEach(button => button.addEventListener("click", () => openBillModal()));
+  document.querySelectorAll("[data-finance-mark-bill]").forEach(button => button.addEventListener("click", () => markBillPaid(button.dataset.financeMarkBill)));
+  document.querySelectorAll("[data-finance-toggle-bill]").forEach(button => button.addEventListener("click", () => toggleFinanceBillPayment(button.dataset.financeToggleBill)));
   bindCollectionActions("income", openIncomeModal);
   bindCollectionActions("expense", openExpenseModal);
   bindCollectionActions("savings", openSavingsModal, "savings");
@@ -827,6 +831,17 @@ function selectMoneySmartTab(button) {
   document.querySelectorAll("[data-money-smart-panel]").forEach(panel => {
     panel.hidden = panel.dataset.moneySmartPanel !== selectedId;
   });
+}
+
+function toggleFinanceBillPayment(billId) {
+  const bill = appData.bills.find(item => item.id === billId);
+  if (!bill) return;
+  if (bill.status !== "Paid") {
+    markBillPaid(billId);
+    return;
+  }
+  Store.edit("bills", bill.id, { status: "Upcoming" });
+  Toast.show(t("paymentMarkedUnpaid"));
 }
 
 function toggleSavingsContribution(input) {

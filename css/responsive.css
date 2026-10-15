@@ -3900,7 +3900,7 @@
 }
 
 .money-smart-row:last-child { border-bottom: 0; }
-.money-smart-row-copy { display: grid; min-width: 0; gap: 3px; }
+.money-smart-row-copy { display: grid; flex: 1 1 auto; min-width: 0; gap: 3px; }
 .money-smart-row-copy strong {
   overflow: hidden;
   color: #263243;
@@ -3912,6 +3912,21 @@
 .money-smart-row-copy small { color: #737b87; font-size: 0.65rem; line-height: 1.35; }
 .money-smart-row-amount,
 .money-smart-change { flex: 0 0 auto; color: #39485a; font-size: 0.7rem; }
+.money-smart-mark-paid {
+  flex: 0 0 auto;
+  min-height: 30px;
+  padding: 5px 8px;
+  border: 1px solid rgba(101, 132, 89, 0.2);
+  border-radius: 8px;
+  background: rgba(138, 178, 112, 0.11);
+  color: #426337;
+  font: inherit;
+  font-size: 0.65rem;
+  font-weight: 750;
+  cursor: pointer;
+}
+.money-smart-mark-paid:hover { background: rgba(138, 178, 112, 0.2); }
+.money-smart-mark-paid:focus-visible { outline: 2px solid #8068b6; outline-offset: 2px; }
 .money-smart-row-amount.is-overdue,
 .money-smart-change { color: #b64d4d; }
 .money-smart-empty { margin: 0; color: #737b87; font-size: 0.73rem; line-height: 1.5; }
@@ -3954,6 +3969,8 @@
 :root[data-theme="dark"] .money-smart-empty,
 :root[data-theme="dark"] .money-smart-rows-heading,
 :root[data-theme="dark"] .money-smart-metrics span { color: #bad5c9; }
+:root[data-theme="dark"] .money-smart-mark-paid { border-color: rgba(201,255,179,0.18); background: rgba(201,255,179,0.09); color: #d9ffcb; }
+:root[data-theme="dark"] .money-smart-mark-paid:hover { background: rgba(201,255,179,0.16); }
 :root[data-theme="dark"] .money-smart-metrics > div { border-color: rgba(201,255,179,0.1); background: rgba(255,255,255,0.045); }
 :root[data-theme="dark"] .money-smart-metrics .is-negative strong,
 :root[data-theme="dark"] .money-smart-change { color: #fca5a5; }

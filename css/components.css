@@ -5779,6 +5779,13 @@ body.money-hidden .money-value {
   line-height: 1.25;
 }
 
+.financial-mini-card .action-row .bill-payment-action {
+  flex: 1 0 100%;
+  justify-content: center;
+  min-height: 36px;
+  font-size: 0.76rem;
+}
+
 .financial-card-amount {
   color: var(--text-primary);
   font-size: 0.9rem;
