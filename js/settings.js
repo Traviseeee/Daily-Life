@@ -212,9 +212,9 @@ function settingsCard(title, rows, icon, section = "data") {
   return `
     <article class="glass-card card-pad settings-compact-card" data-settings-section="${section}">
       <h2 class="section-title section-title-with-icon"><span class="section-title-icon">${icon}</span>${title}</h2>
-      <div class="settings-stat-grid">
+      <div class="settings-stat-grid ${section === "data" ? "settings-database-grid" : ""}">
         ${rows.map(row => `
-          <div class="settings-stat-item">
+          <div class="settings-stat-item ${section === "data" ? "settings-database-stat" : ""}">
             <span>${row[0]}</span>
             <strong>${row[1]}</strong>
           </div>
@@ -730,21 +730,29 @@ function backupDate() {
 }
 
 function renderHelp() {
+  const helpSteps = [
+    { icon: Icons.search(), title: t("search"), description: t("searchHelp"), tone: "search" },
+    { icon: Icons.plus(), title: t("add"), description: t("addHelp"), tone: "add" },
+    { icon: Icons.chart(), title: t("review"), description: t("reviewHelp"), tone: "review" },
+    { icon: Icons.family(), title: t("family"), description: t("helpFamily"), tone: "family" },
+    { icon: Icons.goal(), title: t("goals"), description: t("helpGoals"), tone: "goals" },
+    { icon: Icons.money(), title: t("money"), description: t("helpMoney"), tone: "money" },
+    { icon: Icons.spark(), title: t("daily"), description: t("helpDaily"), tone: "daily" },
+    { icon: Icons.heart(), title: t("memories"), description: t("helpMemories"), tone: "memories" },
+    { icon: Icons.database(), title: t("backupAndRestore"), description: t("helpBackup"), tone: "backup" }
+  ];
+
   return `
-    <section class="page">
+    <section class="page help-page">
       <div class="page-header">
         <div>
           <h1 class="page-title page-title-with-icon"><span class="page-title-icon">${Icons.help()}</span>${t("help")}</h1>
           <p class="page-subtitle">${t("helpSubtitle")}</p>
         </div>
       </div>
-      <article class="glass-card card-pad">
-        <div class="grid three-col">
-          <div class="goal-item"><span class="icon-badge">${Icons.search()}</span><h2>${t("search")}</h2><p class="secondary">${t("searchHelp")}</p></div>
-          <div class="goal-item"><span class="icon-badge green">${Icons.plus()}</span><h2>${t("add")}</h2><p class="secondary">${t("addHelp")}</p></div>
-          <div class="goal-item"><span class="icon-badge blue">${Icons.chart()}</span><h2>${t("review")}</h2><p class="secondary">${t("reviewHelp")}</p></div>
-        </div>
-      </article>
+      <div class="help-grid">
+        ${helpSteps.map(step => `<article class="help-card ${step.tone}"><span class="help-card-icon">${step.icon}</span><h2>${step.title}</h2><p>${step.description}</p></article>`).join("")}
+      </div>
     </section>
   `;
 }

@@ -464,6 +464,44 @@
 }
 
 @media (max-width: 640px) {
+  .help-page { gap: 11px; }
+  .help-grid { grid-template-columns: 1fr; gap: 8px; }
+  .help-card { grid-template-columns: 40px minmax(0, 1fr); grid-template-rows: auto auto; align-items: center; gap: 4px 11px; min-height: 0; padding: 12px; border-radius: 15px; }
+  .help-card-icon { grid-row: 1 / span 2; width: 38px; height: 38px; border-radius: 12px; }
+  .help-card h2 { align-self: end; margin: 0; font-size: 0.94rem; }
+  .help-card p { align-self: start; font-size: 0.76rem; line-height: 1.45; }
+  .family-overview-grid { gap: 10px; margin-top: 10px; }
+  .family-events-panel,
+  .family-summary-panel { gap: 11px; padding: 13px; }
+  .family-events-panel > .between { align-items: flex-start; }
+  .family-events-panel > .between .button { flex: 0 0 auto; min-height: 38px; padding: 7px 9px; font-size: 0.72rem; }
+  .family-events-panel > .between .button svg { width: 16px; height: 16px; }
+  .family-event-card { grid-template-columns: 36px minmax(0, 1fr) auto; gap: 8px; min-height: 66px; padding: 9px; }
+  .family-event-card > .icon-badge { width: 34px; height: 34px; }
+  .family-event-copy strong { font-size: 0.82rem; }
+  .family-event-copy > span { font-size: 0.7rem; }
+  .family-event-actions { gap: 4px; }
+  .family-event-actions .icon-button { width: 32px; height: 32px; }
+  .family-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .family-summary-item { grid-template-columns: 30px minmax(0, 1fr); grid-template-rows: auto 1fr; align-items: center; gap: 5px 8px; min-height: 70px; padding: 9px; }
+  .family-summary-icon { grid-row: 1 / span 2; width: 30px; height: 30px; }
+  .family-summary-label { align-self: end; font-size: 0.66rem; }
+  .family-summary-item > strong { align-self: start; font-size: 1.08rem; }
+  .family-summary-item:last-child { grid-column: 1 / -1; grid-template-columns: 30px minmax(0, 1fr) auto; grid-template-rows: auto; min-height: 58px; }
+  .family-summary-item:last-child .family-summary-icon { grid-row: 1; }
+  .family-summary-item:last-child .family-summary-label,
+  .family-summary-item:last-child > strong { align-self: center; }
+  .daily-page { gap: 11px; }
+  .daily-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding: 9px; }
+  .daily-actions .button { min-height: 42px; padding: 8px; font-size: 0.76rem; white-space: normal; }
+  .daily-actions [data-action="add-hobby"] { grid-column: 1 / -1; }
+  .daily-top-grid { gap: 10px; }
+  .daily-summary-card { gap: 10px; padding: 13px; }
+  .daily-stat { min-height: 62px; padding: 10px 12px; }
+  .daily-stat strong { font-size: 1.85rem; }
+  .daily-page .daily-record-row { grid-template-columns: 34px minmax(0, 1fr) 32px 32px; gap: 6px; padding: 8px; }
+  .daily-page .daily-record-row .icon-badge { width: 32px; height: 32px; }
+  .daily-page .daily-record-row .icon-button { width: 32px; height: 32px; }
   .settings-header .page-title { font-size: 1.95rem; }
   .settings-accordion-list { gap: 9px; }
   .settings-accordion { border-radius: 18px; }
@@ -476,10 +514,29 @@
   .settings-accordion-body .settings-preference-row small { font-size: 0.68rem; }
   .settings-accordion-body .settings-preference-row select { min-width: 94px; max-width: 118px; min-height: 32px; font-size: 0.74rem; }
   .settings-accordion-body .settings-preference-row input[type="checkbox"] { width: 19px; height: 19px; }
+  .settings-accordion-body .settings-preference-list { gap: 7px; }
+  .settings-accordion-body .settings-preference-list > .settings-preference-row { min-height: 62px; padding: 9px 10px; }
+  .settings-accordion-body .settings-preference-list > .settings-preference-row:first-child { border-top: 1px solid var(--border); }
+  .settings-accordion-body .settings-quick-action-row { min-height: 58px; }
+  .settings-action-grid { gap: 8px; }
+  .settings-action { min-height: 72px; padding: 10px; }
+  .settings-action .icon-badge { flex-basis: 34px; width: 34px; height: 34px; }
+  .settings-accordion-body .settings-preference-list-standalone { padding: 8px 10px; }
+  .settings-accordion-body .settings-preference-list-standalone > .settings-preference-row { min-height: 52px; padding: 8px 0; }
   .settings-accordion-body .settings-profile-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .settings-accordion-body .settings-profile-header { gap: 8px; }
   .settings-accordion-body .settings-profile-header .section-title { font-size: 0.94rem; }
   .settings-edit-profile-button { padding: 8px 10px; font-size: 0.72rem; }
+  .settings-profile-card { gap: 13px; padding: 13px; }
+  .settings-profile-card .settings-profile-name { padding: 11px 12px; font-size: 1.1rem; }
+  .settings-profile-card .settings-profile-grid { gap: 8px; }
+  .settings-profile-card .settings-meta-item { min-height: 70px; padding: 10px; }
+  .settings-profile-card .settings-meta-item span { font-size: 0.68rem; }
+  .settings-profile-card .settings-meta-item strong { font-size: 0.86rem; }
+  .settings-database-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .settings-database-stat { min-height: 70px; padding: 10px; }
+  .settings-database-stat span { font-size: 0.68rem; }
+  .settings-database-stat strong { font-size: 1.2rem; }
   .settings-guest-preview { grid-template-columns: 52px minmax(0, 1fr) 18px; min-height: 82px; padding: 10px 12px; }
   .settings-guest-avatar { width: 52px; height: 52px; }
   .settings-guest-copy strong { font-size: 0.9rem; }
@@ -961,7 +1018,7 @@
   }
   .settings-action + .settings-action {
     box-shadow: none;
-    margin-top: 8px;
+    margin-top: 0;
   }
   .settings-data-card > .between {
     padding-bottom: 12px;
@@ -1140,6 +1197,32 @@
   .financial-card-grid {
     grid-template-columns: 1fr;
   }
+  .financial-record-card {
+    grid-template-columns: 38px minmax(0, 1fr) auto;
+    gap: 8px;
+    padding: 9px;
+  }
+  .financial-record-icon { width: 36px; height: 36px; }
+  .financial-record-copy strong { font-size: 0.84rem; }
+  .financial-record-value { font-size: 0.82rem; }
+  .financial-record-period { grid-column: 2; grid-row: 2; justify-self: start; }
+  .financial-record-actions {
+    grid-column: 3;
+    grid-row: 2;
+  }
+  .financial-savings-actions {
+    grid-column: auto;
+    grid-row: auto;
+  }
+  .financial-record-actions .icon-button { width: 34px; height: 34px; }
+  .financial-savings-card,
+  .financial-bill-card,
+  .financial-budget-card { padding: 12px; }
+  .financial-savings-metrics { gap: 6px; }
+  .financial-savings-metrics > div { padding: 8px; }
+  .financial-savings-metrics span { font-size: 0.64rem; }
+  .financial-savings-metrics strong { font-size: 0.72rem; }
+  .financial-budget-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .financial-category-layout {
     grid-template-columns: 116px minmax(0, 1fr);
     gap: 12px;
@@ -1206,15 +1289,19 @@
     min-height: 68px;
     padding: 10px;
   }
+  .loan-metric-label { font-size: 0.68rem; }
   .loan-metrics strong {
     font-size: 1rem;
   }
-  .loan-meta span {
-    width: 100%;
-    justify-content: space-between;
-    border-radius: 12px;
-    padding: 6px 10px;
-    line-height: 1.35;
+  .loan-meta {
+    grid-template-columns: 1fr;
+  }
+  .loan-meta div {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+  .loan-meta strong {
+    text-align: right;
   }
   .payment-schedule summary {
     min-height: 42px;
@@ -1225,19 +1312,9 @@
     flex-direction: column;
     gap: 2px;
   }
-  .loan-card .action-row {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto auto;
-    gap: 8px;
-  }
-  .loan-card .action-row .button {
+  .loan-card-actions .button {
     min-width: 0;
     padding-inline: 10px;
-  }
-  .loan-card .action-row .ghost-button {
-    width: 42px;
-    padding: 0;
-    font-size: 0;
   }
   .mobile-nav {
     left: calc(8px + env(safe-area-inset-left));
@@ -1982,6 +2059,30 @@
   color: #cfffad;
 }
 
+:root[data-theme="dark"] .help-card {
+  border-color: rgba(171, 255, 186, 0.14);
+  background: linear-gradient(145deg, rgba(17, 37, 29, 0.82), rgba(11, 24, 20, 0.94));
+}
+
+:root[data-theme="dark"] .help-card h2 { color: #f4fff7; }
+:root[data-theme="dark"] .help-card p { color: #c2dccd; }
+
+:root[data-theme="dark"] .family-page .family-event-card,
+:root[data-theme="dark"] .family-page .family-summary-item {
+  border-color: rgba(171, 255, 186, 0.14);
+  background: rgba(255, 255, 255, 0.045);
+}
+
+:root[data-theme="dark"] .family-page .family-event-copy strong,
+:root[data-theme="dark"] .family-page .family-summary-item > strong {
+  color: #f4fff7;
+}
+
+:root[data-theme="dark"] .family-page .family-event-copy > span,
+:root[data-theme="dark"] .family-page .family-summary-label {
+  color: #c2dccd;
+}
+
 :root[data-theme="dark"] .family-page .family-member-card .kv div,
 :root[data-theme="dark"] .family-page .family-anniversary-stats div {
   border-color: rgba(201, 255, 179, 0.12);
@@ -2488,6 +2589,41 @@
   box-shadow: 0 18px 32px rgba(2, 10, 7, 0.2);
 }
 
+:root[data-theme="dark"] .settings-profile-card .settings-profile-name {
+  border-color: rgba(171, 255, 186, 0.16);
+  background: linear-gradient(120deg, rgba(165, 255, 180, 0.1), rgba(255, 255, 255, 0.025));
+}
+
+:root[data-theme="dark"] .settings-profile-card .settings-meta-item {
+  border-color: rgba(171, 255, 186, 0.14);
+  background: rgba(255, 255, 255, 0.035);
+}
+
+:root[data-theme="dark"] .settings-accordion-body .settings-preference-list > .settings-preference-row {
+  border-color: rgba(171, 255, 186, 0.14);
+  background: rgba(255, 255, 255, 0.035);
+}
+
+:root[data-theme="dark"] .settings-accordion-body .settings-preference-list-standalone {
+  border-color: rgba(171, 255, 186, 0.14);
+  background: rgba(255, 255, 255, 0.035);
+}
+
+:root[data-theme="dark"] .settings-accordion-body .settings-preference-list-standalone > .settings-preference-row {
+  border-color: rgba(171, 255, 186, 0.12);
+  background: transparent;
+}
+
+:root[data-theme="dark"] .settings-action {
+  border-color: rgba(171, 255, 186, 0.14);
+  background: rgba(255, 255, 255, 0.035);
+}
+
+:root[data-theme="dark"] .settings-database-stat {
+  border-color: rgba(171, 255, 186, 0.14);
+  background: rgba(255, 255, 255, 0.035);
+}
+
 :root[data-theme="dark"] .settings-page .glass-card {
   color: #edfdf2;
 }
@@ -2660,11 +2796,23 @@
   border-radius: 20px;
 }
 
+:root[data-theme="dark"] .daily-actions,
+:root[data-theme="dark"] .daily-page .daily-stat,
+:root[data-theme="dark"] .daily-page .daily-empty {
+  border-color: rgba(171, 255, 186, 0.14);
+  background: rgba(255, 255, 255, 0.035);
+}
+
 :root[data-theme="dark"] .daily-page .list-row,
 :root[data-theme="dark"] .daily-page .pill,
 :root[data-theme="dark"] .daily-page .daily-record-row {
   border-color: rgba(201, 255, 179, 0.12);
   background: rgba(255, 255, 255, 0.04);
+}
+
+:root[data-theme="dark"] .daily-page .daily-category-row .pill {
+  border-color: rgba(201, 255, 179, 0.14);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.025));
 }
 
 :root[data-theme="dark"] .daily-page .pill {

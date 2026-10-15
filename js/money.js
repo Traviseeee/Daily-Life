@@ -330,7 +330,16 @@ function renderIncome() {
 }
 
 function incomeRow(item) {
-  return `<div class="list-row financial-row"><span class="icon-badge green">${Icons.salary()}</span><div class="financial-row-main"><strong>${escapeHtml(item.name)}</strong><span class="secondary">${optionLabel(item.category || "Other")}</span></div><span class="financial-row-amount success">${money(item.amount, item.currency)}</span><span class="pill">${optionLabel(item.frequency)}</span><div class="financial-row-actions"><button class="icon-button" data-edit-income="${item.id}" aria-label="${t("editIncome")}">${Icons.edit()}</button><button class="icon-button" data-delete-income="${item.id}" aria-label="${t("delete")}">${Icons.trash()}</button></div></div>`;
+  return `<div class="financial-record-card">
+    <span class="financial-record-icon green">${Icons.salary()}</span>
+    <div class="financial-record-copy"><strong>${escapeHtml(item.name)}</strong><span>${optionLabel(item.category || "Other")}</span></div>
+    <strong class="financial-record-value success">${money(item.amount, item.currency)}</strong>
+    <span class="pill financial-record-period">${optionLabel(item.frequency)}</span>
+    <div class="financial-record-actions">
+      <button class="icon-button" data-edit-income="${escapeAttr(item.id)}" aria-label="${escapeAttr(`${t("editIncome")} ${item.name}`)}" title="${escapeAttr(t("edit"))}">${Icons.edit()}</button>
+      <button class="icon-button" data-delete-income="${escapeAttr(item.id)}" aria-label="${escapeAttr(`${t("delete")} ${item.name}`)}" title="${escapeAttr(t("delete"))}">${Icons.trash()}</button>
+    </div>
+  </div>`;
 }
 
 function renderExpenses() {
@@ -339,22 +348,20 @@ function renderExpenses() {
 
 function expenseLedger(items) {
   if (!items.length) return emptyState(t("noExpensesYet"), t("noExpensesBody"), t("addExpense"), "add-expense");
-  return `
-    <div class="financial-ledger-table">
-      <div class="financial-ledger-head" aria-hidden="true">
-        <span>${t("expense")}</span>
-        <span>${t("category")}</span>
-        <span>${t("amount")}</span>
-        <span>${t("date")}</span>
-        <span></span>
-      </div>
-      <div class="list financial-ledger">${items.map(expenseRow).join("")}</div>
-    </div>
-  `;
+  return `<div class="financial-record-list">${items.map(expenseRow).join("")}</div>`;
 }
 
 function expenseRow(item) {
-  return `<div class="list-row financial-row financial-expense-row"><div class="financial-row-main"><strong>${escapeHtml(item.description)}</strong></div><span class="pill financial-category-pill">${optionLabel(item.category)}</span><span class="financial-row-amount danger">-${money(item.amount, item.currency)}</span><span class="financial-row-date">${formatDate(item.date, { month: "short", day: "numeric" })}</span><div class="financial-row-actions"><button class="icon-button" data-edit-expense="${item.id}" aria-label="${t("edit")}">${Icons.edit()}</button><button class="icon-button" data-delete-expense="${item.id}" aria-label="${t("delete")}">${Icons.trash()}</button></div></div>`;
+  const category = item.category || "Other";
+  return `<div class="financial-record-card">
+    <span class="financial-record-icon expense">${Icons[expenseCategoryIcons[category] || "expense"]()}</span>
+    <div class="financial-record-copy"><strong>${escapeHtml(item.description)}</strong><span>${optionLabel(category)} · ${formatDate(item.date, { month: "short", day: "numeric" })}</span></div>
+    <strong class="financial-record-value danger">-${money(item.amount, item.currency)}</strong>
+    <div class="financial-record-actions">
+      <button class="icon-button" data-edit-expense="${escapeAttr(item.id)}" aria-label="${escapeAttr(`${t("edit")} ${item.description}`)}" title="${escapeAttr(t("edit"))}">${Icons.edit()}</button>
+      <button class="icon-button" data-delete-expense="${escapeAttr(item.id)}" aria-label="${escapeAttr(`${t("delete")} ${item.description}`)}" title="${escapeAttr(t("delete"))}">${Icons.trash()}</button>
+    </div>
+  </div>`;
 }
 
 function renderSavings() {
@@ -387,8 +394,30 @@ function savingCard(item) {
     .slice(0, 4)
     .map(entry => `<div class="savings-history-row ${entry.paid ? "paid" : ""}"><span>${formatSavingsMonth(entry.month)}</span><strong>${money(Number(entry.amount || item.monthlyContribution || 0), item.currency)}</strong></div>`)
     .join("");
+  const progress = pct(item.currentAmount, item.targetAmount);
 
-  return `<div class="goal-item financial-mini-card"><div class="between"><strong>${escapeHtml(item.name)}</strong><span class="pill">${pct(item.currentAmount, item.targetAmount)}%</span></div><div class="financial-card-amount">${money(item.currentAmount, item.currency)} / ${money(item.targetAmount, item.currency)}</div><div class="progress-track"><div class="progress-fill" style="--progress:${pct(item.currentAmount, item.targetAmount)}%"></div></div><div class="financial-meta-line"><span>${t("deadline")}</span><strong>${formatDate(item.deadline)}</strong></div><div class="financial-meta-line"><span>${t("monthlyContribution")}</span><strong>${money(monthlyAmount, item.currency)}</strong></div><div class="savings-smart-panel"><div class="between"><strong>${t("thisMonth")}</strong><span class="pill ${isPaidThisMonth ? "success" : ""}">${isPaidThisMonth ? t("saved") : t("pending")}</span></div><label class="payment-schedule-row ${isPaidThisMonth ? "paid" : ""}"><input class="check" type="checkbox" data-savings-contribution="${item.id}" data-savings-month="${monthKey}" ${isPaidThisMonth ? "checked" : ""}><span><strong>${formatSavingsMonth(monthKey)}</strong><small>${money(monthlyAmount, item.currency)}</small></span></label>${recentHistory ? `<div class="savings-history-list">${recentHistory}</div>` : ""}</div><div class="action-row"><button class="button ghost-button" data-edit-savings="${item.id}">${Icons.edit()} ${t("edit")}</button><button class="icon-button" data-delete-savings="${item.id}" aria-label="${t("delete")}">${Icons.trash()}</button></div></div>`;
+  return `<div class="financial-savings-card">
+    <div class="financial-savings-header">
+      <span class="financial-record-icon savings">${Icons.savings()}</span>
+      <div class="financial-savings-title"><strong>${escapeHtml(item.name)}</strong><span>${t("savings")}</span></div>
+      <span class="pill financial-savings-progress">${progress}%</span>
+    </div>
+    <div class="financial-savings-balance"><strong>${money(item.currentAmount, item.currency)}</strong><span>/ ${money(item.targetAmount, item.currency)}</span></div>
+    <div class="progress-track"><div class="progress-fill" style="--progress:${progress}%"></div></div>
+    <div class="financial-savings-metrics">
+      <div><span>${Icons.calendar()}${t("deadline")}</span><strong>${formatDate(item.deadline)}</strong></div>
+      <div><span>${Icons.salary()}${t("monthlyContribution")}</span><strong>${money(monthlyAmount, item.currency)}</strong></div>
+    </div>
+    <section class="savings-smart-panel">
+      <div class="savings-smart-heading"><strong>${t("thisMonth")}</strong><span class="pill ${isPaidThisMonth ? "success" : ""}">${isPaidThisMonth ? t("saved") : t("pending")}</span></div>
+      <label class="payment-schedule-row ${isPaidThisMonth ? "paid" : ""}"><input class="check" type="checkbox" data-savings-contribution="${escapeAttr(item.id)}" data-savings-month="${escapeAttr(monthKey)}" ${isPaidThisMonth ? "checked" : ""}><span><strong>${formatSavingsMonth(monthKey)}</strong><small>${money(monthlyAmount, item.currency)}</small></span></label>
+      ${recentHistory ? `<details class="savings-history-details"><summary>${t("recentTransactions")}</summary><div class="savings-history-list">${recentHistory}</div></details>` : ""}
+    </section>
+    <div class="financial-record-actions financial-savings-actions">
+      <button class="icon-button" data-edit-savings="${escapeAttr(item.id)}" aria-label="${escapeAttr(`${t("edit")} ${item.name}`)}" title="${escapeAttr(t("edit"))}">${Icons.edit()}</button>
+      <button class="icon-button" data-delete-savings="${escapeAttr(item.id)}" aria-label="${escapeAttr(`${t("delete")} ${item.name}`)}" title="${escapeAttr(t("delete"))}">${Icons.trash()}</button>
+    </div>
+  </div>`;
 }
 
 function renderLoans() {
@@ -401,8 +430,43 @@ function loanCard(loan) {
   const totalPayable = loanPayoffAmount(loan);
   const totalInterest = Math.max(0, totalPayable - Number(loan.originalAmount || 0));
   const progressTarget = totalPayable || Number(loan.originalAmount || 0);
+  const progress = pct(paid, progressTarget);
   const paymentDay = loanDisplayPaymentDay(loan);
-  return `<div class="loan-card"><div class="loan-card-header"><div><h3>${escapeHtml(loan.name)}</h3><p>${loan.durationMonths ? `${loan.durationMonths} ${t("months")}` : optionLabel(loan.paymentFrequency || "Monthly")} · ${t("interest")} ${loan.interestRate || 0}% · ${t("paymentDay")} ${paymentDay ? formatPaymentDay(paymentDay) : t("notSet")}</p></div><span class="icon-badge blue">${Icons.loan()}</span></div><div class="loan-metrics"><div><span>${t("remaining")}</span><strong>${money(remaining, loan.currency)}</strong></div><div><span>${t("monthlyPayment")}</span><strong>${money(loan.monthlyPayment, loan.currency)}</strong></div><div><span>${t("nextPaymentDate")}</span><strong>${formatDate(nextLoanPaymentDate(loan), { month: "short", day: "numeric" })}</strong></div><div><span>${t("dueDate")}</span><strong>${formatDate(loan.dueDate, { month: "short", year: "numeric" })}</strong></div></div><div><div class="progress-track"><div class="progress-fill" style="--progress:${pct(paid, progressTarget)}%"></div></div><p class="trend">${pct(paid, progressTarget)}% ${t("paid")} · ${money(paid, loan.currency)} / ${money(progressTarget, loan.currency)}</p></div><div class="loan-meta"><span>${t("original")}: <strong>${money(loan.originalAmount, loan.currency)}</strong></span><span>${t("firstPaymentDate")}: <strong>${formatDate(loan.firstPaymentDate || loan.startDate)}</strong></span><span>${t("totalInterest")}: <strong>${money(totalInterest, loan.currency)}</strong></span></div>${renderLoanPaymentSchedule(loan)}<div class="action-row"><button class="button" data-payment-loan="${loan.id}">${Icons.plus()} ${t("makePayment")}</button><button class="button ghost-button" data-edit-loan="${loan.id}">${Icons.edit()} ${t("edit")}</button><button class="icon-button" data-delete-loan="${loan.id}" aria-label="${t("delete")}">${Icons.trash()}</button></div></div>`;
+  return `<div class="loan-card">
+    <div class="loan-card-header">
+      <div class="loan-card-title"><h3>${escapeHtml(loan.name)}</h3><div class="loan-summary-tags">
+        <span>${Icons.calendar()}${loan.durationMonths ? `${loan.durationMonths} ${t("months")}` : optionLabel(loan.paymentFrequency || "Monthly")}</span>
+        <span>${Icons.chart()}${t("interest")} ${loan.interestRate || 0}%</span>
+        <span>${Icons.calendar()}${t("paymentDay")} ${paymentDay ? formatPaymentDay(paymentDay) : t("notSet")}</span>
+      </div></div>
+      <span class="icon-badge blue">${Icons.loan()}</span>
+    </div>
+    <div class="loan-metrics">
+      <div class="loan-metric loan-metric-primary"><span class="loan-metric-label">${Icons.wallet()}${t("remaining")}</span><strong>${money(remaining, loan.currency)}</strong></div>
+      <div class="loan-metric"><span class="loan-metric-label">${Icons.salary()}${t("monthlyPayment")}</span><strong>${money(loan.monthlyPayment, loan.currency)}</strong></div>
+      <div class="loan-metric"><span class="loan-metric-label">${Icons.calendar()}${t("nextPaymentDate")}</span><strong>${formatDate(nextLoanPaymentDate(loan), { month: "short", day: "numeric" })}</strong></div>
+      <div class="loan-metric"><span class="loan-metric-label">${Icons.calendar()}${t("dueDate")}</span><strong>${formatDate(loan.dueDate, { month: "short", year: "numeric" })}</strong></div>
+    </div>
+    <div class="loan-progress-panel">
+      <div class="loan-progress-heading"><span>${t("paid")}</span><strong>${progress}%</strong></div>
+      <div class="progress-track"><div class="progress-fill" style="--progress:${progress}%"></div></div>
+      <div class="loan-progress-amount"><strong>${money(paid, loan.currency)}</strong><span>/</span><span>${money(progressTarget, loan.currency)}</span></div>
+    </div>
+    <details class="loan-details">
+      <summary>${Icons.info()}<span>${t("loanDetails")}</span></summary>
+      <div class="loan-meta">
+        <div><span>${t("original")}</span><strong>${money(loan.originalAmount, loan.currency)}</strong></div>
+        <div><span>${t("firstPaymentDate")}</span><strong>${formatDate(loan.firstPaymentDate || loan.startDate)}</strong></div>
+        <div><span>${t("totalInterest")}</span><strong>${money(totalInterest, loan.currency)}</strong></div>
+      </div>
+    </details>
+    ${renderLoanPaymentSchedule(loan)}
+    <div class="loan-card-actions">
+      <button class="button" data-payment-loan="${escapeAttr(loan.id)}">${Icons.plus()} ${t("makePayment")}</button>
+      <button class="icon-button loan-action-icon" data-edit-loan="${escapeAttr(loan.id)}" aria-label="${escapeAttr(`${t("edit")} ${loan.name}`)}" title="${escapeAttr(t("edit"))}">${Icons.edit()}</button>
+      <button class="icon-button loan-action-icon" data-delete-loan="${escapeAttr(loan.id)}" aria-label="${escapeAttr(`${t("delete")} ${loan.name}`)}" title="${escapeAttr(t("delete"))}">${Icons.trash()}</button>
+    </div>
+  </div>`;
 }
 
 function renderLoanPaymentSchedule(loan) {
@@ -433,15 +497,27 @@ function renderBills() {
 function billCard(bill) {
   const paid = billPaidCurrentCycle(bill);
   const statusLabel = paid ? `${Icons.check()}${escapeHtml(t("billPaidLabel"))}` : escapeHtml(t("billUnpaidLabel"));
-  return `<div class="goal-item financial-mini-card"><div class="between"><span class="icon-badge blue">${Icons.bill()}</span><span class="pill bill-status ${paid ? "is-paid" : "is-unpaid"}">${statusLabel}</span></div><h3>${escapeHtml(bill.name)}</h3><div class="metric compact-metric">${money(bill.amount, bill.currency)}</div><div class="financial-meta-line"><span>${t("dueDate")}</span><strong>${formatDate(bill.due)}</strong></div><p class="secondary">${optionLabel(bill.frequency)} · ${optionLabel(bill.category)}</p><div class="action-row"><button class="button ghost-button bill-payment-action ${paid ? "is-paid" : "is-unpaid"}" data-finance-toggle-bill="${escapeAttr(bill.id)}" aria-pressed="${paid}">${paid ? Icons.check() : ""}${escapeHtml(paid ? t("billPaidLabel") : t("billUnpaidLabel"))}</button><button class="button ghost-button" data-edit-bill="${escapeAttr(bill.id)}">${Icons.edit()} ${t("edit")}</button><button class="icon-button" data-delete-bill="${escapeAttr(bill.id)}" aria-label="${escapeAttr(t("delete"))}">${Icons.trash()}</button></div></div>`;
+  return `<div class="financial-bill-card">
+    <div class="financial-bill-header"><span class="financial-record-icon bill">${Icons.bill()}</span><span class="pill bill-status ${paid ? "is-paid" : "is-unpaid"}">${statusLabel}</span></div>
+    <h3>${escapeHtml(bill.name)}</h3>
+    <strong class="financial-bill-amount">${money(bill.amount, bill.currency)}</strong>
+    <div class="financial-bill-meta"><span>${Icons.calendar()}${t("dueDate")}</span><strong>${formatDate(bill.due)}</strong></div>
+    <div class="financial-bill-tags"><span>${optionLabel(bill.frequency)}</span><span>${optionLabel(bill.category)}</span></div>
+    <div class="financial-bill-actions">
+      <button class="button ghost-button bill-payment-action ${paid ? "is-paid" : "is-unpaid"}" data-finance-toggle-bill="${escapeAttr(bill.id)}" aria-pressed="${paid}">${paid ? Icons.check() : ""}${escapeHtml(paid ? t("billPaidLabel") : t("billUnpaidLabel"))}</button>
+      <button class="icon-button" data-edit-bill="${escapeAttr(bill.id)}" aria-label="${escapeAttr(`${t("edit")} ${bill.name}`)}" title="${escapeAttr(t("edit"))}">${Icons.edit()}</button>
+      <button class="icon-button" data-delete-bill="${escapeAttr(bill.id)}" aria-label="${escapeAttr(`${t("delete")} ${bill.name}`)}" title="${escapeAttr(t("delete"))}">${Icons.trash()}</button>
+    </div>
+  </div>`;
 }
 
 function renderBudget() {
   const categories = [...new Set(appData.expenses.map(expense => expense.category))];
-  return `<article class="glass-card card-pad financial-panel"><h2 class="section-title">${t("spendingByCategory")}</h2><div class="grid financial-card-grid">${categories.map(category => {
+  return `<article class="glass-card card-pad financial-panel"><div class="financial-panel-heading"><div><span class="eyebrow">${t("budget")}</span><h2 class="section-title">${t("spendingByCategory")}</h2></div><span class="icon-badge blue">${Icons.budget()}</span></div><div class="grid financial-card-grid financial-budget-grid">${categories.map(category => {
     const spent = sumMoney(appData.expenses.filter(e => e.category === category), "amount");
     const max = Math.max(...categories.map(cat => sumMoney(appData.expenses.filter(e => e.category === cat), "amount")), 1);
-    return `<div class="goal-item financial-mini-card"><div class="between"><strong>${optionLabel(category)}</strong><span class="financial-row-amount">${money(spent)}</span></div><div class="progress-track"><div class="progress-fill" style="--progress:${(spent / max) * 100}%"></div></div></div>`;
+    const progress = pct(spent, max);
+    return `<div class="financial-budget-card"><div class="financial-budget-heading"><span class="financial-record-icon expense">${Icons[expenseCategoryIcons[category] || "expense"]()}</span><strong>${optionLabel(category)}</strong></div><strong class="financial-budget-amount">${money(spent)}</strong><div class="progress-track"><div class="progress-fill" style="--progress:${progress}%"></div></div><span class="financial-budget-share">${progress}%</span></div>`;
   }).join("") || emptyState(t("noBudgetYet"), t("noBudgetBody"), t("addExpense"), "add-expense")}</div></article>`;
 }
 
@@ -450,7 +526,7 @@ function renderReports() {
   const report = buildMonthlyFinanceReport(month);
   return `<article class="glass-card card-pad financial-panel financial-report-panel">
     <div class="financial-report-toolbar">
-      <div><span class="eyebrow">${t("reports")}</span><h2 class="section-title">${t("monthlyReport")}</h2></div>
+      <div class="financial-report-heading"><span class="icon-badge blue">${Icons.chart()}</span><div><span class="eyebrow">${t("reports")}</span><h2 class="section-title">${t("monthlyReport")}</h2></div></div>
       <label class="field financial-report-month"><span>${t("reportMonth")}</span><input type="month" value="${escapeAttr(month)}" data-finance-report-month></label>
       <div class="financial-report-export-actions">
         <button class="button" type="button" data-finance-report-export="excel">${Icons.arrowDown()} ${t("exportExcel")}</button>
@@ -465,15 +541,15 @@ function renderReports() {
       <div><span>${t("generatedOn")}</span><strong>${escapeHtml(report.generatedOn)}</strong></div>
     </div>
     <div class="financial-report-summary">
-      <div class="financial-report-metric"><span>${t("monthlyIncome")}</span><strong>${money(report.incomeTotal)}</strong></div>
-      <div class="financial-report-metric"><span>${t("monthlyExpenses")}</span><strong>${money(report.expenseTotal)}</strong></div>
-      <div class="financial-report-metric"><span>${t("monthlyPayment")}</span><strong>${money(report.loanPaymentTotal)}</strong></div>
-      <div class="financial-report-metric"><span>${t("netCashFlow")}</span><strong>${money(report.netCashFlow)}</strong></div>
+      <div class="financial-report-metric income"><span>${t("monthlyIncome")}</span><strong>${money(report.incomeTotal)}</strong></div>
+      <div class="financial-report-metric expenses"><span>${t("monthlyExpenses")}</span><strong>${money(report.expenseTotal)}</strong></div>
+      <div class="financial-report-metric payments"><span>${t("monthlyPayment")}</span><strong>${money(report.loanPaymentTotal)}</strong></div>
+      <div class="financial-report-metric cash-flow"><span>${t("netCashFlow")}</span><strong>${money(report.netCashFlow)}</strong></div>
     </div>
     <div class="financial-report-table-wrap">
       <table class="financial-report-table">
         <thead><tr><th>${t("type")}</th><th>${t("description")}</th><th>${t("category")}</th><th>${t("date")} / ${t("frequency")}</th><th>${t("amount")}</th></tr></thead>
-        <tbody>${report.rows.length ? report.rows.map(row => `<tr><td>${escapeHtml(row.type)}</td><td>${escapeHtml(row.description)}</td><td>${escapeHtml(row.category)}</td><td>${escapeHtml(row.period)}</td><td class="${row.amount < 0 ? "financial-report-outflow" : ""}">${money(row.amount)}</td></tr>`).join("") : `<tr><td class="financial-report-empty" colspan="5">${t("noMonthlyTransactions")}</td></tr>`}</tbody>
+        <tbody>${report.rows.length ? report.rows.map(row => `<tr><td data-label="${escapeAttr(t("type"))}">${escapeHtml(row.type)}</td><td data-label="${escapeAttr(t("description"))}">${escapeHtml(row.description)}</td><td data-label="${escapeAttr(t("category"))}">${escapeHtml(row.category)}</td><td data-label="${escapeAttr(`${t("date")} / ${t("frequency")}`)}">${escapeHtml(row.period)}</td><td data-label="${escapeAttr(t("amount"))}" class="${row.amount < 0 ? "financial-report-outflow" : ""}">${money(row.amount)}</td></tr>`).join("") : `<tr><td class="financial-report-empty" colspan="5">${t("noMonthlyTransactions")}</td></tr>`}</tbody>
       </table>
     </div>
     <dialog class="financial-report-preview-dialog" data-finance-report-preview-dialog aria-labelledby="financialReportPreviewTitle">

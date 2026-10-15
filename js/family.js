@@ -28,22 +28,22 @@ function renderFamily() {
       <div class="grid three-col">${appData.family.map(memberCard).join("")}</div>
       ${relationshipAnniversaryCards()}
       ${familyPhotoCard()}
-      <div class="grid two-col" style="margin-top:18px">
-        <article class="glass-card card-pad">
+      <div class="grid two-col family-overview-grid">
+        <article class="glass-card card-pad family-events-panel">
           <div class="between">
             <h2 class="section-title section-title-with-icon"><span class="section-title-icon">${Icons.calendar()}</span>${t("familyEvents")}</h2>
             <button class="button ghost-button" type="button" data-action="add-event">${Icons.plus()} ${t("addEvent")}</button>
           </div>
-          <div class="list">
-            ${familyEvents.map(event => `<div class="list-row"><span class="icon-badge green">${Icons.calendar()}</span><strong>${event.title}</strong><span class="secondary">${formatDate(event.date)}</span><button class="icon-button" data-edit-event="${event.id}" aria-label="${t("editEvent")}">${Icons.edit()}</button><button class="icon-button" data-delete-event="${event.id}" aria-label="${t("deleteEvent")}">${Icons.trash()}</button></div>`).join("") || emptyState(t("noFamilyEvents"), t("noFamilyEventsBody"), t("addEvent"), "add-event")}
+          <div class="list family-event-list">
+            ${familyEvents.map(event => `<div class="family-event-card"><span class="icon-badge green">${Icons.calendar()}</span><div class="family-event-copy"><strong>${escapeHtml(event.title)}</strong><span>${formatDate(event.date)}</span></div><div class="family-event-actions"><button class="icon-button" data-edit-event="${escapeAttr(event.id)}" aria-label="${escapeAttr(t("editEvent"))}">${Icons.edit()}</button><button class="icon-button" data-delete-event="${escapeAttr(event.id)}" aria-label="${escapeAttr(t("deleteEvent"))}">${Icons.trash()}</button></div></div>`).join("") || emptyState(t("noFamilyEvents"), t("noFamilyEventsBody"), t("addEvent"), "add-event")}
           </div>
         </article>
-        <article class="glass-card card-pad">
+        <article class="glass-card card-pad family-summary-panel">
           <h2 class="section-title section-title-with-icon"><span class="section-title-icon">${Icons.chart()}</span>${t("familySnapshot")}</h2>
-          <div class="kv">
-            <div><span>${t("members")}</span><strong>${appData.family.length}</strong></div>
-            <div><span>${t("events")}</span><strong>${familyEvents.length}</strong></div>
-            <div><span>${t("upcomingBirthdays")}</span><strong>${appData.family.filter(member => member.birthday).length}</strong></div>
+          <div class="family-summary-grid">
+            <div class="family-summary-item"><span class="family-summary-icon">${Icons.family()}</span><span class="family-summary-label">${t("members")}</span><strong>${appData.family.length}</strong></div>
+            <div class="family-summary-item"><span class="family-summary-icon">${Icons.calendar()}</span><span class="family-summary-label">${t("events")}</span><strong>${familyEvents.length}</strong></div>
+            <div class="family-summary-item"><span class="family-summary-icon">${Icons.cake()}</span><span class="family-summary-label">${t("upcomingBirthdays")}</span><strong>${appData.family.filter(member => member.birthday).length}</strong></div>
           </div>
         </article>
       </div>
