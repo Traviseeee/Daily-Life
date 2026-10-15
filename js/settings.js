@@ -141,13 +141,31 @@ function renderSettings() {
           <details class="settings-accordion" id="settings-section-about">
             ${settingsAccordionSummary("about", t("about"), t("settingsAboutSubtitle"), Icons.info())}
             <div class="settings-accordion-body settings-about-body">
-              <strong>MYLIFE</strong><span>Version 1.0.0</span><p>${t("privateDashboard")}. ${t("localStorageNote")}</p>
+              <section class="settings-about-story" aria-labelledby="settingsAboutTitle">
+                <div class="settings-about-story-heading">
+                  <span class="settings-about-brand">MYLIFE</span>
+                  <span class="settings-about-version">Version 1.0.0</span>
+                </div>
+                <h3 id="settingsAboutTitle">${t("aboutMylifeTitle")}</h3>
+                <p class="settings-about-tagline">${t("aboutMylifeTagline")}</p>
+                <div class="settings-about-copy">
+                  <p>${t("aboutMylifeIntro")}</p>
+                  <p>${t("aboutMylifePurpose")}</p>
+                  <p>${t("aboutMylifeProject")}</p>
+                </div>
+                <p class="settings-about-closing">${t("aboutMylifeClosing")}</p>
+                <p class="settings-about-storage">${t("localStorageNote")}</p>
+              </section>
             </div>
           </details>
           </div>
-          <article class="glass-card card-pad settings-danger-zone settings-danger-card">
-            <div><strong>${t("dangerZone")}</strong><span>${t("clearDataHelp")}</span></div>
-            <div class="action-row"><button class="button ghost-button" data-action="logout">${Icons.arrowUp()} ${t("logout")}</button><button class="button danger-button" data-action="clear-data">${Icons.trash()} ${t("clearData")}</button></div>
+          <article class="glass-card card-pad settings-danger-zone settings-danger-card" aria-labelledby="settingsDangerTitle">
+            <div class="settings-danger-heading">
+              <span class="settings-danger-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3 2.8 19a1.3 1.3 0 0 0 1.1 2h16.2a1.3 1.3 0 0 0 1.1-2L12 3Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M12 9v5m0 3h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+              <div class="settings-danger-title"><strong id="settingsDangerTitle">${t("dangerZone")}</strong><span>${t("clearDataHelp")}</span></div>
+            </div>
+            <div class="settings-danger-copy"><small>${t("dangerZoneWarning")}</small></div>
+            <div class="action-row settings-danger-actions"><button class="button ghost-button" data-action="logout">${Icons.arrowUp()} ${t("logout")}</button><button class="button danger-button" data-action="clear-data">${Icons.trash()} ${t("clearData")}</button></div>
           </article>
         </div>
         <input class="sr-only" id="importJsonInput" type="file" accept="application/json,.json">

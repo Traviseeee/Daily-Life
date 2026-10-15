@@ -93,20 +93,23 @@ function relationshipAnniversaryCard(member) {
         <div><span class="eyebrow">${escapeHtml(t("ourAnniversary"))}</span><h2>${escapeHtml(member.name)} &amp; ${escapeHtml(relatedMember.name)}</h2></div>
         <span class="icon-badge green">${Icons.spark()}</span>
       </div>
-      <div class="family-anniversary-hero">
-        <strong>${escapeHtml(t("beenTogether"))}</strong>
-        <span>${days} ${escapeHtml(t("days"))}</span>
-      </div>
-      <div class="family-anniversary-timeline" style="--timeline-progress: ${progress}%">
-        <div class="family-anniversary-track"><span></span></div>
-        <div class="family-anniversary-milestone"><strong>${previousMilestone}</strong><span>${escapeHtml(t("days"))}</span></div>
-        <div class="family-anniversary-milestone current"><strong>${days}</strong><span>${escapeHtml(t("today"))}</span></div>
-        <div class="family-anniversary-milestone"><strong>${nextMilestone}</strong><span>${escapeHtml(t("days"))}</span></div>
+      <div class="family-anniversary-hero" style="--timeline-progress: ${progress}%">
+        <div class="family-anniversary-hero-heading">
+          <span class="family-anniversary-heart" aria-hidden="true">${Icons.heart()}</span>
+          <strong>${escapeHtml(t("beenTogether"))}</strong>
+        </div>
+        <div class="family-anniversary-count"><strong>${days}</strong><span>${escapeHtml(t("days"))}</span></div>
+        <div class="family-anniversary-timeline" aria-label="${escapeAttr(`${previousMilestone} ${t("days")}, ${days} ${t("today")}, ${nextMilestone} ${t("days")}`)}">
+          <div class="family-anniversary-track"><span></span><i></i></div>
+          <div class="family-anniversary-milestone"><strong>${previousMilestone}</strong><span>${escapeHtml(t("days"))}</span></div>
+          <div class="family-anniversary-milestone current"><strong class="sr-only">${days}</strong><span>${escapeHtml(t("today"))}</span></div>
+          <div class="family-anniversary-milestone"><strong>${nextMilestone}</strong><span>${escapeHtml(t("days"))}</span></div>
+        </div>
       </div>
       <div class="family-anniversary-stats">
-        <div><span>${escapeHtml(t("relationshipStart"))}</span><strong>${formatDate(member.anniversaryDate)}</strong></div>
-        <div><span>${escapeHtml(t("nextAnniversary"))}</span><strong>${formatDate(anniversaryDate)}</strong></div>
-        ${upcomingBirthday ? `<div><span>${escapeHtml(t("upcomingBirthday"))}</span><strong>${formatDate(upcomingBirthday)}</strong></div>` : ""}
+        <div class="family-anniversary-date-start"><span class="family-anniversary-date-icon" aria-hidden="true">${Icons.calendar()}</span><span class="family-anniversary-date-label">${escapeHtml(t("relationshipStart"))}</span><strong>${formatDate(member.anniversaryDate)}</strong></div>
+        <div class="family-anniversary-date-next"><span class="family-anniversary-date-icon" aria-hidden="true">${Icons.gift()}</span><span class="family-anniversary-date-label">${escapeHtml(t("nextAnniversary"))}</span><strong>${formatDate(anniversaryDate)}</strong></div>
+        ${upcomingBirthday ? `<div class="family-anniversary-date-birthday"><span class="family-anniversary-date-icon" aria-hidden="true">${Icons.cake()}</span><span class="family-anniversary-date-label">${escapeHtml(t("upcomingBirthday"))}</span><strong>${formatDate(upcomingBirthday)}</strong></div>` : ""}
       </div>
     </article>
   `;
@@ -162,7 +165,7 @@ function familyMediaMarkup(item, index = 0) {
   if (!item || !String(item.src || "").trim()) return "";
   const source = escapeAttr(item.src);
   const media = item.type === "video"
-    ? `<video src="${source}" muted loop playsinline></video>`
+    ? `<video src="${source}" autoplay muted loop playsinline></video>`
     : `<img src="${source}" alt="${escapeAttr(t("familyMedia"))}">`;
   return `${media}<div class="family-media-toolbar"><label class="family-media-action family-media-edit" title="${escapeAttr(t("edit"))}">${Icons.edit()}<input type="file" accept="image/*,video/*" data-family-media-edit="${index}"></label><button class="family-media-action family-media-remove" type="button" data-family-media-remove="${index}" aria-label="${escapeAttr(t("delete"))}">${Icons.trash()}</button></div><button class="family-media-control family-media-prev" type="button" data-family-media-prev aria-label="Previous">${Icons.chevron()}</button><button class="family-media-control family-media-next" type="button" data-family-media-next aria-label="Next">${Icons.chevron()}</button>`;
 }
@@ -412,6 +415,7 @@ function bindFamily(options = {}) {
     stage.innerHTML = familyMediaMarkup(selected, next);
     document.querySelectorAll(".family-media-dot").forEach(dot => dot.classList.toggle("active", Number(dot.dataset.familyMediaIndex) === next));
     bindFamilyMediaStage();
+    startFamilyMediaSlideshow();
   }));
   bindFamilyMediaActions();
   if (options.mediaOnly) {
@@ -465,7 +469,21 @@ function bindFamily(options = {}) {
 function startFamilyMediaSlideshow() {
   clearInterval(familyMediaTimer);
   familyMediaTimer = null;
-  // Manual-only slideshow: no automatic advance to avoid distracting autoplay.
+  const mediaCard = document.querySelector(".family-media-card");
+  const media = validFamilyMedia();
+  if (!mediaCard || media.length < 2 || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+  familyMediaTimer = window.setInterval(() => {
+    if (!mediaCard.isConnected) {
+      clearInterval(familyMediaTimer);
+      familyMediaTimer = null;
+      return;
+    }
+    if (document.hidden || mediaCard.matches(":hover") || mediaCard.contains(document.activeElement)) return;
+
+    const current = Number(mediaCard.querySelector(".family-media-dot.active")?.dataset.familyMediaIndex || 0);
+    mediaCard.querySelector(`.family-media-dot[data-family-media-index="${(current + 1) % media.length}"]`)?.click();
+  }, 5000);
 }
 
 function bindFamilyMediaActions() {

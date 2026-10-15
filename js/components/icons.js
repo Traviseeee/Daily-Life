@@ -11,6 +11,8 @@ const Icons = (() => {
     goal: () => base('<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>'),
     plane: () => base('<path d="m3 3 18 8-8 2-2 8-8-18Z"/><path d="m11 13-4 4"/>'),
     heart: () => base('<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21l7.8-7.5 1.1-1.1a5.5 5.5 0 0 0-.1-7.8Z"/>'),
+    gift: () => base('<rect x="3" y="9" width="18" height="12" rx="2"/><path d="M12 9v12M3 13h18M12 9H7.5a2.5 2.5 0 1 1 2.2-3.7L12 9Zm0 0h4.5a2.5 2.5 0 1 0-2.2-3.7L12 9Z"/>'),
+    cake: () => base('<path d="M4 12h16v9H4zM2 21h20M12 12V7M12 7a2 2 0 1 0-2-2M12 7a2 2 0 1 1 2-2M4 16c1.2 1 2.5 1 4 0s2.8-1 4 0 2.5 1 4 0 2.8-1 4 0"/>'),
     graduation: () => base('<path d="m22 10-10-5-10 5 10 5 10-5Z"/><path d="M6 12v5c3.3 2.3 8.7 2.3 12 0v-5"/><path d="M22 10v6"/>'),
     database: () => base('<ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/>'),
     calculator: () => base('<rect x="5" y="2" width="14" height="20" rx="2"/><path d="M8 6h8v4H8zM8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/>'),

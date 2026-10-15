@@ -1095,18 +1095,18 @@ function result(label, href, type) {
   return { label, href, type };
 }
 
-function getUpcomingNotifications(daysAhead = 7) {
+function getUpcomingNotifications(daysAhead = 7, itemLimit = 5) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const limit = new Date(today);
-  limit.setDate(limit.getDate() + daysAhead);
+  const dateLimit = new Date(today);
+  dateLimit.setDate(dateLimit.getDate() + daysAhead);
 
   const items = [];
 
   appData.calendarEvents.forEach(event => {
     if (!event.date) return;
     const eventDate = new Date(`${event.date}T00:00:00`);
-    if (eventDate < today || eventDate > limit) return;
+    if (eventDate < today || eventDate > dateLimit) return;
     items.push({
       id: event.id || `event-${event.date}`,
       type: "event",
@@ -1120,7 +1120,7 @@ function getUpcomingNotifications(daysAhead = 7) {
   appData.bills.forEach(bill => {
     if (bill.reminder === false || !bill.due || bill.status === "Paid") return;
     const dueDate = new Date(`${bill.due}T00:00:00`);
-    if (dueDate < today || dueDate > limit) return;
+    if (dueDate < today || dueDate > dateLimit) return;
     items.push({
       id: bill.id || `bill-${bill.due}`,
       type: "bill",
@@ -1137,7 +1137,7 @@ function getUpcomingNotifications(daysAhead = 7) {
       ["anniversary", member.anniversaryDate]
     ].forEach(([type, value]) => {
       const date = nextYearlyDate(value, today);
-      if (!date || date > limit) return;
+      if (!date || date > dateLimit) return;
       items.push({
         id: `family-${type}-${member.id}-${calendarDateInput(date)}`,
         type: `family-${type}`,
@@ -1154,7 +1154,7 @@ function getUpcomingNotifications(daysAhead = 7) {
   appData.reminders.forEach(reminder => {
     if (reminder.done || !reminder.date) return;
     const reminderDate = new Date(`${reminder.date}T00:00:00`);
-    if (reminderDate < today || reminderDate > limit) return;
+    if (reminderDate < today || reminderDate > dateLimit) return;
     items.push({
       id: reminder.id || `reminder-${reminder.date}`,
       type: "reminder",
@@ -1167,7 +1167,7 @@ function getUpcomingNotifications(daysAhead = 7) {
     });
   });
 
-  return items.sort((a, b) => a.date.localeCompare(b.date)).slice(0, 5);
+  return items.sort((a, b) => a.date.localeCompare(b.date)).slice(0, itemLimit);
 }
 
 function nextYearlyDate(value, today) {

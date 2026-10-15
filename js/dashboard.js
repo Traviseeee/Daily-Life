@@ -1,6 +1,6 @@
 function renderHome() {
   const stats = Store.calculate();
-  const todayIso = new Date().toISOString().slice(0, 10);
+  const todayIso = localDashboardDate(new Date());
   const todayEvents = appData.calendarEvents.filter(event => event.date === todayIso);
   const hasMoneyData = ["income", "expenses", "savings", "loans", "bills"].some(key => appData[key].length);
   const hasAnyData = appData.profile.name || ["family", "goals", "income", "expenses", "savings", "loans", "bills", "calendarEvents", "memories"].some(key => appData[key].length);
@@ -30,18 +30,11 @@ function renderHome() {
   const focusDoneCount = focusItems.filter(item => item.done).length;
   const focusProgress = focusItems.length ? Math.round((focusDoneCount / focusItems.length) * 100) : 0;
   const reflectionReady = (reflectionText || "").trim().length > 0;
-  const upcomingAlerts = getUpcomingNotifications(14);
-  const nextAlert = upcomingAlerts[0] || null;
-
-  const newsTickerItems = upcomingAlerts.length
-    ? upcomingAlerts.slice(0, 8).map(item => {
-        const days = item.daysLeft;
-        const when = days === 0 ? t("today") : days === 1 ? t("tomorrow") : t("inDays", { count: item.daysLeft });
-        const typeIcon = item.kind === "bill" ? "💰" : item.type === "family-birthday" ? "🎂" : item.type === "family-anniversary" ? "💍" : item.kind === "reminder" ? "🔔" : "📅";
-        const categoryLabel = item.source === "family" ? t("family") + " · " : item.kind === "bill" ? t("bill") + " · " : item.kind === "reminder" ? t("reminder") + " · " : "";
-        return typeIcon + " " + categoryLabel + escapeHtml(item.title) + " — " + when;
-      })
-    : [t("noUpcomingEvents")];
+  const agenda = homeAgenda(todayIso);
+  const challengeImage = appData.profile.launcherCover || appData.profile.familyPhoto || "";
+  const challengeImagePosition = imagePosition(appData.profile.launcherCover
+    ? appData.profile.launcherCoverPosition
+    : appData.profile.familyPhotoPosition);
 
   const moodHistoryChart = Array.from({ length: 7 }, (_, index) => {
     const date = new Date();
@@ -85,7 +78,9 @@ function renderHome() {
         '</div>' +
       '</div>' +
     '</div>' +
-    '<div class="home-challenge-card">' +
+    '<div class="home-challenge-card' + (challengeImage ? " has-cover-image" : "") + '">' +
+      (challengeImage ? '<img class="home-challenge-image" src="' + escapeAttr(challengeImage) + '" style="--challenge-image-x: ' + challengeImagePosition.x + '%; --challenge-image-y: ' + challengeImagePosition.y + '%;" alt="">' : '') +
+      '<label class="home-challenge-image-edit" title="' + escapeAttr(t(challengeImage ? "changeFocusImage" : "addFocusImage")) + '"><span aria-hidden="true">' + Icons.edit() + '</span><input type="file" accept="image/*" data-home-challenge-image aria-label="' + escapeAttr(t(challengeImage ? "changeFocusImage" : "addFocusImage")) + '"></label>' +
       '<div class="home-challenge-copy">' +
         '<span class="home-challenge-label">' + t("dailyFocus") + '</span>' +
         '<h2>' + (languageCode() === "km" ? "ត្រូវការជំនួយបន្តិច?" : "Need a nudge?") + '</h2>' +
@@ -97,11 +92,7 @@ function renderHome() {
     '<div class="home-week-row" aria-label="' + (languageCode() === "km" ? "អារម្មណ៍ប្រចាំសប្តាហ៍" : "Mood this week") + '">' +
       moodHistoryChart.map(day => '<div class="home-week-day ' + (day.isToday ? "active" : "") + '"' + (day.isToday ? ' aria-current="date"' : '') + '><span class="week-label">' + day.day + '</span><strong>' + day.date + '</strong><span class="week-mood ' + (day.value ? "has-mood" : "no-mood") + '" aria-label="' + escapeHtml(day.label) + '">' + day.emoji + '</span></div>').join("") +
     '</div>' +
-    '<div class="news-ticker" aria-label="News ticker">' +
-      '<div class="news-ticker-track">' +
-        [...newsTickerItems, ...newsTickerItems].map(item => '<span class="ticker-item">' + item + '</span>').join('<span class="ticker-divider">•</span>') +
-      '</div>' +
-    '</div>' +
+    renderHomeAgenda(agenda) +
     '<div class="home-plan-wrap">' +
       '<h2>' + (languageCode() === "km" ? "ផែនការរបស់អ្នក" : "Your plan") + '</h2>' +
       '<div class="home-quick-actions">' +
@@ -191,6 +182,126 @@ function renderHome() {
       })() : '<div class="next-reminder empty-state"><strong>' + t("noRemindersThisWeek") + '</strong><span>' + t("upcomingSpaceClear") + '</span></div>') +
     '</article>' +
     (typeof homePhotoCard === "function" ? homePhotoCard() : '') +
+  '</section>';
+}
+
+function localDashboardDate(date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
+function homeAgenda(todayIso) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const weekEnd = new Date(today);
+  weekEnd.setDate(weekEnd.getDate() + 7);
+  const limit = new Date(today);
+  limit.setDate(limit.getDate() + 14);
+  const weekEndIso = localDashboardDate(weekEnd);
+  const limitIso = localDashboardDate(limit);
+  const byKey = new Map();
+
+  const addItem = item => {
+    const key = `${item.kind}:${item.id}:${item.date}`;
+    if (!byKey.has(key)) byKey.set(key, item);
+  };
+
+  getUpcomingNotifications(14, Infinity).forEach(item => {
+    const bill = item.kind === "bill"
+      ? appData.bills.find(candidate => candidate.id === item.id || (candidate.name === item.title && candidate.due === item.date))
+      : null;
+    addItem({
+      ...item,
+      href: item.kind === "bill" ? "#money/bills" : item.source === "family" ? "#family" : item.kind === "reminder" ? "#daily" : "#calendar",
+      categoryLabel: item.source === "family" ? t("family") : item.kind === "bill" ? t("bill") : item.kind === "reminder" ? t("reminder") : t("calendarEvent"),
+      amount: bill?.amount,
+      currency: bill?.currency,
+      overdue: false
+    });
+  });
+
+  const monthCursor = new Date(today.getFullYear(), today.getMonth(), 1);
+  appData.bills.forEach(bill => {
+    if (!bill.due || bill.status === "Paid") return;
+    const dueDate = parseAppDate(bill.due);
+    if (Number.isNaN(dueDate.getTime())) return;
+    const frequency = bill.frequency || "Monthly";
+
+    if (frequency === "Once" && bill.due < todayIso) {
+      const overdueDays = Math.floor((today.getTime() - dueDate.getTime()) / 86400000);
+      addItem({
+        id: bill.id || `bill-${bill.due}`,
+        kind: "bill",
+        title: bill.name || t("bill"),
+        date: bill.due,
+        daysLeft: -overdueDays,
+        categoryLabel: t("bill"),
+        amount: bill.amount,
+        currency: bill.currency,
+        href: "#money/bills",
+        overdue: true
+      });
+      return;
+    }
+
+    if (frequency === "Once" || bill.reminder === false || typeof recurringDatesInMonth !== "function") return;
+    for (let monthOffset = 0; monthOffset <= 1; monthOffset += 1) {
+      const cursor = new Date(monthCursor.getFullYear(), monthCursor.getMonth() + monthOffset, 1);
+      recurringDatesInMonth(bill.due, frequency, cursor)
+        .filter(date => date >= todayIso && date <= limitIso)
+        .forEach(date => {
+          const due = parseAppDate(date);
+          const daysLeft = Math.max(0, Math.round((due.getTime() - today.getTime()) / 86400000));
+          addItem({
+            id: bill.id || `bill-${bill.due}`,
+            kind: "bill",
+            title: bill.name || t("bill"),
+            date,
+            daysLeft,
+            categoryLabel: t("bill"),
+            amount: bill.amount,
+            currency: bill.currency,
+            href: "#money/bills",
+            overdue: false
+          });
+        });
+    }
+  });
+
+  const items = [...byKey.values()].sort((a, b) => a.date.localeCompare(b.date) || a.title.localeCompare(b.title));
+  return {
+    today: items.filter(item => !item.overdue && item.date === todayIso).length,
+    nextSevenDays: items.filter(item => !item.overdue && item.date > todayIso && item.date <= weekEndIso).length,
+    overdueBills: items.filter(item => item.overdue).length,
+    items: items.slice(0, 5)
+  };
+}
+
+function renderHomeAgenda(agenda) {
+  const itemIcon = item => item.kind === "bill" ? Icons.bill() : item.kind === "reminder" ? Icons.bell() : item.source === "family" ? Icons.family() : Icons.calendar();
+  const whenLabel = item => item.overdue
+    ? t("overdue")
+    : item.daysLeft === 0
+      ? t("today")
+      : item.daysLeft === 1
+        ? t("tomorrow")
+        : t("inDays", { count: item.daysLeft });
+
+  return '<section class="home-agenda-card" aria-labelledby="homeAgendaTitle">' +
+    '<header class="home-agenda-header"><div><span class="home-agenda-eyebrow">' + t("dailyFocus") + '</span><h2 id="homeAgendaTitle">' + t("todayAndUpcoming") + '</h2></div><a class="home-agenda-view" href="#calendar">' + t("viewCalendar") + ' <span aria-hidden="true">›</span></a></header>' +
+    '<div class="home-agenda-stats">' +
+      '<div class="home-agenda-stat"><strong>' + agenda.today + '</strong><span>' + t("today") + '</span></div>' +
+      '<div class="home-agenda-stat"><strong>' + agenda.nextSevenDays + '</strong><span>' + t("next7Days") + '</span></div>' +
+      '<div class="home-agenda-stat home-agenda-stat-overdue"><strong>' + agenda.overdueBills + '</strong><span>' + t("overdueBills") + '</span></div>' +
+    '</div>' +
+    (agenda.items.length
+      ? '<div class="home-agenda-list">' + agenda.items.map(item =>
+          '<a class="home-agenda-item' + (item.overdue ? ' is-overdue' : '') + '" href="' + item.href + '">' +
+            '<span class="home-agenda-item-icon" aria-hidden="true">' + itemIcon(item) + '</span>' +
+            '<span class="home-agenda-item-copy"><strong>' + escapeHtml(item.title) + '</strong><small>' + escapeHtml(item.categoryLabel) + (item.amount != null ? ' · ' + money(item.amount, item.currency) : '') + '</small></span>' +
+            '<span class="home-agenda-item-date"><strong>' + whenLabel(item) + '</strong><small>' + escapeHtml(formatDate(item.date, { month: "short", day: "numeric" })) + '</small></span>' +
+          '</a>'
+        ).join("") + '</div>'
+      : '<p class="home-agenda-empty">' + t("noUpcomingItems") + '</p>') +
   '</section>';
 }
 
@@ -823,6 +934,31 @@ function openTipsModal() {
 
 function bindHome() {
   if (typeof bindFamily === "function") bindFamily({ mediaOnly: true });
+  document.querySelector("[data-home-challenge-image]")?.addEventListener("change", async event => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    try {
+      const dataUrl = await readImageFile(file);
+      const card = event.target.closest(".home-challenge-card");
+      if (!card) return;
+
+      card.querySelector(".image-position-preview")?.remove();
+      card.appendChild(createImagePositionEditor({
+        src: dataUrl,
+        key: "home-challenge",
+        title: languageCode() === "km" ? "អូសរូបភាពដើម្បីលៃតម្រូវ" : "Drag to adjust your card image",
+        onSave: position => {
+          Store.updateProfile({ launcherCover: dataUrl, launcherCoverPosition: position });
+          Toast.show(languageCode() === "km" ? "បានធ្វើបច្ចុប្បន្នភាពរូបភាពកាត" : "Focus card image updated");
+        },
+        onCancel: () => {
+          event.target.value = "";
+        }
+      }));
+    } catch (error) {
+      Toast.show(languageCode() === "km" ? "មិនអាចបញ្ចូលរូបភាពបានទេ" : "The card image could not be uploaded.", "danger");
+    }
+  });
   document.querySelector("[data-family-photo]")?.addEventListener("change", async event => {
     const file = event.target.files?.[0];
     if (!file) return;
