@@ -66,8 +66,11 @@ function renderMoney(tab = "overview") {
             </dialog>
           </div>
         </div>
-        <button class="button financial-create-button" type="button" data-action="add-expense">${Icons.plus()} ${t("addExpense")}</button>
+        ${tab === "overview" ? `<button class="button financial-create-button" type="button" data-action="add-expense">${Icons.plus()} ${t("addExpense")}</button>` : ""}
       </div>
+      <nav class="financial-shortcuts" aria-label="${t("money")} ${t("sections")}">
+        ${moneyTabs.map(([id, label, icon]) => `<a class="financial-shortcut ${tab === id ? "active" : ""}" href="#money/${id}" ${tab === id ? 'aria-current="page"' : ""}><span class="financial-shortcut-icon" aria-hidden="true">${Icons[icon]()}</span><span>${t(label)}</span></a>`).join("")}
+      </nav>
       <div class="financial-layout">
         <div class="financial-content">
           ${renderMoneyTab(tab, stats)}
@@ -759,6 +762,12 @@ function exportMonthlyFinanceReport(format) {
 }
 
 function bindMoney() {
+  const shortcutNav = document.querySelector(".financial-shortcuts");
+  const activeShortcut = shortcutNav?.querySelector(".financial-shortcut.active");
+  if (shortcutNav && activeShortcut) {
+    const activeOffset = activeShortcut.getBoundingClientRect().left - shortcutNav.getBoundingClientRect().left + shortcutNav.scrollLeft;
+    shortcutNav.scrollLeft = activeOffset - (shortcutNav.clientWidth - activeShortcut.clientWidth) / 2;
+  }
   bindNavigationSheetGestures();
   document.querySelectorAll("[data-money-smart-tab]").forEach(button => {
     button.addEventListener("click", () => selectMoneySmartTab(button));

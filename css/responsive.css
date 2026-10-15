@@ -543,6 +543,19 @@
   }
   .financial-header .page-title { font-size: 1.8rem; }
   .financial-header .page-subtitle { font-size: 0.8rem; line-height: 1.4; }
+  .financial-shortcuts {
+    gap: 4px;
+    margin: 0 -2px 14px;
+    padding: 4px;
+  }
+  .financial-shortcut {
+    flex-basis: 78px;
+    min-height: 48px;
+    padding: 5px 7px;
+    font-size: 0.7rem;
+  }
+  .financial-shortcut-icon { width: 16px; height: 16px; }
+  .financial-shortcut-icon svg { width: 15px; height: 15px; }
   .financial-metric-card .card-title-row { justify-content: flex-start; align-items: center; gap: 9px; }
   .financial-metric-card .card-title-row .icon-badge { flex: 0 0 40px; width: 40px; height: 40px; }
   .financial-metric-card::after { display: none; }
@@ -1186,7 +1199,7 @@
     height: 38px;
   }
   .loan-metrics {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
   }
   .loan-metrics div {
