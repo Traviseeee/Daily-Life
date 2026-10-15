@@ -7250,6 +7250,7 @@ body.money-hidden .money-value {
   background: rgba(0,0,0,0.54);
 }
 .modal-root.open { display: grid; }
+.modal-root.welcome-poster-modal { z-index: 100; }
 .modal {
   width: min(560px, 100%);
   max-height: min(780px, 90vh);
@@ -7259,6 +7260,128 @@ body.money-hidden .money-value {
 }
 .modal-wide { width: min(760px, 100%); }
 .modal-setup { width: min(920px, 100%); }
+
+.welcome-poster-card {
+  display: grid;
+  justify-items: center;
+  gap: 18px;
+  width: min(420px, 100%);
+  max-height: 92vh;
+  overflow: auto;
+  padding: 22px;
+  border: 1px solid rgba(255,255,255,0.16);
+  border-radius: 26px;
+  color: var(--text-primary);
+  text-align: center;
+  background: var(--bg-secondary);
+  box-shadow: 0 28px 90px rgba(0,0,0,0.42);
+  animation: modalIn 180ms ease both;
+}
+
+.welcome-poster-image-wrap {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: min(300px, 70vw, 34vh);
+  overflow: hidden;
+  padding: 0;
+  aspect-ratio: 4 / 5;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  color: inherit;
+  background: linear-gradient(145deg, rgba(184,255,90,0.16), rgba(155,109,255,0.2));
+  cursor: pointer;
+  font: inherit;
+}
+
+.welcome-poster-image-wrap:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.welcome-poster-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.welcome-poster-card.has-agenda .welcome-poster-image-wrap { width: min(220px, 70vw, 28vh); }
+
+.welcome-poster-placeholder {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  max-width: 210px;
+  padding: 20px;
+  color: var(--text-secondary);
+}
+
+.welcome-poster-placeholder span {
+  color: var(--accent);
+  font-size: 3rem;
+  line-height: 1;
+}
+
+.welcome-poster-placeholder strong { font-size: 0.9rem; }
+.welcome-poster-photo-icon { position: absolute; top: 10px; right: 10px; display: grid; place-items: center; width: 34px; height: 34px; border: 1px solid rgba(255,255,255,0.32); border-radius: 50%; color: #fff; background: rgba(0,0,0,0.48); backdrop-filter: blur(8px); }
+.welcome-poster-photo-icon svg { width: 17px; height: 17px; }
+.welcome-poster-copy { display: grid; justify-items: center; gap: 9px; }
+.welcome-poster-copy .eyebrow { color: var(--accent); font-weight: 800; letter-spacing: 0.14em; }
+.welcome-poster-copy h2 { margin: 0; font-size: clamp(1.35rem, 5vw, 1.75rem); }
+.welcome-poster-copy p { max-width: 310px; margin: 0 0 4px; color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5; }
+.welcome-poster-agenda { width: min(100%, 420px); }
+.welcome-poster-agenda h3 { margin: 0 0 8px; font-size: 0.88rem; text-align: left; }
+.welcome-poster-agenda-items { display: grid; max-height: 160px; overflow: auto; border: 1px solid var(--border); border-radius: 12px; }
+.welcome-poster-agenda-item { display: grid; grid-template-columns: minmax(0, 1fr) 18px; align-items: center; gap: 2px 8px; min-height: 48px; padding: 8px 11px; border-top: 1px solid var(--border); color: var(--text-primary); text-align: left; text-decoration: none; }
+.welcome-poster-agenda-item:first-child { border-top: 0; }
+.welcome-poster-agenda-item:hover { background: rgba(255,255,255,0.06); }
+.welcome-poster-agenda-kind { grid-column: 1; color: var(--accent); font-size: 0.64rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; }
+.welcome-poster-agenda-title { grid-column: 1; overflow: hidden; font-size: 0.78rem; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.welcome-poster-agenda-item small { grid-column: 1; overflow: hidden; color: var(--text-secondary); font-size: 0.7rem; text-overflow: ellipsis; white-space: nowrap; }
+.welcome-poster-agenda-item svg { grid-column: 2; grid-row: 1 / span 3; width: 16px; height: 16px; color: var(--text-secondary); }
+.welcome-poster-agenda-empty { margin: 0; padding: 12px; border: 1px solid var(--border); border-radius: 12px; color: var(--text-secondary); font-size: 0.78rem; text-align: left; }
+.welcome-poster-actions { display: grid; width: min(100%, 420px); gap: 8px; }
+.welcome-poster-skip { width: 100%; }
+.welcome-poster-auto-close { color: var(--text-secondary); font-size: 0.74rem; text-align: center; }
+
+.welcome-poster-settings {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 96px;
+  align-items: center;
+  gap: 14px;
+  margin-top: 12px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: rgba(255,255,255,0.025);
+}
+
+.welcome-poster-settings-copy h3 { margin: 0 0 5px; font-size: 0.95rem; }
+.welcome-poster-settings-copy p { margin: 0; color: var(--text-secondary); font-size: 0.78rem; line-height: 1.45; }
+.welcome-poster-settings-preview {
+  display: grid;
+  grid-row: span 2;
+  place-items: center;
+  width: 96px;
+  overflow: hidden;
+  aspect-ratio: 4 / 5;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text-secondary);
+  font-size: 0.68rem;
+  text-align: center;
+  background: rgba(255,255,255,0.04);
+}
+
+.welcome-poster-settings-preview img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.welcome-poster-settings-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.welcome-poster-settings-actions .button { min-height: 38px; padding: 8px 12px; font-size: 0.76rem; }
+
+@media (max-width: 560px) {
+  .welcome-poster-card { gap: 12px; padding: 16px; }
+  .welcome-poster-card.has-agenda .welcome-poster-image-wrap { width: min(175px, 58vw, 22vh); }
+  .welcome-poster-agenda-items { max-height: 120px; }
+  .welcome-poster-settings { grid-template-columns: minmax(0, 1fr) 76px; gap: 10px; padding: 12px; }
+  .welcome-poster-settings-preview { width: 76px; }
+  .welcome-poster-settings-actions .button { flex: 1 1 auto; }
+}
 
 .tips-modal {
   width: min(860px, 100%);

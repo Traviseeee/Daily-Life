@@ -1,5 +1,6 @@
 function renderSettings() {
   const stats = Store.calculate();
+  const welcomePoster = App.getWelcomePoster();
   const settingsSections = [
     ["account", "accountCategory", "settingsAccountSubtitle", "user"],
     ["preferences", "preferences", "settingsPreferencesSubtitle", "settings"],
@@ -128,6 +129,20 @@ function renderSettings() {
               <div class="settings-preference-list settings-preference-list-standalone">
                 <label class="settings-preference-row"><span><strong>${t("theme")}</strong><small>${t("themeHelp")}</small></span><select data-preference="theme"><option value="dark" ${appData.profile.theme !== "light" ? "selected" : ""}>${t("darkTheme")}</option><option value="light" ${appData.profile.theme === "light" ? "selected" : ""}>${t("lightTheme")}</option></select></label>
               </div>
+              <article class="welcome-poster-settings">
+                <div class="welcome-poster-settings-copy">
+                  <h3>${t("familyPoster")}</h3>
+                  <p>${t("familyPosterHelp")}</p>
+                </div>
+                <div class="welcome-poster-settings-preview" data-welcome-poster-preview>
+                  ${welcomePoster ? `<img src="${escapeAttr(welcomePoster)}" alt="${escapeAttr(t("familyPoster"))}">` : `<span>${t("noPoster")}</span>`}
+                </div>
+                <input class="sr-only" id="welcomePosterSettingsInput" type="file" accept="image/*">
+                <div class="welcome-poster-settings-actions">
+                  <button class="button ghost-button" type="button" data-action="upload-welcome-poster">${welcomePoster ? t("changePoster") : t("uploadPoster")}</button>
+                  <button class="button ghost-button" type="button" data-action="remove-welcome-poster" ${welcomePoster ? "" : "hidden"}>${t("removePoster")}</button>
+                </div>
+              </article>
             </div>
           </details>
           <details class="settings-accordion" id="settings-section-privacy">
@@ -523,6 +538,14 @@ function bindSettings() {
     Toast.show(t("preferenceSaved"));
   }));
   bindSettingsAction("edit-profile", openEditUserDataModal);
+  bindSettingsAction("upload-welcome-poster", () => document.getElementById("welcomePosterSettingsInput")?.click());
+  bindSettingsAction("remove-welcome-poster", () => App.removeWelcomePoster());
+  document.getElementById("welcomePosterSettingsInput")?.addEventListener("change", async event => {
+    const input = event.currentTarget;
+    const file = input.files?.[0];
+    input.value = "";
+    await App.saveWelcomePoster(file);
+  });
   bindSettingsAction("connect-guest", () => Login.open("signup"));
   bindSettingsAction("edit-footer", () => {
     sessionStorage.setItem("mylife:open-footer-editor", "1");

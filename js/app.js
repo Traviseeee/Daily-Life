@@ -5,6 +5,8 @@ const App = {
   dueReminderTimer: null,
   dueReminderInterval: null,
   quickActionCloseTimer: null,
+  welcomePosterStartupTimer: null,
+  welcomePosterTimer: null,
   interactionSoundBound: false,
   init() {
     Store.load();
@@ -21,9 +23,217 @@ const App = {
     window.addEventListener("popstate", () => this.render());
     this.render();
     this.syncWithCloud();
+    this.startWelcomePosterOnOpen();
     this.checkUpcomingAlerts();
     this.startDueReminderWatcher();
     setTimeout(() => NotificationManager.sync(), 1200);
+  },
+  startWelcomePosterOnOpen() {
+    let attempts = 0;
+    this.welcomePosterStartupTimer = window.setInterval(() => {
+      attempts += 1;
+      const modalRoot = document.getElementById("modalRoot");
+      if (Login.isOpen || modalRoot?.querySelector("#loginModal")) {
+        if (attempts >= 120) window.clearInterval(this.welcomePosterStartupTimer);
+        return;
+      }
+      if (appData.profile.name && (Login.authenticated || Login.guestMode || Login.getRememberedSession())) {
+        window.clearInterval(this.welcomePosterStartupTimer);
+        this.welcomePosterStartupTimer = null;
+        this.openWelcomePoster();
+        return;
+      }
+      if (attempts >= 120) window.clearInterval(this.welcomePosterStartupTimer);
+    }, 500);
+  },
+  getWelcomePoster() {
+    try {
+      return localStorage.getItem("mylife:welcome-poster:v1") || "";
+    } catch (error) {
+      console.warn("MYLIFE could not read the welcome poster.", error);
+      return "";
+    }
+  },
+  getTodayWelcomeItems() {
+    const today = calendarDateInput(new Date());
+    const items = [];
+    const add = item => items.push(item);
+
+    appData.calendarEvents.forEach(event => {
+      if (event.date !== today) return;
+      add({ type: "event", title: event.title || t("calendarEvent"), detail: event.time || event.category || "", href: "#calendar" });
+    });
+    appData.reminders.forEach(reminder => {
+      if (reminder.done || reminder.date !== today) return;
+      add({ type: "reminder", title: reminder.title || t("reminder"), detail: reminder.time || reminder.category || "", href: "#daily" });
+    });
+    appData.bills.forEach(bill => {
+      if (bill.reminder === false || bill.status === "Paid" || !bill.due) return;
+      const dueToday = typeof recurringDatesInMonth === "function"
+        ? recurringDatesInMonth(bill.due, bill.frequency || "Monthly", new Date()).includes(today)
+        : bill.due === today;
+      if (!dueToday || (typeof billPaidCurrentCycle === "function" && billPaidCurrentCycle(bill))) return;
+      add({
+        type: "bill",
+        title: bill.name || t("bill"),
+        detail: bill.amount ? formatPlainMoney(bill.amount, bill.currency) : bill.category || "",
+        href: "#money/bills"
+      });
+    });
+    appData.loans.forEach(loan => {
+      if (typeof nextLoanPaymentDate !== "function" || nextLoanPaymentDate(loan) !== today) return;
+      if ((loan.payments || []).some(payment => payment.date === today)) return;
+      add({
+        type: "loan",
+        title: loan.name || t("loan"),
+        detail: loan.monthlyPayment ? formatPlainMoney(loan.monthlyPayment, loan.currency) : "",
+        href: "#money/loans"
+      });
+    });
+
+    const typeLabels = { event: t("calendarEvent"), reminder: t("reminder"), bill: t("bill"), loan: t("loan") };
+    return items
+      .sort((left, right) => `${left.type} ${left.title}`.localeCompare(`${right.type} ${right.title}`))
+      .map(item => ({ ...item, typeLabel: typeLabels[item.type] }));
+  },
+  welcomePosterImageContent(image) {
+    const imageContent = image
+      ? `<img class="welcome-poster-image" data-welcome-poster-image src="${escapeAttr(image)}" alt="${escapeAttr(t("familyPoster"))}">`
+      : `<span class="welcome-poster-placeholder"><span aria-hidden="true">♡</span><strong>${t("addPosterPrompt")}</strong></span>`;
+    return `${imageContent}<span class="welcome-poster-photo-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 7.5A1.5 1.5 0 0 1 5.5 6h3l1.25-2h4.5l1.25 2h3A1.5 1.5 0 0 1 20 7.5v10a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5v-10Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><circle cx="12" cy="12.5" r="3.25" stroke="currentColor" stroke-width="1.7"/></svg></span>`;
+  },
+  openWelcomePoster() {
+    if (!appData.profile.name || Login.isOpen || document.getElementById("modalRoot")?.querySelector("#loginModal")) return;
+    if (!Login.authenticated && !Login.guestMode && !Login.getRememberedSession()) return;
+
+    const root = document.getElementById("modalRoot");
+    const poster = this.getWelcomePoster();
+    const todayItems = this.getTodayWelcomeItems();
+    root.innerHTML = `
+      <section class="welcome-poster-card ${todayItems.length ? "has-agenda" : ""}" role="dialog" aria-modal="true" aria-labelledby="welcomePosterTitle">
+        <button class="welcome-poster-image-wrap" type="button" data-welcome-poster-choose aria-label="${escapeAttr(poster ? t("changePoster") : t("uploadPoster"))}">
+          ${this.welcomePosterImageContent(poster)}
+        </button>
+        <div class="welcome-poster-copy">
+          <span class="eyebrow">MYLIFE</span>
+          <h2 id="welcomePosterTitle">${t("welcomePosterTitle")}</h2>
+          <p>${t("welcomePosterMessage")}</p>
+        </div>
+        <section class="welcome-poster-agenda" aria-labelledby="welcomePosterAgendaTitle">
+          <h3 id="welcomePosterAgendaTitle">${t("todayAgenda")}</h3>
+          ${todayItems.length ? `<div class="welcome-poster-agenda-items">${todayItems.map(item => `
+            <a class="welcome-poster-agenda-item" href="${escapeAttr(item.href)}" data-welcome-agenda-route="${escapeAttr(item.href)}">
+              <span class="welcome-poster-agenda-kind">${escapeHtml(item.typeLabel)}</span>
+              <span class="welcome-poster-agenda-title">${escapeHtml(item.title)}</span>
+              ${item.detail ? `<small>${escapeHtml(item.detail)}</small>` : ""}
+              ${Icons.chevron()}
+            </a>
+          `).join("")}</div>` : `<p class="welcome-poster-agenda-empty">${t("todayAgendaEmpty")}</p>`}
+        </section>
+        <div class="welcome-poster-actions">
+          <input class="sr-only" data-welcome-poster-input type="file" accept="image/*">
+          <span class="welcome-poster-auto-close" data-welcome-poster-countdown role="timer" aria-live="polite">${t("autoCloseInSeconds", { seconds: 4 })}</span>
+        </div>
+      </section>
+    `;
+    root.classList.add("open", "welcome-poster-modal");
+
+    const close = () => {
+      window.clearInterval(this.welcomePosterTimer);
+      this.welcomePosterTimer = null;
+      root.classList.remove("open", "welcome-poster-modal");
+      root.innerHTML = "";
+    };
+    const input = root.querySelector("[data-welcome-poster-input]");
+    const countdown = root.querySelector("[data-welcome-poster-countdown]");
+    const stopAutoClose = () => {
+      window.clearInterval(this.welcomePosterTimer);
+      this.welcomePosterTimer = null;
+    };
+    const startAutoClose = () => {
+      stopAutoClose();
+      const deadline = Date.now() + 4000;
+      this.welcomePosterTimer = window.setInterval(() => {
+        const remaining = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+        if (remaining > 0) {
+          countdown.textContent = t("autoCloseInSeconds", { seconds: remaining });
+          return;
+        }
+        close();
+      }, 100);
+    };
+    root.querySelector("[data-welcome-poster-choose]")?.addEventListener("click", () => {
+      stopAutoClose();
+      countdown.textContent = t("posterChooseHint");
+      input?.click();
+    });
+    root.querySelectorAll("[data-welcome-agenda-route]").forEach(link => link.addEventListener("click", event => {
+      event.preventDefault();
+      const route = link.dataset.welcomeAgendaRoute;
+      close();
+      location.hash = route;
+    }));
+    input?.addEventListener("change", async () => {
+      const file = input.files?.[0];
+      input.value = "";
+      const image = await this.saveWelcomePoster(file);
+      if (image) {
+        const imageWrap = root.querySelector("[data-welcome-poster-choose]");
+        if (imageWrap) {
+          imageWrap.setAttribute("aria-label", t("changePoster"));
+          imageWrap.innerHTML = this.welcomePosterImageContent(image);
+        }
+      }
+      startAutoClose();
+    });
+
+    input?.addEventListener("cancel", startAutoClose);
+    startAutoClose();
+    root.querySelector("[data-welcome-poster-choose]")?.focus({ preventScroll: true });
+  },
+  async saveWelcomePoster(file) {
+    if (!file) return "";
+    if (!file.type?.startsWith("image/")) {
+      Toast.show(t("posterImageError"), "warning");
+      return "";
+    }
+    if (file.size > 15 * 1024 * 1024) {
+      Toast.show(t("posterSizeError"), "warning");
+      return "";
+    }
+    try {
+      const image = await prepareWelcomePoster(file);
+      localStorage.setItem("mylife:welcome-poster:v1", image);
+      this.updateWelcomePosterPreview(image);
+      Toast.show(t("posterSaved"), "success");
+      return image;
+    } catch (error) {
+      console.warn("MYLIFE could not save the welcome poster.", error);
+      Toast.show(t("posterSaveError"), "warning");
+      return "";
+    }
+  },
+  removeWelcomePoster() {
+    try {
+      localStorage.removeItem("mylife:welcome-poster:v1");
+      this.updateWelcomePosterPreview("");
+      Toast.show(t("posterRemoved"), "success");
+    } catch (error) {
+      console.warn("MYLIFE could not remove the welcome poster.", error);
+      Toast.show(t("posterRemoveError"), "warning");
+    }
+  },
+  updateWelcomePosterPreview(image) {
+    const preview = document.querySelector("[data-welcome-poster-preview]");
+    if (preview) {
+      preview.innerHTML = image
+        ? `<img src="${escapeAttr(image)}" alt="${escapeAttr(t("familyPoster"))}">`
+        : `<span>${t("noPoster")}</span>`;
+    }
+    const removeButton = document.querySelector("[data-action='remove-welcome-poster']");
+    if (removeButton) removeButton.hidden = !image;
+    const uploadButton = document.querySelector("[data-action='upload-welcome-poster']");
+    if (uploadButton) uploadButton.textContent = t(image ? "changePoster" : "uploadPoster");
   },
   /**
    * Reconciles with the cloud once the shell has already rendered.
@@ -1027,6 +1237,45 @@ function emptyState(title, body, actionLabel = "", action = "") {
       </div>
     </div>
   `;
+}
+
+function prepareWelcomePoster(file) {
+  return new Promise((resolve, reject) => {
+    const objectUrl = URL.createObjectURL(file);
+    const image = new Image();
+    image.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      try {
+        const targetRatio = 4 / 5;
+        let sourceX = 0;
+        let sourceY = 0;
+        let sourceWidth = image.naturalWidth;
+        let sourceHeight = image.naturalHeight;
+        if (sourceWidth / sourceHeight > targetRatio) {
+          sourceWidth = sourceHeight * targetRatio;
+          sourceX = (image.naturalWidth - sourceWidth) / 2;
+        } else {
+          sourceHeight = sourceWidth / targetRatio;
+          sourceY = (image.naturalHeight - sourceHeight) / 2;
+        }
+
+        const canvas = document.createElement("canvas");
+        canvas.width = 640;
+        canvas.height = 800;
+        const context = canvas.getContext("2d");
+        if (!context) throw new Error("Could not prepare the welcome poster image.");
+        context.drawImage(image, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL("image/jpeg", 0.84));
+      } catch (error) {
+        reject(error);
+      }
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error("The selected welcome poster image could not be loaded."));
+    };
+    image.src = objectUrl;
+  });
 }
 
 document.addEventListener("DOMContentLoaded", () => App.init());
