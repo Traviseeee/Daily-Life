@@ -5782,8 +5782,46 @@ body.money-hidden .money-value {
 .financial-mini-card .action-row .bill-payment-action {
   flex: 1 0 100%;
   justify-content: center;
+  gap: 6px;
   min-height: 36px;
+  border: 1px solid transparent;
+  font-weight: 750;
   font-size: 0.76rem;
+}
+
+.financial-mini-card .bill-payment-action svg,
+.financial-mini-card .bill-status svg,
+.home-smart-bill-row > button.is-paid svg {
+  width: 15px;
+  height: 15px;
+}
+
+.financial-mini-card .bill-payment-action.is-paid,
+.financial-mini-card .bill-status.is-paid {
+  border-color: rgba(31, 132, 77, 0.24);
+  background: rgba(31, 132, 77, 0.1);
+  color: #187342;
+}
+
+.financial-mini-card .bill-payment-action.is-unpaid,
+.financial-mini-card .bill-status.is-unpaid {
+  border-color: rgba(194, 53, 53, 0.24);
+  background: rgba(194, 53, 53, 0.1);
+  color: #b4232d;
+}
+
+:root[data-theme="dark"] .financial-mini-card .bill-payment-action.is-paid,
+:root[data-theme="dark"] .financial-mini-card .bill-status.is-paid {
+  border-color: rgba(144, 231, 163, 0.25);
+  background: rgba(62, 163, 104, 0.16);
+  color: #a8f0bb;
+}
+
+:root[data-theme="dark"] .financial-mini-card .bill-payment-action.is-unpaid,
+:root[data-theme="dark"] .financial-mini-card .bill-status.is-unpaid {
+  border-color: rgba(255, 122, 141, 0.3);
+  background: rgba(217, 71, 97, 0.17);
+  color: #ff9ba9;
 }
 
 .financial-card-amount {

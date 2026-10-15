@@ -439,7 +439,10 @@ function renderHomeSmartLists(agenda, focusItems, todayIso) {
   const listCard = (key, title, count, body, open = false) =>
     `<details class="home-smart-list" data-smart-list="${escapeAttr(key)}"${open ? " open" : ""}><summary><span>${escapeHtml(title)}</span><strong>${count}</strong></summary><div class="home-smart-list-content">${body}</div></details>`;
   const billRowsFor = bills => bills.length
-    ? `<div class="home-smart-list-rows">${bills.slice(0, 6).map(bill => `<div class="home-smart-list-row home-smart-bill-row"><a href="#money/bills"><span>${escapeHtml(bill.name || t("bill"))}</span><small>${bill.due ? escapeHtml(formatDate(bill.due, { month: "short", day: "numeric" })) : escapeHtml(t("dueDate"))} · ${escapeHtml(money(bill.amount, bill.currency))}</small></a><button type="button" data-home-mark-bill="${escapeAttr(bill.id)}">${escapeHtml(t("markPaid"))}</button></div>`).join("")}</div>`
+    ? `<div class="home-smart-list-rows">${bills.slice(0, 6).map(bill => {
+      const paid = billPaidCurrentCycle(bill);
+      return `<div class="home-smart-list-row home-smart-bill-row"><a href="#money/bills"><span>${escapeHtml(bill.name || t("bill"))}</span><small>${bill.due ? escapeHtml(formatDate(bill.due, { month: "short", day: "numeric" })) : escapeHtml(t("dueDate"))} · ${money(bill.amount, bill.currency)}</small></a><button type="button" class="${paid ? "is-paid" : "is-unpaid"}" data-home-${paid ? "undo" : "mark"}-bill="${escapeAttr(bill.id)}" aria-pressed="${paid}">${paid ? Icons.check() : ""}${escapeHtml(paid ? t("billPaidLabel") : t("billUnpaidLabel"))}</button></div>`;
+    }).join("")}</div>`
     : `<p class="home-smart-list-empty">${escapeHtml(t("noBillsYet"))}</p>`;
   const billRows = billRowsFor(unpaidBills);
   const billsDueSoonRows = billsDueSoon.length
@@ -508,11 +511,23 @@ function renderHomeSmartLists(agenda, focusItems, todayIso) {
   </section>`;
 }
 
+function billPaidCurrentCycle(bill) {
+  if (bill.status === "Paid") return true;
+  if (!bill.lastPaidAt || !bill.due) return false;
+  return bill.due > localDashboardDate(new Date());
+}
+
 function markBillPaid(billId) {
   const bill = appData.bills.find(item => item.id === billId);
-  if (!bill || bill.status === "Paid") return;
+  if (!bill || billPaidCurrentCycle(bill)) return;
   const frequency = bill.frequency || "Monthly";
-  const nextBill = { status: "Paid" };
+  const paidOn = localDashboardDate(new Date());
+  const nextBill = {
+    status: "Paid",
+    lastPaidAt: paidOn,
+    lastPaidDue: bill.due || "",
+    lastPaidStatus: bill.status || "Upcoming"
+  };
   if (frequency !== "Once") {
     const dueDate = parseAppDate(bill.due);
     if (!Number.isNaN(dueDate.getTime())) {
@@ -535,6 +550,20 @@ function markBillPaid(billId) {
   }
   Store.edit("bills", bill.id, nextBill);
   Toast.show(t("paymentMarkedPaid"));
+}
+
+function markBillUnpaid(billId) {
+  const bill = appData.bills.find(item => item.id === billId);
+  if (!bill) return;
+  const changes = {
+    status: bill.lastPaidStatus || "Upcoming",
+    lastPaidAt: "",
+    lastPaidDue: "",
+    lastPaidStatus: ""
+  };
+  if (bill.lastPaidDue) changes.due = bill.lastPaidDue;
+  Store.edit("bills", bill.id, changes);
+  Toast.show(t("paymentMarkedUnpaid"));
 }
 
 function homeEmptyCard() {
@@ -1251,6 +1280,7 @@ function bindHome() {
   document.querySelectorAll('[data-action="add-bill"]').forEach(button => button.addEventListener("click", () => openBillModal()));
   document.querySelectorAll('[data-action="add-reminder"]').forEach(button => button.addEventListener("click", () => App.openReminderModal()));
   document.querySelectorAll("[data-home-mark-bill]").forEach(button => button.addEventListener("click", () => markBillPaid(button.dataset.homeMarkBill)));
+  document.querySelectorAll("[data-home-undo-bill]").forEach(button => button.addEventListener("click", () => markBillUnpaid(button.dataset.homeUndoBill)));
   document.querySelectorAll("[data-smart-category]").forEach(button => button.addEventListener("click", () => {
     const selectedCategory = button.dataset.smartCategory;
     document.querySelectorAll("[data-smart-category]").forEach(categoryButton => {

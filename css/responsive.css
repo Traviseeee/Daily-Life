@@ -3433,6 +3433,24 @@
   cursor: pointer;
 }
 
+.home-smart-bill-row > button.is-paid {
+  border-color: rgba(57, 133, 92, 0.22);
+  color: #28734b;
+  background: rgba(62, 163, 104, 0.1);
+}
+
+.home-smart-bill-row > button.is-unpaid {
+  border-color: rgba(194, 53, 53, 0.24);
+  color: #b4232d;
+  background: rgba(194, 53, 53, 0.09);
+}
+
+.home-smart-bill-row > button.is-paid {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
 .home-smart-list-link { display: inline-block; margin-top: 9px; color: #65528f; font-size: 0.72rem; font-weight: 750; text-decoration: none; }
 .home-smart-spending-total { display: flex; justify-content: space-between; gap: 10px; padding: 10px 2px; color: #737b87; font-size: 0.7rem; }
 .home-smart-spending-total strong { color: #263243; font-size: 0.84rem; }
@@ -3473,6 +3491,85 @@
 :root[data-theme="dark"] .home-smart-list > summary > strong { color: #d1baff; background: rgba(124, 106, 168, 0.22); }
 :root[data-theme="dark"] .home-smart-bill-row > button,
 :root[data-theme="dark"] .home-smart-capture-actions > button { border-color: rgba(209, 186, 255, 0.2); color: #e1d5ff; background: rgba(124, 106, 168, 0.16); }
+:root[data-theme="dark"] .home-smart-bill-row > button.is-paid { border-color: rgba(144,231,163,0.24); color: #a8f0bb; background: rgba(62,163,104,0.14); }
+:root[data-theme="dark"] .home-smart-bill-row > button.is-unpaid { border-color: rgba(255,122,141,0.3); color: #ff9ba9; background: rgba(217,71,97,0.17); }
+
+.home-smart-category {
+  color: var(--smart-accent);
+  border-color: var(--smart-border);
+  background: var(--smart-tint);
+}
+
+.home-smart-category > strong {
+  color: var(--smart-accent);
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.home-smart-category:hover,
+.home-smart-category.active {
+  color: var(--smart-accent);
+  border-color: var(--smart-accent);
+  background: var(--smart-tint);
+}
+
+.home-smart-category.active { box-shadow: inset 0 0 0 1px var(--smart-accent); }
+.home-smart-category[data-smart-category="today"] { --smart-accent: #2864b0; --smart-tint: #eef5ff; --smart-border: #cbdcf5; }
+.home-smart-category[data-smart-category="money"] { --smart-accent: #187342; --smart-tint: #eef8f1; --smart-border: #c9e4d1; }
+.home-smart-category[data-smart-category="goals"] { --smart-accent: #9a5b00; --smart-tint: #fff6e8; --smart-border: #f0dcba; }
+.home-smart-category[data-smart-category="family"] { --smart-accent: #7545a3; --smart-tint: #f5effb; --smart-border: #dfd0ef; }
+
+.home-smart-list-grid[data-smart-panel="today"] { --smart-accent: #2864b0; --smart-tint: #eef5ff; }
+.home-smart-list-grid[data-smart-panel="money"] { --smart-accent: #187342; --smart-tint: #eef8f1; }
+.home-smart-list-grid[data-smart-panel="goals"] { --smart-accent: #7545a3; --smart-tint: #f5effb; }
+.home-smart-list-grid[data-smart-panel="family"] { --smart-accent: #b34c69; --smart-tint: #fff1f4; }
+
+.home-smart-list-grid .home-smart-list { border-left: 3px solid var(--smart-accent); }
+.home-smart-list-grid .home-smart-list > summary > strong {
+  color: var(--smart-accent);
+  background: var(--smart-tint);
+}
+.home-smart-list-grid .home-smart-list > summary::after { color: var(--smart-accent); }
+
+:root[data-theme="dark"] .home-smart-category > strong { background: rgba(0, 0, 0, 0.18); }
+:root[data-theme="dark"] .home-smart-category[data-smart-category="today"] { --smart-accent: #9fc5ff; --smart-tint: rgba(40, 100, 176, 0.2); --smart-border: rgba(119, 166, 230, 0.35); }
+:root[data-theme="dark"] .home-smart-category[data-smart-category="money"] { --smart-accent: #9be0b1; --smart-tint: rgba(24, 115, 66, 0.2); --smart-border: rgba(102, 190, 132, 0.34); }
+:root[data-theme="dark"] .home-smart-category[data-smart-category="goals"] { --smart-accent: #ffd18a; --smart-tint: rgba(154, 91, 0, 0.2); --smart-border: rgba(232, 173, 86, 0.34); }
+:root[data-theme="dark"] .home-smart-category[data-smart-category="family"] { --smart-accent: #d7b8ff; --smart-tint: rgba(117, 69, 163, 0.22); --smart-border: rgba(178, 137, 220, 0.35); }
+
+:root[data-theme="dark"] .home-smart-category[data-smart-category="today"],
+:root[data-theme="dark"] .home-smart-category[data-smart-category="money"],
+:root[data-theme="dark"] .home-smart-category[data-smart-category="goals"],
+:root[data-theme="dark"] .home-smart-category[data-smart-category="family"] {
+  color: var(--smart-accent);
+  border-color: var(--smart-border);
+  background: var(--smart-tint);
+}
+
+:root[data-theme="dark"] .home-smart-category[data-smart-category="today"] > strong,
+:root[data-theme="dark"] .home-smart-category[data-smart-category="money"] > strong,
+:root[data-theme="dark"] .home-smart-category[data-smart-category="goals"] > strong,
+:root[data-theme="dark"] .home-smart-category[data-smart-category="family"] > strong {
+  color: var(--smart-accent);
+  background: rgba(0, 0, 0, 0.18);
+}
+
+:root[data-theme="dark"] .home-smart-category[data-smart-category="today"]:hover,
+:root[data-theme="dark"] .home-smart-category[data-smart-category="today"].active,
+:root[data-theme="dark"] .home-smart-category[data-smart-category="money"]:hover,
+:root[data-theme="dark"] .home-smart-category[data-smart-category="money"].active,
+:root[data-theme="dark"] .home-smart-category[data-smart-category="goals"]:hover,
+:root[data-theme="dark"] .home-smart-category[data-smart-category="goals"].active,
+:root[data-theme="dark"] .home-smart-category[data-smart-category="family"]:hover,
+:root[data-theme="dark"] .home-smart-category[data-smart-category="family"].active {
+  color: var(--smart-accent);
+  border-color: var(--smart-accent);
+  background: var(--smart-tint);
+}
+
+:root[data-theme="dark"] .home-smart-list-grid[data-smart-panel="today"] { --smart-accent: #9fc5ff; --smart-tint: rgba(40, 100, 176, 0.2); }
+:root[data-theme="dark"] .home-smart-list-grid[data-smart-panel="money"] { --smart-accent: #9be0b1; --smart-tint: rgba(24, 115, 66, 0.2); }
+:root[data-theme="dark"] .home-smart-list-grid[data-smart-panel="goals"] { --smart-accent: #d7b8ff; --smart-tint: rgba(117, 69, 163, 0.22); }
+:root[data-theme="dark"] .home-smart-list-grid[data-smart-panel="family"] { --smart-accent: #ffadc0; --smart-tint: rgba(179, 76, 105, 0.2); }
 
 @media (max-width: 560px) {
   .home-agenda-card { gap: 12px; padding: 14px; border-radius: 17px; }
@@ -3912,21 +4009,21 @@
 .money-smart-row-copy small { color: #737b87; font-size: 0.65rem; line-height: 1.35; }
 .money-smart-row-amount,
 .money-smart-change { flex: 0 0 auto; color: #39485a; font-size: 0.7rem; }
-.money-smart-mark-paid {
+.money-smart-bill-state {
   flex: 0 0 auto;
   min-height: 30px;
   padding: 5px 8px;
-  border: 1px solid rgba(101, 132, 89, 0.2);
+  border: 1px solid rgba(194, 53, 53, 0.24);
   border-radius: 8px;
-  background: rgba(138, 178, 112, 0.11);
-  color: #426337;
+  background: rgba(194, 53, 53, 0.09);
+  color: #b4232d;
   font: inherit;
   font-size: 0.65rem;
   font-weight: 750;
   cursor: pointer;
 }
-.money-smart-mark-paid:hover { background: rgba(138, 178, 112, 0.2); }
-.money-smart-mark-paid:focus-visible { outline: 2px solid #8068b6; outline-offset: 2px; }
+.money-smart-bill-state:hover { background: rgba(194, 53, 53, 0.16); }
+.money-smart-bill-state:focus-visible { outline: 2px solid #8068b6; outline-offset: 2px; }
 .money-smart-row-amount.is-overdue,
 .money-smart-change { color: #b64d4d; }
 .money-smart-empty { margin: 0; color: #737b87; font-size: 0.73rem; line-height: 1.5; }
@@ -3969,8 +4066,8 @@
 :root[data-theme="dark"] .money-smart-empty,
 :root[data-theme="dark"] .money-smart-rows-heading,
 :root[data-theme="dark"] .money-smart-metrics span { color: #bad5c9; }
-:root[data-theme="dark"] .money-smart-mark-paid { border-color: rgba(201,255,179,0.18); background: rgba(201,255,179,0.09); color: #d9ffcb; }
-:root[data-theme="dark"] .money-smart-mark-paid:hover { background: rgba(201,255,179,0.16); }
+:root[data-theme="dark"] .money-smart-bill-state { border-color: rgba(255,122,141,0.3); background: rgba(217,71,97,0.17); color: #ff9ba9; }
+:root[data-theme="dark"] .money-smart-bill-state:hover { background: rgba(217,71,97,0.24); }
 :root[data-theme="dark"] .money-smart-metrics > div { border-color: rgba(201,255,179,0.1); background: rgba(255,255,255,0.045); }
 :root[data-theme="dark"] .money-smart-metrics .is-negative strong,
 :root[data-theme="dark"] .money-smart-change { color: #fca5a5; }
