@@ -1,5 +1,7 @@
 const CAMBODIA_HOLIDAY_CACHE_KEY = "mylife:cambodia-holidays";
 let cambodiaHolidayState = { year: null, items: [], loading: false };
+const cambodiaHolidayCache = new Map();
+const cambodiaHolidayRequests = new Map();
 let selectedCalendarDate = "";
 
 function renderCalendar(view = "month") {
@@ -131,11 +133,19 @@ function renderSelectedDayDetails(date, monthEvents) {
 }
 
 function ensureCambodiaHolidays(year) {
-  if (cambodiaHolidayState.year === year || cambodiaHolidayState.loading) return;
+  if (cambodiaHolidayCache.has(year)) {
+    cambodiaHolidayState = { year, items: cambodiaHolidayCache.get(year), loading: false };
+    return;
+  }
+  if (cambodiaHolidayRequests.has(year)) {
+    cambodiaHolidayState = { year, items: [], loading: true };
+    return;
+  }
 
   try {
     const cached = JSON.parse(localStorage.getItem(`${CAMBODIA_HOLIDAY_CACHE_KEY}:${year}`) || "null");
     if (Array.isArray(cached)) {
+      cambodiaHolidayCache.set(year, cached);
       cambodiaHolidayState = { year, items: cached, loading: false };
       return;
     }
@@ -144,17 +154,20 @@ function ensureCambodiaHolidays(year) {
   }
 
   cambodiaHolidayState = { year, items: [], loading: true };
-  fetch(`https://date.nager.at/api/v3/PublicHolidays/${year}/KH`)
+  const request = fetch(`https://date.nager.at/api/v3/PublicHolidays/${year}/KH`)
     .then(response => response.ok ? response.json() : [])
     .then(items => {
       const holidays = Array.isArray(items) ? items.map(item => ({ date: item.date, name: item.localName || item.name })).filter(item => item.date && item.name) : [];
+      cambodiaHolidayCache.set(year, holidays);
       localStorage.setItem(`${CAMBODIA_HOLIDAY_CACHE_KEY}:${year}`, JSON.stringify(holidays));
-      cambodiaHolidayState = { year, items: holidays, loading: false };
-      if (location.hash.startsWith("#calendar")) App.render();
+      if (cambodiaHolidayState.year === year) cambodiaHolidayState = { year, items: holidays, loading: false };
+      if (location.hash.startsWith("#calendar") || location.hash.startsWith("#home")) App.render();
     })
     .catch(() => {
-      cambodiaHolidayState = { year, items: [], loading: false };
-    });
+      if (cambodiaHolidayState.year === year) cambodiaHolidayState = { year, items: [], loading: false };
+    })
+    .finally(() => cambodiaHolidayRequests.delete(year));
+  cambodiaHolidayRequests.set(year, request);
 }
 
 function calendarEmptyCard() {

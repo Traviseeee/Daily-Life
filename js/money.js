@@ -147,6 +147,7 @@ function renderMoneyTab(tab, stats) {
   if (tab === "reports") return renderReports(stats);
   return `
     ${renderMoneyCards(stats)}
+    ${renderMoneySmartOverview()}
     ${renderCategoryOverview()}
     <div class="grid two-col financial-overview-grid">
       <article class="glass-card card-pad financial-panel">
@@ -176,6 +177,114 @@ function renderMoneyTab(tab, stats) {
       </article>
     </div>
   `;
+}
+
+function renderMoneySmartOverview() {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayIso = toDateInput(today);
+  const weekEnd = new Date(today);
+  weekEnd.setDate(weekEnd.getDate() + 7);
+  const weekEndIso = toDateInput(weekEnd);
+  const dueBills = (appData.bills || [])
+    .filter(bill => bill.status !== "Paid" && bill.due && bill.due <= weekEndIso)
+    .sort((left, right) => String(left.due).localeCompare(String(right.due)));
+  const dueLoans = (appData.loans || []).flatMap(loan => {
+    const due = nextLoanPaymentDate(loan);
+    if (!due || due < todayIso || due > weekEndIso) return [];
+    const paid = (loan.payments || []).some(payment => payment.date === due);
+    return paid ? [] : [{ title: loan.name || t("loan"), date: due, amount: loan.monthlyPayment, currency: loan.currency, href: "#money/loans" }];
+  });
+  const overdueLoanPayments = (appData.loans || []).flatMap(loan => {
+    if (!loan.payments?.length || loanRemaining(loan) <= 0) return [];
+    const overdueDate = loanPaymentScheduleToCurrent(loan)
+      .filter(payment => !payment.paid && payment.date < todayIso)
+      .map(payment => payment.date)
+      .sort()
+      .slice(-1)[0];
+    return overdueDate
+      ? [{ title: loan.name || t("loan"), date: overdueDate, amount: loan.monthlyPayment, currency: loan.currency, href: "#money/loans", overdue: true }]
+      : [];
+  });
+  const billAlerts = dueBills.map(bill => ({
+    title: bill.name || t("bill"),
+    date: bill.due,
+    amount: bill.amount,
+    currency: bill.currency,
+    href: "#money/bills",
+    overdue: bill.due < todayIso
+  }));
+  const attentionItems = [...billAlerts, ...overdueLoanPayments, ...dueLoans]
+    .sort((left, right) => left.date.localeCompare(right.date))
+    .slice(0, 5);
+  const month = `${todayIso.slice(0, 7)}`;
+  const report = buildMonthlyFinanceReport(month);
+  const monthlyExpenses = (appData.expenses || [])
+    .filter(expense => String(expense.date || "").slice(0, 7) === month)
+    .reduce((total, expense) => total + toProfileCurrency(expense.amount, expense.currency), 0);
+  const savingsMonth = month;
+  const savedThisMonth = (appData.savings || []).reduce((total, saving) => {
+    const contribution = getSavingsContribution(saving, savingsMonth);
+    return total + (contribution?.paid ? toProfileCurrency(contribution.amount || saving.monthlyContribution, saving.currency) : 0);
+  }, 0);
+  const remaining = report.incomeTotal - monthlyExpenses - report.loanPaymentTotal - savedThisMonth;
+  const monthStart = `${month}-01`;
+  const previousMonthDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+  const previousMonth = `${previousMonthDate.getFullYear()}-${String(previousMonthDate.getMonth() + 1).padStart(2, "0")}`;
+  const comparisonDay = Math.min(today.getDate(), new Date(previousMonthDate.getFullYear(), previousMonthDate.getMonth() + 1, 0).getDate());
+  const previousCutoff = `${previousMonth}-${String(comparisonDay).padStart(2, "0")}`;
+  const previousStart = `${previousMonth}-01`;
+  const currentExpensesByCategory = new Map();
+  const previousExpensesByCategory = new Map();
+  (appData.expenses || []).forEach(expense => {
+    if (!expense.date) return;
+    const amount = toProfileCurrency(expense.amount, expense.currency);
+    if (expense.date >= monthStart && expense.date <= todayIso) {
+      const category = expense.category || "Other";
+      currentExpensesByCategory.set(category, (currentExpensesByCategory.get(category) || 0) + amount);
+    } else if (expense.date >= previousStart && expense.date <= previousCutoff) {
+      const category = expense.category || "Other";
+      previousExpensesByCategory.set(category, (previousExpensesByCategory.get(category) || 0) + amount);
+    }
+  });
+  const spendingChanges = [...currentExpensesByCategory.entries()]
+    .map(([category, current]) => ({ category, current, previous: previousExpensesByCategory.get(category) || 0, change: current - (previousExpensesByCategory.get(category) || 0) }))
+    .filter(item => item.change > 0)
+    .sort((left, right) => right.change - left.change)
+    .slice(0, 4);
+  const attentionMarkup = attentionItems.length
+    ? `<div class="money-smart-rows">${attentionItems.map(item => `<a class="money-smart-row" href="${escapeAttr(item.href)}"><span class="money-smart-row-copy"><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(item.overdue ? t("overdue") : formatDate(item.date, { month: "short", day: "numeric" }))}</small></span><strong class="money-smart-row-amount${item.overdue ? " is-overdue" : ""}">${money(item.amount, item.currency)}</strong></a>`).join("")}</div>`
+    : `<p class="money-smart-empty">${escapeHtml(t("allCaughtUp"))}</p>`;
+  const changesMarkup = spendingChanges.length
+    ? `<div class="money-smart-rows">${spendingChanges.map(item => `<a class="money-smart-row" href="#money/expenses"><span class="money-smart-row-copy"><strong>${escapeHtml(optionLabel(item.category))}</strong></span><strong class="money-smart-change">+${money(item.change)}</strong></a>`).join("")}</div>`
+    : `<p class="money-smart-empty">${escapeHtml(t("noSpendingIncreaseShort"))}</p>`;
+  const tabs = [
+    { id: "attention", label: t("moneySmartAlerts"), count: attentionItems.length },
+    { id: "month", label: t("moneySmartMonth") },
+    { id: "changes", label: t("moneySmartSpending"), count: spendingChanges.length }
+  ];
+
+  return `<section class="money-smart-overview" aria-label="${escapeAttr(t("moneySmartOverview"))}">
+    <div class="money-smart-tabs" role="tablist" aria-label="${escapeAttr(t("moneySmartOverview"))}">
+      ${tabs.map((tab, index) => `<button class="money-smart-tab${index === 0 ? " active" : ""}" type="button" role="tab" id="money-smart-tab-${tab.id}" aria-controls="money-smart-panel-${tab.id}" aria-selected="${index === 0}" tabindex="${index === 0 ? "0" : "-1"}" data-money-smart-tab="${tab.id}"><span>${escapeHtml(tab.label)}</span>${tab.count ? `<strong>${tab.count}</strong>` : ""}</button>`).join("")}
+    </div>
+    <article class="glass-card card-pad financial-panel money-smart-card" role="tabpanel" id="money-smart-panel-attention" aria-labelledby="money-smart-tab-attention" data-money-smart-panel="attention">
+      ${attentionItems.length ? `<div class="money-smart-rows-heading">${escapeHtml(t("comingUp"))}</div>` : ""}
+      ${attentionMarkup}
+    </article>
+    <article class="glass-card card-pad financial-panel money-smart-card" role="tabpanel" id="money-smart-panel-month" aria-labelledby="money-smart-tab-month" data-money-smart-panel="month" hidden>
+      <div class="money-smart-rows-heading">${escapeHtml(report.monthLabel)}</div>
+      <div class="money-smart-metrics">
+        <div><span>${escapeHtml(t("income"))}</span><strong>${money(report.incomeTotal)}</strong></div>
+        <div><span>${escapeHtml(t("expenses"))}</span><strong>${money(monthlyExpenses)}</strong></div>
+        <div><span>${escapeHtml(t("saved"))}</span><strong>${money(savedThisMonth)}</strong></div>
+        <div class="${remaining < 0 ? "is-negative" : ""}"><span>${escapeHtml(t("moneyLeft"))}</span><strong>${money(remaining)}</strong></div>
+      </div>
+    </article>
+    <article class="glass-card card-pad financial-panel money-smart-card" role="tabpanel" id="money-smart-panel-changes" aria-labelledby="money-smart-tab-changes" data-money-smart-panel="changes" hidden>
+      ${changesMarkup}
+    </article>
+  </section>`;
 }
 
 function moneyEmptyCard() {
@@ -648,6 +757,20 @@ function exportMonthlyFinanceReport(format) {
 
 function bindMoney() {
   bindNavigationSheetGestures();
+  document.querySelectorAll("[data-money-smart-tab]").forEach(button => {
+    button.addEventListener("click", () => selectMoneySmartTab(button));
+    button.addEventListener("keydown", event => {
+      if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+      event.preventDefault();
+      const tabs = [...document.querySelectorAll("[data-money-smart-tab]")];
+      const currentIndex = tabs.indexOf(button);
+      const nextIndex = event.key === "Home" ? 0
+        : event.key === "End" ? tabs.length - 1
+          : (currentIndex + (event.key === "ArrowRight" ? 1 : tabs.length - 1)) % tabs.length;
+      selectMoneySmartTab(tabs[nextIndex]);
+      tabs[nextIndex].focus();
+    });
+  });
   document.querySelectorAll("[data-finance-report-month]").forEach(input => input.addEventListener("change", () => {
     financeReportMonth = input.value;
     financeReportCanvas = null;
@@ -691,6 +814,19 @@ function bindMoney() {
   document.querySelectorAll("[data-payment-loan]").forEach(button => button.addEventListener("click", () => openLoanPaymentModal(appData.loans.find(loan => loan.id === button.dataset.paymentLoan))));
   document.querySelectorAll("[data-loan-schedule]").forEach(input => input.addEventListener("change", () => toggleLoanScheduledPayment(input)));
   document.querySelectorAll("[data-savings-contribution]").forEach(input => input.addEventListener("change", () => toggleSavingsContribution(input)));
+}
+
+function selectMoneySmartTab(button) {
+  const selectedId = button.dataset.moneySmartTab;
+  document.querySelectorAll("[data-money-smart-tab]").forEach(tab => {
+    const selected = tab === button;
+    tab.classList.toggle("active", selected);
+    tab.setAttribute("aria-selected", String(selected));
+    tab.tabIndex = selected ? 0 : -1;
+  });
+  document.querySelectorAll("[data-money-smart-panel]").forEach(panel => {
+    panel.hidden = panel.dataset.moneySmartPanel !== selectedId;
+  });
 }
 
 function toggleSavingsContribution(input) {

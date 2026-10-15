@@ -79,7 +79,6 @@ function renderHome() {
       '</div>' +
     '</div>' +
     '<div class="home-challenge-card' + (challengeImage ? " has-cover-image" : "") + '">' +
-      (challengeImage ? '<img class="home-challenge-image" src="' + escapeAttr(challengeImage) + '" style="--challenge-image-x: ' + challengeImagePosition.x + '%; --challenge-image-y: ' + challengeImagePosition.y + '%;" alt="">' : '') +
       '<label class="home-challenge-image-edit" title="' + escapeAttr(t(challengeImage ? "changeFocusImage" : "addFocusImage")) + '"><span aria-hidden="true">' + Icons.edit() + '</span><input type="file" accept="image/*" data-home-challenge-image aria-label="' + escapeAttr(t(challengeImage ? "changeFocusImage" : "addFocusImage")) + '"></label>' +
       '<div class="home-challenge-copy">' +
         '<span class="home-challenge-label">' + t("dailyFocus") + '</span>' +
@@ -87,12 +86,15 @@ function renderHome() {
         '<p>' + (languageCode() === "km" ? "កត់សម្គាល់អារម្មណ៍ ឬសរសេររឿងល្អមួយយ៉ាង" : "Check in, reflect, and finish a tiny win.") + '</p>' +
         '<button class="suggestion-button" type="button" data-action="smart-assistant">' + (languageCode() === "km" ? "ជំនួយ" : "Help") + '</button>' +
       '</div>' +
+      (challengeImage ? '<img class="home-challenge-image" src="' + escapeAttr(challengeImage) + '" style="--challenge-image-x: ' + challengeImagePosition.x + '%; --challenge-image-y: ' + challengeImagePosition.y + '%;" alt="">' : '') +
       '<div class="home-challenge-art" aria-hidden="true"><span class="shape orange"></span><span class="shape grey"></span><span class="shape dark"></span></div>' +
     '</div>' +
     '<div class="home-week-row" aria-label="' + (languageCode() === "km" ? "អារម្មណ៍ប្រចាំសប្តាហ៍" : "Mood this week") + '">' +
       moodHistoryChart.map(day => '<div class="home-week-day ' + (day.isToday ? "active" : "") + '"' + (day.isToday ? ' aria-current="date"' : '') + '><span class="week-label">' + day.day + '</span><strong>' + day.date + '</strong><span class="week-mood ' + (day.value ? "has-mood" : "no-mood") + '" aria-label="' + escapeHtml(day.label) + '">' + day.emoji + '</span></div>').join("") +
     '</div>' +
+    renderHomeNewsTicker() +
     renderHomeAgenda(agenda) +
+    renderHomeSmartLists(agenda, focusItems, todayIso) +
     '<div class="home-plan-wrap">' +
       '<h2>' + (languageCode() === "km" ? "ផែនការរបស់អ្នក" : "Your plan") + '</h2>' +
       '<div class="home-quick-actions">' +
@@ -185,6 +187,36 @@ function renderHome() {
   '</section>';
 }
 
+function renderHomeNewsTicker() {
+  const items = getUpcomingNotifications(7, 5);
+  const shouldScroll = items.length >= 3;
+  const itemMarkup = items.length
+    ? items.map(item => {
+        const when = item.daysLeft === 0
+          ? t("today")
+          : item.daysLeft === 1
+            ? t("tomorrow")
+            : t("inDays", { count: item.daysLeft });
+        const href = item.kind === "bill"
+          ? "#money/bills"
+          : item.source === "family"
+            ? "#family"
+            : item.kind === "reminder"
+              ? "#daily"
+              : "#calendar";
+        return '<a class="ticker-item" href="' + href + '">' + escapeHtml(item.title) + ' · ' + escapeHtml(when) + '</a>';
+      }).join('<span class="ticker-divider" aria-hidden="true">✦</span>')
+    : '<span class="ticker-item">' + escapeHtml(t("noUpcomingItems")) + '</span>';
+  const groupMarkup = '<div class="ticker-group">' + itemMarkup + '</div>';
+
+  return '<div class="news-ticker' + (shouldScroll ? ' is-scrolling' : '') + '" role="region" aria-label="' + escapeAttr(t("upcoming")) + '">' +
+    '<div class="news-ticker-track">' +
+      groupMarkup +
+      (shouldScroll ? '<div class="ticker-group" aria-hidden="true">' + itemMarkup + '</div>' : '') +
+    '</div>' +
+  '</div>';
+}
+
 function localDashboardDate(date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
@@ -218,6 +250,25 @@ function homeAgenda(todayIso) {
       overdue: false
     });
   });
+
+  for (let year = today.getFullYear(); year <= limit.getFullYear(); year += 1) {
+    ensureCambodiaHolidays(year);
+    (cambodiaHolidayCache.get(year) || [])
+      .filter(holiday => holiday.date >= todayIso && holiday.date <= limitIso)
+      .forEach(holiday => {
+        const date = parseAppDate(holiday.date);
+        addItem({
+          id: `holiday-${holiday.date}`,
+          kind: "holiday",
+          title: holiday.name,
+          date: holiday.date,
+          daysLeft: Math.max(0, Math.round((date.getTime() - today.getTime()) / 86400000)),
+          categoryLabel: languageCode() === "km" ? "ថ្ងៃឈប់សម្រាកសាធារណៈ" : "Public holiday",
+          href: `#calendar/day/${holiday.date}`,
+          overdue: false
+        });
+      });
+  }
 
   const monthCursor = new Date(today.getFullYear(), today.getMonth(), 1);
   appData.bills.forEach(bill => {
@@ -272,7 +323,8 @@ function homeAgenda(todayIso) {
     today: items.filter(item => !item.overdue && item.date === todayIso).length,
     nextSevenDays: items.filter(item => !item.overdue && item.date > todayIso && item.date <= weekEndIso).length,
     overdueBills: items.filter(item => item.overdue).length,
-    items: items.slice(0, 5)
+    items: items.slice(0, 5),
+    allItems: items
   };
 }
 
@@ -305,6 +357,185 @@ function renderHomeAgenda(agenda) {
   '</section>';
 }
 
+function renderHomeSmartLists(agenda, focusItems, todayIso) {
+  const today = parseAppDate(todayIso);
+  const weekEnd = new Date(today);
+  weekEnd.setDate(weekEnd.getDate() + 7);
+  const monthStart = `${todayIso.slice(0, 7)}-01`;
+  const nextMonthLimit = new Date(today);
+  nextMonthLimit.setDate(nextMonthLimit.getDate() + 30);
+  const nextMonthLimitIso = localDashboardDate(nextMonthLimit);
+  const upcomingItems = agenda.allItems.filter(item => !item.overdue && item.date >= todayIso && item.date <= localDashboardDate(weekEnd));
+  const overdueBills = appData.bills.filter(bill => bill.status !== "Paid" && bill.due && bill.due < todayIso);
+  const overdueReminders = appData.reminders.filter(reminder => !reminder.done && reminder.date && reminder.date < todayIso);
+  const dueSoonGoals = appData.goals.filter(goal => {
+    if (!goal.deadline || (Number(goal.targetAmount || 0) > 0 && Number(goal.currentAmount || 0) >= Number(goal.targetAmount || 0))) return false;
+    return goal.deadline <= nextMonthLimitIso;
+  });
+  const attentionItems = [
+    ...overdueBills.map(bill => ({ title: bill.name || t("bill"), detail: `${t("overdue")} · ${formatDate(bill.due, { month: "short", day: "numeric" })}`, href: "#money/bills" })),
+    ...overdueReminders.map(reminder => ({ title: reminder.title || t("reminder"), detail: `${t("overdue")} · ${formatDate(reminder.date, { month: "short", day: "numeric" })}`, href: "#daily" })),
+    ...dueSoonGoals.map(goal => ({ title: goal.name || t("goal"), detail: `${t("deadline")} · ${formatDate(goal.deadline, { month: "short", day: "numeric" })}`, href: `#goals/${goal.id}` }))
+  ];
+  const unpaidBills = appData.bills
+    .filter(bill => bill.status !== "Paid")
+    .slice()
+    .sort((left, right) => String(left.due || "").localeCompare(String(right.due || "")));
+  const billsDueSoon = unpaidBills.filter(bill => bill.due && bill.due >= todayIso && bill.due <= localDashboardDate(weekEnd));
+  const todayEvents = appData.calendarEvents
+    .filter(event => event.date === todayIso)
+    .map(event => ({ title: event.title || t("calendarEvent"), detail: event.time || t("calendarEvent"), href: "#calendar" }));
+  const todayReminders = appData.reminders
+    .filter(reminder => !reminder.done && reminder.date === todayIso)
+    .map(reminder => ({ title: reminder.title || t("reminder"), detail: reminder.time || t("reminder"), href: "#daily" }));
+  const todayFocusItems = focusItems.map(item => ({
+    title: item.text,
+    detail: item.done ? t("completed") : t("dailyFocus"),
+    href: "#daily"
+  }));
+  const incompleteToday = [
+    ...focusItems.filter(item => !item.done).map(item => ({ title: item.text, detail: t("dailyFocus"), href: "#daily" })),
+    ...todayReminders.map(item => ({ ...item, detail: t("reminder") }))
+  ];
+  const familyDates = getUpcomingNotifications(365, Infinity)
+    .filter(item => item.source === "family")
+    .slice(0, 5)
+    .map(item => ({ title: item.title, detail: formatDate(item.date, { month: "short", day: "numeric" }), href: "#family" }));
+  const monthExpenses = appData.expenses
+    .filter(expense => expense.date && expense.date >= monthStart && expense.date <= todayIso)
+    .slice()
+    .sort((left, right) => String(right.date).localeCompare(String(left.date)));
+  const spendingByCategory = new Map();
+  monthExpenses.forEach(expense => {
+    const category = expense.category || "Other";
+    spendingByCategory.set(category, (spendingByCategory.get(category) || 0) + toProfileCurrency(expense.amount, expense.currency));
+  });
+  const categories = [...spendingByCategory.entries()].sort((left, right) => right[1] - left[1]);
+  const recentExpenses = monthExpenses.slice(0, 3).map(expense => ({
+    title: expense.description || t("expense"),
+    detail: `${formatDate(expense.date, { month: "short", day: "numeric" })} · ${money(expense.amount, expense.currency)}`,
+    href: "#money/expenses"
+  }));
+  const goalsToRevisit = appData.goals.filter(goal => {
+    if (Number(goal.targetAmount || 0) > 0 && Number(goal.currentAmount || 0) >= Number(goal.targetAmount || 0)) return false;
+    const contributionDate = (Array.isArray(goal.contributions) ? goal.contributions : [])
+      .map(item => item.date)
+      .filter(Boolean)
+      .sort()
+      .slice(-1)[0];
+    const lastUpdate = contributionDate || (goal.updatedAt || goal.createdAt || "").slice(0, 10);
+    const stale = lastUpdate && lastUpdate < localDashboardDate(new Date(today.getFullYear(), today.getMonth(), today.getDate() - 30));
+    const approachingDeadline = goal.deadline && goal.deadline >= todayIso && goal.deadline <= nextMonthLimitIso;
+    return Boolean(stale || approachingDeadline);
+  }).slice(0, 5).map(goal => ({
+    title: goal.name || t("goal"),
+    detail: goal.deadline ? `${t("deadline")} · ${formatDate(goal.deadline, { month: "short", day: "numeric" })}` : t("goalsToRevisit"),
+    href: `#goals/${goal.id}`
+  }));
+
+  const rowList = (items, emptyText = t("noUpcomingItems")) => items.length
+    ? `<div class="home-smart-list-rows">${items.map(item => `<a class="home-smart-list-row" href="${escapeAttr(item.href)}"><span>${escapeHtml(item.title)}</span><small>${escapeHtml(item.detail)}</small></a>`).join("")}</div>`
+    : `<p class="home-smart-list-empty">${escapeHtml(emptyText)}</p>`;
+  const listCard = (key, title, count, body, open = false) =>
+    `<details class="home-smart-list" data-smart-list="${escapeAttr(key)}"${open ? " open" : ""}><summary><span>${escapeHtml(title)}</span><strong>${count}</strong></summary><div class="home-smart-list-content">${body}</div></details>`;
+  const billRowsFor = bills => bills.length
+    ? `<div class="home-smart-list-rows">${bills.slice(0, 6).map(bill => `<div class="home-smart-list-row home-smart-bill-row"><a href="#money/bills"><span>${escapeHtml(bill.name || t("bill"))}</span><small>${bill.due ? escapeHtml(formatDate(bill.due, { month: "short", day: "numeric" })) : escapeHtml(t("dueDate"))} · ${escapeHtml(money(bill.amount, bill.currency))}</small></a><button type="button" data-home-mark-bill="${escapeAttr(bill.id)}">${escapeHtml(t("markPaid"))}</button></div>`).join("")}</div>`
+    : `<p class="home-smart-list-empty">${escapeHtml(t("noBillsYet"))}</p>`;
+  const billRows = billRowsFor(unpaidBills);
+  const billsDueSoonRows = billsDueSoon.length
+    ? billRowsFor(billsDueSoon)
+    : `<p class="home-smart-list-empty">${escapeHtml(t("noBillsDueSoon"))}</p>`;
+  const spendingBody = monthExpenses.length
+    ? `<div class="home-smart-spending-total"><span>${escapeHtml(t("monthlyExpenses"))}</span><strong>${escapeHtml(money(monthExpenses.reduce((sum, expense) => sum + toProfileCurrency(expense.amount, expense.currency), 0)))}</strong></div><div class="home-smart-category-list">${categories.slice(0, 4).map(([category, total]) => `<div><span>${escapeHtml(optionLabel(category))}</span><strong>${escapeHtml(money(total))}</strong></div>`).join("")}</div>${rowList(recentExpenses, t("noExpensesYet"))}<a class="home-smart-list-link" href="#money/expenses">${escapeHtml(t("expenses"))} ›</a>`
+    : `<p class="home-smart-list-empty">${escapeHtml(t("noExpensesYet"))}</p>`;
+  const quickCapture = `<div class="home-smart-capture-actions"><button type="button" data-action="add-event">${escapeHtml(t("addEvent"))}</button><button type="button" data-action="add-bill">${escapeHtml(t("addBill"))}</button><button type="button" data-action="add-expense">${escapeHtml(t("addExpense"))}</button><button type="button" data-action="add-reminder">${escapeHtml(t("addReminder"))}</button></div>`;
+  const upcomingRows = upcomingItems.map(item => ({
+    title: item.title,
+    detail: `${item.categoryLabel} · ${formatDate(item.date, { month: "short", day: "numeric" })}`,
+    href: item.href
+  }));
+  const smartCategories = [
+    {
+      id: "today",
+      label: t("today"),
+      icon: Icons.calendar(),
+      count: new Set([
+        ...attentionItems.map(item => `${item.href}:${item.title}`),
+        ...upcomingItems.map(item => `${item.kind}:${item.id}:${item.date}`),
+        ...todayFocusItems.map(item => `focus:${item.title}`)
+      ]).size,
+      lists: [
+        listCard("attention", t("needsAttention"), attentionItems.length, rowList(attentionItems, t("allCaughtUp")), attentionItems.length > 0),
+        listCard("upcoming", t("comingUp"), upcomingItems.length, rowList(upcomingRows)),
+        listCard("today", t("todaysPlan"), todayEvents.length + todayReminders.length + todayFocusItems.length, rowList([...todayEvents, ...todayReminders, ...todayFocusItems], t("noUpcomingItems"))),
+        listCard("incomplete-today", t("incompleteToday"), incompleteToday.length, rowList(incompleteToday, t("noIncompleteToday")))
+      ]
+    },
+    {
+      id: "money",
+      label: t("money"),
+      icon: Icons.money(),
+      count: unpaidBills.length + monthExpenses.length,
+      lists: [
+        listCard("unpaid", t("unpaidBills"), unpaidBills.length, billRows),
+        listCard("due-soon", t("billsDueSoon"), billsDueSoon.length, billsDueSoonRows),
+        listCard("spending", t("recentSpending"), monthExpenses.length, spendingBody)
+      ]
+    },
+    {
+      id: "goals",
+      label: t("goals"),
+      icon: Icons.goal(),
+      count: goalsToRevisit.length,
+      lists: [listCard("goals", t("goalsToRevisit"), goalsToRevisit.length, rowList(goalsToRevisit, t("noGoalsToRevisit")))]
+    },
+    {
+      id: "family",
+      label: t("family"),
+      icon: Icons.family(),
+      count: familyDates.length,
+      lists: [listCard("family", t("familyDates"), familyDates.length, rowList(familyDates, t("noFamilyDates")))]
+    }
+  ];
+
+  return `<section class="home-smart-lists" aria-labelledby="homeSmartListsTitle">
+    <header class="home-smart-lists-heading"><h2 id="homeSmartListsTitle">${escapeHtml(t("smartLists"))}</h2><button class="home-smart-capture-toggle" type="button" data-toggle-smart-capture aria-expanded="false">${Icons.plus()}<span>${escapeHtml(t("quickCapture"))}</span></button></header>
+    <div class="home-smart-capture-panel" data-smart-capture-panel hidden>${quickCapture}</div>
+    <div class="home-smart-category-nav" role="group" aria-label="${escapeAttr(t("smartLists"))}">
+      ${smartCategories.map((category, index) => `<button class="home-smart-category${index === 0 ? " active" : ""}" type="button" data-smart-category="${category.id}" aria-controls="home-smart-panel-${category.id}" aria-pressed="${index === 0}">${category.icon}<span>${escapeHtml(category.label)}</span><strong>${category.count}</strong></button>`).join("")}
+    </div>
+    ${smartCategories.map((category, index) => `<div class="home-smart-list-grid" id="home-smart-panel-${category.id}" data-smart-panel="${category.id}"${index === 0 ? "" : " hidden"}>${category.lists.join("")}</div>`).join("")}
+  </section>`;
+}
+
+function markHomeBillPaid(billId) {
+  const bill = appData.bills.find(item => item.id === billId);
+  if (!bill || bill.status === "Paid") return;
+  const frequency = bill.frequency || "Monthly";
+  const nextBill = { status: "Paid" };
+  if (frequency !== "Once") {
+    const dueDate = parseAppDate(bill.due);
+    if (!Number.isNaN(dueDate.getTime())) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      do {
+        if (frequency === "Daily") dueDate.setDate(dueDate.getDate() + 1);
+        else if (frequency === "Weekly") dueDate.setDate(dueDate.getDate() + 7);
+        else {
+          const months = frequency === "Quarterly" ? 3 : frequency === "Yearly" ? 12 : 1;
+          const day = dueDate.getDate();
+          dueDate.setDate(1);
+          dueDate.setMonth(dueDate.getMonth() + months);
+          dueDate.setDate(Math.min(day, new Date(dueDate.getFullYear(), dueDate.getMonth() + 1, 0).getDate()));
+        }
+      } while (dueDate <= today);
+      nextBill.due = localDashboardDate(dueDate);
+      nextBill.status = "Upcoming";
+    }
+  }
+  Store.edit("bills", bill.id, nextBill);
+  Toast.show(t("paymentMarkedPaid"));
+}
 
 function homeEmptyCard() {
   return `
@@ -1016,6 +1247,29 @@ function bindHome() {
   document.querySelectorAll('[data-action="smart-assistant"]').forEach(button => button.addEventListener("click", () => SmartAssistant.open()));
   document.querySelectorAll('[data-action="create-user"]').forEach(button => button.addEventListener("click", () => openCreateUserModal()));
   document.querySelectorAll('[data-action="add-goal"]').forEach(button => button.addEventListener("click", () => openGoalModal()));
+  document.querySelectorAll('[data-action="add-expense"]').forEach(button => button.addEventListener("click", () => openExpenseModal()));
+  document.querySelectorAll('[data-action="add-bill"]').forEach(button => button.addEventListener("click", () => openBillModal()));
+  document.querySelectorAll('[data-action="add-reminder"]').forEach(button => button.addEventListener("click", () => App.openReminderModal()));
+  document.querySelectorAll("[data-home-mark-bill]").forEach(button => button.addEventListener("click", () => markHomeBillPaid(button.dataset.homeMarkBill)));
+  document.querySelectorAll("[data-smart-category]").forEach(button => button.addEventListener("click", () => {
+    const selectedCategory = button.dataset.smartCategory;
+    document.querySelectorAll("[data-smart-category]").forEach(categoryButton => {
+      const isSelected = categoryButton === button;
+      categoryButton.classList.toggle("active", isSelected);
+      categoryButton.setAttribute("aria-pressed", String(isSelected));
+    });
+    document.querySelectorAll("[data-smart-panel]").forEach(panel => {
+      panel.hidden = panel.dataset.smartPanel !== selectedCategory;
+    });
+  }));
+  document.querySelector("[data-toggle-smart-capture]")?.addEventListener("click", event => {
+    const button = event.currentTarget;
+    const panel = document.querySelector("[data-smart-capture-panel]");
+    if (!panel) return;
+    const isExpanded = button.getAttribute("aria-expanded") === "true";
+    button.setAttribute("aria-expanded", String(!isExpanded));
+    panel.hidden = isExpanded;
+  });
   document.querySelectorAll('[data-account-action]').forEach(button => {
     button.addEventListener("click", async event => {
       event.stopPropagation();
