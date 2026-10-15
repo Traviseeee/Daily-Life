@@ -1,6 +1,6 @@
 const routes = [
   { id: "home", label: "Home", icon: "home" },
-  { id: "summary", label: "Summary", icon: "chart" },
+  { id: "summary", labelKey: "smartSummary", icon: "chart" },
   { id: "family", label: "Family", icon: "family" },
   { id: "goals", label: "Goals", icon: "goal" },
   { id: "money", label: "Financial", icon: "money" },
@@ -30,7 +30,7 @@ function footerRoutes() {
 }
 
 function navLink(route) {
-  return `<a class="nav-item" href="#${route.id}" data-route="${route.id}">${Icons[route.icon]()}<span>${t(route.id)}</span></a>`;
+  return `<a class="nav-item" href="#${route.id}" data-route="${route.id}">${Icons[route.icon]()}<span>${t(route.labelKey || route.id)}</span></a>`;
 }
 
 function renderNavigation() {

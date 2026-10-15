@@ -3256,6 +3256,29 @@
   padding: 0 2px 2px;
 }
 
+.home-smart-summary-link {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid rgba(100, 116, 139, 0.14);
+  border-radius: 14px;
+  color: #263243;
+  text-decoration: none;
+  background: rgba(255, 255, 255, 0.82);
+  transition: border-color 150ms ease, transform 150ms ease;
+}
+
+.home-smart-summary-link:hover { border-color: rgba(101, 82, 143, 0.3); transform: translateY(-1px); }
+.home-smart-summary-link > span:first-child { display: grid; width: 34px; height: 34px; place-items: center; border-radius: 11px; color: #65528f; background: #f0ebff; }
+.home-smart-summary-link > span:first-child svg { width: 18px; height: 18px; }
+.home-smart-summary-link > span:nth-child(2) { display: grid; min-width: 0; gap: 3px; }
+.home-smart-summary-link strong { font-size: 0.8rem; }
+.home-smart-summary-link small { overflow: hidden; color: #737b87; font-size: 0.68rem; text-overflow: ellipsis; white-space: nowrap; }
+.home-smart-summary-link > svg { width: 17px; height: 17px; color: #716095; }
+
 .home-smart-lists-heading h2 {
   margin: 0;
   color: #1b2430;
@@ -3469,6 +3492,7 @@
 
 :root[data-theme="dark"] .home-smart-lists-heading h2,
 :root[data-theme="dark"] .home-smart-list > summary,
+:root[data-theme="dark"] .home-smart-summary-link,
 :root[data-theme="dark"] .home-smart-list-row > span,
 :root[data-theme="dark"] .home-smart-list-row > a > span,
 :root[data-theme="dark"] .home-smart-spending-total strong,
@@ -3482,6 +3506,10 @@
 :root[data-theme="dark"] .home-smart-category-list > div { color: #bad5c9; }
 
 :root[data-theme="dark"] .home-smart-list { border-color: rgba(201, 255, 179, 0.12); background: rgba(11, 25, 20, 0.94); }
+:root[data-theme="dark"] .home-smart-summary-link { border-color: rgba(201, 255, 179, 0.12); background: rgba(11, 25, 20, 0.94); }
+:root[data-theme="dark"] .home-smart-summary-link > span:first-child { color: #d1baff; background: rgba(124, 106, 168, 0.22); }
+:root[data-theme="dark"] .home-smart-summary-link small { color: #bad5c9; }
+:root[data-theme="dark"] .home-smart-summary-link > svg { color: #d1baff; }
 :root[data-theme="dark"] .home-smart-category { border-color: rgba(201, 255, 179, 0.12); color: #bad5c9; background: rgba(11, 25, 20, 0.82); }
 :root[data-theme="dark"] .home-smart-category:hover,
 :root[data-theme="dark"] .home-smart-category.active { border-color: rgba(209, 186, 255, 0.3); color: #f4efff; background: rgba(124, 106, 168, 0.2); }
@@ -3571,6 +3599,48 @@
 :root[data-theme="dark"] .home-smart-list-grid[data-smart-panel="goals"] { --smart-accent: #d7b8ff; --smart-tint: rgba(117, 69, 163, 0.22); }
 :root[data-theme="dark"] .home-smart-list-grid[data-smart-panel="family"] { --smart-accent: #ffadc0; --smart-tint: rgba(179, 76, 105, 0.2); }
 
+.summary-page .home-smart-lists {
+  gap: 16px;
+  padding: 20px;
+  border: 1px solid #e5e7f1;
+  border-radius: 24px;
+  color: #14233b;
+  background: linear-gradient(145deg, #ffffff 12%, #f8f8ff 100%);
+  box-shadow: 0 12px 34px rgba(30, 40, 72, 0.08);
+}
+
+.summary-page .home-smart-lists-heading { align-items: center; padding: 0; }
+.summary-page .home-smart-lists-heading h2 { color: #14233b; font-size: 1.2rem; }
+.summary-page .home-smart-capture-toggle { border-color: #e5e7f1; color: #6952d9; background: #ffffff; box-shadow: none; }
+.summary-page .home-smart-list-grid .home-smart-list {
+  border: 1px solid #e5e7f1;
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.84);
+}
+.summary-page .home-smart-list-grid .home-smart-list[open] {
+  border-color: color-mix(in srgb, var(--smart-accent) 32%, #e5e7f1);
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--smart-accent) 8%, transparent);
+}
+:root[data-theme="dark"] .summary-page .home-smart-lists {
+  border-color: rgba(171, 255, 180, 0.14);
+  color: var(--text-primary);
+  background: linear-gradient(rgba(23, 54, 42, 0.98), rgba(10, 24, 19, 0.99));
+  box-shadow: none;
+}
+:root[data-theme="dark"] .summary-page .home-smart-lists-heading h2 { color: var(--text-primary); }
+:root[data-theme="dark"] .summary-page .home-smart-capture-toggle {
+  border-color: var(--border);
+  color: #d1baff;
+  background: var(--bg-secondary);
+}
+:root[data-theme="dark"] .summary-page .home-smart-list-grid .home-smart-list {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.035);
+}
+:root[data-theme="dark"] .summary-page .home-smart-list-grid .home-smart-list[open] {
+  border-color: color-mix(in srgb, var(--smart-accent) 42%, rgba(255, 255, 255, 0.1));
+}
+
 @media (max-width: 560px) {
   .home-agenda-card { gap: 12px; padding: 14px; border-radius: 17px; }
   .home-agenda-header h2 { font-size: 1rem; }
@@ -3586,6 +3656,8 @@
   .home-smart-category > svg { width: 14px; height: 14px; }
   .home-smart-category > span { font-size: 0.7rem; }
   .home-smart-category > strong { min-width: 19px; min-height: 19px; font-size: 0.6rem; }
+  .summary-page .home-smart-lists { gap: 13px; padding: 14px; border-radius: 19px; }
+  .summary-page .home-smart-lists-heading h2 { font-size: 1.02rem; }
 }
 
 @media (max-width: 560px) {

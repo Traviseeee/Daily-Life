@@ -1,4 +1,13 @@
 function renderSummary() {
+  const todayIso = localDashboardDate(new Date());
+  const focusItems = appData.dailyFocus?.date === todayIso && Array.isArray(appData.dailyFocus.items) && appData.dailyFocus.items.length
+    ? appData.dailyFocus.items
+    : [
+        { id: "focus-move", text: t("moveMyBody"), done: false },
+        { id: "focus-water", text: t("drinkWater"), done: false },
+        { id: "focus-family", text: t("checkInWithFamily"), done: false }
+      ];
+  const agenda = homeAgenda(todayIso);
   const items = [
     { key: "family", label: t("family"), count: appData.family.length, color: "#8eea28", icon: Icons.family(), href: "#family" },
     { key: "goals", label: t("goals"), count: appData.goals.length, color: "#17d9b5", icon: Icons.goal(), href: "#goals" },
@@ -15,7 +24,10 @@ function renderSummary() {
 
   return `
     <section class="page summary-page">
-      <h1 class="sr-only">${t("summaryPageTitle")}</h1>
+      <header class="summary-page-header">
+        <div><h1 class="page-title">${escapeHtml(t("summaryPageTitle"))}</h1><p class="page-subtitle">${escapeHtml(t("smartSummarySubtitle"))}</p></div>
+      </header>
+      ${renderHomeSmartLists(agenda, focusItems, todayIso)}
       <article class="glass-card summary-overview-card" aria-labelledby="summaryOverviewTitle">
         <div class="summary-overview-heading">
           <div><span class="eyebrow">${t("summaryOverview")}</span><h2 id="summaryOverviewTitle">${t("summaryOverviewBody")}</h2></div>

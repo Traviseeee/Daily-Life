@@ -94,7 +94,7 @@ function renderHome() {
     '</div>' +
     renderHomeNewsTicker() +
     renderHomeAgenda(agenda) +
-    renderHomeSmartLists(agenda, focusItems, todayIso) +
+    '<a class="home-smart-summary-link" href="#summary"><span>' + Icons.chart() + '</span><span><strong>' + escapeHtml(t("smartSummary")) + '</strong><small>' + escapeHtml(t("smartSummarySubtitle")) + '</small></span>' + Icons.chevron() + '</a>' +
     '<div class="home-plan-wrap">' +
       '<h2>' + (languageCode() === "km" ? "ផែនការរបស់អ្នក" : "Your plan") + '</h2>' +
       '<div class="home-quick-actions">' +
@@ -1272,6 +1272,10 @@ function bindHome() {
     });
   });
 
+  bindHomeActions();
+}
+
+function bindHomeActions({ bindProfile = true } = {}) {
   document.querySelectorAll('[data-action="add-event"]').forEach(button => button.addEventListener("click", () => App.openEventModal()));
   document.querySelectorAll('[data-action="smart-assistant"]').forEach(button => button.addEventListener("click", () => SmartAssistant.open()));
   document.querySelectorAll('[data-action="create-user"]').forEach(button => button.addEventListener("click", () => openCreateUserModal()));
@@ -1300,39 +1304,41 @@ function bindHome() {
     button.setAttribute("aria-expanded", String(!isExpanded));
     panel.hidden = isExpanded;
   });
-  document.querySelectorAll('[data-account-action]').forEach(button => {
-    button.addEventListener("click", async event => {
-      event.stopPropagation();
-      const action = button.dataset.accountAction;
-      if (action === "edit-profile") {
-        openProfileModal();
-        document.querySelector(".home-profile-side")?.classList.remove("menu-open");
-        return;
-      }
-      if (action === "logout") {
-        await Login.logout();
-        App.render();
-        return;
-      }
-      Login.open();
+  if (bindProfile) {
+    document.querySelectorAll('[data-account-action]').forEach(button => {
+      button.addEventListener("click", async event => {
+        event.stopPropagation();
+        const action = button.dataset.accountAction;
+        if (action === "edit-profile") {
+          openProfileModal();
+          document.querySelector(".home-profile-side")?.classList.remove("menu-open");
+          return;
+        }
+        if (action === "logout") {
+          await Login.logout();
+          App.render();
+          return;
+        }
+        Login.open();
+      });
     });
-  });
-  document.querySelectorAll('.home-profile-side').forEach(button => {
-    button.addEventListener("click", event => {
-      if (event.target.closest('[data-account-action]')) return;
-      button.classList.toggle("menu-open");
-    });
-    button.addEventListener("keydown", event => {
-      if (event.key === "Enter" || event.key === " ") {
-        event.preventDefault();
+    document.querySelectorAll('.home-profile-side').forEach(button => {
+      button.addEventListener("click", event => {
+        if (event.target.closest('[data-account-action]')) return;
         button.classList.toggle("menu-open");
+      });
+      button.addEventListener("keydown", event => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          button.classList.toggle("menu-open");
+        }
+      });
+    });
+
+    document.addEventListener("click", event => {
+      if (!event.target.closest(".home-profile-side")) {
+        document.querySelectorAll(".home-profile-side").forEach(panel => panel.classList.remove("menu-open"));
       }
     });
-  });
-
-  document.addEventListener("click", event => {
-    if (!event.target.closest(".home-profile-side")) {
-      document.querySelectorAll(".home-profile-side").forEach(panel => panel.classList.remove("menu-open"));
-    }
-  });
+  }
 }
