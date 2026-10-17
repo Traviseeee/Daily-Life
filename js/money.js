@@ -369,7 +369,7 @@ function renderSavings() {
 }
 
 function getSavingsContributionMonth() {
-  return new Date().toISOString().slice(0, 7);
+  return localDateInput().slice(0, 7);
 }
 
 function formatSavingsMonth(monthKey) {
@@ -522,7 +522,7 @@ function renderBudget() {
 }
 
 function renderReports() {
-  const month = financeReportMonth || new Date().toISOString().slice(0, 7);
+  const month = financeReportMonth || localDateInput().slice(0, 7);
   const report = buildMonthlyFinanceReport(month);
   return `<article class="glass-card card-pad financial-panel financial-report-panel">
     <div class="financial-report-toolbar">
@@ -799,7 +799,7 @@ async function getMonthlyFinanceReportCanvas(month) {
 }
 
 async function previewMonthlyFinanceReport() {
-  const month = document.querySelector("[data-finance-report-month]")?.value || financeReportMonth || new Date().toISOString().slice(0, 7);
+  const month = document.querySelector("[data-finance-report-month]")?.value || financeReportMonth || localDateInput().slice(0, 7);
   try {
     const canvas = await getMonthlyFinanceReportCanvas(month);
     const dialog = document.querySelector("[data-finance-report-preview-dialog]");
@@ -815,7 +815,7 @@ async function previewMonthlyFinanceReport() {
 }
 
 async function downloadMonthlyFinanceReportJpg() {
-  const month = document.querySelector("[data-finance-report-month]")?.value || financeReportMonth || new Date().toISOString().slice(0, 7);
+  const month = document.querySelector("[data-finance-report-month]")?.value || financeReportMonth || localDateInput().slice(0, 7);
   try {
     const canvas = await getMonthlyFinanceReportCanvas(month);
     const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", 0.94));
@@ -828,7 +828,7 @@ async function downloadMonthlyFinanceReportJpg() {
 }
 
 function exportMonthlyFinanceReport(format) {
-  const month = document.querySelector("[data-finance-report-month]")?.value || financeReportMonth || new Date().toISOString().slice(0, 7);
+  const month = document.querySelector("[data-finance-report-month]")?.value || financeReportMonth || localDateInput().slice(0, 7);
   const report = buildMonthlyFinanceReport(month);
   const isWord = format === "word";
   const extension = isWord ? "doc" : "xls";
@@ -1013,7 +1013,7 @@ function openExpenseModal(item) {
     { name: "amount", label: t("amount"), type: "number", value: item?.amount, required: true },
     { name: "currency", label: t("currency"), type: "select", options: ["USD", "KHR"], value: item?.currency || appData.profile.currency || "USD" },
     { name: "category", label: t("category"), type: "select", options: expenseCategories, value: item?.category || "Food" },
-    { name: "date", label: t("date"), type: "date", value: item?.date || new Date().toISOString().slice(0, 10) },
+    { name: "date", label: t("date"), type: "date", value: item?.date || localDateInput() },
     { name: "method", label: t("paymentMethod"), value: item?.method },
     { name: "notes", label: t("notes"), type: "textarea", value: item?.notes }
   ], onSubmit(data) { const record = { ...data, amount: Number(data.amount || 0), currency: data.currency || appData.profile.currency || "USD" }; item ? Store.edit("expenses", item.id, record) : Store.add("expenses", record); Toast.show(item ? t("expenseSaved") : t("expenseAdded")); } });
@@ -1289,6 +1289,6 @@ function openBillModal(item) {
 function openLoanPaymentModal(loan) {
   Modal.open({ title: t("makePayment"), submitText: t("savePayment"), fields: [
     { name: "amount", label: t("amount"), type: "number", value: loan.monthlyPayment || "", required: true },
-    { name: "date", label: t("date"), type: "date", value: new Date().toISOString().slice(0, 10), required: true }
+    { name: "date", label: t("date"), type: "date", value: localDateInput(), required: true }
   ], onSubmit(data) { loan.payments = [{ amount: Number(data.amount || 0), date: data.date }, ...(loan.payments || [])]; Store.save(); Toast.show(t("paymentSaved")); App.render(); } });
 }

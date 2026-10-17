@@ -231,7 +231,7 @@ function bindGoals(goalId) {
       submitText: t("addContribution"),
       fields: [
         { name: "amount", label: t("amount"), type: "number", required: true },
-        { name: "date", label: t("date"), type: "date", value: new Date().toISOString().slice(0, 10), required: true }
+        { name: "date", label: t("date"), type: "date", value: localDateInput(), required: true }
       ],
       onSubmit(data) {
         const amount = Number(data.amount || 0);

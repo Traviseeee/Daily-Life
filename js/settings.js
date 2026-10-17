@@ -749,7 +749,7 @@ function downloadFile(filename, type, content) {
 }
 
 function backupDate() {
-  return new Date().toISOString().slice(0, 10);
+  return localDateInput();
 }
 
 function renderHelp() {

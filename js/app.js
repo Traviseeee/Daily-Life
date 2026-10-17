@@ -303,107 +303,10 @@ const App = {
     app.focus({ preventScroll: true });
   },
   renderNotificationBadge() {
-    const bell = document.getElementById("bellButton");
-    if (!bell) return;
-
-    const alerts = getUpcomingNotifications(7);
-    const count = alerts.length;
-    let badge = bell.querySelector(".notification-badge");
-
-    if (!badge) {
-      badge = document.createElement("span");
-      badge.className = "notification-badge";
-      badge.setAttribute("aria-hidden", "true");
-      bell.appendChild(badge);
-    }
-
-    const label = count > 0 ? `${count} notifications` : "Notifications";
-    badge.textContent = count > 99 ? "99+" : String(count || "");
-    badge.hidden = count === 0;
-    bell.classList.toggle("has-notifications", count > 0);
-    bell.setAttribute("aria-label", label);
-    bell.setAttribute("title", label);
+    NotificationCenter.renderBadge();
   },
   openNotificationsPanel() {
-    const root = document.getElementById("modalRoot");
-    const alerts = getUpcomingNotifications(7);
-
-    root.classList.add("open");
-    root.innerHTML = `
-      <div class="notification-backdrop" data-close-notification>
-        <div class="notification-panel glass-card" role="dialog" aria-modal="true" aria-labelledby="notificationTitle">
-          <div class="between notification-header">
-            <div>
-              <span class="eyebrow">${t("upcoming")}</span>
-              <h2 id="notificationTitle">${alerts.length ? (languageCode() === "km" ? "ការជូនដំណឹង" : "Notifications") : (languageCode() === "km" ? "គ្មានការជូនដំណឹង" : "No notifications")}</h2>
-            </div>
-            <button class="icon-button" type="button" data-close-notification aria-label="${t("close")}">${Icons.close()}</button>
-          </div>
-
-          ${alerts.length ? `
-            <div class="notification-list">
-              ${alerts.map(item => `
-                <div class="notification-item">
-                  <div class="notification-icon ${item.kind === "bill" ? "bill" : "event"}">${item.kind === "bill" ? Icons.bill() : Icons.calendar()}</div>
-                  <div class="notification-copy">
-                    <strong>${escapeHtml(item.title)}</strong>
-                    <small>${new Date(`${item.date}T00:00:00`).toLocaleDateString(languageCode() === "km" ? "km-KH" : "en-US", { month: "short", day: "numeric" })}</small>
-                    <span>${item.daysLeft === 0 ? (languageCode() === "km" ? "ថ្ងៃនេះ" : "Today") : item.daysLeft === 1 ? (languageCode() === "km" ? "ក្នុង 1 ថ្ងៃ" : "In 1 day") : (languageCode() === "km" ? `ក្នុង ${item.daysLeft} ថ្ងៃ` : `In ${item.daysLeft} days`)}</span>
-                  </div>
-                  <button class="button ghost-button notification-view" type="button" data-view-notification="${escapeAttr(item.id)}">${languageCode() === "km" ? "មើល" : "View"}</button>
-                </div>
-              `).join("")}
-            </div>
-          ` : `
-            <div class="notification-empty">
-              <div class="notification-empty-icon">${Icons.bell()}</div>
-              <p>${languageCode() === "km" ? "អ្នកមិនមានការជូនដំណឹងក្នុង 7 ថ្ងៃទេ" : "You have no reminders in the next 7 days."}</p>
-            </div>
-          `}
-
-          <div class="notification-actions">
-            <button class="button ghost-button" type="button" data-close-notification>${t("close")}</button>
-          </div>
-        </div>
-      </div>
-    `;
-
-    const closeButtons = root.querySelectorAll("[data-close-notification]");
-    closeButtons.forEach(button => button.addEventListener("click", () => {
-      root.classList.remove("open");
-      root.innerHTML = "";
-    }));
-
-    const backdrop = root.querySelector(".notification-backdrop");
-    backdrop?.addEventListener("click", event => {
-      if (event.target === backdrop) {
-        root.classList.remove("open");
-        root.innerHTML = "";
-      }
-    });
-
-    root.querySelectorAll("[data-view-notification]").forEach(button => {
-      button.addEventListener("click", () => {
-        const id = button.dataset.viewNotification;
-        const item = alerts.find(alert => alert.id === id);
-        if (!item) return;
-
-        root.classList.remove("open");
-        root.innerHTML = "";
-        if (item.source === "family") {
-          location.hash = "#family";
-          return;
-        }
-        location.hash = "#calendar";
-
-        setTimeout(() => {
-          const event = appData.calendarEvents.find(entry => entry.id === item.id);
-          if (event) {
-            App.openNotificationDetail(event, item);
-          }
-        }, 200);
-      });
-    });
+    NotificationCenter.open();
   },
   openNotificationDetail(record, item) {
     const root = document.getElementById("modalRoot");
@@ -449,7 +352,7 @@ const App = {
   checkHomeSuggestions() {
     if (this.route !== "home") return;
 
-    const todayIso = new Date().toISOString().slice(0, 10);
+    const todayIso = localDateInput();
     const moodMissing = !appData.mood || appData.mood.date !== todayIso;
     const reflectionMissing = !appData.dailyReflection || appData.dailyReflection.date !== todayIso || !(appData.dailyReflection.text || "").trim();
     const focusMissing = !appData.dailyFocus || appData.dailyFocus.date !== todayIso || !Array.isArray(appData.dailyFocus.items) || !appData.dailyFocus.items.length || appData.dailyFocus.items.every(item => !item.done);
@@ -490,6 +393,7 @@ const App = {
     this.dueReminderInterval = window.setInterval(() => {
       this.checkDueReminderAlerts();
       this.scheduleDueReminderAlerts();
+      this.renderNotificationBadge();
     }, 15000);
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState === "visible") {
@@ -539,6 +443,10 @@ const App = {
 
     try {
       const registration = await navigator.serviceWorker?.ready;
+      // When this device has a Web Push subscription the server already sends
+      // the same alert, so only show the in-app toast to avoid a duplicate.
+      const pushSubscription = await registration?.pushManager?.getSubscription?.();
+      if (pushSubscription) return;
       await registration?.showNotification(payload.title, {
         body: payload.body,
         icon: "/assets/icons/mylife-icon-192.png",
@@ -609,7 +517,7 @@ const App = {
       });
     });
 
-    const currentMonth = new Date().toISOString().slice(0, 7);
+    const currentMonth = localDateInput().slice(0, 7);
     appData.savings.forEach(saving => {
       const monthlyAmount = Number(saving.monthlyContribution || 0);
       const contribution = typeof getSavingsContribution === "function" ? getSavingsContribution(saving, currentMonth) : null;
@@ -640,7 +548,9 @@ const App = {
   checkDueReminderAlerts() {
     if (appData.profile?.notificationsEnabled === false) return;
     const now = new Date();
-    const graceMs = 60 * 1000;
+    // Background tabs throttle timers, so allow alerts that came due while the
+    // tab was hidden to still show when the person comes back.
+    const graceMs = 15 * 60 * 1000;
     this.collectDueAlertItems().forEach(item => {
       if (this.hasSentDueReminder(item)) return;
       const dueAt = this.alertDateTime(item);
@@ -983,14 +893,7 @@ const App = {
         menuToggle.focus();
       }
     });
-    document.getElementById("bellButton").addEventListener("click", () => {
-      const alerts = getUpcomingNotifications(7);
-      if (!alerts.length) {
-        this.openNotificationsPanel();
-        return;
-      }
-      this.openNotificationsPanel();
-    });
+    document.getElementById("bellButton").addEventListener("click", () => NotificationCenter.toggle());
     document.getElementById("smartAssistantButton").addEventListener("click", () => SmartAssistant.open());
     document.addEventListener("click", event => {
       const pinButton = event.target.closest("[data-pin-footer]");
@@ -1045,7 +948,7 @@ const App = {
       submitText: event.id ? t("saveEvent") : t("addEvent"),
       fields: [
         { name: "title", label: t("eventTitle"), value: event.title, required: true },
-        { name: "date", label: t("date"), type: "date", value: event.date || new Date().toISOString().slice(0, 10), required: true },
+        { name: "date", label: t("date"), type: "date", value: event.date || localDateInput(), required: true },
         { name: "time", label: t("time"), type: "time", value: event.time },
         { name: "category", label: t("category"), type: "select", options: ["Personal", "Family", "Goal", "Bill", "Loan", "Reminder"], value: event.category || "Personal" },
         { name: "familyMember", label: t("familyMemberName"), type: "select", options: ["", ...appData.family.map(member => member.name)], value: event.familyMember || "" },
@@ -1065,7 +968,7 @@ const App = {
       submitText: hobby.id ? t("saveRecord") : t("recordHobby"),
       fields: [
         { name: "title", label: t("hobby"), value: hobby.title || "", required: true },
-        { name: "date", label: t("date"), type: "date", value: hobby.date || new Date().toISOString().slice(0, 10), required: true },
+        { name: "date", label: t("date"), type: "date", value: hobby.date || localDateInput(), required: true },
         { name: "minutes", label: t("minutes"), type: "number", value: hobby.minutes || "", min: 1 },
         { name: "category", label: t("category"), type: "select", options: ["Work", "Personal", "Love", "Family", "Health", "Learning"], value: hobby.category || "Personal" },
         { name: "mood", label: t("moodAfter"), value: hobby.mood || "" },
@@ -1084,7 +987,7 @@ const App = {
       submitText: reminder.id ? t("saveReminder") : t("addReminder"),
       fields: [
         { name: "title", label: t("reminder"), value: reminder.title || "", required: true },
-        { name: "date", label: t("date"), type: "date", value: reminder.date || new Date().toISOString().slice(0, 10), required: true },
+        { name: "date", label: t("date"), type: "date", value: reminder.date || localDateInput(), required: true },
         { name: "time", label: t("time"), type: "time", value: reminder.time || "" },
         { name: "category", label: t("category"), type: "select", options: ["Work", "Personal", "Love", "Family", "Health", "Learning"], value: reminder.category || "Personal" },
         { name: "notes", label: t("notes"), type: "textarea", value: reminder.notes || "" }

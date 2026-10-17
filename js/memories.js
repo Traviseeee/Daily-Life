@@ -118,7 +118,7 @@ function memoryFields(memory = {}) {
   return [
     { name: "title", label: t("title"), value: memory.title, required: true },
     { name: "photo", label: t("photo"), type: "file", value: memory.photo },
-    { name: "date", label: t("date"), type: "date", value: memory.date || new Date().toISOString().slice(0, 10), required: true },
+    { name: "date", label: t("date"), type: "date", value: memory.date || localDateInput(), required: true },
     { name: "location", label: t("location"), value: memory.location },
     { name: "description", label: t("description"), type: "textarea", value: memory.description },
     { name: "familyMembers", label: t("familyMembers"), value: memory.familyMembers },

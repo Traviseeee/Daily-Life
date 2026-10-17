@@ -659,7 +659,7 @@ const Store = {
   },
   updateMood(mood) {
     const previous = structuredClone(appData);
-    const today = new Date().toISOString().slice(0, 10);
+    const today = localDateInput();
     const history = Array.isArray(appData.moodHistory) ? appData.moodHistory : [];
 
     appData.mood = {
@@ -681,7 +681,7 @@ const Store = {
   },
   updateDailyReflection(text) {
     const previous = structuredClone(appData);
-    const today = new Date().toISOString().slice(0, 10);
+    const today = localDateInput();
     appData.dailyReflection = {
       date: today,
       text: (text || "").trim()
@@ -690,7 +690,7 @@ const Store = {
   },
   updateDailyFocus(items) {
     const previous = structuredClone(appData);
-    const today = new Date().toISOString().slice(0, 10);
+    const today = localDateInput();
     appData.dailyFocus = {
       date: today,
       items: Array.isArray(items) ? items.map((item, index) => ({
@@ -1328,6 +1328,12 @@ function formatDate(value, options = { month: "short", day: "numeric", year: "nu
     return parts.join(" ");
   }
   return date.toLocaleDateString("en-US", options);
+}
+
+// Calendar date (YYYY-MM-DD) in the device's local time zone.
+// toISOString() uses UTC, which is the previous day before 07:00 in Cambodia.
+function localDateInput(date = new Date()) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 
 function parseAppDate(value) {

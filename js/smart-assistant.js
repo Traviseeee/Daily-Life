@@ -67,7 +67,7 @@ const SmartAssistant = {
     if (kind === "event") {
       return draft("calendarEvents", t("calendarEvent"), {
         title: cleanName || t("calendarEvent"),
-        date: date || new Date().toISOString().slice(0, 10),
+        date: date || localDateInput(),
         time: this.extractTime(line),
         category: this.detectEventCategory(lower),
         familyMember: "",
@@ -107,7 +107,7 @@ const SmartAssistant = {
         amount: amount.value,
         currency,
         category: this.detectMoneyCategory(lower, "Other"),
-        date: date || new Date().toISOString().slice(0, 10),
+        date: date || localDateInput(),
         method: this.detectPaymentMethod(lower),
         notes: line
       });
@@ -127,7 +127,7 @@ const SmartAssistant = {
       return draft("memories", t("memory"), {
         title: cleanName || t("memory"),
         photo: "",
-        date: date || new Date().toISOString().slice(0, 10),
+        date: date || localDateInput(),
         location: this.extractAfter(line, ["at", "in", "នៅ"]),
         description: line,
         familyMembers: "",

@@ -1,5 +1,5 @@
 function renderDaily() {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = localDateInput();
   const todayHobbies = appData.hobbyLogs.filter(item => item.date === today);
   const upcoming = appData.reminders.filter(item => !item.done && item.date >= today).sort((a, b) => a.date.localeCompare(b.date));
   const categories = ["work", "personal", "love", "family", "health", "learning"];

@@ -6,8 +6,12 @@ const {
   getUserSubscriptions,
   sendToSubscription
 } = require("../lib/push");
+const { buildTelegramText } = require("../lib/telegram-message");
 
-const LOOKBACK_MS = 6 * 60 * 1000;
+// Redis dedupe makes a wide window safe: a late or skipped scheduler run still
+// delivers alerts that came due in the last 30 minutes, exactly once.
+const LOOKBACK_MS = 30 * 60 * 1000;
+const APP_TIME_ZONE = "Asia/Phnom_Penh";
 const SENT_TTL_SECONDS = 90 * 24 * 60 * 60;
 
 function localDateTimeToUtc(dateValue, timeValue, timeZone) {
@@ -103,6 +107,16 @@ function parseDate(value) {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
+// Today's calendar date (YYYY-MM-DD) in Cambodia, not in the server's UTC clock.
+function zonedTodayInput(timeZone = APP_TIME_ZONE) {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).format(new Date());
+}
+
 function toDateInput(date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
@@ -134,8 +148,7 @@ function loanNextPaymentDate(loan) {
 
   const durationMonths = Number(loan.durationMonths || 0);
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const today = parseDate(zonedTodayInput());
 
   let next = new Date(first);
   let index = 0;
@@ -164,11 +177,7 @@ function loanNextPaymentDate(loan) {
 }
 
 function currentMonthKey() {
-  const now = new Date();
-
-  return `${now.getFullYear()}-${String(
-    now.getMonth() + 1
-  ).padStart(2, "0")}`;
+  return zonedTodayInput().slice(0, 7);
 }
 
 function savingsContributionPaid(saving, monthKey) {
@@ -182,7 +191,7 @@ function notificationItems(payload) {
 
   const add = item => {
     if (!item?.date || !item.title) return;
-    items.push({ time: "09:00", ...item });
+    items.push({ time: "09:00", hasTime: false, ...item });
   };
 
   (Array.isArray(payload.reminders) ? payload.reminders : [])
@@ -196,6 +205,7 @@ function notificationItems(payload) {
         body: item.notes || item.category || "Upcoming reminder",
         date: item.date,
         time: item.time || "09:00",
+        hasTime: Boolean(item.time),
         url: "/#daily"
       });
     });
@@ -211,6 +221,7 @@ function notificationItems(payload) {
         body: item.notes || item.category || "Upcoming event",
         date: item.date,
         time: item.time || "09:00",
+        hasTime: Boolean(item.time),
         url: "/#calendar"
       });
     });
@@ -325,7 +336,9 @@ async function sendToMakeWebhook(item, userId, redis) {
         message: String(item.body || "It is time."),
         date: String(item.date || ""),
         time: String(item.time || "09:00"),
-        kind: String(item.kind || "reminder")
+        kind: String(item.kind || "reminder"),
+        // Ready-made bilingual message (Telegram HTML parse mode).
+        text: buildTelegramText(item)
       })
     });
 
@@ -431,9 +444,10 @@ module.exports = async (req, res) => {
             continue;
           }
 
-          jobs.push(() =>
-            sendToMakeWebhook(item, row.user_id, redis)
-          );
+          jobs.push({
+            channel: "telegram",
+            run: () => sendToMakeWebhook(item, row.user_id, redis)
+          });
         }
 
         // Keep existing Web Push notifications.
@@ -461,7 +475,7 @@ module.exports = async (req, res) => {
               continue;
             }
 
-            jobs.push(async () => {
+            jobs.push({ channel: "push", run: async () => {
               const marker = makeMarker(
                 row.user_id,
                 entry.endpoint,
@@ -500,7 +514,7 @@ module.exports = async (req, res) => {
               } finally {
                 await redis.del(lockKey);
               }
-            });
+            } });
           }
         }
       }
@@ -511,24 +525,34 @@ module.exports = async (req, res) => {
     }
 
     const results = await Promise.allSettled(
-      jobs.map(job => job())
+      jobs.map(job => job.run())
     );
 
-    const sent = results.filter(
-      result =>
-        result.status === "fulfilled" &&
-        result.value === "sent"
-    ).length;
+    const breakdown = {
+      telegram: { sent: 0, duplicate: 0, skipped: 0, failed: 0 },
+      push: { sent: 0, duplicate: 0, skipped: 0, failed: 0 }
+    };
 
-    const failed = results.filter(
-      result => result.status === "rejected"
-    ).length;
+    results.forEach((result, index) => {
+      const bucket = breakdown[jobs[index].channel];
+      if (result.status === "rejected") {
+        bucket.failed += 1;
+        console.error(`MYLIFE ${jobs[index].channel} alert failed.`, result.reason);
+        return;
+      }
+      if (bucket[result.value] !== undefined) bucket[result.value] += 1;
+    });
+
+    const sent = breakdown.telegram.sent + breakdown.push.sent;
+    const failed = breakdown.telegram.failed + breakdown.push.failed;
 
     return res.status(200).json({
       ok: true,
       checked: jobs.length,
       sent,
-      failed
+      failed,
+      telegram: breakdown.telegram,
+      push: breakdown.push
     });
   } catch (error) {
     console.error("MYLIFE scheduled notification dispatch failed.", error);

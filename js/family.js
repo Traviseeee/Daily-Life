@@ -119,7 +119,7 @@ function nextAnnualDate(value) {
   const start = parseAppDate(value);
   const next = new Date(new Date().getFullYear(), start.getMonth(), start.getDate());
   if (next <= new Date()) next.setFullYear(next.getFullYear() + 1);
-  return next.toISOString().slice(0, 10);
+  return localDateInput(next);
 }
 
 function nextBirthdayDate(value) {
@@ -129,7 +129,7 @@ function nextBirthdayDate(value) {
   const today = new Date();
   let next = new Date(today.getFullYear(), birthDate.getMonth(), birthDate.getDate());
   if (next < new Date(today.getFullYear(), today.getMonth(), today.getDate())) next.setFullYear(next.getFullYear() + 1);
-  return next.toISOString().slice(0, 10);
+  return localDateInput(next);
 }
 
 function familyPhotoCard() {

@@ -40,7 +40,7 @@ function renderHome() {
     const date = new Date();
     date.setHours(0, 0, 0, 0);
     date.setDate(date.getDate() - (6 - index));
-    const iso = date.toISOString().slice(0, 10);
+    const iso = localDateInput(date);
     const entry = moodHistory.find(item => item.date === iso);
     const option = entry ? moodOptions.find(item => item.value === entry.value) : null;
     const isKhmer = languageCode() === "km";
@@ -1243,7 +1243,7 @@ function bindHome() {
 
   document.querySelectorAll("[data-focus-id]").forEach(input => {
     input.addEventListener("change", event => {
-      const items = (appData.dailyFocus?.date === new Date().toISOString().slice(0, 10) && Array.isArray(appData.dailyFocus.items) && appData.dailyFocus.items.length
+      const items = (appData.dailyFocus?.date === localDateInput() && Array.isArray(appData.dailyFocus.items) && appData.dailyFocus.items.length
         ? appData.dailyFocus.items
         : [
             { id: "focus-move", text: t("moveMyBody"), done: false },
