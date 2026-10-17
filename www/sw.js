@@ -1,4 +1,4 @@
-const CACHE_NAME = "mylife-pwa-v48";
+const CACHE_NAME = "mylife-pwa-v49";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -40,6 +40,7 @@ const APP_SHELL = [
   "./js/setup-form-ux.js",
   "./js/memory-form.js",
   "./js/hobby-form.js",
+  "./js/goal-form.js",
   "./js/smart-money.js",
   "./js/today.js",
   "./js/automation-settings.js",

@@ -188,6 +188,7 @@ function goalHasTarget(goal) {
 }
 
 function openGoalModal(goal, defaultCategory = "Personal") {
+  if (typeof GoalForm !== "undefined") return GoalForm.open(goal, defaultCategory);
   Modal.open({
     title: goal ? t("editGoal") : t("createGoal"),
     submitText: goal ? t("saveGoal") : t("createGoal"),

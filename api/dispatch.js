@@ -437,6 +437,48 @@ function notificationItems(payload) {
       }
     });
 
+  // Goals: deadline alert (+ N days before) and a monthly nudge on the 1st. Only goals
+  // the user switched on in the goal form (goalReminder === true).
+  const goalCurrency = (payload.profile || {}).currency || "USD";
+  (Array.isArray(payload.goals) ? payload.goals : [])
+    .forEach(goal => {
+      if (!goal || !goal.name || goal.goalReminder !== true) return;
+      const target = Number(goal.targetAmount || 0);
+      const current = Number(goal.currentAmount || 0);
+      const remaining = target - current;
+      if (target > 0 && remaining <= 0) return;
+      if (goal.deadline && goal.deadline >= today) {
+        const deadlineItem = {
+          kind: "goal",
+          id: `${goal.id || goal.name}-goal-deadline`,
+          title: goal.name,
+          body: remaining > 0 ? `នៅខ្វះ · Still need: ${moneyLabel(goalCurrency, Math.round(remaining))}` : (goal.description || ""),
+          date: goal.deadline,
+          url: `/#goals/${goal.id || ""}`
+        };
+        add(deadlineItem);
+        withEarly(items, { time: "09:00", hasTime: false, ...deadlineItem }, Math.round(Number(goal.remindDaysBefore || 0)) * 1440);
+      }
+      if (goal.monthlyNudge && remaining > 0 && today.endsWith("-01")) {
+        let monthsLeft = 0;
+        if (goal.deadline) {
+          const [y, m] = goal.deadline.split("-").map(Number);
+          const [ty, tm] = today.split("-").map(Number);
+          monthsLeft = Math.max(1, (y - ty) * 12 + (m - tm));
+        }
+        add({
+          kind: "goal",
+          id: `${goal.id || goal.name}-goal-month-${today.slice(0, 7)}`,
+          title: goal.name,
+          body: monthsLeft
+            ? `ខែនេះគួរសន្សំ · Save this month: ${moneyLabel(goalCurrency, Math.ceil(remaining / monthsLeft))}`
+            : `នៅខ្វះ · Still need: ${moneyLabel(goalCurrency, Math.round(remaining))}`,
+          date: today,
+          url: `/#goals/${goal.id || ""}`
+        });
+      }
+    });
+
   (Array.isArray(payload.family) ? payload.family : [])
     .forEach(member => {
       if (!member || !member.name) return;

@@ -2682,3 +2682,65 @@ body:has(#modalRoot.open) .quick-action-dock {
   .calendar-detail-event.tone-row { grid-template-columns: 38px minmax(0, 1fr) auto auto; }
   .calendar-detail-event.tone-row .cde-delete { width: 32px; height: 32px; }
 }
+
+/* =====================================================================
+ * Goal form (js/goal-form.js) — on the .event-modal base
+ * ===================================================================== */
+:root #modalRoot .goal-form-modal .gf-cover { position: relative; display: grid; place-items: center; height: 120px; overflow: hidden; border: 1.5px dashed rgba(20, 32, 27, 0.2); border-radius: 22px; cursor: pointer; background: radial-gradient(120% 120% at 0% 0%, rgba(197, 255, 96, 0.4), transparent 60%), radial-gradient(120% 120% at 100% 100%, rgba(139, 92, 246, 0.16), transparent 60%), #ffffff; transition: border-color 160ms ease; }
+:root #modalRoot .goal-form-modal .gf-cover:hover { border-color: #a6e33f; }
+:root #modalRoot .goal-form-modal .gf-cover input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+:root #modalRoot .goal-form-modal .gf-cover-img { position: absolute; inset: 0; }
+:root #modalRoot .goal-form-modal .gf-cover-img img { width: 100%; height: 100%; object-fit: cover; }
+:root #modalRoot .goal-form-modal .gf-cover-empty { display: inline-flex; align-items: center; gap: 10px; }
+:root #modalRoot .goal-form-modal .gf-cover-empty i { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 14px; color: #142a04; background: var(--ev-lime); }
+:root #modalRoot .goal-form-modal .gf-cover-empty b { font-size: 0.9rem; color: var(--ev-ink) !important; }
+:root #modalRoot .goal-form-modal .gf-cover-change { position: absolute; right: 10px; bottom: 10px; display: none; align-items: center; gap: 6px; padding: 6px 11px; border-radius: 999px; font-size: 0.78rem; font-weight: 700; color: #142a04; background: rgba(197, 255, 96, 0.95); }
+:root #modalRoot .goal-form-modal .gf-cover-change svg { width: 14px; height: 14px; }
+:root #modalRoot .goal-form-modal .gf-cover.has-photo { border-style: solid; border-color: transparent; }
+:root #modalRoot .goal-form-modal .gf-cover.has-photo .gf-cover-empty { display: none; }
+:root #modalRoot .goal-form-modal .gf-cover.has-photo .gf-cover-change { display: inline-flex; }
+
+:root #modalRoot .goal-form-modal .gf-cats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+:root #modalRoot .goal-form-modal .gf-cats .ev-cat input { position: absolute; opacity: 0; pointer-events: none; }
+:root #modalRoot .goal-form-modal .gf-cats .ev-cat b { white-space: normal; line-height: 1.25; }
+
+:root #modalRoot .goal-form-modal .gf-amounts { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 10px; }
+:root #modalRoot .goal-form-modal .gf-amount { display: grid; gap: 4px; min-width: 0; padding: 10px 12px; border: 1px solid var(--ev-line); border-radius: 18px; background: #ffffff; }
+:root #modalRoot .goal-form-modal .gf-amount:focus-within { border-color: #7cc23a; box-shadow: 0 0 0 4px rgba(124, 194, 58, 0.18); }
+:root #modalRoot .goal-form-modal .gf-amount > span { font-size: 0.74rem; font-weight: 700; color: var(--ev-ink-3) !important; }
+:root #modalRoot .goal-form-modal .gf-amount > div { display: flex; align-items: baseline; gap: 6px; min-width: 0; }
+:root #modalRoot .goal-form-modal .gf-amount em { font-style: normal; font-size: 0.8rem; font-weight: 800; color: var(--ev-ink-3) !important; }
+:root #modalRoot .modal.goal-form-modal.goal-form-modal .gf-amount input[type="number"] { flex: 1; min-width: 0; width: 100%; height: 36px; padding: 0 !important; border: 0 !important; background: transparent !important; box-shadow: none !important; font-size: 1.35rem; font-weight: 800; color: var(--ev-ink) !important; -webkit-text-fill-color: var(--ev-ink); outline: none; -moz-appearance: textfield; }
+:root #modalRoot .goal-form-modal .gf-target input[type="number"] { font-size: 1.7rem !important; }
+:root #modalRoot .goal-form-modal .gf-amount input::-webkit-outer-spin-button,
+:root #modalRoot .goal-form-modal .gf-amount input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+:root #modalRoot .goal-form-modal .gf-amount.is-linked { background: #f3faff; border-color: #bfe3f5; }
+:root #modalRoot .goal-form-modal .gf-target-chips,
+:root #modalRoot .goal-form-modal .gf-deadline-row,
+:root #modalRoot .goal-form-modal .gf-links { flex-wrap: wrap; overflow: visible; }
+
+:root #modalRoot .goal-form-modal .gf-progress { display: flex; align-items: center; gap: 10px; }
+:root #modalRoot .goal-form-modal .gf-progress[hidden] { display: none; }
+:root #modalRoot .goal-form-modal .gf-bar { flex: 1; height: 10px; overflow: hidden; border-radius: 999px; background: #eef2ec; }
+:root #modalRoot .goal-form-modal .gf-bar span { display: block; height: 100%; width: 0; border-radius: inherit; background: linear-gradient(90deg, #a6e33f, #22c55e); transition: width 240ms ease; }
+:root #modalRoot .goal-form-modal .gf-progress b { min-width: 42px; text-align: right; font-size: 0.85rem; color: #2f7a12 !important; }
+
+:root #modalRoot .goal-form-modal .gf-link { display: grid; gap: 8px; padding-top: 4px; }
+:root #modalRoot .goal-form-modal .gf-sub { font-size: 0.82rem; }
+:root #modalRoot .goal-form-modal .gf-link-chip { position: relative; display: inline-flex; align-items: baseline; gap: 6px; padding: 8px 13px; border: 1px solid var(--ev-line); border-radius: 999px; background: #ffffff; cursor: pointer; }
+:root #modalRoot .goal-form-modal .gf-link-chip input { position: absolute; opacity: 0; pointer-events: none; }
+:root #modalRoot .goal-form-modal .gf-link-chip b { font-size: 0.82rem; color: var(--ev-ink-2) !important; }
+:root #modalRoot .goal-form-modal .gf-link-chip small { font-size: 0.72rem; color: var(--ev-ink-3) !important; }
+:root #modalRoot .goal-form-modal .gf-link-chip:has(input:checked) { border-color: #2aa3df; background: #e8f6fd; }
+:root #modalRoot .goal-form-modal .gf-link-chip:has(input:checked) b { color: #1f6f99 !important; }
+
+:root #modalRoot .goal-form-modal .gf-pace { padding: 10px 14px; border-radius: 14px; font-size: 0.84rem; font-weight: 600; line-height: 1.45; color: #2c4a0a !important; background: #f2fbe4; }
+:root #modalRoot .goal-form-modal .gf-pace[hidden] { display: none; }
+:root #modalRoot .goal-form-modal .gf-pace[data-tone="late"] { color: #9a3412 !important; background: #fff4e8; }
+:root #modalRoot .goal-form-modal .gf-pace[data-tone="done"] { color: #166534 !important; background: #e3f9eb; }
+:root #modalRoot .goal-form-modal .gf-monthly input[type="checkbox"] { position: absolute; opacity: 0; pointer-events: none; }
+:root #modalRoot .goal-form-modal .gf-monthly input:checked + b { color: #ffffff; background: #2aa3df; border-color: #2aa3df; }
+
+@media (max-width: 420px) {
+  :root #modalRoot .goal-form-modal .gf-amounts { grid-template-columns: minmax(0, 1fr); }
+}
