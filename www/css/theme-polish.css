@@ -2563,3 +2563,58 @@ body:has(#modalRoot.open) .quick-action-dock {
 }
 :root #modalRoot .su-plain .section-title { color: var(--ev-ink) !important; }
 :root #modalRoot .su-plain .field > label { font-size: 0.8rem; font-weight: 700; color: var(--ev-ink-2) !important; }
+
+/* =====================================================================
+ * Memory form (js/memory-form.js) — on the .event-modal base
+ * ===================================================================== */
+:root #modalRoot .memory-form-modal .mf-cover {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 16 / 9;
+  max-height: 260px;
+  overflow: hidden;
+  border: 1.5px dashed rgba(20, 32, 27, 0.2);
+  border-radius: 22px;
+  background:
+    radial-gradient(120% 100% at 0% 0%, rgba(197, 255, 96, 0.35), transparent 60%),
+    radial-gradient(120% 100% at 100% 100%, rgba(90, 169, 255, 0.18), transparent 60%),
+    #ffffff;
+  cursor: pointer;
+  transition: border-color 160ms ease, transform 160ms ease;
+}
+:root #modalRoot .memory-form-modal .mf-cover:hover { border-color: #a6e33f; }
+:root #modalRoot .memory-form-modal .mf-cover input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+:root #modalRoot .memory-form-modal .mf-cover-img { position: absolute; inset: 0; }
+:root #modalRoot .memory-form-modal .mf-cover-img img { width: 100%; height: 100%; object-fit: cover; }
+:root #modalRoot .memory-form-modal .mf-cover-empty { position: relative; display: grid; justify-items: center; gap: 6px; text-align: center; }
+:root #modalRoot .memory-form-modal .mf-cover-empty i { display: grid; place-items: center; width: 54px; height: 54px; border-radius: 18px; color: #142a04; background: var(--ev-lime); box-shadow: 0 10px 24px rgba(130, 200, 40, 0.3); }
+:root #modalRoot .memory-form-modal .mf-cover-empty i svg { width: 24px; height: 24px; }
+:root #modalRoot .memory-form-modal .mf-cover-empty strong { font-size: 1rem; color: var(--ev-ink) !important; }
+:root #modalRoot .memory-form-modal .mf-cover-empty small { font-size: 0.78rem; color: var(--ev-ink-3) !important; }
+:root #modalRoot .memory-form-modal .mf-cover-change { position: absolute; right: 12px; bottom: 12px; display: none; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 999px; font-size: 0.8rem; font-weight: 700; color: #142a04; background: rgba(197, 255, 96, 0.95); box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18); }
+:root #modalRoot .memory-form-modal .mf-cover-change svg { width: 15px; height: 15px; }
+:root #modalRoot .memory-form-modal .mf-cover.has-photo { border-style: solid; border-color: transparent; }
+:root #modalRoot .memory-form-modal .mf-cover.has-photo .mf-cover-empty { display: none; }
+:root #modalRoot .memory-form-modal .mf-cover.has-photo .mf-cover-change { display: inline-flex; }
+
+:root #modalRoot .memory-form-modal .mf-place { display: flex; align-items: center; gap: 10px; padding: 0 12px; border: 1px solid var(--ev-line); border-radius: 14px; background: #ffffff; }
+:root #modalRoot .memory-form-modal .mf-place:focus-within { border-color: #7cc23a; box-shadow: 0 0 0 4px rgba(124, 194, 58, 0.18); }
+:root #modalRoot .memory-form-modal .mf-place i { display: grid; color: #3f86d6; }
+:root #modalRoot .memory-form-modal .mf-place i svg { width: 18px; height: 18px; }
+:root #modalRoot .memory-form-modal .mf-place input,
+:root #modalRoot .modal.memory-form-modal.memory-form-modal .mf-place input[type="text"] { flex: 1; min-width: 0; height: 44px; padding: 0 !important; border: 0 !important; background: transparent !important; box-shadow: none !important; font: inherit; color: var(--ev-ink) !important; -webkit-text-fill-color: var(--ev-ink); outline: none; }
+:root #modalRoot .memory-form-modal .mf-custom-tag i { color: var(--ev-ink-3); }
+:root #modalRoot .memory-form-modal .mf-places .ev-chip { display: inline-flex; align-items: center; gap: 5px; }
+:root #modalRoot .memory-form-modal .mf-places .ev-chip svg { width: 14px; height: 14px; color: #3f86d6; }
+
+:root #modalRoot .memory-form-modal .mf-tags { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+:root #modalRoot .memory-form-modal .mf-tags .ev-cat { flex-direction: column; justify-content: center; gap: 5px; min-height: 70px; padding: 8px 4px; text-align: center; }
+:root #modalRoot .memory-form-modal .mf-tags .ev-cat b { font-size: 0.76rem; white-space: normal; }
+:root #modalRoot .memory-form-modal .mf-tags .ev-cat-icon svg { width: 17px; height: 17px; }
+:root #modalRoot .memory-form-modal .ev-people .ev-person input[type="checkbox"] { position: absolute; opacity: 0; pointer-events: none; }
+:root #modalRoot .memory-form-modal .ev-person:has(input:checked) .ev-avatar { border-color: #7cc23a; transform: scale(1.06); }
+
+@media (max-width: 560px) {
+  :root #modalRoot .memory-form-modal .mf-tags { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}

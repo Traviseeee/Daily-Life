@@ -127,6 +127,7 @@ function memoryFields(memory = {}) {
 }
 
 function openMemoryModal(memory) {
+  if (typeof MemoryForm !== "undefined") return MemoryForm.open(memory);
   Modal.open({
     title: memory ? t("editMemory") : t("addMemory"),
     submitText: memory ? t("saveMemory") : t("addMemory"),
