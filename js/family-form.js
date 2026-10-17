@@ -10,6 +10,15 @@ const FamilyForm = (() => {
   const MOOD_EMOJI = { Happy: "😊", Calm: "😌", Cheerful: "😄", Funny: "😂", Caring: "🤗", Quiet: "🤫", Creative: "🎨", Energetic: "⚡", Sensitive: "🥺", Serious: "🧐", Adventurous: "🧗", Other: "🙂" };
   const ZODIAC = { Aries: "♈", Taurus: "♉", Gemini: "♊", Cancer: "♋", Leo: "♌", Virgo: "♍", Libra: "♎", Scorpio: "♏", Sagittarius: "♐", Capricorn: "♑", Aquarius: "♒", Pisces: "♓" };
   const PARTNER = ["Wife", "Husband", "Girlfriend", "Boyfriend", "Me"];
+  // tile colours, same idea as the expense categories
+  const TONE = {
+    Me: "#5aa9ff", Wife: "#ff5c8a", Husband: "#3f86d6", Girlfriend: "#ff6fa5", Boyfriend: "#5b7cfa",
+    Mother: "#f59e0b", Father: "#0ea5a4", Daughter: "#f472b6", Son: "#60a5fa", Sister: "#c084fc",
+    Brother: "#34d399", Grandmother: "#fb923c", Grandfather: "#a3a36b", Friend: "#22c55e", Other: "#94a3b8",
+    Happy: "#f5b301", Calm: "#38bdf8", Cheerful: "#fb923c", Funny: "#f472b6", Caring: "#ef4444",
+    Quiet: "#94a3b8", Creative: "#a78bfa", Energetic: "#facc15", Sensitive: "#f9a8d4", Serious: "#64748b",
+    Adventurous: "#10b981"
+  };
 
   const km = () => languageCode() === "km";
   const L = (kmText, enText) => (km() ? kmText : enText);
@@ -21,7 +30,10 @@ const FamilyForm = (() => {
   function chips(name, values, emoji, selected) {
     const list = [...values];
     if (selected && !list.includes(selected)) list.unshift(selected);
-    return list.map(value => `<label class="ff-chip"><input type="radio" name="${name}" value="${escapeAttr(value)}" ${value === selected ? "checked" : ""}><span>${emoji[value] || "•"}</span><b>${escapeHtml(label(value))}</b></label>`).join("");
+    return list.map(value => {
+      const tone = TONE[value] || "#94a3b8";
+      return `<label class="ev-cat ff-tile" style="--tone:${tone};--tone-bg:color-mix(in srgb, ${tone} 16%, #ffffff)"><input type="radio" name="${name}" value="${escapeAttr(value)}" ${value === selected ? "checked" : ""}><i class="ev-cat-icon ff-emoji">${emoji[value] || "•"}</i><b>${escapeHtml(label(value))}</b></label>`;
+    }).join("");
   }
 
   function people(member) {
@@ -59,7 +71,7 @@ const FamilyForm = (() => {
 
         <section class="ev-section">
           <div class="ev-label">${Icons.heart()}<strong>${escapeHtml(t("relationship"))}</strong></div>
-          <div class="ff-chips">${chips("relationship", RELATIONSHIPS, REL_EMOJI, member.relationship || "")}</div>
+          <div class="ev-cats ff-tiles">${chips("relationship", RELATIONSHIPS, REL_EMOJI, member.relationship || "")}</div>
           ${hasPeople ? `<div class="ff-related" data-ff-related>
             <div class="ev-label ff-sub">${Icons.family()}<strong>${escapeHtml(t("relatedPerson"))}</strong></div>
             <div class="ev-people">${people(member)}</div>
@@ -68,7 +80,7 @@ const FamilyForm = (() => {
 
         <section class="ev-section">
           <div class="ev-label">${Icons.spark()}<strong>${escapeHtml(t("characterMood"))}</strong></div>
-          <div class="ff-chips">${chips("characterMood", MOODS, MOOD_EMOJI, member.characterMood || "")}</div>
+          <div class="ev-cats ff-tiles">${chips("characterMood", MOODS, MOOD_EMOJI, member.characterMood || "")}</div>
         </section>
 
         <section class="ev-section">
@@ -173,7 +185,7 @@ const FamilyForm = (() => {
       ? familyCareIdea({ name, relationship, characterMood: mood, favorite: form.elements.favorite.value })
       : "";
     const ideaBox = root.querySelector("[data-ff-idea]");
-    ideaBox.hidden = !idea;
+    ideaBox.hidden = !idea || !name || !relationship;
     ideaBox.querySelector("p").textContent = idea;
   }
 

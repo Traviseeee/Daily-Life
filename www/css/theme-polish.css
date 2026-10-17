@@ -2099,3 +2099,16 @@ body:has(#modalRoot.open) .quick-action-dock {
   :root #modalRoot .family-form-modal .ff-date-grid,
   :root #modalRoot .family-form-modal .ff-care-grid { grid-template-columns: 1fr; }
 }
+
+/* family form: relationship / personality as tiles like expense categories */
+:root #modalRoot .family-form-modal .ff-tiles { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+:root #modalRoot .family-form-modal .ff-tiles .ev-cat { flex-direction: column; justify-content: center; gap: 6px; min-height: 80px; padding: 8px 4px; text-align: center; }
+:root #modalRoot .family-form-modal .ff-tiles .ev-cat b { max-width: 100%; font-size: 0.76rem; line-height: 1.25; white-space: normal; overflow-wrap: anywhere; }
+:root #modalRoot .family-form-modal .ff-tiles .ff-emoji { width: 36px; height: 36px; border-radius: 12px; font-size: 1.25rem; font-style: normal; line-height: 1; }
+:root #modalRoot .family-form-modal .ff-tiles .ev-cat:has(input:checked) .ff-emoji { background: var(--tone); box-shadow: 0 6px 14px color-mix(in srgb, var(--tone) 40%, transparent); }
+@media (max-width: 720px) {
+  :root #modalRoot .family-form-modal .ff-tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (max-width: 420px) {
+  :root #modalRoot .family-form-modal .ff-tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
