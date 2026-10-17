@@ -961,6 +961,7 @@ const App = {
     panel.hidden = false;
   },
   openEventModal(event = {}) {
+    if (typeof EventForm !== "undefined") return EventForm.open(event || {});
     Modal.open({
       title: event.id ? t("editEvent") : t("addEvent"),
       submitText: event.id ? t("saveEvent") : t("addEvent"),
