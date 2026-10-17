@@ -141,32 +141,65 @@ function moneyMetricCard({ tone, section, icon, title, value, pill = "", bar = n
 }
 
 function renderCategoryOverview() {
-  const categories = expenseCategories.map(category => ({
-    category,
-    amount: sumMoney(appData.expenses.filter(expense => expense.category === category), "amount"),
-    color: expenseCategoryColors[category]
-  })).filter(item => item.amount > 0).sort((left, right) => right.amount - left.amount);
+  const isKm = languageCode() === "km";
+  const categories = expenseCategories.map(category => {
+    const items = appData.expenses.filter(expense => expense.category === category);
+    return { category, count: items.length, amount: sumMoney(items, "amount"), color: expenseCategoryColors[category] };
+  }).filter(item => item.amount > 0).sort((left, right) => right.amount - left.amount);
   const total = categories.reduce((sum, item) => sum + item.amount, 0);
+  const count = appData.expenses.length;
 
-  return `<article class="glass-card card-pad financial-panel financial-category-overview">
+  // this month vs last month
+  const thisKey = localDateInput().slice(0, 7);
+  const [y, m] = thisKey.split("-").map(Number);
+  const lastKey = `${m === 1 ? y - 1 : y}-${String(m === 1 ? 12 : m - 1).padStart(2, "0")}`;
+  const thisMonth = sumMoney(appData.expenses.filter(item => String(item.date || "").startsWith(thisKey)), "amount");
+  const lastMonth = sumMoney(appData.expenses.filter(item => String(item.date || "").startsWith(lastKey)), "amount");
+  const peak = Math.max(thisMonth, lastMonth, 1);
+  const change = lastMonth ? Math.round(((thisMonth - lastMonth) / lastMonth) * 100) : null;
+  const changeText = change === null
+    ? (isKm ? "មិនមានទិន្នន័យខែមុន" : "No data for last month")
+    : change === 0
+      ? (isKm ? "ស្មើខែមុន" : "Same as last month")
+      : `${change > 0 ? "▲" : "▼"} ${Math.abs(change)}% ${isKm ? (change > 0 ? "ច្រើនជាងខែមុន" : "តិចជាងខែមុន") : (change > 0 ? "more than last month" : "less than last month")}`;
+  const top = categories[0];
+
+  return `<article class="glass-card card-pad financial-panel financial-category-overview cat-v2">
     <div class="financial-panel-heading">
       <div><span class="eyebrow">${t("overview")}</span><h2 class="section-title">${t("spendingByCategory")}</h2></div>
       <div class="financial-category-total"><span>${t("totalExpenses")}</span><strong>${money(total)}</strong></div>
     </div>
-    ${categories.length ? `<div class="financial-category-layout">
+    ${categories.length ? `
+    <div class="cat-stats">
+      <div class="cat-stat"><span>${isKm ? "ចំនួនចំណាយ" : "Expenses"}</span><strong>${count}</strong></div>
+      <div class="cat-stat" style="--category-color:${top.color}"><span>${isKm ? "ចាយច្រើនបំផុត" : "Top category"}</span><strong><i></i>${escapeHtml(optionLabel(top.category))}</strong></div>
+      <div class="cat-stat"><span>${isKm ? "មធ្យមក្នុងមួយដង" : "Average each"}</span><strong>${money(count ? total / count : 0)}</strong></div>
+    </div>
+    <div class="cat-body">
       <div class="financial-category-chart" role="img" aria-label="${t("spendingByCategory")}">
         ${Charts.donut(categories.map(item => ({ value: item.amount, color: item.color })))}
-        <div class="financial-category-chart-center"><strong>${money(total)}</strong><span>${t("expenses")}</span></div>
+        <div class="financial-category-chart-center"><strong>${money(total)}</strong><span>${categories.length} ${isKm ? "ប្រភេទ" : categories.length === 1 ? "category" : "categories"}</span></div>
       </div>
-      <div class="financial-category-list">
+      <div class="cat-list">
         ${categories.map(item => {
           const share = Math.round((item.amount / total) * 100);
-          return `<div class="financial-category-item" style="--category-color:${item.color};--category-share:${share}%">
-            <span class="financial-category-icon" aria-hidden="true">${Icons[expenseCategoryIcons[item.category]]()}</span>
-            <div class="financial-category-copy"><div class="financial-category-label"><span>${optionLabel(item.category)}</span><strong>${money(item.amount)}</strong></div><div class="financial-category-track"><span></span></div></div>
-            <span class="financial-category-share">${share}%</span>
+          return `<div class="cat-item" style="--category-color:${item.color};--category-share:${Math.max(share, 2)}%">
+            <span class="cat-icon" aria-hidden="true">${Icons[expenseCategoryIcons[item.category]]()}</span>
+            <div class="cat-copy">
+              <div class="cat-row"><b>${escapeHtml(optionLabel(item.category))}</b><small>${item.count} ${isKm ? "ដង" : item.count === 1 ? "time" : "times"}</small><strong>${money(item.amount)}</strong></div>
+              <div class="cat-track"><span></span></div>
+            </div>
+            <span class="cat-share">${share}%</span>
           </div>`;
         }).join("")}
+      </div>
+      <div class="cat-compare">
+        <span class="cat-compare-title">${isKm ? "ខែនេះ ធៀបនឹងខែមុន" : "This month vs last"}</span>
+        <div class="cat-bars">
+          <div class="cat-bar is-last"><strong>${money(lastMonth)}</strong><i style="height:${Math.max(4, Math.round((lastMonth / peak) * 100))}%"></i><span>${isKm ? "ខែមុន" : "Last"}</span></div>
+          <div class="cat-bar is-this"><strong>${money(thisMonth)}</strong><i style="height:${Math.max(4, Math.round((thisMonth / peak) * 100))}%"></i><span>${isKm ? "ខែនេះ" : "This"}</span></div>
+        </div>
+        <small class="cat-change ${change > 0 ? "is-up" : change < 0 ? "is-down" : ""}">${changeText}</small>
       </div>
     </div>` : `<div class="financial-category-empty">
       <div class="financial-category-swatches" aria-hidden="true">${expenseCategories.slice(0, 6).map(category => `<span style="--category-color:${expenseCategoryColors[category]}"></span>`).join("")}</div>
