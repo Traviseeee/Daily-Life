@@ -1171,3 +1171,172 @@ body:has(#modalRoot.open) .quick-action-dock {
   .calendar-detail-event.tone-row .cde-amount { grid-column: 2; grid-row: 2; }
   .calendar-detail-event.tone-row .cde-action { display: none; }
 }
+
+/* =====================================================================
+ * Money overview cards (js/money.js moneyMetricCard).
+ * Each card has its own colour (income green, expense orange, savings
+ * blue, available lime / red when short), a status pill and a bar.
+ * Same look in light and dark mode.
+ * ===================================================================== */
+.financial-metric-grid .financial-metric-card.mm-card {
+  --mm: #1f9d63;
+  --mm-a: #effff5;
+  --mm-b: #d3f5e2;
+  display: flex !important;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 168px !important;
+  padding: 18px 18px 16px !important;
+  color: #14201b !important;
+  background: linear-gradient(145deg, var(--mm-a), var(--mm-b)) !important;
+  border: 1px solid color-mix(in srgb, var(--mm) 22%, transparent) !important;
+  border-radius: 22px !important;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.7) !important;
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.financial-metric-grid .financial-metric-card.mm-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.7) !important;
+}
+
+.financial-metric-grid .financial-metric-card.mm-card::after {
+  inset: auto 0 0 0 !important;
+  height: 4px !important;
+  border-radius: 0 !important;
+  background: var(--mm) !important;
+  opacity: 0.85 !important;
+}
+
+.financial-metric-grid .mm-card.mm-expense { --mm: #e0702a; --mm-a: #fff6ef; --mm-b: #ffe2cf; }
+.financial-metric-grid .mm-card.mm-savings { --mm: #2f86d6; --mm-a: #f1f8ff; --mm-b: #d6eafe; }
+.financial-metric-grid .mm-card.mm-available { --mm: #4f8f12; --mm-a: #f7ffe8; --mm-b: #e0f8b6; }
+.financial-metric-grid .mm-card.mm-short { --mm: #d64545; --mm-a: #fff4f4; --mm-b: #ffd9d9; }
+
+.financial-metric-grid .mm-card .financial-metric-watermark {
+  color: var(--mm) !important;
+  opacity: 0.12 !important;
+}
+
+.financial-metric-grid .mm-card .mm-top {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.financial-metric-grid .mm-card .mm-icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+  border-radius: 13px;
+  color: #ffffff;
+  background: var(--mm);
+  box-shadow: 0 6px 14px color-mix(in srgb, var(--mm) 35%, transparent);
+}
+
+.financial-metric-grid .mm-card .mm-icon svg { width: 20px; height: 20px; }
+
+.financial-metric-grid .mm-card .mm-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #3f4b45 !important;
+}
+
+.financial-metric-grid .mm-card .mm-arrow {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  color: var(--mm);
+  background: rgba(255, 255, 255, 0.7);
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+
+.financial-metric-grid .mm-card .mm-arrow svg { width: 15px; height: 15px; }
+.financial-metric-grid .mm-card:hover .mm-arrow { opacity: 1; transform: none; }
+
+.financial-metric-grid .mm-card .mm-value {
+  position: relative;
+  z-index: 1;
+  margin: 4px 0 0 !important;
+  font-size: clamp(1.6rem, 2.6vw, 2.2rem) !important;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #14201b !important;
+}
+
+.financial-metric-grid .mm-card.mm-short .mm-value { color: #b8312f !important; }
+
+.financial-metric-grid .mm-card .mm-pill {
+  position: relative;
+  z-index: 1;
+  width: fit-content;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: color-mix(in srgb, var(--mm) 80%, #000000);
+  background: color-mix(in srgb, var(--mm) 14%, #ffffff);
+  border: 1px solid color-mix(in srgb, var(--mm) 22%, transparent);
+}
+
+.financial-metric-grid .mm-card .mm-bar { position: relative; z-index: 1; display: grid; gap: 5px; margin-top: auto; }
+
+.financial-metric-grid .mm-card .mm-track {
+  height: 7px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(20, 32, 27, 0.09);
+}
+
+.financial-metric-grid .mm-card .mm-track i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--mm);
+  transition: width 500ms ease;
+}
+
+.financial-metric-grid .mm-card .mm-bar.mm-warn .mm-track i { background: #e8a317; }
+.financial-metric-grid .mm-card .mm-bar.mm-bad .mm-track i { background: #d64545; }
+
+.financial-metric-grid .mm-card .mm-bar small,
+.financial-metric-grid .mm-card .mm-note {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: #5b6762 !important;
+}
+
+.financial-metric-grid .mm-card .mm-bar.mm-bad small { color: #b8312f !important; }
+
+.financial-metric-grid .mm-card .mm-foot {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-top: auto;
+  padding-top: 8px;
+  border-top: 1px dashed color-mix(in srgb, var(--mm) 30%, transparent);
+  font-size: 0.8rem;
+}
+
+.financial-metric-grid .mm-card .mm-foot-label { color: #5b6762; }
+.financial-metric-grid .mm-card .mm-foot strong { color: color-mix(in srgb, var(--mm) 80%, #000000) !important; }
+.financial-metric-grid .mm-card .mm-note { position: relative; z-index: 1; opacity: 0.8; }
+
+@media (max-width: 720px) {
+  .financial-metric-grid .financial-metric-card.mm-card { min-height: 150px !important; padding: 14px !important; }
+  .financial-metric-grid .mm-card .mm-icon { width: 34px; height: 34px; border-radius: 11px; }
+  .financial-metric-grid .mm-card .mm-value { font-size: 1.5rem !important; }
+  .financial-metric-grid .mm-card .mm-note { display: none; }
+}

@@ -81,12 +81,63 @@ function renderMoney(tab = "overview") {
 }
 
 function renderMoneyCards(stats) {
-  return `<div class="summary-grid financial-metric-grid grid" role="region" aria-label="${escapeAttr(t("overview"))}" tabindex="0">
-    ${summaryCard("Income", t("totalIncome"), money(stats.totalIncome), `${appData.income.length} ${t("income")}`, Icons.salary(), "green", "income")}
-    ${summaryCard("Expenses", t("totalExpenses"), money(stats.totalExpenses), `${appData.expenses.length} ${t("expenses")}`, Icons.expense(), "", "expenses")}
-    ${summaryCard("Savings", t("totalSavings"), money(stats.totalSavings), `${money(stats.monthlySavings)} ${t("monthlyContribution")}`, Icons.savings(), "blue", "savings")}
-    ${summaryCard("Available", t("available"), money(stats.available), t("availableMoney"), Icons.wallet(), "purple", "budget")}
+  const isKm = languageCode() === "km";
+  const monthKey = localDateInput().slice(0, 7);
+  const inMonth = item => String(item.date || "").startsWith(monthKey);
+  const monthIncome = sumMoney(appData.income.filter(inMonth), "amount");
+  const monthExpenses = sumMoney(appData.expenses.filter(inMonth), "amount");
+  const spentPct = stats.totalIncome ? Math.round((stats.totalExpenses / stats.totalIncome) * 100) : 0;
+  const savingsTarget = sumMoney(appData.savings, "targetAmount");
+  const savingsPct = savingsTarget ? Math.min(100, Math.round((stats.totalSavings / savingsTarget) * 100)) : 0;
+  const committed = stats.totalExpenses + stats.monthlySavings + stats.monthlyLoanPayments;
+  const usedPct = stats.totalIncome ? Math.round((committed / stats.totalIncome) * 100) : 0;
+  const short = stats.available < 0;
+  const level = pct => (pct >= 90 ? "bad" : pct >= 70 ? "warn" : "good");
+
+  return `<div class="summary-grid financial-metric-grid grid mm-grid" role="region" aria-label="${escapeAttr(t("overview"))}" tabindex="0">
+    ${moneyMetricCard({
+      tone: "income", section: "income", icon: Icons.salary(), title: t("totalIncome"), value: money(stats.totalIncome),
+      pill: `${appData.income.length} ${escapeHtml(t("income"))}`,
+      foot: `<span class="mm-foot-label">${isKm ? "ខែនេះ" : "This month"}</span><strong>${money(monthIncome)}</strong>`
+    })}
+    ${moneyMetricCard({
+      tone: "expense", section: "expenses", icon: Icons.expense(), title: t("totalExpenses"), value: money(stats.totalExpenses),
+      pill: `${appData.expenses.length} ${escapeHtml(t("expenses"))}`,
+      bar: stats.totalIncome ? { pct: spentPct, level: level(spentPct), label: isKm ? `ប្រើ ${spentPct}% នៃចំណូល` : `${spentPct}% of income` } : null,
+      foot: stats.totalIncome ? "" : `<span class="mm-foot-label">${isKm ? "ខែនេះ" : "This month"}</span><strong>${money(monthExpenses)}</strong>`
+    })}
+    ${moneyMetricCard({
+      tone: "savings", section: "savings", icon: Icons.savings(), title: t("totalSavings"), value: money(stats.totalSavings),
+      pill: `+${money(stats.monthlySavings)} / ${isKm ? "ខែ" : "mo"}`,
+      bar: savingsTarget ? { pct: savingsPct, level: "good", label: isKm ? `${savingsPct}% នៃគោលដៅ ${money(savingsTarget)}` : `${savingsPct}% of ${money(savingsTarget)} goal` } : null
+    })}
+    ${moneyMetricCard({
+      tone: short ? "short" : "available", section: "budget", icon: Icons.wallet(), title: t("available"), value: money(stats.available),
+      pill: short ? `⚠ ${isKm ? "ខ្វះ" : "Short by"} ${money(Math.abs(stats.available))}` : `✓ ${isKm ? "នៅសល់សម្រាប់ចាយ" : "Left to spend"}`,
+      bar: stats.totalIncome ? { pct: Math.min(usedPct, 100), level: level(usedPct), label: isKm ? `បានកំណត់ ${usedPct}% នៃចំណូល` : `${usedPct}% of income committed` } : null,
+      note: isKm ? "ចំណូល − ចំណាយ − សន្សំ − កម្ចី" : "Income − spent − savings − loans"
+    })}
   </div>`;
+}
+
+// Money overview card: tone colour, quick status pill and an optional progress bar.
+function moneyMetricCard({ tone, section, icon, title, value, pill = "", bar = null, foot = "", note = "" }) {
+  return `
+    <article class="glass-card card-pad financial-metric-card mm-card mm-${tone}">
+      <a class="financial-metric-card-link" href="#money/${section}" aria-label="${escapeAttr(title)}"></a>
+      <span class="financial-metric-watermark" aria-hidden="true">${icon}</span>
+      <div class="mm-top">
+        <span class="mm-icon">${icon}</span>
+        <span class="mm-title">${escapeHtml(title)}</span>
+        <span class="mm-arrow" aria-hidden="true">${Icons.chevron()}</span>
+      </div>
+      <div class="metric mm-value">${value}</div>
+      ${pill ? `<div class="mm-pill">${pill}</div>` : ""}
+      ${bar ? `<div class="mm-bar mm-${bar.level}" ><div class="mm-track"><i style="width:${Math.max(3, Math.min(100, bar.pct))}%"></i></div><small>${bar.label}</small></div>` : ""}
+      ${foot ? `<div class="mm-foot">${foot}</div>` : ""}
+      ${note ? `<div class="mm-note">${escapeHtml(note)}</div>` : ""}
+    </article>
+  `;
 }
 
 function renderCategoryOverview() {
