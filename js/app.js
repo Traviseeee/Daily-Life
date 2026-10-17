@@ -490,15 +490,33 @@ const App = {
       });
     });
 
+    const todayIso = localDateInput();
     appData.bills.forEach(bill => {
-      if (bill.reminder === false || bill.status === "Paid") return;
-      add({
+      if (bill.reminder === false || !bill.due) return;
+      const dates = new Set(billCycleDates(bill, todayIso, todayIso));
+      if (bill.status !== "Paid") dates.add(bill.due);
+      dates.forEach(date => add({
         kind: "bill",
         id: bill.id,
         title: bill.name || "Bill due",
         body: bill.amount ? `${optionLabel(bill.category || "Bill")} - ${typeof formatPlainMoney === "function" ? formatPlainMoney(bill.amount, bill.currency) : bill.amount}` : (bill.notes || "Bill payment is due"),
-        date: bill.due,
+        date,
         url: "/#money/bills"
+      }));
+    });
+
+    appData.family.forEach(member => {
+      [["birthday", member.birthday], ["anniversary", member.anniversaryDate]].forEach(([type, value]) => {
+        const date = typeof yearlyDateInMonth === "function" && value ? yearlyDateInMonth(value, new Date()) : "";
+        if (date !== todayIso || value > todayIso) return;
+        add({
+          kind: type,
+          id: `${member.id}-${type}`,
+          title: `${t(type)}: ${member.name}`,
+          body: member.relationshipNote || "",
+          date,
+          url: "/#family"
+        });
       });
     });
 

@@ -1118,14 +1118,15 @@ function getUpcomingNotifications(daysAhead = 7, itemLimit = 5) {
   });
 
   appData.bills.forEach(bill => {
-    if (bill.reminder === false || !bill.due || bill.status === "Paid") return;
-    const dueDate = new Date(`${bill.due}T00:00:00`);
-    if (dueDate < today || dueDate > dateLimit) return;
+    if (bill.reminder === false || !bill.due) return;
+    const nextDue = billCycleDates(bill, localDateInput(today), localDateInput(dateLimit))[0];
+    if (!nextDue) return;
+    const dueDate = new Date(`${nextDue}T00:00:00`);
     items.push({
-      id: bill.id || `bill-${bill.due}`,
+      id: bill.id || `bill-${nextDue}`,
       type: "bill",
       title: bill.name || "Bill",
-      date: bill.due,
+      date: nextDue,
       daysLeft: Math.max(0, Math.round((dueDate - today) / 86400000)),
       kind: "bill"
     });
@@ -1328,6 +1329,36 @@ function formatDate(value, options = { month: "short", day: "numeric", year: "nu
     return parts.join(" ");
   }
   return date.toLocaleDateString("en-US", options);
+}
+
+// Dates (YYYY-MM-DD) between fromIso and toIso on which a bill is due.
+// Cycles start at bill.due and repeat by frequency; marking a bill paid moves
+// `due` to the next cycle, so every cycle on/after `due` is still unpaid.
+function billCycleDates(bill, fromIso, toIso) {
+  if (!bill?.due) return [];
+  const start = parseAppDate(bill.due);
+  if (Number.isNaN(start.getTime())) return [];
+  const frequency = bill.frequency || "Monthly";
+  const dates = [];
+  const from = fromIso > bill.due ? fromIso : bill.due;
+  const cursor = new Date(`${from}T00:00:00`);
+  const end = new Date(`${toIso}T00:00:00`);
+  for (let guard = 0; cursor <= end && guard < 400; guard += 1, cursor.setDate(cursor.getDate() + 1)) {
+    const iso = localDateInput(cursor);
+    let hit = false;
+    if (frequency === "Once") hit = iso === bill.due;
+    else if (frequency === "Daily") hit = true;
+    else if (frequency === "Weekly") hit = Math.round((cursor - start) / 86400000) % 7 === 0;
+    else {
+      const months = (cursor.getFullYear() - start.getFullYear()) * 12 + cursor.getMonth() - start.getMonth();
+      const lastDay = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0).getDate();
+      hit = cursor.getDate() === Math.min(start.getDate(), lastDay)
+        && !(frequency === "Quarterly" && months % 3 !== 0)
+        && !(frequency === "Yearly" && months % 12 !== 0);
+    }
+    if (hit && !(bill.status === "Paid" && iso === bill.due)) dates.push(iso);
+  }
+  return dates;
 }
 
 // Calendar date (YYYY-MM-DD) in the device's local time zone.

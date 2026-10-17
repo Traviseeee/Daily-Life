@@ -186,6 +186,47 @@ function savingsContributionPaid(saving, monthKey) {
   );
 }
 
+function moneyLabel(currency, amount) {
+  const value = Number(amount || 0);
+  if (!value) return "";
+  return `${currency || ""} ${value.toLocaleString("en-US")}`.trim();
+}
+
+// Does a recurring bill fall on `dateInput`? Cycles start at bill.due and
+// repeat by frequency (Once / Daily / Weekly / Monthly / Quarterly / Yearly).
+// Marking a bill paid in the app moves `due` to the next cycle, so every
+// cycle on or after `due` is still unpaid and should be reminded.
+function billOccursOn(bill, dateInput) {
+  const due = parseDate(bill.due);
+  const day = parseDate(dateInput);
+  if (!due || !day || day < due) return false;
+
+  const frequency = bill.frequency || "Monthly";
+  if (frequency === "Once") return toDateInput(due) === dateInput;
+  if (frequency === "Daily") return true;
+  if (frequency === "Weekly") {
+    return Math.round((day - due) / 86400000) % 7 === 0;
+  }
+
+  const months = (day.getFullYear() - due.getFullYear()) * 12 + day.getMonth() - due.getMonth();
+  if (frequency === "Quarterly" && months % 3 !== 0) return false;
+  if (frequency === "Yearly" && months % 12 !== 0) return false;
+  const lastDay = new Date(day.getFullYear(), day.getMonth() + 1, 0).getDate();
+  return day.getDate() === Math.min(due.getDate(), lastDay);
+}
+
+// Yearly family dates (birthday / anniversary) that fall on `dateInput`.
+// A 29 Feb date is celebrated on 28 Feb in non-leap years.
+function yearlyDateYears(value, dateInput) {
+  const original = parseDate(value);
+  const day = parseDate(dateInput);
+  if (!original || !day || day < original) return null;
+  const lastDay = new Date(day.getFullYear(), original.getMonth() + 1, 0).getDate();
+  const matches = day.getMonth() === original.getMonth()
+    && day.getDate() === Math.min(original.getDate(), lastDay);
+  return matches ? day.getFullYear() - original.getFullYear() : null;
+}
+
 function notificationItems(payload) {
   const items = [];
 
@@ -202,7 +243,7 @@ function notificationItems(payload) {
         kind: "reminder",
         id: item.id,
         title: item.title || "MYLIFE reminder",
-        body: item.notes || item.category || "Upcoming reminder",
+        body: item.notes || "",
         date: item.date,
         time: item.time || "09:00",
         hasTime: Boolean(item.time),
@@ -218,7 +259,7 @@ function notificationItems(payload) {
         kind: "calendar",
         id: item.id,
         title: item.title || "MYLIFE event",
-        body: item.notes || item.category || "Upcoming event",
+        body: item.notes || "",
         date: item.date,
         time: item.time || "09:00",
         hasTime: Boolean(item.time),
@@ -226,20 +267,29 @@ function notificationItems(payload) {
       });
     });
 
+  const today = zonedTodayInput();
+
   (Array.isArray(payload.bills) ? payload.bills : [])
     .forEach(item => {
-      if (item.reminder === false || item.status === "Paid") return;
+      if (item.reminder === false || !item.due) return;
 
-      add({
+      const dates = new Set();
+      // The current cycle (first due date or the one after the last payment).
+      if (item.status !== "Paid") dates.add(item.due);
+      // Every later cycle that lands on today, even if earlier ones weren't marked paid.
+      if (billOccursOn(item, today) && !(item.status === "Paid" && item.due === today)) {
+        dates.add(today);
+      }
+
+      const amount = moneyLabel(item.currency, item.amount);
+      dates.forEach(date => add({
         kind: "bill",
         id: item.id,
         title: item.name || "Bill due",
-        body: item.amount
-          ? `${item.category || "Bill"} - ${item.currency || ""} ${Number(item.amount || 0)}`.trim()
-          : (item.notes || "Bill payment is due"),
-        date: item.due,
+        body: [amount ? `ត្រូវបង់ · Due: ${amount}` : "", item.notes || ""].filter(Boolean).join("\n"),
+        date,
         url: "/#money/bills"
-      });
+      }));
     });
 
   (Array.isArray(payload.loans) ? payload.loans : [])
@@ -252,8 +302,8 @@ function notificationItems(payload) {
         id: item.id,
         title: item.name || "Loan payment due",
         body: item.monthlyPayment
-          ? `Monthly payment: ${item.currency || ""} ${Number(item.monthlyPayment || 0)}`.trim()
-          : "Loan payment is due",
+          ? `ត្រូវបង់ប្រចាំខែ · Monthly payment: ${moneyLabel(item.currency, item.monthlyPayment)}`
+          : "",
         date,
         url: "/#money/loans"
       });
@@ -273,7 +323,7 @@ function notificationItems(payload) {
           kind: "savings-contribution",
           id: `${item.id || item.name}-${monthKey}`,
           title: item.name || "Savings contribution",
-          body: `Monthly contribution: ${item.currency || ""} ${monthlyAmount}`.trim(),
+          body: `សន្សំខែនេះ · Monthly saving: ${moneyLabel(item.currency, monthlyAmount)}`,
           date: `${monthKey}-01`,
           url: "/#money/savings"
         });
@@ -284,9 +334,38 @@ function notificationItems(payload) {
           kind: "savings-deadline",
           id: `${item.id || item.name}-deadline`,
           title: item.name || "Savings deadline",
-          body: item.notes || "Savings deadline",
+          body: item.notes || "",
           date: item.deadline,
           url: "/#money/savings"
+        });
+      }
+    });
+
+  (Array.isArray(payload.family) ? payload.family : [])
+    .forEach(member => {
+      if (!member || !member.name) return;
+
+      const birthdayYears = yearlyDateYears(member.birthday, today);
+      if (birthdayYears !== null) {
+        add({
+          kind: "birthday",
+          id: `${member.id || member.name}-birthday`,
+          title: member.name,
+          body: birthdayYears > 0 ? `អាយុ ${birthdayYears} ឆ្នាំ · Turns ${birthdayYears}` : "",
+          date: today,
+          url: "/#family"
+        });
+      }
+
+      const anniversaryYears = yearlyDateYears(member.anniversaryDate, today);
+      if (anniversaryYears !== null && anniversaryYears > 0) {
+        add({
+          kind: "anniversary",
+          id: `${member.id || member.name}-anniversary`,
+          title: member.name,
+          body: `${anniversaryYears} ឆ្នាំ · ${anniversaryYears} year${anniversaryYears === 1 ? "" : "s"}`,
+          date: today,
+          url: "/#family"
         });
       }
     });
