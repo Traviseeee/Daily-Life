@@ -2744,3 +2744,43 @@ body:has(#modalRoot.open) .quick-action-dock {
 @media (max-width: 420px) {
   :root #modalRoot .goal-form-modal .gf-amounts { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* =====================================================================
+ * Easier UX pass
+ * ===================================================================== */
+/* "+" slides away while scrolling down */
+.quick-action-dock { transition: transform 220ms ease, opacity 220ms ease; }
+.quick-action-dock.fab-away { transform: translateY(140%); opacity: 0; pointer-events: none; }
+
+/* Money: all four cards visible on phones (2 × 2) instead of a hidden side-scroll */
+@media (max-width: 680px) {
+  .financial-metric-grid,
+  .financial-content .financial-metric-grid {
+    display: grid !important;
+    grid-auto-flow: row !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    grid-auto-columns: unset !important;
+    overflow: visible !important;
+    gap: 10px !important;
+    padding: 0 !important;
+    scroll-snap-type: none !important;
+  }
+  .financial-metric-grid > .financial-metric-card,
+  .financial-metric-grid .financial-metric-card.mm-card {
+    min-width: 0 !important;
+    min-height: 0 !important;
+    gap: 8px !important;
+    padding: 14px !important;
+  }
+  .financial-metric-grid .mm-card .mm-value { font-size: 1.3rem !important; overflow-wrap: anywhere; }
+  .financial-metric-grid .mm-card .mm-title { font-size: 0.8rem; }
+  .financial-metric-grid .mm-card .mm-note,
+  .financial-metric-grid .mm-card .financial-metric-watermark { display: none; }
+  .financial-metric-grid .mm-card .mm-foot { font-size: 0.72rem; flex-wrap: wrap; gap: 2px 6px; }
+}
+
+/* Event form: "save it as a bill" hint */
+:root #modalRoot .event-modal .ev-bill-hint { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid #f6d7a8; border-radius: 14px; background: #fff7ea; font-size: 0.82rem; color: #8a4b08 !important; }
+:root #modalRoot .event-modal .ev-bill-hint[hidden] { display: none; }
+:root #modalRoot .event-modal .ev-bill-hint span { flex: 1; min-width: 0; color: #8a4b08 !important; }
+:root #modalRoot .event-modal .ev-bill-hint button { flex: 0 0 auto; padding: 7px 12px; border: 0; border-radius: 999px; font: inherit; font-weight: 700; font-size: 0.8rem; color: #ffffff !important; background: #e0702a !important; cursor: pointer; }

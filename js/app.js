@@ -105,6 +105,12 @@ const App = {
   openWelcomePoster() {
     if (!appData.profile.name || Login.isOpen || document.getElementById("modalRoot")?.querySelector("#loginModal")) return;
     if (!Login.authenticated && !Login.guestMode && !Login.getRememberedSession()) return;
+    // Show the welcome poster once a day only.
+    try {
+      const shownKey = "mylife:welcome-poster:shown";
+      if (localStorage.getItem(shownKey) === localDateInput()) return;
+      localStorage.setItem(shownKey, localDateInput());
+    } catch (error) { /* storage blocked: show it */ }
 
     const root = document.getElementById("modalRoot");
     const poster = this.getWelcomePoster();
@@ -162,6 +168,9 @@ const App = {
         close();
       }, 100);
     };
+    root.addEventListener("click", event => {
+      if (root.classList.contains("welcome-poster-modal") && !event.target.closest(".welcome-poster-card")) close();
+    });
     root.querySelector("[data-welcome-poster-choose]")?.addEventListener("click", () => {
       stopAutoClose();
       countdown.textContent = t("posterChooseHint");
@@ -325,7 +334,7 @@ const App = {
     this.bindScrollReveal();
     this.checkUpcomingAlerts();
     this.scheduleDueReminderAlerts();
-    this.checkHomeSuggestions();
+    // (home suggestion toast removed — the mood / reflection / focus cards are on Home already)
     this.renderNotificationBadge();
     app.focus({ preventScroll: true });
   },
@@ -410,7 +419,8 @@ const App = {
       ? `${first.title} is today`
       : `${first.title} in ${first.daysLeft} day${first.daysLeft === 1 ? "" : "s"}`;
 
-    Toast.show(alerts.length > 1 ? `${alerts.length} reminders are coming soon` : label, "warning", { duration: 3200 });
+    // No toast on open — the bell badge shows the count.
+    void label;
     NotificationManager.sync();
     this.renderNotificationBadge();
   },
@@ -1249,3 +1259,26 @@ function runQuickAction(action) {
   if (action === "add-bill" && typeof openBillModal === "function") openBillModal();
   if (action === "add-family" && typeof openFamilyModal === "function") openFamilyModal();
 }
+
+// The "+" button slides away while scrolling down and comes back when scrolling up,
+// so it never sits on top of what you are reading.
+(() => {
+  let lastY = window.scrollY;
+  let ticking = false;
+  window.addEventListener("scroll", () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(() => {
+      const y = window.scrollY;
+      const dock = document.querySelector(".quick-action-dock");
+      if (dock && !dock.classList.contains("is-open")) {
+        const nearBottom = window.innerHeight + y >= document.documentElement.scrollHeight - 40;
+        dock.classList.toggle("fab-away", (y > lastY + 4 && y > 120) || nearBottom);
+        if (y < lastY - 4 && !nearBottom) dock.classList.remove("fab-away");
+      }
+      lastY = y;
+      ticking = false;
+    });
+  }, { passive: true });
+  window.addEventListener("hashchange", () => document.querySelector(".quick-action-dock")?.classList.remove("fab-away"));
+})();

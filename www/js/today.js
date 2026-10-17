@@ -62,6 +62,7 @@ function todayOverdueBills(today) {
 function todayClock(time) {
   if (!time) return todayKm() ? "ពេញថ្ងៃ" : "All day";
   const [h, m] = time.split(":").map(Number);
+  if (appData.profile.clockFormat === "24-hour") return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
   const h12 = h % 12 || 12;
   if (todayKm()) return `${h12}:${String(m).padStart(2, "0")} ${h < 12 ? "ព្រឹក" : h < 17 ? "រសៀល" : "ល្ងាច"}`;
   return `${h12}:${String(m).padStart(2, "0")} ${h < 12 ? "AM" : "PM"}`;
@@ -119,6 +120,8 @@ function renderToday() {
     : now.toLocaleDateString("en-US", { weekday: "long", day: "numeric", month: "long" });
 
   const stats = Store.calculate();
+  // same "left this month" number as the Money page
+  if (typeof moneyMonthNumbers === "function") stats.available = moneyMonthNumbers().left;
   const spentToday = sumMoney(appData.expenses.filter(item => item.date === today), "amount");
   const nearBudgets = typeof SmartMoney !== "undefined"
     ? expenseCategories.map(category => ({ category, ...SmartMoney.budgetStatus(category) })).filter(row => row.budget && row.percent >= 80)
@@ -134,7 +137,7 @@ function renderToday() {
         <div class="td-chips">
           <span class="td-chip">📋 ${entries.length} ${isKm ? "ថ្ងៃនេះ" : "today"}</span>
           ${overdue.length ? `<span class="td-chip td-chip-warn">⚠️ ${overdue.length} ${isKm ? "ហួសថ្ងៃ" : "overdue"}</span>` : ""}
-          <span class="td-chip ${stats.available < 0 ? "td-chip-warn" : "td-chip-ok"}">💰 ${money(stats.available)} ${isKm ? "អាចចាយ" : "left"}</span>
+          <span class="td-chip ${stats.available < 0 ? "td-chip-warn" : "td-chip-ok"}">💰 ${stats.available < 0 ? `${isKm ? "ចាយលើស" : "Over by"} ${money(-stats.available)}` : `${money(stats.available)} ${isKm ? "អាចចាយ" : "left"}`}</span>
         </div>
       </div>
       <button class="button" type="button" data-td-add-event>${Icons.plus()} ${t("addEvent")}</button>

@@ -163,7 +163,7 @@ function renderCategoryOverview() {
 
   return `<article class="glass-card card-pad financial-panel financial-category-overview cat-v2">
     <div class="financial-panel-heading">
-      <div><span class="eyebrow">${t("overview")}</span><h2 class="section-title">${t("spendingByCategory")}</h2></div>
+      <div><span class="eyebrow">${t("overview")} · ${isKm ? "គ្រប់ពេល" : "All time"}</span><h2 class="section-title">${t("spendingByCategory")}</h2></div>
       <div class="financial-category-total"><span>${t("totalExpenses")}</span><strong>${money(total)}</strong></div>
     </div>
     ${categories.length ? `

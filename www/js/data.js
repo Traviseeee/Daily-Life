@@ -1196,6 +1196,7 @@ function getUpcomingNotifications(daysAhead = 7, itemLimit = 5) {
       title: event.title || "Event",
       date: event.date,
       daysLeft: Math.max(0, Math.round((eventDate - today) / 86400000)),
+      time: event.time || "",
       kind: "event"
     });
   });

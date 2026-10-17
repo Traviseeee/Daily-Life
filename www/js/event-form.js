@@ -283,6 +283,7 @@ const EventForm = (() => {
         <section class="ev-section">
           <div class="ev-label">${icon("spark")}<strong>${esc(L("type"))}</strong></div>
           <div class="ev-cats">${categoriesHtml(event.category || "Personal")}</div>
+          <div class="ev-bill-hint" data-ev-bill-hint hidden><span>${languageCode() === "km" ? "💡 ជាវិក្កយបត្រ? រក្សាទុកក្នុងហិរញ្ញវត្ថុ ដើម្បីមានប៊ូតុង \"បង់រួច\" និងរំលឹករៀងរាល់ខែ" : "💡 Is this a bill? Save it in Money to get a \"Paid\" button and a monthly repeat"}</span><button type="button" data-ev-make-bill>${languageCode() === "km" ? "ធ្វើជាវិក្កយបត្រ" : "Make it a bill"}</button></div>
         </section>
 
         ${hasFamily ? `
@@ -436,6 +437,23 @@ const EventForm = (() => {
     if (event.familyMember) state.touched.add("familyMember");
 
     const form = root.querySelector("#modalForm");
+    const billHint = () => {
+      const hint = root.querySelector("[data-ev-bill-hint]");
+      const cat = form.querySelector('input[name="category"]:checked')?.value;
+      if (hint) hint.hidden = event.id || cat !== "Bill";
+    };
+    form.addEventListener("change", billHint);
+    form.addEventListener("input", () => setTimeout(billHint, 300));
+    root.querySelector("[data-ev-make-bill]")?.addEventListener("click", () => {
+      const name = form.elements.title.value.trim();
+      const due = form.elements.date?.value || localDateInput();
+      Modal.close();
+      if (typeof openBillModal !== "function") return;
+      openBillModal();
+      const billForm = document.querySelector("#modalForm");
+      if (billForm?.elements.name) billForm.elements.name.value = name;
+      if (billForm?.elements.due) billForm.elements.due.value = due;
+    });
     root.querySelector("[data-ev-delete]")?.addEventListener("click", () => {
       Modal.confirm({ title: t("deleteEvent"), message: t("deleteEventMessage"), confirmText: t("delete"), onConfirm: () => {
         Store.delete("calendarEvents", event.id);

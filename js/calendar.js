@@ -132,7 +132,7 @@ function dayDetailRows(date, events) {
   const nextId = date === today ? sorted.find(event => event.time && event.time >= nowTime)?.id : null;
   return sorted.map(event => {
     const state = date < today || (date === today && event.time && event.time < nowTime) ? "is-past" : event.id === nextId ? "is-next" : "";
-    const when = event.time ? escapeHtml(event.time) : (isKm ? "ពេញមួយថ្ងៃ" : "All day");
+    const when = event.time ? escapeHtml(typeof todayClock === "function" ? todayClock(event.time) : event.time) : (isKm ? "ពេញមួយថ្ងៃ" : "All day");
     const amount = event.amount ? `<span class="cde-amount">${money(event.amount, event.currency)}</span>` : "";
     const action = event.auto
       ? (event.href ? `<a class="icon-button cde-action" href="${event.href}" aria-label="${escapeAttr(t("view"))}">${Icons.chevron()}</a>` : "")
@@ -594,7 +594,7 @@ function agendaRow(event) {
   const range = event.dateEnd
     ? `${new Date(`${event.date}T00:00:00`).getDate()}–${new Date(`${event.dateEnd}T00:00:00`).getDate()} ${isKm ? ["មករា", "កុម្ភៈ", "មីនា", "មេសា", "ឧសភា", "មិថុនា", "កក្កដា", "សីហា", "កញ្ញា", "តុលា", "វិច្ឆិកា", "ធ្នូ"][new Date(`${event.dateEnd}T00:00:00`).getMonth()] : new Date(`${event.dateEnd}T00:00:00`).toLocaleDateString("en-US", { month: "short" })}`
     : "";
-  const when = event.time ? escapeHtml(event.time) : range || (isKm ? "ពេញមួយថ្ងៃ" : "All day");
+  const when = event.time ? escapeHtml(typeof todayClock === "function" ? todayClock(event.time) : event.time) : range || (isKm ? "ពេញមួយថ្ងៃ" : "All day");
   const actions = event.source === "holiday"
     ? ""
     : event.auto

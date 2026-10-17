@@ -20,9 +20,18 @@ const FOOTER_ROUTES_KEY = "mylife:footer-routes";
 
 function footerRoutes() {
   const allRoutes = [...routes, ...utilityRoutes];
-  const defaults = ["home", "family", "goals", "money", "settings"];
+  const defaults = ["home", "today", "money", "calendar", "family"];
   try {
-    const saved = JSON.parse(localStorage.getItem(FOOTER_ROUTES_KEY) || "null");
+    let saved = JSON.parse(localStorage.getItem(FOOTER_ROUTES_KEY) || "null");
+    // one-time: put Today in the footer (it is the most useful page); Goals moves to ☰
+    if (Array.isArray(saved) && !saved.includes("today") && !localStorage.getItem("mylife:footer-today-v1")) {
+      const at = saved.indexOf("goals");
+      if (at >= 0) saved.splice(at, 1, "today");
+      else saved.splice(1, 0, "today");
+      saved = saved.slice(0, 5);
+      localStorage.setItem(FOOTER_ROUTES_KEY, JSON.stringify(saved));
+    }
+    localStorage.setItem("mylife:footer-today-v1", "1");
     const selected = Array.isArray(saved) ? saved.filter(id => allRoutes.some(route => route.id === id)) : defaults;
     return (selected.length ? selected : defaults).slice(0, 5).map(id => allRoutes.find(route => route.id === id));
   } catch (error) {

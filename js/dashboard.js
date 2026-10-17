@@ -59,7 +59,7 @@ function renderHome() {
     '<div class="home-hero-panel">' +
       '<div class="home-hero-copy">' +
         '<span class="eyebrow">' + t("privateDashboard") + '</span>' +
-        '<h1 class="page-title">' + t("goodMorning") + ', ' + escapeHtml(firstName) + '</h1>' +
+        '<h1 class="page-title">' + homeGreeting() + ', ' + escapeHtml(firstName) + '</h1>' +
         '<div class="home-quote-row">' +
           '<span class="quote-mark">“</span>' +
           '<p>' + t("smallStepsBigWins") + '</p>' +
@@ -78,6 +78,7 @@ function renderHome() {
         '</div>' +
       '</div>' +
     '</div>' +
+    renderHomeAgenda(agenda) +
     '<div class="home-challenge-card' + (challengeImage ? " has-cover-image" : "") + '">' +
       '<label class="home-challenge-image-edit" title="' + escapeAttr(t(challengeImage ? "changeFocusImage" : "addFocusImage")) + '"><span aria-hidden="true">' + Icons.edit() + '</span><input type="file" accept="image/*" data-home-challenge-image aria-label="' + escapeAttr(t(challengeImage ? "changeFocusImage" : "addFocusImage")) + '"></label>' +
       '<div class="home-challenge-copy">' +
@@ -92,8 +93,7 @@ function renderHome() {
     '<div class="home-week-row" aria-label="' + (languageCode() === "km" ? "អារម្មណ៍ប្រចាំសប្តាហ៍" : "Mood this week") + '">' +
       moodHistoryChart.map(day => '<div class="home-week-day ' + (day.isToday ? "active" : "") + '"' + (day.isToday ? ' aria-current="date"' : '') + '><span class="week-label">' + day.day + '</span><strong>' + day.date + '</strong><span class="week-mood ' + (day.value ? "has-mood" : "no-mood") + '" aria-label="' + escapeHtml(day.label) + '">' + day.emoji + '</span></div>').join("") +
     '</div>' +
-    renderHomeNewsTicker() +
-    renderHomeAgenda(agenda) +
+    '' +
     '<a class="home-smart-summary-link" href="#summary"><span>' + Icons.chart() + '</span><span><strong>' + escapeHtml(t("smartSummary")) + '</strong><small>' + escapeHtml(t("smartSummarySubtitle")) + '</small></span>' + Icons.chevron() + '</a>' +
     '<div class="home-overview">' +
       '<article class="glass-card mood-card">' +
@@ -263,7 +263,8 @@ function homeAgenda(todayIso) {
     today: items.filter(item => !item.overdue && item.date === todayIso).length,
     nextSevenDays: items.filter(item => !item.overdue && item.date > todayIso && item.date <= weekEndIso).length,
     overdueBills: items.filter(item => item.overdue).length,
-    items: items.slice(0, 5),
+    // hide today's timed items that are already over
+    items: items.filter(item => !(item.date === todayIso && item.time && item.time < `${String(new Date().getHours()).padStart(2, "0")}:${String(new Date().getMinutes()).padStart(2, "0")}`)).slice(0, 5),
     allItems: items
   };
 }
@@ -1279,4 +1280,10 @@ function bindHomeActions({ bindProfile = true } = {}) {
       }
     });
   }
+}
+
+function homeGreeting() {
+  const hour = new Date().getHours();
+  if (languageCode() === "km") return hour < 12 ? "អរុណសួស្តី" : hour < 17 ? "ទិវាសួស្តី" : "សាយណ្ហសួស្តី";
+  return hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
 }

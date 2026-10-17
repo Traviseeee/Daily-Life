@@ -136,6 +136,8 @@ function launcherTool(route) {
 function launcherDescription(routeId) {
   const descriptions = languageCode() === "km" ? {
     home: "កន្លែងចាប់ផ្តើមជីវិតប្រចាំថ្ងៃ",
+    today: "កាលវិភាគ លុយ និងអ្វីត្រូវធ្វើថ្ងៃនេះ",
+    daily: "ចំណង់ចំណូលចិត្ត និងការរំលឹក",
     summary: "ទិដ្ឋភាពជីវិតទាំងមូលរបស់អ្នក",
     family: "គ្រួសារ និងទំនាក់ទំនង",
     goals: "កំណត់ និងសម្រេចគោលដៅ",
@@ -147,6 +149,8 @@ function launcherDescription(routeId) {
     help: "ជំនួយ និងការណែនាំប្រើប្រាស់"
   } : {
     home: "Your daily life starting point",
+    today: "Today's plan, money and to-dos",
+    daily: "Hobbies and reminders",
     summary: "Your complete life overview",
     family: "Family and relationships",
     goals: "Set and reach your goals",
