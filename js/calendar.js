@@ -3,6 +3,7 @@ let cambodiaHolidayState = { year: null, items: [], loading: false };
 const cambodiaHolidayCache = new Map();
 const cambodiaHolidayRequests = new Map();
 let selectedCalendarDate = "";
+let calendarAgendaShowPast = false;
 
 function renderCalendar(view = "month") {
   const parts = location.hash.replace("#", "").split("/");
@@ -110,7 +111,7 @@ function renderCalendar(view = "month") {
         </div>
       </article>
       ${renderSelectedDayDetails(selectedCalendarDate, periodEvents)}
-      <article class="glass-card card-pad" style="margin-top:18px"><h2 class="section-title">${t("allEvents")}</h2><div class="list">${periodEvents.map(eventRow).join("") || calendarEmptyCard()}</div></article>
+      ${renderCalendarAgenda(periodEvents)}
     </section>
   `;
 }
@@ -429,6 +430,131 @@ function eventRow(event) {
   </div>`;
 }
 
+// ---------------------------------------------------------------------------
+// Agenda list under the calendar.
+// Shows one compact, date-grouped list instead of every record of the month:
+// - skips the selected day (already shown in the day card above),
+// - skips money records and memories (they are history, not plans),
+// - merges multi-day holidays into one row and drops auto items that a
+//   manual event already covers, and hides past days behind a toggle.
+// ---------------------------------------------------------------------------
+const AGENDA_HIDDEN_SOURCES = new Set(["expense", "memory"]);
+
+function agendaTitleKey(title) {
+  return String(title || "").replace(/^[^:]{1,24}:\s*/, "").trim().toLowerCase();
+}
+
+function dedupeAgendaItems(items) {
+  const manual = items.filter(item => !item.auto);
+  const manualKeys = new Set(manual.map(item => `${item.date}|${agendaTitleKey(item.title)}`));
+  const manualBirthdayDates = new Set(manual
+    .filter(item => /birthday|ថ្ងៃកំណើត|ខួប|anniversary/i.test(item.title || ""))
+    .map(item => item.date));
+  return items.filter(item => {
+    if (!item.auto) return true;
+    if (manualKeys.has(`${item.date}|${agendaTitleKey(item.title)}`)) return false;
+    if (item.source === "family" && manualBirthdayDates.has(item.date)) return false;
+    return true;
+  });
+}
+
+function mergeHolidayRanges(items) {
+  const out = [];
+  items.forEach(item => {
+    const last = out[out.length - 1];
+    if (item.source === "holiday" && last && last.source === "holiday" && last.title === item.title) {
+      const next = new Date(`${last.dateEnd || last.date}T00:00:00`);
+      next.setDate(next.getDate() + 1);
+      if (calendarDateInput(next) === item.date) {
+        last.dateEnd = item.date;
+        return;
+      }
+    }
+    out.push({ ...item });
+  });
+  return out;
+}
+
+function agendaDateHeading(date) {
+  const isKm = languageCode() === "km";
+  const today = calendarDateInput(new Date());
+  const tomorrowDate = new Date();
+  tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+  const tomorrow = calendarDateInput(tomorrowDate);
+  const dateValue = new Date(`${date}T00:00:00`);
+  const kmWeekdays = ["អាទិត្យ", "ច័ន្ទ", "អង្គារ", "ពុធ", "ព្រហស្បតិ៍", "សុក្រ", "សៅរ៍"];
+  const kmMonths = ["មករា", "កុម្ភៈ", "មីនា", "មេសា", "ឧសភា", "មិថុនា", "កក្កដា", "សីហា", "កញ្ញា", "តុលា", "វិច្ឆិកា", "ធ្នូ"];
+  const label = isKm
+    ? `ថ្ងៃ${kmWeekdays[dateValue.getDay()]} ${dateValue.getDate()} ${kmMonths[dateValue.getMonth()]}`
+    : dateValue.toLocaleDateString("en-US", { weekday: "long", day: "numeric", month: "long" });
+  const badge = date === today ? (isKm ? "ថ្ងៃនេះ" : "Today") : date === tomorrow ? (isKm ? "ស្អែក" : "Tomorrow") : "";
+  return `<h3 class="agenda-date ${date < today ? "is-past" : ""}">${escapeHtml(label)}${badge ? `<span class="agenda-badge">${badge}</span>` : ""}</h3>`;
+}
+
+function agendaIcon(event) {
+  if (event.source === "bill") return Icons.bill();
+  if (event.source === "loan" || event.source === "income" || event.source === "savings") return Icons.money();
+  if (event.source === "goal") return Icons.goal();
+  if (event.source === "family") return /anniversary|ខួប/i.test(event.id || "") ? Icons.heart() : Icons.cake();
+  return Icons.calendar();
+}
+
+function agendaRow(event) {
+  const isKm = languageCode() === "km";
+  const amount = event.amount ? `<span class="agenda-amount">${money(event.amount, event.currency)}</span>` : "";
+  const range = event.dateEnd
+    ? `${new Date(`${event.date}T00:00:00`).getDate()}–${new Date(`${event.dateEnd}T00:00:00`).getDate()} ${isKm ? ["មករា", "កុម្ភៈ", "មីនា", "មេសា", "ឧសភា", "មិថុនា", "កក្កដា", "សីហា", "កញ្ញា", "តុលា", "វិច្ឆិកា", "ធ្នូ"][new Date(`${event.dateEnd}T00:00:00`).getMonth()] : new Date(`${event.dateEnd}T00:00:00`).toLocaleDateString("en-US", { month: "short" })}`
+    : "";
+  const when = event.time ? escapeHtml(event.time) : range || (isKm ? "ពេញមួយថ្ងៃ" : "All day");
+  const actions = event.source === "holiday"
+    ? ""
+    : event.auto
+      ? `<a class="icon-button agenda-open" href="${event.href}" aria-label="${escapeAttr(t("view"))}">${Icons.chevron()}</a>`
+      : `<button class="icon-button" data-edit-event="${event.id}" aria-label="${t("editEvent")}">${Icons.edit()}</button><button class="icon-button" data-delete-event="${event.id}" aria-label="${t("deleteEvent")}">${Icons.trash()}</button>`;
+  return `<div class="agenda-row src-${escapeAttr(event.source || "event")} ${event.paid ? "is-paid" : ""}">
+    <span class="agenda-icon">${agendaIcon(event)}</span>
+    <div class="agenda-main"><strong>${escapeHtml(event.title)}</strong><span>${when} · ${escapeHtml(optionLabel(event.category))}</span></div>
+    ${amount}
+    <div class="agenda-actions">${actions}</div>
+  </div>`;
+}
+
+function renderCalendarAgenda(periodEvents) {
+  const isKm = languageCode() === "km";
+  const today = calendarDateInput(new Date());
+  const items = mergeHolidayRanges(dedupeAgendaItems(periodEvents)
+    .filter(event => !AGENDA_HIDDEN_SOURCES.has(event.source) && event.date !== selectedCalendarDate));
+  const past = items.filter(event => (event.dateEnd || event.date) < today);
+  const visible = calendarAgendaShowPast ? items : items.filter(event => (event.dateEnd || event.date) >= today);
+  const groups = [];
+  visible.forEach(event => {
+    const last = groups[groups.length - 1];
+    if (last && last.date === event.date) last.items.push(event);
+    else groups.push({ date: event.date, items: [event] });
+  });
+
+  const toggle = past.length
+    ? `<button class="button ghost-button agenda-toggle" type="button" data-agenda-toggle-past>${calendarAgendaShowPast
+      ? (isKm ? "លាក់ថ្ងៃដែលកន្លងផុត" : "Hide past days")
+      : (isKm ? `បង្ហាញថ្ងៃកន្លងផុត (${past.length})` : `Show past (${past.length})`)}</button>`
+    : "";
+
+  return `
+    <article class="glass-card card-pad calendar-agenda" style="margin-top:18px">
+      <div class="between agenda-head">
+        <div>
+          <span class="eyebrow">${isKm ? "កាលវិភាគ" : "Agenda"}</span>
+          <h2 class="section-title">${isKm ? "ព្រឹត្តិការណ៍ខាងមុខ" : "Coming up"}</h2>
+        </div>
+        ${toggle}
+      </div>
+      ${groups.length
+        ? groups.map(group => `<section class="agenda-group">${agendaDateHeading(group.date)}<div class="agenda-list">${group.items.map(agendaRow).join("")}</div></section>`).join("")
+        : `<p class="secondary agenda-empty">${isKm ? "មិនមានព្រឹត្តិការណ៍ខាងមុខក្នុងរយៈពេលនេះទេ។" : "Nothing else coming up in this period."}</p>`}
+    </article>
+  `;
+}
+
 function bindCalendar() {
   document.querySelectorAll('[data-action="add-calendar"]').forEach(button => button.addEventListener("click", () => App.openEventModal({ date: button.dataset.calendarDate || "" })));
   document.querySelectorAll(".day[data-calendar-date]").forEach(button => button.addEventListener("click", () => {
@@ -438,6 +564,10 @@ function bindCalendar() {
       location.hash = `#calendar/${view}/${selectedCalendarDate}`;
       return;
     }
+    App.render();
+  }));
+  document.querySelectorAll("[data-agenda-toggle-past]").forEach(button => button.addEventListener("click", () => {
+    calendarAgendaShowPast = !calendarAgendaShowPast;
     App.render();
   }));
   document.querySelectorAll("[data-edit-event]").forEach(button => button.addEventListener("click", () => App.openEventModal(appData.calendarEvents.find(item => item.id === button.dataset.editEvent))));
