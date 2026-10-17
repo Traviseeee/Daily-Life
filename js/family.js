@@ -319,8 +319,12 @@ function openFamilyModal(member) {
   const zodiacInput = document.querySelector("#zodiacSign");
   birthdayInput?.addEventListener("change", () => {
     const sign = zodiacSignForDate(birthdayInput.value);
-    if (sign && zodiacInput) zodiacInput.value = sign;
+    if (sign && zodiacInput) {
+      zodiacInput.value = sign;
+      zodiacInput.dispatchEvent(new Event("change"));
+    }
   });
+  if (typeof FamilyFormUX !== "undefined") FamilyFormUX.enhance(form);
 }
 
 function openSelfFamilyModal() {
