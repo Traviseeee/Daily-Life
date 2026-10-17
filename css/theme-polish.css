@@ -2442,3 +2442,87 @@ body:has(#modalRoot.open) .quick-action-dock {
 :root #modalRoot .su-modern .setup-sidebar { max-width: 100%; min-width: 0; overflow-x: auto; scrollbar-width: none; }
 :root #modalRoot .su-modern .setup-sidebar::-webkit-scrollbar { display: none; }
 :root #modalRoot .su-modern .setup-panels { min-width: 0; }
+
+/* =====================================================================
+ * Section sheets behind the ☰ button (money, goals, settings) in dark
+ * mode: items were a light surface with light text. Dark glass items,
+ * light text, colour icon squares, and lime for the current section.
+ * ===================================================================== */
+:root:not([data-theme="light"]) .financial-sidebar .financial-nav-item,
+:root:not([data-theme="light"]) .goals-sidebar .financial-nav-item,
+:root:not([data-theme="light"]) .settings-sidebar .financial-nav-item {
+  color: #f4fff7 !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: none !important;
+}
+:root:not([data-theme="light"]) .financial-sidebar .financial-nav-item:hover,
+:root:not([data-theme="light"]) .goals-sidebar .financial-nav-item:hover,
+:root:not([data-theme="light"]) .settings-sidebar .financial-nav-item:hover,
+:root:not([data-theme="light"]) .settings-sidebar .financial-nav-item:focus-visible {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(214, 247, 140, 0.35) !important;
+}
+:root:not([data-theme="light"]) .financial-sidebar .financial-nav-copy strong,
+:root:not([data-theme="light"]) .goals-sidebar .financial-nav-copy strong,
+:root:not([data-theme="light"]) .settings-sidebar .financial-nav-copy strong {
+  color: #f4fff7 !important;
+}
+:root:not([data-theme="light"]) .financial-sidebar .financial-nav-copy small,
+:root:not([data-theme="light"]) .goals-sidebar .financial-nav-copy small,
+:root:not([data-theme="light"]) .settings-sidebar .financial-nav-copy small {
+  color: rgba(244, 255, 247, 0.62) !important;
+}
+:root:not([data-theme="light"]) .financial-sidebar .financial-nav-icon,
+:root:not([data-theme="light"]) .goals-sidebar .financial-nav-icon,
+:root:not([data-theme="light"]) .settings-sidebar .financial-nav-icon {
+  color: var(--financial-icon-color, #c5ff60) !important;
+  background: color-mix(in srgb, var(--financial-icon-color, #c5ff60) 18%, transparent) !important;
+}
+:root:not([data-theme="light"]) .financial-sidebar .financial-nav-icon svg,
+:root:not([data-theme="light"]) .goals-sidebar .financial-nav-icon svg,
+:root:not([data-theme="light"]) .settings-sidebar .financial-nav-icon svg {
+  color: inherit !important;
+}
+:root:not([data-theme="light"]) .financial-sidebar .financial-nav-item > svg:last-child,
+:root:not([data-theme="light"]) .goals-sidebar .financial-nav-item > svg:last-child,
+:root:not([data-theme="light"]) .settings-sidebar .financial-nav-item > svg:last-child {
+  color: rgba(244, 255, 247, 0.55) !important;
+}
+:root:not([data-theme="light"]) .goals-sidebar .financial-nav-item > strong {
+  color: #f4fff7 !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* current section: lime pill with dark text */
+:root:not([data-theme="light"]) .financial-sidebar .financial-nav-item.active,
+:root:not([data-theme="light"]) .goals-sidebar .financial-nav-item.active {
+  background: #c5ff60 !important;
+  border-color: #a6e33f !important;
+  box-shadow: 0 8px 20px rgba(130, 200, 40, 0.25) !important;
+}
+:root:not([data-theme="light"]) .financial-sidebar .financial-nav-item.active .financial-nav-copy strong,
+:root:not([data-theme="light"]) .goals-sidebar .financial-nav-item.active .financial-nav-copy strong,
+:root:not([data-theme="light"]) .financial-sidebar .financial-nav-item.active > svg:last-child,
+:root:not([data-theme="light"]) .goals-sidebar .financial-nav-item.active > svg:last-child {
+  color: #142a04 !important;
+}
+:root:not([data-theme="light"]) .financial-sidebar .financial-nav-item.active .financial-nav-copy small,
+:root:not([data-theme="light"]) .goals-sidebar .financial-nav-item.active .financial-nav-copy small {
+  color: rgba(20, 42, 4, 0.7) !important;
+}
+:root:not([data-theme="light"]) .financial-sidebar .financial-nav-item.active .financial-nav-icon,
+:root:not([data-theme="light"]) .goals-sidebar .financial-nav-item.active .financial-nav-icon {
+  color: #ffffff !important;
+  background: #142a04 !important;
+}
+:root:not([data-theme="light"]) .goals-sidebar .financial-nav-item.active > strong {
+  color: #142a04 !important;
+  background: rgba(20, 42, 4, 0.12) !important;
+}
+
+/* sheet heading text */
+:root:not([data-theme="light"]) .financial-sidebar-heading strong,
+:root:not([data-theme="light"]) .goals-sidebar-heading strong { color: #f4fff7 !important; }
+:root:not([data-theme="light"]) .financial-sidebar-heading span,
+:root:not([data-theme="light"]) .goals-sidebar-heading span { color: rgba(244, 255, 247, 0.65) !important; }
