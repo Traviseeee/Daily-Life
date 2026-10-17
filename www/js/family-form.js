@@ -22,17 +22,40 @@ const FamilyForm = (() => {
 
   const km = () => languageCode() === "km";
   const L = (kmText, enText) => (km() ? kmText : enText);
-  const label = value => optionLabel(value) || value;
+  const KM_LABEL = {
+    Me: "ខ្ញុំ", Wife: "ប្រពន្ធ", Husband: "ប្តី", Girlfriend: "សង្សារស្រី", Boyfriend: "សង្សារប្រុស",
+    Mother: "ម្តាយ", Father: "ឪពុក", Daughter: "កូនស្រី", Son: "កូនប្រុស", Sister: "បងប្អូនស្រី",
+    Brother: "បងប្អូនប្រុស", Grandmother: "យាយ", Grandfather: "តា", Friend: "មិត្តភក្តិ", Other: "ផ្សេងៗ",
+    Happy: "សប្បាយ", Calm: "ស្ងប់", Cheerful: "រីករាយ", Funny: "កំប្លែង", Caring: "យកចិត្តទុកដាក់",
+    Quiet: "ស្ងៀម", Creative: "ច្នៃប្រឌិត", Energetic: "ស្វាហាប់", Sensitive: "រសើប", Serious: "ម៉ឺងម៉ាត់",
+    Adventurous: "ចូលចិត្តផ្សងព្រេង"
+  };
+  const label = value => (km() && KM_LABEL[value]) || optionLabel(value) || value;
+  // shown first; the rest sit behind "more"
+  const MAIN_REL = ["Me", "Wife", "Husband", "Girlfriend", "Boyfriend", "Mother", "Father", "Daughter", "Son"];
 
   let photoFile = null;
   let photoPreview = "";
 
-  function chips(name, values, emoji, selected) {
-    const list = [...values];
+  // Relationship: compact tiles (icon left, like the event form categories).
+  function relationTiles(selected) {
+    const list = [...RELATIONSHIPS];
+    if (selected && !list.includes(selected)) list.unshift(selected);
+    const tiles = list.map(value => {
+      const tone = TONE[value] || "#94a3b8";
+      const extra = !MAIN_REL.includes(value) && value !== selected;
+      return `<label class="ev-cat ff-rel ${extra ? "ff-extra" : ""}" style="--tone:${tone};--tone-bg:color-mix(in srgb, ${tone} 15%, #ffffff)"><input type="radio" name="relationship" value="${escapeAttr(value)}" ${value === selected ? "checked" : ""}><i class="ev-cat-icon ff-emoji">${REL_EMOJI[value] || "•"}</i><b>${escapeHtml(label(value))}</b></label>`;
+    }).join("");
+    return `${tiles}<button type="button" class="ev-cat ff-more" data-ff-more><i class="ev-cat-icon ff-emoji">＋</i><b>${escapeHtml(L("ផ្សេងទៀត", "More"))}</b></button>`;
+  }
+
+  // Personality: one scrollable row of small pills (like quick expense).
+  function moodPills(selected) {
+    const list = [...MOODS];
     if (selected && !list.includes(selected)) list.unshift(selected);
     return list.map(value => {
       const tone = TONE[value] || "#94a3b8";
-      return `<label class="ev-cat ff-tile" style="--tone:${tone};--tone-bg:color-mix(in srgb, ${tone} 16%, #ffffff)"><input type="radio" name="${name}" value="${escapeAttr(value)}" ${value === selected ? "checked" : ""}><i class="ev-cat-icon ff-emoji">${emoji[value] || "•"}</i><b>${escapeHtml(label(value))}</b></label>`;
+      return `<label class="ff-pill" style="--tone:${tone}"><input type="radio" name="characterMood" value="${escapeAttr(value)}" ${value === selected ? "checked" : ""}><i>${MOOD_EMOJI[value] || "🙂"}</i><b>${escapeHtml(label(value))}</b></label>`;
     }).join("");
   }
 
@@ -71,7 +94,7 @@ const FamilyForm = (() => {
 
         <section class="ev-section">
           <div class="ev-label">${Icons.heart()}<strong>${escapeHtml(t("relationship"))}</strong></div>
-          <div class="ev-cats ff-tiles">${chips("relationship", RELATIONSHIPS, REL_EMOJI, member.relationship || "")}</div>
+          <div class="ev-cats ff-rel-grid" data-ff-rel>${relationTiles(member.relationship || "")}</div>
           ${hasPeople ? `<div class="ff-related" data-ff-related>
             <div class="ev-label ff-sub">${Icons.family()}<strong>${escapeHtml(t("relatedPerson"))}</strong></div>
             <div class="ev-people">${people(member)}</div>
@@ -80,7 +103,7 @@ const FamilyForm = (() => {
 
         <section class="ev-section">
           <div class="ev-label">${Icons.spark()}<strong>${escapeHtml(t("characterMood"))}</strong></div>
-          <div class="ev-cats ff-tiles">${chips("characterMood", MOODS, MOOD_EMOJI, member.characterMood || "")}</div>
+          <div class="ff-pills">${moodPills(member.characterMood || "")}</div>
         </section>
 
         <section class="ev-section">
@@ -206,6 +229,12 @@ const FamilyForm = (() => {
     root.querySelectorAll("[data-close]").forEach(button => button.addEventListener("click", () => Modal.close()));
 
     const refresh = () => sync(root, member);
+    root.querySelector("[data-ff-more]")?.addEventListener("click", event => {
+      const grid = root.querySelector("[data-ff-rel]");
+      grid.classList.toggle("show-all");
+      event.currentTarget.querySelector("b").textContent = grid.classList.contains("show-all") ? L("តិចជាងនេះ", "Less") : L("ផ្សេងទៀត", "More");
+      event.currentTarget.querySelector("i").textContent = grid.classList.contains("show-all") ? "－" : "＋";
+    });
     form.addEventListener("input", refresh);
     form.addEventListener("change", refresh);
     form.elements.photoFile.addEventListener("change", () => {

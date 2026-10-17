@@ -2112,3 +2112,51 @@ body:has(#modalRoot.open) .quick-action-dock {
 @media (max-width: 420px) {
   :root #modalRoot .family-form-modal .ff-tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
+
+/* family form v3: compact relationship tiles + mood pill row */
+:root #modalRoot .family-form-modal .ff-rel-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+:root #modalRoot .family-form-modal .ff-rel-grid .ff-extra { display: none; }
+:root #modalRoot .family-form-modal .ff-rel-grid.show-all .ff-extra { display: flex; }
+:root #modalRoot .family-form-modal .ff-rel-grid .ev-cat { min-height: 46px; }
+:root #modalRoot .family-form-modal .ff-rel-grid .ff-emoji { width: 30px; height: 30px; border-radius: 10px; font-size: 1.05rem; font-style: normal; line-height: 1; }
+:root #modalRoot .family-form-modal .ff-rel-grid .ev-cat:has(input:checked) .ff-emoji { background: var(--tone); }
+:root #modalRoot .family-form-modal .ff-more {
+  --tone: #7b8a82;
+  --tone-bg: #eef1ec;
+  justify-content: flex-start;
+  border-style: dashed !important;
+  font: inherit;
+  color: var(--ev-ink-2);
+  background: transparent !important;
+  cursor: pointer;
+}
+:root #modalRoot .family-form-modal .ff-more b { font-size: 0.84rem; color: var(--ev-ink-2); }
+
+:root #modalRoot .family-form-modal .ff-pills { display: flex; gap: 8px; overflow-x: auto; padding: 2px 0 4px; scrollbar-width: none; }
+:root #modalRoot .family-form-modal .ff-pills::-webkit-scrollbar { display: none; }
+:root #modalRoot .family-form-modal .ff-pill {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px 5px 5px;
+  border: 1px solid color-mix(in srgb, var(--tone) 30%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--tone) 9%, #ffffff);
+  cursor: pointer;
+  transition: background 140ms ease, transform 120ms ease;
+}
+:root #modalRoot .family-form-modal .ff-pill input { position: absolute; opacity: 0; pointer-events: none; }
+:root #modalRoot .family-form-modal .ff-pill i { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; font-size: 1rem; font-style: normal; background: color-mix(in srgb, var(--tone) 20%, #ffffff); }
+:root #modalRoot .family-form-modal .ff-pill b { font-size: 0.82rem; font-weight: 700; white-space: nowrap; color: var(--ev-ink-2); }
+:root #modalRoot .family-form-modal .ff-pill:active { transform: scale(0.97); }
+:root #modalRoot .family-form-modal .ff-pill:has(input:checked) { border-color: var(--tone); background: color-mix(in srgb, var(--tone) 22%, #ffffff); box-shadow: 0 4px 12px color-mix(in srgb, var(--tone) 30%, transparent); }
+:root #modalRoot .family-form-modal .ff-pill:has(input:checked) i { background: var(--tone); }
+:root #modalRoot .family-form-modal .ff-pill:has(input:checked) b { color: var(--ev-ink); }
+:root #modalRoot .family-form-modal .ff-pill:has(input:focus-visible) { outline: 2px solid var(--tone); outline-offset: 2px; }
+:root #modalRoot .family-form-modal .ff-date small:empty { display: none; }
+
+@media (max-width: 720px) {
+  :root #modalRoot .family-form-modal .ff-rel-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
