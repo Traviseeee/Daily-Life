@@ -1926,3 +1926,64 @@ body:has(#modalRoot.open) .quick-action-dock {
 :root #modalRoot .modal.event-modal.expense-modal input.xp-amount::-webkit-outer-spin-button,
 :root #modalRoot .modal.event-modal.expense-modal input.xp-amount::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 :root #modalRoot .modal.event-modal.expense-modal .xp-cats .ev-cat b { white-space: normal; line-height: 1.25; overflow-wrap: anywhere; }
+
+/* =====================================================================
+ * Family member form upgrade (js/family-form.js)
+ * ===================================================================== */
+#modalRoot .family-modal .ff-hidden-select { position: absolute !important; width: 1px !important; height: 1px !important; opacity: 0 !important; pointer-events: none !important; }
+#modalRoot .family-modal .field:has(.ff-chips) { position: relative; grid-column: 1 / -1; }
+
+#modalRoot .family-modal .ff-hero {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 12px 0 6px;
+  padding: 14px 16px;
+  border: 1px solid rgba(214, 69, 122, 0.22);
+  border-radius: 20px;
+  background: linear-gradient(120deg, #fff0f5, #f6fbef);
+}
+#modalRoot .family-modal .ff-avatar {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  flex: 0 0 auto;
+  overflow: hidden;
+  border: 3px solid #ffffff;
+  border-radius: 50%;
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #d6457a;
+  background: #ffe6ef;
+  box-shadow: 0 6px 16px rgba(214, 69, 122, 0.25);
+}
+#modalRoot .family-modal .ff-avatar img { width: 100%; height: 100%; object-fit: cover; }
+#modalRoot .family-modal .ff-hero-copy { display: grid; gap: 3px; min-width: 0; }
+#modalRoot .family-modal .ff-hero-copy strong { overflow: hidden; font-size: 1.15rem; white-space: nowrap; text-overflow: ellipsis; color: #14201b !important; }
+#modalRoot .family-modal .ff-hero-copy span { font-size: 0.82rem; font-weight: 600; color: #4a5750 !important; }
+#modalRoot .family-modal .ff-hero-copy small { font-size: 0.78rem; font-weight: 700; color: #b8336a !important; }
+
+#modalRoot .family-modal .ff-chips { display: flex; flex-wrap: wrap; gap: 7px; }
+#modalRoot .family-modal .ff-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 12px 0 8px;
+  border: 1px solid rgba(20, 32, 27, 0.12) !important;
+  border-radius: 999px;
+  font: inherit;
+  color: #3f4b45 !important;
+  background: #f4f6f2 !important;
+  cursor: pointer;
+  transition: transform 120ms ease, background 140ms ease;
+}
+#modalRoot .family-modal .ff-chip span { font-size: 1.05rem; color: inherit !important; }
+#modalRoot .family-modal .ff-chip b { font-size: 0.82rem; font-weight: 700; }
+#modalRoot .family-modal .ff-chip:hover { background: #eaf0e5 !important; }
+#modalRoot .family-modal .ff-chip:active { transform: scale(0.97); }
+#modalRoot .family-modal .ff-chip.active { color: #ffffff !important; background: #d6457a !important; border-color: #d6457a !important; box-shadow: 0 6px 14px rgba(214, 69, 122, 0.3); }
+
+#modalRoot .family-modal .ff-hint { display: block; margin-top: 6px; font-size: 0.78rem; font-weight: 700; color: #b8336a !important; }
+#modalRoot .family-modal .ff-hint:empty { display: none; }
