@@ -2262,3 +2262,46 @@ body:has(#modalRoot.open) .quick-action-dock {
   background: transparent !important;
   box-shadow: none !important;
 }
+
+/* family form v5: same colour language as the event form (lime accent, neutral chips) */
+:root #modalRoot .family-form-modal .ff-head-icon { color: #1d3a08; background: linear-gradient(135deg, #e3ffb0, var(--ev-lime)); }
+
+:root #modalRoot .family-form-modal .ff-profile {
+  border: 1px solid var(--ev-line);
+  background: #ffffff;
+}
+:root #modalRoot .family-form-modal .ff-photo-img {
+  color: #3d6b0d;
+  background: linear-gradient(135deg, #f1ffdc, #e3ffb0);
+  box-shadow: 0 0 0 3px #c5ff60, 0 8px 20px rgba(130, 200, 40, 0.25);
+}
+:root #modalRoot .family-form-modal .ff-photo-img svg { color: #3d6b0d; }
+:root #modalRoot .family-form-modal .ff-photo-badge { color: #142a04; background: var(--ev-lime); }
+:root #modalRoot .family-form-modal input.ff-name { background: #ffffff !important; }
+:root #modalRoot .family-form-modal .ff-dates span { color: var(--ev-lime-ink) !important; }
+:root #modalRoot .family-form-modal .ff-tag { color: var(--ev-ink-2) !important; background: var(--ev-soft); border: 1px solid var(--ev-line); }
+:root #modalRoot .family-form-modal .ff-tag svg { color: var(--tone); }
+
+/* personality: neutral chips, lime when picked (like the date/time chips) */
+:root #modalRoot .family-form-modal .ff-pill { border-color: var(--ev-line); background: var(--ev-soft); }
+:root #modalRoot .family-form-modal .ff-pill i { background: #ffffff; }
+:root #modalRoot .family-form-modal .ff-pill:has(input:checked) {
+  border-color: #a6e33f;
+  background: var(--ev-lime);
+  box-shadow: 0 6px 16px rgba(130, 200, 40, 0.28);
+}
+:root #modalRoot .family-form-modal .ff-pill:has(input:checked) i { color: #ffffff; background: var(--tone); }
+:root #modalRoot .family-form-modal .ff-pill:has(input:checked) b { color: #142a04; }
+
+/* dates: white cards like the other sections, tinted icon squares */
+:root #modalRoot .family-form-modal .ff-date-card {
+  border-color: var(--ev-line);
+  background: #ffffff;
+}
+:root #modalRoot .family-form-modal .ff-date-card.is-set { border-color: #a6e33f; background: #fbfff3; }
+:root #modalRoot .family-form-modal .ff-date-card:focus-within { border-color: #7cc23a; box-shadow: 0 0 0 4px rgba(124, 194, 58, 0.18); }
+:root #modalRoot .family-form-modal .ff-dc-icon { color: var(--dc); background: color-mix(in srgb, var(--dc) 15%, #ffffff); box-shadow: none; }
+:root #modalRoot .family-form-modal .ff-date-card.is-set .ff-dc-icon { color: #ffffff; background: var(--dc); }
+:root #modalRoot .family-form-modal .ff-dc-badge { color: var(--ev-lime-ink) !important; background: #eefbd8; }
+:root #modalRoot .family-form-modal .ff-field > span svg { color: var(--ev-ink-2); }
+:root #modalRoot .family-form-modal .ff-zodiac { border-color: var(--ev-line); background: #ffffff; }
