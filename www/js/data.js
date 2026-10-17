@@ -1,4 +1,5 @@
 const STORAGE_KEY = "mylife:user-data:v1";
+const BACKUP_PREFIX = "mylife:backup:";
 const SUPABASE_TABLE = "app_data";
 const isGuestMode = () => typeof Login !== "undefined" && Login.guestMode;
 
@@ -44,6 +45,32 @@ const saveLocalSnapshot = value => {
     } catch (compactError) {
       console.warn("MYLIFE local storage is full; keeping data in memory for cloud sync.", compactError);
     }
+    return false;
+  }
+};
+
+const hasMeaningfulAppData = value => {
+  if (!value || typeof value !== "object") return false;
+  return Object.keys(value).some(key => {
+    if (key === "profile") {
+      const profile = value.profile || {};
+      return Boolean(profile.name || profile.email || profile.photo);
+    }
+    const item = value[key];
+    if (Array.isArray(item)) return item.length > 0;
+    if (item && typeof item === "object") return Object.keys(item).length > 0;
+    return Boolean(item);
+  });
+};
+
+const saveDataBackup = (reason, value = appData) => {
+  if (!hasMeaningfulAppData(value)) return false;
+  try {
+    const key = `${BACKUP_PREFIX}${new Date().toISOString()}:${reason}`;
+    localStorage.setItem(key, JSON.stringify(value));
+    return true;
+  } catch (error) {
+    console.warn("MYLIFE could not create a local data backup.", error);
     return false;
   }
 };
@@ -152,7 +179,11 @@ const mergeAppData = (base, update) => {
       if (index === -1) {
         mergedList.push(structuredClone(nextItem));
       } else {
-        mergedList[index] = mergeAppData(mergedList[index], nextItem);
+        // The copy edited most recently wins (e.g. a bill marked paid from Telegram
+        // must not be undone by an older copy cached on this device).
+        const current = mergedList[index];
+        const currentIsNewer = current.updatedAt && nextItem.updatedAt && String(current.updatedAt) > String(nextItem.updatedAt);
+        mergedList[index] = currentIsNewer ? mergeAppData(nextItem, current) : mergeAppData(current, nextItem);
       }
     });
     return mergedList;
@@ -217,6 +248,68 @@ const canonicalizePayload = value => {
     sorted[key] = canonicalizePayload(value[key]);
     return sorted;
   }, {});
+};
+
+const CLOUD_SYNCED_AT_KEY = "mylife:cloud-synced-at:v1";
+
+const lastCloudSyncAt = () => {
+  try {
+    return localStorage.getItem(CLOUD_SYNCED_AT_KEY) || "";
+  } catch (error) {
+    return "";
+  }
+};
+
+const markCloudSynced = () => {
+  try {
+    localStorage.setItem(CLOUD_SYNCED_AT_KEY, new Date().toISOString());
+  } catch (error) {
+    // best effort only
+  }
+};
+
+/**
+ * Brings changes made elsewhere into `local` without undoing local edits:
+ * - a record missing here is adopted only if it was created after this device
+ *   last synced (so something deleted here never comes back),
+ * - a record edited more recently elsewhere (newer updatedAt) replaces ours,
+ * - tombstones from both sides are merged and applied.
+ * Returns true when `local` changed.
+ */
+const adoptRemoteChanges = (local, remote, syncedAt = "") => {
+  if (!local || !remote || typeof remote !== "object") return false;
+  let changed = false;
+  const mergedDeletions = SyncState.merge(local[DELETIONS_FIELD], remote[DELETIONS_FIELD]);
+  if (JSON.stringify(mergedDeletions) !== JSON.stringify(local[DELETIONS_FIELD] || {})) {
+    local[DELETIONS_FIELD] = mergedDeletions;
+    changed = true;
+  }
+  Object.keys(remote).forEach(key => {
+    if (key === DELETIONS_FIELD || key === "profile") return;
+    const remoteList = remote[key];
+    const localList = local[key];
+    if (!Array.isArray(remoteList) || !Array.isArray(localList)) return;
+    const mine = new Map(localList.filter(item => item && item.id).map(item => [item.id, item]));
+    remoteList.forEach(item => {
+      if (!item || typeof item !== "object" || !item.id) return;
+      const current = mine.get(item.id);
+      if (!current) {
+        const stamp = String(item.updatedAt || item.createdAt || "");
+        if (syncedAt && stamp && stamp > syncedAt) {
+          localList.push(structuredClone(item));
+          changed = true;
+        }
+        return;
+      }
+      if (item.updatedAt && (!current.updatedAt || String(item.updatedAt) > String(current.updatedAt))) {
+        Object.keys(current).forEach(field => delete current[field]);
+        Object.assign(current, structuredClone(item));
+        changed = true;
+      }
+    });
+  });
+  if (changed) SyncState.apply(local);
+  return changed;
 };
 
 const payloadsDiffer = (first, second) => {
@@ -303,6 +396,7 @@ const Store = {
       // A cached payload belonging to another account must never be merged into this
       // one, so drop it before anything else can read it.
       if (SyncState.isDifferentAccount(user.id)) {
+        saveDataBackup("account-switch");
         Object.assign(appData, structuredClone(emptyData));
         appData.profile = { ...emptyData.profile };
         SyncState.clearPending();
@@ -355,6 +449,7 @@ const Store = {
       SyncState.apply(appData);
       SyncState.prune(appData);
       saveLocalSnapshot(appData);
+      markCloudSynced();
 
       // Converge the cloud copy whenever it is behind us. Without this the record
       // would come back on the next refresh as well, not just this one.
@@ -385,6 +480,21 @@ const Store = {
 
       await this.moveImagesToSupabase(user.id);
 
+      // Adopt what changed in the cloud since this device last synced (events or
+      // expenses added from Telegram, bills marked paid there) before overwriting it.
+      if (!SyncState.isReplacePending()) {
+        try {
+          const { data: remote } = await client.from(SUPABASE_TABLE).select("payload").eq("user_id", user.id).maybeSingle();
+          const remotePayload = toPayloadObject(remote?.payload);
+          if (remotePayload && !isEmptyPayload(remotePayload) && adoptRemoteChanges(appData, remotePayload, lastCloudSyncAt())) {
+            saveLocalSnapshot(appData);
+            if (typeof window !== "undefined" && typeof CustomEvent === "function") window.dispatchEvent(new CustomEvent("mylife:cloud-merged"));
+          }
+        } catch (mergeError) {
+          console.warn("MYLIFE could not check the cloud copy before saving.", mergeError);
+        }
+      }
+
       const sequence = this.saveSequence;
       const payload = structuredClone(appData);
 
@@ -406,6 +516,7 @@ const Store = {
       // Only stand the pending flag down when nothing changed while uploading;
       // otherwise a newer local edit still has to reach the cloud.
       if (sequence === this.saveSequence) SyncState.clearPending();
+      markCloudSynced();
       SyncState.setAccountId(user.id);
       saveLocalSnapshot(appData);
       return true;
@@ -631,7 +742,7 @@ const Store = {
   },
   updateMood(mood) {
     const previous = structuredClone(appData);
-    const today = new Date().toISOString().slice(0, 10);
+    const today = localDateInput();
     const history = Array.isArray(appData.moodHistory) ? appData.moodHistory : [];
 
     appData.mood = {
@@ -653,7 +764,7 @@ const Store = {
   },
   updateDailyReflection(text) {
     const previous = structuredClone(appData);
-    const today = new Date().toISOString().slice(0, 10);
+    const today = localDateInput();
     appData.dailyReflection = {
       date: today,
       text: (text || "").trim()
@@ -662,7 +773,7 @@ const Store = {
   },
   updateDailyFocus(items) {
     const previous = structuredClone(appData);
-    const today = new Date().toISOString().slice(0, 10);
+    const today = localDateInput();
     appData.dailyFocus = {
       date: today,
       items: Array.isArray(items) ? items.map((item, index) => ({
@@ -969,6 +1080,46 @@ const Store = {
   startSyncRetry() {
     SyncScheduler.start(() => this.flushPendingSync());
   },
+  listBackups() {
+    const backups = [];
+    try {
+      for (let index = 0; index < localStorage.length; index += 1) {
+        const key = localStorage.key(index);
+        if (!key?.startsWith(BACKUP_PREFIX)) continue;
+        const raw = localStorage.getItem(key);
+        const data = raw ? JSON.parse(raw) : null;
+        backups.push({
+          key,
+          createdAt: key.slice(BACKUP_PREFIX.length).split(":").slice(0, 3).join(":"),
+          profile: data?.profile?.name || data?.profile?.email || "",
+          counts: ["family", "goals", "income", "expenses", "savings", "loans", "bills", "calendarEvents", "memories", "hobbyLogs", "reminders"]
+            .reduce((total, collection) => total + (Array.isArray(data?.[collection]) ? data[collection].length : 0), 0)
+        });
+      }
+    } catch (error) {
+      console.warn("MYLIFE could not list local backups.", error);
+    }
+    return backups.sort((a, b) => b.key.localeCompare(a.key));
+  },
+  restoreBackup(key) {
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) return false;
+      const backup = JSON.parse(raw);
+      if (!hasMeaningfulAppData(backup)) return false;
+      saveDataBackup("before-restore");
+      Object.assign(appData, structuredClone(emptyData), backup);
+      ensureAppDataShape();
+      appData.profile = { ...emptyData.profile, ...(appData.profile || {}) };
+      SyncState.clear(appData);
+      this.save({ mode: "replace", reason: "restore-backup" });
+      App.render();
+      return true;
+    } catch (error) {
+      console.warn("MYLIFE could not restore the selected backup.", error);
+      return false;
+    }
+  },
   calculate() {
     const totalIncome = sumMoney(appData.income, "amount");
     const totalExpenses = sumMoney(appData.expenses, "amount");
@@ -1027,18 +1178,18 @@ function result(label, href, type) {
   return { label, href, type };
 }
 
-function getUpcomingNotifications(daysAhead = 7) {
+function getUpcomingNotifications(daysAhead = 7, itemLimit = 5) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const limit = new Date(today);
-  limit.setDate(limit.getDate() + daysAhead);
+  const dateLimit = new Date(today);
+  dateLimit.setDate(dateLimit.getDate() + daysAhead);
 
   const items = [];
 
   appData.calendarEvents.forEach(event => {
     if (!event.date) return;
     const eventDate = new Date(`${event.date}T00:00:00`);
-    if (eventDate < today || eventDate > limit) return;
+    if (eventDate < today || eventDate > dateLimit) return;
     items.push({
       id: event.id || `event-${event.date}`,
       type: "event",
@@ -1050,14 +1201,15 @@ function getUpcomingNotifications(daysAhead = 7) {
   });
 
   appData.bills.forEach(bill => {
-    if (bill.reminder === false || !bill.due || bill.status === "Paid") return;
-    const dueDate = new Date(`${bill.due}T00:00:00`);
-    if (dueDate < today || dueDate > limit) return;
+    if (bill.reminder === false || !bill.due) return;
+    const nextDue = billCycleDates(bill, localDateInput(today), localDateInput(dateLimit))[0];
+    if (!nextDue) return;
+    const dueDate = new Date(`${nextDue}T00:00:00`);
     items.push({
-      id: bill.id || `bill-${bill.due}`,
+      id: bill.id || `bill-${nextDue}`,
       type: "bill",
       title: bill.name || "Bill",
-      date: bill.due,
+      date: nextDue,
       daysLeft: Math.max(0, Math.round((dueDate - today) / 86400000)),
       kind: "bill"
     });
@@ -1069,7 +1221,7 @@ function getUpcomingNotifications(daysAhead = 7) {
       ["anniversary", member.anniversaryDate]
     ].forEach(([type, value]) => {
       const date = nextYearlyDate(value, today);
-      if (!date || date > limit) return;
+      if (!date || date > dateLimit) return;
       items.push({
         id: `family-${type}-${member.id}-${calendarDateInput(date)}`,
         type: `family-${type}`,
@@ -1086,7 +1238,7 @@ function getUpcomingNotifications(daysAhead = 7) {
   appData.reminders.forEach(reminder => {
     if (reminder.done || !reminder.date) return;
     const reminderDate = new Date(`${reminder.date}T00:00:00`);
-    if (reminderDate < today || reminderDate > limit) return;
+    if (reminderDate < today || reminderDate > dateLimit) return;
     items.push({
       id: reminder.id || `reminder-${reminder.date}`,
       type: "reminder",
@@ -1099,7 +1251,7 @@ function getUpcomingNotifications(daysAhead = 7) {
     });
   });
 
-  return items.sort((a, b) => a.date.localeCompare(b.date)).slice(0, 5);
+  return items.sort((a, b) => a.date.localeCompare(b.date)).slice(0, itemLimit);
 }
 
 function nextYearlyDate(value, today) {
@@ -1260,6 +1412,42 @@ function formatDate(value, options = { month: "short", day: "numeric", year: "nu
     return parts.join(" ");
   }
   return date.toLocaleDateString("en-US", options);
+}
+
+// Dates (YYYY-MM-DD) between fromIso and toIso on which a bill is due.
+// Cycles start at bill.due and repeat by frequency; marking a bill paid moves
+// `due` to the next cycle, so every cycle on/after `due` is still unpaid.
+function billCycleDates(bill, fromIso, toIso) {
+  if (!bill?.due) return [];
+  const start = parseAppDate(bill.due);
+  if (Number.isNaN(start.getTime())) return [];
+  const frequency = bill.frequency || "Monthly";
+  const dates = [];
+  const from = fromIso > bill.due ? fromIso : bill.due;
+  const cursor = new Date(`${from}T00:00:00`);
+  const end = new Date(`${toIso}T00:00:00`);
+  for (let guard = 0; cursor <= end && guard < 400; guard += 1, cursor.setDate(cursor.getDate() + 1)) {
+    const iso = localDateInput(cursor);
+    let hit = false;
+    if (frequency === "Once") hit = iso === bill.due;
+    else if (frequency === "Daily") hit = true;
+    else if (frequency === "Weekly") hit = Math.round((cursor - start) / 86400000) % 7 === 0;
+    else {
+      const months = (cursor.getFullYear() - start.getFullYear()) * 12 + cursor.getMonth() - start.getMonth();
+      const lastDay = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0).getDate();
+      hit = cursor.getDate() === Math.min(start.getDate(), lastDay)
+        && !(frequency === "Quarterly" && months % 3 !== 0)
+        && !(frequency === "Yearly" && months % 12 !== 0);
+    }
+    if (hit && !(bill.status === "Paid" && iso === bill.due)) dates.push(iso);
+  }
+  return dates;
+}
+
+// Calendar date (YYYY-MM-DD) in the device's local time zone.
+// toISOString() uses UTC, which is the previous day before 07:00 in Cambodia.
+function localDateInput(date = new Date()) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 
 function parseAppDate(value) {

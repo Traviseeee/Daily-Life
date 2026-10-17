@@ -1,8 +1,10 @@
 const Modal = {
+  escapeHandler: null,
   open({ title, fields = [], submitText = "Save", onSubmit, danger = false, wide = false, grouped = false }) {
     const root = document.getElementById("modalRoot");
     const fieldHtml = grouped ? this.groupedFields(fields) : this.fields(fields);
 
+    if (this.escapeHandler) document.removeEventListener("keydown", this.escapeHandler);
     root.innerHTML = `
       <form class="modal glass-card ${wide ? "modal-wide" : ""} ${grouped ? "modal-setup" : ""}" id="modalForm" novalidate>
         <div class="between">
@@ -17,6 +19,10 @@ const Modal = {
       </form>
     `;
     root.classList.add("open");
+    this.escapeHandler = event => {
+      if (event.key === "Escape") this.close();
+    };
+    document.addEventListener("keydown", this.escapeHandler);
 
     root.querySelectorAll("[data-close]").forEach(button => button.addEventListener("click", () => this.close()));
     if (grouped) this.bindGroups(root);
@@ -154,6 +160,10 @@ const Modal = {
   },
   close() {
     const root = document.getElementById("modalRoot");
+    if (this.escapeHandler) {
+      document.removeEventListener("keydown", this.escapeHandler);
+      this.escapeHandler = null;
+    }
     root.classList.remove("open");
     root.innerHTML = "";
   },

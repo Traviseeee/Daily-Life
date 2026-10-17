@@ -104,6 +104,7 @@ function goalCard(goal) {
         <div class="goal-profile-progress">
           <div class="between"><span>${t("target")}</span><strong>${hasTarget ? money(goal.targetAmount) : t("notSet")}</strong></div>
           ${hasTarget ? `<div class="progress-track"><div class="progress-fill" style="--progress:${progress}%"></div></div>` : ""}
+          ${typeof SmartMoney !== "undefined" ? `${SmartMoney.linkedBadge(goal)}${SmartMoney.goalPace(goal)}` : ""}
         </div>
         <a class="goal-profile-open" href="#goals/${goal.id}">${t("open")} ${Icons.chevron()}</a>
       </div>
@@ -133,6 +134,7 @@ function renderGoalDetail(goal) {
           <p class="secondary">${t("progress")}</p>
           <div class="metric">${money(goal.currentAmount)} ${hasTarget ? `<span class="secondary" style="font-size:1rem">of ${money(goal.targetAmount)}</span>` : ""}</div>
           ${hasTarget ? `<div class="progress-track"><div class="progress-fill" style="--progress:${progress}%"></div></div><p class="trend">${progress}% complete</p>` : `<p class="trend">${t("target")}: ${t("notSet")}</p>`}
+          ${typeof SmartMoney !== "undefined" ? `${SmartMoney.linkedBadge(goal)}${SmartMoney.goalPace(goal)}` : ""}
           <div class="kv">
             <div><span>${t("category")}</span><strong>${optionLabel(goal.category)}</strong></div>
             <div><span>${t("target")}</span><strong>${hasTarget ? money(goal.targetAmount) : t("notSet")}</strong></div>
@@ -158,6 +160,14 @@ function goalFields(goal = null, defaultCategory = "Personal") {
     { name: "targetAmount", label: t("targetAmount"), type: "number", value: currentGoal.targetAmount || "" },
     { name: "currentAmount", label: t("currentAmount"), type: "number", value: currentGoal.currentAmount || "" },
     { name: "deadline", label: t("deadline"), type: "date", value: currentGoal.deadline },
+    ...(appData.savings.length ? [{
+      name: "linkedSavingsId",
+      label: languageCode() === "km" ? "🔗 ភ្ជាប់ជាមួយការសន្សំ (update ដោយខ្លួនឯង)" : "🔗 Link to savings (updates itself)",
+      type: "select",
+      options: ["", ...appData.savings.map(item => item.id)],
+      optionLabels: [languageCode() === "km" ? "— មិនភ្ជាប់ —" : "— Not linked —", ...appData.savings.map(item => item.name || item.id)],
+      value: currentGoal.linkedSavingsId || ""
+    }] : []),
     { name: "description", label: t("description"), type: "textarea", value: currentGoal.description },
     { name: "coverImage", label: t("photo"), type: "file", value: currentGoal.coverImage || "" }
   ];

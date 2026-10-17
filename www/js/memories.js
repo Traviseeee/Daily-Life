@@ -1,14 +1,7 @@
 function renderMemories() {
-  const groups = appData.memories.reduce((acc, memory) => {
-    const date = memory.date ? new Date(`${memory.date}T00:00:00`) : new Date();
-    const year = date.getFullYear();
-    const month = date.toLocaleDateString(languageCode() === "km" ? "km-KH" : "en-US", { month: "long" });
-    acc[year] = acc[year] || {};
-    acc[year][month] = acc[year][month] || [];
-    acc[year][month].push(memory);
-    return acc;
-  }, {});
-
+  const memories = appData.memories || [];
+  const years = [...new Set(memories.map(memory => memory.date?.slice(0, 4)).filter(Boolean))].sort((left, right) => right.localeCompare(left));
+  const locations = [...new Set(memories.map(memory => memory.location?.trim()).filter(Boolean))].sort((left, right) => left.localeCompare(right));
   return `
     <section class="page">
       <div class="page-header">
@@ -18,22 +11,54 @@ function renderMemories() {
         </div>
         <button class="button" data-action="add-memory">${Icons.plus()} ${t("addMemory")}</button>
       </div>
-      ${appData.memories.length ? `
-        <div class="grid two-col">
-          <div class="memory-grid">${appData.memories.map(memoryCard).join("")}</div>
-          <article class="glass-card card-pad">
-            <h2 class="section-title">${t("memoryTimeline")}</h2>
-            ${Object.entries(groups).map(([year, months]) => `<h3>${year}</h3>${Object.entries(months).map(([month, memories]) => `
-              <div class="goal-item">
-                <strong>${month}</strong>
-                ${memories.map(memory => `<div class="between"><span class="secondary">${escapeHtml(memory.title)}</span><span class="pill">${firstTag(memory.tags)}</span></div>`).join("")}
-              </div>
-            `).join("")}`).join("")}
-          </article>
+      ${memories.length ? `
+        ${renderOnThisDay(memories)}
+        <div class="memory-filter-panel">
+          <div class="memory-filters" role="search">
+            <label class="memory-search-field">
+              <span aria-hidden="true">${Icons.search()}</span>
+              <input type="search" data-memory-search placeholder="${escapeAttr(t("searchMemories"))}" aria-label="${escapeAttr(t("searchMemories"))}">
+            </label>
+            <div class="memory-filter-selects">
+              <label class="memory-filter-select">
+                <span class="sr-only">${escapeHtml(t("filterByYear"))}</span>
+                <select data-memory-year aria-label="${escapeAttr(t("filterByYear"))}">
+                  <option value="">${escapeHtml(t("allYears"))}</option>
+                  ${years.map(year => `<option value="${escapeAttr(year)}">${escapeHtml(year)}</option>`).join("")}
+                </select>
+              </label>
+              <label class="memory-filter-select">
+                <span class="sr-only">${escapeHtml(t("filterByPlace"))}</span>
+                <select data-memory-location aria-label="${escapeAttr(t("filterByPlace"))}">
+                  <option value="">${escapeHtml(t("allPlaces"))}</option>
+                  ${locations.map(location => `<option value="${escapeAttr(location)}">${escapeHtml(location)}</option>`).join("")}
+                </select>
+              </label>
+            </div>
+          </div>
+          <div class="memory-filter-footer">
+            <span data-memory-result-count aria-live="polite"></span>
+            <button class="memory-filter-reset" type="button" data-memory-reset hidden>${escapeHtml(t("clearFilters"))}</button>
+          </div>
         </div>
+        <div class="memory-grid">${memories.map(memoryCard).join("")}</div>
+        <p class="memory-filter-empty secondary" data-memory-filter-empty hidden>${escapeHtml(t("noResultsFound"))}</p>
       ` : memoriesEmptyCard()}
     </section>
   `;
+}
+
+function renderOnThisDay(memories) {
+  const today = new Date();
+  const monthDay = `${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+  const matches = memories
+    .filter(memory => /^\d{4}-\d{2}-\d{2}$/.test(memory.date || "") && memory.date.slice(5) === monthDay && Number(memory.date.slice(0, 4)) < today.getFullYear())
+    .sort((left, right) => right.date.localeCompare(left.date));
+  if (!matches.length) return "";
+  return `<details class="memory-on-this-day">
+    <summary>${escapeHtml(t("onThisDay"))}<span class="pill">${matches.length}</span></summary>
+    <div class="memory-on-this-day-list">${matches.map(memory => `<button class="memory-on-this-day-item" type="button" data-memory-jump="${escapeAttr(memory.id)}"><strong>${escapeHtml(memory.title)}</strong><span>${escapeHtml(formatDate(memory.date))}${memory.location ? ` · ${escapeHtml(memory.location)}` : ""}</span></button>`).join("")}</div>
+  </details>`;
 }
 
 function memoriesEmptyCard() {
@@ -52,18 +77,28 @@ function memoriesEmptyCard() {
 
 function memoryCard(memory) {
   const style = memory.photo ? `background-image:url('${memory.photo}')` : `background:${memoryGradient(memory.id)}`;
+  const tags = splitList(memory.tags);
+  const familyMembers = splitList(memory.familyMembers);
+  const hasDetails = memory.description || tags.length || familyMembers.length;
+  const searchText = [memory.title, memory.location, memory.description, memory.familyMembers, memory.tags, memory.date].filter(Boolean).join(" ").toLocaleLowerCase();
   return `
-    <article class="memory-card glass-card">
+    <article class="memory-card glass-card" id="memory-card-${escapeAttr(memory.id)}" data-memory-card data-memory-search-text="${escapeAttr(searchText)}" data-memory-year="${escapeAttr(memory.date?.slice(0, 4) || "")}" data-memory-location="${escapeAttr(memory.location?.trim() || "")}">
       <div class="memory-photo" style="${style}"></div>
       <div class="card-pad">
-        <div class="between"><span class="pill">${escapeHtml(memory.location || t("noLocation"))}</span><span class="secondary">${formatDate(memory.date)}</span></div>
-        <h2>${escapeHtml(memory.title)}</h2>
-        <p class="secondary">${escapeHtml(memory.description || "")}</p>
-        <div>${splitList(memory.tags).map(tag => `<span class="pill">${escapeHtml(tag)}</span>`).join(" ")}</div>
-        <div class="action-row">
-          <button class="button ghost-button" data-edit-memory="${memory.id}">${Icons.edit()} ${t("edit")}</button>
-          <button class="icon-button" data-delete-memory="${memory.id}" aria-label="${t("deleteMemory")}">${Icons.trash()}</button>
+        <div class="memory-card-heading">
+          <h2>${escapeHtml(memory.title)}</h2>
+          <div class="memory-card-actions">
+            <button class="icon-button" data-edit-memory="${memory.id}" aria-label="${escapeAttr(t("editMemory"))}">${Icons.edit()}</button>
+            <button class="icon-button" data-delete-memory="${memory.id}" aria-label="${escapeAttr(t("deleteMemory"))}">${Icons.trash()}</button>
+          </div>
         </div>
+        <p class="memory-card-meta">${[memory.date ? formatDate(memory.date) : "", memory.location || ""].filter(Boolean).map(escapeHtml).join(" · ")}</p>
+        ${hasDetails ? `<details class="memory-details">
+          <summary>${escapeHtml(t("memoryDetails"))}</summary>
+          ${memory.description ? `<p class="secondary">${escapeHtml(memory.description)}</p>` : ""}
+          ${familyMembers.length ? `<p class="memory-details-line"><strong>${escapeHtml(t("familyMembers"))}:</strong> ${familyMembers.map(escapeHtml).join(", ")}</p>` : ""}
+          ${tags.length ? `<div class="memory-card-tags">${tags.map(tag => `<span class="pill">${escapeHtml(tag)}</span>`).join("")}</div>` : ""}
+        </details>` : ""}
       </div>
     </article>
   `;
@@ -83,7 +118,7 @@ function memoryFields(memory = {}) {
   return [
     { name: "title", label: t("title"), value: memory.title, required: true },
     { name: "photo", label: t("photo"), type: "file", value: memory.photo },
-    { name: "date", label: t("date"), type: "date", value: memory.date || new Date().toISOString().slice(0, 10), required: true },
+    { name: "date", label: t("date"), type: "date", value: memory.date || localDateInput(), required: true },
     { name: "location", label: t("location"), value: memory.location },
     { name: "description", label: t("description"), type: "textarea", value: memory.description },
     { name: "familyMembers", label: t("familyMembers"), value: memory.familyMembers },
@@ -108,13 +143,55 @@ function splitList(value) {
   return String(value || "").split(",").map(item => item.trim()).filter(Boolean);
 }
 
-function firstTag(value) {
-  return splitList(value)[0] || "memory";
-}
-
 function bindMemories() {
   document.querySelectorAll('[data-action="add-memory"]').forEach(button => button.addEventListener("click", () => openMemoryModal()));
   document.querySelectorAll("[data-edit-memory]").forEach(button => button.addEventListener("click", () => openMemoryModal(appData.memories.find(item => item.id === button.dataset.editMemory))));
+  const search = document.querySelector("[data-memory-search]");
+  const yearFilter = document.querySelector("[data-memory-year]");
+  const locationFilter = document.querySelector("[data-memory-location]");
+  const emptyState = document.querySelector("[data-memory-filter-empty]");
+  const filterPanel = document.querySelector(".memory-filter-panel");
+  const resetButton = document.querySelector("[data-memory-reset]");
+  const resultCount = document.querySelector("[data-memory-result-count]");
+  const filterMemories = () => {
+    const query = search.value.trim().toLocaleLowerCase();
+    const hasFilters = Boolean(query || yearFilter.value || locationFilter.value);
+    let visibleCount = 0;
+    document.querySelectorAll("[data-memory-card]").forEach(card => {
+      const matches = card.dataset.memorySearchText.includes(query)
+        && (!yearFilter.value || card.dataset.memoryYear === yearFilter.value)
+        && (!locationFilter.value || card.dataset.memoryLocation === locationFilter.value);
+      card.hidden = !matches;
+      if (matches) visibleCount += 1;
+    });
+    emptyState.hidden = visibleCount > 0;
+    resultCount.textContent = hasFilters ? `${visibleCount} / ${document.querySelectorAll("[data-memory-card]").length}` : "";
+    resetButton.hidden = !hasFilters;
+    filterPanel.classList.toggle("memory-filter-active", hasFilters);
+  };
+  search?.addEventListener("input", filterMemories);
+  yearFilter?.addEventListener("change", filterMemories);
+  locationFilter?.addEventListener("change", filterMemories);
+  resetButton?.addEventListener("click", () => {
+    search.value = "";
+    yearFilter.value = "";
+    locationFilter.value = "";
+    filterMemories();
+    search.focus();
+  });
+  document.querySelectorAll("[data-memory-jump]").forEach(button => button.addEventListener("click", () => {
+    if (search && yearFilter && locationFilter && emptyState) {
+      search.value = "";
+      yearFilter.value = "";
+      locationFilter.value = "";
+      filterMemories();
+    }
+    const card = document.getElementById(`memory-card-${button.dataset.memoryJump}`);
+    if (!card) return;
+    document.querySelectorAll("[data-memory-card]").forEach(item => item.classList.remove("memory-card-highlight"));
+    card.scrollIntoView({ behavior: "smooth", block: "center" });
+    card.classList.add("memory-card-highlight");
+  }));
   document.querySelectorAll("[data-delete-memory]").forEach(button => button.addEventListener("click", () => {
     Modal.confirm({ title: t("deleteMemory"), message: t("deleteMemoryMessage"), confirmText: t("delete"), onConfirm: () => {
       Store.delete("memories", button.dataset.deleteMemory);

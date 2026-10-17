@@ -234,6 +234,7 @@ function renderMoneyTab(tab, stats) {
   if (tab === "reports") return renderReports(stats);
   return `
     ${renderMoneyCards(stats)}
+    ${typeof SmartMoney !== "undefined" ? SmartMoney.renderQuickExpense() : ""}
     ${renderMoneySmartOverview()}
     ${renderCategoryOverview()}
     <div class="grid two-col financial-overview-grid">
@@ -427,7 +428,7 @@ function incomeRow(item) {
 }
 
 function renderExpenses() {
-  return `<article class="glass-card card-pad financial-panel"><div class="between"><h2 class="section-title">${t("expenses")}</h2><button class="button" data-action="add-expense">${Icons.plus()} ${t("addExpense")}</button></div>${expenseLedger(appData.expenses)}</article>`;
+  return `${typeof SmartMoney !== "undefined" ? SmartMoney.renderQuickExpense() : ""}<article class="glass-card card-pad financial-panel"><div class="between"><h2 class="section-title">${t("expenses")}</h2><button class="button" data-action="add-expense">${Icons.plus()} ${t("addExpense")}</button></div>${expenseLedger(appData.expenses)}</article>`;
 }
 
 function expenseLedger(items) {
@@ -488,6 +489,7 @@ function savingCard(item) {
     </div>
     <div class="financial-savings-balance"><strong>${money(item.currentAmount, item.currency)}</strong><span>/ ${money(item.targetAmount, item.currency)}</span></div>
     <div class="progress-track"><div class="progress-fill" style="--progress:${progress}%"></div></div>
+    ${typeof SmartMoney !== "undefined" ? SmartMoney.savingsPace(item) : ""}
     <div class="financial-savings-metrics">
       <div><span>${Icons.calendar()}${t("deadline")}</span><strong>${formatDate(item.deadline)}</strong></div>
       <div><span>${Icons.salary()}${t("monthlyContribution")}</span><strong>${money(monthlyAmount, item.currency)}</strong></div>
@@ -596,6 +598,7 @@ function billCard(bill) {
 }
 
 function renderBudget() {
+  if (typeof SmartMoney !== "undefined") return SmartMoney.renderBudgetTab();
   const categories = [...new Set(appData.expenses.map(expense => expense.category))];
   return `<article class="glass-card card-pad financial-panel"><div class="financial-panel-heading"><div><span class="eyebrow">${t("budget")}</span><h2 class="section-title">${t("spendingByCategory")}</h2></div><span class="icon-badge blue">${Icons.budget()}</span></div><div class="grid financial-card-grid financial-budget-grid">${categories.map(category => {
     const spent = sumMoney(appData.expenses.filter(e => e.category === category), "amount");
@@ -922,6 +925,10 @@ function exportMonthlyFinanceReport(format) {
 }
 
 function bindMoney() {
+  if (typeof SmartMoney !== "undefined") {
+    SmartMoney.bindQuickExpense();
+    SmartMoney.bindBudgetTab();
+  }
   const shortcutNav = document.querySelector(".financial-shortcuts");
   const activeShortcut = shortcutNav?.querySelector(".financial-shortcut.active");
   if (shortcutNav && activeShortcut) {

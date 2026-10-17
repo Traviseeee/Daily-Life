@@ -243,7 +243,32 @@ const App = {
    * deleted record back. It only re-renders when the user has not navigated away
    * in the meantime.
    */
+  // Pull changes made elsewhere (Telegram buttons and messages, another device)
+  // while the app stays open. Re-renders only when something actually changed
+  // and the user isn't typing or using a form.
+  bindLiveCloudSync() {
+    if (this.liveCloudSyncBound) return;
+    this.liveCloudSyncBound = true;
+    let lastPull = Date.now();
+    const busy = () => document.getElementById("modalRoot")?.classList.contains("open")
+      || ["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement?.tagName);
+    const pull = async (force = false) => {
+      if (document.visibilityState !== "visible" || (!force && Date.now() - lastPull < 45000)) return;
+      if (typeof SyncState !== "undefined" && SyncState.isPending?.()) return;
+      lastPull = Date.now();
+      const before = JSON.stringify(appData);
+      const applied = await Store.syncFromSupabase().catch(() => false);
+      if (applied && JSON.stringify(appData) !== before && !busy()) this.render();
+    };
+    document.addEventListener("visibilitychange", () => pull(true));
+    window.addEventListener("focus", () => pull());
+    window.setInterval(() => pull(), 60000);
+    window.addEventListener("mylife:cloud-merged", () => {
+      if (!busy()) this.render();
+    });
+  },
   syncWithCloud() {
+    this.bindLiveCloudSync();
     const routeAtStart = this.route;
     Promise.resolve(Store.syncFromSupabase())
       .then(applied => {
@@ -259,6 +284,7 @@ const App = {
   },
   render() {
     this.parseRoute();
+    if (typeof syncLinkedGoals === "function") syncLinkedGoals();
     const app = document.getElementById("app");
     const route = this.route;
     document.documentElement.lang = languageCode();
@@ -279,6 +305,7 @@ const App = {
     else if (route === "money") app.innerHTML = renderMoney(this.param || "overview");
     else if (route === "calendar") app.innerHTML = renderCalendar(this.param || "month");
     else if (route === "daily") app.innerHTML = renderDaily();
+    else if (route === "today" && typeof renderToday === "function") app.innerHTML = renderToday();
     else if (route === "memories") app.innerHTML = renderMemories();
     else if (route === "tips") {
       const renderTipsContent = typeof renderTips === "function"
@@ -695,6 +722,7 @@ const App = {
     if (route === "money" && typeof bindMoney === "function") bindMoney();
     if (route === "calendar" && typeof bindCalendar === "function") bindCalendar();
     if (route === "daily" && typeof bindDaily === "function") bindDaily();
+    if (route === "today" && typeof bindToday === "function") bindToday();
     if (route === "memories" && typeof bindMemories === "function") bindMemories();
     if (route === "tips") {
       if (typeof bindTips === "function") bindTips();

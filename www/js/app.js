@@ -2,7 +2,11 @@ const App = {
   route: "home",
   param: "",
   shellClockTimer: null,
+  dueReminderTimer: null,
+  dueReminderInterval: null,
   quickActionCloseTimer: null,
+  welcomePosterStartupTimer: null,
+  welcomePosterTimer: null,
   interactionSoundBound: false,
   init() {
     Store.load();
@@ -19,8 +23,217 @@ const App = {
     window.addEventListener("popstate", () => this.render());
     this.render();
     this.syncWithCloud();
+    this.startWelcomePosterOnOpen();
     this.checkUpcomingAlerts();
+    this.startDueReminderWatcher();
     setTimeout(() => NotificationManager.sync(), 1200);
+  },
+  startWelcomePosterOnOpen() {
+    let attempts = 0;
+    this.welcomePosterStartupTimer = window.setInterval(() => {
+      attempts += 1;
+      const modalRoot = document.getElementById("modalRoot");
+      if (Login.isOpen || modalRoot?.querySelector("#loginModal")) {
+        if (attempts >= 120) window.clearInterval(this.welcomePosterStartupTimer);
+        return;
+      }
+      if (appData.profile.name && (Login.authenticated || Login.guestMode || Login.getRememberedSession())) {
+        window.clearInterval(this.welcomePosterStartupTimer);
+        this.welcomePosterStartupTimer = null;
+        this.openWelcomePoster();
+        return;
+      }
+      if (attempts >= 120) window.clearInterval(this.welcomePosterStartupTimer);
+    }, 500);
+  },
+  getWelcomePoster() {
+    try {
+      return localStorage.getItem("mylife:welcome-poster:v1") || "";
+    } catch (error) {
+      console.warn("MYLIFE could not read the welcome poster.", error);
+      return "";
+    }
+  },
+  getTodayWelcomeItems() {
+    const today = calendarDateInput(new Date());
+    const items = [];
+    const add = item => items.push(item);
+
+    appData.calendarEvents.forEach(event => {
+      if (event.date !== today) return;
+      add({ type: "event", title: event.title || t("calendarEvent"), detail: event.time || event.category || "", href: "#calendar" });
+    });
+    appData.reminders.forEach(reminder => {
+      if (reminder.done || reminder.date !== today) return;
+      add({ type: "reminder", title: reminder.title || t("reminder"), detail: reminder.time || reminder.category || "", href: "#daily" });
+    });
+    appData.bills.forEach(bill => {
+      if (bill.reminder === false || bill.status === "Paid" || !bill.due) return;
+      const dueToday = typeof recurringDatesInMonth === "function"
+        ? recurringDatesInMonth(bill.due, bill.frequency || "Monthly", new Date()).includes(today)
+        : bill.due === today;
+      if (!dueToday || (typeof billPaidCurrentCycle === "function" && billPaidCurrentCycle(bill))) return;
+      add({
+        type: "bill",
+        title: bill.name || t("bill"),
+        detail: bill.amount ? formatPlainMoney(bill.amount, bill.currency) : bill.category || "",
+        href: "#money/bills"
+      });
+    });
+    appData.loans.forEach(loan => {
+      if (typeof nextLoanPaymentDate !== "function" || nextLoanPaymentDate(loan) !== today) return;
+      if ((loan.payments || []).some(payment => payment.date === today)) return;
+      add({
+        type: "loan",
+        title: loan.name || t("loan"),
+        detail: loan.monthlyPayment ? formatPlainMoney(loan.monthlyPayment, loan.currency) : "",
+        href: "#money/loans"
+      });
+    });
+
+    const typeLabels = { event: t("calendarEvent"), reminder: t("reminder"), bill: t("bill"), loan: t("loan") };
+    return items
+      .sort((left, right) => `${left.type} ${left.title}`.localeCompare(`${right.type} ${right.title}`))
+      .map(item => ({ ...item, typeLabel: typeLabels[item.type] }));
+  },
+  welcomePosterImageContent(image) {
+    const imageContent = image
+      ? `<img class="welcome-poster-image" data-welcome-poster-image src="${escapeAttr(image)}" alt="${escapeAttr(t("familyPoster"))}">`
+      : `<span class="welcome-poster-placeholder"><span aria-hidden="true">♡</span><strong>${t("addPosterPrompt")}</strong></span>`;
+    return `${imageContent}<span class="welcome-poster-photo-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 7.5A1.5 1.5 0 0 1 5.5 6h3l1.25-2h4.5l1.25 2h3A1.5 1.5 0 0 1 20 7.5v10a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5v-10Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><circle cx="12" cy="12.5" r="3.25" stroke="currentColor" stroke-width="1.7"/></svg></span>`;
+  },
+  openWelcomePoster() {
+    if (!appData.profile.name || Login.isOpen || document.getElementById("modalRoot")?.querySelector("#loginModal")) return;
+    if (!Login.authenticated && !Login.guestMode && !Login.getRememberedSession()) return;
+
+    const root = document.getElementById("modalRoot");
+    const poster = this.getWelcomePoster();
+    const todayItems = this.getTodayWelcomeItems();
+    root.innerHTML = `
+      <section class="welcome-poster-card ${todayItems.length ? "has-agenda" : ""}" role="dialog" aria-modal="true" aria-labelledby="welcomePosterTitle">
+        <button class="welcome-poster-image-wrap" type="button" data-welcome-poster-choose aria-label="${escapeAttr(poster ? t("changePoster") : t("uploadPoster"))}">
+          ${this.welcomePosterImageContent(poster)}
+        </button>
+        <div class="welcome-poster-copy">
+          <span class="eyebrow">MYLIFE</span>
+          <h2 id="welcomePosterTitle">${t("welcomePosterTitle")}</h2>
+          <p>${t("welcomePosterMessage")}</p>
+        </div>
+        <section class="welcome-poster-agenda" aria-labelledby="welcomePosterAgendaTitle">
+          <h3 id="welcomePosterAgendaTitle">${t("todayAgenda")}</h3>
+          ${todayItems.length ? `<div class="welcome-poster-agenda-items">${todayItems.map(item => `
+            <a class="welcome-poster-agenda-item" href="${escapeAttr(item.href)}" data-welcome-agenda-route="${escapeAttr(item.href)}">
+              <span class="welcome-poster-agenda-kind">${escapeHtml(item.typeLabel)}</span>
+              <span class="welcome-poster-agenda-title">${escapeHtml(item.title)}</span>
+              ${item.detail ? `<small>${escapeHtml(item.detail)}</small>` : ""}
+              ${Icons.chevron()}
+            </a>
+          `).join("")}</div>` : `<p class="welcome-poster-agenda-empty">${t("todayAgendaEmpty")}</p>`}
+        </section>
+        <div class="welcome-poster-actions">
+          <input class="sr-only" data-welcome-poster-input type="file" accept="image/*">
+          <span class="welcome-poster-auto-close" data-welcome-poster-countdown role="timer" aria-live="polite">${t("autoCloseInSeconds", { seconds: 4 })}</span>
+        </div>
+      </section>
+    `;
+    root.classList.add("open", "welcome-poster-modal");
+
+    const close = () => {
+      window.clearInterval(this.welcomePosterTimer);
+      this.welcomePosterTimer = null;
+      root.classList.remove("open", "welcome-poster-modal");
+      root.innerHTML = "";
+    };
+    const input = root.querySelector("[data-welcome-poster-input]");
+    const countdown = root.querySelector("[data-welcome-poster-countdown]");
+    const stopAutoClose = () => {
+      window.clearInterval(this.welcomePosterTimer);
+      this.welcomePosterTimer = null;
+    };
+    const startAutoClose = () => {
+      stopAutoClose();
+      const deadline = Date.now() + 4000;
+      this.welcomePosterTimer = window.setInterval(() => {
+        const remaining = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+        if (remaining > 0) {
+          countdown.textContent = t("autoCloseInSeconds", { seconds: remaining });
+          return;
+        }
+        close();
+      }, 100);
+    };
+    root.querySelector("[data-welcome-poster-choose]")?.addEventListener("click", () => {
+      stopAutoClose();
+      countdown.textContent = t("posterChooseHint");
+      input?.click();
+    });
+    root.querySelectorAll("[data-welcome-agenda-route]").forEach(link => link.addEventListener("click", event => {
+      event.preventDefault();
+      const route = link.dataset.welcomeAgendaRoute;
+      close();
+      location.hash = route;
+    }));
+    input?.addEventListener("change", async () => {
+      const file = input.files?.[0];
+      input.value = "";
+      const image = await this.saveWelcomePoster(file);
+      if (image) {
+        const imageWrap = root.querySelector("[data-welcome-poster-choose]");
+        if (imageWrap) {
+          imageWrap.setAttribute("aria-label", t("changePoster"));
+          imageWrap.innerHTML = this.welcomePosterImageContent(image);
+        }
+      }
+      startAutoClose();
+    });
+
+    input?.addEventListener("cancel", startAutoClose);
+    startAutoClose();
+    root.querySelector("[data-welcome-poster-choose]")?.focus({ preventScroll: true });
+  },
+  async saveWelcomePoster(file) {
+    if (!file) return "";
+    if (!file.type?.startsWith("image/")) {
+      Toast.show(t("posterImageError"), "warning");
+      return "";
+    }
+    if (file.size > 15 * 1024 * 1024) {
+      Toast.show(t("posterSizeError"), "warning");
+      return "";
+    }
+    try {
+      const image = await prepareWelcomePoster(file);
+      localStorage.setItem("mylife:welcome-poster:v1", image);
+      this.updateWelcomePosterPreview(image);
+      Toast.show(t("posterSaved"), "success");
+      return image;
+    } catch (error) {
+      console.warn("MYLIFE could not save the welcome poster.", error);
+      Toast.show(t("posterSaveError"), "warning");
+      return "";
+    }
+  },
+  removeWelcomePoster() {
+    try {
+      localStorage.removeItem("mylife:welcome-poster:v1");
+      this.updateWelcomePosterPreview("");
+      Toast.show(t("posterRemoved"), "success");
+    } catch (error) {
+      console.warn("MYLIFE could not remove the welcome poster.", error);
+      Toast.show(t("posterRemoveError"), "warning");
+    }
+  },
+  updateWelcomePosterPreview(image) {
+    const preview = document.querySelector("[data-welcome-poster-preview]");
+    if (preview) {
+      preview.innerHTML = image
+        ? `<img src="${escapeAttr(image)}" alt="${escapeAttr(t("familyPoster"))}">`
+        : `<span>${t("noPoster")}</span>`;
+    }
+    const removeButton = document.querySelector("[data-action='remove-welcome-poster']");
+    if (removeButton) removeButton.hidden = !image;
+    const uploadButton = document.querySelector("[data-action='upload-welcome-poster']");
+    if (uploadButton) uploadButton.textContent = t(image ? "changePoster" : "uploadPoster");
   },
   /**
    * Reconciles with the cloud once the shell has already rendered.
@@ -30,7 +243,32 @@ const App = {
    * deleted record back. It only re-renders when the user has not navigated away
    * in the meantime.
    */
+  // Pull changes made elsewhere (Telegram buttons and messages, another device)
+  // while the app stays open. Re-renders only when something actually changed
+  // and the user isn't typing or using a form.
+  bindLiveCloudSync() {
+    if (this.liveCloudSyncBound) return;
+    this.liveCloudSyncBound = true;
+    let lastPull = Date.now();
+    const busy = () => document.getElementById("modalRoot")?.classList.contains("open")
+      || ["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement?.tagName);
+    const pull = async (force = false) => {
+      if (document.visibilityState !== "visible" || (!force && Date.now() - lastPull < 45000)) return;
+      if (typeof SyncState !== "undefined" && SyncState.isPending?.()) return;
+      lastPull = Date.now();
+      const before = JSON.stringify(appData);
+      const applied = await Store.syncFromSupabase().catch(() => false);
+      if (applied && JSON.stringify(appData) !== before && !busy()) this.render();
+    };
+    document.addEventListener("visibilitychange", () => pull(true));
+    window.addEventListener("focus", () => pull());
+    window.setInterval(() => pull(), 60000);
+    window.addEventListener("mylife:cloud-merged", () => {
+      if (!busy()) this.render();
+    });
+  },
   syncWithCloud() {
+    this.bindLiveCloudSync();
     const routeAtStart = this.route;
     Promise.resolve(Store.syncFromSupabase())
       .then(applied => {
@@ -46,6 +284,7 @@ const App = {
   },
   render() {
     this.parseRoute();
+    if (typeof syncLinkedGoals === "function") syncLinkedGoals();
     const app = document.getElementById("app");
     const route = this.route;
     document.documentElement.lang = languageCode();
@@ -66,8 +305,14 @@ const App = {
     else if (route === "money") app.innerHTML = renderMoney(this.param || "overview");
     else if (route === "calendar") app.innerHTML = renderCalendar(this.param || "month");
     else if (route === "daily") app.innerHTML = renderDaily();
+    else if (route === "today" && typeof renderToday === "function") app.innerHTML = renderToday();
     else if (route === "memories") app.innerHTML = renderMemories();
-    else if (route === "tips") app.innerHTML = renderTips();
+    else if (route === "tips") {
+      const renderTipsContent = typeof renderTips === "function"
+        ? renderTips
+        : (typeof renderLegacyTips === "function" ? renderLegacyTips : () => `<section class="page"><article class="glass-card card-pad"><h1 class="page-title">Tips</h1><p class="page-subtitle">This section is loading. Please refresh if it stays unavailable.</p></article></section>`);
+      app.innerHTML = renderTipsContent();
+    }
     else if (route === "settings") app.innerHTML = renderSettings();
     else if (route === "help") app.innerHTML = renderHelp();
     else app.innerHTML = renderHome();
@@ -79,112 +324,16 @@ const App = {
     this.bindPage(route);
     this.bindScrollReveal();
     this.checkUpcomingAlerts();
+    this.scheduleDueReminderAlerts();
     this.checkHomeSuggestions();
     this.renderNotificationBadge();
     app.focus({ preventScroll: true });
   },
   renderNotificationBadge() {
-    const bell = document.getElementById("bellButton");
-    if (!bell) return;
-
-    const alerts = getUpcomingNotifications(7);
-    const count = alerts.length;
-    let badge = bell.querySelector(".notification-badge");
-
-    if (!badge) {
-      badge = document.createElement("span");
-      badge.className = "notification-badge";
-      badge.setAttribute("aria-hidden", "true");
-      bell.appendChild(badge);
-    }
-
-    const label = count > 0 ? `${count} notifications` : "Notifications";
-    badge.textContent = count > 99 ? "99+" : String(count || "");
-    badge.hidden = count === 0;
-    bell.classList.toggle("has-notifications", count > 0);
-    bell.setAttribute("aria-label", label);
-    bell.setAttribute("title", label);
+    NotificationCenter.renderBadge();
   },
   openNotificationsPanel() {
-    const root = document.getElementById("modalRoot");
-    const alerts = getUpcomingNotifications(7);
-
-    root.classList.add("open");
-    root.innerHTML = `
-      <div class="notification-backdrop" data-close-notification>
-        <div class="notification-panel glass-card" role="dialog" aria-modal="true" aria-labelledby="notificationTitle">
-          <div class="between notification-header">
-            <div>
-              <span class="eyebrow">${t("upcoming")}</span>
-              <h2 id="notificationTitle">${alerts.length ? (languageCode() === "km" ? "ការជូនដំណឹង" : "Notifications") : (languageCode() === "km" ? "គ្មានការជូនដំណឹង" : "No notifications")}</h2>
-            </div>
-            <button class="icon-button" type="button" data-close-notification aria-label="${t("close")}">${Icons.close()}</button>
-          </div>
-
-          ${alerts.length ? `
-            <div class="notification-list">
-              ${alerts.map(item => `
-                <div class="notification-item">
-                  <div class="notification-icon ${item.kind === "bill" ? "bill" : "event"}">${item.kind === "bill" ? Icons.bill() : Icons.calendar()}</div>
-                  <div class="notification-copy">
-                    <strong>${escapeHtml(item.title)}</strong>
-                    <small>${new Date(`${item.date}T00:00:00`).toLocaleDateString(languageCode() === "km" ? "km-KH" : "en-US", { month: "short", day: "numeric" })}</small>
-                    <span>${item.daysLeft === 0 ? (languageCode() === "km" ? "ថ្ងៃនេះ" : "Today") : item.daysLeft === 1 ? (languageCode() === "km" ? "ក្នុង 1 ថ្ងៃ" : "In 1 day") : (languageCode() === "km" ? `ក្នុង ${item.daysLeft} ថ្ងៃ` : `In ${item.daysLeft} days`)}</span>
-                  </div>
-                  <button class="button ghost-button notification-view" type="button" data-view-notification="${escapeAttr(item.id)}">${languageCode() === "km" ? "មើល" : "View"}</button>
-                </div>
-              `).join("")}
-            </div>
-          ` : `
-            <div class="notification-empty">
-              <div class="notification-empty-icon">${Icons.bell()}</div>
-              <p>${languageCode() === "km" ? "អ្នកមិនមានការជូនដំណឹងក្នុង 7 ថ្ងៃទេ" : "You have no reminders in the next 7 days."}</p>
-            </div>
-          `}
-
-          <div class="notification-actions">
-            <button class="button ghost-button" type="button" data-close-notification>${t("close")}</button>
-          </div>
-        </div>
-      </div>
-    `;
-
-    const closeButtons = root.querySelectorAll("[data-close-notification]");
-    closeButtons.forEach(button => button.addEventListener("click", () => {
-      root.classList.remove("open");
-      root.innerHTML = "";
-    }));
-
-    const backdrop = root.querySelector(".notification-backdrop");
-    backdrop?.addEventListener("click", event => {
-      if (event.target === backdrop) {
-        root.classList.remove("open");
-        root.innerHTML = "";
-      }
-    });
-
-    root.querySelectorAll("[data-view-notification]").forEach(button => {
-      button.addEventListener("click", () => {
-        const id = button.dataset.viewNotification;
-        const item = alerts.find(alert => alert.id === id);
-        if (!item) return;
-
-        root.classList.remove("open");
-        root.innerHTML = "";
-        if (item.source === "family") {
-          location.hash = "#family";
-          return;
-        }
-        location.hash = "#calendar";
-
-        setTimeout(() => {
-          const event = appData.calendarEvents.find(entry => entry.id === item.id);
-          if (event) {
-            App.openNotificationDetail(event, item);
-          }
-        }, 200);
-      });
-    });
+    NotificationCenter.open();
   },
   openNotificationDetail(record, item) {
     const root = document.getElementById("modalRoot");
@@ -230,7 +379,7 @@ const App = {
   checkHomeSuggestions() {
     if (this.route !== "home") return;
 
-    const todayIso = new Date().toISOString().slice(0, 10);
+    const todayIso = localDateInput();
     const moodMissing = !appData.mood || appData.mood.date !== todayIso;
     const reflectionMissing = !appData.dailyReflection || appData.dailyReflection.date !== todayIso || !(appData.dailyReflection.text || "").trim();
     const focusMissing = !appData.dailyFocus || appData.dailyFocus.date !== todayIso || !Array.isArray(appData.dailyFocus.items) || !appData.dailyFocus.items.length || appData.dailyFocus.items.every(item => !item.done);
@@ -262,11 +411,219 @@ const App = {
       : `${first.title} in ${first.daysLeft} day${first.daysLeft === 1 ? "" : "s"}`;
 
     Toast.show(alerts.length > 1 ? `${alerts.length} reminders are coming soon` : label, "warning", { duration: 3200 });
-    if ("Notification" in window && Notification.permission === "granted") {
-      new Notification("MYLIFE reminder", { body: alerts.length > 1 ? `${alerts.length} reminders are coming soon` : label });
-    }
     NotificationManager.sync();
     this.renderNotificationBadge();
+  },
+  startDueReminderWatcher() {
+    this.scheduleDueReminderAlerts();
+    if (this.dueReminderInterval) return;
+    this.dueReminderInterval = window.setInterval(() => {
+      this.checkDueReminderAlerts();
+      this.scheduleDueReminderAlerts();
+      this.renderNotificationBadge();
+    }, 15000);
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") {
+        this.checkDueReminderAlerts();
+        this.scheduleDueReminderAlerts();
+      }
+    });
+  },
+  alertDateTime(item) {
+    if (!item?.date) return null;
+    const date = new Date(`${item.date}T${item.time || "09:00"}:00`);
+    return Number.isNaN(date.getTime()) ? null : date;
+  },
+  dueReminderKey(item) {
+    return [item.kind || "alert", item.id || item.title || "item", item.date || "", item.time || "09:00"].join("|");
+  },
+  hasSentDueReminder(item) {
+    try {
+      const sent = JSON.parse(localStorage.getItem("mylife:due-reminder-alerts") || "{}");
+      return Boolean(sent[this.dueReminderKey(item)]);
+    } catch (error) {
+      return false;
+    }
+  },
+  markDueReminderSent(item) {
+    try {
+      const key = this.dueReminderKey(item);
+      const sent = JSON.parse(localStorage.getItem("mylife:due-reminder-alerts") || "{}");
+      sent[key] = new Date().toISOString();
+      const entries = Object.entries(sent).slice(-100);
+      localStorage.setItem("mylife:due-reminder-alerts", JSON.stringify(Object.fromEntries(entries)));
+    } catch (error) {
+      console.warn("MYLIFE could not record reminder alert state.", error);
+    }
+  },
+  dueReminderPayload(item) {
+    return {
+      title: item.title || "MYLIFE alert",
+      body: item.body || item.notes || item.category || "It is time.",
+      url: item.url || "/#daily"
+    };
+  },
+  async showDueReminder(item) {
+    const payload = this.dueReminderPayload(item);
+    Toast.show(`${payload.title}: ${payload.body}`, "warning", { duration: 6000 });
+    if (!("Notification" in window) || Notification.permission !== "granted") return;
+
+    try {
+      const registration = await navigator.serviceWorker?.ready;
+      // When this device has a Web Push subscription the server already sends
+      // the same alert, so only show the in-app toast to avoid a duplicate.
+      const pushSubscription = await registration?.pushManager?.getSubscription?.();
+      if (pushSubscription) return;
+      await registration?.showNotification(payload.title, {
+        body: payload.body,
+        icon: "/assets/icons/mylife-icon-192.png",
+        badge: "/assets/icons/mylife-icon-192.png",
+        data: { url: payload.url }
+      });
+    } catch (error) {
+      console.warn("MYLIFE could not display the reminder notification.", error);
+    }
+  },
+  collectDueAlertItems() {
+    const items = [];
+    const add = item => {
+      if (!item?.date || !item.title) return;
+      items.push({ time: "09:00", ...item });
+    };
+
+    appData.reminders.forEach(reminder => {
+      if (reminder.done) return;
+      add({
+        kind: "reminder",
+        id: reminder.id,
+        title: reminder.title || "MYLIFE reminder",
+        body: reminder.notes || reminder.category || "Reminder time",
+        date: reminder.date,
+        time: reminder.time || "09:00",
+        url: "/#daily"
+      });
+    });
+
+    appData.calendarEvents.forEach(event => {
+      if (event.reminder === false) return;
+      add({
+        kind: "calendar",
+        id: event.id,
+        title: event.title || "MYLIFE event",
+        body: event.notes || event.category || "Upcoming event",
+        date: event.date,
+        time: event.time || "09:00",
+        url: "/#calendar"
+      });
+    });
+
+    const todayIso = localDateInput();
+    appData.bills.forEach(bill => {
+      if (bill.reminder === false || !bill.due) return;
+      const dates = new Set(billCycleDates(bill, todayIso, todayIso));
+      if (bill.status !== "Paid") dates.add(bill.due);
+      dates.forEach(date => add({
+        kind: "bill",
+        id: bill.id,
+        title: bill.name || "Bill due",
+        body: bill.amount ? `${optionLabel(bill.category || "Bill")} - ${typeof formatPlainMoney === "function" ? formatPlainMoney(bill.amount, bill.currency) : bill.amount}` : (bill.notes || "Bill payment is due"),
+        date,
+        url: "/#money/bills"
+      }));
+    });
+
+    appData.family.forEach(member => {
+      [["birthday", member.birthday], ["anniversary", member.anniversaryDate]].forEach(([type, value]) => {
+        const date = typeof yearlyDateInMonth === "function" && value ? yearlyDateInMonth(value, new Date()) : "";
+        if (date !== todayIso || value > todayIso) return;
+        add({
+          kind: type,
+          id: `${member.id}-${type}`,
+          title: `${t(type)}: ${member.name}`,
+          body: member.relationshipNote || "",
+          date,
+          url: "/#family"
+        });
+      });
+    });
+
+    appData.loans.forEach(loan => {
+      const nextPayment = typeof nextLoanPaymentDate === "function" ? nextLoanPaymentDate(loan) : "";
+      if (!nextPayment) return;
+      const alreadyPaid = (loan.payments || []).some(payment => payment.date === nextPayment);
+      if (alreadyPaid) return;
+      add({
+        kind: "loan",
+        id: loan.id,
+        title: loan.name || "Loan payment due",
+        body: loan.monthlyPayment ? `${t("monthlyPayment")}: ${typeof formatPlainMoney === "function" ? formatPlainMoney(loan.monthlyPayment, loan.currency) : loan.monthlyPayment}` : "Loan payment is due",
+        date: nextPayment,
+        url: "/#money/loans"
+      });
+    });
+
+    const currentMonth = localDateInput().slice(0, 7);
+    appData.savings.forEach(saving => {
+      const monthlyAmount = Number(saving.monthlyContribution || 0);
+      const contribution = typeof getSavingsContribution === "function" ? getSavingsContribution(saving, currentMonth) : null;
+      if (monthlyAmount && !contribution?.paid) {
+        add({
+          kind: "savings-contribution",
+          id: `${saving.id || saving.name}-${currentMonth}`,
+          title: saving.name || "Savings contribution",
+          body: `${t("monthlyContribution")}: ${typeof formatPlainMoney === "function" ? formatPlainMoney(monthlyAmount, saving.currency) : monthlyAmount}`,
+          date: `${currentMonth}-01`,
+          url: "/#money/savings"
+        });
+      }
+      if (saving.deadline) {
+        add({
+          kind: "savings-deadline",
+          id: `${saving.id || saving.name}-deadline`,
+          title: saving.name || "Savings deadline",
+          body: saving.notes || t("deadline"),
+          date: saving.deadline,
+          url: "/#money/savings"
+        });
+      }
+    });
+
+    return items;
+  },
+  checkDueReminderAlerts() {
+    if (appData.profile?.notificationsEnabled === false) return;
+    const now = new Date();
+    // Background tabs throttle timers, so allow alerts that came due while the
+    // tab was hidden to still show when the person comes back.
+    const graceMs = 15 * 60 * 1000;
+    this.collectDueAlertItems().forEach(item => {
+      if (this.hasSentDueReminder(item)) return;
+      const dueAt = this.alertDateTime(item);
+      if (!dueAt) return;
+      const delta = now - dueAt;
+      if (delta < 0 || delta > graceMs) return;
+      this.markDueReminderSent(item);
+      this.showDueReminder(item);
+    });
+  },
+  scheduleDueReminderAlerts() {
+    window.clearTimeout(this.dueReminderTimer);
+    this.dueReminderTimer = null;
+    if (appData.profile?.notificationsEnabled === false) return;
+
+    const now = new Date();
+    const next = this.collectDueAlertItems()
+      .filter(item => !this.hasSentDueReminder(item))
+      .map(item => ({ item, dueAt: this.alertDateTime(item) }))
+      .filter(item => item.dueAt && item.dueAt >= now)
+      .sort((a, b) => a.dueAt - b.dueAt)[0];
+
+    if (!next) return;
+    const delay = Math.max(0, Math.min(next.dueAt - now, 2147483647));
+    this.dueReminderTimer = window.setTimeout(() => {
+      this.checkDueReminderAlerts();
+      this.scheduleDueReminderAlerts();
+    }, delay);
   },
   bindScrollReveal() {
     const elements = document.querySelectorAll(".page > *:not(.home-hero), .tool-launcher-item");
@@ -357,16 +714,21 @@ const App = {
     });
   },
   bindPage(route) {
-    if (route === "launcher") bindLauncher();
+    if (route === "launcher" && typeof bindLauncher === "function") bindLauncher();
     if (route === "home" && typeof bindHome === "function") bindHome();
-    if (route === "family") bindFamily();
-    if (route === "goals") bindGoals(this.param);
-    if (route === "money") bindMoney();
-    if (route === "calendar") bindCalendar();
-    if (route === "daily") bindDaily();
-    if (route === "memories") bindMemories();
-    if (route === "tips") bindTips();
-    if (route === "settings") bindSettings();
+    if (route === "summary" && typeof bindHomeActions === "function") bindHomeActions({ bindProfile: false });
+    if (route === "family" && typeof bindFamily === "function") bindFamily();
+    if (route === "goals" && typeof bindGoals === "function") bindGoals(this.param);
+    if (route === "money" && typeof bindMoney === "function") bindMoney();
+    if (route === "calendar" && typeof bindCalendar === "function") bindCalendar();
+    if (route === "daily" && typeof bindDaily === "function") bindDaily();
+    if (route === "today" && typeof bindToday === "function") bindToday();
+    if (route === "memories" && typeof bindMemories === "function") bindMemories();
+    if (route === "tips") {
+      if (typeof bindTips === "function") bindTips();
+      else if (typeof bindLegacyTips === "function") bindLegacyTips();
+    }
+    if (route === "settings" && typeof bindSettings === "function") bindSettings();
   },
   bindInteractionSounds() {
     if (this.interactionSoundBound) return;
@@ -577,14 +939,7 @@ const App = {
         menuToggle.focus();
       }
     });
-    document.getElementById("bellButton").addEventListener("click", () => {
-      const alerts = getUpcomingNotifications(7);
-      if (!alerts.length) {
-        this.openNotificationsPanel();
-        return;
-      }
-      this.openNotificationsPanel();
-    });
+    document.getElementById("bellButton").addEventListener("click", () => NotificationCenter.toggle());
     document.getElementById("smartAssistantButton").addEventListener("click", () => SmartAssistant.open());
     document.addEventListener("click", event => {
       const pinButton = event.target.closest("[data-pin-footer]");
@@ -634,12 +989,13 @@ const App = {
     panel.hidden = false;
   },
   openEventModal(event = {}) {
+    if (typeof EventForm !== "undefined") return EventForm.open(event || {});
     Modal.open({
       title: event.id ? t("editEvent") : t("addEvent"),
       submitText: event.id ? t("saveEvent") : t("addEvent"),
       fields: [
         { name: "title", label: t("eventTitle"), value: event.title, required: true },
-        { name: "date", label: t("date"), type: "date", value: event.date || new Date().toISOString().slice(0, 10), required: true },
+        { name: "date", label: t("date"), type: "date", value: event.date || localDateInput(), required: true },
         { name: "time", label: t("time"), type: "time", value: event.time },
         { name: "category", label: t("category"), type: "select", options: ["Personal", "Family", "Goal", "Bill", "Loan", "Reminder"], value: event.category || "Personal" },
         { name: "familyMember", label: t("familyMemberName"), type: "select", options: ["", ...appData.family.map(member => member.name)], value: event.familyMember || "" },
@@ -659,7 +1015,7 @@ const App = {
       submitText: hobby.id ? t("saveRecord") : t("recordHobby"),
       fields: [
         { name: "title", label: t("hobby"), value: hobby.title || "", required: true },
-        { name: "date", label: t("date"), type: "date", value: hobby.date || new Date().toISOString().slice(0, 10), required: true },
+        { name: "date", label: t("date"), type: "date", value: hobby.date || localDateInput(), required: true },
         { name: "minutes", label: t("minutes"), type: "number", value: hobby.minutes || "", min: 1 },
         { name: "category", label: t("category"), type: "select", options: ["Work", "Personal", "Love", "Family", "Health", "Learning"], value: hobby.category || "Personal" },
         { name: "mood", label: t("moodAfter"), value: hobby.mood || "" },
@@ -678,7 +1034,7 @@ const App = {
       submitText: reminder.id ? t("saveReminder") : t("addReminder"),
       fields: [
         { name: "title", label: t("reminder"), value: reminder.title || "", required: true },
-        { name: "date", label: t("date"), type: "date", value: reminder.date || new Date().toISOString().slice(0, 10), required: true },
+        { name: "date", label: t("date"), type: "date", value: reminder.date || localDateInput(), required: true },
         { name: "time", label: t("time"), type: "time", value: reminder.time || "" },
         { name: "category", label: t("category"), type: "select", options: ["Work", "Personal", "Love", "Family", "Health", "Learning"], value: reminder.category || "Personal" },
         { name: "notes", label: t("notes"), type: "textarea", value: reminder.notes || "" }
@@ -831,6 +1187,45 @@ function emptyState(title, body, actionLabel = "", action = "") {
       </div>
     </div>
   `;
+}
+
+function prepareWelcomePoster(file) {
+  return new Promise((resolve, reject) => {
+    const objectUrl = URL.createObjectURL(file);
+    const image = new Image();
+    image.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      try {
+        const targetRatio = 4 / 5;
+        let sourceX = 0;
+        let sourceY = 0;
+        let sourceWidth = image.naturalWidth;
+        let sourceHeight = image.naturalHeight;
+        if (sourceWidth / sourceHeight > targetRatio) {
+          sourceWidth = sourceHeight * targetRatio;
+          sourceX = (image.naturalWidth - sourceWidth) / 2;
+        } else {
+          sourceHeight = sourceWidth / targetRatio;
+          sourceY = (image.naturalHeight - sourceHeight) / 2;
+        }
+
+        const canvas = document.createElement("canvas");
+        canvas.width = 640;
+        canvas.height = 800;
+        const context = canvas.getContext("2d");
+        if (!context) throw new Error("Could not prepare the welcome poster image.");
+        context.drawImage(image, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL("image/jpeg", 0.84));
+      } catch (error) {
+        reject(error);
+      }
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error("The selected welcome poster image could not be loaded."));
+    };
+    image.src = objectUrl;
+  });
 }
 
 document.addEventListener("DOMContentLoaded", () => App.init());

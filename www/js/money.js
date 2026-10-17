@@ -29,6 +29,18 @@ const expenseCategoryColors = {
   Entertainment: "#818cf8",
   Other: "#94a3b8"
 };
+const expenseCategoryIcons = {
+  Food: "food",
+  Home: "home",
+  Family: "family",
+  Transport: "plane",
+  Shopping: "wallet",
+  Bills: "bill",
+  Education: "graduation",
+  Health: "heart",
+  Entertainment: "memory",
+  Other: "chart"
+};
 let financeReportMonth = "";
 let financeReportCanvas = null;
 let financeReportCanvasMonth = "";
@@ -54,8 +66,11 @@ function renderMoney(tab = "overview") {
             </dialog>
           </div>
         </div>
-        <button class="button financial-create-button" type="button" data-action="add-expense">${Icons.plus()} ${t("addExpense")}</button>
+        ${tab === "overview" ? `<button class="button financial-create-button" type="button" data-action="add-expense">${Icons.plus()} ${t("addExpense")}</button>` : ""}
       </div>
+      <nav class="financial-shortcuts" aria-label="${t("money")} ${t("sections")}">
+        ${moneyTabs.map(([id, label, icon]) => `<a class="financial-shortcut ${tab === id ? "active" : ""}" href="#money/${id}" ${tab === id ? 'aria-current="page"' : ""}><span class="financial-shortcut-icon" aria-hidden="true">${Icons[icon]()}</span><span>${t(label)}</span></a>`).join("")}
+      </nav>
       <div class="financial-layout">
         <div class="financial-content">
           ${renderMoneyTab(tab, stats)}
@@ -66,41 +81,125 @@ function renderMoney(tab = "overview") {
 }
 
 function renderMoneyCards(stats) {
-  return `<div class="summary-grid financial-metric-grid grid">
-    ${summaryCard("Income", t("totalIncome"), money(stats.totalIncome), `${appData.income.length} ${t("income")}`, Icons.salary(), "green")}
-    ${summaryCard("Expenses", t("totalExpenses"), money(stats.totalExpenses), `${appData.expenses.length} ${t("expenses")}`, Icons.expense(), "")}
-    ${summaryCard("Savings", t("totalSavings"), money(stats.totalSavings), `${money(stats.monthlySavings)} ${t("monthlyContribution")}`, Icons.savings(), "blue")}
-    ${summaryCard("Available", t("available"), money(stats.available), t("availableMoney"), Icons.wallet(), "purple")}
+  const isKm = languageCode() === "km";
+  const monthKey = localDateInput().slice(0, 7);
+  const inMonth = item => String(item.date || "").startsWith(monthKey);
+  const monthIncome = sumMoney(appData.income.filter(inMonth), "amount");
+  const monthExpenses = sumMoney(appData.expenses.filter(inMonth), "amount");
+  const spentPct = stats.totalIncome ? Math.round((stats.totalExpenses / stats.totalIncome) * 100) : 0;
+  const savingsTarget = sumMoney(appData.savings, "targetAmount");
+  const savingsPct = savingsTarget ? Math.min(100, Math.round((stats.totalSavings / savingsTarget) * 100)) : 0;
+  const committed = stats.totalExpenses + stats.monthlySavings + stats.monthlyLoanPayments;
+  const usedPct = stats.totalIncome ? Math.round((committed / stats.totalIncome) * 100) : 0;
+  const short = stats.available < 0;
+  const level = pct => (pct >= 90 ? "bad" : pct >= 70 ? "warn" : "good");
+
+  return `<div class="summary-grid financial-metric-grid grid mm-grid" role="region" aria-label="${escapeAttr(t("overview"))}" tabindex="0">
+    ${moneyMetricCard({
+      tone: "income", section: "income", icon: Icons.salary(), title: t("totalIncome"), value: money(stats.totalIncome),
+      pill: `${appData.income.length} ${escapeHtml(t("income"))}`,
+      foot: `<span class="mm-foot-label">${isKm ? "ខែនេះ" : "This month"}</span><strong>${money(monthIncome)}</strong>`
+    })}
+    ${moneyMetricCard({
+      tone: "expense", section: "expenses", icon: Icons.expense(), title: t("totalExpenses"), value: money(stats.totalExpenses),
+      pill: `${appData.expenses.length} ${escapeHtml(t("expenses"))}`,
+      bar: stats.totalIncome ? { pct: spentPct, level: level(spentPct), label: isKm ? `ប្រើ ${spentPct}% នៃចំណូល` : `${spentPct}% of income` } : null,
+      foot: stats.totalIncome ? "" : `<span class="mm-foot-label">${isKm ? "ខែនេះ" : "This month"}</span><strong>${money(monthExpenses)}</strong>`
+    })}
+    ${moneyMetricCard({
+      tone: "savings", section: "savings", icon: Icons.savings(), title: t("totalSavings"), value: money(stats.totalSavings),
+      pill: `+${money(stats.monthlySavings)} / ${isKm ? "ខែ" : "mo"}`,
+      bar: savingsTarget ? { pct: savingsPct, level: "good", label: isKm ? `${savingsPct}% នៃគោលដៅ ${money(savingsTarget)}` : `${savingsPct}% of ${money(savingsTarget)} goal` } : null
+    })}
+    ${moneyMetricCard({
+      tone: short ? "short" : "available", section: "budget", icon: Icons.wallet(), title: t("available"), value: money(stats.available),
+      pill: short ? `⚠ ${isKm ? "ខ្វះ" : "Short by"} ${money(Math.abs(stats.available))}` : `✓ ${isKm ? "នៅសល់សម្រាប់ចាយ" : "Left to spend"}`,
+      bar: stats.totalIncome ? { pct: Math.min(usedPct, 100), level: level(usedPct), label: isKm ? `បានកំណត់ ${usedPct}% នៃចំណូល` : `${usedPct}% of income committed` } : null,
+      note: isKm ? "ចំណូល − ចំណាយ − សន្សំ − កម្ចី" : "Income − spent − savings − loans"
+    })}
   </div>`;
 }
 
-function renderCategoryOverview() {
-  const categories = expenseCategories.map(category => ({
-    category,
-    amount: sumMoney(appData.expenses.filter(expense => expense.category === category), "amount"),
-    color: expenseCategoryColors[category]
-  })).filter(item => item.amount > 0).sort((left, right) => right.amount - left.amount);
-  const total = categories.reduce((sum, item) => sum + item.amount, 0);
+// Money overview card: tone colour, quick status pill and an optional progress bar.
+function moneyMetricCard({ tone, section, icon, title, value, pill = "", bar = null, foot = "", note = "" }) {
+  return `
+    <article class="glass-card card-pad financial-metric-card mm-card mm-${tone}">
+      <a class="financial-metric-card-link" href="#money/${section}" aria-label="${escapeAttr(title)}"></a>
+      <span class="financial-metric-watermark" aria-hidden="true">${icon}</span>
+      <div class="mm-top">
+        <span class="mm-icon">${icon}</span>
+        <span class="mm-title">${escapeHtml(title)}</span>
+        <span class="mm-arrow" aria-hidden="true">${Icons.chevron()}</span>
+      </div>
+      <div class="metric mm-value">${value}</div>
+      ${pill ? `<div class="mm-pill">${pill}</div>` : ""}
+      ${bar ? `<div class="mm-bar mm-${bar.level}" ><div class="mm-track"><i style="width:${Math.max(3, Math.min(100, bar.pct))}%"></i></div><small>${bar.label}</small></div>` : ""}
+      ${foot ? `<div class="mm-foot">${foot}</div>` : ""}
+      ${note ? `<div class="mm-note">${escapeHtml(note)}</div>` : ""}
+    </article>
+  `;
+}
 
-  return `<article class="glass-card card-pad financial-panel financial-category-overview">
+function renderCategoryOverview() {
+  const isKm = languageCode() === "km";
+  const categories = expenseCategories.map(category => {
+    const items = appData.expenses.filter(expense => expense.category === category);
+    return { category, count: items.length, amount: sumMoney(items, "amount"), color: expenseCategoryColors[category] };
+  }).filter(item => item.amount > 0).sort((left, right) => right.amount - left.amount);
+  const total = categories.reduce((sum, item) => sum + item.amount, 0);
+  const count = appData.expenses.length;
+
+  // this month vs last month
+  const thisKey = localDateInput().slice(0, 7);
+  const [y, m] = thisKey.split("-").map(Number);
+  const lastKey = `${m === 1 ? y - 1 : y}-${String(m === 1 ? 12 : m - 1).padStart(2, "0")}`;
+  const thisMonth = sumMoney(appData.expenses.filter(item => String(item.date || "").startsWith(thisKey)), "amount");
+  const lastMonth = sumMoney(appData.expenses.filter(item => String(item.date || "").startsWith(lastKey)), "amount");
+  const peak = Math.max(thisMonth, lastMonth, 1);
+  const change = lastMonth ? Math.round(((thisMonth - lastMonth) / lastMonth) * 100) : null;
+  const changeText = change === null
+    ? (isKm ? "មិនមានទិន្នន័យខែមុន" : "No data for last month")
+    : change === 0
+      ? (isKm ? "ស្មើខែមុន" : "Same as last month")
+      : `${change > 0 ? "▲" : "▼"} ${Math.abs(change)}% ${isKm ? (change > 0 ? "ច្រើនជាងខែមុន" : "តិចជាងខែមុន") : (change > 0 ? "more than last month" : "less than last month")}`;
+  const top = categories[0];
+
+  return `<article class="glass-card card-pad financial-panel financial-category-overview cat-v2">
     <div class="financial-panel-heading">
       <div><span class="eyebrow">${t("overview")}</span><h2 class="section-title">${t("spendingByCategory")}</h2></div>
       <div class="financial-category-total"><span>${t("totalExpenses")}</span><strong>${money(total)}</strong></div>
     </div>
-    ${categories.length ? `<div class="financial-category-layout">
+    ${categories.length ? `
+    <div class="cat-stats">
+      <div class="cat-stat"><span>${isKm ? "ចំនួនចំណាយ" : "Expenses"}</span><strong>${count}</strong></div>
+      <div class="cat-stat" style="--category-color:${top.color}"><span>${isKm ? "ចាយច្រើនបំផុត" : "Top category"}</span><strong><i></i>${escapeHtml(optionLabel(top.category))}</strong></div>
+      <div class="cat-stat"><span>${isKm ? "មធ្យមក្នុងមួយដង" : "Average each"}</span><strong>${money(count ? total / count : 0)}</strong></div>
+    </div>
+    <div class="cat-body">
       <div class="financial-category-chart" role="img" aria-label="${t("spendingByCategory")}">
         ${Charts.donut(categories.map(item => ({ value: item.amount, color: item.color })))}
-        <div class="financial-category-chart-center"><strong>${money(total)}</strong><span>${t("expenses")}</span></div>
+        <div class="financial-category-chart-center"><strong>${money(total)}</strong><span>${categories.length} ${isKm ? "ប្រភេទ" : categories.length === 1 ? "category" : "categories"}</span></div>
       </div>
-      <div class="financial-category-list">
+      <div class="cat-list">
         ${categories.map(item => {
           const share = Math.round((item.amount / total) * 100);
-          return `<div class="financial-category-item" style="--category-color:${item.color};--category-share:${share}%">
-            <span class="financial-category-dot" aria-hidden="true"></span>
-            <div class="financial-category-copy"><div class="financial-category-label"><span>${optionLabel(item.category)}</span><strong>${money(item.amount)}</strong></div><div class="financial-category-track"><span></span></div></div>
-            <span class="financial-category-share">${share}%</span>
+          return `<div class="cat-item" style="--category-color:${item.color};--category-share:${Math.max(share, 2)}%">
+            <span class="cat-icon" aria-hidden="true">${Icons[expenseCategoryIcons[item.category]]()}</span>
+            <div class="cat-copy">
+              <div class="cat-row"><b>${escapeHtml(optionLabel(item.category))}</b><small>${item.count} ${isKm ? "ដង" : item.count === 1 ? "time" : "times"}</small><strong>${money(item.amount)}</strong></div>
+              <div class="cat-track"><span></span></div>
+            </div>
+            <span class="cat-share">${share}%</span>
           </div>`;
         }).join("")}
+      </div>
+      <div class="cat-compare">
+        <span class="cat-compare-title">${isKm ? "ខែនេះ ធៀបនឹងខែមុន" : "This month vs last"}</span>
+        <div class="cat-bars">
+          <div class="cat-bar is-last"><strong>${money(lastMonth)}</strong><i style="height:${Math.max(4, Math.round((lastMonth / peak) * 100))}%"></i><span>${isKm ? "ខែមុន" : "Last"}</span></div>
+          <div class="cat-bar is-this"><strong>${money(thisMonth)}</strong><i style="height:${Math.max(4, Math.round((thisMonth / peak) * 100))}%"></i><span>${isKm ? "ខែនេះ" : "This"}</span></div>
+        </div>
+        <small class="cat-change ${change > 0 ? "is-up" : change < 0 ? "is-down" : ""}">${changeText}</small>
       </div>
     </div>` : `<div class="financial-category-empty">
       <div class="financial-category-swatches" aria-hidden="true">${expenseCategories.slice(0, 6).map(category => `<span style="--category-color:${expenseCategoryColors[category]}"></span>`).join("")}</div>
@@ -110,9 +209,11 @@ function renderCategoryOverview() {
   </article>`;
 }
 
-function summaryCard(label, title, value, trend, icon, tone) {
+function summaryCard(label, title, value, trend, icon, tone, section) {
   return `
     <article class="glass-card card-pad financial-metric-card">
+      <a class="financial-metric-card-link" href="#money/${section}" aria-label="${escapeAttr(title)}"></a>
+      <span class="financial-metric-watermark" aria-hidden="true">${icon}</span>
       <div class="card-title-row">
         <span class="icon-badge ${tone}">${icon}</span>
         <span class="secondary">${escapeHtml(title)}</span>
@@ -133,6 +234,8 @@ function renderMoneyTab(tab, stats) {
   if (tab === "reports") return renderReports(stats);
   return `
     ${renderMoneyCards(stats)}
+    ${typeof SmartMoney !== "undefined" ? SmartMoney.renderQuickExpense() : ""}
+    ${renderMoneySmartOverview()}
     ${renderCategoryOverview()}
     <div class="grid two-col financial-overview-grid">
       <article class="glass-card card-pad financial-panel">
@@ -143,12 +246,12 @@ function renderMoneyTab(tab, stats) {
           </div>
           <span class="icon-badge blue">${Icons.chart()}</span>
         </div>
-        ${stats.totalIncome || stats.totalExpenses || stats.monthlySavings || stats.monthlyLoanPayments ? Charts.bars([
+        ${stats.totalIncome || stats.totalExpenses || stats.monthlySavings || stats.monthlyLoanPayments ? `<div class="financial-chart-bars">${Charts.bars([
           { label: t("income"), value: stats.totalIncome, color: "linear-gradient(90deg,#9dff6e,#64f4d2)" },
           { label: t("expenses"), value: stats.totalExpenses, color: "linear-gradient(90deg,#ff6f9c,#9b6dff)" },
           { label: t("monthlyContribution"), value: stats.monthlySavings, color: "linear-gradient(90deg,#64f4d2,#b8ff5a)" },
           { label: t("monthlyPayment"), value: stats.monthlyLoanPayments, color: "linear-gradient(90deg,#9b6dff,#b8ff5a)" }
-        ]) : moneyEmptyCard()}
+        ])}</div>` : moneyEmptyCard()}
       </article>
       <article class="glass-card card-pad financial-panel">
         <div class="financial-panel-heading">
@@ -162,6 +265,115 @@ function renderMoneyTab(tab, stats) {
       </article>
     </div>
   `;
+}
+
+function renderMoneySmartOverview() {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayIso = toDateInput(today);
+  const weekEnd = new Date(today);
+  weekEnd.setDate(weekEnd.getDate() + 7);
+  const weekEndIso = toDateInput(weekEnd);
+  const dueBills = (appData.bills || [])
+    .filter(bill => bill.status !== "Paid" && !billPaidCurrentCycle(bill) && bill.due && bill.due <= weekEndIso)
+    .sort((left, right) => String(left.due).localeCompare(String(right.due)));
+  const dueLoans = (appData.loans || []).flatMap(loan => {
+    const due = nextLoanPaymentDate(loan);
+    if (!due || due < todayIso || due > weekEndIso) return [];
+    const paid = (loan.payments || []).some(payment => payment.date === due);
+    return paid ? [] : [{ title: loan.name || t("loan"), date: due, amount: loan.monthlyPayment, currency: loan.currency, href: "#money/loans" }];
+  });
+  const overdueLoanPayments = (appData.loans || []).flatMap(loan => {
+    if (!loan.payments?.length || loanRemaining(loan) <= 0) return [];
+    const overdueDate = loanPaymentScheduleToCurrent(loan)
+      .filter(payment => !payment.paid && payment.date < todayIso)
+      .map(payment => payment.date)
+      .sort()
+      .slice(-1)[0];
+    return overdueDate
+      ? [{ title: loan.name || t("loan"), date: overdueDate, amount: loan.monthlyPayment, currency: loan.currency, href: "#money/loans", overdue: true }]
+      : [];
+  });
+  const billAlerts = dueBills.map(bill => ({
+    billId: bill.id,
+    title: bill.name || t("bill"),
+    date: bill.due,
+    amount: bill.amount,
+    currency: bill.currency,
+    href: "#money/bills",
+    overdue: bill.due < todayIso
+  }));
+  const attentionItems = [...billAlerts, ...overdueLoanPayments, ...dueLoans]
+    .sort((left, right) => left.date.localeCompare(right.date))
+    .slice(0, 5);
+  const month = `${todayIso.slice(0, 7)}`;
+  const report = buildMonthlyFinanceReport(month);
+  const monthlyExpenses = (appData.expenses || [])
+    .filter(expense => String(expense.date || "").slice(0, 7) === month)
+    .reduce((total, expense) => total + toProfileCurrency(expense.amount, expense.currency), 0);
+  const savingsMonth = month;
+  const savedThisMonth = (appData.savings || []).reduce((total, saving) => {
+    const contribution = getSavingsContribution(saving, savingsMonth);
+    return total + (contribution?.paid ? toProfileCurrency(contribution.amount || saving.monthlyContribution, saving.currency) : 0);
+  }, 0);
+  const remaining = report.incomeTotal - monthlyExpenses - report.loanPaymentTotal - savedThisMonth;
+  const monthStart = `${month}-01`;
+  const previousMonthDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+  const previousMonth = `${previousMonthDate.getFullYear()}-${String(previousMonthDate.getMonth() + 1).padStart(2, "0")}`;
+  const comparisonDay = Math.min(today.getDate(), new Date(previousMonthDate.getFullYear(), previousMonthDate.getMonth() + 1, 0).getDate());
+  const previousCutoff = `${previousMonth}-${String(comparisonDay).padStart(2, "0")}`;
+  const previousStart = `${previousMonth}-01`;
+  const currentExpensesByCategory = new Map();
+  const previousExpensesByCategory = new Map();
+  (appData.expenses || []).forEach(expense => {
+    if (!expense.date) return;
+    const amount = toProfileCurrency(expense.amount, expense.currency);
+    if (expense.date >= monthStart && expense.date <= todayIso) {
+      const category = expense.category || "Other";
+      currentExpensesByCategory.set(category, (currentExpensesByCategory.get(category) || 0) + amount);
+    } else if (expense.date >= previousStart && expense.date <= previousCutoff) {
+      const category = expense.category || "Other";
+      previousExpensesByCategory.set(category, (previousExpensesByCategory.get(category) || 0) + amount);
+    }
+  });
+  const spendingChanges = [...currentExpensesByCategory.entries()]
+    .map(([category, current]) => ({ category, current, previous: previousExpensesByCategory.get(category) || 0, change: current - (previousExpensesByCategory.get(category) || 0) }))
+    .filter(item => item.change > 0)
+    .sort((left, right) => right.change - left.change)
+    .slice(0, 4);
+  const attentionMarkup = attentionItems.length
+    ? `<div class="money-smart-rows">${attentionItems.map(item => `<div class="money-smart-row"><a class="money-smart-row-copy" href="${escapeAttr(item.href)}"><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(item.overdue ? t("overdue") : formatDate(item.date, { month: "short", day: "numeric" }))}</small></a><strong class="money-smart-row-amount${item.overdue ? " is-overdue" : ""}">${money(item.amount, item.currency)}</strong>${item.billId ? `<button class="money-smart-bill-state is-unpaid" type="button" data-finance-mark-bill="${escapeAttr(item.billId)}" aria-pressed="false">${escapeHtml(t("billUnpaidLabel"))}</button>` : ""}</div>`).join("")}</div>`
+    : `<p class="money-smart-empty">${escapeHtml(t("allCaughtUp"))}</p>`;
+  const changesMarkup = spendingChanges.length
+    ? `<div class="money-smart-rows">${spendingChanges.map(item => `<a class="money-smart-row" href="#money/expenses"><span class="money-smart-row-copy"><strong>${escapeHtml(optionLabel(item.category))}</strong></span><strong class="money-smart-change">+${money(item.change)}</strong></a>`).join("")}</div>`
+    : `<p class="money-smart-empty">${escapeHtml(t("noSpendingIncreaseShort"))}</p>`;
+  const tabs = [
+    { id: "attention", label: t("moneySmartAlerts"), count: attentionItems.length },
+    { id: "month", label: t("moneySmartMonth") },
+    { id: "changes", label: t("moneySmartSpending"), count: spendingChanges.length }
+  ];
+
+  return `<section class="money-smart-overview" aria-label="${escapeAttr(t("moneySmartOverview"))}">
+    <div class="money-smart-tabs" role="tablist" aria-label="${escapeAttr(t("moneySmartOverview"))}">
+      ${tabs.map((tab, index) => `<button class="money-smart-tab${index === 0 ? " active" : ""}" type="button" role="tab" id="money-smart-tab-${tab.id}" aria-controls="money-smart-panel-${tab.id}" aria-selected="${index === 0}" tabindex="${index === 0 ? "0" : "-1"}" data-money-smart-tab="${tab.id}"><span>${escapeHtml(tab.label)}</span>${tab.count ? `<strong>${tab.count}</strong>` : ""}</button>`).join("")}
+    </div>
+    <article class="glass-card card-pad financial-panel money-smart-card" role="tabpanel" id="money-smart-panel-attention" aria-labelledby="money-smart-tab-attention" data-money-smart-panel="attention">
+      ${attentionItems.length ? `<div class="money-smart-rows-heading">${escapeHtml(t("comingUp"))}</div>` : ""}
+      ${attentionMarkup}
+    </article>
+    <article class="glass-card card-pad financial-panel money-smart-card" role="tabpanel" id="money-smart-panel-month" aria-labelledby="money-smart-tab-month" data-money-smart-panel="month" hidden>
+      <div class="money-smart-rows-heading">${escapeHtml(report.monthLabel)}</div>
+      <div class="money-smart-metrics">
+        <div><span>${escapeHtml(t("income"))}</span><strong>${money(report.incomeTotal)}</strong></div>
+        <div><span>${escapeHtml(t("expenses"))}</span><strong>${money(monthlyExpenses)}</strong></div>
+        <div><span>${escapeHtml(t("saved"))}</span><strong>${money(savedThisMonth)}</strong></div>
+        <div class="${remaining < 0 ? "is-negative" : ""}"><span>${escapeHtml(t("moneyLeft"))}</span><strong>${money(remaining)}</strong></div>
+      </div>
+    </article>
+    <article class="glass-card card-pad financial-panel money-smart-card" role="tabpanel" id="money-smart-panel-changes" aria-labelledby="money-smart-tab-changes" data-money-smart-panel="changes" hidden>
+      ${changesMarkup}
+    </article>
+  </section>`;
 }
 
 function moneyEmptyCard() {
@@ -203,39 +415,95 @@ function renderIncome() {
 }
 
 function incomeRow(item) {
-  return `<div class="list-row financial-row"><span class="icon-badge green">${Icons.salary()}</span><div class="financial-row-main"><strong>${escapeHtml(item.name)}</strong><span class="secondary">${optionLabel(item.category || "Other")}</span></div><span class="financial-row-amount success">${money(item.amount, item.currency)}</span><span class="pill">${optionLabel(item.frequency)}</span><div class="financial-row-actions"><button class="icon-button" data-edit-income="${item.id}" aria-label="${t("editIncome")}">${Icons.edit()}</button><button class="icon-button" data-delete-income="${item.id}" aria-label="${t("delete")}">${Icons.trash()}</button></div></div>`;
+  return `<div class="financial-record-card">
+    <span class="financial-record-icon green">${Icons.salary()}</span>
+    <div class="financial-record-copy"><strong>${escapeHtml(item.name)}</strong><span>${optionLabel(item.category || "Other")}</span></div>
+    <strong class="financial-record-value success">${money(item.amount, item.currency)}</strong>
+    <span class="pill financial-record-period">${optionLabel(item.frequency)}</span>
+    <div class="financial-record-actions">
+      <button class="icon-button" data-edit-income="${escapeAttr(item.id)}" aria-label="${escapeAttr(`${t("editIncome")} ${item.name}`)}" title="${escapeAttr(t("edit"))}">${Icons.edit()}</button>
+      <button class="icon-button" data-delete-income="${escapeAttr(item.id)}" aria-label="${escapeAttr(`${t("delete")} ${item.name}`)}" title="${escapeAttr(t("delete"))}">${Icons.trash()}</button>
+    </div>
+  </div>`;
 }
 
 function renderExpenses() {
-  return `<article class="glass-card card-pad financial-panel"><div class="between"><h2 class="section-title">${t("expenses")}</h2><button class="button" data-action="add-expense">${Icons.plus()} ${t("addExpense")}</button></div>${expenseLedger(appData.expenses)}</article>`;
+  return `${typeof SmartMoney !== "undefined" ? SmartMoney.renderQuickExpense() : ""}<article class="glass-card card-pad financial-panel"><div class="between"><h2 class="section-title">${t("expenses")}</h2><button class="button" data-action="add-expense">${Icons.plus()} ${t("addExpense")}</button></div>${expenseLedger(appData.expenses)}</article>`;
 }
 
 function expenseLedger(items) {
   if (!items.length) return emptyState(t("noExpensesYet"), t("noExpensesBody"), t("addExpense"), "add-expense");
-  return `
-    <div class="financial-ledger-table">
-      <div class="financial-ledger-head" aria-hidden="true">
-        <span>${t("expense")}</span>
-        <span>${t("category")}</span>
-        <span>${t("amount")}</span>
-        <span>${t("date")}</span>
-        <span></span>
-      </div>
-      <div class="list financial-ledger">${items.map(expenseRow).join("")}</div>
-    </div>
-  `;
+  return `<div class="financial-record-list">${items.map(expenseRow).join("")}</div>`;
 }
 
 function expenseRow(item) {
-  return `<div class="list-row financial-row financial-expense-row"><div class="financial-row-main"><strong>${escapeHtml(item.description)}</strong></div><span class="pill financial-category-pill">${optionLabel(item.category)}</span><span class="financial-row-amount danger">-${money(item.amount, item.currency)}</span><span class="financial-row-date">${formatDate(item.date, { month: "short", day: "numeric" })}</span><div class="financial-row-actions"><button class="icon-button" data-edit-expense="${item.id}" aria-label="${t("edit")}">${Icons.edit()}</button><button class="icon-button" data-delete-expense="${item.id}" aria-label="${t("delete")}">${Icons.trash()}</button></div></div>`;
+  const category = item.category || "Other";
+  return `<div class="financial-record-card">
+    <span class="financial-record-icon expense">${Icons[expenseCategoryIcons[category] || "expense"]()}</span>
+    <div class="financial-record-copy"><strong>${escapeHtml(item.description)}</strong><span>${optionLabel(category)} · ${formatDate(item.date, { month: "short", day: "numeric" })}</span></div>
+    <strong class="financial-record-value danger">-${money(item.amount, item.currency)}</strong>
+    <div class="financial-record-actions">
+      <button class="icon-button" data-edit-expense="${escapeAttr(item.id)}" aria-label="${escapeAttr(`${t("edit")} ${item.description}`)}" title="${escapeAttr(t("edit"))}">${Icons.edit()}</button>
+      <button class="icon-button" data-delete-expense="${escapeAttr(item.id)}" aria-label="${escapeAttr(`${t("delete")} ${item.description}`)}" title="${escapeAttr(t("delete"))}">${Icons.trash()}</button>
+    </div>
+  </div>`;
 }
 
 function renderSavings() {
   return `<article class="glass-card card-pad financial-panel"><div class="between"><h2 class="section-title">${t("savings")}</h2><button class="button" data-action="add-savings">${Icons.plus()} ${t("addSavings")}</button></div>${appData.savings.length ? `<div class="grid three-col financial-card-grid">${appData.savings.map(savingCard).join("")}</div>` : emptyState(t("noSavingsYet"), t("noSavingsBody"), t("addSavings"), "add-savings")}</article>`;
 }
 
+function getSavingsContributionMonth() {
+  return localDateInput().slice(0, 7);
+}
+
+function formatSavingsMonth(monthKey) {
+  if (!monthKey) return "";
+  const [year, month] = monthKey.split("-").map(Number);
+  if (!year || !month) return monthKey;
+  const date = new Date(year, month - 1, 1);
+  return date.toLocaleDateString(languageCode() === "km" ? "km-KH" : "en-US", { month: "short", year: "numeric" });
+}
+
+function getSavingsContribution(item, monthKey = getSavingsContributionMonth()) {
+  const contributions = Array.isArray(item.contributions) ? item.contributions : [];
+  return contributions.find(entry => entry && entry.month === monthKey) || null;
+}
+
 function savingCard(item) {
-  return `<div class="goal-item financial-mini-card"><div class="between"><strong>${escapeHtml(item.name)}</strong><span class="pill">${pct(item.currentAmount, item.targetAmount)}%</span></div><div class="financial-card-amount">${money(item.currentAmount, item.currency)} / ${money(item.targetAmount, item.currency)}</div><div class="progress-track"><div class="progress-fill" style="--progress:${pct(item.currentAmount, item.targetAmount)}%"></div></div><div class="financial-meta-line"><span>${t("deadline")}</span><strong>${formatDate(item.deadline)}</strong></div><div class="action-row"><button class="button ghost-button" data-edit-savings="${item.id}">${Icons.edit()} ${t("edit")}</button><button class="icon-button" data-delete-savings="${item.id}" aria-label="${t("delete")}">${Icons.trash()}</button></div></div>`;
+  const monthKey = getSavingsContributionMonth();
+  const contribution = getSavingsContribution(item, monthKey);
+  const isPaidThisMonth = Boolean(contribution && contribution.paid);
+  const monthlyAmount = Number(item.monthlyContribution || 0);
+  const recentHistory = (Array.isArray(item.contributions) ? item.contributions : [])
+    .slice(0, 4)
+    .map(entry => `<div class="savings-history-row ${entry.paid ? "paid" : ""}"><span>${formatSavingsMonth(entry.month)}</span><strong>${money(Number(entry.amount || item.monthlyContribution || 0), item.currency)}</strong></div>`)
+    .join("");
+  const progress = pct(item.currentAmount, item.targetAmount);
+
+  return `<div class="financial-savings-card">
+    <div class="financial-savings-header">
+      <span class="financial-record-icon savings">${Icons.savings()}</span>
+      <div class="financial-savings-title"><strong>${escapeHtml(item.name)}</strong><span>${t("savings")}</span></div>
+      <span class="pill financial-savings-progress">${progress}%</span>
+    </div>
+    <div class="financial-savings-balance"><strong>${money(item.currentAmount, item.currency)}</strong><span>/ ${money(item.targetAmount, item.currency)}</span></div>
+    <div class="progress-track"><div class="progress-fill" style="--progress:${progress}%"></div></div>
+    ${typeof SmartMoney !== "undefined" ? SmartMoney.savingsPace(item) : ""}
+    <div class="financial-savings-metrics">
+      <div><span>${Icons.calendar()}${t("deadline")}</span><strong>${formatDate(item.deadline)}</strong></div>
+      <div><span>${Icons.salary()}${t("monthlyContribution")}</span><strong>${money(monthlyAmount, item.currency)}</strong></div>
+    </div>
+    <section class="savings-smart-panel">
+      <div class="savings-smart-heading"><strong>${t("thisMonth")}</strong><span class="pill ${isPaidThisMonth ? "success" : ""}">${isPaidThisMonth ? t("saved") : t("pending")}</span></div>
+      <label class="payment-schedule-row ${isPaidThisMonth ? "paid" : ""}"><input class="check" type="checkbox" data-savings-contribution="${escapeAttr(item.id)}" data-savings-month="${escapeAttr(monthKey)}" ${isPaidThisMonth ? "checked" : ""}><span><strong>${formatSavingsMonth(monthKey)}</strong><small>${money(monthlyAmount, item.currency)}</small></span></label>
+      ${recentHistory ? `<details class="savings-history-details"><summary>${t("recentTransactions")}</summary><div class="savings-history-list">${recentHistory}</div></details>` : ""}
+    </section>
+    <div class="financial-record-actions financial-savings-actions">
+      <button class="icon-button" data-edit-savings="${escapeAttr(item.id)}" aria-label="${escapeAttr(`${t("edit")} ${item.name}`)}" title="${escapeAttr(t("edit"))}">${Icons.edit()}</button>
+      <button class="icon-button" data-delete-savings="${escapeAttr(item.id)}" aria-label="${escapeAttr(`${t("delete")} ${item.name}`)}" title="${escapeAttr(t("delete"))}">${Icons.trash()}</button>
+    </div>
+  </div>`;
 }
 
 function renderLoans() {
@@ -248,8 +516,43 @@ function loanCard(loan) {
   const totalPayable = loanPayoffAmount(loan);
   const totalInterest = Math.max(0, totalPayable - Number(loan.originalAmount || 0));
   const progressTarget = totalPayable || Number(loan.originalAmount || 0);
+  const progress = pct(paid, progressTarget);
   const paymentDay = loanDisplayPaymentDay(loan);
-  return `<div class="loan-card"><div class="loan-card-header"><div><h3>${escapeHtml(loan.name)}</h3><p>${loan.durationMonths ? `${loan.durationMonths} ${t("months")}` : optionLabel(loan.paymentFrequency || "Monthly")} · ${t("interest")} ${loan.interestRate || 0}% · ${t("paymentDay")} ${paymentDay ? formatPaymentDay(paymentDay) : t("notSet")}</p></div><span class="icon-badge blue">${Icons.loan()}</span></div><div class="loan-metrics"><div><span>${t("remaining")}</span><strong>${money(remaining, loan.currency)}</strong></div><div><span>${t("monthlyPayment")}</span><strong>${money(loan.monthlyPayment, loan.currency)}</strong></div><div><span>${t("nextPaymentDate")}</span><strong>${formatDate(nextLoanPaymentDate(loan), { month: "short", day: "numeric" })}</strong></div><div><span>${t("dueDate")}</span><strong>${formatDate(loan.dueDate, { month: "short", year: "numeric" })}</strong></div></div><div><div class="progress-track"><div class="progress-fill" style="--progress:${pct(paid, progressTarget)}%"></div></div><p class="trend">${pct(paid, progressTarget)}% ${t("paid")} · ${money(paid, loan.currency)} / ${money(progressTarget, loan.currency)}</p></div><div class="loan-meta"><span>${t("original")}: <strong>${money(loan.originalAmount, loan.currency)}</strong></span><span>${t("firstPaymentDate")}: <strong>${formatDate(loan.firstPaymentDate || loan.startDate)}</strong></span><span>${t("totalInterest")}: <strong>${money(totalInterest, loan.currency)}</strong></span></div>${renderLoanPaymentSchedule(loan)}<div class="action-row"><button class="button" data-payment-loan="${loan.id}">${Icons.plus()} ${t("makePayment")}</button><button class="button ghost-button" data-edit-loan="${loan.id}">${Icons.edit()} ${t("edit")}</button><button class="icon-button" data-delete-loan="${loan.id}" aria-label="${t("delete")}">${Icons.trash()}</button></div></div>`;
+  return `<div class="loan-card">
+    <div class="loan-card-header">
+      <div class="loan-card-title"><h3>${escapeHtml(loan.name)}</h3><div class="loan-summary-tags">
+        <span>${Icons.calendar()}${loan.durationMonths ? `${loan.durationMonths} ${t("months")}` : optionLabel(loan.paymentFrequency || "Monthly")}</span>
+        <span>${Icons.chart()}${t("interest")} ${loan.interestRate || 0}%</span>
+        <span>${Icons.calendar()}${t("paymentDay")} ${paymentDay ? formatPaymentDay(paymentDay) : t("notSet")}</span>
+      </div></div>
+      <span class="icon-badge blue">${Icons.loan()}</span>
+    </div>
+    <div class="loan-metrics">
+      <div class="loan-metric loan-metric-primary"><span class="loan-metric-label">${Icons.wallet()}${t("remaining")}</span><strong>${money(remaining, loan.currency)}</strong></div>
+      <div class="loan-metric"><span class="loan-metric-label">${Icons.salary()}${t("monthlyPayment")}</span><strong>${money(loan.monthlyPayment, loan.currency)}</strong></div>
+      <div class="loan-metric"><span class="loan-metric-label">${Icons.calendar()}${t("nextPaymentDate")}</span><strong>${formatDate(nextLoanPaymentDate(loan), { month: "short", day: "numeric" })}</strong></div>
+      <div class="loan-metric"><span class="loan-metric-label">${Icons.calendar()}${t("dueDate")}</span><strong>${formatDate(loan.dueDate, { month: "short", year: "numeric" })}</strong></div>
+    </div>
+    <div class="loan-progress-panel">
+      <div class="loan-progress-heading"><span>${t("paid")}</span><strong>${progress}%</strong></div>
+      <div class="progress-track"><div class="progress-fill" style="--progress:${progress}%"></div></div>
+      <div class="loan-progress-amount"><strong>${money(paid, loan.currency)}</strong><span>/</span><span>${money(progressTarget, loan.currency)}</span></div>
+    </div>
+    <details class="loan-details">
+      <summary>${Icons.info()}<span>${t("loanDetails")}</span></summary>
+      <div class="loan-meta">
+        <div><span>${t("original")}</span><strong>${money(loan.originalAmount, loan.currency)}</strong></div>
+        <div><span>${t("firstPaymentDate")}</span><strong>${formatDate(loan.firstPaymentDate || loan.startDate)}</strong></div>
+        <div><span>${t("totalInterest")}</span><strong>${money(totalInterest, loan.currency)}</strong></div>
+      </div>
+    </details>
+    ${renderLoanPaymentSchedule(loan)}
+    <div class="loan-card-actions">
+      <button class="button" data-payment-loan="${escapeAttr(loan.id)}">${Icons.plus()} ${t("makePayment")}</button>
+      <button class="icon-button loan-action-icon" data-edit-loan="${escapeAttr(loan.id)}" aria-label="${escapeAttr(`${t("edit")} ${loan.name}`)}" title="${escapeAttr(t("edit"))}">${Icons.edit()}</button>
+      <button class="icon-button loan-action-icon" data-delete-loan="${escapeAttr(loan.id)}" aria-label="${escapeAttr(`${t("delete")} ${loan.name}`)}" title="${escapeAttr(t("delete"))}">${Icons.trash()}</button>
+    </div>
+  </div>`;
 }
 
 function renderLoanPaymentSchedule(loan) {
@@ -278,24 +581,39 @@ function renderBills() {
 }
 
 function billCard(bill) {
-  return `<div class="goal-item financial-mini-card"><div class="between"><span class="icon-badge blue">${Icons.bill()}</span><span class="pill ${bill.status === "Paid" ? "success" : ""}">${optionLabel(bill.status || "Upcoming")}</span></div><h3>${escapeHtml(bill.name)}</h3><div class="metric compact-metric">${money(bill.amount, bill.currency)}</div><div class="financial-meta-line"><span>${t("dueDate")}</span><strong>${formatDate(bill.due)}</strong></div><p class="secondary">${optionLabel(bill.frequency)} · ${optionLabel(bill.category)}</p><div class="action-row"><button class="button ghost-button" data-edit-bill="${bill.id}">${Icons.edit()} ${t("edit")}</button><button class="icon-button" data-delete-bill="${bill.id}" aria-label="${t("delete")}">${Icons.trash()}</button></div></div>`;
+  const paid = billPaidCurrentCycle(bill);
+  const statusLabel = paid ? `${Icons.check()}${escapeHtml(t("billPaidLabel"))}` : escapeHtml(t("billUnpaidLabel"));
+  return `<div class="financial-bill-card">
+    <div class="financial-bill-header"><span class="financial-record-icon bill">${Icons.bill()}</span><span class="pill bill-status ${paid ? "is-paid" : "is-unpaid"}">${statusLabel}</span></div>
+    <h3>${escapeHtml(bill.name)}</h3>
+    <strong class="financial-bill-amount">${money(bill.amount, bill.currency)}</strong>
+    <div class="financial-bill-meta"><span>${Icons.calendar()}${t("dueDate")}</span><strong>${formatDate(bill.due)}</strong></div>
+    <div class="financial-bill-tags"><span>${optionLabel(bill.frequency)}</span><span>${optionLabel(bill.category)}</span></div>
+    <div class="financial-bill-actions">
+      <button class="button ghost-button bill-payment-action ${paid ? "is-paid" : "is-unpaid"}" data-finance-toggle-bill="${escapeAttr(bill.id)}" aria-pressed="${paid}">${paid ? Icons.check() : ""}${escapeHtml(paid ? t("billPaidLabel") : t("billUnpaidLabel"))}</button>
+      <button class="icon-button" data-edit-bill="${escapeAttr(bill.id)}" aria-label="${escapeAttr(`${t("edit")} ${bill.name}`)}" title="${escapeAttr(t("edit"))}">${Icons.edit()}</button>
+      <button class="icon-button" data-delete-bill="${escapeAttr(bill.id)}" aria-label="${escapeAttr(`${t("delete")} ${bill.name}`)}" title="${escapeAttr(t("delete"))}">${Icons.trash()}</button>
+    </div>
+  </div>`;
 }
 
 function renderBudget() {
+  if (typeof SmartMoney !== "undefined") return SmartMoney.renderBudgetTab();
   const categories = [...new Set(appData.expenses.map(expense => expense.category))];
-  return `<article class="glass-card card-pad financial-panel"><h2 class="section-title">${t("spendingByCategory")}</h2><div class="grid financial-card-grid">${categories.map(category => {
+  return `<article class="glass-card card-pad financial-panel"><div class="financial-panel-heading"><div><span class="eyebrow">${t("budget")}</span><h2 class="section-title">${t("spendingByCategory")}</h2></div><span class="icon-badge blue">${Icons.budget()}</span></div><div class="grid financial-card-grid financial-budget-grid">${categories.map(category => {
     const spent = sumMoney(appData.expenses.filter(e => e.category === category), "amount");
     const max = Math.max(...categories.map(cat => sumMoney(appData.expenses.filter(e => e.category === cat), "amount")), 1);
-    return `<div class="goal-item financial-mini-card"><div class="between"><strong>${optionLabel(category)}</strong><span class="financial-row-amount">${money(spent)}</span></div><div class="progress-track"><div class="progress-fill" style="--progress:${(spent / max) * 100}%"></div></div></div>`;
+    const progress = pct(spent, max);
+    return `<div class="financial-budget-card"><div class="financial-budget-heading"><span class="financial-record-icon expense">${Icons[expenseCategoryIcons[category] || "expense"]()}</span><strong>${optionLabel(category)}</strong></div><strong class="financial-budget-amount">${money(spent)}</strong><div class="progress-track"><div class="progress-fill" style="--progress:${progress}%"></div></div><span class="financial-budget-share">${progress}%</span></div>`;
   }).join("") || emptyState(t("noBudgetYet"), t("noBudgetBody"), t("addExpense"), "add-expense")}</div></article>`;
 }
 
 function renderReports() {
-  const month = financeReportMonth || new Date().toISOString().slice(0, 7);
+  const month = financeReportMonth || localDateInput().slice(0, 7);
   const report = buildMonthlyFinanceReport(month);
   return `<article class="glass-card card-pad financial-panel financial-report-panel">
     <div class="financial-report-toolbar">
-      <div><span class="eyebrow">${t("reports")}</span><h2 class="section-title">${t("monthlyReport")}</h2></div>
+      <div class="financial-report-heading"><span class="icon-badge blue">${Icons.chart()}</span><div><span class="eyebrow">${t("reports")}</span><h2 class="section-title">${t("monthlyReport")}</h2></div></div>
       <label class="field financial-report-month"><span>${t("reportMonth")}</span><input type="month" value="${escapeAttr(month)}" data-finance-report-month></label>
       <div class="financial-report-export-actions">
         <button class="button" type="button" data-finance-report-export="excel">${Icons.arrowDown()} ${t("exportExcel")}</button>
@@ -310,15 +628,15 @@ function renderReports() {
       <div><span>${t("generatedOn")}</span><strong>${escapeHtml(report.generatedOn)}</strong></div>
     </div>
     <div class="financial-report-summary">
-      <div class="financial-report-metric"><span>${t("monthlyIncome")}</span><strong>${money(report.incomeTotal)}</strong></div>
-      <div class="financial-report-metric"><span>${t("monthlyExpenses")}</span><strong>${money(report.expenseTotal)}</strong></div>
-      <div class="financial-report-metric"><span>${t("monthlyPayment")}</span><strong>${money(report.loanPaymentTotal)}</strong></div>
-      <div class="financial-report-metric"><span>${t("netCashFlow")}</span><strong>${money(report.netCashFlow)}</strong></div>
+      <div class="financial-report-metric income"><span>${t("monthlyIncome")}</span><strong>${money(report.incomeTotal)}</strong></div>
+      <div class="financial-report-metric expenses"><span>${t("monthlyExpenses")}</span><strong>${money(report.expenseTotal)}</strong></div>
+      <div class="financial-report-metric payments"><span>${t("monthlyPayment")}</span><strong>${money(report.loanPaymentTotal)}</strong></div>
+      <div class="financial-report-metric cash-flow"><span>${t("netCashFlow")}</span><strong>${money(report.netCashFlow)}</strong></div>
     </div>
     <div class="financial-report-table-wrap">
       <table class="financial-report-table">
         <thead><tr><th>${t("type")}</th><th>${t("description")}</th><th>${t("category")}</th><th>${t("date")} / ${t("frequency")}</th><th>${t("amount")}</th></tr></thead>
-        <tbody>${report.rows.length ? report.rows.map(row => `<tr><td>${escapeHtml(row.type)}</td><td>${escapeHtml(row.description)}</td><td>${escapeHtml(row.category)}</td><td>${escapeHtml(row.period)}</td><td class="${row.amount < 0 ? "financial-report-outflow" : ""}">${money(row.amount)}</td></tr>`).join("") : `<tr><td class="financial-report-empty" colspan="5">${t("noMonthlyTransactions")}</td></tr>`}</tbody>
+        <tbody>${report.rows.length ? report.rows.map(row => `<tr><td data-label="${escapeAttr(t("type"))}">${escapeHtml(row.type)}</td><td data-label="${escapeAttr(t("description"))}">${escapeHtml(row.description)}</td><td data-label="${escapeAttr(t("category"))}">${escapeHtml(row.category)}</td><td data-label="${escapeAttr(`${t("date")} / ${t("frequency")}`)}">${escapeHtml(row.period)}</td><td data-label="${escapeAttr(t("amount"))}" class="${row.amount < 0 ? "financial-report-outflow" : ""}">${money(row.amount)}</td></tr>`).join("") : `<tr><td class="financial-report-empty" colspan="5">${t("noMonthlyTransactions")}</td></tr>`}</tbody>
       </table>
     </div>
     <dialog class="financial-report-preview-dialog" data-finance-report-preview-dialog aria-labelledby="financialReportPreviewTitle">
@@ -568,7 +886,7 @@ async function getMonthlyFinanceReportCanvas(month) {
 }
 
 async function previewMonthlyFinanceReport() {
-  const month = document.querySelector("[data-finance-report-month]")?.value || financeReportMonth || new Date().toISOString().slice(0, 7);
+  const month = document.querySelector("[data-finance-report-month]")?.value || financeReportMonth || localDateInput().slice(0, 7);
   try {
     const canvas = await getMonthlyFinanceReportCanvas(month);
     const dialog = document.querySelector("[data-finance-report-preview-dialog]");
@@ -584,7 +902,7 @@ async function previewMonthlyFinanceReport() {
 }
 
 async function downloadMonthlyFinanceReportJpg() {
-  const month = document.querySelector("[data-finance-report-month]")?.value || financeReportMonth || new Date().toISOString().slice(0, 7);
+  const month = document.querySelector("[data-finance-report-month]")?.value || financeReportMonth || localDateInput().slice(0, 7);
   try {
     const canvas = await getMonthlyFinanceReportCanvas(month);
     const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", 0.94));
@@ -597,7 +915,7 @@ async function downloadMonthlyFinanceReportJpg() {
 }
 
 function exportMonthlyFinanceReport(format) {
-  const month = document.querySelector("[data-finance-report-month]")?.value || financeReportMonth || new Date().toISOString().slice(0, 7);
+  const month = document.querySelector("[data-finance-report-month]")?.value || financeReportMonth || localDateInput().slice(0, 7);
   const report = buildMonthlyFinanceReport(month);
   const isWord = format === "word";
   const extension = isWord ? "doc" : "xls";
@@ -607,7 +925,31 @@ function exportMonthlyFinanceReport(format) {
 }
 
 function bindMoney() {
+  if (typeof SmartMoney !== "undefined") {
+    SmartMoney.bindQuickExpense();
+    SmartMoney.bindBudgetTab();
+  }
+  const shortcutNav = document.querySelector(".financial-shortcuts");
+  const activeShortcut = shortcutNav?.querySelector(".financial-shortcut.active");
+  if (shortcutNav && activeShortcut) {
+    const activeOffset = activeShortcut.getBoundingClientRect().left - shortcutNav.getBoundingClientRect().left + shortcutNav.scrollLeft;
+    shortcutNav.scrollLeft = activeOffset - (shortcutNav.clientWidth - activeShortcut.clientWidth) / 2;
+  }
   bindNavigationSheetGestures();
+  document.querySelectorAll("[data-money-smart-tab]").forEach(button => {
+    button.addEventListener("click", () => selectMoneySmartTab(button));
+    button.addEventListener("keydown", event => {
+      if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+      event.preventDefault();
+      const tabs = [...document.querySelectorAll("[data-money-smart-tab]")];
+      const currentIndex = tabs.indexOf(button);
+      const nextIndex = event.key === "Home" ? 0
+        : event.key === "End" ? tabs.length - 1
+          : (currentIndex + (event.key === "ArrowRight" ? 1 : tabs.length - 1)) % tabs.length;
+      selectMoneySmartTab(tabs[nextIndex]);
+      tabs[nextIndex].focus();
+    });
+  });
   document.querySelectorAll("[data-finance-report-month]").forEach(input => input.addEventListener("change", () => {
     financeReportMonth = input.value;
     financeReportCanvas = null;
@@ -643,6 +985,8 @@ function bindMoney() {
   document.querySelectorAll('[data-action="add-savings"]').forEach(button => button.addEventListener("click", () => openSavingsModal()));
   document.querySelectorAll('[data-action="add-loan"]').forEach(button => button.addEventListener("click", () => openLoanModal()));
   document.querySelectorAll('[data-action="add-bill"]').forEach(button => button.addEventListener("click", () => openBillModal()));
+  document.querySelectorAll("[data-finance-mark-bill]").forEach(button => button.addEventListener("click", () => markBillPaid(button.dataset.financeMarkBill)));
+  document.querySelectorAll("[data-finance-toggle-bill]").forEach(button => button.addEventListener("click", () => toggleFinanceBillPayment(button.dataset.financeToggleBill)));
   bindCollectionActions("income", openIncomeModal);
   bindCollectionActions("expense", openExpenseModal);
   bindCollectionActions("savings", openSavingsModal, "savings");
@@ -650,6 +994,61 @@ function bindMoney() {
   bindCollectionActions("bill", openBillModal);
   document.querySelectorAll("[data-payment-loan]").forEach(button => button.addEventListener("click", () => openLoanPaymentModal(appData.loans.find(loan => loan.id === button.dataset.paymentLoan))));
   document.querySelectorAll("[data-loan-schedule]").forEach(input => input.addEventListener("change", () => toggleLoanScheduledPayment(input)));
+  document.querySelectorAll("[data-savings-contribution]").forEach(input => input.addEventListener("change", () => toggleSavingsContribution(input)));
+}
+
+function selectMoneySmartTab(button) {
+  const selectedId = button.dataset.moneySmartTab;
+  document.querySelectorAll("[data-money-smart-tab]").forEach(tab => {
+    const selected = tab === button;
+    tab.classList.toggle("active", selected);
+    tab.setAttribute("aria-selected", String(selected));
+    tab.tabIndex = selected ? 0 : -1;
+  });
+  document.querySelectorAll("[data-money-smart-panel]").forEach(panel => {
+    panel.hidden = panel.dataset.moneySmartPanel !== selectedId;
+  });
+}
+
+function toggleFinanceBillPayment(billId) {
+  const bill = appData.bills.find(item => item.id === billId);
+  if (!bill) return;
+  if (!billPaidCurrentCycle(bill)) {
+    markBillPaid(billId);
+    return;
+  }
+  markBillUnpaid(billId);
+}
+
+function toggleSavingsContribution(input) {
+  const saving = appData.savings.find(item => item.id === input.dataset.savingsContribution);
+  if (!saving) return;
+
+  const monthKey = input.dataset.savingsMonth || getSavingsContributionMonth();
+  const contributionAmount = Number(saving.monthlyContribution || 0);
+  const contributions = Array.isArray(saving.contributions) ? saving.contributions.slice() : [];
+  const existingIndex = contributions.findIndex(entry => entry && entry.month === monthKey);
+  const wasPaid = existingIndex >= 0 ? Boolean(contributions[existingIndex].paid) : false;
+
+  if (input.checked && !wasPaid) {
+    if (existingIndex >= 0) {
+      contributions[existingIndex] = { ...contributions[existingIndex], month: monthKey, amount: contributionAmount, paid: true };
+    } else {
+      contributions.unshift({ month: monthKey, amount: contributionAmount, paid: true });
+    }
+    saving.currentAmount = Number(saving.currentAmount || 0) + contributionAmount;
+  } else if (!input.checked && wasPaid) {
+    if (existingIndex >= 0) {
+      const previousAmount = Number(contributions[existingIndex].amount || contributionAmount);
+      contributions.splice(existingIndex, 1);
+      saving.currentAmount = Math.max(0, Number(saving.currentAmount || 0) - previousAmount);
+    }
+  }
+
+  saving.contributions = contributions;
+  Store.save();
+  Toast.show(input.checked ? t("savingsAdded") : t("savingsRemoved"));
+  App.render();
 }
 
 function toggleLoanScheduledPayment(input) {
@@ -705,7 +1104,7 @@ function openExpenseModal(item) {
     { name: "amount", label: t("amount"), type: "number", value: item?.amount, required: true },
     { name: "currency", label: t("currency"), type: "select", options: ["USD", "KHR"], value: item?.currency || appData.profile.currency || "USD" },
     { name: "category", label: t("category"), type: "select", options: expenseCategories, value: item?.category || "Food" },
-    { name: "date", label: t("date"), type: "date", value: item?.date || new Date().toISOString().slice(0, 10) },
+    { name: "date", label: t("date"), type: "date", value: item?.date || localDateInput() },
     { name: "method", label: t("paymentMethod"), value: item?.method },
     { name: "notes", label: t("notes"), type: "textarea", value: item?.notes }
   ], onSubmit(data) { const record = { ...data, amount: Number(data.amount || 0), currency: data.currency || appData.profile.currency || "USD" }; item ? Store.edit("expenses", item.id, record) : Store.add("expenses", record); Toast.show(item ? t("expenseSaved") : t("expenseAdded")); } });
@@ -981,6 +1380,6 @@ function openBillModal(item) {
 function openLoanPaymentModal(loan) {
   Modal.open({ title: t("makePayment"), submitText: t("savePayment"), fields: [
     { name: "amount", label: t("amount"), type: "number", value: loan.monthlyPayment || "", required: true },
-    { name: "date", label: t("date"), type: "date", value: new Date().toISOString().slice(0, 10), required: true }
+    { name: "date", label: t("date"), type: "date", value: localDateInput(), required: true }
   ], onSubmit(data) { loan.payments = [{ amount: Number(data.amount || 0), date: data.date }, ...(loan.payments || [])]; Store.save(); Toast.show(t("paymentSaved")); App.render(); } });
 }

@@ -7,6 +7,7 @@ const {
   sendToSubscription
 } = require("../lib/push");
 const { sendAlert, flushSnoozes, ensureWebhook } = require("../lib/telegram");
+const { budgetAlerts, weeklyReport } = require("../lib/money-report");
 
 // Redis dedupe makes a wide window safe: a late or skipped scheduler run still
 // delivers alerts that came due in the last 30 minutes, exactly once.
@@ -468,12 +469,64 @@ function notificationItems(payload) {
   const digest = digestItem(payload, today);
   if (digest) items.push(digest);
 
+  // Category budgets: 80% and 100% alerts, once per category per month.
+  budgetAlerts(payload, today).forEach(alert => items.push({
+    ...alert,
+    date: `${today.slice(0, 7)}-01`,
+    time: "00:00",
+    hasTime: false
+  }));
+
+  // Sunday evening weekly money report.
+  const profile = payload.profile || {};
+  const [y, m, d] = today.split("-").map(Number);
+  if (profile.weeklyReport !== false && new Date(Date.UTC(y, m - 1, d)).getUTCDay() === 0) {
+    items.push({
+      kind: "weekly",
+      id: `weekly-${today}`,
+      title: "MYLIFE weekly report",
+      body: "របាយការណ៍ប្រចាំសប្តាហ៍ · Weekly report",
+      date: today,
+      time: /^\d{1,2}:\d{2}$/.test(String(profile.weeklyReportTime || "")) ? profile.weeklyReportTime : "19:00",
+      hasTime: true,
+      url: "/#money/reports",
+      weekly: weeklyReport(payload, today)
+    });
+  }
+
   return items;
 }
 
 // When an item should fire: its own date/time, or earlier for "remind before".
+// "sendNow" items (budget alerts) fire right away, but only 08:00–21:00 local.
 function itemDueAt(item, timeZone) {
+  if (item.sendNow) {
+    const hour = Number(new Intl.DateTimeFormat("en-GB", { timeZone: APP_TIME_ZONE, hour: "2-digit", hourCycle: "h23" }).format(new Date()));
+    return hour >= 8 && hour < 21 ? Date.now() - 1000 : null;
+  }
   return localDateTimeToUtc(item.fireDate || item.date, item.fireTime || item.time || "09:00", timeZone);
+}
+
+// Weekly cloud backup of each payload into Redis (last 5 kept, 36 days).
+const BACKUP_TTL_SECONDS = 36 * 24 * 60 * 60;
+const BACKUP_MAX_BYTES = 900 * 1024;
+
+async function weeklyBackup(redis, userId, rawPayload) {
+  const lastKey = `mylife:backup:last:${userId}`;
+  if (await redis.get(lastKey)) return "recent";
+  const json = typeof rawPayload === "string" ? rawPayload : JSON.stringify(rawPayload || {});
+  if (json.length > BACKUP_MAX_BYTES) {
+    await redis.set(lastKey, "too-big", { ex: 24 * 60 * 60 });
+    return "too_big";
+  }
+  const day = zonedTodayInput();
+  await redis.set(`mylife:backup:${userId}:${day}`, json, { ex: BACKUP_TTL_SECONDS });
+  await redis.lrem(`mylife:backups:${userId}`, 0, day);
+  await redis.lpush(`mylife:backups:${userId}`, day);
+  await redis.ltrim(`mylife:backups:${userId}`, 0, 4);
+  await redis.expire(`mylife:backups:${userId}`, BACKUP_TTL_SECONDS);
+  await redis.set(lastKey, day, { ex: 7 * 24 * 60 * 60 });
+  return "saved";
 }
 
 function makeMarker(userId, endpoint, item) {
@@ -582,6 +635,8 @@ module.exports = async (req, res) => {
       for (const row of rows || []) {
         const payload = parsePayload(row.payload);
 
+        jobs.push({ channel: "backup", run: () => weeklyBackup(redis, row.user_id, row.payload) });
+
         if (payload.profile?.notificationsEnabled === false) {
           continue;
         }
@@ -611,7 +666,7 @@ module.exports = async (req, res) => {
         const subscriptions = await getUserSubscriptions(row.user_id);
 
         for (const item of items) {
-          if (item.kind === "digest") continue;
+          if (["digest", "weekly", "budget"].includes(item.kind)) continue;
           const title = String(item.title || "MYLIFE alert");
           const body = String(
             item.body || item.notes || item.category || "It is time."
@@ -699,7 +754,8 @@ module.exports = async (req, res) => {
 
     const breakdown = {
       telegram: { sent: 0, duplicate: 0, skipped: 0, failed: 0 },
-      push: { sent: 0, duplicate: 0, skipped: 0, failed: 0 }
+      push: { sent: 0, duplicate: 0, skipped: 0, failed: 0 },
+      backup: { saved: 0, recent: 0, too_big: 0, failed: 0 }
     };
 
     results.forEach((result, index) => {
@@ -711,19 +767,21 @@ module.exports = async (req, res) => {
       }
       if (bucket[result.value] !== undefined) bucket[result.value] += 1;
     });
+    const alertJobs = jobs.filter(job => job.channel !== "backup").length;
 
     const sent = breakdown.telegram.sent + breakdown.push.sent;
     const failed = breakdown.telegram.failed + breakdown.push.failed;
 
     return res.status(200).json({
       ok: true,
-      checked: jobs.length,
+      checked: alertJobs,
       sent,
       failed,
       telegram: breakdown.telegram,
       push: breakdown.push,
       snoozed,
-      webhook
+      webhook,
+      backup: breakdown.backup
     });
   } catch (error) {
     console.error("MYLIFE scheduled notification dispatch failed.", error);
@@ -733,3 +791,7 @@ module.exports = async (req, res) => {
     });
   }
 };
+
+// Shared with /api/telegram-webhook (the /today command).
+module.exports.digestItem = digestItem;
+module.exports.zonedTodayInput = zonedTodayInput;

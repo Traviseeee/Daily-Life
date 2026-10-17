@@ -179,7 +179,11 @@ const mergeAppData = (base, update) => {
       if (index === -1) {
         mergedList.push(structuredClone(nextItem));
       } else {
-        mergedList[index] = mergeAppData(mergedList[index], nextItem);
+        // The copy edited most recently wins (e.g. a bill marked paid from Telegram
+        // must not be undone by an older copy cached on this device).
+        const current = mergedList[index];
+        const currentIsNewer = current.updatedAt && nextItem.updatedAt && String(current.updatedAt) > String(nextItem.updatedAt);
+        mergedList[index] = currentIsNewer ? mergeAppData(nextItem, current) : mergeAppData(current, nextItem);
       }
     });
     return mergedList;
@@ -244,6 +248,68 @@ const canonicalizePayload = value => {
     sorted[key] = canonicalizePayload(value[key]);
     return sorted;
   }, {});
+};
+
+const CLOUD_SYNCED_AT_KEY = "mylife:cloud-synced-at:v1";
+
+const lastCloudSyncAt = () => {
+  try {
+    return localStorage.getItem(CLOUD_SYNCED_AT_KEY) || "";
+  } catch (error) {
+    return "";
+  }
+};
+
+const markCloudSynced = () => {
+  try {
+    localStorage.setItem(CLOUD_SYNCED_AT_KEY, new Date().toISOString());
+  } catch (error) {
+    // best effort only
+  }
+};
+
+/**
+ * Brings changes made elsewhere into `local` without undoing local edits:
+ * - a record missing here is adopted only if it was created after this device
+ *   last synced (so something deleted here never comes back),
+ * - a record edited more recently elsewhere (newer updatedAt) replaces ours,
+ * - tombstones from both sides are merged and applied.
+ * Returns true when `local` changed.
+ */
+const adoptRemoteChanges = (local, remote, syncedAt = "") => {
+  if (!local || !remote || typeof remote !== "object") return false;
+  let changed = false;
+  const mergedDeletions = SyncState.merge(local[DELETIONS_FIELD], remote[DELETIONS_FIELD]);
+  if (JSON.stringify(mergedDeletions) !== JSON.stringify(local[DELETIONS_FIELD] || {})) {
+    local[DELETIONS_FIELD] = mergedDeletions;
+    changed = true;
+  }
+  Object.keys(remote).forEach(key => {
+    if (key === DELETIONS_FIELD || key === "profile") return;
+    const remoteList = remote[key];
+    const localList = local[key];
+    if (!Array.isArray(remoteList) || !Array.isArray(localList)) return;
+    const mine = new Map(localList.filter(item => item && item.id).map(item => [item.id, item]));
+    remoteList.forEach(item => {
+      if (!item || typeof item !== "object" || !item.id) return;
+      const current = mine.get(item.id);
+      if (!current) {
+        const stamp = String(item.updatedAt || item.createdAt || "");
+        if (syncedAt && stamp && stamp > syncedAt) {
+          localList.push(structuredClone(item));
+          changed = true;
+        }
+        return;
+      }
+      if (item.updatedAt && (!current.updatedAt || String(item.updatedAt) > String(current.updatedAt))) {
+        Object.keys(current).forEach(field => delete current[field]);
+        Object.assign(current, structuredClone(item));
+        changed = true;
+      }
+    });
+  });
+  if (changed) SyncState.apply(local);
+  return changed;
 };
 
 const payloadsDiffer = (first, second) => {
@@ -383,6 +449,7 @@ const Store = {
       SyncState.apply(appData);
       SyncState.prune(appData);
       saveLocalSnapshot(appData);
+      markCloudSynced();
 
       // Converge the cloud copy whenever it is behind us. Without this the record
       // would come back on the next refresh as well, not just this one.
@@ -413,6 +480,21 @@ const Store = {
 
       await this.moveImagesToSupabase(user.id);
 
+      // Adopt what changed in the cloud since this device last synced (events or
+      // expenses added from Telegram, bills marked paid there) before overwriting it.
+      if (!SyncState.isReplacePending()) {
+        try {
+          const { data: remote } = await client.from(SUPABASE_TABLE).select("payload").eq("user_id", user.id).maybeSingle();
+          const remotePayload = toPayloadObject(remote?.payload);
+          if (remotePayload && !isEmptyPayload(remotePayload) && adoptRemoteChanges(appData, remotePayload, lastCloudSyncAt())) {
+            saveLocalSnapshot(appData);
+            if (typeof window !== "undefined" && typeof CustomEvent === "function") window.dispatchEvent(new CustomEvent("mylife:cloud-merged"));
+          }
+        } catch (mergeError) {
+          console.warn("MYLIFE could not check the cloud copy before saving.", mergeError);
+        }
+      }
+
       const sequence = this.saveSequence;
       const payload = structuredClone(appData);
 
@@ -434,6 +516,7 @@ const Store = {
       // Only stand the pending flag down when nothing changed while uploading;
       // otherwise a newer local edit still has to reach the cloud.
       if (sequence === this.saveSequence) SyncState.clearPending();
+      markCloudSynced();
       SyncState.setAccountId(user.id);
       saveLocalSnapshot(appData);
       return true;

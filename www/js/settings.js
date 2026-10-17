@@ -1,5 +1,6 @@
 function renderSettings() {
   const stats = Store.calculate();
+  const welcomePoster = App.getWelcomePoster();
   const settingsSections = [
     ["account", "accountCategory", "settingsAccountSubtitle", "user"],
     ["preferences", "preferences", "settingsPreferencesSubtitle", "settings"],
@@ -81,6 +82,8 @@ function renderSettings() {
                 <label class="settings-preference-row"><span><strong>${t("notificationsEnabled")}</strong><small>${t("notificationsEnabledHelp")}</small></span><input type="checkbox" data-preference="notificationsEnabled" ${appData.profile.notificationsEnabled !== false ? "checked" : ""}></label>
               </div>
             </article>
+            ${renderAlertStatusCard()}
+            ${typeof renderAutomationCard === "function" ? renderAutomationCard() : ""}
             </div>
           </details>
           <details class="settings-accordion" id="settings-section-data">
@@ -127,6 +130,20 @@ function renderSettings() {
               <div class="settings-preference-list settings-preference-list-standalone">
                 <label class="settings-preference-row"><span><strong>${t("theme")}</strong><small>${t("themeHelp")}</small></span><select data-preference="theme"><option value="dark" ${appData.profile.theme !== "light" ? "selected" : ""}>${t("darkTheme")}</option><option value="light" ${appData.profile.theme === "light" ? "selected" : ""}>${t("lightTheme")}</option></select></label>
               </div>
+              <article class="welcome-poster-settings">
+                <div class="welcome-poster-settings-copy">
+                  <h3>${t("familyPoster")}</h3>
+                  <p>${t("familyPosterHelp")}</p>
+                </div>
+                <div class="welcome-poster-settings-preview" data-welcome-poster-preview>
+                  ${welcomePoster ? `<img src="${escapeAttr(welcomePoster)}" alt="${escapeAttr(t("familyPoster"))}">` : `<span>${t("noPoster")}</span>`}
+                </div>
+                <input class="sr-only" id="welcomePosterSettingsInput" type="file" accept="image/*">
+                <div class="welcome-poster-settings-actions">
+                  <button class="button ghost-button" type="button" data-action="upload-welcome-poster">${welcomePoster ? t("changePoster") : t("uploadPoster")}</button>
+                  <button class="button ghost-button" type="button" data-action="remove-welcome-poster" ${welcomePoster ? "" : "hidden"}>${t("removePoster")}</button>
+                </div>
+              </article>
             </div>
           </details>
           <details class="settings-accordion" id="settings-section-privacy">
@@ -140,18 +157,66 @@ function renderSettings() {
           <details class="settings-accordion" id="settings-section-about">
             ${settingsAccordionSummary("about", t("about"), t("settingsAboutSubtitle"), Icons.info())}
             <div class="settings-accordion-body settings-about-body">
-              <strong>MYLIFE</strong><span>Version 1.0.0</span><p>${t("privateDashboard")}. ${t("localStorageNote")}</p>
+              <section class="settings-about-story" aria-labelledby="settingsAboutTitle">
+                <div class="settings-about-story-heading">
+                  <span class="settings-about-brand">MYLIFE</span>
+                  <span class="settings-about-version">Version 1.0.0</span>
+                </div>
+                <h3 id="settingsAboutTitle">${t("aboutMylifeTitle")}</h3>
+                <p class="settings-about-tagline">${t("aboutMylifeTagline")}</p>
+                <div class="settings-about-copy">
+                  <p>${t("aboutMylifeIntro")}</p>
+                  <p>${t("aboutMylifePurpose")}</p>
+                  <p>${t("aboutMylifeProject")}</p>
+                </div>
+                <p class="settings-about-closing">${t("aboutMylifeClosing")}</p>
+                <p class="settings-about-storage">${t("localStorageNote")}</p>
+              </section>
             </div>
           </details>
           </div>
-          <article class="glass-card card-pad settings-danger-zone settings-danger-card">
-            <div><strong>${t("dangerZone")}</strong><span>${t("clearDataHelp")}</span></div>
-            <div class="action-row"><button class="button ghost-button" data-action="logout">${Icons.arrowUp()} ${t("logout")}</button><button class="button danger-button" data-action="clear-data">${Icons.trash()} ${t("clearData")}</button></div>
+          <article class="glass-card card-pad settings-danger-zone settings-danger-card" aria-labelledby="settingsDangerTitle">
+            <div class="settings-danger-heading">
+              <span class="settings-danger-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3 2.8 19a1.3 1.3 0 0 0 1.1 2h16.2a1.3 1.3 0 0 0 1.1-2L12 3Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M12 9v5m0 3h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+              <div class="settings-danger-title"><strong id="settingsDangerTitle">${t("dangerZone")}</strong><span>${t("clearDataHelp")}</span></div>
+            </div>
+            <div class="settings-danger-copy"><small>${t("dangerZoneWarning")}</small></div>
+            <div class="action-row settings-danger-actions"><button class="button ghost-button" data-action="logout">${Icons.arrowUp()} ${t("logout")}</button><button class="button danger-button" data-action="clear-data">${Icons.trash()} ${t("clearData")}</button></div>
           </article>
         </div>
         <input class="sr-only" id="importJsonInput" type="file" accept="application/json,.json">
       </div>
     </section>
+  `;
+}
+
+function renderAlertStatusCard() {
+  const notificationsOn = appData.profile.notificationsEnabled !== false;
+  const pushSupported = typeof window !== "undefined" && "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+  const permission = typeof Notification !== "undefined" ? Notification.permission : "default";
+  const backups = typeof Store.listBackups === "function" ? Store.listBackups() : [];
+  const pendingSync = typeof SyncState !== "undefined" && SyncState.isPending?.();
+  return `
+    <article class="glass-card card-pad settings-preferences-card" data-settings-section="preferences">
+      <div class="between">
+        <div>
+          <h2 class="section-title section-title-with-icon"><span class="section-title-icon">${Icons.bell()}</span>${t("alertStatus")}</h2>
+          <p class="secondary">${t("alertStatusHelp")}</p>
+        </div>
+        <span class="pill ${notificationsOn ? "success" : ""}">${notificationsOn ? t("on") : t("off")}</span>
+      </div>
+      <div class="settings-preference-list">
+        <div class="settings-preference-row"><span><strong>${t("inAppAlerts")}</strong><small>${t("inAppAlertsHelp")}</small></span><span class="pill success">${t("ready")}</span></div>
+        <div class="settings-preference-row"><span><strong>${t("lockScreenPush")}</strong><small>${t("lockScreenPushHelp")}</small></span><span class="pill">${pushSupported && permission === "granted" ? t("enabled") : t("needsSetup")}</span></div>
+        <div class="settings-preference-row"><span><strong>${t("cloudSync")}</strong><small>${t("cloudSyncHelp")}</small></span><span class="pill ${pendingSync ? "" : "success"}">${pendingSync ? t("pending") : t("synced")}</span></div>
+        <div class="settings-preference-row"><span><strong>${t("localBackups")}</strong><small>${t("localBackupsHelp")}</small></span><span class="pill ${backups.length ? "success" : ""}">${backups.length}</span></div>
+      </div>
+      <div class="settings-action-grid">
+        ${settingsAction("enable-alerts", Icons.bell(), t("enableAlerts"), t("enableAlertsHelp"))}
+        ${settingsAction("test-alert", Icons.spark(), t("sendTestAlert"), t("sendTestAlertHelp"))}
+        ${settingsAction("show-backups", Icons.database(), t("restoreLocalBackup"), t("restoreLocalBackupHelp"))}
+      </div>
+    </article>
   `;
 }
 
@@ -163,9 +228,9 @@ function settingsCard(title, rows, icon, section = "data") {
   return `
     <article class="glass-card card-pad settings-compact-card" data-settings-section="${section}">
       <h2 class="section-title section-title-with-icon"><span class="section-title-icon">${icon}</span>${title}</h2>
-      <div class="settings-stat-grid">
+      <div class="settings-stat-grid ${section === "data" ? "settings-database-grid" : ""}">
         ${rows.map(row => `
-          <div class="settings-stat-item">
+          <div class="settings-stat-item ${section === "data" ? "settings-database-stat" : ""}">
             <span>${row[0]}</span>
             <strong>${row[1]}</strong>
           </div>
@@ -434,6 +499,7 @@ function openEditUserDataModal() {
 
 function bindSettings() {
   bindNavigationSheetGestures();
+  if (typeof bindAutomationCard === "function") bindAutomationCard();
   document.querySelectorAll("[data-open-settings-nav]").forEach(button => button.addEventListener("click", () => {
     button.closest(".settings-nav-dock")?.querySelector(".settings-sidebar")?.showModal();
   }));
@@ -460,7 +526,12 @@ function bindSettings() {
     const key = control.dataset.preference;
     const value = control.type === "checkbox" ? control.checked : control.value;
     Store.updateProfile({ [key]: value });
-    if (key === "notificationsEnabled" && value) NotificationManager.requestPermission().then(() => NotificationManager.sync());
+    if (key === "notificationsEnabled" && value) {
+      if (NotificationManager.getPlugin()) NotificationManager.requestPermission().then(() => NotificationManager.sync());
+      else window.PushNotifications?.enable();
+    } else if (key === "notificationsEnabled" && !value && !NotificationManager.getPlugin()) {
+      window.PushNotifications?.disable();
+    }
     Toast.show(t("preferenceSaved"));
   }));
   document.querySelectorAll("[data-quick-action-preference]").forEach(control => control.addEventListener("change", () => {
@@ -469,6 +540,14 @@ function bindSettings() {
     Toast.show(t("preferenceSaved"));
   }));
   bindSettingsAction("edit-profile", openEditUserDataModal);
+  bindSettingsAction("upload-welcome-poster", () => document.getElementById("welcomePosterSettingsInput")?.click());
+  bindSettingsAction("remove-welcome-poster", () => App.removeWelcomePoster());
+  document.getElementById("welcomePosterSettingsInput")?.addEventListener("change", async event => {
+    const input = event.currentTarget;
+    const file = input.files?.[0];
+    input.value = "";
+    await App.saveWelcomePoster(file);
+  });
   bindSettingsAction("connect-guest", () => Login.open("signup"));
   bindSettingsAction("edit-footer", () => {
     sessionStorage.setItem("mylife:open-footer-editor", "1");
@@ -478,6 +557,19 @@ function bindSettings() {
   bindSettingsAction("export-json", exportJsonData);
   bindSettingsAction("export-excel", exportExcelData);
   bindSettingsAction("import-json", () => document.getElementById("importJsonInput")?.click());
+  bindSettingsAction("enable-alerts", async () => {
+    if (NotificationManager.getPlugin()) {
+      const permission = await NotificationManager.requestPermission();
+      Toast.show(permission === "granted" ? t("alertsEnabled") : t("alertsRemainOff"), permission === "granted" ? "success" : "warning");
+      if (permission === "granted") NotificationManager.sync();
+      App.render();
+      return;
+    }
+    await window.PushNotifications?.enable();
+    App.render();
+  });
+  bindSettingsAction("test-alert", sendLocalTestAlert);
+  bindSettingsAction("show-backups", openLocalBackupsModal);
   document.getElementById("importJsonInput")?.addEventListener("change", importJsonData);
   bindSettingsAction("load-demo", () => {
     Modal.confirm({ title: t("loadDemoTitle"), message: t("loadDemoMessage"), confirmText: t("loadDemo"), onConfirm: () => {
@@ -508,6 +600,72 @@ function bindSettingsAction(action, handler) {
   document.querySelectorAll(`[data-action="${action}"]`).forEach(button => {
     button.addEventListener("click", handler);
   });
+}
+
+async function sendLocalTestAlert() {
+  const title = "MYLIFE test";
+  const body = t("sendTestAlertBody");
+  Toast.show(body, "success");
+  if (!("Notification" in window) || Notification.permission !== "granted") {
+    Toast.show(t("enableAlertsFirst"), "warning");
+    return;
+  }
+  try {
+    const registration = await navigator.serviceWorker?.ready;
+    await registration?.showNotification(title, {
+      body,
+      icon: "/assets/icons/mylife-icon-192.png",
+      badge: "/assets/icons/mylife-icon-192.png",
+      data: { url: "/#settings" }
+    });
+  } catch (error) {
+    console.warn("MYLIFE could not show a local test alert.", error);
+    Toast.show(t("pushEnableFailed"), "warning");
+  }
+}
+
+function openLocalBackupsModal() {
+  const backups = typeof Store.listBackups === "function" ? Store.listBackups() : [];
+  const root = document.getElementById("modalRoot");
+  root.classList.add("open");
+  root.innerHTML = `
+    <div class="modal glass-card" aria-modal="true" role="dialog" aria-labelledby="localBackupsTitle">
+      <div class="between">
+        <div>
+          <h2 id="localBackupsTitle">${t("restoreLocalBackup")}</h2>
+          <p class="secondary">${t("restoreLocalBackupHelp")}</p>
+        </div>
+        <button class="icon-button" type="button" data-close aria-label="${t("close")}">${Icons.close()}</button>
+      </div>
+      <div class="settings-preference-list">
+        ${backups.length ? backups.map(backup => `
+          <div class="settings-preference-row">
+            <span><strong>${escapeHtml(backup.profile || t("backup"))}</strong><small>${escapeHtml(backup.createdAt)} · ${backup.counts} ${t("records")}</small></span>
+            <button class="button ghost-button" type="button" data-restore-backup="${escapeAttr(backup.key)}">${t("restore")}</button>
+          </div>
+        `).join("") : `<p class="secondary">${t("noLocalBackups")}</p>`}
+      </div>
+      <div class="between"><button class="button ghost-button" type="button" data-close>${t("close")}</button></div>
+    </div>
+  `;
+
+  root.querySelectorAll("[data-close]").forEach(button => button.addEventListener("click", () => {
+    root.classList.remove("open");
+    root.innerHTML = "";
+  }));
+  root.querySelectorAll("[data-restore-backup]").forEach(button => button.addEventListener("click", () => {
+    Modal.confirm({
+      title: t("restoreLocalBackup"),
+      message: t("restoreLocalBackupConfirm"),
+      confirmText: t("restore"),
+      onConfirm: () => {
+        const restored = Store.restoreBackup(button.dataset.restoreBackup);
+        root.classList.remove("open");
+        root.innerHTML = "";
+        Toast.show(restored ? t("backupRestored") : t("restoreFailed"), restored ? "success" : "warning");
+      }
+    });
+  }));
 }
 
 function exportJsonData() {
@@ -593,25 +751,33 @@ function downloadFile(filename, type, content) {
 }
 
 function backupDate() {
-  return new Date().toISOString().slice(0, 10);
+  return localDateInput();
 }
 
 function renderHelp() {
+  const helpSteps = [
+    { icon: Icons.search(), title: t("search"), description: t("searchHelp"), tone: "search" },
+    { icon: Icons.plus(), title: t("add"), description: t("addHelp"), tone: "add" },
+    { icon: Icons.chart(), title: t("review"), description: t("reviewHelp"), tone: "review" },
+    { icon: Icons.family(), title: t("family"), description: t("helpFamily"), tone: "family" },
+    { icon: Icons.goal(), title: t("goals"), description: t("helpGoals"), tone: "goals" },
+    { icon: Icons.money(), title: t("money"), description: t("helpMoney"), tone: "money" },
+    { icon: Icons.spark(), title: t("daily"), description: t("helpDaily"), tone: "daily" },
+    { icon: Icons.heart(), title: t("memories"), description: t("helpMemories"), tone: "memories" },
+    { icon: Icons.database(), title: t("backupAndRestore"), description: t("helpBackup"), tone: "backup" }
+  ];
+
   return `
-    <section class="page">
+    <section class="page help-page">
       <div class="page-header">
         <div>
           <h1 class="page-title page-title-with-icon"><span class="page-title-icon">${Icons.help()}</span>${t("help")}</h1>
           <p class="page-subtitle">${t("helpSubtitle")}</p>
         </div>
       </div>
-      <article class="glass-card card-pad">
-        <div class="grid three-col">
-          <div class="goal-item"><span class="icon-badge">${Icons.search()}</span><h2>${t("search")}</h2><p class="secondary">${t("searchHelp")}</p></div>
-          <div class="goal-item"><span class="icon-badge green">${Icons.plus()}</span><h2>${t("add")}</h2><p class="secondary">${t("addHelp")}</p></div>
-          <div class="goal-item"><span class="icon-badge blue">${Icons.chart()}</span><h2>${t("review")}</h2><p class="secondary">${t("reviewHelp")}</p></div>
-        </div>
-      </article>
+      <div class="help-grid">
+        ${helpSteps.map(step => `<article class="help-card ${step.tone}"><span class="help-card-icon">${step.icon}</span><h2>${step.title}</h2><p>${step.description}</p></article>`).join("")}
+      </div>
     </section>
   `;
 }

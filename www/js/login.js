@@ -253,6 +253,12 @@ const Login = {
 
   async logout() {
     try {
+      await window.PushNotifications?.disable();
+    } catch (error) {
+      console.warn("MYLIFE could not remove this device's push subscription before signing out.", error);
+    }
+
+    try {
       // Push anything that never reached the cloud before the session disappears.
       // The pending flag survives a failure, so it is retried after the next login.
       if (window.MYLIFE_SUPABASE?.enabled && window.supabaseClient) {

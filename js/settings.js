@@ -83,6 +83,7 @@ function renderSettings() {
               </div>
             </article>
             ${renderAlertStatusCard()}
+            ${typeof renderAutomationCard === "function" ? renderAutomationCard() : ""}
             </div>
           </details>
           <details class="settings-accordion" id="settings-section-data">
@@ -498,6 +499,7 @@ function openEditUserDataModal() {
 
 function bindSettings() {
   bindNavigationSheetGestures();
+  if (typeof bindAutomationCard === "function") bindAutomationCard();
   document.querySelectorAll("[data-open-settings-nav]").forEach(button => button.addEventListener("click", () => {
     button.closest(".settings-nav-dock")?.querySelector(".settings-sidebar")?.showModal();
   }));
