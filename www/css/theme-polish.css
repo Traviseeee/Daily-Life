@@ -2618,3 +2618,55 @@ body:has(#modalRoot.open) .quick-action-dock {
 @media (max-width: 560px) {
   :root #modalRoot .memory-form-modal .mf-tags { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
+
+/* =====================================================================
+ * Hobby form (js/hobby-form.js) — on the .event-modal base
+ * ===================================================================== */
+:root #modalRoot .hobby-form-modal .hf-favs { display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 4px; scrollbar-width: none; }
+:root #modalRoot .hobby-form-modal .hf-favs::-webkit-scrollbar { display: none; }
+:root #modalRoot .hobby-form-modal .hf-fav { flex: 0 0 auto; display: grid; gap: 1px; padding: 8px 14px; text-align: left; border: 1px solid var(--ev-line); border-radius: 16px; background: #ffffff !important; color: var(--ev-ink) !important; cursor: pointer; transition: border-color 140ms ease, transform 140ms ease; }
+:root #modalRoot .hobby-form-modal .hf-fav:hover { transform: translateY(-1px); border-color: #a6e33f; }
+:root #modalRoot .hobby-form-modal .hf-fav b { font-size: 0.86rem; color: var(--ev-ink) !important; }
+:root #modalRoot .hobby-form-modal .hf-fav small { font-size: 0.72rem; color: var(--ev-ink-3) !important; }
+:root #modalRoot .hobby-form-modal .hf-fav.active { border-color: #7cc23a; background: var(--ev-lime) !important; }
+:root #modalRoot .hobby-form-modal .hf-fav.active small { color: #2c4a0a !important; }
+
+:root #modalRoot .hobby-form-modal .hf-streak { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; padding: 10px 14px; border-radius: 16px; background: linear-gradient(135deg, rgba(255, 159, 67, 0.16), rgba(197, 255, 96, 0.22)); font-size: 0.82rem; color: var(--ev-ink-2) !important; }
+:root #modalRoot .hobby-form-modal .hf-streak[hidden] { display: none; }
+:root #modalRoot .hobby-form-modal .hf-streak b { display: inline-flex; align-items: center; gap: 5px; color: #c2410c !important; }
+:root #modalRoot .hobby-form-modal .hf-streak b svg { width: 16px; height: 16px; }
+
+:root #modalRoot .hobby-form-modal .hf-duration { display: grid; grid-template-columns: 48px minmax(0, 1fr) 48px; align-items: center; gap: 10px; }
+:root #modalRoot .hobby-form-modal .hf-step { display: grid; place-items: center; width: 48px; height: 48px; border: 1px solid var(--ev-line); border-radius: 16px; background: #ffffff !important; color: var(--ev-ink) !important; cursor: pointer; }
+:root #modalRoot .hobby-form-modal .hf-step:hover { border-color: #a6e33f; background: #f6fde9 !important; }
+:root #modalRoot .hobby-form-modal .hf-big { display: flex; align-items: baseline; justify-content: center; gap: 6px; min-width: 0; padding: 4px 10px; border-radius: 18px; background: #ffffff; border: 1px solid var(--ev-line); }
+:root #modalRoot .hobby-form-modal .hf-big:focus-within { border-color: #7cc23a; box-shadow: 0 0 0 4px rgba(124, 194, 58, 0.18); }
+:root #modalRoot .modal.hobby-form-modal.hobby-form-modal .hf-big input[type="number"] { width: 4.2ch; min-width: 0; height: 52px; padding: 0 !important; border: 0 !important; background: transparent !important; box-shadow: none !important; text-align: right; font-size: 2.1rem; font-weight: 800; letter-spacing: -0.02em; color: var(--ev-ink) !important; -webkit-text-fill-color: var(--ev-ink); outline: none; -moz-appearance: textfield; }
+:root #modalRoot .hobby-form-modal .hf-big input::-webkit-outer-spin-button,
+:root #modalRoot .hobby-form-modal .hf-big input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+:root #modalRoot .hobby-form-modal .hf-big span { font-weight: 700; color: var(--ev-ink-3) !important; }
+
+:root #modalRoot .hobby-form-modal .hf-cats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+:root #modalRoot .hobby-form-modal .hf-cats .ev-cat input { position: absolute; opacity: 0; pointer-events: none; }
+
+:root #modalRoot .hobby-form-modal .hf-moods { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
+:root #modalRoot .hobby-form-modal .hf-mood { position: relative; display: grid; justify-items: center; gap: 4px; padding: 10px 2px 8px; border: 1px solid var(--ev-line); border-radius: 16px; background: #ffffff; cursor: pointer; transition: transform 140ms ease, border-color 140ms ease, background 140ms ease; }
+:root #modalRoot .hobby-form-modal .hf-mood input { position: absolute; opacity: 0; pointer-events: none; }
+:root #modalRoot .hobby-form-modal .hf-mood i { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 12px; color: var(--tone); background: color-mix(in srgb, var(--tone) 14%, #ffffff); }
+:root #modalRoot .hobby-form-modal .hf-mood i svg { width: 19px; height: 19px; }
+:root #modalRoot .hobby-form-modal .hf-mood b { font-size: 0.72rem; font-weight: 700; color: var(--ev-ink-2) !important; text-align: center; line-height: 1.2; }
+:root #modalRoot .hobby-form-modal .hf-mood:hover { transform: translateY(-1px); }
+:root #modalRoot .hobby-form-modal .hf-mood:has(input:checked) { border-color: var(--tone); background: color-mix(in srgb, var(--tone) 12%, #ffffff); box-shadow: 0 6px 16px color-mix(in srgb, var(--tone) 22%, transparent); }
+:root #modalRoot .hobby-form-modal .hf-mood:has(input:checked) i { color: #ffffff; background: var(--tone); }
+
+:root #modalRoot .hobby-form-modal .hf-remind .ev-label svg { color: #229ed9; }
+:root #modalRoot .hobby-form-modal .hf-remind-time[hidden] { display: none !important; }
+:root #modalRoot .hobby-form-modal .hf-remind-note { display: block; font-size: 0.78rem; color: #1d7fb3 !important; }
+:root #modalRoot .hobby-form-modal .hf-remind-note:empty { display: none; }
+
+@media (max-width: 560px) {
+  :root #modalRoot .hobby-form-modal .hf-moods { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+:root #modalRoot .hobby-form-modal .hf-min-row,
+:root #modalRoot .hobby-form-modal .hf-remind .ev-row { flex-wrap: wrap; overflow: visible; }
+:root #modalRoot .hobby-form-modal .hf-cats .ev-cat b { white-space: normal; overflow: visible; text-overflow: clip; line-height: 1.25; }

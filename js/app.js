@@ -1010,6 +1010,7 @@ const App = {
     });
   },
   openHobbyModal(hobby = {}) {
+    if (typeof HobbyForm !== "undefined") return HobbyForm.open(hobby);
     Modal.open({
       title: hobby.id ? t("editHobby") : t("recordHobbyTitle"),
       submitText: hobby.id ? t("saveRecord") : t("recordHobby"),
