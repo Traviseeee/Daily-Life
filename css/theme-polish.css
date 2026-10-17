@@ -1841,3 +1841,88 @@ body:has(#modalRoot.open) .quick-action-dock {
 .bud-input input { width: 100%; }
 .financial-content > .qx-card, .td-side > .qx-card, .qx-card { min-height: 0 !important; height: auto !important; }
 .financial-content > .qx-card { margin: 14px 0; }
+
+/* =====================================================================
+ * Smart expense form (js/expense-form.js) — extends .event-modal styles
+ * ===================================================================== */
+:root #modalRoot .expense-modal .xp-head-icon { color: #ffffff; background: linear-gradient(135deg, #ffad4a, #f07a1c); }
+
+:root #modalRoot .expense-modal .xp-amount-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px 10px 10px;
+  border: 1.5px solid var(--ev-line);
+  border-radius: 20px;
+  background: linear-gradient(135deg, #fff8f1, #ffffff);
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+:root #modalRoot .expense-modal .xp-amount-card:focus-within { border-color: #f0a530; box-shadow: 0 0 0 4px rgba(240, 165, 48, 0.18); }
+
+:root #modalRoot .expense-modal .xp-currency {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  flex: 0 0 auto;
+  border: 0;
+  border-radius: 15px;
+  font: inherit;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #142a04 !important;
+  background: #c5ff60 !important;
+  cursor: pointer;
+}
+
+:root #modalRoot .expense-modal input.xp-amount {
+  flex: 1;
+  min-width: 0;
+  height: 54px;
+  padding: 0;
+  border: 0 !important;
+  font-size: 2.2rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--ev-ink) !important;
+  -webkit-text-fill-color: var(--ev-ink);
+  background: transparent !important;
+  box-shadow: none !important;
+  outline: none;
+}
+
+:root #modalRoot .expense-modal input.xp-amount::placeholder { color: #c3cbc6 !important; -webkit-text-fill-color: #c3cbc6; }
+:root #modalRoot .expense-modal .xp-currency-name { font-size: 0.8rem; font-weight: 800; color: var(--ev-ink-3); }
+:root #modalRoot .expense-modal input.xp-desc { min-height: 50px; font-size: 1rem; }
+
+:root #modalRoot .expense-modal .xp-cats { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+:root #modalRoot .expense-modal .xp-cats .ev-cat { flex-direction: column; justify-content: center; gap: 5px; min-height: 74px; padding: 8px 4px; text-align: center; }
+:root #modalRoot .expense-modal .xp-cats .ev-cat b { max-width: 100%; font-size: 0.76rem; }
+
+:root #modalRoot .expense-modal .ev-summary[data-level="ok"] { color: #23864f; }
+:root #modalRoot .expense-modal .ev-summary[data-level="warn"] { color: #b8580c; }
+:root #modalRoot .expense-modal .ev-summary[data-level="over"] { color: #c42b30; }
+
+:root #modalRoot .expense-modal input.xp-method { flex-basis: 110px; }
+:root #modalRoot .expense-modal input.xp-method.has-value { border-style: solid !important; border-color: #a6e33f !important; background: #f4ffe2 !important; }
+
+@media (max-width: 720px) {
+  :root #modalRoot .expense-modal .xp-cats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  :root #modalRoot .expense-modal input.xp-amount { font-size: 1.9rem; }
+}
+@media (max-width: 420px) {
+  :root #modalRoot .expense-modal .xp-cats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+:root #modalRoot .modal.event-modal { grid-template-columns: minmax(0, 1fr); }
+:root #modalRoot .modal.event-modal .ev-cats { min-width: 0; }
+:root #modalRoot .modal.event-modal.expense-modal input.xp-amount.xp-amount {
+  width: 100%;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  -moz-appearance: textfield;
+}
+:root #modalRoot .modal.event-modal.expense-modal input.xp-amount::-webkit-outer-spin-button,
+:root #modalRoot .modal.event-modal.expense-modal input.xp-amount::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+:root #modalRoot .modal.event-modal.expense-modal .xp-cats .ev-cat b { white-space: normal; line-height: 1.25; overflow-wrap: anywhere; }

@@ -1099,6 +1099,7 @@ function openIncomeModal(item) {
 }
 
 function openExpenseModal(item) {
+  if (typeof ExpenseForm !== "undefined") return ExpenseForm.open(item);
   Modal.open({ title: item ? `${t("edit")} ${t("expense")}` : t("addExpense"), submitText: item ? `${t("save")} ${t("expense")}` : t("addExpense"), fields: [
     { name: "description", label: t("description"), value: item?.description, required: true },
     { name: "amount", label: t("amount"), type: "number", value: item?.amount, required: true },
