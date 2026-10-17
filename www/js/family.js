@@ -268,6 +268,7 @@ function daysSinceDate(value) {
 }
 
 function openFamilyModal(member) {
+  if (typeof FamilyForm !== "undefined") return FamilyForm.open(member);
   const isEditing = Boolean(member?.id);
   let activeMember = member;
   Modal.open({
@@ -324,7 +325,6 @@ function openFamilyModal(member) {
       zodiacInput.dispatchEvent(new Event("change"));
     }
   });
-  if (typeof FamilyFormUX !== "undefined") FamilyFormUX.enhance(form);
 }
 
 function openSelfFamilyModal() {

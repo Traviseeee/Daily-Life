@@ -1987,3 +1987,115 @@ body:has(#modalRoot.open) .quick-action-dock {
 
 #modalRoot .family-modal .ff-hint { display: block; margin-top: 6px; font-size: 0.78rem; font-weight: 700; color: #b8336a !important; }
 #modalRoot .family-modal .ff-hint:empty { display: none; }
+
+/* =====================================================================
+ * Family member form v2 (js/family-form.js) — uses .event-modal base
+ * ===================================================================== */
+:root #modalRoot .family-form-modal .ff-head-icon { color: #ffffff; background: linear-gradient(135deg, #ff8fb8, #d6457a); }
+
+:root #modalRoot .family-form-modal .ff-profile {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid rgba(214, 69, 122, 0.2);
+  border-radius: 22px;
+  background:
+    radial-gradient(120% 120% at 0% 0%, rgba(255, 143, 184, 0.28), transparent 60%),
+    linear-gradient(120deg, #fff4f8, #f7fbef);
+}
+
+:root #modalRoot .family-form-modal .ff-photo { position: relative; flex: 0 0 auto; cursor: pointer; }
+:root #modalRoot .family-form-modal .ff-photo input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+:root #modalRoot .family-form-modal .ff-photo-img {
+  display: grid;
+  place-items: center;
+  width: 84px;
+  height: 84px;
+  overflow: hidden;
+  border: 4px solid #ffffff;
+  border-radius: 50%;
+  font-size: 2rem;
+  color: #d6457a;
+  background: linear-gradient(135deg, #ffe0ec, #ffd1e2);
+  box-shadow: 0 10px 24px rgba(214, 69, 122, 0.28);
+  transition: transform 160ms ease;
+}
+:root #modalRoot .family-form-modal .ff-photo:hover .ff-photo-img { transform: scale(1.04); }
+:root #modalRoot .family-form-modal .ff-photo-img img { width: 100%; height: 100%; object-fit: cover; }
+:root #modalRoot .family-form-modal .ff-photo-img b { font-weight: 800; }
+:root #modalRoot .family-form-modal .ff-photo-badge {
+  position: absolute;
+  right: -2px;
+  bottom: 2px;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  color: #ffffff;
+  background: #d6457a;
+}
+:root #modalRoot .family-form-modal .ff-photo-badge svg { width: 14px; height: 14px; }
+:root #modalRoot .family-form-modal .ff-profile-main { display: grid; gap: 6px; flex: 1; min-width: 0; }
+:root #modalRoot .family-form-modal input.ff-name { min-height: 50px; font-size: 1.2rem; background: rgba(255, 255, 255, 0.85) !important; }
+:root #modalRoot .family-form-modal .ff-meta { font-size: 0.84rem; font-weight: 700; color: #4a5750 !important; }
+:root #modalRoot .family-form-modal .ff-dates { font-size: 0.78rem; font-weight: 700; color: #b8336a !important; }
+:root #modalRoot .family-form-modal .ff-dates:empty { display: none; }
+
+:root #modalRoot .family-form-modal .ff-chips { display: flex; flex-wrap: wrap; gap: 7px; }
+:root #modalRoot .family-form-modal .ff-chip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 38px;
+  padding: 0 13px 0 9px;
+  border: 1px solid var(--ev-line);
+  border-radius: 999px;
+  color: var(--ev-ink-2);
+  background: var(--ev-soft);
+  cursor: pointer;
+  transition: transform 120ms ease, background 140ms ease;
+}
+:root #modalRoot .family-form-modal .ff-chip input { position: absolute; opacity: 0; pointer-events: none; }
+:root #modalRoot .family-form-modal .ff-chip span { font-size: 1.1rem; color: inherit !important; }
+:root #modalRoot .family-form-modal .ff-chip b { font-size: 0.82rem; font-weight: 700; color: inherit; }
+:root #modalRoot .family-form-modal .ff-chip:hover { background: #ebf0e6; }
+:root #modalRoot .family-form-modal .ff-chip:active { transform: scale(0.97); }
+:root #modalRoot .family-form-modal .ff-chip:has(input:checked) { color: #ffffff; background: #d6457a; border-color: #d6457a; box-shadow: 0 6px 14px rgba(214, 69, 122, 0.3); }
+:root #modalRoot .family-form-modal .ff-chip:has(input:focus-visible) { outline: 2px solid #d6457a; outline-offset: 2px; }
+
+:root #modalRoot .family-form-modal .ff-related { display: grid; gap: 8px; margin-top: 4px; padding-top: 10px; border-top: 1px dashed var(--ev-line); }
+:root #modalRoot .family-form-modal .ff-related[hidden] { display: none; }
+
+:root #modalRoot .family-form-modal .ff-date-grid,
+:root #modalRoot .family-form-modal .ff-care-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+:root #modalRoot .family-form-modal .ff-date,
+:root #modalRoot .family-form-modal .ff-field { display: grid; gap: 6px; min-width: 0; }
+:root #modalRoot .family-form-modal .ff-date > span,
+:root #modalRoot .family-form-modal .ff-field > span { font-size: 0.8rem; font-weight: 700; color: var(--ev-ink-2) !important; }
+:root #modalRoot .family-form-modal .ff-date input,
+:root #modalRoot .family-form-modal .ff-field input { width: 100%; border-radius: 12px; min-height: 42px; border-style: solid !important; }
+:root #modalRoot .family-form-modal .ff-date small { min-height: 1em; font-size: 0.76rem; font-weight: 700; color: #b8336a !important; }
+
+:root #modalRoot .family-form-modal .ff-zodiac { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 12px; background: #f3efff; }
+:root #modalRoot .family-form-modal .ff-zodiac .ff-zodiac-sign { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; font-size: 1.05rem; color: #ffffff !important; background: #7a52d6; }
+:root #modalRoot .family-form-modal .ff-zodiac b { color: #4b2fa3; }
+:root #modalRoot .family-form-modal .ff-zodiac small { font-size: 0.76rem; color: #6a5aa0 !important; }
+
+:root #modalRoot .family-form-modal .ff-idea { display: flex; gap: 10px; padding: 10px 12px; border-radius: 14px; background: linear-gradient(135deg, #f1ffdc, #fbfff3); border: 1px solid #d8f0a8; }
+:root #modalRoot .family-form-modal .ff-idea[hidden] { display: none; }
+:root #modalRoot .family-form-modal .ff-idea i { display: grid; flex: 0 0 auto; color: #5a9a1c; }
+:root #modalRoot .family-form-modal .ff-idea i svg { width: 18px; height: 18px; }
+:root #modalRoot .family-form-modal .ff-idea p { margin: 0; font-size: 0.82rem; line-height: 1.5; color: #3d5a1c !important; }
+
+:root #modalRoot .family-form-modal .ev-notes textarea + textarea { margin-top: 8px; }
+
+@media (max-width: 560px) {
+  :root #modalRoot .family-form-modal .ff-profile { padding: 12px; gap: 12px; }
+  :root #modalRoot .family-form-modal .ff-photo-img { width: 68px; height: 68px; }
+  :root #modalRoot .family-form-modal .ff-date-grid,
+  :root #modalRoot .family-form-modal .ff-care-grid { grid-template-columns: 1fr; }
+}
