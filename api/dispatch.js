@@ -440,6 +440,21 @@ function notificationItems(payload) {
   (Array.isArray(payload.family) ? payload.family : [])
     .forEach(member => {
       if (!member || !member.name) return;
+      if (member.dateReminder === false) return;
+
+      // "N days before" copy for birthdays / anniversaries (set in the family form).
+      const daysBefore = Math.round(Number(member.remindDaysBefore || 0));
+      if (daysBefore > 0 && daysBefore <= 30) {
+        const ahead = addDaysInput(today, daysBefore);
+        const aheadBirthday = yearlyDateYears(member.birthday, ahead);
+        if (aheadBirthday !== null) {
+          withEarly(items, { kind: "birthday", id: `${member.id || member.name}-birthday-${ahead}`, title: member.name, body: aheadBirthday > 0 ? `អាយុ ${aheadBirthday} ឆ្នាំ · Turns ${aheadBirthday}` : "", date: ahead, time: "09:00", hasTime: false, url: "/#family" }, daysBefore * 1440);
+        }
+        const aheadYears = yearlyDateYears(member.anniversaryDate, ahead);
+        if (aheadYears !== null && aheadYears > 0) {
+          withEarly(items, { kind: "anniversary", id: `${member.id || member.name}-anniversary-${ahead}`, title: member.name, body: `${aheadYears} ឆ្នាំ · ${aheadYears} year${aheadYears === 1 ? "" : "s"}`, date: ahead, time: "09:00", hasTime: false, url: "/#family" }, daysBefore * 1440);
+        }
+      }
 
       const birthdayYears = yearlyDateYears(member.birthday, today);
       if (birthdayYears !== null) {

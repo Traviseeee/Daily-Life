@@ -2646,7 +2646,7 @@ body:has(#modalRoot.open) .quick-action-dock {
 :root #modalRoot .hobby-form-modal .hf-big input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 :root #modalRoot .hobby-form-modal .hf-big span { font-weight: 700; color: var(--ev-ink-3) !important; }
 
-:root #modalRoot .hobby-form-modal .hf-cats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+:root #modalRoot .hobby-form-modal .hf-cats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 :root #modalRoot .hobby-form-modal .hf-cats .ev-cat input { position: absolute; opacity: 0; pointer-events: none; }
 
 :root #modalRoot .hobby-form-modal .hf-moods { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
@@ -2659,14 +2659,10 @@ body:has(#modalRoot.open) .quick-action-dock {
 :root #modalRoot .hobby-form-modal .hf-mood:has(input:checked) { border-color: var(--tone); background: color-mix(in srgb, var(--tone) 12%, #ffffff); box-shadow: 0 6px 16px color-mix(in srgb, var(--tone) 22%, transparent); }
 :root #modalRoot .hobby-form-modal .hf-mood:has(input:checked) i { color: #ffffff; background: var(--tone); }
 
-:root #modalRoot .hobby-form-modal .hf-remind .ev-label svg { color: #229ed9; }
-:root #modalRoot .hobby-form-modal .hf-remind-time[hidden] { display: none !important; }
-:root #modalRoot .hobby-form-modal .hf-remind-note { display: block; font-size: 0.78rem; color: #1d7fb3 !important; }
-:root #modalRoot .hobby-form-modal .hf-remind-note:empty { display: none; }
+:root #modalRoot .modal.hobby-form-modal.hobby-form-modal .hf-remind-time[type="time"] { height: 34px; padding: 0 12px !important; border: 1px solid #bfe3f5 !important; border-radius: 999px !important; background: #ffffff !important; color: #1f6f99 !important; -webkit-text-fill-color: #1f6f99; font: inherit; font-size: 0.8rem; font-weight: 700; box-shadow: none !important; }
 
 @media (max-width: 560px) {
   :root #modalRoot .hobby-form-modal .hf-moods { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
-:root #modalRoot .hobby-form-modal .hf-min-row,
-:root #modalRoot .hobby-form-modal .hf-remind .ev-row { flex-wrap: wrap; overflow: visible; }
+:root #modalRoot .hobby-form-modal .hf-min-row { flex-wrap: wrap; overflow: visible; }
 :root #modalRoot .hobby-form-modal .hf-cats .ev-cat b { white-space: normal; overflow: visible; text-overflow: clip; line-height: 1.25; }

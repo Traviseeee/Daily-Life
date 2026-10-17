@@ -136,7 +136,7 @@ const FamilyForm = (() => {
         </section>
 
         <section class="ev-section">
-          <div class="ev-label">${Icons.calendar()}<strong>${escapeHtml(L("ថ្ងៃសំខាន់ៗ", "Important dates"))}</strong><em class="ev-summary">${escapeHtml(L("រំលឹកតាម Telegram ដោយខ្លួនឯង", "Auto reminders on Telegram"))}</em></div>
+          <div class="ev-label">${Icons.calendar()}<strong>${escapeHtml(L("ថ្ងៃសំខាន់ៗ", "Important dates"))}</strong></div>
           <div class="ff-date-cards">
             <label class="ff-date-card ff-bday">
               <span class="ff-dc-icon">${icon("cake", 20)}</span>
@@ -156,6 +156,17 @@ const FamilyForm = (() => {
             </label>
           </div>
           <div class="ff-zodiac" data-ff-zodiac></div>
+          <div class="ev-tg-wrap ff-tg">
+            <label class="ev-telegram">
+              <i class="ev-tg-icon"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M21.9 4.3 18.7 19.4c-.2 1.1-.9 1.3-1.8.8l-4.9-3.6-2.4 2.3c-.3.3-.5.5-1 .5l.3-5 9.1-8.2c.4-.4-.1-.6-.6-.2L6.2 13 1.4 11.5c-1-.3-1.1-1 .2-1.5L20.5 2.8c.9-.3 1.6.2 1.4 1.5Z"/></svg></i>
+              <div class="ev-tg-text"><strong>${escapeHtml(L("ជូនដំណឹងតាម Telegram", "Telegram alert"))}</strong><em data-ff-alert></em></div>
+              <input type="checkbox" name="dateReminder" class="ev-switch" ${member.dateReminder === false ? "" : "checked"}>
+            </label>
+            <div class="ev-before" data-ff-before ${member.dateReminder === false ? "hidden" : ""}>
+              <span>${escapeHtml(L("រំលឹកមុន", "Remind"))}</span>
+              ${[[0, L("ថ្ងៃនោះ", "On the day")], [1, L("1 ថ្ងៃ", "1 day")], [3, L("3 ថ្ងៃ", "3 days")], [7, L("1 សប្តាហ៍", "1 week")]].map(([days, label]) => `<label class="ev-before-chip"><input type="radio" name="remindDaysBefore" value="${days}" ${Number(member.remindDaysBefore || 0) === days ? "checked" : ""}><b>${escapeHtml(label)}</b></label>`).join("")}
+            </div>
+          </div>
         </section>
 
         <section class="ev-section">
@@ -193,7 +204,44 @@ const FamilyForm = (() => {
     return { days, years, past: original <= today };
   }
 
+  function syncTelegram(root) {
+    const form = root.querySelector("#modalForm");
+    const on = form.elements.dateReminder.checked;
+    const before = Number(form.querySelector('input[name="remindDaysBefore"]:checked')?.value || 0);
+    const box = root.querySelector("[data-ff-before]");
+    if (box) box.hidden = !on;
+    const tg = root.querySelector(".ff-tg .ev-telegram");
+    const alert = root.querySelector("[data-ff-alert]");
+    if (!tg || !alert) return;
+    const name = form.elements.name.value.trim() || L("គាត់", "them");
+    const dates = [
+      [form.elements.birthday.value, L("ថ្ងៃកំណើត", "birthday")],
+      [form.elements.anniversaryDate.value, L("ខួប", "anniversary")]
+    ].map(([value, label]) => ({ info: nextInfo(value), label })).filter(item => item.info).sort((a, b) => a.info.days - b.info.days);
+    let tone = "ok";
+    let text;
+    if (!on) {
+      tone = "off";
+      text = L("បិទ — មិនផ្ញើទៅ Telegram ទេ", "Off — nothing goes to Telegram");
+    } else if (!dates.length) {
+      tone = "warn";
+      text = L("ដាក់ថ្ងៃកំណើត ឬខួប ដើម្បីទទួលការជូនដំណឹង", "Add a birthday or anniversary to get alerts");
+    } else {
+      const next = dates[0];
+      const day = new Date();
+      day.setHours(0, 0, 0, 0);
+      day.setDate(day.getDate() + next.info.days);
+      const send = new Date(day);
+      send.setDate(send.getDate() - before);
+      const sendText = before && send >= new Date(new Date().setHours(0, 0, 0, 0)) ? `${formatDate(localDateInput(send))} ${L("និង", "and")} ` : "";
+      text = L(`ផ្ញើម៉ោង 9 ព្រឹក ${sendText}${formatDate(localDateInput(day))} — ${next.label} ${name}`, `Sent at 9 AM on ${sendText}${formatDate(localDateInput(day))} — ${name}'s ${next.label}`);
+    }
+    tg.dataset.tone = tone;
+    alert.textContent = text;
+  }
+
   function sync(root, member) {
+    syncTelegram(root);
     const form = root.querySelector("#modalForm");
     const name = form.elements.name.value.trim();
     const relationship = form.querySelector('input[name="relationship"]:checked')?.value || "";
@@ -313,6 +361,8 @@ const FamilyForm = (() => {
         characterMood: form.querySelector('input[name="characterMood"]:checked')?.value || "",
         birthday: form.elements.birthday.value,
         anniversaryDate: form.elements.anniversaryDate.value,
+        dateReminder: form.elements.dateReminder.checked,
+        remindDaysBefore: Number(form.querySelector('input[name="remindDaysBefore"]:checked')?.value || 0),
         phone: form.elements.phone.value.trim(),
         favorite: form.elements.favorite.value.trim(),
         relationshipNote: form.elements.relationshipNote.value.trim(),

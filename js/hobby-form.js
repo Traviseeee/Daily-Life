@@ -116,7 +116,7 @@ const HobbyForm = (() => {
     const moodNow = String(hobby.mood || "").trim().toLowerCase();
     const knownMood = MOODS.some(m => m.km.toLowerCase() === moodNow || m.en.toLowerCase() === moodNow);
     const dateChips = [[shift(0), L("ថ្ងៃនេះ", "Today")], [shift(-1), L("ម្សិលមិញ", "Yesterday")]];
-    const remindChips = [["", L("ទេ", "No")], [shift(1), L("ស្អែក", "Tomorrow")], [shift(3), L("៣ ថ្ងៃទៀត", "In 3 days")], [shift(7), L("សប្តាហ៍ក្រោយ", "Next week")]];
+    const remindChips = [[shift(1), L("ស្អែក", "Tomorrow")], [shift(3), L("3 ថ្ងៃទៀត", "In 3 days")], [shift(7), L("1 សប្តាហ៍", "1 week")]];
     const now = new Date();
     const defaultTime = `${String(now.getHours()).padStart(2, "0")}:${now.getMinutes() < 30 ? "00" : "30"}`;
     return `
@@ -159,11 +159,18 @@ const HobbyForm = (() => {
           ${moodNow && !knownMood ? `<input type="hidden" name="hfMoodOld" value="${escapeAttr(hobby.mood)}">` : ""}
         </section>
 
-        ${isEdit ? "" : `<section class="ev-section hf-remind">
-          <div class="ev-label">${icon("send")}<strong>${escapeHtml(L("រំលឹកពេលក្រោយ", "Remind me next time"))}</strong><em class="ev-summary">${escapeHtml(L("តាម Telegram", "via Telegram"))}</em></div>
-          <div class="ev-row">${remindChips.map(([value, label]) => `<button type="button" class="ev-chip" data-hf-remind="${value}">${escapeHtml(label)}</button>`).join("")}<input class="ev-date hf-remind-time" id="hfRemindTime" type="time" value="${defaultTime}" hidden></div>
-          <small class="hf-remind-note" data-hf-remind-note></small>
-        </section>`}
+        ${isEdit ? "" : `<div class="ev-tg-wrap hf-tg">
+          <label class="ev-telegram" data-tone="off">
+            <i class="ev-tg-icon"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M21.9 4.3 18.7 19.4c-.2 1.1-.9 1.3-1.8.8l-4.9-3.6-2.4 2.3c-.3.3-.5.5-1 .5l.3-5 9.1-8.2c.4-.4-.1-.6-.6-.2L6.2 13 1.4 11.5c-1-.3-1.1-1 .2-1.5L20.5 2.8c.9-.3 1.6.2 1.4 1.5Z"/></svg></i>
+            <div class="ev-tg-text"><strong>${escapeHtml(L("រំលឹកពេលក្រោយតាម Telegram", "Remind me next time on Telegram"))}</strong><em data-hf-remind-note></em></div>
+            <input type="checkbox" id="hfRemindOn" class="ev-switch">
+          </label>
+          <div class="ev-before" data-hf-before hidden>
+            <span>${escapeHtml(L("ពេល", "When"))}</span>
+            ${remindChips.map(([value, label], i) => `<label class="ev-before-chip"><input type="radio" name="hfRemindDay" value="${value}" ${i === 0 ? "checked" : ""}><b>${escapeHtml(label)}</b></label>`).join("")}
+            <input class="hf-remind-time" id="hfRemindTime" type="time" value="${defaultTime}">
+          </div>
+        </div>`}
 
         <details class="ev-notes" ${hobby.notes ? "open" : ""}>
           <summary>${icon("note")}<strong>${escapeHtml(t("notes"))}</strong></summary>
@@ -187,13 +194,16 @@ const HobbyForm = (() => {
     const when = root.querySelector("[data-hf-when]");
     if (when) when.textContent = [minutes ? fmtMin(minutes) : "", date ? formatDate(date) : ""].filter(Boolean).join(" · ");
 
-    root.querySelectorAll("[data-hf-remind]").forEach(chip => chip.classList.toggle("active", chip.dataset.hfRemind === state.remind));
-    const timeInput = root.querySelector("#hfRemindTime");
-    if (timeInput) timeInput.hidden = !state.remind;
-    const note = root.querySelector("[data-hf-remind-note]");
-    if (note) note.textContent = state.remind
-      ? L(`Telegram នឹងរំលឹក "${cleanTitle(form.elements.title.value) || "…"}" នៅ ${formatDate(state.remind)} ម៉ោង ${timeInput.value}`, `Telegram will remind "${cleanTitle(form.elements.title.value) || "…"}" on ${formatDate(state.remind)} at ${timeInput.value}`)
-      : "";
+    const remindOn = root.querySelector("#hfRemindOn");
+    if (remindOn) {
+      state.remind = remindOn.checked ? (form.querySelector('input[name="hfRemindDay"]:checked')?.value || "") : "";
+      root.querySelector("[data-hf-before]").hidden = !remindOn.checked;
+      const timeInput = root.querySelector("#hfRemindTime");
+      root.querySelector(".hf-tg .ev-telegram").dataset.tone = state.remind ? "ok" : "off";
+      root.querySelector("[data-hf-remind-note]").textContent = state.remind
+        ? L(`ផ្ញើ "${cleanTitle(form.elements.title.value) || "…"}" នៅ ${formatDate(state.remind)} ម៉ោង ${timeInput.value}`, `Sends "${cleanTitle(form.elements.title.value) || "…"}" on ${formatDate(state.remind)} at ${timeInput.value}`)
+        : L("បើកដើម្បីរំលឹកឱ្យធ្វើម្តងទៀត", "Turn on to get a nudge to do it again");
+    }
 
     const streakBox = root.querySelector("[data-hf-streak]");
     const info = stats(form.elements.title.value, state.hobby.id);
@@ -323,10 +333,8 @@ const HobbyForm = (() => {
       }
     }));
     form.querySelectorAll('input[name="hfMood"]:checked').forEach(radio => (radio.dataset.was = "1"));
-    root.querySelectorAll("[data-hf-remind]").forEach(chip => chip.addEventListener("click", () => {
-      state.remind = chip.dataset.hfRemind;
-      sync(root);
-    }));
+    root.querySelector("#hfRemindOn")?.addEventListener("change", () => sync(root));
+    form.querySelectorAll('input[name="hfRemindDay"]').forEach(radio => radio.addEventListener("change", () => sync(root)));
     root.querySelector("#hfRemindTime")?.addEventListener("input", () => sync(root));
     const details = root.querySelector(".ev-notes");
     details.addEventListener("toggle", () => {
