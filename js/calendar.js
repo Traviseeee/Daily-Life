@@ -136,8 +136,8 @@ function dayDetailRows(date, events) {
     const amount = event.amount ? `<span class="cde-amount">${money(event.amount, event.currency)}</span>` : "";
     const action = event.auto
       ? (event.href ? `<a class="icon-button cde-action" href="${event.href}" aria-label="${escapeAttr(t("view"))}">${Icons.chevron()}</a>` : "")
-      : `<button class="icon-button cde-action" type="button" data-edit-event="${event.id}" aria-label="${escapeAttr(t("editEvent"))}">${Icons.edit()}</button>`;
-    return `<div class="calendar-detail-event tone-row ${state}" style="${toneStyle(event)}">
+      : `<button class="icon-button cde-action" type="button" data-edit-event="${event.id}" aria-label="${escapeAttr(t("editEvent"))}">${Icons.edit()}</button><button class="icon-button cde-delete" type="button" data-delete-event="${event.id}" aria-label="${escapeAttr(t("deleteEvent"))}">${Icons.trash()}</button>`;
+    return `<div class="calendar-detail-event tone-row ${state}" style="${toneStyle(event)}"${event.auto ? "" : ` data-open-event="${escapeAttr(event.id)}"`}>
       <span class="cde-icon">${agendaIcon(event)}</span>
       <div class="cde-main"><strong>${escapeHtml(event.title)}</strong><small>${escapeHtml(optionLabel(event.category || ""))}${event.reminder === false ? ` · ${isKm ? "បិទការរំលឹក" : "No alert"}` : ""}</small></div>
       ${amount}
@@ -645,6 +645,11 @@ function bindCalendar() {
     App.render();
   }));
   document.querySelectorAll("[data-edit-event]").forEach(button => button.addEventListener("click", () => App.openEventModal(appData.calendarEvents.find(item => item.id === button.dataset.editEvent))));
+  document.querySelectorAll("[data-open-event]").forEach(row => row.addEventListener("click", event => {
+    if (event.target.closest("button, a")) return;
+    const item = appData.calendarEvents.find(entry => entry.id === row.dataset.openEvent);
+    if (item) App.openEventModal(item);
+  }));
   document.querySelectorAll("[data-delete-event]").forEach(button => button.addEventListener("click", () => {
     Modal.confirm({ title: t("deleteEvent"), message: t("deleteEventMessage"), confirmText: t("delete"), onConfirm: () => {
       Store.delete("calendarEvents", button.dataset.deleteEvent);
