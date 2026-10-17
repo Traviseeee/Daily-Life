@@ -95,43 +95,6 @@ function renderHome() {
     renderHomeNewsTicker() +
     renderHomeAgenda(agenda) +
     '<a class="home-smart-summary-link" href="#summary"><span>' + Icons.chart() + '</span><span><strong>' + escapeHtml(t("smartSummary")) + '</strong><small>' + escapeHtml(t("smartSummarySubtitle")) + '</small></span>' + Icons.chevron() + '</a>' +
-    '<div class="home-plan-wrap">' +
-      '<h2>' + (languageCode() === "km" ? "ផែនការរបស់អ្នក" : "Your plan") + '</h2>' +
-      '<div class="home-quick-actions">' +
-      '<button class="home-action action-green" type="button" data-action="smart-assistant">' +
-        '<span class="action-icon">' + Icons.spark() + '</span>' +
-        '<span class="action-content">' +
-          '<strong>' + t("smartAssistant") + '</strong>' +
-          '<small>' + t("instantHelpPrompt") + '</small>' +
-        '</span>' +
-        '<span class="action-arrow">›</span>' +
-      '</button>' +
-      '<button class="home-action action-purple" type="button" data-action="create-user">' +
-        '<span class="action-icon">' + Icons.user() + '</span>' +
-        '<span class="action-content">' +
-          '<strong>' + t("createUser") + '</strong>' +
-          '<small>' + t("manageProfilesPrompt") + '</small>' +
-        '</span>' +
-        '<span class="action-arrow">›</span>' +
-      '</button>' +
-      '<button class="home-action action-dark" type="button" data-action="add-goal">' +
-        '<span class="action-icon">' + Icons.goal() + '</span>' +
-        '<span class="action-content">' +
-          '<strong>' + t("createGoal") + '</strong>' +
-          '<small>' + t("setTargetsPrompt") + '</small>' +
-        '</span>' +
-        '<span class="action-arrow">›</span>' +
-      '</button>' +
-      '<button class="home-action action-blue" type="button" data-action="add-event">' +
-        '<span class="action-icon">' + Icons.calendar() + '</span>' +
-        '<span class="action-content">' +
-          '<strong>' + t("addEvent") + '</strong>' +
-          '<small>' + t("planMomentsPrompt") + '</small>' +
-        '</span>' +
-        '<span class="action-arrow">›</span>' +
-      '</button>' +
-      '</div>' +
-    '</div>' +
     '<div class="home-overview">' +
       '<article class="glass-card mood-card">' +
         '<span class="eyebrow">' + t("mood") + '</span>' +
@@ -161,29 +124,6 @@ function renderHome() {
         '<button class="button ghost-button" type="button" data-action="edit-focus">' + Icons.edit() + ' ' + t("editFocus") + '</button>' +
       '</article>' +
     '</div>' +
-    '<article class="glass-card reminder-summary-card">' +
-      '<div class="mood-header">' +
-        '<div>' +
-          '<span class="eyebrow">' + t("upcoming") + '</span>' +
-          '<h2 class="section-title">' + t("remindersThisWeek") + '</h2>' +
-        '</div>' +
-        '<div>' +
-          '<span class="mood-history-score">' + getUpcomingNotifications(7).length + '</span>' +
-        '</div>' +
-      '</div>' +
-      (getUpcomingNotifications(7)[0] ? (function() {
-        const alerts = getUpcomingNotifications(7);
-        const nextAlert = alerts[0];
-        return '<div class="next-reminder">' +
-          '<strong>' + escapeHtml(nextAlert.title) + '</strong>' +
-          '<span>' + (nextAlert.daysLeft === 0 ? "Today" : nextAlert.daysLeft + " day" + (nextAlert.daysLeft === 1 ? "" : "s") + " left") + '</span>' +
-        '</div>' +
-        '<div class="reminder-list">' +
-          alerts.slice(0, 3).map(item => '<div class="reminder-item"><span class="reminder-dot"></span><div><strong>' + escapeHtml(item.title) + '</strong><small>' + new Date(item.date + "T00:00:00").toLocaleDateString(languageCode() === "km" ? "km-KH" : "en-US", { month: "short", day: "numeric" }) + '</small></div></div>').join("") +
-        '</div>';
-      })() : '<div class="next-reminder empty-state"><strong>' + t("noRemindersThisWeek") + '</strong><span>' + t("upcomingSpaceClear") + '</span></div>') +
-    '</article>' +
-    (typeof homePhotoCard === "function" ? homePhotoCard() : '') +
   '</section>';
 }
 
@@ -339,14 +279,14 @@ function renderHomeAgenda(agenda) {
         : t("inDays", { count: item.daysLeft });
 
   return '<section class="home-agenda-card" aria-labelledby="homeAgendaTitle">' +
-    '<header class="home-agenda-header"><div><span class="home-agenda-eyebrow">' + t("dailyFocus") + '</span><h2 id="homeAgendaTitle">' + t("todayAndUpcoming") + '</h2></div><a class="home-agenda-view" href="#calendar">' + t("viewCalendar") + ' <span aria-hidden="true">›</span></a></header>' +
+    '<header class="home-agenda-header"><div><span class="home-agenda-eyebrow">' + t("dailyFocus") + '</span><h2 id="homeAgendaTitle">' + t("todayAndUpcoming") + '</h2></div><a class="home-agenda-view" href="#today">' + (languageCode() === "km" ? "មើលថ្ងៃនេះ" : "Open Today") + ' <span aria-hidden="true">›</span></a></header>' +
     '<div class="home-agenda-stats">' +
       '<div class="home-agenda-stat"><strong>' + agenda.today + '</strong><span>' + t("today") + '</span></div>' +
       '<div class="home-agenda-stat"><strong>' + agenda.nextSevenDays + '</strong><span>' + t("next7Days") + '</span></div>' +
       '<div class="home-agenda-stat home-agenda-stat-overdue"><strong>' + agenda.overdueBills + '</strong><span>' + t("overdueBills") + '</span></div>' +
     '</div>' +
     (agenda.items.length
-      ? '<div class="home-agenda-list">' + agenda.items.map(item =>
+      ? '<div class="home-agenda-list">' + agenda.items.slice(0, 4).map(item =>
           '<a class="home-agenda-item' + (item.overdue ? ' is-overdue' : '') + '" href="' + item.href + '">' +
             '<span class="home-agenda-item-icon" aria-hidden="true">' + itemIcon(item) + '</span>' +
             '<span class="home-agenda-item-copy"><strong>' + escapeHtml(item.title) + '</strong><small>' + escapeHtml(item.categoryLabel) + (item.amount != null ? ' · ' + money(item.amount, item.currency) : '') + '</small></span>' +
@@ -465,12 +405,11 @@ function renderHomeSmartLists(agenda, focusItems, todayIso) {
       count: new Set([
         ...attentionItems.map(item => `${item.href}:${item.title}`),
         ...upcomingItems.map(item => `${item.kind}:${item.id}:${item.date}`),
-        ...todayFocusItems.map(item => `focus:${item.title}`)
       ]).size,
       lists: [
         listCard("attention", t("needsAttention"), attentionItems.length, rowList(attentionItems, t("allCaughtUp")), attentionItems.length > 0),
         listCard("upcoming", t("comingUp"), upcomingItems.length, rowList(upcomingRows)),
-        listCard("today", t("todaysPlan"), todayEvents.length + todayReminders.length + todayFocusItems.length, rowList([...todayEvents, ...todayReminders, ...todayFocusItems], t("noUpcomingItems"))),
+        listCard("today", t("todaysPlan"), todayEvents.length + todayReminders.length, rowList([...todayEvents, ...todayReminders], t("noUpcomingItems"))),
         listCard("incomplete-today", t("incompleteToday"), incompleteToday.length, rowList(incompleteToday, t("noIncompleteToday")))
       ]
     },
@@ -502,8 +441,7 @@ function renderHomeSmartLists(agenda, focusItems, todayIso) {
   ];
 
   return `<section class="home-smart-lists" aria-labelledby="homeSmartListsTitle">
-    <header class="home-smart-lists-heading"><h2 id="homeSmartListsTitle">${escapeHtml(t("smartLists"))}</h2><button class="home-smart-capture-toggle" type="button" data-toggle-smart-capture aria-expanded="false">${Icons.plus()}<span>${escapeHtml(t("quickCapture"))}</span></button></header>
-    <div class="home-smart-capture-panel" data-smart-capture-panel hidden>${quickCapture}</div>
+    <header class="home-smart-lists-heading"><h2 id="homeSmartListsTitle">${escapeHtml(t("smartLists"))}</h2></header>
     <div class="home-smart-category-nav" role="group" aria-label="${escapeAttr(t("smartLists"))}">
       ${smartCategories.map((category, index) => `<button class="home-smart-category${index === 0 ? " active" : ""}" type="button" data-smart-category="${category.id}" aria-controls="home-smart-panel-${category.id}" aria-pressed="${index === 0}">${category.icon}<span>${escapeHtml(category.label)}</span><strong>${category.count}</strong></button>`).join("")}
     </div>

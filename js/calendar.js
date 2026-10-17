@@ -357,6 +357,21 @@ function calendarItemsForMonth(cursor) {
     });
   });
 
+  (appData.reminders || []).forEach(reminder => {
+    if (reminder.done || !reminder.date) return;
+    add({
+      id: `auto-reminder-${reminder.id}`,
+      title: reminder.title,
+      date: reminder.date,
+      time: reminder.time || "",
+      category: t("reminder"),
+      source: "reminder",
+      auto: true,
+      href: "#daily",
+      notes: reminder.notes || ""
+    });
+  });
+
   appData.memories.forEach(memory => add({
     id: `auto-memory-${memory.id}`,
     title: `${t("memory")}: ${memory.title}`,

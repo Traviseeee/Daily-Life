@@ -39,16 +39,16 @@ const HobbyForm = (() => {
     { value: "Learning", icon: "book", tone: "#f59e0b", re: /រៀន|learn|study|read|អាន|សៀវភៅ|book|course|english|អង់គ្លេស|class|ថ្នាក់/i }
   ];
   const MOODS = [
-    { km: "សប្បាយ", en: "Happy", icon: "smile", tone: "#f59e0b" },
-    { km: "ស្ងប់", en: "Calm", icon: "calm", tone: "#3f86d6" },
+    { key: "moodHappy", km: "សប្បាយ", en: "Happy", icon: "smile", tone: "#f59e0b" },
+    { key: "moodCalm", km: "ស្ងប់", en: "Calm", icon: "calm", tone: "#3f86d6" },
     { km: "មានថាមពល", en: "Energized", icon: "zap", tone: "#22c55e" },
     { km: "ពេញចិត្ត", en: "Proud", icon: "star", tone: "#8b5cf6" },
-    { km: "ហត់", en: "Tired", icon: "tired", tone: "#94a3b8" },
-    { km: "តានតឹង", en: "Stressed", icon: "stress", tone: "#ef4444" }
+    { key: "moodTired", km: "ហត់", en: "Tired", icon: "tired", tone: "#94a3b8" },
+    { key: "moodStressed", km: "តានតឹង", en: "Stressed", icon: "stress", tone: "#ef4444" }
   ];
   const MINUTE_CHIPS = [15, 30, 45, 60, 90, 120];
   const catLabel = value => t(value.toLowerCase()) || value;
-  const moodLabel = mood => (km() ? mood.km : mood.en);
+  const moodLabel = mood => (mood.key && t(mood.key) && t(mood.key) !== mood.key ? t(mood.key) : km() ? mood.km : mood.en);
   const fmtMin = m => {
     const n = Number(m) || 0;
     if (!n) return L("—", "—");
@@ -114,7 +114,7 @@ const HobbyForm = (() => {
     const favs = favourites();
     const category = hobby.category || "Personal";
     const moodNow = String(hobby.mood || "").trim().toLowerCase();
-    const knownMood = MOODS.some(m => m.km.toLowerCase() === moodNow || m.en.toLowerCase() === moodNow);
+    const knownMood = MOODS.some(m => [m.km, m.en, moodLabel(m)].some(v => v.toLowerCase() === moodNow));
     const dateChips = [[shift(0), L("ថ្ងៃនេះ", "Today")], [shift(-1), L("ម្សិលមិញ", "Yesterday")]];
     const remindChips = [[shift(1), L("ស្អែក", "Tomorrow")], [shift(3), L("3 ថ្ងៃទៀត", "In 3 days")], [shift(7), L("1 សប្តាហ៍", "1 week")]];
     const now = new Date();
@@ -155,7 +155,7 @@ const HobbyForm = (() => {
 
         <section class="ev-section">
           <div class="ev-label">${icon("smile")}<strong>${escapeHtml(t("moodAfter"))}</strong></div>
-          <div class="hf-moods">${MOODS.map(mood => `<label class="hf-mood" style="--tone:${mood.tone}"><input type="radio" name="hfMood" value="${escapeAttr(moodLabel(mood))}" ${moodNow && (mood.km.toLowerCase() === moodNow || mood.en.toLowerCase() === moodNow) ? "checked" : ""}><i>${icon(mood.icon)}</i><b>${escapeHtml(moodLabel(mood))}</b></label>`).join("")}</div>
+          <div class="hf-moods">${MOODS.map(mood => `<label class="hf-mood" style="--tone:${mood.tone}"><input type="radio" name="hfMood" value="${escapeAttr(moodLabel(mood))}" ${moodNow && [mood.km, mood.en, moodLabel(mood)].some(v => v.toLowerCase() === moodNow) ? "checked" : ""}><i>${icon(mood.icon)}</i><b>${escapeHtml(moodLabel(mood))}</b></label>`).join("")}</div>
           ${moodNow && !knownMood ? `<input type="hidden" name="hfMoodOld" value="${escapeAttr(hobby.mood)}">` : ""}
         </section>
 

@@ -1,7 +1,11 @@
 function renderDaily() {
   const today = localDateInput();
   const todayHobbies = appData.hobbyLogs.filter(item => item.date === today);
-  const upcoming = appData.reminders.filter(item => !item.done && item.date >= today).sort((a, b) => a.date.localeCompare(b.date));
+  // Reminders and calendar events are one list now (new reminders are saved as events).
+  const upcoming = [
+    ...appData.reminders.filter(item => !item.done && item.date >= today),
+    ...appData.calendarEvents.filter(item => item.date >= today && item.reminder !== false).map(item => ({ ...item, isEvent: true }))
+  ].sort((a, b) => `${a.date}${a.time || ""}`.localeCompare(`${b.date}${b.time || ""}`));
   const categories = ["work", "personal", "love", "family", "health", "learning"];
 
   return `
@@ -9,7 +13,7 @@ function renderDaily() {
       <div class="page-header">
         <div><h1 class="page-title page-title-with-icon"><span class="page-title-icon">${Icons.spark()}</span>${t("daily")}</h1><p class="page-subtitle">${t("dailySubtitle")}</p></div>
       </div>
-      <div class="daily-actions" aria-label="${t("quickActions")}"><button class="button ghost-button" data-action="enable-alerts">${Icons.bell()} ${t("enableAlerts")}</button><button class="button ghost-button" data-action="add-reminder">${Icons.bell()} ${t("addReminder")}</button><button class="button" data-action="add-hobby">${Icons.plus()} ${t("recordHobby")}</button></div>
+      <div class="daily-actions" aria-label="${t("quickActions")}"><button class="button ghost-button" data-action="add-reminder">${Icons.bell()} ${t("addReminder")}</button><button class="button" data-action="add-hobby">${Icons.plus()} ${t("recordHobby")}</button></div>
       <div class="grid two-col daily-top-grid">
         <article class="glass-card card-pad daily-summary-card"><div class="between"><div><span class="eyebrow">${t("dailyToday")}</span><h2 class="section-title">${t("dailyRecord")}</h2></div><span class="icon-badge green">${Icons.spark()}</span></div><div class="daily-stat"><strong>${todayHobbies.length}</strong><span>${t("hobbyRecordCount")}</span></div><div class="list">${todayHobbies.map(hobbyRow).join("") || `<p class="secondary daily-empty">${t("nothingYet")}</p>`}</div></article>
         <article class="glass-card card-pad daily-summary-card"><div class="between"><div><span class="eyebrow">${t("nextUp")}</span><h2 class="section-title">${t("reminders")}</h2></div><span class="icon-badge pink">${Icons.bell()}</span></div><div class="list">${upcoming.slice(0, 4).map(reminderRow).join("") || `<p class="secondary daily-empty">${t("noUpcomingReminders")}</p>`}</div></article>
@@ -24,6 +28,7 @@ function hobbyRow(item) {
 }
 
 function reminderRow(item) {
+  if (item.isEvent) return `<div class="list-row daily-record-row"><span class="icon-badge blue">${Icons.calendar()}</span><div><strong>${escapeHtml(item.title)}</strong><span class="secondary">${formatDate(item.date)}${item.time ? ` · ${escapeHtml(item.time)}` : ""}${item.category ? ` · ${escapeHtml(t(item.category.toLowerCase()) || item.category)}` : ""}</span></div><button class="icon-button" data-edit-event="${escapeAttr(item.id)}" aria-label="${t("editEvent")}">${Icons.edit()}</button></div>`;
   return `<div class="list-row daily-record-row"><span class="icon-badge pink">${Icons.bell()}</span><div><strong>${escapeHtml(item.title)}</strong><span class="secondary">${formatDate(item.date)}${item.category ? ` · ${escapeHtml(t(item.category.toLowerCase()) || item.category)}` : ""}</span></div><button class="icon-button" data-complete-reminder="${escapeAttr(item.id)}" aria-label="${t("complete")}">${Icons.check()}</button><button class="icon-button" data-edit-reminder="${escapeAttr(item.id)}" aria-label="${t("editReminder")}">${Icons.edit()}</button></div>`;
 }
 
@@ -42,5 +47,6 @@ function bindDaily() {
   document.querySelectorAll("[data-edit-hobby]").forEach(button => button.addEventListener("click", () => App.openHobbyModal(appData.hobbyLogs.find(item => item.id === button.dataset.editHobby))));
   document.querySelectorAll("[data-delete-hobby]").forEach(button => button.addEventListener("click", () => Store.delete("hobbyLogs", button.dataset.deleteHobby)));
   document.querySelectorAll("[data-edit-reminder]").forEach(button => button.addEventListener("click", () => App.openReminderModal(appData.reminders.find(item => item.id === button.dataset.editReminder))));
+  document.querySelectorAll("[data-edit-event]").forEach(button => button.addEventListener("click", () => App.openEventModal(appData.calendarEvents.find(item => item.id === button.dataset.editEvent))));
   document.querySelectorAll("[data-complete-reminder]").forEach(button => button.addEventListener("click", () => Store.edit("reminders", button.dataset.completeReminder, { done: true })));
 }

@@ -678,15 +678,10 @@ const App = {
     const toggle = document.getElementById("quickActionToggle");
     if (!menu || !toggle) return;
 
-    const actions = [
-      ["smart-assistant", Icons.spark(), t("smartAssistant")],
-      ["add-event", Icons.calendar(), t("addEvent")],
-      ["add-goal", Icons.goal(), t("createGoal")],
-      ["add-expense", Icons.expense(), t("addExpense")]
-    ];
-    const selected = Array.isArray(appData.profile.quickActions) && appData.profile.quickActions.length
-      ? appData.profile.quickActions
-      : ["smart-assistant", "add-event", "add-goal"];
+    const actions = quickActionList();
+    const saved = Array.isArray(appData.profile.quickActions) ? appData.profile.quickActions : [];
+    const oldDefault = saved.length === 3 && ["smart-assistant", "add-event", "add-goal"].every(id => saved.includes(id));
+    const selected = saved.length && !oldDefault ? saved : QUICK_ACTION_DEFAULTS;
 
     toggle.innerHTML = Icons.plus();
     menu.innerHTML = actions
@@ -871,10 +866,7 @@ const App = {
       quickActionToggle?.setAttribute("aria-expanded", "false");
       quickActionToggle?.closest(".quick-action-dock")?.classList.remove("is-open");
       const action = button.dataset.quickAction;
-      if (action === "smart-assistant") SmartAssistant.open();
-      if (action === "add-event") this.openEventModal();
-      if (action === "add-goal") openGoalModal();
-      if (action === "add-expense") openExpenseModal();
+      runQuickAction(action);
     });
     document.addEventListener("click", event => {
       if (event.target.closest(".quick-action-dock")) return;
@@ -1030,6 +1022,8 @@ const App = {
     });
   },
   openReminderModal(reminder = {}) {
+    // New reminders are calendar events with a Telegram alert (one tool, shown on the calendar).
+    if (!reminder.id && typeof EventForm !== "undefined") return EventForm.open({ date: reminder.date || localDateInput(), category: reminder.category || "" });
     Modal.open({
       title: reminder.id ? t("editReminder") : t("addReminderTitle"),
       submitText: reminder.id ? t("saveReminder") : t("addReminder"),
@@ -1230,3 +1224,28 @@ function prepareWelcomePoster(file) {
 }
 
 document.addEventListener("DOMContentLoaded", () => App.init());
+
+// The one "+" menu for the whole app (Settings chooses which buttons show).
+const QUICK_ACTION_DEFAULTS = ["add-event", "add-expense", "add-hobby", "add-memory", "add-goal"];
+function quickActionList() {
+  return [
+    ["add-event", Icons.calendar(), t("addEvent")],
+    ["add-expense", Icons.expense(), t("addExpense")],
+    ["add-hobby", Icons.spark(), t("recordHobby")],
+    ["add-memory", Icons.memory(), t("addMemory")],
+    ["add-goal", Icons.goal(), t("createGoal")],
+    ["add-bill", Icons.bill(), t("addBill")],
+    ["add-family", Icons.family(), t("addFamilyMember")],
+    ["smart-assistant", Icons.spark(), t("smartAssistant")]
+  ];
+}
+function runQuickAction(action) {
+  if (action === "smart-assistant") SmartAssistant.open();
+  if (action === "add-event") App.openEventModal();
+  if (action === "add-goal") openGoalModal();
+  if (action === "add-expense") openExpenseModal();
+  if (action === "add-hobby") App.openHobbyModal();
+  if (action === "add-memory" && typeof openMemoryModal === "function") openMemoryModal();
+  if (action === "add-bill" && typeof openBillModal === "function") openBillModal();
+  if (action === "add-family" && typeof openFamilyModal === "function") openFamilyModal();
+}

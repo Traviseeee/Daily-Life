@@ -70,12 +70,12 @@ function renderSettings() {
               </div>
               <div class="settings-preference-list">
                 <label class="settings-preference-row"><span><strong>${t("quickActions")}</strong><small>${t("quickActionsHelp")}</small></span></label>
-                ${[
-                  ["smart-assistant", t("smartAssistant")],
-                  ["add-event", t("addEvent")],
-                  ["add-goal", t("createGoal")],
-                  ["add-expense", t("addExpense")]
-                ].map(([id, label]) => `<label class="settings-preference-row settings-quick-action-row"><span><strong>${label}</strong><small>${t("showInQuickActions")}</small></span><input type="checkbox" data-quick-action-preference="${id}" ${((appData.profile.quickActions || ["smart-assistant", "add-event", "add-goal"]).includes(id)) ? "checked" : ""}></label>`).join("")}
+                ${(() => {
+                  const saved = Array.isArray(appData.profile.quickActions) ? appData.profile.quickActions : [];
+                  const oldDefault = saved.length === 3 && ["smart-assistant", "add-event", "add-goal"].every(id => saved.includes(id));
+                  const selected = saved.length && !oldDefault ? saved : QUICK_ACTION_DEFAULTS;
+                  return quickActionList().map(([id, , label]) => `<label class="settings-preference-row settings-quick-action-row"><span><strong>${label}</strong><small>${t("showInQuickActions")}</small></span><input type="checkbox" data-quick-action-preference="${id}" ${selected.includes(id) ? "checked" : ""}></label>`).join("");
+                })()}
                 <label class="settings-preference-row"><span><strong>${t("language")}</strong><small>${t("languageHelp")}</small></span><select data-preference="language"><option value="English" ${appData.profile.language !== "Khmer" ? "selected" : ""}>English</option><option value="Khmer" ${appData.profile.language === "Khmer" ? "selected" : ""}>ខ្មែរ</option></select></label>
                 <label class="settings-preference-row"><span><strong>${t("clockFormat")}</strong><small>${t("clockFormatHelp")}</small></span><select data-preference="clockFormat"><option value="12-hour" ${appData.profile.clockFormat !== "24-hour" ? "selected" : ""}>12-hour</option><option value="24-hour" ${appData.profile.clockFormat === "24-hour" ? "selected" : ""}>24-hour</option></select></label>
                 <label class="settings-preference-row"><span><strong>${t("soundEnabled")}</strong><small>${t("soundEnabledHelp")}</small></span><input type="checkbox" data-preference="soundEnabled" ${appData.profile.soundEnabled !== false ? "checked" : ""}></label>
