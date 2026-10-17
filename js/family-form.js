@@ -6,9 +6,38 @@
 const FamilyForm = (() => {
   const RELATIONSHIPS = ["Me", "Wife", "Husband", "Girlfriend", "Boyfriend", "Mother", "Father", "Daughter", "Son", "Sister", "Brother", "Grandmother", "Grandfather", "Friend", "Other"];
   const MOODS = ["Happy", "Calm", "Cheerful", "Funny", "Caring", "Quiet", "Creative", "Energetic", "Sensitive", "Serious", "Adventurous", "Other"];
-  const REL_EMOJI = { Me: "🙋", Wife: "👰", Husband: "🤵", Girlfriend: "💕", Boyfriend: "💙", Mother: "👩", Father: "👨", Daughter: "👧", Son: "👦", Sister: "👭", Brother: "👬", Grandmother: "👵", Grandfather: "👴", Friend: "🤝", Other: "✨" };
-  const MOOD_EMOJI = { Happy: "😊", Calm: "😌", Cheerful: "😄", Funny: "😂", Caring: "🤗", Quiet: "🤫", Creative: "🎨", Energetic: "⚡", Sensitive: "🥺", Serious: "🧐", Adventurous: "🧗", Other: "🙂" };
-  const ZODIAC = { Aries: "♈", Taurus: "♉", Gemini: "♊", Cancer: "♋", Leo: "♌", Virgo: "♍", Libra: "♎", Scorpio: "♏", Sagittarius: "♐", Capricorn: "♑", Aquarius: "♒", Pisces: "♓" };
+  // Line icons (24px grid, stroke = currentColor) — no emoji.
+  const svg = (paths, size = 18) => `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths}</svg>`;
+  const P = {
+    user: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+    ring: '<circle cx="12" cy="15" r="6"/><path d="m9.5 3.5 2.5 4 2.5-4"/><path d="M8.5 3.5h7"/>',
+    heart: '<path d="M19 14c1.5-1.5 3-3.2 3-5.5A5.5 5.5 0 0 0 12 5a5.5 5.5 0 0 0-10 3.5c0 2.3 1.5 4 3 5.5l7 7Z"/>',
+    flower: '<circle cx="12" cy="12" r="2.5"/><path d="M12 9.5A3 3 0 1 1 12 3.5a3 3 0 0 1 0 6Zm0 5a3 3 0 1 1 0 6 3 3 0 0 1 0-6Zm-2.5-2.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm5 0a3 3 0 1 1 6 0 3 3 0 0 1-6 0Z"/>',
+    shield: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/>',
+    baby: '<path d="M9 12h.01M15 12h.01"/><path d="M10 16c.5.3 1.2.5 2 .5s1.5-.2 2-.5"/><path d="M19 6.3a9 9 0 0 1 1.8 3.9 2 2 0 0 1 0 3.6 9 9 0 0 1-17.6 0 2 2 0 0 1 0-3.6A9 9 0 0 1 12 3c2 0 3.5 1.1 3.5 2.5s-.9 2.5-2 2.5c-.8 0-1.5-.4-1.5-1"/>',
+    users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+    tree: '<path d="M12 22v-6"/><path d="M8 16h8a4 4 0 0 0 1.2-7.8A5 5 0 0 0 6.8 8.2 4 4 0 0 0 8 16Z"/>',
+    hand: '<path d="m11 17 2 2a1 1 0 1 0 3-3"/><path d="m14 14 2.5 2.5a1 1 0 1 0 3-3l-3.9-3.9a3 3 0 0 0-4.2 0l-.9.9a1 1 0 1 1-3-3l2.8-2.8a5.8 5.8 0 0 1 7.1-.9l.5.3a2 2 0 0 0 1.4.2L21 4"/><path d="m21 3 1 11h-2"/><path d="M3 3 2 14l6.5 6.5a1 1 0 1 0 3-3"/><path d="M3 4h8"/>',
+    spark: '<path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/>',
+    smile: '<circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><path d="M9 9h.01M15 9h.01"/>',
+    calm: '<circle cx="12" cy="12" r="10"/><path d="M9 15h6"/><path d="M8 10c.6-.7 1.4-.7 2 0M14 10c.6-.7 1.4-.7 2 0"/>',
+    sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+    laugh: '<circle cx="12" cy="12" r="10"/><path d="M18 13a6 6 0 0 1-12 0Z"/><path d="M9 9h.01M15 9h.01"/>',
+    moon: '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>',
+    palette: '<circle cx="13.5" cy="6.5" r=".6"/><circle cx="17.5" cy="10.5" r=".6"/><circle cx="8.5" cy="7.5" r=".6"/><circle cx="6.5" cy="12.5" r=".6"/><path d="M12 2a10 10 0 0 0 0 20 1.7 1.7 0 0 0 1.7-1.7c0-.4-.2-.8-.4-1.1a1.7 1.7 0 0 1 1.3-2.8H17a5 5 0 0 0 5-5C22 6 17.5 2 12 2Z"/>',
+    zap: '<path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/>',
+    drop: '<path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5S12.5 5.5 12 3c-.5 2.5-2 4.9-4 6.5S5 13 5 15a7 7 0 0 0 7 7z"/>',
+    glasses: '<circle cx="6" cy="15" r="4"/><circle cx="18" cy="15" r="4"/><path d="M14 15a2 2 0 0 0-4 0M2.5 13 5 7c.7-1.3 1.4-2 3-2M21.5 13 19 7c-.7-1.3-1.5-2-3-2"/>',
+    mountain: '<path d="m8 3 4 8 5-5 5 15H2L8 3z"/>',
+    cake: '<path d="M20 21v-8a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8"/><path d="M4 16s.5-1 2-1 2.5 2 4 2 2.5-2 4-2 2.5 2 4 2 2-1 2-1"/><path d="M2 21h20"/><path d="M7 8v3M12 8v3M17 8v3"/><path d="M7 4h.01M12 4h.01M17 4h.01"/>',
+    phone: '<path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2Z"/>',
+    star: '<path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.8-6.2-3.2-6.2 3.2L7 14.2 2 9.3l6.9-1L12 2z"/>',
+    plus: '<path d="M12 5v14M5 12h14"/>',
+    minus: '<path d="M5 12h14"/>'
+  };
+  const REL_ICON = { Me: "user", Wife: "ring", Husband: "ring", Girlfriend: "heart", Boyfriend: "heart", Mother: "flower", Father: "shield", Daughter: "baby", Son: "baby", Sister: "users", Brother: "users", Grandmother: "tree", Grandfather: "tree", Friend: "hand", Other: "spark" };
+  const MOOD_ICON = { Happy: "smile", Calm: "calm", Cheerful: "sun", Funny: "laugh", Caring: "heart", Quiet: "moon", Creative: "palette", Energetic: "zap", Sensitive: "drop", Serious: "glasses", Adventurous: "mountain", Other: "spark" };
+  const icon = (name, size) => svg(P[name] || P.spark, size);
   const PARTNER = ["Wife", "Husband", "Girlfriend", "Boyfriend", "Me"];
   // tile colours, same idea as the expense categories
   const TONE = {
@@ -44,9 +73,9 @@ const FamilyForm = (() => {
     const tiles = list.map(value => {
       const tone = TONE[value] || "#94a3b8";
       const extra = !MAIN_REL.includes(value) && value !== selected;
-      return `<label class="ev-cat ff-rel ${extra ? "ff-extra" : ""}" style="--tone:${tone};--tone-bg:color-mix(in srgb, ${tone} 15%, #ffffff)"><input type="radio" name="relationship" value="${escapeAttr(value)}" ${value === selected ? "checked" : ""}><i class="ev-cat-icon ff-emoji">${REL_EMOJI[value] || "•"}</i><b>${escapeHtml(label(value))}</b></label>`;
+      return `<label class="ev-cat ff-rel ${extra ? "ff-extra" : ""}" style="--tone:${tone};--tone-bg:color-mix(in srgb, ${tone} 15%, #ffffff)"><input type="radio" name="relationship" value="${escapeAttr(value)}" ${value === selected ? "checked" : ""}><i class="ev-cat-icon ff-emoji">${icon(REL_ICON[value])}</i><b>${escapeHtml(label(value))}</b></label>`;
     }).join("");
-    return `${tiles}<button type="button" class="ev-cat ff-more" data-ff-more><i class="ev-cat-icon ff-emoji">＋</i><b>${escapeHtml(L("ផ្សេងទៀត", "More"))}</b></button>`;
+    return `${tiles}<button type="button" class="ev-cat ff-more" data-ff-more><i class="ev-cat-icon ff-emoji" data-ff-more-icon>${icon("plus")}</i><b>${escapeHtml(L("ផ្សេងទៀត", "More"))}</b></button>`;
   }
 
   // Personality: one scrollable row of small pills (like quick expense).
@@ -55,7 +84,7 @@ const FamilyForm = (() => {
     if (selected && !list.includes(selected)) list.unshift(selected);
     return list.map(value => {
       const tone = TONE[value] || "#94a3b8";
-      return `<label class="ff-pill" style="--tone:${tone}"><input type="radio" name="characterMood" value="${escapeAttr(value)}" ${value === selected ? "checked" : ""}><i>${MOOD_EMOJI[value] || "🙂"}</i><b>${escapeHtml(label(value))}</b></label>`;
+      return `<label class="ff-pill" style="--tone:${tone}"><input type="radio" name="characterMood" value="${escapeAttr(value)}" ${value === selected ? "checked" : ""}><i>${icon(MOOD_ICON[value], 16)}</i><b>${escapeHtml(label(value))}</b></label>`;
     }).join("");
   }
 
@@ -108,16 +137,22 @@ const FamilyForm = (() => {
 
         <section class="ev-section">
           <div class="ev-label">${Icons.calendar()}<strong>${escapeHtml(L("ថ្ងៃសំខាន់ៗ", "Important dates"))}</strong><em class="ev-summary">${escapeHtml(L("រំលឹកតាម Telegram ដោយខ្លួនឯង", "Auto reminders on Telegram"))}</em></div>
-          <div class="ff-date-grid">
-            <label class="ff-date">
-              <span>🎂 ${escapeHtml(t("birthday"))}</span>
-              <input class="ev-date" id="birthday" name="birthday" type="date" value="${escapeAttr(member.birthday || "")}">
-              <small data-ff-birthday></small>
+          <div class="ff-date-cards">
+            <label class="ff-date-card ff-bday">
+              <span class="ff-dc-icon">${icon("cake", 20)}</span>
+              <span class="ff-dc-body">
+                <span class="ff-dc-label">${escapeHtml(t("birthday"))}</span>
+                <input id="birthday" name="birthday" type="date" value="${escapeAttr(member.birthday || "")}">
+              </span>
+              <small class="ff-dc-badge" data-ff-birthday></small>
             </label>
-            <label class="ff-date">
-              <span>💞 ${escapeHtml(member.relatedMemberId ? t("relationshipStart") : t("anniversary"))}</span>
-              <input class="ev-date" id="anniversaryDate" name="anniversaryDate" type="date" value="${escapeAttr(member.anniversaryDate || "")}">
-              <small data-ff-anniversary></small>
+            <label class="ff-date-card ff-anniv">
+              <span class="ff-dc-icon">${icon("heart", 20)}</span>
+              <span class="ff-dc-body">
+                <span class="ff-dc-label">${escapeHtml(member.relatedMemberId ? t("relationshipStart") : t("anniversary"))}</span>
+                <input id="anniversaryDate" name="anniversaryDate" type="date" value="${escapeAttr(member.anniversaryDate || "")}">
+              </span>
+              <small class="ff-dc-badge" data-ff-anniversary></small>
             </label>
           </div>
           <div class="ff-zodiac" data-ff-zodiac></div>
@@ -126,8 +161,8 @@ const FamilyForm = (() => {
         <section class="ev-section">
           <div class="ev-label">${Icons.gift()}<strong>${escapeHtml(L("ថែរក្សាទំនាក់ទំនង", "Care"))}</strong></div>
           <div class="ff-care-grid">
-            <label class="ff-field"><span>📞 ${escapeHtml(t("phone"))}</span><input class="ev-date" id="phone" name="phone" type="tel" inputmode="tel" placeholder="012 345 678" value="${escapeAttr(member.phone || "")}"></label>
-            <label class="ff-field"><span>⭐ ${escapeHtml(t("favorite"))}</span><input class="ev-date" id="favorite" name="favorite" type="text" placeholder="${escapeAttr(L("ម្ហូប ពណ៌ កាដូ…", "Food, colour, gifts…"))}" value="${escapeAttr(member.favorite || "")}"></label>
+            <label class="ff-field"><span>${icon("phone", 15)}${escapeHtml(t("phone"))}</span><input class="ev-date" id="phone" name="phone" type="tel" inputmode="tel" placeholder="012 345 678" value="${escapeAttr(member.phone || "")}"></label>
+            <label class="ff-field"><span>${icon("star", 15)}${escapeHtml(t("favorite"))}</span><input class="ev-date" id="favorite" name="favorite" type="text" placeholder="${escapeAttr(L("ម្ហូប ពណ៌ កាដូ…", "Food, colour, gifts…"))}" value="${escapeAttr(member.favorite || "")}"></label>
           </div>
           <div class="ff-idea" data-ff-idea><i>${Icons.spark()}</i><p></p></div>
         </section>
@@ -170,17 +205,18 @@ const FamilyForm = (() => {
     const photo = photoPreview || member.photo || "";
     root.querySelector("[data-ff-photo]").innerHTML = photo
       ? `<img src="${escapeAttr(photo)}" alt="">`
-      : `<b>${escapeHtml(name ? name.charAt(0).toUpperCase() : REL_EMOJI[relationship] || "🙂")}</b>`;
+      : (name ? `<b>${escapeHtml(name.charAt(0).toUpperCase())}</b>` : icon(REL_ICON[relationship] || "user", 34));
 
-    root.querySelector("[data-ff-meta]").textContent = [
-      relationship ? `${REL_EMOJI[relationship] || ""} ${label(relationship)}` : "",
-      mood ? `${MOOD_EMOJI[mood] || ""} ${label(mood)}` : "",
-      sign ? `${ZODIAC[sign] || ""} ${label(sign)}` : ""
-    ].filter(Boolean).join("  ·  ") || L("ជ្រើសទំនាក់ទំនង និងចរិតខាងក្រោម", "Pick a relationship and personality below");
+    const metaParts = [
+      relationship ? `<span class="ff-tag" style="--tone:${TONE[relationship] || "#94a3b8"}">${icon(REL_ICON[relationship], 13)}${escapeHtml(label(relationship))}</span>` : "",
+      mood ? `<span class="ff-tag" style="--tone:${TONE[mood] || "#94a3b8"}">${icon(MOOD_ICON[mood], 13)}${escapeHtml(label(mood))}</span>` : "",
+      sign ? `<span class="ff-tag" style="--tone:#7a52d6">${icon("star", 13)}${escapeHtml(label(sign))}</span>` : ""
+    ].filter(Boolean);
+    root.querySelector("[data-ff-meta]").innerHTML = metaParts.length ? metaParts.join("") : `<span class="ff-meta-hint">${escapeHtml(L("ជ្រើសទំនាក់ទំនង និងចរិតខាងក្រោម", "Pick a relationship and personality below"))}</span>`;
 
     const b = nextInfo(birthday);
     const birthdayText = !b ? "" : b.days === 0
-      ? L(`🎉 ថ្ងៃនេះខួបកំណើត ${b.years} ឆ្នាំ!`, `🎉 Turns ${b.years} today!`)
+      ? L(`ថ្ងៃនេះខួបកំណើត ${b.years} ឆ្នាំ!`, `Turns ${b.years} today!`)
       : L(`អាយុ ${Math.max(0, b.years - 1)} ឆ្នាំ · ខួបក្នុង ${b.days} ថ្ងៃទៀត`, `${Math.max(0, b.years - 1)} years · birthday in ${b.days} days`);
     root.querySelector("[data-ff-birthday]").textContent = birthdayText;
 
@@ -196,10 +232,16 @@ const FamilyForm = (() => {
     }
     root.querySelector("[data-ff-anniversary]").textContent = anniversaryText;
 
-    root.querySelector("[data-ff-dates]").textContent = [b ? `🎂 ${birthdayText}` : "", anniversaryText ? `💞 ${anniversaryText}` : ""].filter(Boolean).join("   ");
-    root.querySelector("[data-ff-zodiac]").innerHTML = sign
-      ? `<span class="ff-zodiac-sign">${ZODIAC[sign] || "✦"}</span><b>${escapeHtml(label(sign))}</b><small>${escapeHtml(L("គណនាពីថ្ងៃកំណើតដោយស្វ័យប្រវត្តិ", "worked out from the birthday"))}</small>`
-      : `<small>${escapeHtml(L("✦ រាសីនឹងលេចឡើងពេលបញ្ចូលថ្ងៃកំណើត", "✦ The zodiac sign appears once a birthday is set"))}</small>`;
+    root.querySelector("[data-ff-dates]").innerHTML = [
+      b ? `<span>${icon("cake", 13)}${escapeHtml(birthdayText)}</span>` : "",
+      anniversaryText ? `<span>${icon("heart", 13)}${escapeHtml(anniversaryText)}</span>` : ""
+    ].filter(Boolean).join("");
+    root.querySelectorAll(".ff-date-card").forEach(card => card.classList.toggle("is-set", Boolean(card.querySelector("input").value)));
+    const zodiacBox = root.querySelector("[data-ff-zodiac]");
+    zodiacBox.hidden = !sign;
+    zodiacBox.innerHTML = sign
+      ? `<span class="ff-zodiac-sign">${icon("star", 16)}</span><span><b>${escapeHtml(label(sign))}</b><small>${escapeHtml(L("រាសី · គណនាពីថ្ងៃកំណើតដោយស្វ័យប្រវត្តិ", "Zodiac · worked out from the birthday"))}</small></span>`
+      : "";
 
     const related = root.querySelector("[data-ff-related]");
     if (related) related.hidden = !(PARTNER.includes(relationship) || form.querySelector('input[name="relatedMemberId"]:checked')?.value);
@@ -233,7 +275,7 @@ const FamilyForm = (() => {
       const grid = root.querySelector("[data-ff-rel]");
       grid.classList.toggle("show-all");
       event.currentTarget.querySelector("b").textContent = grid.classList.contains("show-all") ? L("តិចជាងនេះ", "Less") : L("ផ្សេងទៀត", "More");
-      event.currentTarget.querySelector("i").textContent = grid.classList.contains("show-all") ? "－" : "＋";
+      event.currentTarget.querySelector("i").innerHTML = icon(grid.classList.contains("show-all") ? "minus" : "plus");
     });
     form.addEventListener("input", refresh);
     form.addEventListener("change", refresh);

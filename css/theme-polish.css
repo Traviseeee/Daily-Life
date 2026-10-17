@@ -2160,3 +2160,105 @@ body:has(#modalRoot.open) .quick-action-dock {
 @media (max-width: 720px) {
   :root #modalRoot .family-form-modal .ff-rel-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/* family form v4: SVG icons + date cards */
+:root #modalRoot .family-form-modal .ff-emoji { color: var(--tone); }
+:root #modalRoot .family-form-modal .ff-emoji svg { width: 17px; height: 17px; }
+:root #modalRoot .family-form-modal .ff-rel-grid .ev-cat:has(input:checked) .ff-emoji { color: #ffffff; }
+:root #modalRoot .family-form-modal .ff-pill i { color: var(--tone); }
+:root #modalRoot .family-form-modal .ff-pill:has(input:checked) i { color: #ffffff; }
+:root #modalRoot .family-form-modal .ff-photo-img svg { color: #d6457a; }
+
+:root #modalRoot .family-form-modal .ff-meta { display: flex; flex-wrap: wrap; gap: 6px; }
+:root #modalRoot .family-form-modal .ff-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px 3px 7px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: color-mix(in srgb, var(--tone) 75%, #1a1a1a) !important;
+  background: color-mix(in srgb, var(--tone) 15%, #ffffff);
+}
+:root #modalRoot .family-form-modal .ff-meta-hint { font-size: 0.8rem; font-weight: 600; color: var(--ev-ink-3) !important; }
+:root #modalRoot .family-form-modal .ff-dates { display: flex; flex-wrap: wrap; gap: 4px 12px; }
+:root #modalRoot .family-form-modal .ff-dates span { display: inline-flex; align-items: center; gap: 5px; color: #b8336a !important; }
+
+:root #modalRoot .family-form-modal .ff-date-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+:root #modalRoot .family-form-modal .ff-date-card {
+  --dc: #ff6fa5;
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  align-items: center;
+  gap: 4px 12px;
+  padding: 12px;
+  border: 1.5px solid color-mix(in srgb, var(--dc) 22%, transparent);
+  border-radius: 18px;
+  background: linear-gradient(140deg, color-mix(in srgb, var(--dc) 10%, #ffffff), #ffffff 70%);
+  cursor: pointer;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+:root #modalRoot .family-form-modal .ff-date-card.ff-anniv { --dc: #e5484d; }
+:root #modalRoot .family-form-modal .ff-date-card:focus-within { border-color: var(--dc); box-shadow: 0 0 0 4px color-mix(in srgb, var(--dc) 15%, transparent); }
+:root #modalRoot .family-form-modal .ff-date-card.is-set { border-color: color-mix(in srgb, var(--dc) 45%, transparent); }
+:root #modalRoot .family-form-modal .ff-dc-icon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 13px;
+  color: #ffffff;
+  background: var(--dc);
+  box-shadow: 0 6px 14px color-mix(in srgb, var(--dc) 35%, transparent);
+}
+:root #modalRoot .family-form-modal .ff-dc-body { display: grid; gap: 2px; min-width: 0; }
+:root #modalRoot .family-form-modal .ff-dc-label { font-size: 0.76rem; font-weight: 700; color: var(--ev-ink-3) !important; }
+:root #modalRoot .family-form-modal .ff-date-card input {
+  width: 100%;
+  min-width: 0;
+  height: 30px;
+  padding: 0 !important;
+  border: 0 !important;
+  font: inherit;
+  font-size: 0.98rem;
+  font-weight: 800;
+  color: var(--ev-ink) !important;
+  -webkit-text-fill-color: var(--ev-ink);
+  background: transparent !important;
+  box-shadow: none !important;
+  outline: none;
+}
+:root #modalRoot .family-form-modal .ff-dc-badge {
+  grid-column: 1 / -1;
+  justify-self: start;
+  margin-top: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: color-mix(in srgb, var(--dc) 75%, #1a1a1a) !important;
+  background: color-mix(in srgb, var(--dc) 13%, #ffffff);
+}
+:root #modalRoot .family-form-modal .ff-dc-badge:empty { display: none; }
+
+:root #modalRoot .family-form-modal .ff-zodiac { gap: 10px; padding: 10px 12px; border: 1px solid #e3d9ff; background: linear-gradient(120deg, #f5f0ff, #ffffff); }
+:root #modalRoot .family-form-modal .ff-zodiac[hidden] { display: none; }
+:root #modalRoot .family-form-modal .ff-zodiac .ff-zodiac-sign { width: 34px; height: 34px; color: #ffffff !important; }
+:root #modalRoot .family-form-modal .ff-zodiac > span:last-child { display: grid; gap: 1px; }
+:root #modalRoot .family-form-modal .ff-zodiac b { font-size: 0.95rem; }
+
+:root #modalRoot .family-form-modal .ff-field > span { display: inline-flex; align-items: center; gap: 6px; }
+:root #modalRoot .family-form-modal .ff-field > span svg { color: #d6457a; }
+
+@media (max-width: 560px) {
+  :root #modalRoot .family-form-modal .ff-date-cards { grid-template-columns: 1fr; }
+}
+:root #modalRoot .modal.event-modal.family-form-modal .ff-date-card input[type="date"][type="date"] {
+  height: 30px;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0;
+  background: transparent !important;
+  box-shadow: none !important;
+}
