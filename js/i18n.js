@@ -1345,6 +1345,9 @@ const translations = {
 
 const optionTranslations = {
   km: {
+    Work: "ការងារ",
+    Love: "ស្នេហា",
+    Learning: "ការរៀន",
     Personal: "ផ្ទាល់ខ្លួន",
     Family: "គ្រួសារ",
     Goal: "គោលដៅ",

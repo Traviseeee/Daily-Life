@@ -2526,3 +2526,40 @@ body:has(#modalRoot.open) .quick-action-dock {
 :root:not([data-theme="light"]) .goals-sidebar-heading strong { color: #f4fff7 !important; }
 :root:not([data-theme="light"]) .financial-sidebar-heading span,
 :root:not([data-theme="light"]) .goals-sidebar-heading span { color: rgba(244, 255, 247, 0.65) !important; }
+
+/* ordinary Modal forms upgraded by ModernForm (.su-plain) */
+:root #modalRoot .modal.su-modern.su-plain { display: grid; gap: 14px; padding: 20px 22px 18px; }
+:root #modalRoot .su-plain > .between:first-child { margin: 0; }
+:root #modalRoot .su-plain .form-grid { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 14px 12px !important; padding: 16px; border: 1px solid var(--ev-line); border-radius: 18px; background: #ffffff; }
+:root #modalRoot .su-plain .form-grid > .field { min-width: 0; margin: 0; }
+:root #modalRoot .su-plain .form-grid > .field:has(textarea),
+:root #modalRoot .su-plain .form-grid > .field:has(.su-chips),
+:root #modalRoot .su-plain .form-grid > .field:has(.su-photo),
+:root #modalRoot .su-plain .form-grid > .field:first-child { grid-column: 1 / -1; }
+:root #modalRoot .su-plain .form-grid > .field:first-child input { min-height: 52px; font-size: 1.08rem; font-weight: 700; }
+:root #modalRoot .su-plain .field-error:empty { display: none; }
+:root #modalRoot .su-modern .su-quick { margin-top: 8px; }
+:root #modalRoot .su-modern .su-quick .su-chip { min-height: 34px; padding: 0 12px; font-size: 0.8rem; }
+:root #modalRoot .su-modern .su-chip { display: inline-flex; align-items: center; gap: 6px; }
+:root #modalRoot .su-modern .su-chip-avatar { display: inline-grid; place-items: center; width: 24px; height: 24px; margin-left: -6px; overflow: hidden; border-radius: 50%; font-size: 0.7rem; font-weight: 800; object-fit: cover; color: #d6457a; background: #ffe6ef; }
+:root #modalRoot .su-modern textarea { min-height: 90px; }
+:root #modalRoot .su-plain > .between:last-child { gap: 10px; margin-top: 0 !important; }
+@media (max-width: 720px) {
+  :root #modalRoot .su-plain .form-grid { grid-template-columns: 1fr !important; padding: 12px; }
+  :root #modalRoot .modal.su-modern.su-plain { padding: 16px; }
+}
+:root #modalRoot .modal.su-modern {
+  --ev-ink: #14201b;
+  --ev-ink-2: #4a5750;
+  --ev-ink-3: #85908a;
+  --ev-line: rgba(20, 32, 27, 0.1);
+  --ev-soft: #f2f5ef;
+  --ev-lime: #c5ff60;
+  --ev-lime-ink: #3d6b0d;
+  color: var(--ev-ink);
+  background: #fbfcf9 !important;
+  border-radius: 26px;
+  color-scheme: light;
+}
+:root #modalRoot .su-plain .section-title { color: var(--ev-ink) !important; }
+:root #modalRoot .su-plain .field > label { font-size: 0.8rem; font-weight: 700; color: var(--ev-ink-2) !important; }
