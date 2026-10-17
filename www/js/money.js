@@ -66,7 +66,6 @@ function renderMoney(tab = "overview") {
             </dialog>
           </div>
         </div>
-        ${tab === "overview" ? `<button class="button financial-create-button" type="button" data-action="add-expense">${Icons.plus()} ${t("addExpense")}</button>` : ""}
       </div>
       <nav class="financial-shortcuts" aria-label="${t("money")} ${t("sections")}">
         ${moneyTabs.map(([id, label, icon]) => `<a class="financial-shortcut ${tab === id ? "active" : ""}" href="#money/${id}" ${tab === id ? 'aria-current="page"' : ""}><span class="financial-shortcut-icon" aria-hidden="true">${Icons[icon]()}</span><span>${t(label)}</span></a>`).join("")}
@@ -82,29 +81,27 @@ function renderMoney(tab = "overview") {
 
 function renderMoneyCards(stats) {
   const isKm = languageCode() === "km";
-  const monthKey = localDateInput().slice(0, 7);
-  const inMonth = item => String(item.date || "").startsWith(monthKey);
-  const monthIncome = sumMoney(appData.income.filter(inMonth), "amount");
-  const monthExpenses = sumMoney(appData.expenses.filter(inMonth), "amount");
-  const spentPct = stats.totalIncome ? Math.round((stats.totalExpenses / stats.totalIncome) * 100) : 0;
+  const m = moneyMonthNumbers();
   const savingsTarget = sumMoney(appData.savings, "targetAmount");
   const savingsPct = savingsTarget ? Math.min(100, Math.round((stats.totalSavings / savingsTarget) * 100)) : 0;
-  const committed = stats.totalExpenses + stats.monthlySavings + stats.monthlyLoanPayments;
-  const usedPct = stats.totalIncome ? Math.round((committed / stats.totalIncome) * 100) : 0;
-  const short = stats.available < 0;
+  const spentPct = m.income ? Math.round((m.expenses / m.income) * 100) : 0;
+  const committed = m.expenses + m.loans + Math.max(m.saved, m.plannedSavings);
+  const usedPct = m.income ? Math.round((committed / m.income) * 100) : 0;
+  const short = m.left < 0;
   const level = pct => (pct >= 90 ? "bad" : pct >= 70 ? "warn" : "good");
+  const allTime = value => `<span class="mm-foot-label">${isKm ? "សរុបទាំងអស់" : "All time"}</span><strong>${money(value)}</strong>`;
 
   return `<div class="summary-grid financial-metric-grid grid mm-grid" role="region" aria-label="${escapeAttr(t("overview"))}" tabindex="0">
     ${moneyMetricCard({
-      tone: "income", section: "income", icon: Icons.salary(), title: t("totalIncome"), value: money(stats.totalIncome),
+      tone: "income", section: "income", icon: Icons.salary(), title: isKm ? "ចំណូលខែនេះ" : "Income this month", value: money(m.income),
       pill: `${appData.income.length} ${escapeHtml(t("income"))}`,
-      foot: `<span class="mm-foot-label">${isKm ? "ខែនេះ" : "This month"}</span><strong>${money(monthIncome)}</strong>`
+      foot: allTime(stats.totalIncome)
     })}
     ${moneyMetricCard({
-      tone: "expense", section: "expenses", icon: Icons.expense(), title: t("totalExpenses"), value: money(stats.totalExpenses),
-      pill: `${appData.expenses.length} ${escapeHtml(t("expenses"))}`,
-      bar: stats.totalIncome ? { pct: spentPct, level: level(spentPct), label: isKm ? `ប្រើ ${spentPct}% នៃចំណូល` : `${spentPct}% of income` } : null,
-      foot: stats.totalIncome ? "" : `<span class="mm-foot-label">${isKm ? "ខែនេះ" : "This month"}</span><strong>${money(monthExpenses)}</strong>`
+      tone: "expense", section: "expenses", icon: Icons.expense(), title: isKm ? "ចំណាយខែនេះ" : "Spent this month", value: money(m.expenses),
+      pill: `${appData.expenses.filter(item => String(item.date || "").startsWith(m.month)).length} ${escapeHtml(t("expenses"))}`,
+      bar: m.income ? { pct: spentPct, level: level(spentPct), label: isKm ? `ប្រើ ${spentPct}% នៃចំណូលខែនេះ` : `${spentPct}% of this month's income` } : null,
+      foot: allTime(stats.totalExpenses)
     })}
     ${moneyMetricCard({
       tone: "savings", section: "savings", icon: Icons.savings(), title: t("totalSavings"), value: money(stats.totalSavings),
@@ -112,10 +109,10 @@ function renderMoneyCards(stats) {
       bar: savingsTarget ? { pct: savingsPct, level: "good", label: isKm ? `${savingsPct}% នៃគោលដៅ ${money(savingsTarget)}` : `${savingsPct}% of ${money(savingsTarget)} goal` } : null
     })}
     ${moneyMetricCard({
-      tone: short ? "short" : "available", section: "budget", icon: Icons.wallet(), title: t("available"), value: money(stats.available),
-      pill: short ? `⚠ ${isKm ? "ខ្វះ" : "Short by"} ${money(Math.abs(stats.available))}` : `✓ ${isKm ? "នៅសល់សម្រាប់ចាយ" : "Left to spend"}`,
-      bar: stats.totalIncome ? { pct: Math.min(usedPct, 100), level: level(usedPct), label: isKm ? `បានកំណត់ ${usedPct}% នៃចំណូល` : `${usedPct}% of income committed` } : null,
-      note: isKm ? "ចំណូល − ចំណាយ − សន្សំ − កម្ចី" : "Income − spent − savings − loans"
+      tone: short ? "short" : "available", section: "budget", icon: Icons.wallet(), title: isKm ? "នៅសល់ខែនេះ" : "Left this month", value: money(m.left),
+      pill: short ? `⚠ ${isKm ? "ខ្វះ" : "Short by"} ${money(Math.abs(m.left))}` : `✓ ${isKm ? "នៅសល់សម្រាប់ចាយ" : "Left to spend"}`,
+      bar: m.income ? { pct: Math.min(usedPct, 100), level: level(usedPct), label: isKm ? `បានប្រើ ${usedPct}% នៃចំណូល` : `${usedPct}% of income used` } : null,
+      note: isKm ? "ចំណូល − ចំណាយ − កម្ចី − សន្សំ (ខែនេះ)" : "Income − spent − loans − savings (this month)"
     })}
   </div>`;
 }
@@ -235,24 +232,9 @@ function renderMoneyTab(tab, stats) {
   return `
     ${renderMoneyCards(stats)}
     ${typeof SmartMoney !== "undefined" ? SmartMoney.renderQuickExpense() : ""}
-    ${renderMoneySmartOverview()}
     ${renderCategoryOverview()}
     <div class="grid two-col financial-overview-grid">
-      <article class="glass-card card-pad financial-panel">
-        <div class="financial-panel-heading">
-          <div>
-            <span class="eyebrow">${t("overview")}</span>
-            <h2 class="section-title">${t("incomeVsExpenses")}</h2>
-          </div>
-          <span class="icon-badge blue">${Icons.chart()}</span>
-        </div>
-        ${stats.totalIncome || stats.totalExpenses || stats.monthlySavings || stats.monthlyLoanPayments ? `<div class="financial-chart-bars">${Charts.bars([
-          { label: t("income"), value: stats.totalIncome, color: "linear-gradient(90deg,#9dff6e,#64f4d2)" },
-          { label: t("expenses"), value: stats.totalExpenses, color: "linear-gradient(90deg,#ff6f9c,#9b6dff)" },
-          { label: t("monthlyContribution"), value: stats.monthlySavings, color: "linear-gradient(90deg,#64f4d2,#b8ff5a)" },
-          { label: t("monthlyPayment"), value: stats.monthlyLoanPayments, color: "linear-gradient(90deg,#9b6dff,#b8ff5a)" }
-        ])}</div>` : moneyEmptyCard()}
-      </article>
+      ${renderMoneySmartOverview()}
       <article class="glass-card card-pad financial-panel">
         <div class="financial-panel-heading">
           <div>
@@ -265,6 +247,27 @@ function renderMoneyTab(tab, stats) {
       </article>
     </div>
   `;
+}
+
+// This month's real numbers (recurring income included), shared by the
+// overview cards so they and the reports agree.
+function moneyMonthNumbers() {
+  const todayIso = localDateInput();
+  const month = todayIso.slice(0, 7);
+  const report = buildMonthlyFinanceReport(month);
+  const expenses = (appData.expenses || [])
+    .filter(expense => String(expense.date || "").slice(0, 7) === month)
+    .reduce((total, expense) => total + toProfileCurrency(expense.amount, expense.currency), 0);
+  const saved = (appData.savings || []).reduce((total, saving) => {
+    const contribution = getSavingsContribution(saving, month);
+    return total + (contribution?.paid ? toProfileCurrency(contribution.amount || saving.monthlyContribution, saving.currency) : 0);
+  }, 0);
+  const plannedSavings = sumMoney(appData.savings || [], "monthlyContribution");
+  const income = report.incomeTotal;
+  const loans = report.loanPaymentTotal;
+  // what is left after spending, loan payments and this month's planned saving
+  const left = income - expenses - loans - Math.max(saved, plannedSavings);
+  return { month, monthLabel: report.monthLabel, income, expenses, saved, plannedSavings, loans, left };
 }
 
 function renderMoneySmartOverview() {
@@ -347,33 +350,13 @@ function renderMoneySmartOverview() {
   const changesMarkup = spendingChanges.length
     ? `<div class="money-smart-rows">${spendingChanges.map(item => `<a class="money-smart-row" href="#money/expenses"><span class="money-smart-row-copy"><strong>${escapeHtml(optionLabel(item.category))}</strong></span><strong class="money-smart-change">+${money(item.change)}</strong></a>`).join("")}</div>`
     : `<p class="money-smart-empty">${escapeHtml(t("noSpendingIncreaseShort"))}</p>`;
-  const tabs = [
-    { id: "attention", label: t("moneySmartAlerts"), count: attentionItems.length },
-    { id: "month", label: t("moneySmartMonth") },
-    { id: "changes", label: t("moneySmartSpending"), count: spendingChanges.length }
-  ];
-
-  return `<section class="money-smart-overview" aria-label="${escapeAttr(t("moneySmartOverview"))}">
-    <div class="money-smart-tabs" role="tablist" aria-label="${escapeAttr(t("moneySmartOverview"))}">
-      ${tabs.map((tab, index) => `<button class="money-smart-tab${index === 0 ? " active" : ""}" type="button" role="tab" id="money-smart-tab-${tab.id}" aria-controls="money-smart-panel-${tab.id}" aria-selected="${index === 0}" tabindex="${index === 0 ? "0" : "-1"}" data-money-smart-tab="${tab.id}"><span>${escapeHtml(tab.label)}</span>${tab.count ? `<strong>${tab.count}</strong>` : ""}</button>`).join("")}
+  return `<article class="glass-card card-pad financial-panel money-due-card">
+    <div class="financial-panel-heading">
+      <div><span class="eyebrow">${escapeHtml(t("comingUp"))}</span><h2 class="section-title">${escapeHtml(languageCode() === "km" ? "ត្រូវបង់ក្នុង ៧ ថ្ងៃ" : "Due in the next 7 days")}</h2></div>
+      <span class="pill ${attentionItems.some(item => item.overdue) ? "danger" : ""}">${attentionItems.length}</span>
     </div>
-    <article class="glass-card card-pad financial-panel money-smart-card" role="tabpanel" id="money-smart-panel-attention" aria-labelledby="money-smart-tab-attention" data-money-smart-panel="attention">
-      ${attentionItems.length ? `<div class="money-smart-rows-heading">${escapeHtml(t("comingUp"))}</div>` : ""}
-      ${attentionMarkup}
-    </article>
-    <article class="glass-card card-pad financial-panel money-smart-card" role="tabpanel" id="money-smart-panel-month" aria-labelledby="money-smart-tab-month" data-money-smart-panel="month" hidden>
-      <div class="money-smart-rows-heading">${escapeHtml(report.monthLabel)}</div>
-      <div class="money-smart-metrics">
-        <div><span>${escapeHtml(t("income"))}</span><strong>${money(report.incomeTotal)}</strong></div>
-        <div><span>${escapeHtml(t("expenses"))}</span><strong>${money(monthlyExpenses)}</strong></div>
-        <div><span>${escapeHtml(t("saved"))}</span><strong>${money(savedThisMonth)}</strong></div>
-        <div class="${remaining < 0 ? "is-negative" : ""}"><span>${escapeHtml(t("moneyLeft"))}</span><strong>${money(remaining)}</strong></div>
-      </div>
-    </article>
-    <article class="glass-card card-pad financial-panel money-smart-card" role="tabpanel" id="money-smart-panel-changes" aria-labelledby="money-smart-tab-changes" data-money-smart-panel="changes" hidden>
-      ${changesMarkup}
-    </article>
-  </section>`;
+    ${attentionMarkup}
+  </article>`;
 }
 
 function moneyEmptyCard() {

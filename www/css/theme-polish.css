@@ -2305,3 +2305,25 @@ body:has(#modalRoot.open) .quick-action-dock {
 :root #modalRoot .family-form-modal .ff-dc-badge { color: var(--ev-lime-ink) !important; background: #eefbd8; }
 :root #modalRoot .family-form-modal .ff-field > span svg { color: var(--ev-ink-2); }
 :root #modalRoot .family-form-modal .ff-zodiac { border-color: var(--ev-line); background: #ffffff; }
+
+/* merged money overview */
+.qx-head .qx-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  padding: 6px 12px;
+  border: 1px solid rgba(127, 140, 133, 0.3);
+  border-radius: 999px;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: inherit;
+  background: rgba(127, 140, 133, 0.08);
+  cursor: pointer;
+}
+.qx-head .qx-more svg { width: 14px; height: 14px; }
+.qx-head .qx-more:hover { background: rgba(197, 255, 96, 0.22); border-color: #a6e33f; }
+.money-due-card .money-smart-rows { margin-top: 6px; }
+.money-due-card .pill.danger { color: #fff; background: #e5484d; }
+.financial-overview-grid { align-items: start; }

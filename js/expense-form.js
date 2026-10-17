@@ -194,7 +194,7 @@ const ExpenseForm = (() => {
     if (Modal.escapeHandler) document.removeEventListener("keydown", Modal.escapeHandler);
     root.innerHTML = render(item);
     root.classList.add("open");
-    touched = new Set(item.id ? ["category", "amount"] : []);
+    touched = new Set(item.id ? ["category", "amount"] : [item.category && "category", item.amount && "amount"].filter(Boolean));
 
     const form = root.querySelector("#modalForm");
     Modal.escapeHandler = event => {

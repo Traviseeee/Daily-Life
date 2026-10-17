@@ -141,6 +141,7 @@ const SmartMoney = (() => {
         <div class="qx-head">
           <span class="qx-bolt">⚡</span>
           <div><strong>${km() ? "កត់ចំណាយរហ័ស" : "Quick expense"}</strong><small data-qx-hint></small></div>
+          <button class="qx-more" type="button" data-qx-details>${Icons.plus()}${km() ? "លម្អិត" : "Details"}</button>
         </div>
         <div class="qx-cats" role="radiogroup">
           ${categories.map((category, index) => `<label class="qx-cat" style="--cat:${expenseCategoryColors[category]}">
@@ -163,6 +164,11 @@ const SmartMoney = (() => {
   function bindQuickExpense() {
     document.querySelectorAll("[data-quick-expense]").forEach(form => {
       const hint = form.querySelector("[data-qx-hint]");
+      form.querySelector("[data-qx-details]")?.addEventListener("click", () => {
+        const category = form.querySelector('input[name="qxCategory"]:checked')?.value;
+        const amount = Number(form.elements.qxAmount.value || 0);
+        openExpenseModal(amount || form.elements.qxNote.value ? { category, amount: amount || "", description: form.elements.qxNote.value.trim(), currency: form.querySelector("[data-qx-currency]").dataset.qxCurrency } : { category });
+      });
       const currencyButton = form.querySelector("[data-qx-currency]");
       const update = () => {
         const category = form.querySelector('input[name="qxCategory"]:checked')?.value;
