@@ -6,7 +6,7 @@ const {
   getUserSubscriptions,
   sendToSubscription
 } = require("../lib/push");
-const { buildTelegramText } = require("../lib/telegram-message");
+const { sendAlert, flushSnoozes, ensureWebhook } = require("../lib/telegram");
 
 // Redis dedupe makes a wide window safe: a late or skipped scheduler run still
 // delivers alerts that came due in the last 30 minutes, exactly once.
@@ -227,6 +227,92 @@ function yearlyDateYears(value, dateInput) {
   return matches ? day.getFullYear() - original.getFullYear() : null;
 }
 
+// Local date/time minus `minutes`, as { date, time } strings (pure calendar math).
+function shiftLocal(dateValue, timeValue, minutes) {
+  const d = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(dateValue || ""));
+  const t = /^(\d{1,2}):(\d{2})/.exec(String(timeValue || "09:00"));
+  if (!d || !t) return null;
+  const at = new Date(Date.UTC(+d[1], +d[2] - 1, +d[3], +t[1], +t[2]) - minutes * 60000);
+  const pad = n => String(n).padStart(2, "0");
+  return {
+    date: `${at.getUTCFullYear()}-${pad(at.getUTCMonth() + 1)}-${pad(at.getUTCDate())}`,
+    time: `${pad(at.getUTCHours())}:${pad(at.getUTCMinutes())}`
+  };
+}
+
+function addDaysInput(dateInput, days) {
+  const date = parseDate(dateInput);
+  date.setDate(date.getDate() + days);
+  return toDateInput(date);
+}
+
+// Everything that happens on one day, for the morning digest.
+function dayEntries(payload, day) {
+  const entries = [];
+  (payload.calendarEvents || []).forEach(item => {
+    if (item.date === day && item.title) entries.push({ kind: "calendar", title: item.title, time: item.time || "", hasTime: Boolean(item.time) });
+  });
+  (payload.reminders || []).forEach(item => {
+    if (!item.done && item.date === day && item.title) entries.push({ kind: "reminder", title: item.title, time: item.time || "", hasTime: Boolean(item.time) });
+  });
+  (payload.bills || []).forEach(item => {
+    if (!item.due || !item.name) return;
+    const due = (item.status !== "Paid" && item.due === day) || (billOccursOn(item, day) && !(item.status === "Paid" && item.due === day));
+    if (due) entries.push({ kind: "bill", title: item.name, extra: moneyLabel(item.currency, item.amount) });
+  });
+  (payload.loans || []).forEach(item => {
+    if (item.name && loanNextPaymentDate(item) === day) entries.push({ kind: "loan", title: item.name, extra: moneyLabel(item.currency, item.monthlyPayment) });
+  });
+  (payload.family || []).forEach(member => {
+    if (!member?.name) return;
+    const age = yearlyDateYears(member.birthday, day);
+    if (age !== null) entries.push({ kind: "birthday", title: member.name, extra: age > 0 ? `${age} ឆ្នាំ` : "" });
+    const years = yearlyDateYears(member.anniversaryDate, day);
+    if (years !== null && years > 0) entries.push({ kind: "anniversary", title: member.name, extra: `${years} ឆ្នាំ` });
+  });
+  return entries.sort((a, b) => (a.hasTime ? a.time : "") .localeCompare(b.hasTime ? b.time : ""));
+}
+
+function digestItem(payload, today) {
+  const profile = payload.profile || {};
+  if (profile.morningDigest === false) return null;
+  const tomorrow = addDaysInput(today, 1);
+  const upcoming = [];
+  for (let days = 2; days <= 7; days += 1) {
+    const day = addDaysInput(today, days);
+    (payload.family || []).forEach(member => {
+      if (!member?.name) return;
+      if (yearlyDateYears(member.birthday, day) !== null) upcoming.push({ kind: "birthday", title: member.name, days, date: day });
+      const years = yearlyDateYears(member.anniversaryDate, day);
+      if (years !== null && years > 0) upcoming.push({ kind: "anniversary", title: member.name, days, date: day });
+    });
+  }
+  const overdue = (payload.bills || [])
+    .filter(bill => bill.name && bill.due && bill.due < today && bill.status !== "Paid" && bill.reminder !== false)
+    .map(bill => ({ kind: "bill", title: bill.name, extra: moneyLabel(bill.currency, bill.amount) }));
+  const todayEntries = dayEntries(payload, today);
+  return {
+    kind: "digest",
+    id: `digest-${today}`,
+    title: "MYLIFE morning digest",
+    body: todayEntries.length ? `ថ្ងៃនេះមាន ${todayEntries.length} · ${todayEntries.length} today` : "ថ្ងៃនេះទំនេរ · Nothing today",
+    date: today,
+    time: /^\d{1,2}:\d{2}$/.test(String(profile.digestTime || "")) ? profile.digestTime : "07:00",
+    hasTime: true,
+    url: "/#calendar",
+    digest: { today: todayEntries, tomorrow: dayEntries(payload, tomorrow), overdue, upcoming }
+  };
+}
+
+// Adds a "coming up" copy of an item that fires `remindBefore` minutes early.
+function withEarly(items, item, remindBefore) {
+  const minutes = Number(remindBefore || 0);
+  if (!minutes || minutes < 0) return;
+  const fire = shiftLocal(item.date, item.time || "09:00", minutes);
+  if (!fire) return;
+  items.push({ ...item, id: `${item.id}-before-${minutes}`, sourceId: item.id, early: minutes, fireDate: fire.date, fireTime: fire.time });
+}
+
 function notificationItems(payload) {
   const items = [];
 
@@ -239,7 +325,7 @@ function notificationItems(payload) {
     .forEach(item => {
       if (item.done) return;
 
-      add({
+      const reminder = {
         kind: "reminder",
         id: item.id,
         title: item.title || "MYLIFE reminder",
@@ -248,14 +334,16 @@ function notificationItems(payload) {
         time: item.time || "09:00",
         hasTime: Boolean(item.time),
         url: "/#daily"
-      });
+      };
+      add(reminder);
+      if (item.date && item.title) withEarly(items, reminder, item.remindBefore);
     });
 
   (Array.isArray(payload.calendarEvents) ? payload.calendarEvents : [])
     .forEach(item => {
       if (item.reminder === false) return;
 
-      add({
+      const event = {
         kind: "calendar",
         id: item.id,
         title: item.title || "MYLIFE event",
@@ -264,7 +352,9 @@ function notificationItems(payload) {
         time: item.time || "09:00",
         hasTime: Boolean(item.time),
         url: "/#calendar"
-      });
+      };
+      add(event);
+      if (item.date) withEarly(items, event, item.remindBefore);
     });
 
   const today = zonedTodayInput();
@@ -288,6 +378,8 @@ function notificationItems(payload) {
         title: item.name || "Bill due",
         body: [amount ? `ត្រូវបង់ · Due: ${amount}` : "", item.notes || ""].filter(Boolean).join("\n"),
         date,
+        amount: Number(item.amount || 0),
+        currency: item.currency || "",
         url: "/#money/bills"
       }));
     });
@@ -305,6 +397,7 @@ function notificationItems(payload) {
           ? `ត្រូវបង់ប្រចាំខែ · Monthly payment: ${moneyLabel(item.currency, item.monthlyPayment)}`
           : "",
         date,
+        amount: Number(item.monthlyPayment || 0),
         url: "/#money/loans"
       });
     });
@@ -322,6 +415,8 @@ function notificationItems(payload) {
         add({
           kind: "savings-contribution",
           id: `${item.id || item.name}-${monthKey}`,
+          sourceId: item.id,
+          month: monthKey,
           title: item.name || "Savings contribution",
           body: `សន្សំខែនេះ · Monthly saving: ${moneyLabel(item.currency, monthlyAmount)}`,
           date: `${monthKey}-01`,
@@ -370,7 +465,15 @@ function notificationItems(payload) {
       }
     });
 
+  const digest = digestItem(payload, today);
+  if (digest) items.push(digest);
+
   return items;
+}
+
+// When an item should fire: its own date/time, or earlier for "remind before".
+function itemDueAt(item, timeZone) {
+  return localDateTimeToUtc(item.fireDate || item.date, item.fireTime || item.time || "09:00", timeZone);
 }
 
 function makeMarker(userId, endpoint, item) {
@@ -386,11 +489,7 @@ function makeMarker(userId, endpoint, item) {
   return crypto.createHash("sha256").update(identity).digest("hex");
 }
 
-async function sendToMakeWebhook(item, userId, redis) {
-  const webhookUrl = process.env.MAKE_WEBHOOK_URL;
-
-  if (!webhookUrl) return "skipped";
-
+async function sendTelegram(item, userId, redis) {
   const marker = makeMarker(userId, "telegram", item);
   const sentKey = `mylife:telegram:sent:${marker}`;
   const lockKey = `mylife:telegram:lock:${marker}`;
@@ -405,31 +504,14 @@ async function sendToMakeWebhook(item, userId, redis) {
   if (!claimed) return "duplicate";
 
   try {
-    const response = await fetch(webhookUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        title: String(item.title || "MYLIFE alert"),
-        message: String(item.body || "It is time."),
-        date: String(item.date || ""),
-        time: String(item.time || "09:00"),
-        kind: String(item.kind || "reminder"),
-        // Ready-made bilingual message (Telegram HTML parse mode).
-        text: buildTelegramText(item)
-      })
-    });
-
-    if (!response.ok) {
-      throw new Error(`Make webhook failed: ${response.status}`);
+    // Bot API with buttons first; Make.com webhook as the fallback.
+    const result = await sendAlert(item, userId, redis);
+    if (result === "sent") {
+      await redis.set(sentKey, "1", {
+        ex: SENT_TTL_SECONDS
+      });
     }
-
-    await redis.set(sentKey, "1", {
-      ex: SENT_TTL_SECONDS
-    });
-
-    return "sent";
+    return result;
   } finally {
     await redis.del(lockKey);
   }
@@ -509,11 +591,7 @@ module.exports = async (req, res) => {
         // Send due alerts to Make.com / Telegram.
         // This works even if the user has no Web Push subscription.
         for (const item of items) {
-          const dueAt = localDateTimeToUtc(
-            item.date,
-            item.time || "09:00",
-            "Asia/Phnom_Penh"
-          );
+          const dueAt = itemDueAt(item, APP_TIME_ZONE);
 
           if (
             dueAt === null ||
@@ -525,7 +603,7 @@ module.exports = async (req, res) => {
 
           jobs.push({
             channel: "telegram",
-            run: () => sendToMakeWebhook(item, row.user_id, redis)
+            run: () => sendTelegram(item, row.user_id, redis)
           });
         }
 
@@ -533,6 +611,7 @@ module.exports = async (req, res) => {
         const subscriptions = await getUserSubscriptions(row.user_id);
 
         for (const item of items) {
+          if (item.kind === "digest") continue;
           const title = String(item.title || "MYLIFE alert");
           const body = String(
             item.body || item.notes || item.category || "It is time."
@@ -540,11 +619,7 @@ module.exports = async (req, res) => {
           const destination = String(item.url || "/#daily");
 
           for (const entry of subscriptions) {
-            const dueAt = localDateTimeToUtc(
-              item.date,
-              item.time || "09:00",
-              entry.timeZone
-            );
+            const dueAt = itemDueAt(item, entry.timeZone);
 
             if (
               dueAt === null ||
@@ -607,6 +682,21 @@ module.exports = async (req, res) => {
       jobs.map(job => job.run())
     );
 
+    // Snoozed alerts (⏰ buttons) and the bot webhook never block regular alerts.
+    let snoozed = { sent: 0, failed: 0 };
+    let webhook = "skipped";
+    try {
+      snoozed = await flushSnoozes(redis, now);
+    } catch (error) {
+      console.error("MYLIFE snooze flush failed.", error.message);
+    }
+    try {
+      webhook = await ensureWebhook(redis);
+    } catch (error) {
+      webhook = "error";
+      console.error("MYLIFE Telegram webhook setup failed.", error.message);
+    }
+
     const breakdown = {
       telegram: { sent: 0, duplicate: 0, skipped: 0, failed: 0 },
       push: { sent: 0, duplicate: 0, skipped: 0, failed: 0 }
@@ -631,7 +721,9 @@ module.exports = async (req, res) => {
       sent,
       failed,
       telegram: breakdown.telegram,
-      push: breakdown.push
+      push: breakdown.push,
+      snoozed,
+      webhook
     });
   } catch (error) {
     console.error("MYLIFE scheduled notification dispatch failed.", error);

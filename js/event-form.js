@@ -49,7 +49,10 @@ const EventForm = (() => {
       min: "នាទី",
       hour: "ម៉ោង",
       day: "ថ្ងៃ",
-      shortcut: "Ctrl + Enter ដើម្បីរក្សាទុក"
+      shortcut: "Ctrl + Enter ដើម្បីរក្សាទុក",
+      before: "រំលឹកមុន",
+      onTime: "ដល់ម៉ោង",
+      plusEarly: "+ មុន {rel}"
     },
     en: {
       titlePh: "e.g. Lunch with Mom tomorrow 12pm",
@@ -83,7 +86,10 @@ const EventForm = (() => {
       min: "min",
       hour: "h",
       day: "d",
-      shortcut: "Ctrl + Enter to save"
+      shortcut: "Ctrl + Enter to save",
+      before: "Also remind me",
+      onTime: "On time",
+      plusEarly: "+ {rel} before"
     }
   };
 
@@ -91,6 +97,7 @@ const EventForm = (() => {
   const KM_MONTHS = ["មករា", "កុម្ភៈ", "មីនា", "មេសា", "ឧសភា", "មិថុនា", "កក្កដា", "សីហា", "កញ្ញា", "តុលា", "វិច្ឆិកា", "ធ្នូ"];
   const EN_DAYS = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
   const LOOKBACK_MS = 30 * 60 * 1000; // matches api/dispatch.js
+  const BEFORE_OPTIONS = [0, 10, 30, 60, 1440];
 
   const KEYWORDS = [
     { category: "Family", re: /ថ្ងៃកំណើត|ខួប|birthday|anniversary|bday|គ្រួសារ|family/i },
@@ -144,6 +151,13 @@ const EventForm = (() => {
       return `${h12}:${String(m).padStart(2, "0")} ${period}`;
     }
     return dateFromInput("2000-01-01", time).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  }
+
+  function beforeLabel(minutes) {
+    if (!minutes) return L("onTime");
+    if (minutes >= 1440) return `${minutes / 1440} ${L("day")}`;
+    if (minutes >= 60) return `${minutes / 60} ${L("hour")}`;
+    return `${minutes} ${L("min")}`;
   }
 
   function relative(ms) {
@@ -277,11 +291,17 @@ const EventForm = (() => {
           <div class="ev-people">${membersHtml(event.familyMember || "")}</div>
         </section>` : `<input type="hidden" name="familyMember" value="${escapeAttr(event.familyMember || "")}">`}
 
+        <div class="ev-tg-wrap">
         <label class="ev-telegram">
           <i class="ev-tg-icon"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M21.9 4.3 18.7 19.4c-.2 1.1-.9 1.3-1.8.8l-4.9-3.6-2.4 2.3c-.3.3-.5.5-1 .5l.3-5 9.1-8.2c.4-.4-.1-.6-.6-.2L6.2 13 1.4 11.5c-1-.3-1.1-1 .2-1.5L20.5 2.8c.9-.3 1.6.2 1.4 1.5Z"/></svg></i>
           <div class="ev-tg-text"><strong>${esc(L("telegram"))}</strong><em data-ev-alert></em></div>
           <input type="checkbox" id="reminder" name="reminder" class="ev-switch" ${reminderOn ? "checked" : ""}>
         </label>
+        <div class="ev-before" data-ev-before ${reminderOn ? "" : "hidden"}>
+          <span>${esc(L("before"))}</span>
+          ${BEFORE_OPTIONS.map(minutes => `<label class="ev-before-chip"><input type="radio" name="remindBefore" value="${minutes}" ${Number(event.remindBefore || 0) === minutes ? "checked" : ""}><b>${esc(beforeLabel(minutes))}</b></label>`).join("")}
+        </div>
+        </div>
 
         <details class="ev-notes" ${notes ? "open" : ""}>
           <summary>${icon("edit")}<strong>${esc(notes ? L("notes") : L("addNotes"))}</strong></summary>
@@ -318,6 +338,9 @@ const EventForm = (() => {
     const alertEl = root.querySelector("[data-ev-alert]");
     const tg = root.querySelector(".ev-telegram");
     const on = form.elements.reminder.checked;
+    const beforeBox = root.querySelector("[data-ev-before]");
+    if (beforeBox) beforeBox.hidden = !on;
+    const before = Number(form.querySelector('input[name="remindBefore"]:checked')?.value || 0);
     let message;
     let tone = "ok";
     if (!on) {
@@ -340,6 +363,7 @@ const EventForm = (() => {
       } else {
         message = `${L("willSend", { when })} · ${L("sendIn", { rel: relative(diff) })}${time ? "" : ` ${L("allDayNote")}`}`;
       }
+      if (before && diff - before * 60000 > -LOOKBACK_MS) message += ` ${L("plusEarly", { rel: beforeLabel(before) })}`;
     }
     if (alertEl) alertEl.textContent = message;
     tg?.setAttribute("data-tone", tone);
@@ -439,6 +463,7 @@ const EventForm = (() => {
     form.querySelectorAll('input[name="category"]').forEach(input => input.addEventListener("change", () => { state.touched.add("category"); syncUi(root); }));
     form.querySelectorAll('input[name="familyMember"]').forEach(input => input.addEventListener("change", () => { state.touched.add("familyMember"); syncUi(root); }));
     form.elements.reminder.addEventListener("change", () => syncUi(root));
+    form.querySelectorAll('input[name="remindBefore"]').forEach(input => input.addEventListener("change", () => syncUi(root)));
 
     const details = root.querySelector(".ev-notes");
     details.addEventListener("toggle", () => {
@@ -461,6 +486,7 @@ const EventForm = (() => {
         category: form.querySelector('input[name="category"]:checked')?.value || "Personal",
         familyMember: form.querySelector('input[name="familyMember"]:checked')?.value ?? form.elements.familyMember?.value ?? "",
         reminder: form.elements.reminder.checked,
+        remindBefore: form.elements.reminder.checked ? Number(form.querySelector('input[name="remindBefore"]:checked')?.value || 0) : 0,
         notes: form.elements.notes.value.trim()
       };
       let invalid = false;
