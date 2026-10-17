@@ -57,7 +57,9 @@ function renderCalendar(view = "month") {
     const isWeekend = date ? date.getDay() === 0 || date.getDay() === 6 : false;
     const holiday = iso ? cambodiaHolidayState.items.find(item => item.date === iso) : null;
     const isSelected = iso === selectedCalendarDate;
-    return `<button class="day ${iso ? "has-date" : "empty-day"} ${isWeekend ? "weekend" : ""} ${holiday ? "public-holiday" : ""} ${isSelected ? "selected-day" : ""}" type="button" ${iso ? `data-calendar-date="${iso}"` : "disabled"} aria-pressed="${isSelected}" aria-label="${iso ? formatDate(iso) : ""}"><strong>${iso ? Number(iso.slice(8)) : ""}</strong>${holiday ? `<span class="holiday-label" title="${escapeAttr(holiday.name)}">${languageCode() === "km" ? "ថ្ងៃឈប់សម្រាក" : "Holiday"}</span>` : ""}<span class="calendar-event-indicators">${calendarEventIndicators(events)}</span></button>`;
+    const todayIso = localDateInput();
+    const dayState = iso ? `${iso === todayIso ? "is-today" : iso < todayIso ? "is-past" : ""} ${events.length ? "has-items" : "no-items"}` : "";
+    return `<button class="day ${iso ? "has-date" : "empty-day"} ${dayState} ${isWeekend ? "weekend" : ""} ${holiday ? "public-holiday" : ""} ${isSelected ? "selected-day" : ""}" type="button" ${iso ? `data-calendar-date="${iso}"` : "disabled"} aria-pressed="${isSelected}" aria-label="${iso ? formatDate(iso) : ""}"><strong>${iso ? Number(iso.slice(8)) : ""}</strong>${holiday ? `<span class="holiday-label" title="${escapeAttr(holiday.name)}">${languageCode() === "km" ? "ថ្ងៃឈប់សម្រាក" : "Holiday"}</span>` : ""}<span class="calendar-event-indicators">${calendarEventIndicators(events)}</span></button>`;
   });
 
   const locale = languageCode() === "km" ? "km-KH" : "en-US";
@@ -109,11 +111,40 @@ function renderCalendar(view = "month") {
           ${weekdayHeaders}
           ${cells.join("")}
         </div>
+        ${calendarLegend(periodEvents)}
       </article>
       ${renderSelectedDayDetails(selectedCalendarDate, periodEvents)}
       ${renderCalendarAgenda(periodEvents)}
     </section>
   `;
+}
+
+// Day card rows: coloured by kind, sorted by time, past items dimmed and the
+// next upcoming item of today marked so it stands out.
+function dayDetailRows(date, events) {
+  const isKm = languageCode() === "km";
+  const today = localDateInput();
+  const now = new Date();
+  const nowTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+  const sorted = events
+    .filter(event => event.source !== "holiday")
+    .sort((a, b) => (a.time || "").localeCompare(b.time || ""));
+  const nextId = date === today ? sorted.find(event => event.time && event.time >= nowTime)?.id : null;
+  return sorted.map(event => {
+    const state = date < today || (date === today && event.time && event.time < nowTime) ? "is-past" : event.id === nextId ? "is-next" : "";
+    const when = event.time ? escapeHtml(event.time) : (isKm ? "ពេញមួយថ្ងៃ" : "All day");
+    const amount = event.amount ? `<span class="cde-amount">${money(event.amount, event.currency)}</span>` : "";
+    const action = event.auto
+      ? (event.href ? `<a class="icon-button cde-action" href="${event.href}" aria-label="${escapeAttr(t("view"))}">${Icons.chevron()}</a>` : "")
+      : `<button class="icon-button cde-action" type="button" data-edit-event="${event.id}" aria-label="${escapeAttr(t("editEvent"))}">${Icons.edit()}</button>`;
+    return `<div class="calendar-detail-event tone-row ${state}" style="${toneStyle(event)}">
+      <span class="cde-icon">${agendaIcon(event)}</span>
+      <div class="cde-main"><strong>${escapeHtml(event.title)}</strong><small>${escapeHtml(optionLabel(event.category || ""))}${event.reminder === false ? ` · ${isKm ? "បិទការរំលឹក" : "No alert"}` : ""}</small></div>
+      ${amount}
+      <span class="cde-time">${state === "is-next" ? `<em>${isKm ? "បន្ទាប់" : "Next"}</em>` : ""}${when}</span>
+      ${action}
+    </div>`;
+  }).join("");
 }
 
 function renderSelectedDayDetails(date, monthEvents) {
@@ -127,7 +158,7 @@ function renderSelectedDayDetails(date, monthEvents) {
         <button class="button ghost-button" type="button" data-action="add-calendar" data-calendar-date="${date}">${Icons.plus()} ${t("addEvent")}</button>
       </div>
       ${holiday ? `<div class="holiday-detail"><span class="holiday-detail-icon">${Icons.calendar()}</span><div><strong>${escapeHtml(holiday.name)}</strong><small>${languageCode() === "km" ? "ថ្ងៃឈប់សម្រាកសាធារណៈកម្ពុជា" : "Cambodia public holiday"}</small></div></div>` : ""}
-      ${events.length ? `<div class="calendar-detail-events">${events.map(event => `<div class="calendar-detail-event"><span class="icon-badge green">${Icons.calendar()}</span><div><strong>${escapeHtml(event.title)}</strong><small>${event.time ? escapeHtml(event.time) : (languageCode() === "km" ? "មិនបានកំណត់ពេល" : "Time not set")}${event.category ? ` · ${escapeHtml(optionLabel(event.category))}` : ""}</small></div></div>`).join("")}</div>` : ""}
+      ${events.length ? `<div class="calendar-detail-events">${dayDetailRows(date, events)}</div>` : ""}
       ${!holiday && !events.length ? `<p class="secondary calendar-detail-empty">${languageCode() === "km" ? "មិនមានព្រឹត្តិការណ៍ ឬថ្ងៃឈប់សម្រាកសម្រាប់ថ្ងៃនេះទេ។" : "No event or public holiday is scheduled for this day."}</p>` : ""}
     </article>
   `;
@@ -408,8 +439,42 @@ function calendarDateInput(date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 
+// One colour per kind of item, shared by the grid chips, day card, agenda and legend.
+const CALENDAR_TONES = {
+  personal: { color: "#5aa9ff", km: "ផ្ទាល់ខ្លួន", en: "Personal" },
+  family: { color: "#ff7eb3", km: "គ្រួសារ", en: "Family" },
+  goal: { color: "#b38cff", km: "គោលដៅ", en: "Goal" },
+  bill: { color: "#ffad4a", km: "វិក្កយបត្រ", en: "Bill" },
+  loan: { color: "#ff6b7a", km: "កម្ចី", en: "Loan" },
+  reminder: { color: "#5fe0a0", km: "ការរំលឹក", en: "Reminder" },
+  income: { color: "#3fd7a4", km: "ចំណូល", en: "Income" },
+  savings: { color: "#4fd0ff", km: "សន្សំ", en: "Savings" },
+  expense: { color: "#a7b3ad", km: "ចំណាយ", en: "Expense" },
+  memory: { color: "#d4b5ff", km: "អនុស្សាវរីយ៍", en: "Memory" },
+  holiday: { color: "#f2c94c", km: "ថ្ងៃឈប់សម្រាក", en: "Holiday" }
+};
+
+function calendarTone(event) {
+  if (!event.source || event.source === "event") {
+    const category = String(event.category || "Personal").toLowerCase();
+    return CALENDAR_TONES[category] ? category : "personal";
+  }
+  return CALENDAR_TONES[event.source] ? event.source : "personal";
+}
+
+function toneStyle(event) {
+  return `--tone:${CALENDAR_TONES[calendarTone(event)].color}`;
+}
+
+function calendarLegend(events) {
+  const used = [...new Set(events.map(calendarTone))];
+  if (!used.length) return "";
+  const isKm = languageCode() === "km";
+  return `<div class="calendar-legend">${Object.keys(CALENDAR_TONES).filter(key => used.includes(key)).map(key => `<span class="calendar-legend-item" style="--tone:${CALENDAR_TONES[key].color}"><i></i>${escapeHtml(isKm ? CALENDAR_TONES[key].km : CALENDAR_TONES[key].en)}</span>`).join("")}</div>`;
+}
+
 function eventChip(event) {
-  return `<span class="event-chip ${event.source || event.category?.toLowerCase() || ""} ${event.auto ? "auto" : ""}" title="${escapeAttr(event.title)}">${escapeHtml(event.title)}</span>`;
+  return `<span class="event-chip tone-chip ${event.source || event.category?.toLowerCase() || ""} ${event.auto ? "auto" : ""}" style="${toneStyle(event)}" title="${escapeAttr(event.title)}">${escapeHtml(event.title)}</span>`;
 }
 
 function calendarEventIndicators(events) {
@@ -492,6 +557,15 @@ function agendaDateHeading(date) {
 }
 
 function agendaIcon(event) {
+  if (!event.source || event.source === "event") {
+    const category = calendarTone(event);
+    if (category === "family") return Icons.family();
+    if (category === "goal") return Icons.target();
+    if (category === "bill") return Icons.bill();
+    if (category === "loan") return Icons.loan();
+    if (category === "reminder") return Icons.bell();
+    return Icons.calendar();
+  }
   if (event.source === "bill") return Icons.bill();
   if (event.source === "loan" || event.source === "income" || event.source === "savings") return Icons.money();
   if (event.source === "goal") return Icons.goal();
@@ -511,7 +585,7 @@ function agendaRow(event) {
     : event.auto
       ? `<a class="icon-button agenda-open" href="${event.href}" aria-label="${escapeAttr(t("view"))}">${Icons.chevron()}</a>`
       : `<button class="icon-button" data-edit-event="${event.id}" aria-label="${t("editEvent")}">${Icons.edit()}</button><button class="icon-button" data-delete-event="${event.id}" aria-label="${t("deleteEvent")}">${Icons.trash()}</button>`;
-  return `<div class="agenda-row src-${escapeAttr(event.source || "event")} ${event.paid ? "is-paid" : ""}">
+  return `<div class="agenda-row src-${escapeAttr(event.source || "event")} ${event.paid ? "is-paid" : ""}" style="--src:${CALENDAR_TONES[calendarTone(event)].color}">
     <span class="agenda-icon">${agendaIcon(event)}</span>
     <div class="agenda-main"><strong>${escapeHtml(event.title)}</strong><span>${when} · ${escapeHtml(optionLabel(event.category))}</span></div>
     ${amount}
