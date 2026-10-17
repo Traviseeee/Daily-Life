@@ -26,6 +26,7 @@ const Modal = {
 
     root.querySelectorAll("[data-close]").forEach(button => button.addEventListener("click", () => this.close()));
     if (grouped) this.bindGroups(root);
+    if (grouped && typeof SetupFormUX !== "undefined") SetupFormUX.enhance(root);
     this.bindImageFileInputs(root);
     root.querySelector("#modalForm").addEventListener("submit", async event => {
       event.preventDefault();

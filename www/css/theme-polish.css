@@ -2327,3 +2327,118 @@ body:has(#modalRoot.open) .quick-action-dock {
 .money-due-card .money-smart-rows { margin-top: 6px; }
 .money-due-card .pill.danger { color: #fff; background: #e5484d; }
 .financial-overview-grid { align-items: start; }
+
+/* =====================================================================
+ * Grouped setup forms (Create user / Edit user data) — js/setup-form-ux.js
+ * Same light card + lime language as the event form.
+ * ===================================================================== */
+:root #modalRoot .modal.modal-setup.su-modern {
+  --ev-ink: #14201b;
+  --ev-ink-2: #4a5750;
+  --ev-ink-3: #85908a;
+  --ev-line: rgba(20, 32, 27, 0.1);
+  --ev-soft: #f2f5ef;
+  --ev-lime: #c5ff60;
+  color: var(--ev-ink);
+  background: #fbfcf9 !important;
+  border-radius: 26px;
+  color-scheme: light;
+}
+:root #modalRoot .su-modern .su-head { display: flex; align-items: center; gap: 12px; justify-content: flex-start; }
+:root #modalRoot .su-modern .su-head .section-title { flex: 1; margin: 0; color: var(--ev-ink) !important; }
+:root #modalRoot .su-modern .su-head-icon { display: grid; place-items: center; width: 40px; height: 40px; flex: 0 0 auto; border-radius: 13px; color: #1d3a08; background: linear-gradient(135deg, #e3ffb0, var(--ev-lime)); }
+
+/* tabs */
+:root #modalRoot .su-modern .setup-layout { min-height: 0 !important; gap: 14px; }
+:root #modalRoot .su-modern .setup-sidebar { gap: 6px; padding: 6px !important; border: 1px solid var(--ev-line) !important; border-radius: 16px !important; background: #ffffff !important; }
+:root #modalRoot .su-modern .setup-tab { min-height: 40px; border-radius: 12px !important; color: var(--ev-ink-2) !important; background: transparent !important; border: 0 !important; }
+:root #modalRoot .su-modern .setup-tab:hover { background: var(--ev-soft) !important; }
+:root #modalRoot .su-modern .setup-tab.active { color: #142a04 !important; background: var(--ev-lime) !important; box-shadow: 0 6px 16px rgba(130, 200, 40, 0.28) !important; }
+:root #modalRoot .su-modern .setup-tab svg { color: inherit !important; }
+
+/* panel */
+:root #modalRoot .su-modern .setup-panels { height: auto !important; max-height: min(62vh, 640px); overflow: auto; }
+:root #modalRoot .su-modern .setup-panel .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; padding: 14px; border: 1px solid var(--ev-line); border-radius: 18px; background: #ffffff; }
+:root #modalRoot .su-modern .setup-panel .field:has(textarea),
+:root #modalRoot .su-modern .setup-panel .field:has(.su-chips),
+:root #modalRoot .su-modern .setup-panel .field:has(.su-photo) { grid-column: 1 / -1; }
+:root #modalRoot .su-modern .field-heading { margin-bottom: 10px; padding-left: 12px; border-left: 3px solid var(--ev-lime); }
+:root #modalRoot .su-modern .field-heading h3 { color: var(--ev-ink) !important; }
+:root #modalRoot .su-modern .field-heading p { color: var(--ev-ink-3) !important; }
+:root #modalRoot .su-modern .field > label { font-size: 0.8rem; font-weight: 700; color: var(--ev-ink-2) !important; }
+:root #modalRoot .modal.su-modern.su-modern input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+:root #modalRoot .modal.su-modern.su-modern select,
+:root #modalRoot .modal.su-modern.su-modern textarea {
+  min-height: 44px;
+  border-radius: 13px;
+  color: var(--ev-ink) !important;
+  -webkit-text-fill-color: var(--ev-ink);
+  background: #ffffff !important;
+  border: 1px solid var(--ev-line) !important;
+}
+:root #modalRoot .modal.su-modern.su-modern input:focus,
+:root #modalRoot .modal.su-modern.su-modern select:focus,
+:root #modalRoot .modal.su-modern.su-modern textarea:focus { border-color: #7cc23a !important; box-shadow: 0 0 0 4px rgba(124, 194, 58, 0.18) !important; outline: none; }
+
+/* chips for short selects */
+:root #modalRoot .su-modern .su-hidden { position: absolute !important; width: 1px !important; height: 1px !important; opacity: 0 !important; pointer-events: none !important; }
+:root #modalRoot .su-modern .field { position: relative; }
+:root #modalRoot .su-modern .su-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+:root #modalRoot .su-modern .su-chip {
+  min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid var(--ev-line) !important;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--ev-ink-2) !important;
+  background: var(--ev-soft) !important;
+  cursor: pointer;
+}
+:root #modalRoot .su-modern .su-chip.active { color: #142a04 !important; background: var(--ev-lime) !important; border-color: #a6e33f !important; box-shadow: 0 6px 16px rgba(130, 200, 40, 0.28); }
+
+/* photo picker */
+:root #modalRoot .su-modern .su-photo { display: flex; align-items: center; gap: 14px; padding: 12px; border: 1.5px dashed rgba(20, 32, 27, 0.18); border-radius: 18px; background: #fbfff3; cursor: pointer; }
+:root #modalRoot .su-modern .su-photo:hover { border-color: #a6e33f; }
+:root #modalRoot .su-modern .su-photo-img { display: grid; place-items: center; width: 60px; height: 60px; flex: 0 0 auto; overflow: hidden; border-radius: 50%; color: #3d6b0d; background: linear-gradient(135deg, #f1ffdc, #e3ffb0); box-shadow: 0 0 0 3px #c5ff60; }
+:root #modalRoot .su-modern .su-photo-img img { width: 100%; height: 100%; object-fit: cover; }
+:root #modalRoot .su-modern .su-photo-copy { display: grid; gap: 2px; flex: 1; min-width: 0; }
+:root #modalRoot .su-modern .su-photo-copy strong { font-size: 0.92rem; color: var(--ev-ink) !important; }
+:root #modalRoot .su-modern .su-photo-copy small { overflow: hidden; font-size: 0.76rem; white-space: nowrap; text-overflow: ellipsis; color: var(--ev-ink-3) !important; }
+:root #modalRoot .su-modern .su-photo-btn { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 12px; color: #142a04; background: var(--ev-lime); }
+
+/* yes/no as switches */
+:root #modalRoot .su-modern .field-inline { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; border: 1px solid var(--ev-line); border-radius: 14px; background: var(--ev-soft); }
+:root #modalRoot .su-modern input.su-switch {
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  width: 46px;
+  height: 28px;
+  flex: 0 0 auto;
+  margin: 0;
+  border-radius: 999px;
+  background: #c9d0cc;
+  cursor: pointer;
+  transition: background 160ms ease;
+}
+:root #modalRoot .su-modern input.su-switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: #ffffff; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2); transition: transform 160ms ease; }
+:root #modalRoot .su-modern input.su-switch:checked { background: #5a9a1c; }
+:root #modalRoot .su-modern input.su-switch:checked::after { transform: translateX(18px); }
+
+/* footer */
+:root #modalRoot .su-modern > .between:last-child { gap: 10px; }
+:root #modalRoot .su-modern .ev-submit { display: inline-flex; align-items: center; gap: 8px; color: #142a04 !important; background: linear-gradient(135deg, #dcff9c, var(--ev-lime)) !important; border: 1px solid #a6e33f !important; box-shadow: 0 10px 22px rgba(130, 200, 40, 0.3); }
+:root #modalRoot .su-modern .ev-submit svg { width: 18px; height: 18px; }
+:root #modalRoot .su-modern .ghost-button { color: var(--ev-ink-2) !important; background: var(--ev-soft) !important; border: 1px solid var(--ev-line) !important; }
+
+@media (max-width: 720px) {
+  :root #modalRoot .su-modern .setup-panel .form-grid { grid-template-columns: 1fr; padding: 12px; }
+  :root #modalRoot .su-modern .setup-panels { max-height: none; }
+}
+:root #modalRoot .modal.modal-setup.su-modern { height: auto !important; min-height: 0 !important; overflow-x: hidden; }
+:root #modalRoot .su-modern .setup-layout { min-width: 0; }
+:root #modalRoot .su-modern .setup-sidebar { max-width: 100%; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+:root #modalRoot .su-modern .setup-sidebar::-webkit-scrollbar { display: none; }
+:root #modalRoot .su-modern .setup-panels { min-width: 0; }
