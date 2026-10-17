@@ -310,6 +310,7 @@ const EventForm = (() => {
 
         <div class="ev-foot">
           <small class="ev-shortcut">${esc(L("shortcut"))}</small>
+          ${event.id ? `<button class="icon-button ev-delete" type="button" data-ev-delete aria-label="${escapeAttr(t("deleteEvent"))}" title="${escapeAttr(t("deleteEvent"))}">${Icons.trash()}</button>` : ""}
           <button class="button ghost-button" type="button" data-close>${t("cancel")}</button>
           <button class="button ev-submit" type="submit">${icon("check")}${event.id ? t("saveEvent") : t("addEvent")}</button>
         </div>
@@ -435,6 +436,12 @@ const EventForm = (() => {
     if (event.familyMember) state.touched.add("familyMember");
 
     const form = root.querySelector("#modalForm");
+    root.querySelector("[data-ev-delete]")?.addEventListener("click", () => {
+      Modal.confirm({ title: t("deleteEvent"), message: t("deleteEventMessage"), confirmText: t("delete"), onConfirm: () => {
+        Store.delete("calendarEvents", event.id);
+        Toast.show(t("eventDeleted"));
+      } });
+    });
     Modal.escapeHandler = e => {
       if (e.key === "Escape") Modal.close();
     };

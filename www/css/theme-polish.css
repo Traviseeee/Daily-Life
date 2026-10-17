@@ -2666,3 +2666,8 @@ body:has(#modalRoot.open) .quick-action-dock {
 }
 :root #modalRoot .hobby-form-modal .hf-min-row { flex-wrap: wrap; overflow: visible; }
 :root #modalRoot .hobby-form-modal .hf-cats .ev-cat b { white-space: normal; overflow: visible; text-overflow: clip; line-height: 1.25; }
+
+/* Delete button in the edit-event form */
+:root #modalRoot .event-modal .ev-foot .ev-delete { flex: 0 0 auto; width: 46px; height: 46px; display: grid; place-items: center; border-radius: 16px; border: 1px solid #f5c2c2 !important; background: #fff1f1 !important; color: #d93636 !important; }
+:root #modalRoot .event-modal .ev-foot .ev-delete:hover { background: #ffe1e1 !important; border-color: #ef8f8f !important; }
+:root #modalRoot .event-modal .ev-foot .ev-delete svg { width: 19px; height: 19px; }
