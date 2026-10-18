@@ -2879,3 +2879,38 @@ body:has(#modalRoot.open) .quick-action-dock {
 .financial-report-panel .fri-bar i { height: 10px; border-radius: 999px; background: rgba(127, 140, 130, 0.18); overflow: hidden; }
 .financial-report-panel .fri-bar b { display: block; height: 100%; border-radius: inherit; }
 .financial-report-panel .fri-bar em { font-style: normal; font-weight: 800; text-align: right; color: var(--rp-ink-2); }
+
+/* Reports toolbar: title · month · 3 equal buttons */
+.financial-report-panel .financial-report-toolbar {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 240px);
+  align-items: center;
+  gap: 14px 16px !important;
+}
+.financial-report-panel .financial-report-heading { grid-column: 1; min-width: 0; display: flex; align-items: center; gap: 12px; }
+.financial-report-panel .financial-report-heading .section-title { font-size: 1.05rem; line-height: 1.35; }
+.financial-report-panel .financial-report-month { grid-column: 2; margin: 0 !important; display: grid; gap: 6px; }
+.financial-report-panel .financial-report-month > span { font-size: 0.78rem; }
+.financial-report-panel .financial-report-month input { width: 100%; height: 44px; border-radius: 14px !important; }
+.financial-report-panel .financial-report-export-actions {
+  grid-column: 1 / -1;
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px !important;
+}
+.financial-report-panel .financial-report-export-actions .button {
+  width: 100%;
+  min-width: 0;
+  height: 46px;
+  justify-content: center;
+  padding: 0 10px !important;
+  border-radius: 14px !important;
+  font-size: 0.86rem;
+  white-space: nowrap;
+}
+.financial-report-panel .financial-report-export-actions .button svg { flex: 0 0 auto; width: 16px; height: 16px; }
+@media (max-width: 560px) {
+  .financial-report-panel .financial-report-toolbar { grid-template-columns: minmax(0, 1fr); }
+  .financial-report-panel .financial-report-month { grid-column: 1; }
+  .financial-report-panel .financial-report-export-actions .button { flex-direction: column; height: 58px; gap: 3px; font-size: 0.78rem; }
+}
