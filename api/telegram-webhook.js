@@ -75,7 +75,7 @@ function applyDone(payload, item) {
       const existing = payload.expenses.find(entry => entry.billId === bill.id && entry.date === today);
       const expenseId = existing?.id || `expenses-bill-${bill.id}-${Date.now()}`;
       if (!existing) {
-        payload.expenses.push({ id: expenseId, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), description: bill.name || "Bill", amount: Number(bill.amount), currency: bill.currency || payload.profile?.currency || "USD", date: today, category: "Bills", method: "Telegram", notes: "Bill", billId: bill.id });
+        payload.expenses.push({ id: expenseId, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), description: bill.name || "Bill", amount: Number(bill.amount), currency: bill.currency || payload.profile?.currency || "USD", date: today, category: "Bills", method: "Telegram", notes: "Bill", billId: bill.id, source: "telegram" });
       }
       bill.lastPaidExpenseId = expenseId;
     }
@@ -238,10 +238,10 @@ function entryRecord(entry, today, fallbackCurrency) {
   const date = entry.date || today;
   if (entry.type === "income") {
     const id = recordId("income");
-    return { collection: "income", record: { id, createdAt: now, updatedAt: now, name: entry.description || INCOME_KM[entry.category] || "Income", amount: entry.amount, currency: entry.currency || fallbackCurrency, category: entry.category || "Other", frequency: "Once", recurring: false, nextPaymentDate: date, notes: "Telegram" } };
+    return { collection: "income", record: { id, createdAt: now, updatedAt: now, name: entry.description || INCOME_KM[entry.category] || "Income", amount: entry.amount, currency: entry.currency || fallbackCurrency, category: entry.category || "Other", frequency: "Once", recurring: false, nextPaymentDate: date, notes: "Telegram", source: "telegram" } };
   }
   const id = recordId("expenses");
-  return { collection: "expenses", record: { id, createdAt: now, updatedAt: now, description: entry.description || CATEGORY_KM[entry.category] || entry.category, amount: entry.amount, currency: entry.currency || fallbackCurrency, category: entry.category || "Other", date, method: "Telegram", notes: "" } };
+  return { collection: "expenses", record: { id, createdAt: now, updatedAt: now, description: entry.description || CATEGORY_KM[entry.category] || entry.category, amount: entry.amount, currency: entry.currency || fallbackCurrency, category: entry.category || "Other", date, method: "Telegram", notes: "", source: "telegram" } };
 }
 
 // Reply text for saved money lines, read from the saved payload so budget % is exact.
@@ -351,7 +351,8 @@ async function handleMessage(message, redis) {
     category: parsed.category || "Personal",
     familyMember: parsed.familyMember || "",
     reminder: true,
-    notes: ""
+    notes: "",
+    source: "telegram"
   };
   await updatePayload(userId, data => {
     data.calendarEvents = Array.isArray(data.calendarEvents) ? data.calendarEvents : [];
