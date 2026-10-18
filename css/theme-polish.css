@@ -2784,3 +2784,18 @@ body:has(#modalRoot.open) .quick-action-dock {
 :root #modalRoot .event-modal .ev-bill-hint[hidden] { display: none; }
 :root #modalRoot .event-modal .ev-bill-hint span { flex: 1; min-width: 0; color: #8a4b08 !important; }
 :root #modalRoot .event-modal .ev-bill-hint button { flex: 0 0 auto; padding: 7px 12px; border: 0; border-radius: 999px; font: inherit; font-weight: 700; font-size: 0.8rem; color: #ffffff !important; background: #e0702a !important; cursor: pointer; }
+
+/* Settings: no extra box inside each opened section (the section card is the box) */
+.settings-accordion-body .glass-card,
+.settings-accordion-body .settings-section-grid > article {
+  border: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+.settings-accordion-body .settings-preference-list {
+  border: 0 !important;
+  background: transparent !important;
+  padding: 0 !important;
+}
