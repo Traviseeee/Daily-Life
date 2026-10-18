@@ -10,6 +10,7 @@ const { sendAlert, flushSnoozes, ensureWebhook } = require("../lib/telegram");
 const { budgetAlerts, weeklyReport, CATEGORY_KM } = require("../lib/money-report");
 const { frequentExpenses, unusualToday, convert } = require("../lib/money-insights");
 const { payBill } = require("../lib/bill-pay");
+const { updatePayloadSafe } = require("../lib/payload-store");
 
 // Redis dedupe makes a wide window safe: a late or skipped scheduler run still
 // delivers alerts that came due in the last 30 minutes, exactly once.
@@ -578,11 +579,13 @@ function notificationItems(payload) {
     }
   }
 
-  // 1st of the month, 09:00: picture of last month
-  if (profile.monthlyImage !== false && today.endsWith("-01")) {
-    const last = addDaysInput(today, -1).slice(0, 7);
+  // Fallback on the 2nd, 09:00: picture of last month — only if the app has not
+  // already sent its full report (JPG + Excel) when it was opened in the new month.
+  if (profile.monthlyImage !== false && today.endsWith("-02")) {
+    const last = addDaysInput(today, -2).slice(0, 7);
     items.push({
       kind: "monthly-image", id: `monthly-image-${last}`, title: "MYLIFE monthly image", date: today, time: "09:00", hasTime: true, url: "/#money/reports",
+      skipKey: userId => `mylife:report-sent:${userId}:${last}`,
       makeFile: async () => ({
         method: "sendPhoto", field: "photo", mime: "image/png", filename: `mylife-month-${last}.png`,
         buffer: Buffer.from(await require("../lib/report-image").monthlyImage(payload, last)),
@@ -668,21 +671,18 @@ async function autoPayBills(supabase, redis, userId, rawPayload) {
   }
   if (!claimed.length) return "duplicate";
 
-  const { data, error } = await supabase.from("app_data").select("payload").eq("user_id", userId).maybeSingle();
-  if (error) throw error;
-  if (!data) return "skipped";
-  const wasString = typeof data.payload === "string";
-  const fresh = wasString ? JSON.parse(data.payload || "{}") : data.payload || {};
   const paid = [];
-  (fresh.bills || []).forEach(bill => {
-    if (!claimed.includes(bill.id)) return;
-    if (payBill(fresh, bill, today, "Auto-pay") === "updated") paid.push(bill);
+  let fresh = null;
+  await updatePayloadSafe(supabase, userId, payload => {
+    paid.length = 0;
+    (payload.bills || []).forEach(bill => {
+      if (!claimed.includes(bill.id)) return;
+      if (payBill(payload, bill, today, "Auto-pay") === "updated") paid.push(bill);
+    });
+    fresh = payload;
+    return paid.length ? "updated" : "skipped";
   });
   if (!paid.length) return "skipped";
-  const { error: saveError } = await supabase.from("app_data")
-    .update({ payload: wasString ? JSON.stringify(fresh) : fresh, updated_at: new Date().toISOString() })
-    .eq("user_id", userId);
-  if (saveError) throw saveError;
 
   const currency = fresh.profile?.currency || "USD";
   await sendAlert({
@@ -743,6 +743,7 @@ async function sendTelegram(item, userId, redis) {
   const lockKey = `mylife:telegram:lock:${marker}`;
 
   if (await redis.get(sentKey)) return "duplicate";
+  if (typeof item.skipKey === "function" && await redis.get(item.skipKey(userId))) return "skipped";
 
   const claimed = await redis.set(lockKey, "1", {
     nx: true,

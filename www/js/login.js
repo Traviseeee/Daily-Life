@@ -197,8 +197,9 @@ const Login = {
         }
 
         if (name) {
-          const displayName = name.split("@")?.[0] || appData.profile.name || "User";
-          Store.updateProfile({ name: displayName, email }, { sync: false });
+          // Keep the name the user chose (e.g. "Tra"). Writing the email prefix here
+          // used to look like a newer edit and overwrote the cloud name on every login.
+          Store.updateProfile({ email }, { sync: false });
           Store.migrateLegacyLocalData();
         }
 
@@ -213,6 +214,8 @@ const Login = {
         // cached payload only when it belongs to a different account, so signing up
         // on a device that already holds offline data keeps that data.
         await Store.syncFromSupabase();
+        // only a brand-new account with no name gets one from the email
+        if (!String(appData.profile.name || "").trim()) Store.updateProfile({ name: email.split("@")[0] || "User" }, { sync: false });
         await Store.syncToSupabase();
         this.authenticated = true;
         this.setRememberedSession(rememberMe);

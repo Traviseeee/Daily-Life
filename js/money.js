@@ -754,6 +754,7 @@ function renderReports() {
       <label class="field financial-report-month"><span>${t("reportMonth")}</span><input type="month" value="${escapeAttr(month)}" data-finance-report-month></label>
       <div class="financial-report-export-actions">
         <button class="button" type="button" data-finance-report-export="excel">${Icons.arrowDown()} ${t("exportExcel")}</button>
+        <button class="button finance-report-telegram" type="button" data-finance-report-telegram>📤 ${languageCode() === "km" ? "ផ្ញើទៅ Telegram" : "Send to Telegram"}</button>
         <button class="button ghost-button" type="button" data-finance-report-export="word">${Icons.arrowDown()} ${t("exportWord")}</button>
         <button class="button ghost-button" type="button" data-finance-report-preview>${Icons.memory()} ${t("previewJpg")}</button>
       </div>

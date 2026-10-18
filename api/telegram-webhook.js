@@ -11,6 +11,7 @@ const { parseEvent, parseMoney } = require("../lib/smart-parse");
 const { monthSpending, formatMoney, convert, CATEGORY_KM, weeklyReport } = require("../lib/money-report");
 const { digestItem, eveningItem } = require("./dispatch");
 const { payBill } = require("../lib/bill-pay");
+const { updatePayloadSafe } = require("../lib/payload-store");
 
 const APP_TIME_ZONE = "Asia/Phnom_Penh";
 
@@ -112,20 +113,7 @@ function recordId(collection) {
 }
 
 async function updatePayload(userId, mutate) {
-  const supabase = serviceClient();
-  const { data, error } = await supabase.from("app_data").select("payload").eq("user_id", userId).maybeSingle();
-  if (error) throw error;
-  if (!data) return "missing";
-  const wasString = typeof data.payload === "string";
-  const payload = wasString ? JSON.parse(data.payload || "{}") : data.payload || {};
-  const result = mutate(payload);
-  if (result !== "updated") return result;
-  const { error: saveError } = await supabase
-    .from("app_data")
-    .update({ payload: wasString ? JSON.stringify(payload) : payload, updated_at: new Date().toISOString() })
-    .eq("user_id", userId);
-  if (saveError) throw saveError;
-  return "updated";
+  return updatePayloadSafe(serviceClient(), userId, mutate);
 }
 
 const DONE_TEXT = {
@@ -157,7 +145,8 @@ const HELP_TEXT = [
   "🌙 <code>/evening</code> — សួរពេលយប់ (ប៊ូតុងចំណាយញឹកញាប់)",
   "📈 <code>/week</code> — របាយការណ៍ 7 ថ្ងៃ + រូប",
   "🗓️ <code>/month</code> — រូបរបាយការណ៍ខែនេះ",
-  "💾 <code>/backup</code> — ឯកសារ backup JSON"
+  "💾 <code>/backup</code> — ឯកសារ backup JSON",
+  "☰ <code>/menu</code> — ម៉ឺនុយប៊ូតុង"
 ].join("\n");
 
 async function reply(message, text, keyboard) {
@@ -307,10 +296,100 @@ function moneyKeyboard(token, saved, mode = "main") {
   return { inline_keyboard: [top, [{ text: "📱 បើក MYLIFE", url: appLink({ url }) }]] };
 }
 
+/* ---------------- menu + commands ---------------- */
+
+// persistent buttons under the chat box
+const REPLY_KEYBOARD = {
+  keyboard: [[{ text: "☀️ ថ្ងៃនេះ" }, { text: "🌙 កត់ចំណាយ" }], [{ text: "📊 របាយការណ៍" }, { text: "☰ ម៉ឺនុយ" }]],
+  resize_keyboard: true,
+  is_persistent: true,
+  input_field_placeholder: "coffee 2 · ស្អែក 9 ព្រឹក ជួបម៉ាក់"
+};
+
+const COMMAND_WORDS = [
+  ["help", /^\/(start|help)\b|^ជំនួយ$|^❓/i],
+  ["menu", /^\/menu\b|^☰|^ម៉ឺនុយ$|^menu$/i],
+  ["reports", /^\/report\b|^📊 របាយការណ៍$|^របាយការណ៍$/i],
+  ["today", /^\/today\b|^☀️ ថ្ងៃនេះ$|^ថ្ងៃនេះ$/i],
+  ["evening", /^\/evening\b|^🌙 កត់ចំណាយ$/i],
+  ["week", /^\/week\b/i],
+  ["month", /^\/month\b/i],
+  ["lastmonth", /^\/lastmonth\b/i],
+  ["backup", /^\/backup\b/i]
+];
+
+function commandOf(text) {
+  const found = COMMAND_WORDS.find(([, re]) => re.test(text));
+  return found ? found[0] : "";
+}
+
+function menuKeyboard() {
+  const b = (text, key) => ({ text, callback_data: `m|${key}` });
+  return {
+    inline_keyboard: [
+      [b("☀️ ថ្ងៃនេះ", "today"), b("🌙 កត់ចំណាយ", "evening")],
+      [b("📈 7 ថ្ងៃ", "week"), b("🗓️ ខែនេះ", "month")],
+      [b("📅 ខែមុន", "lastmonth"), b("💾 Backup", "backup")],
+      [{ text: "📑 របាយការណ៍ JPG + Excel (app)", url: appLink({ url: "/#money/reports" }) }],
+      [b("❓ ជំនួយ", "help"), { text: "📱 បើក MYLIFE", url: appLink({ url: "/" }) }]
+    ]
+  };
+}
+
+function reportsKeyboard() {
+  const b = (text, key) => ({ text, callback_data: `m|${key}` });
+  return {
+    inline_keyboard: [
+      [b("📈 7 ថ្ងៃចុងក្រោយ", "week")],
+      [b("🗓️ ខែនេះ (ដល់ថ្ងៃនេះ)", "month"), b("📅 ខែមុន", "lastmonth")],
+      [{ text: "📑 JPG + Excel ពី app", url: appLink({ url: "/#money/reports" }) }]
+    ]
+  };
+}
+
+async function runCommand(command, { message, userId, payload, today, redis }) {
+  const images = () => require("../lib/report-image");
+  switch (command) {
+    case "help":
+      return reply(message, HELP_TEXT, REPLY_KEYBOARD);
+    case "menu":
+      return reply(message, "☰ <b>ម៉ឺនុយ MYLIFE</b>\n<i>ជ្រើសខាងក្រោម ឬវាយសារ ឧ.</i> <code>coffee 2</code>", menuKeyboard());
+    case "reports":
+      return reply(message, "📊 <b>របាយការណ៍</b> — ជ្រើសមួយ", reportsKeyboard());
+    case "today": {
+      const digest = digestItem({ ...payload, profile: { ...(payload.profile || {}), morningDigest: true } }, today);
+      return reply(message, buildTelegramText({ ...digest, heading: "📋 <b>សង្ខេបថ្ងៃនេះ · Today</b>" }));
+    }
+    case "evening":
+      return sendAlert(eveningItem(payload, today, "21:00"), userId, redis);
+    case "week": {
+      await reply(message, buildWeeklyText({ kind: "weekly", url: "/#money/reports", weekly: weeklyReport(payload, today) }));
+      const png = await images().weeklyImage(payload, today);
+      return tgUpload("sendPhoto", "photo", Buffer.from(png), `mylife-week-${today}.png`, "image/png", { caption: "📊 <b>របាយការណ៍ 7 ថ្ងៃ</b>", parse_mode: "HTML" });
+    }
+    case "month":
+    case "lastmonth": {
+      const month = command === "month" ? today.slice(0, 7) : (() => { const [y, m] = today.split("-").map(Number); return m === 1 ? `${y - 1}-12` : `${y}-${String(m - 1).padStart(2, "0")}`; })();
+      const png = await images().monthlyImage(payload, month);
+      return tgUpload("sendPhoto", "photo", Buffer.from(png), `mylife-month-${month}.png`, "image/png", {
+        caption: command === "month" ? "🗓️ <b>របាយការណ៍ខែនេះ (ដល់ថ្ងៃនេះ)</b>" : "📅 <b>របាយការណ៍ខែមុន</b>",
+        parse_mode: "HTML",
+        reply_markup: { inline_keyboard: [[{ text: "📑 Excel ពី app", url: appLink({ url: "/#money/reports" }) }]] }
+      });
+    }
+    case "backup":
+      return tgUpload("sendDocument", "document", Buffer.from(JSON.stringify(payload, null, 1)), `mylife-backup-${today}.json`, "application/json", { caption: `💾 <b>Backup</b> · ${today}\nរក្សាទុកឯកសារនេះ។ ពេលត្រូវការ៖ Settings → Import`, parse_mode: "HTML" });
+    default:
+      return null;
+  }
+}
+
 async function handleMessage(message, redis) {
-  const text = String(message.text || "").trim();
+  // "/week@MyBot" in groups → "/week"
+  const text = String(message.text || "").trim().replace(/^(\/[a-z]+)@\w+/i, "$1");
   if (!text) return;
-  if (/^\/(start|help)\b|^ជំនួយ$/i.test(text)) return reply(message, HELP_TEXT);
+  const command = commandOf(text);
+  if (command === "help") return reply(message, HELP_TEXT, REPLY_KEYBOARD);
 
   const userId = await ownerUserId(redis);
   if (!userId) {
@@ -319,29 +398,7 @@ async function handleMessage(message, redis) {
   const payload = await readPayload(userId);
   if (!payload) return reply(message, "⚠️ រកមិនឃើញទិន្នន័យ MYLIFE · No MYLIFE data found");
   const today = zonedToday();
-
-  if (/^\/today\b|^ថ្ងៃនេះ$/i.test(text)) {
-    const digest = digestItem({ ...payload, profile: { ...(payload.profile || {}), morningDigest: true } }, today);
-    return reply(message, buildTelegramText({ ...digest, heading: "📋 <b>សង្ខេបថ្ងៃនេះ · Today</b>" }));
-  }
-
-  // on-demand versions of the scheduled messages
-  if (/^\/evening\b/i.test(text)) {
-    await sendAlert(eveningItem(payload, today, "21:00"), userId, redis);
-    return null;
-  }
-  if (/^\/week\b/i.test(text)) {
-    await reply(message, buildWeeklyText({ kind: "weekly", url: "/#money/reports", weekly: weeklyReport(payload, today) }));
-    const png = await require("../lib/report-image").weeklyImage(payload, today);
-    return tgUpload("sendPhoto", "photo", Buffer.from(png), `mylife-week-${today}.png`, "image/png", { caption: "📊 <b>របាយការណ៍ 7 ថ្ងៃ</b>", parse_mode: "HTML" });
-  }
-  if (/^\/month\b/i.test(text)) {
-    const png = await require("../lib/report-image").monthlyImage(payload, today.slice(0, 7));
-    return tgUpload("sendPhoto", "photo", Buffer.from(png), `mylife-month-${today.slice(0, 7)}.png`, "image/png", { caption: "🗓️ <b>របាយការណ៍ខែនេះ (ដល់ថ្ងៃនេះ)</b>", parse_mode: "HTML" });
-  }
-  if (/^\/backup\b/i.test(text)) {
-    return tgUpload("sendDocument", "document", Buffer.from(JSON.stringify(payload, null, 1)), `mylife-backup-${today}.json`, "application/json", { caption: `💾 <b>Backup</b> · ${today}\nរក្សាទុកឯកសារនេះ។ ពេលត្រូវការ៖ Settings → Import`, parse_mode: "HTML" });
-  }
+  if (command) return runCommand(command, { message, userId, payload, today, redis });
 
   const currency = payload.profile?.currency || "USD";
   const rows = text.split(/\n+/).map(line => line.trim()).filter(Boolean);
@@ -451,6 +508,18 @@ module.exports = async (req, res) => {
     }
 
     const [verb, token] = String(query.data || "").split("|");
+    if (verb === "m" && token) {
+      const redisMenu = getRedis();
+      const userId = await ownerUserId(redisMenu);
+      if (!userId && token !== "help") {
+        await answer("⚠️ មិនទាន់ភ្ជាប់គណនី");
+        return res.status(200).json({ ok: true });
+      }
+      await answer(["week", "month", "lastmonth", "backup"].includes(token) ? "⏳ កំពុងរៀបចំ…" : "👌");
+      const payload = userId ? await readPayload(userId) : null;
+      await runCommand(token, { message: { chat: { id: chatId }, message_id: query.message?.message_id }, userId, payload: payload || {}, today: zonedToday(), redis: redisMenu });
+      return res.status(200).json({ ok: true });
+    }
     if (verb === "noop" || !token) {
       await answer("👌");
       return res.status(200).json({ ok: true });

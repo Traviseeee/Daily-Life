@@ -25,7 +25,8 @@ function renderAutomationCard() {
         ${row("eveningCheck", p.eveningCheck !== false, isKm ? "🌙 សួរពេលយប់" : "🌙 Evening check", isKm ? "\"មានចាយអ្វីទៀតទេ?\" ជាមួយប៊ូតុងចំណាយញឹកញាប់" : "\"Anything else today?\" with one-tap frequent expenses", "eveningCheckTime", p.eveningCheckTime || "21:00")}
         ${row("unusualAlert", p.unusualAlert !== false, isKm ? "⚠️ ព្រមានចាយមិនធម្មតា" : "⚠️ Unusual spending", isKm ? "ពេលថ្ងៃនេះចាយច្រើនជាងធម្មតា 3 ដង" : "When today is 3× a normal day")}
         ${row("weeklyImage", p.weeklyImage !== false, isKm ? "🖼️ រូបរបាយការណ៍ប្រចាំសប្តាហ៍" : "🖼️ Weekly report picture", isKm ? "រូបភាពក្រាហ្វ ផ្ញើជាមួយរបាយការណ៍ថ្ងៃអាទិត្យ" : "Chart picture with the Sunday report")}
-        ${row("monthlyImage", p.monthlyImage !== false, isKm ? "🗓️ រូបរបាយការណ៍ប្រចាំខែ" : "🗓️ Monthly report picture", isKm ? "ថ្ងៃទី 1 ម៉ោង 9 ព្រឹក សម្រាប់ខែមុន" : "On the 1st at 9:00, for last month")}
+        ${row("monthlyImage", p.monthlyImage !== false, isKm ? "🗓️ រូបរបាយការណ៍ប្រចាំខែ" : "🗓️ Monthly report picture", isKm ? "បម្រុង៖ ថ្ងៃទី 2 ម៉ោង 9 ព្រឹក ប្រសិនបើ app មិនទាន់ផ្ញើ" : "Backup: on the 2nd at 9:00 if the app has not sent it")}
+        ${row("reportAutoSend", p.reportAutoSend !== false, isKm ? "📤 របាយការណ៍ខែ (JPG + Excel)" : "📤 Monthly report (JPG + Excel)", isKm ? "ផ្ញើរបាយការណ៍ខែមុន ពេលបើក app លើកដំបូងនៃខែថ្មី" : "Sends last month's report the first time the app opens in a new month")}
         ${row("telegramBackup", p.telegramBackup !== false, isKm ? "💾 Backup ទៅ Telegram" : "💾 Backup to Telegram", isKm ? "ឯកសារ JSON រៀងរាល់ថ្ងៃអាទិត្យ (Import វិញបាន)" : "JSON file every Sunday (can be imported)")}
       </div>
       <details class="auto-help">
