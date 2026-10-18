@@ -395,6 +395,11 @@ function daysBetween(a, b) {
   return Math.round((toDay(b) - toDay(a)) / 86400000);
 }
 
+function addDaysIso(iso, days) {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d + days)).toISOString().slice(0, 10);
+}
+
 function dueLine(bill) {
   if (!bill?.due) return "";
   const date = dateLabels(bill.due);
@@ -415,22 +420,56 @@ async function handleUtility(message, notice, redis) {
   const bill = payload ? findUtilityBill(payload.bills, notice.provider) : null;
 
   if (notice.type === "invoice") {
+    // save it in the app: the matching bill gets the invoice link (or a new bill is made)
+    let saved = bill;
+    let created = false;
+    const oldInvoice = notice.date && daysBetween(notice.date, today) > 20;
+    if (userId && payload && !oldInvoice) {
+      await updatePayload(userId, data => {
+        data.bills = Array.isArray(data.bills) ? data.bills : [];
+        const now = new Date().toISOString();
+        let target = findUtilityBill(data.bills, notice.provider);
+        if (!target) {
+          created = true;
+          target = {
+            id: recordId("bills"),
+            createdAt: now,
+            name: `${info.en} (${info.company})`,
+            amount: 0,
+            currency: "KHR",
+            frequency: "Monthly",
+            due: addDaysIso(today, 7),
+            category: "Utilities",
+            reminder: true,
+            notes: "បង្កើតពីវិក្កយបត្រ Telegram — សូមកែថ្ងៃផុតកំណត់ · Made from a Telegram invoice, check the due date",
+            status: "Upcoming",
+            source: "telegram"
+          };
+          data.bills.push(target);
+        }
+        Object.assign(target, { invoiceUrl: notice.url, invoiceRef: notice.ref, invoiceAt: now, updatedAt: now });
+        saved = { ...target };
+        return "updated";
+      });
+    }
     const keyboard = [];
-    if (bill && userId) {
-      const token = await saveAction(redis, { userId, item: { kind: "bill", id: bill.id, sourceId: bill.id, title: bill.name, url: "/#money/bills" } });
+    if (saved && userId) {
+      const token = await saveAction(redis, { userId, item: { kind: "bill", id: saved.id, sourceId: saved.id, title: saved.name, url: "/#money/bills" } });
       keyboard.push([{ text: "✅ បានបង់ · Paid", callback_data: `paid|${token}` }]);
     }
     if (linkRow) keyboard.push(linkRow);
+    const amountText = saved && Number(saved.amount) > 0 ? ` · ប្រហែល ${escapeHtml(formatMoney(saved.amount, saved.currency || payload?.profile?.currency || "USD"))}` : "";
     const lines = [
       `🧾 <b>វិក្កយបត្រ${info.km}ថ្មី · New ${info.en.toLowerCase()} bill</b>`,
       label,
-      bill ? `📌 ${escapeHtml(bill.name)}${Number(bill.amount) > 0 ? ` · ប្រហែល ${escapeHtml(formatMoney(bill.amount, bill.currency || payload.profile?.currency || "USD"))}` : ""}` : "",
-      bill ? dueLine(bill) : `💡 បន្ថែមវិក្កយបត្រ "${info.en}" ក្នុង MYLIFE ដើម្បីតាមដានថ្ងៃផុតកំណត់ · Add a "${info.en}" bill in MYLIFE to track it`,
+      saved ? `📌 ${escapeHtml(saved.name)}${amountText}` : "",
+      saved ? dueLine(saved) : "",
+      created ? "🆕 បានបង្កើតក្នុង MYLIFE → Money › Bills (សូមកែថ្ងៃផុតកំណត់) · Added to MYLIFE" : saved ? "📲 បានដាក់ក្នុង MYLIFE · Saved in MYLIFE" : "",
       "",
       "<i>ពេលបង់រួច បង្កាន់ដៃនឹងត្រូវកត់ដោយស្វ័យប្រវត្តិ · The receipt will be recorded automatically</i>"
-    ].filter(line => line !== "");
+    ].filter((line, index, all) => line !== "" || (index > 0 && all[index - 1] !== ""));
     const sent = await reply(message, lines.join("\n"), keyboard.length ? { inline_keyboard: keyboard } : undefined);
-    if (userId) await pushAdded(userId, `🧾 វិក្កយបត្រ${info.km}ថ្មី · ${info.company}`, bill?.due ? `ផុតកំណត់ ${dateLabels(bill.due).km}` : "មើលក្នុង Telegram", "/#money/bills");
+    if (userId) await pushAdded(userId, `🧾 វិក្កយបត្រ${info.km}ថ្មី · ${info.company}`, saved?.due ? `ផុតកំណត់ ${dateLabels(saved.due).km}` : "មើលក្នុង Telegram", "/#money/bills");
     return sent;
   }
 
@@ -457,6 +496,10 @@ async function handleUtility(message, notice, redis) {
         outcome = "already";
         nextDue = target.due || "";
         return "unchanged";
+      }
+      if (!(Number(target.amount) > 0) && amount) {
+        target.amount = amount;
+        target.currency = notice.currency || target.currency;
       }
       const result = payBill(data, target, today, info.company, { amount, currency: notice.currency, notes: `${info.company} receipt ${notice.ref}`, force: true });
       outcome = result === "updated" ? "paid" : "already";

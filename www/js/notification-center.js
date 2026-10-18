@@ -291,7 +291,7 @@ const NotificationCenter = (() => {
         <ul class="nc-list">${list.map(entry => `
           <li class="nc-item nc-kind-telegram ${entry.read ? "" : "is-new"}">
             <button class="nc-item-main" type="button" data-nc-tg-open="${escapeAttr(entry.url)}">
-              <span class="nc-icon nc-tg-icon">${entry.collection === "calendarEvents" ? "📅" : entry.collection === "income" ? "💰" : "💸"}</span>
+              <span class="nc-icon nc-tg-icon">${entry.collection === "bills" ? "🧾" : entry.collection === "calendarEvents" ? "📅" : entry.collection === "income" ? "💰" : "💸"}</span>
               <span class="nc-copy">
                 <strong>${entry.text}</strong>
                 <span class="nc-meta"><span class="nc-relative">${escapeHtml(agoLabel(entry.at))}</span>${entry.read ? "" : `<span class="nc-tg-new">${L("ថ្មី", "New")}</span>`}</span>

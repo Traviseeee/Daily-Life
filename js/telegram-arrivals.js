@@ -53,6 +53,10 @@ const TelegramArrivals = (() => {
   }
 
   function lookup(entry) {
+    if (entry.collection === "bills") {
+      const bill = (appData.bills || []).find(item => item.id === entry.id);
+      return bill && bill.invoiceAt ? { kind: "invoice", record: bill } : null;
+    }
     const pair = COLLECTIONS.find(([collection]) => collection === entry.collection);
     const record = pair && (appData[pair[0]] || []).find(item => item.id === entry.id);
     return record ? { kind: pair[1], record } : null;
@@ -65,7 +69,7 @@ const TelegramArrivals = (() => {
       .filter(entry => now - entry.at < MAX_AGE_MS)
       .map(entry => ({ ...entry, item: lookup(entry) }))
       .filter(entry => entry.item)
-      .map(entry => ({ ...entry, text: describe(entry.item), url: entry.collection === "calendarEvents" ? "#calendar" : entry.collection === "income" ? "#money/income" : "#money/expenses" }));
+      .map(entry => ({ ...entry, text: describe(entry.item), url: entry.collection === "bills" ? "#money/bills" : entry.collection === "calendarEvents" ? "#calendar" : entry.collection === "income" ? "#money/income" : "#money/expenses" }));
   }
 
   const unreadCount = () => feed().filter(entry => !entry.read).length;
@@ -82,10 +86,17 @@ const TelegramArrivals = (() => {
 
   function fromTelegram() {
     if (typeof appData === "undefined") return [];
-    return COLLECTIONS.flatMap(([collection, kind]) => (appData[collection] || [])
+    const records = COLLECTIONS.flatMap(([collection, kind]) => (appData[collection] || [])
       .filter(record => record && (record.source === "telegram" || record.method === "Telegram"))
-      .map(record => ({ kind, record })));
+      .map(record => ({ kind, record, key: record.id, at: record.createdAt })));
+    // water / electricity invoice from the PPWSA / EDC bots: one pop-up per invoice
+    const invoices = (appData.bills || [])
+      .filter(bill => bill && bill.invoiceAt)
+      .map(bill => ({ kind: "invoice", record: bill, key: `bill:${bill.id}:${bill.invoiceAt}`, at: bill.invoiceAt }));
+    return [...records, ...invoices];
   }
+
+  const UTILITY_ICON = bill => (/water|ppwsa|ទឹក/i.test(`${bill.name} ${bill.notes || ""}`) ? "💧" : /electric|edc|ភ្លើង|អគ្គិសនី/i.test(`${bill.name} ${bill.notes || ""}`) ? "⚡" : "🧾");
 
   function amountText(value, currency) {
     const number = Number(value || 0);
@@ -97,6 +108,7 @@ const TelegramArrivals = (() => {
   const safe = text => (typeof escapeHtml === "function" ? escapeHtml(String(text || "")) : String(text || ""));
 
   function describe({ kind, record }) {
+    if (kind === "invoice") return `${UTILITY_ICON(record)} ${L("វិក្កយបត្រថ្មី", "New bill")} · ${safe(record.name)}`;
     if (kind === "event") return `📅 ${safe(record.title)}`;
     const sign = kind === "income" ? "+" : "−";
     const name = record.description || record.name;
@@ -105,23 +117,24 @@ const TelegramArrivals = (() => {
 
   function check() {
     const items = fromTelegram();
-    const ids = items.map(item => item.record.id);
+    const ids = items.map(item => item.key);
     const seen = readSeen();
     // first run on this device: only items added in the last 30 minutes are announced
-    const known = new Set(seen || items.filter(item => Date.now() - Date.parse(item.record.createdAt || 0) > FIRST_RUN_MS).map(item => item.record.id));
+    const known = new Set(seen || items.filter(item => Date.now() - Date.parse(item.at || 0) > FIRST_RUN_MS).map(item => item.key));
     const now = Date.now();
-    const fresh = items.filter(item => !known.has(item.record.id)
-      && now - Date.parse(item.record.createdAt || 0) < MAX_AGE_MS);
+    const fresh = items.filter(item => !known.has(item.key)
+      && now - Date.parse(item.at || 0) < MAX_AGE_MS);
     writeSeen(ids);
     if (!fresh.length) return;
-    const collectionOf = kind => COLLECTIONS.find(([, k]) => k === kind)[0];
+    const collectionOf = kind => (kind === "invoice" ? "bills" : COLLECTIONS.find(([, k]) => k === kind)[0]);
+    const feedNow = readFeed().filter(entry => !fresh.some(item => item.kind === "invoice" && entry.collection === "bills" && entry.id === item.record.id));
     writeFeed([
-      ...fresh.map(item => ({ collection: collectionOf(item.kind), id: item.record.id, at: Date.parse(item.record.createdAt || 0) || Date.now(), read: false })),
-      ...readFeed()
+      ...fresh.map(item => ({ collection: collectionOf(item.kind), id: item.record.id, at: Date.parse(item.at || 0) || Date.now(), read: false })),
+      ...feedNow
     ]);
     if (typeof NotificationCenter !== "undefined") NotificationCenter.renderBadge();
 
-    const money = fresh.filter(item => item.kind !== "event");
+    const money = fresh.filter(item => item.kind === "expense" || item.kind === "income");
     showWhenClear(fresh, money.length ? "coin" : "notify");
   }
 
@@ -143,6 +156,11 @@ const TelegramArrivals = (() => {
   }
 
   function rowHtml({ kind, record }) {
+    if (kind === "invoice") {
+      const due = record.due ? `${L("ផុតកំណត់", "Due")} ${formatDate(record.due)}` : "";
+      const amount = Number(record.amount) > 0 ? `<span class="tga-amount">${amountText(record.amount, record.currency)}</span>` : "";
+      return `<li class="tga-row tga-invoice"><span class="tga-row-icon">${UTILITY_ICON(record)}</span><span class="tga-row-copy"><strong>${safe(record.name)}</strong><small>${safe(due)}</small></span>${amount}</li>`;
+    }
     if (kind === "event") {
       const when = [record.date ? formatDate(record.date) : "", record.time && typeof fmtClock === "function" ? fmtClock(record.time) : ""].filter(Boolean).join(" · ");
       return `<li class="tga-row"><span class="tga-row-icon">📅</span><span class="tga-row-copy"><strong>${safe(record.title)}</strong><small>${safe(when)}</small></span></li>`;
@@ -184,15 +202,17 @@ const TelegramArrivals = (() => {
     document.getElementById("tgaPopup")?.remove();
     const onlyEvents = fresh.every(item => item.kind === "event");
     const onlyIncome = fresh.every(item => item.kind === "income");
-    const url = onlyEvents ? "#calendar" : onlyIncome ? "#money/income" : "#money/expenses";
-    const what = onlyEvents ? L("ព្រឹត្តិការណ៍", "event") : onlyIncome ? L("ចំណូល", "income") : L("ចំណាយ", "expense");
+    const onlyInvoices = fresh.every(item => item.kind === "invoice");
+    const url = onlyInvoices ? "#money/bills" : onlyEvents ? "#calendar" : onlyIncome ? "#money/income" : "#money/expenses";
+    const what = onlyInvoices ? L("វិក្កយបត្រ", "bill") : onlyEvents ? L("ព្រឹត្តិការណ៍", "event") : onlyIncome ? L("ចំណូល", "income") : L("ចំណាយ", "expense");
+    const invoice = onlyInvoices && fresh.length === 1 ? fresh[0].record : null;
     const node = document.createElement("div");
     node.id = "tgaPopup";
     node.className = "tga-overlay";
     node.innerHTML = `
       <section class="tga-card" role="dialog" aria-modal="true" aria-labelledby="tgaTitle">
         <div class="tga-check" aria-hidden="true"><svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="24"/><path d="M15 27l7 7 15-16"/></svg></div>
-        <h3 id="tgaTitle">${L("បានបន្ថែមដោយជោគជ័យ!", "Added successfully!")}</h3>
+        <h3 id="tgaTitle">${onlyInvoices ? L("មានវិក្កយបត្រថ្មី!", "New bill arrived!") : L("បានបន្ថែមដោយជោគជ័យ!", "Added successfully!")}</h3>
         <p class="tga-sub">📲 ${fresh.length > 1
           ? L(`${fresh.length} ពី Telegram · រក្សាទុកក្នុង app រួចហើយ`, `${fresh.length} from Telegram · saved in the app`)
           : L(`${what}ពី Telegram · រក្សាទុកក្នុង app រួចហើយ`, `${what} from Telegram · saved in the app`)}</p>
@@ -200,14 +220,14 @@ const TelegramArrivals = (() => {
         ${fresh.length > 5 ? `<p class="tga-more">+${fresh.length - 5} ${L("ទៀត", "more")}</p>` : ""}
         ${budgetHtml(fresh)}
         <div class="tga-actions">
-          <button type="button" class="tga-btn tga-view" data-tga-view>${L("មើល", "View")}</button>
+          ${invoice && /^https:\/\//.test(invoice.invoiceUrl || "") ? `<a class="tga-btn tga-view" href="${safe(invoice.invoiceUrl)}" target="_blank" rel="noopener" data-tga-link>🔗 ${L("មើលវិក្កយបត្រ", "View bill")}</a>` : `<button type="button" class="tga-btn tga-view" data-tga-view>${L("មើល", "View")}</button>`}
           <button type="button" class="tga-btn tga-ok" data-tga-ok>${L("យល់ព្រម", "OK")}</button>
         </div>
         <span class="tga-timer" aria-hidden="true"><span style="animation-duration:${AUTO_CLOSE_MS}ms"></span></span>
       </section>`;
     document.body.appendChild(node);
     node.addEventListener("click", event => {
-      if (event.target === node || event.target.closest("[data-tga-ok]")) closePopup();
+      if (event.target === node || event.target.closest("[data-tga-ok]") || event.target.closest("[data-tga-link]")) closePopup();
       if (event.target.closest("[data-tga-view]")) {
         closePopup();
         location.hash = url;

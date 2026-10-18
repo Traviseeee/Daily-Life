@@ -723,9 +723,10 @@ function billCard(bill) {
   return `<div class="financial-bill-card">
     <div class="financial-bill-header"><span class="financial-record-icon bill">${Icons.bill()}</span><span class="pill bill-status ${paid ? "is-paid" : "is-unpaid"}">${statusLabel}</span></div>
     <h3>${escapeHtml(bill.name)}</h3>
-    <strong class="financial-bill-amount">${money(bill.amount, bill.currency)}</strong>
+    <strong class="financial-bill-amount">${!(Number(bill.amount) > 0) && bill.invoiceUrl ? (languageCode() === "km" ? "— មើលវិក្កយបត្រ" : "— see invoice") : money(bill.amount, bill.currency)}</strong>
     <div class="financial-bill-meta"><span>${Icons.calendar()}${t("dueDate")}</span><strong>${formatDate(bill.due)}</strong></div>
-    <div class="financial-bill-tags"><span>${optionLabel(bill.frequency)}</span><span>${optionLabel(bill.category)}</span>${bill.autoPay ? `<span class="bill-autopay-tag">🔁 ${languageCode() === "km" ? "ស្វ័យប្រវត្តិ" : "Auto-pay"}</span>` : ""}</div>
+    <div class="financial-bill-tags"><span>${optionLabel(bill.frequency)}</span><span>${optionLabel(bill.category)}</span>${bill.autoPay ? `<span class="bill-autopay-tag">🔁 ${languageCode() === "km" ? "ស្វ័យប្រវត្តិ" : "Auto-pay"}</span>` : ""}${!paid && bill.invoiceAt && Date.now() - Date.parse(bill.invoiceAt) < 20 * 86400000 ? `<span class="bill-invoice-tag">🆕 ${languageCode() === "km" ? "វិក្កយបត្រថ្មី" : "New invoice"}</span>` : ""}</div>
+    ${/^https:\/\//.test(bill.invoiceUrl || "") ? `<a class="bill-invoice-link" href="${escapeAttr(bill.invoiceUrl)}" target="_blank" rel="noopener">🔗 ${languageCode() === "km" ? "មើលវិក្កយបត្រ" : "View invoice"}</a>` : ""}
     <div class="financial-bill-actions">
       <button class="button ghost-button bill-payment-action ${paid ? "is-paid" : "is-unpaid"}" data-finance-toggle-bill="${escapeAttr(bill.id)}" aria-pressed="${paid}">${paid ? Icons.check() : ""}${escapeHtml(paid ? t("billPaidLabel") : t("billUnpaidLabel"))}</button>
       <button class="icon-button" data-edit-bill="${escapeAttr(bill.id)}" aria-label="${escapeAttr(`${t("edit")} ${bill.name}`)}" title="${escapeAttr(t("edit"))}">${Icons.edit()}</button>
