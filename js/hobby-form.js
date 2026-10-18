@@ -201,7 +201,7 @@ const HobbyForm = (() => {
       const timeInput = root.querySelector("#hfRemindTime");
       root.querySelector(".hf-tg .ev-telegram").dataset.tone = state.remind ? "ok" : "off";
       root.querySelector("[data-hf-remind-note]").textContent = state.remind
-        ? L(`ផ្ញើ "${cleanTitle(form.elements.title.value) || "…"}" នៅ ${formatDate(state.remind)} ម៉ោង ${timeInput.value}`, `Sends "${cleanTitle(form.elements.title.value) || "…"}" on ${formatDate(state.remind)} at ${timeInput.value}`)
+        ? L(`ផ្ញើ "${cleanTitle(form.elements.title.value) || "…"}" នៅ ${formatDate(state.remind)} ម៉ោង ${fmtClock(timeInput.value)}`, `Sends "${cleanTitle(form.elements.title.value) || "…"}" on ${formatDate(state.remind)} at ${fmtClock(timeInput.value)}`)
         : L("បើកដើម្បីរំលឹកឱ្យធ្វើម្តងទៀត", "Turn on to get a nudge to do it again");
     }
 

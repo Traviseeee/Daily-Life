@@ -134,11 +134,7 @@ const NotificationCenter = (() => {
   /* ---------- formatting ---------- */
   function clockLabel(entry) {
     if (!entry.time) return L("ពេញមួយថ្ងៃ", "All day");
-    return entry.at.toLocaleTimeString(isKm() ? "km-KH" : "en-US", {
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: appData.profile.clockFormat !== "24-hour"
-    });
+    return fmtClockDate(entry.at);
   }
 
   function relativeLabel(entry, now) {

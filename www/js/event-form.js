@@ -144,6 +144,7 @@ const EventForm = (() => {
 
   function friendlyTime(time) {
     if (!time) return L("allDay");
+    return fmtClock(time);
     const [h, m] = time.split(":").map(Number);
     if (lang() === "km") {
       const period = h < 12 ? L("morning") : h < 17 ? L("afternoon") : L("evening");

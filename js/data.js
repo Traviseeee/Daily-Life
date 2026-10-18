@@ -1549,3 +1549,16 @@ function demoData() {
     ]
   };
 }
+
+// One time format for the whole app: "4:24 PM" (or "16:24" when Settings → 24-hour).
+function fmtClock(time) {
+  const match = /^(\d{1,2}):(\d{2})/.exec(String(time || ""));
+  if (!match) return String(time || "");
+  const h = Number(match[1]);
+  const m = match[2];
+  if (appData?.profile?.clockFormat === "24-hour") return `${String(h).padStart(2, "0")}:${m}`;
+  return `${h % 12 || 12}:${m} ${h < 12 ? "AM" : "PM"}`;
+}
+function fmtClockDate(date) {
+  return fmtClock(`${date.getHours()}:${String(date.getMinutes()).padStart(2, "0")}`);
+}

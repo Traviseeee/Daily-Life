@@ -505,7 +505,7 @@ function eventRow(event) {
   const actions = event.source === "holiday" ? "" : event.auto ? `<a class="button ghost-button" href="${event.href}">${t("view")}</a>` : `<button class="icon-button" data-edit-event="${event.id}" aria-label="${t("editEvent")}">${Icons.edit()}</button><button class="icon-button" data-delete-event="${event.id}" aria-label="${t("deleteEvent")}">${Icons.trash()}</button>`;
   return `<div class="list-row calendar-event-row ${event.auto ? "auto" : ""} ${event.source === "holiday" ? "holiday-event" : ""}">
     <span class="icon-badge green">${Icons.calendar()}</span>
-    <div class="calendar-event-main"><strong>${escapeHtml(event.title)}</strong><span class="secondary">${formatDate(event.date)}${event.time ? ` · ${escapeHtml(event.time)}` : ""}</span></div>
+    <div class="calendar-event-main"><strong>${escapeHtml(event.title)}</strong><span class="secondary">${formatDate(event.date)}${event.time ? ` · ${escapeHtml(fmtClock(event.time))}` : ""}</span></div>
     <div class="calendar-event-side"><div class="calendar-event-meta">${amount}<span class="pill">${optionLabel(event.category)}${event.auto ? ` · ${t("auto")}` : ""}</span></div><div class="calendar-event-actions">${actions}</div></div>
   </div>`;
 }

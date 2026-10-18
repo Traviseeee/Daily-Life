@@ -61,11 +61,11 @@ const App = {
 
     appData.calendarEvents.forEach(event => {
       if (event.date !== today) return;
-      add({ type: "event", title: event.title || t("calendarEvent"), detail: event.time || event.category || "", href: "#calendar" });
+      add({ type: "event", title: event.title || t("calendarEvent"), detail: event.time ? fmtClock(event.time) : event.category || "", href: "#calendar" });
     });
     appData.reminders.forEach(reminder => {
       if (reminder.done || reminder.date !== today) return;
-      add({ type: "reminder", title: reminder.title || t("reminder"), detail: reminder.time || reminder.category || "", href: "#daily" });
+      add({ type: "reminder", title: reminder.title || t("reminder"), detail: reminder.time ? fmtClock(reminder.time) : reminder.category || "", href: "#daily" });
     });
     appData.bills.forEach(bill => {
       if (bill.reminder === false || bill.status === "Paid" || !bill.due) return;
@@ -712,11 +712,8 @@ const App = {
     const locale = languageCode() === "km" ? "km-KH" : "en-US";
     const now = new Date();
     if (!clock) return;
-    clock.textContent = now.toLocaleTimeString(locale, {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: appData.profile.clockFormat !== "24-hour"
-    });
+    void locale;
+    clock.textContent = fmtClockDate(now);
   },
   bindPage(route) {
     if (route === "launcher" && typeof bindLauncher === "function") bindLauncher();

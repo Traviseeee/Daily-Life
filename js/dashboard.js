@@ -325,10 +325,10 @@ function renderHomeSmartLists(agenda, focusItems, todayIso) {
   const billsDueSoon = unpaidBills.filter(bill => bill.due && bill.due >= todayIso && bill.due <= localDashboardDate(weekEnd));
   const todayEvents = appData.calendarEvents
     .filter(event => event.date === todayIso)
-    .map(event => ({ title: event.title || t("calendarEvent"), detail: event.time || t("calendarEvent"), href: "#calendar" }));
+    .map(event => ({ title: event.title || t("calendarEvent"), detail: event.time ? fmtClock(event.time) : t("calendarEvent"), href: "#calendar" }));
   const todayReminders = appData.reminders
     .filter(reminder => !reminder.done && reminder.date === todayIso)
-    .map(reminder => ({ title: reminder.title || t("reminder"), detail: reminder.time || t("reminder"), href: "#daily" }));
+    .map(reminder => ({ title: reminder.title || t("reminder"), detail: reminder.time ? fmtClock(reminder.time) : t("reminder"), href: "#daily" }));
   const todayFocusItems = focusItems.map(item => ({
     title: item.text,
     detail: item.done ? t("completed") : t("dailyFocus"),

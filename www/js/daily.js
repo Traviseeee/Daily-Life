@@ -28,7 +28,7 @@ function hobbyRow(item) {
 }
 
 function reminderRow(item) {
-  if (item.isEvent) return `<div class="list-row daily-record-row"><span class="icon-badge blue">${Icons.calendar()}</span><div><strong>${escapeHtml(item.title)}</strong><span class="secondary">${formatDate(item.date)}${item.time ? ` · ${escapeHtml(item.time)}` : ""}${item.category ? ` · ${escapeHtml(t(item.category.toLowerCase()) || item.category)}` : ""}</span></div><button class="icon-button" data-edit-event="${escapeAttr(item.id)}" aria-label="${t("editEvent")}">${Icons.edit()}</button></div>`;
+  if (item.isEvent) return `<div class="list-row daily-record-row"><span class="icon-badge blue">${Icons.calendar()}</span><div><strong>${escapeHtml(item.title)}</strong><span class="secondary">${formatDate(item.date)}${item.time ? ` · ${escapeHtml(fmtClock(item.time))}` : ""}${item.category ? ` · ${escapeHtml(t(item.category.toLowerCase()) || item.category)}` : ""}</span></div><button class="icon-button" data-edit-event="${escapeAttr(item.id)}" aria-label="${t("editEvent")}">${Icons.edit()}</button></div>`;
   return `<div class="list-row daily-record-row"><span class="icon-badge pink">${Icons.bell()}</span><div><strong>${escapeHtml(item.title)}</strong><span class="secondary">${formatDate(item.date)}${item.category ? ` · ${escapeHtml(t(item.category.toLowerCase()) || item.category)}` : ""}</span></div><button class="icon-button" data-complete-reminder="${escapeAttr(item.id)}" aria-label="${t("complete")}">${Icons.check()}</button><button class="icon-button" data-edit-reminder="${escapeAttr(item.id)}" aria-label="${t("editReminder")}">${Icons.edit()}</button></div>`;
 }
 

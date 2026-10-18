@@ -61,8 +61,8 @@ function todayOverdueBills(today) {
 
 function todayClock(time) {
   if (!time) return todayKm() ? "ពេញថ្ងៃ" : "All day";
+  return fmtClock(time);
   const [h, m] = time.split(":").map(Number);
-  if (appData.profile.clockFormat === "24-hour") return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
   const h12 = h % 12 || 12;
   if (todayKm()) return `${h12}:${String(m).padStart(2, "0")} ${h < 12 ? "ព្រឹក" : h < 17 ? "រសៀល" : "ល្ងាច"}`;
   return `${h12}:${String(m).padStart(2, "0")} ${h < 12 ? "AM" : "PM"}`;
