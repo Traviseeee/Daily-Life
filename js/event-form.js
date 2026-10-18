@@ -190,7 +190,8 @@ const EventForm = (() => {
 
     let match = text.match(new RegExp(`(\\d{1,2}):(\\d{2})\\s*${marker}`, "i"))
       || text.match(new RegExp(`ម៉ោង\\s*(\\d{1,2})(?:\\s*(?:និង|:)\\s*(\\d{1,2}))?\\s*${marker}`, "i"))
-      || text.match(/\b(\d{1,2})()\s*(am|pm)\b/i);
+      || text.match(/\b(\d{1,2})()\s*(am|pm)\b/i)
+      || text.match(/(\d{1,2})()\s*(ព្រឹក|រសៀល|ល្ងាច|យប់)/);
     if (match) {
       const time = to24(match[1], match[2], match[3]);
       if (time) found.time = time;
