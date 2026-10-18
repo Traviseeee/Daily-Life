@@ -84,6 +84,8 @@ function renderLauncher() {
       <nav class="app-grid" aria-label="App tools">
         ${LAUNCHER_ORDER.map(id => all.find(route => route.id === id)).filter(Boolean).map(launcherTool).join("")}
       </nav>
+      ${renderLauncherUpcoming()}
+      ${renderLauncherQuickAdd()}
     </section>
   `;
 }
@@ -153,6 +155,11 @@ function bindLauncher() {
     }
   };
   page?.addEventListener("click", event => {
+    const quick = event.target.closest("[data-launcher-quick]");
+    if (quick && typeof runQuickAction === "function") {
+      runQuickAction(quick.dataset.launcherQuick);
+      return;
+    }
     const toggleEdit = event.target.closest("[data-footer-edit]");
     if (toggleEdit) {
       setEditing(!page.classList.contains("footer-editing"));
@@ -302,6 +309,43 @@ function launcherCount(routeId) {
     return 0;
   }
   return 0;
+}
+
+// Wide widget: the next things coming up (14 days).
+function renderLauncherUpcoming() {
+  const km = languageCode() === "km";
+  let items = [];
+  try { items = getUpcomingNotifications(14, 4); } catch (error) { items = []; }
+  const KM_MONTHS = ["មករា", "កុម្ភៈ", "មីនា", "មេសា", "ឧសភា", "មិថុនា", "កក្កដា", "សីហា", "កញ្ញា", "តុលា", "វិច្ឆិកា", "ធ្នូ"];
+  const when = item => item.daysLeft === 0 ? (km ? "ថ្ងៃនេះ" : "Today") : item.daysLeft === 1 ? (km ? "ស្អែក" : "Tomorrow") : (km ? `${item.daysLeft} ថ្ងៃទៀត` : `In ${item.daysLeft} days`);
+  const kindIcon = item => item.kind === "bill" ? Icons.bill() : item.kind === "birthday" || item.type === "birthday" ? Icons.cake() : item.kind === "reminder" ? Icons.bell() : Icons.calendar();
+  return `<section class="app-widget-wide">
+    <div class="app-widget-wide-head"><strong>${km ? "ជិតមកដល់" : "Coming up"}</strong><a href="#calendar">${km ? "ប្រតិទិន ›" : "Calendar ›"}</a></div>
+    ${items.length ? `<div class="app-upcoming">${items.map(item => {
+      const d = new Date(`${item.date}T00:00:00`);
+      return `<a class="app-upcoming-row" href="${item.kind === "bill" ? "#money/bills" : "#calendar"}">
+        <span class="app-upcoming-date"><b>${d.getDate()}</b><small>${km ? KM_MONTHS[d.getMonth()] : d.toLocaleDateString("en-US", { month: "short" })}</small></span>
+        <span class="app-upcoming-icon">${kindIcon(item)}</span>
+        <span class="app-upcoming-title">${escapeHtml(item.title)}</span>
+        <em>${when(item)}</em>
+      </a>`;
+    }).join("")}</div>` : `<p class="app-upcoming-empty">${km ? "២ សប្តាហ៍ខាងមុខ ទំនេរ 🎉" : "Nothing in the next 2 weeks 🎉"}</p>`}
+  </section>`;
+}
+
+// Quick add bar (same actions as the + button).
+function renderLauncherQuickAdd() {
+  const km = languageCode() === "km";
+  const actions = [
+    ["add-event", Icons.calendar(), km ? "Event" : "Event", "#ff7a9c"],
+    ["add-expense", Icons.expense(), km ? "ចំណាយ" : "Expense", "#ffb35c"],
+    ["add-hobby", Icons.spark(), km ? "ចំណង់ចំណូលចិត្ត" : "Hobby", "#9ef06a"],
+    ["add-memory", Icons.memory(), km ? "អនុស្សាវរីយ៍" : "Memory", "#4fe0c8"]
+  ];
+  return `<section class="app-quick">
+    <strong>${km ? "បន្ថែមរហ័ស" : "Quick add"}</strong>
+    <div class="app-quick-row">${actions.map(([id, icon, label, color]) => `<button type="button" class="app-quick-btn" data-launcher-quick="${id}" style="--q:${color}"><span>${icon}</span><small>${escapeHtml(label)}</small></button>`).join("")}</div>
+  </section>`;
 }
 
 // Two widgets on top (like a phone home screen): Today and Money.
