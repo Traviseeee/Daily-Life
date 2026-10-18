@@ -6,6 +6,7 @@
 const TelegramArrivals = (() => {
   const KEY = "mylife:tg-seen:v1";
   const MAX_AGE_MS = 3 * 24 * 60 * 60 * 1000;
+  const FIRST_RUN_MS = 30 * 60 * 1000;
   const COLLECTIONS = [
     ["expenses", "expense"],
     ["income", "income"],
@@ -35,7 +36,7 @@ const TelegramArrivals = (() => {
   function fromTelegram() {
     if (typeof appData === "undefined") return [];
     return COLLECTIONS.flatMap(([collection, kind]) => (appData[collection] || [])
-      .filter(record => record && record.source === "telegram")
+      .filter(record => record && (record.source === "telegram" || record.method === "Telegram"))
       .map(record => ({ kind, record })));
   }
 
@@ -59,11 +60,8 @@ const TelegramArrivals = (() => {
     const items = fromTelegram();
     const ids = items.map(item => item.record.id);
     const seen = readSeen();
-    if (!seen) {
-      writeSeen(ids);
-      return;
-    }
-    const known = new Set(seen);
+    // first run on this device: only items added in the last 30 minutes are announced
+    const known = new Set(seen || items.filter(item => Date.now() - Date.parse(item.record.createdAt || 0) > FIRST_RUN_MS).map(item => item.record.id));
     const now = Date.now();
     const fresh = items.filter(item => !known.has(item.record.id)
       && now - Date.parse(item.record.createdAt || 0) < MAX_AGE_MS);
