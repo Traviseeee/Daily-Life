@@ -105,12 +105,16 @@ const App = {
   openWelcomePoster() {
     if (!appData.profile.name || Login.isOpen || document.getElementById("modalRoot")?.querySelector("#loginModal")) return;
     if (!Login.authenticated && !Login.guestMode && !Login.getRememberedSession()) return;
-    // Show the welcome poster once a day only.
-    try {
-      const shownKey = "mylife:welcome-poster:shown";
-      if (localStorage.getItem(shownKey) === localDateInput()) return;
-      localStorage.setItem(shownKey, localDateInput());
-    } catch (error) { /* storage blocked: show it */ }
+    // Settings → welcome photo: once a day (default) / every time / off
+    const posterMode = appData.profile.welcomePosterMode || "daily";
+    if (posterMode === "off") return;
+    if (posterMode === "daily") {
+      try {
+        const shownKey = "mylife:welcome-poster:shown";
+        if (localStorage.getItem(shownKey) === localDateInput()) return;
+        localStorage.setItem(shownKey, localDateInput());
+      } catch (error) { /* storage blocked: show it */ }
+    }
 
     const root = document.getElementById("modalRoot");
     const poster = this.getWelcomePoster();

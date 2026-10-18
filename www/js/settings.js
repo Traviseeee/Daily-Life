@@ -80,6 +80,10 @@ function renderSettings() {
                 <label class="settings-preference-row"><span><strong>${t("clockFormat")}</strong><small>${t("clockFormatHelp")}</small></span><select data-preference="clockFormat"><option value="12-hour" ${appData.profile.clockFormat !== "24-hour" ? "selected" : ""}>12-hour</option><option value="24-hour" ${appData.profile.clockFormat === "24-hour" ? "selected" : ""}>24-hour</option></select></label>
                 <label class="settings-preference-row"><span><strong>${t("soundEnabled")}</strong><small>${t("soundEnabledHelp")}</small></span><input type="checkbox" data-preference="soundEnabled" ${appData.profile.soundEnabled !== false ? "checked" : ""}></label>
                 <div class="settings-preference-row settings-sound-row"><span><strong>${languageCode() === "km" ? "កម្រិតសំឡេង" : "Sound volume"}</strong><small>${languageCode() === "km" ? "សំឡេងពេលចុច កត់លុយ ជូនដំណឹង និងសម្រេចគោលដៅ" : "Taps, money, alerts and goal celebrations"}</small></span><div class="settings-sound-controls"><input type="range" min="0" max="100" step="5" value="${Number.isFinite(Number(appData.profile.soundVolume)) ? Number(appData.profile.soundVolume) : 70}" data-sound-volume aria-label="Volume"><button type="button" class="button ghost-button" data-sound-preview>▶ ${languageCode() === "km" ? "សាក" : "Try"}</button></div></div>
+                <label class="settings-preference-row"><span><strong>${languageCode() === "km" ? "ញ័រទូរស័ព្ទ" : "Vibration"}</strong><small>${languageCode() === "km" ? "ញ័រតិចៗពេល save ការរំលឹក និងអបអរ (ទូរស័ព្ទ)" : "Small buzz on save, reminders and celebrations (phones)"}</small></span><input type="checkbox" data-preference="haptics" ${appData.profile.haptics !== false ? "checked" : ""}></label>
+                <label class="settings-preference-row"><span><strong>${languageCode() === "km" ? "រូបស្វាគមន៍ពេលបើក app" : "Welcome photo on open"}</strong><small>${languageCode() === "km" ? "រូបគ្រួសារ និងកិច្ចការថ្ងៃនេះ ពេលបើក app" : "Family photo and today's plan when the app opens"}</small></span><select data-preference="welcomePosterMode">${[["daily", languageCode() === "km" ? "ម្ដងក្នុងមួយថ្ងៃ" : "Once a day"], ["always", languageCode() === "km" ? "រាល់ពេលបើក" : "Every time"], ["off", languageCode() === "km" ? "បិទ" : "Off"]].map(([v, l]) => `<option value="${v}" ${(appData.profile.welcomePosterMode || "daily") === v ? "selected" : ""}>${l}</option>`).join("")}</select></label>
+                <label class="settings-preference-row"><span><strong>${languageCode() === "km" ? "ទំព័រលុយ បង្ហាញដំបូង" : "Money page opens on"}</strong><small>${languageCode() === "km" ? "ពេលដែលទំព័រលុយបង្ហាញមុនគេ" : "The period the Money page shows first"}</small></span><select data-preference="moneyDefaultPeriod">${[["day", languageCode() === "km" ? "ថ្ងៃ" : "Day"], ["week", languageCode() === "km" ? "សប្តាហ៍" : "Week"], ["month", languageCode() === "km" ? "ខែ" : "Month"], ["year", languageCode() === "km" ? "ឆ្នាំ" : "Year"]].map(([v, l]) => `<option value="${v}" ${(appData.profile.moneyDefaultPeriod || "month") === v ? "selected" : ""}>${l}</option>`).join("")}</select></label>
+                <div class="settings-preference-row settings-link-row"><span><strong>${languageCode() === "km" ? "Footer និងថវិកា" : "Footer and budgets"}</strong><small>${languageCode() === "km" ? "រៀបលំដាប់ footer ឬកំណត់ថវិកាតាមប្រភេទចំណាយ" : "Arrange the footer or set spending budgets"}</small></span><div class="settings-link-buttons"><button type="button" class="button ghost-button" data-open-footer-editor>${languageCode() === "km" ? "រៀបចំ footer" : "Arrange footer"}</button><a class="button ghost-button" href="#money/budget">${languageCode() === "km" ? "ថវិកា" : "Budgets"}</a></div></div>
                 <label class="settings-preference-row"><span><strong>${t("notificationsEnabled")}</strong><small>${t("notificationsEnabledHelp")}</small></span><input type="checkbox" data-preference="notificationsEnabled" ${appData.profile.notificationsEnabled !== false ? "checked" : ""}></label>
               </div>
             </article>
@@ -543,6 +547,10 @@ function bindSettings() {
     });
   });
   document.querySelectorAll("[data-sound-preview]").forEach(button => button.addEventListener("click", () => Sound.preview()));
+  document.querySelectorAll("[data-open-footer-editor]").forEach(button => button.addEventListener("click", () => {
+    try { sessionStorage.setItem("mylife:open-footer-editor", String(Date.now())); } catch (error) { /* ignore */ }
+    location.hash = "#launcher";
+  }));
   document.querySelectorAll("[data-quick-action-preference]").forEach(control => control.addEventListener("change", () => {
     const quickActions = [...document.querySelectorAll("[data-quick-action-preference]:checked")].map(item => item.dataset.quickActionPreference);
     Store.updateProfile({ quickActions });
@@ -559,7 +567,7 @@ function bindSettings() {
   });
   bindSettingsAction("connect-guest", () => Login.open("signup"));
   bindSettingsAction("edit-footer", () => {
-    sessionStorage.setItem("mylife:open-footer-editor", "1");
+    sessionStorage.setItem("mylife:open-footer-editor", String(Date.now()));
     location.hash = "#launcher";
   });
   bindSettingsAction("create-user", openCreateUserModal);
@@ -787,6 +795,33 @@ function renderHelp() {
       <div class="help-grid">
         ${helpSteps.map(step => `<article class="help-card ${step.tone}"><span class="help-card-icon">${step.icon}</span><h2>${step.title}</h2><p>${step.description}</p></article>`).join("")}
       </div>
+      ${renderSmartHelp()}
     </section>
   `;
+}
+
+// "Use it smart" guide: the newer features, with examples to copy.
+function renderSmartHelp() {
+  const km = languageCode() === "km";
+  const tips = km ? [
+    { icon: Icons.calendar(), title: "Form ឆ្លាត", body: "វាយមួយបន្ទាត់ ហើយ app បំពេញឱ្យ។", examples: ["ជួបម៉ាក់ ស្អែក 9 ព្រឹក", "Grab 15k", "Gym 45 នាទី", "សន្សំ $2000 ទិញម៉ូតូ 1 ឆ្នាំ"] },
+    { icon: Icons.bell(), title: "Telegram bot", body: "ផ្ញើសារទៅ bot ដើម្បីកត់ ឬមើលភ្លាម។", examples: ["/today", "/help", "ចាយ 5$ អាហារ", "ស្អែក 7 យប់ ញ៉ាំបាយ"] },
+    { icon: Icons.money(), title: "មើលលុយតាមពេល", body: "ទំព័រលុយ → ជ្រើស ថ្ងៃ · សប្តាហ៍ · ខែ · ឆ្នាំ ហើយចុច ‹ › ដើម្បីទៅមុន ឬក្រោយ។ ថ្ងៃ/សប្តាហ៍ ប្រាប់ថាអាចចាយបានប៉ុន្មានទៀត។", examples: [] },
+    { icon: Icons.chart(), title: "របាយការណ៍", body: "លុយ → របាយការណ៍៖ នាំចេញ Excel (មានរូបមន្ត) · Word · JPG ដែលមានការយល់ដឹងសរសេរឱ្យ។", examples: [] },
+    { icon: Icons.menu(), title: "☰ និង footer", body: "☰ ដូចអេក្រង់ទូរស័ព្ទ៖ លេខក្រហម = រឿងត្រូវធ្វើ។ ចុច ▦ ដើម្បីរៀប footer (‹ › × +)។", examples: [] },
+    { icon: Icons.spark(), title: "ប៊ូតុង + និងសំឡេង", body: "ប៊ូតុង + ពណ៌ទឹកក្រូច បន្ថែមអ្វីៗរហ័ស (ជ្រើសក្នុង Settings)។ សំឡេង និងការញ័រ កែបានក្នុង Settings។", examples: [] }
+  ] : [
+    { icon: Icons.calendar(), title: "Smart forms", body: "Type one line and the app fills the rest.", examples: ["Meet mom tomorrow 9am", "Grab 15k", "Gym 45 min", "Save $2000 for a motorbike in 1 year"] },
+    { icon: Icons.bell(), title: "Telegram bot", body: "Message the bot to log or check things fast.", examples: ["/today", "/help", "spent 5$ food", "tomorrow 7pm dinner"] },
+    { icon: Icons.money(), title: "Money by period", body: "Money → pick Day · Week · Month · Year and use ‹ › to move. Day/Week shows what you can still spend.", examples: [] },
+    { icon: Icons.chart(), title: "Reports", body: "Money → Reports: export Excel (with formulas), Word or a JPG with written insights.", examples: [] },
+    { icon: Icons.menu(), title: "☰ and footer", body: "☰ works like a phone home screen: red numbers need you. Tap ▦ to arrange the footer (‹ › × +).", examples: [] },
+    { icon: Icons.spark(), title: "+ button and sounds", body: "The orange + adds things fast (choose them in Settings). Sounds and vibration are in Settings.", examples: [] }
+  ];
+  return `<section class="smart-help">
+    <h2 class="smart-help-title">${km ? "✨ ប្រើឱ្យឆ្លាត" : "✨ Use it smart"}</h2>
+    <div class="smart-help-grid">
+      ${tips.map(tip => `<article class="smart-help-card"><span class="smart-help-icon">${tip.icon}</span><div><h3>${escapeHtml(tip.title)}</h3><p>${escapeHtml(tip.body)}</p>${tip.examples.length ? `<div class="smart-help-examples">${tip.examples.map(ex => `<code>${escapeHtml(ex)}</code>`).join("")}</div>` : ""}</div></article>`).join("")}
+    </div>
+  </section>`;
 }

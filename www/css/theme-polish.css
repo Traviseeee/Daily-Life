@@ -3119,3 +3119,24 @@ body:has(#modalRoot.open) .quick-action-dock {
 .settings-sound-controls { display: flex; align-items: center; gap: 10px; flex: 1 1 220px; justify-content: flex-end; }
 .settings-sound-controls input[type="range"] { flex: 1; max-width: 220px; accent-color: #a6e33f; }
 .settings-sound-controls .button { height: 36px; padding: 0 14px; white-space: nowrap; }
+
+/* Settings: new rows */
+.settings-link-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.settings-link-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+.settings-link-buttons .button { height: 36px; padding: 0 14px; }
+
+/* Help: "use it smart" */
+.smart-help { display: grid; gap: 12px; margin-top: 22px; }
+.smart-help-title { margin: 0; font-size: 1.15rem; color: var(--text-primary, #f2fbf4); }
+.smart-help-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 12px; }
+.smart-help-card { display: grid; grid-template-columns: 42px minmax(0, 1fr); gap: 12px; padding: 16px; border-radius: 20px; border: 1px solid rgba(171, 255, 186, 0.12); background: rgba(255, 255, 255, 0.04); }
+.smart-help-icon { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 14px; color: #142a04; background: #c5ff60; }
+.smart-help-icon svg { width: 20px; height: 20px; }
+.smart-help-card h3 { margin: 0 0 4px; font-size: 0.98rem; color: var(--text-primary, #f2fbf4); }
+.smart-help-card p { margin: 0; font-size: 0.84rem; line-height: 1.5; color: var(--text-secondary, rgba(242, 251, 244, 0.7)); }
+.smart-help-examples { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.smart-help-examples code { padding: 4px 9px; border-radius: 999px; font-family: inherit; font-size: 0.78rem; color: #c5ff60; background: rgba(197, 255, 96, 0.1); }
+:root[data-theme="light"] .smart-help-card { background: #ffffff; border-color: rgba(20, 32, 27, 0.1); }
+:root[data-theme="light"] .smart-help-title, :root[data-theme="light"] .smart-help-card h3 { color: #14201b; }
+:root[data-theme="light"] .smart-help-card p { color: #5d6b64; }
+:root[data-theme="light"] .smart-help-examples code { color: #3f6b0c; background: #f2fbe4; }

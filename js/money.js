@@ -52,7 +52,8 @@ function moneyPeriod() {
     const saved = JSON.parse(sessionStorage.getItem(MONEY_PERIOD_KEY) || "null");
     if (saved && ["day", "week", "month", "year", "all"].includes(saved.kind) && /^\d{4}-\d{2}-\d{2}$/.test(saved.anchor)) return saved;
   } catch (error) { /* ignore */ }
-  return { kind: "month", anchor: localDateInput() };
+  const preferred = appData.profile.moneyDefaultPeriod;
+  return { kind: ["day", "week", "month", "year", "all"].includes(preferred) ? preferred : "month", anchor: localDateInput() };
 }
 function setMoneyPeriod(next) {
   try { sessionStorage.setItem(MONEY_PERIOD_KEY, JSON.stringify(next)); } catch (error) { /* ignore */ }

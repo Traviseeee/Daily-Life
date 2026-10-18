@@ -156,6 +156,11 @@ function bindLauncher() {
       }
     }
   };
+  // opened from Settings → "Arrange footer" (flag is valid for a few seconds)
+  try {
+    const askedAt = Number(sessionStorage.getItem("mylife:open-footer-editor") || 0);
+    if (askedAt && Date.now() - askedAt < 4000) setEditing(true);
+  } catch (error) { /* ignore */ }
   page?.addEventListener("click", event => {
     const quick = event.target.closest("[data-launcher-quick]");
     if (quick && typeof runQuickAction === "function") {
