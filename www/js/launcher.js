@@ -118,9 +118,20 @@ function renderFooterEditor() {
 }
 
 function saveFooterRoutes(ids) {
+  const list = ids.slice(0, FOOTER_MAX);
+  const at = new Date().toISOString();
   try {
-    localStorage.setItem(FOOTER_ROUTES_KEY, JSON.stringify(ids.slice(0, FOOTER_MAX)));
+    localStorage.setItem(FOOTER_ROUTES_KEY, JSON.stringify(list));
+    localStorage.setItem(FOOTER_ROUTES_AT_KEY, at);
   } catch (error) { /* ignore */ }
+  // keep it in the account too (synced), without re-rendering the editor
+  try {
+    if (typeof appData !== "undefined" && appData.profile && !(typeof isGuestMode === "function" && isGuestMode())) {
+      appData.profile.footerRoutes = list.join(",");
+      appData.profile.footerRoutesAt = at;
+      Store.save({ reason: "footer" });
+    }
+  } catch (error) { /* the device copy is already saved */ }
   renderNavigation();
   if (typeof setActiveNav === "function") setActiveNav("launcher");
   refreshFooterEditing();

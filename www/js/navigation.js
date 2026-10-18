@@ -17,12 +17,34 @@ const utilityRoutes = [
 ];
 
 const FOOTER_ROUTES_KEY = "mylife:footer-routes";
+const FOOTER_ROUTES_AT_KEY = "mylife:footer-routes-at";
+
+// The footer is saved on this device AND in the account (profile.footerRoutes),
+// so a refresh, a cleared browser or another phone shows the same footer.
+// Whichever copy was edited last wins.
+function footerFromAccount() {
+  try {
+    const profile = (typeof appData !== "undefined" && appData && appData.profile) || {};
+    const remote = String(profile.footerRoutes || "").split(",").map(id => id.trim()).filter(Boolean);
+    if (!remote.length) return null;
+    const remoteAt = String(profile.footerRoutesAt || "");
+    const localAt = localStorage.getItem(FOOTER_ROUTES_AT_KEY) || "";
+    const hasLocal = localStorage.getItem(FOOTER_ROUTES_KEY);
+    if (hasLocal && localAt >= remoteAt) return null;
+    localStorage.setItem(FOOTER_ROUTES_KEY, JSON.stringify(remote));
+    localStorage.setItem(FOOTER_ROUTES_AT_KEY, remoteAt);
+    localStorage.setItem("mylife:footer-today-v1", "1");
+    return remote;
+  } catch (error) {
+    return null;
+  }
+}
 
 function footerRoutes() {
   const allRoutes = [...routes, ...utilityRoutes];
   const defaults = ["home", "today", "money", "calendar", "family"];
   try {
-    let saved = JSON.parse(localStorage.getItem(FOOTER_ROUTES_KEY) || "null");
+    let saved = footerFromAccount() || JSON.parse(localStorage.getItem(FOOTER_ROUTES_KEY) || "null");
     // one-time: put Today in the footer (it is the most useful page); Goals moves to ☰
     if (Array.isArray(saved) && !saved.includes("today") && !localStorage.getItem("mylife:footer-today-v1")) {
       const at = saved.indexOf("goals");
