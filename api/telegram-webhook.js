@@ -67,7 +67,19 @@ function applyDone(payload, item) {
   const id = item.sourceId || item.id;
   if (item.kind === "bill") {
     const bill = (payload.bills || []).find(entry => entry.id === id);
-    return bill ? markBillPaid(bill, today) : "missing";
+    if (!bill) return "missing";
+    const result = markBillPaid(bill, today);
+    // same as the app: a paid bill is also recorded as an expense
+    if (result === "updated" && Number(bill.amount) > 0) {
+      payload.expenses = Array.isArray(payload.expenses) ? payload.expenses : [];
+      const existing = payload.expenses.find(entry => entry.billId === bill.id && entry.date === today);
+      const expenseId = existing?.id || `expenses-bill-${bill.id}-${Date.now()}`;
+      if (!existing) {
+        payload.expenses.push({ id: expenseId, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), description: bill.name || "Bill", amount: Number(bill.amount), currency: bill.currency || payload.profile?.currency || "USD", date: today, category: "Bills", method: "Telegram", notes: "Bill", billId: bill.id });
+      }
+      bill.lastPaidExpenseId = expenseId;
+    }
+    return result;
   }
   if (item.kind === "loan") {
     const loan = (payload.loans || []).find(entry => entry.id === id);

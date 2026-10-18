@@ -487,6 +487,27 @@ function markBillPaid(billId) {
       nextBill.status = "Upcoming";
     }
   }
+  // A paid bill is money spent: record it as an expense so it counts in
+  // "left this month", budgets, category charts and the monthly report.
+  const amount = Number(bill.amount || 0);
+  if (amount > 0) {
+    const existing = appData.expenses.find(item => item.billId === bill.id && item.date === paidOn);
+    const expenseId = existing?.id || `expenses-bill-${bill.id}-${Date.now()}`;
+    if (!existing) {
+      Store.add("expenses", {
+        id: expenseId,
+        description: bill.name || t("bill"),
+        amount,
+        currency: bill.currency || appData.profile.currency || "USD",
+        date: paidOn,
+        category: "Bills",
+        method: "",
+        notes: t("bill"),
+        billId: bill.id
+      });
+    }
+    nextBill.lastPaidExpenseId = expenseId;
+  }
   Store.edit("bills", bill.id, nextBill);
   Toast.show(t("paymentMarkedPaid"));
 }
@@ -501,6 +522,9 @@ function markBillUnpaid(billId) {
     lastPaidStatus: ""
   };
   if (bill.lastPaidDue) changes.due = bill.lastPaidDue;
+  // undo: remove the expense that "paid" created
+  if (bill.lastPaidExpenseId && appData.expenses.some(item => item.id === bill.lastPaidExpenseId)) Store.delete("expenses", bill.lastPaidExpenseId);
+  changes.lastPaidExpenseId = "";
   Store.edit("bills", bill.id, changes);
   Toast.show(t("paymentMarkedUnpaid"));
 }
