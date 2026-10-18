@@ -1,4 +1,4 @@
-const CACHE_NAME = "mylife-pwa-v81";
+const CACHE_NAME = "mylife-pwa-v82";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -127,7 +127,7 @@ self.addEventListener("notificationclick", event => {
 // screen on iPhone): the app shell answers from the cache at once and refreshes
 // itself in the background; the next open gets the new version.
 const SHELL_KEY = new URL("./", self.registration.scope).href;
-const FONT_HOSTS = ["fonts.googleapis.com", "fonts.gstatic.com"];
+const FONT_HOSTS = ["fonts.googleapis.com", "fonts.gstatic.com", "cdn.jsdelivr.net"];
 
 async function fromCacheThenRefresh(event, request, key = request) {
   const cache = await caches.open(CACHE_NAME);

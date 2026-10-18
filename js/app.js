@@ -1209,7 +1209,7 @@ function prepareWelcomePoster(file) {
   });
 }
 
-document.addEventListener("DOMContentLoaded", () => App.init());
+document.addEventListener("DOMContentLoaded", () => Promise.resolve(window.__cssReady).then(() => App.init()));
 
 // The one "+" menu for the whole app (Settings chooses which buttons show).
 const QUICK_ACTION_DEFAULTS = ["add-event", "add-expense", "add-hobby", "add-memory", "add-goal"];
