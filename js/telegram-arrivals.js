@@ -52,7 +52,7 @@ const TelegramArrivals = (() => {
     if (kind === "event") return `📅 ${safe(record.title)}`;
     const sign = kind === "income" ? "+" : "−";
     const name = record.description || record.name;
-    return `${sign}${amountText(record.amount, record.currency)} · ${label(record.category)}${name && name !== optionLabel?.(record.category) ? ` · ${safe(name)}` : ""}`;
+    return `${sign}${amountText(record.amount, record.currency)} · ${label(record.category)}${name && ![String(record.category).toLowerCase(), String(optionLabel?.(record.category) || "").toLowerCase()].includes(String(name).trim().toLowerCase()) ? ` · ${safe(name)}` : ""}`;
   }
 
   function check() {
@@ -80,7 +80,17 @@ const TelegramArrivals = (() => {
       const total = spent ? ` · ${L("ចំណាយ", "spent")} ${amountText(spent, appData.profile.currency || "USD")}` : "";
       message = `<b>📲 ${L(`បានបន្ថែម ${fresh.length} ពី Telegram`, `${fresh.length} added from Telegram`)}</b>${total}<br>${fresh.slice(0, 3).map(describe).join("<br>")}${fresh.length > 3 ? "<br>…" : ""}`;
     }
-    Toast.show(message, "success", { sound: money.length ? "coin" : "notify", duration: 5200 });
+    showWhenClear(message, money.length ? "coin" : "notify");
+  }
+
+  // wait until the welcome poster / an open form is closed, so the toast is seen
+  function showWhenClear(message, sound, tries = 0) {
+    const root = document.getElementById("modalRoot");
+    if (root?.classList.contains("open") && tries < 40) {
+      setTimeout(() => showWhenClear(message, sound, tries + 1), 1000);
+      return;
+    }
+    Toast.show(message, "success", { sound, duration: 5200 });
     if (navigator.vibrate && appData.profile?.haptics !== false) {
       try { navigator.vibrate([18, 60, 18]); } catch (error) { /* ignore */ }
     }
