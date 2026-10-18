@@ -7,7 +7,9 @@ const {
   sendToSubscription
 } = require("../lib/push");
 const { sendAlert, flushSnoozes, ensureWebhook } = require("../lib/telegram");
-const { budgetAlerts, weeklyReport } = require("../lib/money-report");
+const { budgetAlerts, weeklyReport, CATEGORY_KM } = require("../lib/money-report");
+const { frequentExpenses, unusualToday, convert } = require("../lib/money-insights");
+const { payBill } = require("../lib/bill-pay");
 
 // Redis dedupe makes a wide window safe: a late or skipped scheduler run still
 // delivers alerts that came due in the last 30 minutes, exactly once.
@@ -551,9 +553,143 @@ function notificationItems(payload) {
       url: "/#money/reports",
       weekly: weeklyReport(payload, today)
     });
+    // the same evening: report picture, then the JSON backup file
+    if (profile.weeklyImage !== false) {
+      items.push({
+        kind: "weekly-image", id: `weekly-image-${today}`, title: "MYLIFE weekly image", date: today,
+        time: plusMinutes(profile.weeklyReportTime, "19:00", 1), hasTime: true, url: "/#money/reports",
+        makeFile: async () => ({
+          method: "sendPhoto", field: "photo", mime: "image/png", filename: `mylife-week-${today}.png`,
+          buffer: Buffer.from(await require("../lib/report-image").weeklyImage(payload, today)),
+          caption: "📊 <b>របាយការណ៍ប្រចាំសប្តាហ៍</b>"
+        })
+      });
+    }
+    if (profile.telegramBackup !== false) {
+      items.push({
+        kind: "backup-file", id: `backup-file-${today}`, title: "MYLIFE backup", date: today,
+        time: plusMinutes(profile.weeklyReportTime, "19:00", 2), hasTime: true, url: "/#settings",
+        makeFile: async () => ({
+          method: "sendDocument", field: "document", mime: "application/json", filename: `mylife-backup-${today}.json`,
+          buffer: Buffer.from(JSON.stringify(payload, null, 1)),
+          caption: `💾 <b>Backup ប្រចាំសប្តាហ៍</b> · ${today}\nរក្សាទុកឯកសារនេះ។ ពេលត្រូវការ៖ Settings → Import`
+        })
+      });
+    }
+  }
+
+  // 1st of the month, 09:00: picture of last month
+  if (profile.monthlyImage !== false && today.endsWith("-01")) {
+    const last = addDaysInput(today, -1).slice(0, 7);
+    items.push({
+      kind: "monthly-image", id: `monthly-image-${last}`, title: "MYLIFE monthly image", date: today, time: "09:00", hasTime: true, url: "/#money/reports",
+      makeFile: async () => ({
+        method: "sendPhoto", field: "photo", mime: "image/png", filename: `mylife-month-${last}.png`,
+        buffer: Buffer.from(await require("../lib/report-image").monthlyImage(payload, last)),
+        caption: "🗓️ <b>របាយការណ៍ប្រចាំខែ</b>"
+      })
+    });
+  }
+
+  // Evening check: "did you spend anything else today?"
+  if (profile.eveningCheck !== false) {
+    items.push(eveningItem(payload, today, /^\d{1,2}:\d{2}$/.test(String(profile.eveningCheckTime || "")) ? profile.eveningCheckTime : "21:00"));
+  }
+
+  // Spending far above a normal day (once a day, 08:00–21:00)
+  if (profile.unusualAlert !== false) {
+    const check = unusualToday(payload, today);
+    if (check.unusual) {
+      const currency = profile.currency || "USD";
+      items.push({
+        kind: "unusual", id: `unusual-${today}`, title: "MYLIFE unusual spending", date: today, time: "00:00", hasTime: false, sendNow: true, url: "/#money/expenses",
+        body: `ថ្ងៃនេះចាយ ${fmtMoney(currency, check.today)} ច្រើនជាងធម្មតា ${Math.round(check.ratio)} ដង`,
+        html: [
+          "⚠️ <b>ថ្ងៃនេះចាយច្រើនជាងធម្មតា</b>",
+          "",
+          `💸 ថ្ងៃនេះ <b>${fmtMoney(currency, check.today)}</b>`,
+          `📊 ធម្មតា ${fmtMoney(currency, check.average)} / ថ្ងៃ · ច្រើនជាង <b>${Math.round(check.ratio)} ដង</b>`,
+          "",
+          "<i>បើជាការទិញធំដែលបានគ្រោងទុក មិនអីទេ 👍</i>"
+        ].join("\n")
+      });
+    }
   }
 
   return items;
+}
+
+// "$3.25", "$12", "15,000 ៛" (riel never shows decimals)
+function fmtMoney(currency, amount) {
+  const value = Number(amount || 0);
+  if ((currency || "USD") === "KHR") return `${Math.round(value).toLocaleString("en-US")} ៛`;
+  const cents = Math.round(value * 100) % 100 !== 0;
+  return `$${value.toLocaleString("en-US", { minimumFractionDigits: cents ? 2 : 0, maximumFractionDigits: cents ? 2 : 0 })}`;
+}
+
+function plusMinutes(value, fallback, minutes) {
+  const time = /^\d{1,2}:\d{2}$/.test(String(value || "")) ? value : fallback;
+  const [h, m] = time.split(":").map(Number);
+  const total = Math.min(23 * 60 + 59, h * 60 + m + minutes);
+  return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
+}
+
+function eveningItem(payload, today, time) {
+  const currency = payload.profile?.currency || "USD";
+  const todays = (payload.expenses || []).filter(item => item.date === today);
+  const total = todays.reduce((sum, item) => sum + convert(item.amount, item.currency || currency, currency), 0);
+  const quick = frequentExpenses(payload, today, 4);
+  const lines = ["🌙 <b>មុនគេង · កត់ចំណាយថ្ងៃនេះ</b>", ""];
+  if (todays.length) {
+    lines.push(`ថ្ងៃនេះបងកត់ <b>${todays.length} មុខ</b> · <b>${fmtMoney(currency, total)}</b>`);
+    todays.slice(-4).forEach(item => lines.push(`• ${String(item.description || CATEGORY_KM[item.category] || "").replace(/[<>&]/g, "")} ${fmtMoney(item.currency || currency, item.amount)}`));
+  } else {
+    lines.push("ថ្ងៃនេះមិនទាន់កត់ចំណាយទេ");
+  }
+  lines.push("", "មានចាយអ្វីទៀតទេ?", quick.length ? "👇 ចុចមួយដងដើម្បីកត់ ឬវាយតបមក ឧ. <code>coffee 2</code>" : "វាយតបមក ឧ. <code>coffee 2</code> ឬ <code>grab 15k</code>");
+  return {
+    kind: "evening", id: `evening-${today}`, title: "MYLIFE evening check", date: today, time, hasTime: true, url: "/#money/expenses",
+    html: lines.join("\n"), quick
+  };
+}
+
+// Bills marked "auto-pay" (subscriptions) are paid on their due date and recorded
+// as expenses. Runs from 07:00 local, once per bill cycle.
+async function autoPayBills(supabase, redis, userId, rawPayload) {
+  const payload = parsePayload(rawPayload);
+  const today = zonedTodayInput();
+  const hour = Number(new Intl.DateTimeFormat("en-GB", { timeZone: APP_TIME_ZONE, hour: "2-digit", hourCycle: "h23" }).format(new Date()));
+  if (hour < 7) return "skipped";
+  const due = (payload.bills || []).filter(bill => bill.autoPay && bill.due && bill.due <= today && bill.status !== "Paid");
+  if (!due.length) return "skipped";
+  const claimed = [];
+  for (const bill of due) {
+    if (await redis.set(`mylife:autopay:${userId}:${bill.id}:${bill.due}`, "1", { nx: true, ex: 40 * 24 * 60 * 60 })) claimed.push(bill.id);
+  }
+  if (!claimed.length) return "duplicate";
+
+  const { data, error } = await supabase.from("app_data").select("payload").eq("user_id", userId).maybeSingle();
+  if (error) throw error;
+  if (!data) return "skipped";
+  const wasString = typeof data.payload === "string";
+  const fresh = wasString ? JSON.parse(data.payload || "{}") : data.payload || {};
+  const paid = [];
+  (fresh.bills || []).forEach(bill => {
+    if (!claimed.includes(bill.id)) return;
+    if (payBill(fresh, bill, today, "Auto-pay") === "updated") paid.push(bill);
+  });
+  if (!paid.length) return "skipped";
+  const { error: saveError } = await supabase.from("app_data")
+    .update({ payload: wasString ? JSON.stringify(fresh) : fresh, updated_at: new Date().toISOString() })
+    .eq("user_id", userId);
+  if (saveError) throw saveError;
+
+  const currency = fresh.profile?.currency || "USD";
+  await sendAlert({
+    kind: "autopay", id: `autopay-${today}`, title: "MYLIFE auto-pay", date: today, url: "/#money/bills",
+    html: ["🔁 <b>បង់ស្វ័យប្រវត្តិ</b>", "", ...paid.map(bill => `✅ ${String(bill.name || "Bill").replace(/[<>&]/g, "")} · <b>${fmtMoney(bill.currency || currency, bill.amount)}</b>`), "", "<i>បានកត់ជាចំណាយ (វិក្កយបត្រ) រួចហើយ</i>"].join("\n")
+  }, userId, redis);
+  return "paid";
 }
 
 // When an item should fire: its own date/time, or earlier for "remind before".
@@ -695,6 +831,7 @@ module.exports = async (req, res) => {
         const payload = parsePayload(row.payload);
 
         jobs.push({ channel: "backup", run: () => weeklyBackup(redis, row.user_id, row.payload) });
+        jobs.push({ channel: "autopay", run: () => autoPayBills(supabase, redis, row.user_id, row.payload) });
 
         if (payload.profile?.notificationsEnabled === false) {
           continue;
@@ -725,7 +862,7 @@ module.exports = async (req, res) => {
         const subscriptions = await getUserSubscriptions(row.user_id);
 
         for (const item of items) {
-          if (["digest", "weekly", "budget"].includes(item.kind)) continue;
+          if (["digest", "weekly", "budget", "evening", "weekly-image", "monthly-image", "backup-file", "autopay"].includes(item.kind)) continue;
           const title = String(item.title || "MYLIFE alert");
           const body = String(
             item.body || item.notes || item.category || "It is time."
@@ -814,7 +951,8 @@ module.exports = async (req, res) => {
     const breakdown = {
       telegram: { sent: 0, duplicate: 0, skipped: 0, failed: 0 },
       push: { sent: 0, duplicate: 0, skipped: 0, failed: 0 },
-      backup: { saved: 0, recent: 0, too_big: 0, failed: 0 }
+      backup: { saved: 0, recent: 0, too_big: 0, failed: 0 },
+      autopay: { paid: 0, skipped: 0, duplicate: 0, failed: 0 }
     };
 
     results.forEach((result, index) => {
@@ -826,7 +964,7 @@ module.exports = async (req, res) => {
       }
       if (bucket[result.value] !== undefined) bucket[result.value] += 1;
     });
-    const alertJobs = jobs.filter(job => job.channel !== "backup").length;
+    const alertJobs = jobs.filter(job => !["backup", "autopay"].includes(job.channel)).length;
 
     const sent = breakdown.telegram.sent + breakdown.push.sent;
     const failed = breakdown.telegram.failed + breakdown.push.failed;
@@ -840,7 +978,8 @@ module.exports = async (req, res) => {
       push: breakdown.push,
       snoozed,
       webhook,
-      backup: breakdown.backup
+      backup: breakdown.backup,
+      autopay: breakdown.autopay
     });
   } catch (error) {
     console.error("MYLIFE scheduled notification dispatch failed.", error);

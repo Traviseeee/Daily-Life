@@ -10,6 +10,7 @@ const { buildTelegramText, dateLabels, timeLabels, escapeHtml } = require("../li
 const { parseEvent, parseMoney } = require("../lib/smart-parse");
 const { monthSpending, formatMoney, convert, CATEGORY_KM } = require("../lib/money-report");
 const { digestItem } = require("./dispatch");
+const { payBill } = require("../lib/bill-pay");
 
 const APP_TIME_ZONE = "Asia/Phnom_Penh";
 
@@ -21,46 +22,6 @@ function zonedClock(ms) {
   return new Intl.DateTimeFormat("en-GB", { timeZone: APP_TIME_ZONE, hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(new Date(ms));
 }
 
-function pad(n) {
-  return String(n).padStart(2, "0");
-}
-
-function dateInput(date) {
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
-}
-
-function parseDate(value) {
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value || ""));
-  return match ? new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3])) : null;
-}
-
-// Same rules as markBillPaid() in js/dashboard.js.
-function markBillPaid(bill, today) {
-  if (bill.status === "Paid") return "already";
-  if (bill.lastPaidAt && bill.due && bill.due > today) return "already";
-  const frequency = bill.frequency || "Monthly";
-  const changes = { status: "Paid", lastPaidAt: today, lastPaidDue: bill.due || "", lastPaidStatus: bill.status || "Upcoming" };
-  const due = parseDate(bill.due);
-  if (frequency !== "Once" && due) {
-    const todayDate = parseDate(today);
-    do {
-      if (frequency === "Daily") due.setDate(due.getDate() + 1);
-      else if (frequency === "Weekly") due.setDate(due.getDate() + 7);
-      else {
-        const months = frequency === "Quarterly" ? 3 : frequency === "Yearly" ? 12 : 1;
-        const day = due.getDate();
-        due.setDate(1);
-        due.setMonth(due.getMonth() + months);
-        due.setDate(Math.min(day, new Date(due.getFullYear(), due.getMonth() + 1, 0).getDate()));
-      }
-    } while (due <= todayDate);
-    changes.due = dateInput(due);
-    changes.status = "Upcoming";
-  }
-  Object.assign(bill, changes, { updatedAt: new Date().toISOString() });
-  return "updated";
-}
-
 // Applies ✅ to the payload. Returns "updated", "already" or "missing".
 function applyDone(payload, item) {
   const today = zonedToday();
@@ -68,18 +29,7 @@ function applyDone(payload, item) {
   if (item.kind === "bill") {
     const bill = (payload.bills || []).find(entry => entry.id === id);
     if (!bill) return "missing";
-    const result = markBillPaid(bill, today);
-    // same as the app: a paid bill is also recorded as an expense
-    if (result === "updated" && Number(bill.amount) > 0) {
-      payload.expenses = Array.isArray(payload.expenses) ? payload.expenses : [];
-      const existing = payload.expenses.find(entry => entry.billId === bill.id && entry.date === today);
-      const expenseId = existing?.id || `expenses-bill-${bill.id}-${Date.now()}`;
-      if (!existing) {
-        payload.expenses.push({ id: expenseId, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), description: bill.name || "Bill", amount: Number(bill.amount), currency: bill.currency || payload.profile?.currency || "USD", date: today, category: "Bills", method: "Telegram", notes: "Bill", billId: bill.id, source: "telegram" });
-      }
-      bill.lastPaidExpenseId = expenseId;
-    }
-    return result;
+    return payBill(payload, bill, today, "Telegram");
   }
   if (item.kind === "loan") {
     const loan = (payload.loans || []).find(entry => entry.id === id);
@@ -552,6 +502,37 @@ module.exports = async (req, res) => {
         reply_markup: moneyKeyboard(token, saved)
       }).catch(() => {});
       return res.status(200).json({ ok: true });
+    } else if (/^qa\d$/.test(verb) && item.kind === "evening") {
+      // one-tap frequent expense from the evening check
+      const entry = (item.quick || [])[Number(verb.slice(2))];
+      if (!entry) {
+        await answer("🤔");
+        return res.status(200).json({ ok: true });
+      }
+      const today = zonedToday();
+      const saved = [entryRecord({ type: "expense", amount: entry.amount, currency: entry.currency, category: entry.category, description: entry.description, date: item.date || today }, today, entry.currency)];
+      let after = null;
+      await updatePayload(action.userId, data => {
+        data.expenses = Array.isArray(data.expenses) ? data.expenses : [];
+        data.expenses.push(saved[0].record);
+        after = data;
+        return "updated";
+      });
+      const undoToken = await saveAction(redis, { userId: action.userId, item: { kind: "undo", entries: [{ collection: "expenses", id: saved[0].record.id }], collection: "expenses", id: saved[0].record.id, url: "/#money/expenses" } });
+      await answer(`✅ ${entry.description}`);
+      await tgCall("sendMessage", {
+        chat_id: chatId,
+        text: moneyReplyText(after, saved, today),
+        parse_mode: "HTML",
+        disable_web_page_preview: true,
+        reply_to_message_id: query.message.message_id,
+        reply_markup: moneyKeyboard(undoToken, saved)
+      }).catch(() => {});
+      await pushAdded(action.userId, "📲 បានកត់ចំណាយពី Telegram", `−${formatMoney(entry.amount, entry.currency)} · ${catLabel({ collection: "expenses", category: entry.category })} · ${entry.description}`, "/#money/expenses");
+      return res.status(200).json({ ok: true });
+    } else if (verb === "nomore") {
+      status = "✅ ល្អណាស់! ថ្ងៃនេះកត់រួច";
+      toast = "👍 រាត្រីសួស្តី";
     } else if (verb === "seen") {
       status = DONE_TEXT.seen;
       toast = "👍";

@@ -1,4 +1,4 @@
-const CACHE_NAME = "mylife-pwa-v74";
+const CACHE_NAME = "mylife-pwa-v75";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -49,6 +49,7 @@ const APP_SHELL = [
   "./js/app.js",
   "./js/sound-hooks.js",
   "./js/smart-parse.js",
+  "./js/money-insights.js",
   "./js/chat-bot.js",
   "./js/telegram-arrivals.js"
 ];

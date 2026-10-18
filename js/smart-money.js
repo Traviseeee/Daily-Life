@@ -132,7 +132,13 @@ const SmartMoney = (() => {
     return [...expenseCategories].sort((a, b) => (counts[b] || 0) - (counts[a] || 0) || rank(a) - rank(b));
   }
 
+  const FREQ_ICON = { Food: "🍜", Transport: "🚗", Shopping: "🛍", Home: "🏠", Bills: "🧾", Family: "👨‍👩‍👧", Health: "💊", Education: "📚", Entertainment: "🎬", Other: "📦" };
+  // expenses logged 3+ times in 60 days → one-tap buttons
+  const frequentList = () => (typeof MoneyInsights !== "undefined" ? MoneyInsights.frequentExpenses(appData, localDateInput(), 4) : []);
+  const freqAmount = entry => (entry.currency === "KHR" ? `${Number(entry.amount).toLocaleString("en-US")}៛` : `$${Number(entry.amount).toLocaleString("en-US", { maximumFractionDigits: 2 })}`);
+
   function renderQuickExpense(extraClass = "") {
+    const frequent = frequentList();
     const categories = topCategories();
     const first = categories[0];
     const currency = profileCurrency();
@@ -143,6 +149,10 @@ const SmartMoney = (() => {
           <div><strong>${km() ? "កត់ចំណាយរហ័ស" : "Quick expense"}</strong><small data-qx-hint></small></div>
           <button class="qx-more" type="button" data-qx-details>${Icons.plus()}${km() ? "លម្អិត" : "Details"}</button>
         </div>
+        ${frequent.length ? `<div class="qx-frequent" aria-label="${escapeAttr(km() ? "ចំណាយញឹកញាប់" : "Frequent expenses")}">
+          <span class="qx-frequent-label">⭐ ${km() ? "ចុចមួយដង" : "One tap"}</span>
+          ${frequent.map((entry, index) => `<button type="button" class="qx-fav" data-qx-fav="${index}" title="${escapeAttr(`${entry.count}×`)}">${FREQ_ICON[entry.category] || "📦"} ${escapeHtml(entry.description)} <b>${escapeHtml(freqAmount(entry))}</b></button>`).join("")}
+        </div>` : ""}
         <div class="qx-cats" role="radiogroup">
           ${categories.map((category, index) => `<label class="qx-cat" style="--cat:${expenseCategoryColors[category]}">
             <input type="radio" name="qxCategory" value="${escapeAttr(category)}" ${index === 0 ? "checked" : ""}>
@@ -169,6 +179,13 @@ const SmartMoney = (() => {
         const amount = Number(form.elements.qxAmount.value || 0);
         openExpenseModal(amount || form.elements.qxNote.value ? { category, amount: amount || "", description: form.elements.qxNote.value.trim(), currency: form.querySelector("[data-qx-currency]").dataset.qxCurrency } : { category });
       });
+      form.querySelectorAll("[data-qx-fav]").forEach(button => button.addEventListener("click", () => {
+        const entry = frequentList()[Number(button.dataset.qxFav)];
+        if (!entry) return;
+        button.disabled = true;
+        Store.add("expenses", { description: entry.description, amount: entry.amount, currency: entry.currency, category: entry.category, date: localDateInput(), method: "", notes: "" });
+        Toast.show(`${km() ? "បានកត់" : "Added"} ${FREQ_ICON[entry.category] || ""} ${escapeHtml(entry.description)} ${escapeHtml(freqAmount(entry))}`, "success", { sound: "coin" });
+      }));
       const currencyButton = form.querySelector("[data-qx-currency]");
       const update = () => {
         const category = form.querySelector('input[name="qxCategory"]:checked')?.value;

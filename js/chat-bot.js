@@ -115,13 +115,25 @@ const MyLifeChat = (() => {
     const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
     const daysLeft = lastDay - today.getDate() + 1;
     const perDay = m.left > 0 ? m.left / daysLeft : 0;
+    const fc = forecastLine();
     return {
-      html: m.left >= 0
+      html: (m.left >= 0
         ? `<p>${L("ខែនេះនៅសល់", "Left this month")} <strong>${money(m.left)}</strong></p>${li([row(L("ចំណូល", "Income"), money(m.income)), row(L("ចាយ", "Spent"), money(m.expenses)), row(L("កម្ចី", "Loans"), money(m.loans)), row(L("អាចចាយ/ថ្ងៃ", "Can spend / day"), money(perDay))])}`
-        : `<p>⚠️ ${L("ខែនេះខ្វះ", "Short this month by")} <strong>${money(-m.left)}</strong></p>${li([row(L("ចំណូល", "Income"), money(m.income)), row(L("ចាយ", "Spent"), money(m.expenses)), row(L("កម្ចី", "Loans"), money(m.loans))])}`,
+        : `<p>⚠️ ${L("ខែនេះខ្វះ", "Short this month by")} <strong>${money(-m.left)}</strong></p>${li([row(L("ចំណូល", "Income"), money(m.income)), row(L("ចាយ", "Spent"), money(m.expenses)), row(L("កម្ចី", "Loans"), money(m.loans))])}`) + fc,
       actions: [link(L("💰 មើលលុយ", "💰 Open Money"), "#money")]
     };
   }
+  function forecastLine() {
+    if (typeof MoneyInsights === "undefined") return "";
+    const f = MoneyInsights.monthForecast(appData, localDateInput(), { leftNow: moneyMonthNumbers().left });
+    const line = f.left < 0
+      ? L(`🔮 បើចាយបែបនេះ ចុងខែនឹងខ្វះ ${plainMoney(Math.abs(f.left))}`, `🔮 At this pace you'll be short ${plainMoney(Math.abs(f.left))} by month-end`)
+      : L(`🔮 បើចាយបែបនេះ ចុងខែនឹងនៅសល់ ${plainMoney(f.left)}`, `🔮 At this pace ${plainMoney(f.left)} will be left at month-end`);
+    const budget = f.budgets[0];
+    const extra = budget ? (budget.over ? L(` · ថវិកា${optionLabel(budget.category)} លើសហើយ`, ` · ${optionLabel(budget.category)} budget is over`) : L(` · ថវិកា${optionLabel(budget.category)} នឹងអស់ថ្ងៃទី ${budget.day}`, ` · ${optionLabel(budget.category)} budget runs out ~day ${budget.day}`)) : "";
+    return `<p class="mlc-note">${escapeHtml(line + extra)}</p>`;
+  }
+
 
   function answerIncome() {
     const m = moneyMonthNumbers();

@@ -334,6 +334,30 @@ function renderCategoryOverview(range = moneyPeriodRange()) {
   </article>`;
 }
 
+// "If you keep spending like this…" — only for the current month
+function renderMoneyForecast(range) {
+  if (typeof MoneyInsights === "undefined" || range.kind !== "month" || !range.isCurrent) return "";
+  const today = localDateInput();
+  const f = MoneyInsights.monthForecast(appData, today, { leftNow: moneyMonthNumbers().left });
+  if (!f.spent && !f.income) return "";
+  const isKm = languageCode() === "km";
+  const short = f.left < 0;
+  const budgets = f.budgets.slice(0, 2).map(entry => `<li class="${entry.over ? "is-over" : "is-near"}">${entry.over
+    ? (isKm ? `ថវិកា${escapeHtml(optionLabel(entry.category))} លើសហើយ` : `${escapeHtml(optionLabel(entry.category))} budget is over`)
+    : (isKm ? `ថវិកា${escapeHtml(optionLabel(entry.category))} នឹងអស់ប្រហែលថ្ងៃទី ${entry.day}` : `${escapeHtml(optionLabel(entry.category))} budget runs out around day ${entry.day}`)}</li>`).join("");
+  return `<article class="glass-card card-pad money-forecast ${short ? "is-short" : "is-ok"}">
+    <span class="money-forecast-icon" aria-hidden="true">🔮</span>
+    <div class="money-forecast-copy">
+      <small>${isKm ? "ព្យាករណ៍ចុងខែ" : "Month-end forecast"}</small>
+      <strong>${short
+        ? (isKm ? `បើចាយបែបនេះ នឹងខ្វះ ${money(Math.abs(f.left))}` : `At this pace you'll be short ${money(Math.abs(f.left))}`)
+        : (isKm ? `បើចាយបែបនេះ នឹងនៅសល់ ${money(f.left)}` : `At this pace you'll have ${money(f.left)} left`)}</strong>
+      ${f.daysLeft > 0 ? `<span>${isKm ? `អាចចាយបាន ${money(f.perDay)} / ថ្ងៃ · ${f.daysLeft} ថ្ងៃទៀត` : `You can spend ${money(f.perDay)} / day · ${f.daysLeft} days left`}</span>` : ""}
+      ${budgets ? `<ul>${budgets}</ul>` : ""}
+    </div>
+  </article>`;
+}
+
 function summaryCard(label, title, value, trend, icon, tone, section) {
   return `
     <article class="glass-card card-pad financial-metric-card">
@@ -362,6 +386,7 @@ function renderMoneyTab(tab, stats) {
   return `
     ${renderMoneyPeriodBar(range)}
     ${renderMoneyCards(stats, range)}
+    ${renderMoneyForecast(range)}
     ${typeof SmartMoney !== "undefined" ? SmartMoney.renderQuickExpense() : ""}
     ${renderCategoryOverview(range)}
     <div class="grid two-col financial-overview-grid">
@@ -700,7 +725,7 @@ function billCard(bill) {
     <h3>${escapeHtml(bill.name)}</h3>
     <strong class="financial-bill-amount">${money(bill.amount, bill.currency)}</strong>
     <div class="financial-bill-meta"><span>${Icons.calendar()}${t("dueDate")}</span><strong>${formatDate(bill.due)}</strong></div>
-    <div class="financial-bill-tags"><span>${optionLabel(bill.frequency)}</span><span>${optionLabel(bill.category)}</span></div>
+    <div class="financial-bill-tags"><span>${optionLabel(bill.frequency)}</span><span>${optionLabel(bill.category)}</span>${bill.autoPay ? `<span class="bill-autopay-tag">🔁 ${languageCode() === "km" ? "ស្វ័យប្រវត្តិ" : "Auto-pay"}</span>` : ""}</div>
     <div class="financial-bill-actions">
       <button class="button ghost-button bill-payment-action ${paid ? "is-paid" : "is-unpaid"}" data-finance-toggle-bill="${escapeAttr(bill.id)}" aria-pressed="${paid}">${paid ? Icons.check() : ""}${escapeHtml(paid ? t("billPaidLabel") : t("billUnpaidLabel"))}</button>
       <button class="icon-button" data-edit-bill="${escapeAttr(bill.id)}" aria-label="${escapeAttr(`${t("edit")} ${bill.name}`)}" title="${escapeAttr(t("edit"))}">${Icons.edit()}</button>
@@ -1517,6 +1542,7 @@ function openBillModal(item) {
     { name: "due", label: t("dueDateDay"), type: "date", value: item?.due },
     { name: "category", label: t("category"), value: item?.category },
     { name: "reminder", label: t("reminder"), type: "checkbox", value: item?.reminder ?? true },
+    { name: "autoPay", label: languageCode() === "km" ? "🔁 បង់ស្វ័យប្រវត្តិ (Netflix, Wi-Fi…) — កត់ជាចំណាយដោយខ្លួនឯងនៅថ្ងៃបង់" : "🔁 Auto-pay (subscriptions) — logged as an expense on the due date", type: "checkbox", value: item?.autoPay ?? false },
     { name: "status", label: t("status"), type: "select", options: ["Upcoming", "Paid", "Overdue"], value: item?.status || "Upcoming" },
     { name: "notes", label: t("notes"), type: "textarea", value: item?.notes }
   ], onSubmit(data) { const record = { ...data, amount: Number(data.amount || 0), currency: data.currency || appData.profile.currency || "USD" }; item ? Store.edit("bills", item.id, record) : Store.add("bills", record); Toast.show(item ? t("billSaved") : t("billAdded")); } });
