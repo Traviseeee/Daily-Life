@@ -79,6 +79,7 @@ const ReportTelegram = (() => {
     const original = button.innerHTML;
     button.disabled = true;
     button.textContent = L("កំពុងផ្ញើ…", "Sending…");
+    button.classList.add("is-sending");
     try {
       await send(month);
       Toast.show(L("📤 បានផ្ញើរបាយការណ៍ទៅ Telegram", "📤 Report sent to Telegram"), "success", { sound: "notify" });
@@ -91,6 +92,7 @@ const ReportTelegram = (() => {
       Toast.show(message, "warning");
     } finally {
       button.disabled = false;
+      button.classList.remove("is-sending");
       button.innerHTML = original;
     }
   }
