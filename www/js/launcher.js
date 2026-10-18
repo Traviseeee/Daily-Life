@@ -7,6 +7,12 @@ const LAUNCHER_GROUPS = [
   { id: "more", km: "ផ្សេងៗ", en: "More", routes: ["settings", "tips", "help"] }
 ];
 const LAUNCHER_ICON = { tips: "heart", help: "help" };
+const LAUNCHER_ORDER = ["today", "calendar", "money", "family", "goals", "memories", "daily", "summary", "settings", "tips", "help"];
+const LAUNCHER_COLORS = {
+  today: ["#ffd25e", "#ff9f2e"], calendar: ["#ff7a9c", "#e8436b"], money: ["#ffb35c", "#f07a1a"], family: ["#b28cff", "#7c4dff"],
+  goals: ["#62c3ff", "#2f7ff0"], memories: ["#4fe0c8", "#13a89e"], daily: ["#9ef06a", "#3fb84a"], summary: ["#7ee6a8", "#1fa767"],
+  settings: ["#a5b1c2", "#5f6b7d"], tips: ["#ff9ad1", "#e0559e"], help: ["#8fb6ff", "#4f6fe0"]
+};
 const FOOTER_MAX = 5;
 
 function launcherAllRoutes() {
@@ -74,12 +80,9 @@ function renderLauncher() {
         <input class="sr-only" type="file" accept="image/*" data-launcher-cover-input>
       </header>
       <section class="footer-editor" data-footer-editor hidden></section>
-      <nav class="tool-launcher-groups" aria-label="App tools">
-        ${LAUNCHER_GROUPS.map(group => `
-          <section class="tool-group">
-            <h2 class="tool-group-title">${km ? group.km : group.en}</h2>
-            <div class="tool-launcher">${group.routes.map(id => all.find(route => route.id === id)).filter(Boolean).map(launcherTool).join("")}</div>
-          </section>`).join("")}
+      ${renderLauncherWidgets()}
+      <nav class="app-grid" aria-label="App tools">
+        ${LAUNCHER_ORDER.map(id => all.find(route => route.id === id)).filter(Boolean).map(launcherTool).join("")}
       </nav>
     </section>
   `;
@@ -271,21 +274,59 @@ function launcherCoverPosition() {
 
 function launcherTool(route) {
   const pinned = footerRoutes().some(item => item.id === route.id);
-  const description = launcherDescription(route.id);
   const icon = Icons[LAUNCHER_ICON[route.id] || route.icon]();
-  const badge = launcherBadge(route.id);
+  const [c1, c2] = LAUNCHER_COLORS[route.id] || ["#9ef06a", "#3fb84a"];
+  const count = launcherCount(route.id);
   const km = languageCode() === "km";
   return `
-    <div class="tool-launcher-entry">
-      <a class="tool-launcher-item tool-${route.id}" href="#${route.id}">
-        <span class="tool-launcher-watermark">${icon}</span>
-        <span class="tool-launcher-icon">${icon}</span>
-        <span class="tool-launcher-copy"><strong>${t(route.labelKey || route.id)}</strong><small>${description}</small>${badge ? `<em class="tool-badge tool-badge-${badge.tone}">${escapeHtml(badge.text)}</em>` : ""}</span>
-        <span class="tool-launcher-arrow">${Icons.chevron()}</span>
+    <div class="app-cell">
+      <a class="app-icon" href="#${route.id}" style="--a1:${c1};--a2:${c2}" title="${escapeAttr(launcherDescription(route.id))}">
+        <span class="app-icon-tile">${icon}${count ? `<em class="app-badge">${count > 99 ? "99+" : count}</em>` : ""}</span>
+        <span class="app-icon-label">${t(route.labelKey || route.id)}</span>
       </a>
-      <button class="tool-footer-pin ${pinned ? "active" : ""}" type="button" data-footer-toggle="${route.id}" aria-pressed="${pinned}" aria-label="${pinned ? (km ? "ដកពី footer" : "Remove from footer") : (km ? "បន្ថែមទៅ footer" : "Add to footer")}">${pinned ? "✓" : "+"}</button>
+      <button class="app-pin ${pinned ? "active" : ""}" type="button" data-footer-toggle="${route.id}" aria-pressed="${pinned}" aria-label="${pinned ? (km ? "ដកពី footer" : "Remove from footer") : (km ? "បន្ថែមទៅ footer" : "Add to footer")}">${pinned ? "✓" : "+"}</button>
     </div>
   `;
+}
+
+// Red number on the icon, like a phone: things that need you.
+function launcherCount(routeId) {
+  try {
+    if (routeId === "today") return getUpcomingNotifications(0, Infinity).length;
+    if (routeId === "calendar") return getUpcomingNotifications(7, Infinity).length;
+    if (routeId === "money") {
+      const today = localDateInput();
+      return (appData.bills || []).filter(bill => bill.status !== "Paid" && bill.due && bill.due <= today && !(typeof billPaidCurrentCycle === "function" && billPaidCurrentCycle(bill))).length;
+    }
+  } catch (error) {
+    return 0;
+  }
+  return 0;
+}
+
+// Two widgets on top (like a phone home screen): Today and Money.
+function renderLauncherWidgets() {
+  const km = languageCode() === "km";
+  const today = launcherBadge("today");
+  const money = launcherBadge("money");
+  const family = launcherBadge("family");
+  const goals = launcherBadge("goals");
+  const now = new Date();
+  const KM_DAYS = ["អាទិត្យ", "ច័ន្ទ", "អង្គារ", "ពុធ", "ព្រហស្បតិ៍", "សុក្រ", "សៅរ៍"];
+  const KM_MONTHS = ["មករា", "កុម្ភៈ", "មីនា", "មេសា", "ឧសភា", "មិថុនា", "កក្កដា", "សីហា", "កញ្ញា", "តុលា", "វិច្ឆិកា", "ធ្នូ"];
+  const dateText = km ? `ថ្ងៃ${KM_DAYS[now.getDay()]} ${now.getDate()} ${KM_MONTHS[now.getMonth()]}` : now.toLocaleDateString("en-US", { weekday: "long", day: "numeric", month: "long" });
+  return `<div class="app-widgets">
+    <a class="app-widget app-widget-today" href="#today">
+      <small>${escapeHtml(dateText)}</small>
+      <strong>${escapeHtml(today?.text || "")}</strong>
+      <span>${family ? escapeHtml(family.text) : ""}</span>
+    </a>
+    <a class="app-widget app-widget-money app-widget-${money?.tone || "green"}" href="#money">
+      <small>${km ? "លុយខែនេះ" : "Money this month"}</small>
+      <strong>${escapeHtml(money?.text || "")}</strong>
+      <span>${goals ? escapeHtml(goals.text) : ""}</span>
+    </a>
+  </div>`;
 }
 
 function launcherDescription(routeId) {
