@@ -616,6 +616,13 @@ function renderReports() {
       <div class="financial-report-metric payments"><span>${t("monthlyPayment")}</span><strong>${money(report.loanPaymentTotal)}</strong></div>
       <div class="financial-report-metric cash-flow"><span>${t("netCashFlow")}</span><strong>${money(report.netCashFlow)}</strong></div>
     </div>
+    ${typeof ReportInsights !== "undefined" ? (() => {
+      const info = ReportInsights.build(month);
+      return `<div class="financial-report-insights">
+        <div class="fri-col"><h3>💡 ${languageCode() === "km" ? "ការយល់ដឹង" : "Insights"}</h3><ul>${info.insights.map(item => `<li class="fri-${item.tone}">${escapeHtml(item.text)}</li>`).join("")}</ul></div>
+        ${info.categories.length ? `<div class="fri-col"><h3>${t("spendingByCategory")}</h3>${info.categories.slice(0, 6).map(item => `<div class="fri-bar"><span>${escapeHtml(item.label)}</span><i><b style="width:${Math.max(4, Math.round(item.share * 100))}%;background:${item.color}"></b></i><em>${Math.round(item.share * 100)}%</em></div>`).join("")}</div>` : ""}
+      </div>`;
+    })() : ""}
     <div class="financial-report-table-wrap">
       <table class="financial-report-table">
         <thead><tr><th>${t("type")}</th><th>${t("description")}</th><th>${t("category")}</th><th>${t("date")} / ${t("frequency")}</th><th>${t("amount")}</th></tr></thead>
@@ -712,7 +719,7 @@ function monthlyFinanceReportHtml(report) {
   const transactionRows = rows.length ? rows : [[t("noMonthlyTransactions"), "", "", "", ""]];
   const detailTable = `<table style="width:100%;border-collapse:collapse;margin:12px 0 24px;font-family:${fontStack};font-size:11pt"><tbody>${details.map(([label, value]) => `<tr><th style="width:30%;border:1px solid #d5ddcc;padding:8px 10px;background:#f4f7ef;color:#35491b;font-family:${fontStack};text-align:left">${escapeHtml(label)}</th><td style="border:1px solid #d5ddcc;padding:8px 10px;background:#ffffff;color:#20251b;font-family:${fontStack}">${escapeHtml(value)}</td></tr>`).join("")}</tbody></table>`;
   const inlineFont = `font-family:${fontStack};`;
-  return `<html><head><meta charset="utf-8"><style>body{${inlineFont}margin:28px 36px;color:#20251b}h1{font-size:22pt;color:#202c18;margin:0 0 6px}h2{font-size:14pt;color:#35491b;margin:24px 0 8px}p{font-size:11pt;color:#59634f;margin:0 0 18px}</style></head><body style="${inlineFont}margin:28px 36px;color:#20251b"><h1 style="${inlineFont}font-size:22pt;color:#202c18;margin:0 0 6px">${escapeHtml(t("monthlyReport"))}</h1>${detailTable}<h2 style="${inlineFont}font-size:14pt;color:#35491b;margin:24px 0 8px">${escapeHtml(t("financialAnalytics"))}</h2>${table([[t("summary"), t("amount")], ...summary], [58, 42])}<h2 style="${inlineFont}font-size:14pt;color:#35491b;margin:24px 0 8px">${escapeHtml(t("recentTransactions"))}</h2>${table([headers, ...transactionRows], [14, 25, 17, 25, 19])}</body></html>`;
+  return `<html><head><meta charset="utf-8"><style>body{${inlineFont}margin:28px 36px;color:#20251b}h1{font-size:22pt;color:#202c18;margin:0 0 6px}h2{font-size:14pt;color:#35491b;margin:24px 0 8px}p{font-size:11pt;color:#59634f;margin:0 0 18px}</style></head><body style="${inlineFont}margin:28px 36px;color:#20251b"><h1 style="${inlineFont}font-size:22pt;color:#202c18;margin:0 0 6px">${escapeHtml(t("monthlyReport"))}</h1>${detailTable}<h2 style="${inlineFont}font-size:14pt;color:#35491b;margin:24px 0 8px">${escapeHtml(t("financialAnalytics"))}</h2>${table([[t("summary"), t("amount")], ...summary], [58, 42])}${report.insights ? `<h2 style="${inlineFont}font-size:14pt;color:#35491b;margin:24px 0 8px">💡 ${escapeHtml(languageCode() === "km" ? "ការយល់ដឹង" : "Insights")}</h2><ul style="${inlineFont}font-size:11pt;color:#20251b;margin:8px 0 18px">${report.insights.map(item => `<li style="margin:4px 0;color:${item.tone === "warn" ? "#b42339" : item.tone === "good" ? "#1b7a35" : "#20251b"}">${escapeHtml(item.text)}</li>`).join("")}</ul>` : ""}${report.categories?.length ? `<h2 style="${inlineFont}font-size:14pt;color:#35491b;margin:24px 0 8px">${escapeHtml(t("spendingByCategory"))}</h2>${table([[t("category"), t("amount"), "%"], ...report.categories.map(item => [item.label, formatPlainMoney(item.amount), `${Math.round(item.share * 100)}%`])], [50, 30, 20])}` : ""}<h2 style="${inlineFont}font-size:14pt;color:#35491b;margin:24px 0 8px">${escapeHtml(t("recentTransactions"))}</h2>${table([headers, ...transactionRows], [14, 25, 17, 25, 19])}</body></html>`;
 }
 
 function wrapFinanceCanvasText(context, value, maxWidth, font) {
@@ -863,7 +870,7 @@ async function createMonthlyFinanceReportCanvas(report) {
 
 async function getMonthlyFinanceReportCanvas(month) {
   if (financeReportCanvas && financeReportCanvasMonth === month) return financeReportCanvas;
-  financeReportCanvas = await createMonthlyFinanceReportCanvas(buildMonthlyFinanceReport(month));
+  financeReportCanvas = typeof ReportCanvas !== "undefined" ? await ReportCanvas.draw(month) : await createMonthlyFinanceReportCanvas(buildMonthlyFinanceReport(month));
   financeReportCanvasMonth = month;
   return financeReportCanvas;
 }
@@ -899,7 +906,12 @@ async function downloadMonthlyFinanceReportJpg() {
 
 function exportMonthlyFinanceReport(format) {
   const month = document.querySelector("[data-finance-report-month]")?.value || financeReportMonth || localDateInput().slice(0, 7);
-  const report = buildMonthlyFinanceReport(month);
+  if (format === "excel" && typeof ReportXlsx !== "undefined") {
+    ReportXlsx.download(month);
+    Toast.show(t("financialReportExported"));
+    return;
+  }
+  const report = typeof ReportInsights !== "undefined" ? ReportInsights.build(month) : buildMonthlyFinanceReport(month);
   const isWord = format === "word";
   const extension = isWord ? "doc" : "xls";
   const mimeType = isWord ? "application/msword" : "application/vnd.ms-excel";

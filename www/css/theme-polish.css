@@ -2864,3 +2864,18 @@ body:has(#modalRoot.open) .quick-action-dock {
 .financial-report-panel .financial-report-table td.financial-report-outflow { color: #ff8a7a !important; }
 .financial-report-panel .financial-report-table td::before { color: var(--rp-ink-2) !important; }
 .financial-report-panel .financial-report-empty { color: var(--rp-ink-2) !important; text-align: center; }
+
+/* Reports: insights + category bars */
+.financial-report-panel .financial-report-insights { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; margin: 12px 0; }
+.financial-report-panel .fri-col { padding: 16px; border: 1px solid var(--rp-line); border-radius: 18px; background: var(--rp-card); }
+.financial-report-panel .fri-col h3 { margin: 0 0 10px; font-size: 0.95rem; color: var(--rp-ink); }
+.financial-report-panel .fri-col ul { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.financial-report-panel .fri-col li { position: relative; padding-left: 18px; font-size: 0.86rem; line-height: 1.45; color: var(--rp-ink); }
+.financial-report-panel .fri-col li::before { content: ""; position: absolute; left: 0; top: 0.5em; width: 8px; height: 8px; border-radius: 50%; background: #5aa9ff; }
+.financial-report-panel .fri-col li.fri-warn::before { background: #ff6b7a; }
+.financial-report-panel .fri-col li.fri-good::before { background: #3fd7a4; }
+.financial-report-panel .fri-bar { display: grid; grid-template-columns: minmax(70px, 110px) minmax(0, 1fr) 42px; align-items: center; gap: 10px; margin: 8px 0; font-size: 0.84rem; color: var(--rp-ink); }
+.financial-report-panel .fri-bar span { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.financial-report-panel .fri-bar i { height: 10px; border-radius: 999px; background: rgba(127, 140, 130, 0.18); overflow: hidden; }
+.financial-report-panel .fri-bar b { display: block; height: 100%; border-radius: inherit; }
+.financial-report-panel .fri-bar em { font-style: normal; font-weight: 800; text-align: right; color: var(--rp-ink-2); }
