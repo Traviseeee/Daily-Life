@@ -1,4 +1,4 @@
-const CACHE_NAME = "mylife-pwa-v80";
+const CACHE_NAME = "mylife-pwa-v81";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -123,48 +123,59 @@ self.addEventListener("notificationclick", event => {
   })());
 });
 
+// Opening from the Home Screen must not wait for the network (that is the white
+// screen on iPhone): the app shell answers from the cache at once and refreshes
+// itself in the background; the next open gets the new version.
+const SHELL_KEY = new URL("./", self.registration.scope).href;
+const FONT_HOSTS = ["fonts.googleapis.com", "fonts.gstatic.com"];
+
+async function fromCacheThenRefresh(event, request, key = request) {
+  const cache = await caches.open(CACHE_NAME);
+  const cached = await cache.match(key);
+  const refresh = fetch(request).then(response => {
+    if (response && (response.ok || response.type === "opaque")) cache.put(key, response.clone());
+    return response;
+  }).catch(() => null);
+  if (cached) {
+    event.waitUntil(refresh);
+    return cached;
+  }
+  return (await refresh) || (await caches.match(key)) || Response.error();
+}
+
+async function cacheFirst(request) {
+  const cached = await caches.match(request);
+  if (cached) return cached;
+  const response = await fetch(request);
+  if (response && response.ok) {
+    const cache = await caches.open(CACHE_NAME);
+    cache.put(request, response.clone());
+  }
+  return response;
+}
+
 self.addEventListener("fetch", event => {
-  if (event.request.method !== "GET") return;
-  const url = new URL(event.request.url);
+  const request = event.request;
+  if (request.method !== "GET") return;
+  const url = new URL(request.url);
+
   if (url.origin !== self.location.origin) {
-    event.respondWith(fetch(event.request));
+    if (FONT_HOSTS.includes(url.hostname)) event.respondWith(fromCacheThenRefresh(event, request));
     return;
   }
   if (url.pathname.startsWith("/api/")) {
-    event.respondWith(fetch(event.request, { cache: "no-store" }));
+    event.respondWith(fetch(request, { cache: "no-store" }));
     return;
   }
-  const freshExtensions = [".html", ".css", ".js", ".json", ".webmanifest"];
-  const wantsFreshAsset = freshExtensions.some(extension => url.pathname.endsWith(extension)) || url.pathname.endsWith("/");
-  const hasVersionQuery = url.searchParams.has("v");
-  if (wantsFreshAsset && hasVersionQuery) {
-    event.respondWith(
-      fetch(event.request).then(response => {
-        const copy = response.clone();
-        caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
-        return response;
-      }).catch(() => caches.match(event.request))
-    );
+  // the page itself (any ?r= / #hash) → one cached copy of the app shell
+  if (request.mode === "navigate") {
+    event.respondWith(fromCacheThenRefresh(event, request, SHELL_KEY));
     return;
   }
-  if (wantsFreshAsset) {
-    event.respondWith(
-      fetch(event.request).then(response => {
-        const copy = response.clone();
-        caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
-        return response;
-      }).catch(() => caches.match(event.request))
-    );
+  // versioned files (?v=) never change under the same URL
+  if (url.searchParams.has("v")) {
+    event.respondWith(cacheFirst(request).catch(() => caches.match(request)));
     return;
   }
-  event.respondWith(
-    caches.match(event.request).then(cached => {
-      if (cached) return cached;
-      return fetch(event.request).then(response => {
-        const copy = response.clone();
-        caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
-        return response;
-      });
-    })
-  );
+  event.respondWith(fromCacheThenRefresh(event, request));
 });

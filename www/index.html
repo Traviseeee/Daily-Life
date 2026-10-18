@@ -179,7 +179,18 @@
     if ("serviceWorker" in navigator && ["http:", "https:"].includes(window.location.protocol)) {
       window.addEventListener("load", () => {
         navigator.serviceWorker.register("/sw.js", { scope: "/" })
+          .then(registration => registration.update().catch(() => {}))
           .catch(error => console.warn("MYLIFE could not register its service worker.", error));
+      });
+      // A new version took over: reload right away while the opening screen is up,
+      // otherwise the next time the app comes back to the foreground.
+      var hadController = Boolean(navigator.serviceWorker.controller);
+      navigator.serviceWorker.addEventListener("controllerchange", () => {
+        if (!hadController) { hadController = true; return; }
+        if (document.getElementById("mylifeSplash")) { window.location.reload(); return; }
+        document.addEventListener("visibilitychange", () => {
+          if (document.visibilityState === "visible") window.location.reload();
+        });
       });
     }
   </script>
