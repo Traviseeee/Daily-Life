@@ -120,32 +120,124 @@ const TelegramArrivals = (() => {
       ...readFeed()
     ]);
     if (typeof NotificationCenter !== "undefined") NotificationCenter.renderBadge();
-    if (typeof Toast === "undefined") return;
 
     const money = fresh.filter(item => item.kind !== "event");
-    let message;
-    if (fresh.length === 1) {
-      message = `<b>📲 ${L("បានបន្ថែមពី Telegram", "Added from Telegram")}</b><br>${describe(fresh[0])}`;
-    } else {
-      const spent = money.filter(item => item.kind === "expense")
-        .reduce((sum, item) => sum + toProfileCurrency(Number(item.record.amount || 0), item.record.currency), 0);
-      const total = spent ? ` · ${L("ចំណាយ", "spent")} ${amountText(spent, appData.profile.currency || "USD")}` : "";
-      message = `<b>📲 ${L(`បានបន្ថែម ${fresh.length} ពី Telegram`, `${fresh.length} added from Telegram`)}</b>${total}<br>${fresh.slice(0, 3).map(describe).join("<br>")}${fresh.length > 3 ? "<br>…" : ""}`;
-    }
-    showWhenClear(message, money.length ? "coin" : "notify");
+    showWhenClear(fresh, money.length ? "coin" : "notify");
   }
 
-  // wait until the welcome poster / an open form is closed, so the toast is seen
-  function showWhenClear(message, sound, tries = 0) {
-    const root = document.getElementById("modalRoot");
-    if (root?.classList.contains("open") && tries < 40) {
-      setTimeout(() => showWhenClear(message, sound, tries + 1), 1000);
-      return;
+  /* ---------- centre pop-up: "Added successfully" ---------- */
+  const AUTO_CLOSE_MS = 8000;
+  let popupTimer = null;
+
+  function closePopup() {
+    clearTimeout(popupTimer);
+    const node = document.getElementById("tgaPopup");
+    if (!node) return;
+    node.classList.add("is-leaving");
+    document.removeEventListener("keydown", escClose);
+    setTimeout(() => node.remove(), 200);
+  }
+
+  function escClose(event) {
+    if (event.key === "Escape") closePopup();
+  }
+
+  function rowHtml({ kind, record }) {
+    if (kind === "event") {
+      const when = [record.date ? formatDate(record.date) : "", record.time && typeof fmtClock === "function" ? fmtClock(record.time) : ""].filter(Boolean).join(" · ");
+      return `<li class="tga-row"><span class="tga-row-icon">📅</span><span class="tga-row-copy"><strong>${safe(record.title)}</strong><small>${safe(when)}</small></span></li>`;
     }
-    Toast.show(message, "success", { sound, duration: 5200 });
+    const sign = kind === "income" ? "+" : "−";
+    const name = record.description || record.name || "";
+    const sameAsCat = [String(record.category).toLowerCase(), String(optionLabel?.(record.category) || "").toLowerCase()].includes(name.trim().toLowerCase());
+    const today = typeof localDateInput === "function" ? localDateInput() : "";
+    const day = record.date || record.nextPaymentDate;
+    const dayText = day && day !== today ? ` · ${formatDate(day)}` : "";
+    return `<li class="tga-row tga-${kind}">
+      <span class="tga-row-icon">${ICON[record.category] || "📦"}</span>
+      <span class="tga-row-copy"><strong>${safe(optionLabel?.(record.category) || record.category)}</strong><small>${sameAsCat || !name ? "" : safe(name)}${safe(dayText)}</small></span>
+      <span class="tga-amount">${sign}${amountText(record.amount, record.currency)}</span>
+    </li>`;
+  }
+
+  function budgetHtml(fresh) {
+    const month = (typeof localDateInput === "function" ? localDateInput() : "").slice(0, 7);
+    const budgets = appData.profile?.categoryBudgets || {};
+    const cats = [...new Set(fresh.filter(item => item.kind === "expense").map(item => item.record.category))].filter(cat => Number(budgets[cat]) > 0);
+    return cats.map(category => {
+      const budget = Number(budgets[category]);
+      const spent = (appData.expenses || []).filter(e => String(e.date || "").startsWith(month) && (e.category || "Other") === category)
+        .reduce((sum, e) => sum + toProfileCurrency(Number(e.amount || 0), e.currency), 0);
+      const percent = Math.round((spent / budget) * 100);
+      const tone = percent >= 100 ? "is-over" : percent >= 80 ? "is-near" : "";
+      return `<div class="tga-budget ${tone}">
+        <span>${ICON[category] || "📦"} ${L("ថវិកា", "Budget")} ${safe(optionLabel?.(category) || category)}</span>
+        <strong>${percent}%</strong>
+        <span class="tga-bar"><span style="width:${Math.min(100, percent)}%"></span></span>
+        <small>${amountText(spent, appData.profile.currency || "USD")} / ${amountText(budget, appData.profile.currency || "USD")}${percent >= 100 ? ` · ${L("លើសថវិកា", "over budget")}` : ""}</small>
+      </div>`;
+    }).join("");
+  }
+
+  function showPopup(fresh, sound) {
+    closePopup();
+    document.getElementById("tgaPopup")?.remove();
+    const onlyEvents = fresh.every(item => item.kind === "event");
+    const onlyIncome = fresh.every(item => item.kind === "income");
+    const url = onlyEvents ? "#calendar" : onlyIncome ? "#money/income" : "#money/expenses";
+    const what = onlyEvents ? L("ព្រឹត្តិការណ៍", "event") : onlyIncome ? L("ចំណូល", "income") : L("ចំណាយ", "expense");
+    const node = document.createElement("div");
+    node.id = "tgaPopup";
+    node.className = "tga-overlay";
+    node.innerHTML = `
+      <section class="tga-card" role="dialog" aria-modal="true" aria-labelledby="tgaTitle">
+        <div class="tga-check" aria-hidden="true"><svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="24"/><path d="M15 27l7 7 15-16"/></svg></div>
+        <h3 id="tgaTitle">${L("បានបន្ថែមដោយជោគជ័យ!", "Added successfully!")}</h3>
+        <p class="tga-sub">📲 ${fresh.length > 1
+          ? L(`${fresh.length} ពី Telegram · រក្សាទុកក្នុង app រួចហើយ`, `${fresh.length} from Telegram · saved in the app`)
+          : L(`${what}ពី Telegram · រក្សាទុកក្នុង app រួចហើយ`, `${what} from Telegram · saved in the app`)}</p>
+        <ul class="tga-list">${fresh.slice(0, 5).map(rowHtml).join("")}</ul>
+        ${fresh.length > 5 ? `<p class="tga-more">+${fresh.length - 5} ${L("ទៀត", "more")}</p>` : ""}
+        ${budgetHtml(fresh)}
+        <div class="tga-actions">
+          <button type="button" class="tga-btn tga-view" data-tga-view>${L("មើល", "View")}</button>
+          <button type="button" class="tga-btn tga-ok" data-tga-ok>${L("យល់ព្រម", "OK")}</button>
+        </div>
+        <span class="tga-timer" aria-hidden="true"><span style="animation-duration:${AUTO_CLOSE_MS}ms"></span></span>
+      </section>`;
+    document.body.appendChild(node);
+    node.addEventListener("click", event => {
+      if (event.target === node || event.target.closest("[data-tga-ok]")) closePopup();
+      if (event.target.closest("[data-tga-view]")) {
+        closePopup();
+        location.hash = url;
+      }
+    });
+    document.addEventListener("keydown", escClose);
+    const card = node.querySelector(".tga-card");
+    // pause the countdown while the pointer is on the card, continue after
+    let remaining = AUTO_CLOSE_MS;
+    let startedAt = Date.now();
+    const start = () => { startedAt = Date.now(); clearTimeout(popupTimer); popupTimer = setTimeout(closePopup, remaining); };
+    card.addEventListener("pointerenter", () => { clearTimeout(popupTimer); remaining = Math.max(800, remaining - (Date.now() - startedAt)); });
+    card.addEventListener("pointerleave", start);
+    start();
+    if (typeof Sound !== "undefined") Sound.play(sound);
     if (navigator.vibrate && appData.profile?.haptics !== false) {
       try { navigator.vibrate([18, 60, 18]); } catch (error) { /* ignore */ }
     }
+    node.querySelector("[data-tga-ok]")?.focus({ preventScroll: true });
+  }
+
+  // wait until the welcome poster / an open form is closed, so the pop-up is seen
+  function showWhenClear(fresh, sound, tries = 0) {
+    const root = document.getElementById("modalRoot");
+    const busy = root?.classList.contains("open") || ["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement?.tagName);
+    if (busy && tries < 60) {
+      setTimeout(() => showWhenClear(fresh, sound, tries + 1), 1000);
+      return;
+    }
+    showPopup(fresh, sound);
   }
 
   if (typeof Store !== "undefined" && typeof Store.syncFromSupabase === "function") {

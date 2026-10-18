@@ -3199,3 +3199,46 @@ body:has(#modalRoot.open) .quick-action-dock {
 .nc-item.nc-kind-telegram .nc-tg-icon { font-size: 18px; display: grid; place-items: center; background: color-mix(in srgb, #2aabee 16%, transparent); }
 .nc-item.nc-kind-telegram.is-new { box-shadow: inset 3px 0 0 #2aabee; }
 .nc-tg-new { font-size: 11px; font-weight: 700; color: #fff; background: #2aabee; border-radius: 999px; padding: 1px 8px; margin-left: 6px; }
+
+/* Telegram "Added successfully" centre pop-up */
+.tga-overlay { position: fixed; inset: 0; z-index: 9999; display: grid; place-items: center; padding: 20px; background: rgba(2, 12, 9, 0.55); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); animation: tga-fade 200ms ease both; }
+.tga-overlay.is-leaving { animation: tga-fade 180ms ease reverse both; }
+.tga-card { position: relative; width: min(360px, 100%); max-height: calc(100dvh - 40px); overflow: auto; background: #fff; color: #10201a; border-radius: 28px; padding: 26px 20px 18px; text-align: center; box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45); animation: tga-pop 360ms cubic-bezier(0.18, 1.3, 0.4, 1) both; }
+.tga-overlay.is-leaving .tga-card { animation: tga-pop 180ms ease reverse both; }
+.tga-check { width: 72px; height: 72px; margin: 0 auto 12px; border-radius: 50%; background: #e7f9ec; display: grid; place-items: center; }
+.tga-check svg { width: 52px; height: 52px; fill: none; stroke: #22a356; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+.tga-check circle { stroke-width: 3; stroke-dasharray: 151; stroke-dashoffset: 151; animation: tga-draw 520ms 80ms ease-out forwards; }
+.tga-check path { stroke-dasharray: 40; stroke-dashoffset: 40; animation: tga-draw 320ms 480ms ease-out forwards; }
+.tga-card h3 { margin: 0; font-size: 21px; font-weight: 800; color: #10201a; }
+.tga-sub { margin: 6px 0 14px; font-size: 13px; color: #5d7067; }
+.tga-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; text-align: left; }
+.tga-row { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 16px; background: #f3f7f4; }
+.tga-row-icon { width: 38px; height: 38px; flex: none; border-radius: 12px; background: #fff; display: grid; place-items: center; font-size: 20px; }
+.tga-row-copy { flex: 1; min-width: 0; display: grid; }
+.tga-row-copy strong { font-size: 15px; color: #10201a; }
+.tga-row-copy small { font-size: 12px; color: #6b7d74; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tga-amount { font-size: 17px; font-weight: 800; color: #d14a5c; white-space: nowrap; }
+.tga-income .tga-amount { color: #1f9a52; }
+.tga-more { margin: 6px 0 0; font-size: 12px; color: #6b7d74; }
+.tga-budget { margin-top: 10px; padding: 10px 12px; border-radius: 16px; background: #f3f7f4; display: grid; grid-template-columns: 1fr auto; gap: 6px 10px; text-align: left; font-size: 13px; color: #33463d; }
+.tga-budget strong { color: #1f9a52; }
+.tga-budget.is-near strong { color: #c98a00; }
+.tga-budget.is-over strong { color: #d14a5c; }
+.tga-bar { grid-column: 1 / -1; height: 6px; border-radius: 99px; background: #dfe8e2; overflow: hidden; }
+.tga-bar span { display: block; height: 100%; border-radius: inherit; background: #22a356; }
+.tga-budget.is-near .tga-bar span { background: #e0a400; }
+.tga-budget.is-over .tga-bar span { background: #e05267; }
+.tga-budget small { grid-column: 1 / -1; color: #6b7d74; }
+.tga-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
+.tga-btn { height: 46px; border-radius: 16px; border: 0; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer; }
+.tga-view { background: #eef3ef; color: #10201a; }
+.tga-ok { background: linear-gradient(120deg, #c7f36a, #a6e86b); color: #10201a; }
+.tga-btn:focus-visible { outline: 3px solid #2aabee; outline-offset: 2px; }
+.tga-timer { position: absolute; left: 24px; right: 24px; bottom: 7px; height: 3px; border-radius: 99px; background: #eef3ef; overflow: hidden; }
+.tga-timer span { display: block; height: 100%; background: #2aabee; transform-origin: left; animation: tga-timer linear forwards; }
+.tga-card:hover .tga-timer span { animation-play-state: paused; }
+@keyframes tga-fade { from { opacity: 0; } }
+@keyframes tga-pop { from { opacity: 0; transform: scale(0.86) translateY(12px); } }
+@keyframes tga-draw { to { stroke-dashoffset: 0; } }
+@keyframes tga-timer { to { transform: scaleX(0); } }
+@media (prefers-reduced-motion: reduce) { .tga-overlay, .tga-card, .tga-check *, .tga-timer span { animation: none !important; stroke-dashoffset: 0 !important; } }
