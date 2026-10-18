@@ -3076,3 +3076,35 @@ body:has(#modalRoot.open) .quick-action-dock {
 :root[data-theme="light"] .app-widget-wide-head strong, :root[data-theme="light"] .app-quick > strong { color: #14201b; }
 :root[data-theme="light"] .app-widget-wide-head a, :root[data-theme="light"] .app-upcoming-row em { color: #4d7c0f; }
 :root[data-theme="light"] .app-upcoming-icon { color: #4d7c0f; }
+
+/* Launcher hero v2: photo fills the card, greeting + date, glass buttons */
+.launcher-page .launcher-hero.lh-v2 { display: flex; align-items: flex-end; min-height: 190px !important; padding: 0; background: #0f1a14 !important; isolation: isolate; }
+.launcher-hero.lh-v2::after { display: none; }
+.launcher-hero.lh-v2 .launcher-hero-art {
+  position: absolute; inset: 0; top: 0 !important; right: 0 !important; width: 100% !important; height: 100%; aspect-ratio: auto;
+  transform: none !important; animation: none !important; mix-blend-mode: normal !important; opacity: 1 !important;
+  -webkit-mask-image: none !important; mask-image: none !important; object-fit: cover;
+  object-position: calc(50% + var(--launcher-cover-x, 0%)) calc(40% + var(--launcher-cover-y, 0%)); z-index: -2;
+}
+.launcher-hero.lh-v2 .lh-shade { position: absolute; inset: 0; z-index: -1; background: linear-gradient(90deg, rgba(8, 14, 11, 0.86) 0%, rgba(8, 14, 11, 0.55) 45%, rgba(8, 14, 11, 0.05) 100%), linear-gradient(0deg, rgba(8, 14, 11, 0.7) 0%, transparent 55%); }
+.launcher-hero.lh-v2 .launcher-hero-copy { max-width: 72% !important; padding: 18px 20px !important; display: grid; gap: 6px; }
+.lh-brand { display: inline-flex; align-items: center; gap: 7px; width: fit-content; padding: 5px 10px 5px 6px; border-radius: 999px; background: rgba(255, 255, 255, 0.14); backdrop-filter: blur(8px); font-size: 0.78rem; font-weight: 800; letter-spacing: 0.04em; color: #ffffff; }
+.lh-brand img { width: 20px; height: 20px; border-radius: 6px; }
+.lh-brand b { color: #c5ff60; }
+.lh-greeting { margin: 4px 0 0; font-size: clamp(1.35rem, 5vw, 2rem); font-weight: 800; line-height: 1.3; color: #ffffff; text-shadow: 0 2px 10px rgba(0, 0, 0, 0.35); }
+.lh-date { margin: 0; font-size: 0.82rem; font-weight: 600; line-height: 1.45; color: rgba(255, 255, 255, 0.82); }
+.lh-actions { position: absolute; top: 12px; right: 12px; display: flex; gap: 8px; z-index: 1; }
+.lh-btn { display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 12px; border: 1px solid rgba(255, 255, 255, 0.25); border-radius: 999px; background: rgba(10, 16, 13, 0.45); backdrop-filter: blur(10px); color: #ffffff; font: inherit; font-size: 0.78rem; font-weight: 700; cursor: pointer; }
+.lh-btn:hover { background: rgba(10, 16, 13, 0.65); }
+.lh-btn.active { background: #c5ff60; color: #142a04; border-color: #c5ff60; }
+.lh-btn-icon { width: 38px; padding: 0; justify-content: center; }
+.launcher-hero.lh-v2 .launcher-edit-button { position: static !important; }
+.launcher-hero.lh-v2 .launcher-cover-editor { position: relative; z-index: 2; margin: 60px 16px 16px; }
+@media (max-width: 560px) {
+  .launcher-page .launcher-hero.lh-v2 { min-height: 176px !important; }
+  .lh-btn span { display: none; }
+  .lh-btn { width: 38px; padding: 0; justify-content: center; }
+  .launcher-hero.lh-v2 .launcher-hero-copy { max-width: 100% !important; padding: 16px !important; }
+}
+.launcher-hero.lh-v2 .launcher-hero-copy p.lh-date { margin: 0; color: rgba(255, 255, 255, 0.88) !important; text-shadow: 0 1px 6px rgba(0, 0, 0, 0.5); }
+.launcher-hero.lh-v2 .lh-greeting { color: #ffffff !important; }

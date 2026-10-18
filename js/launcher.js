@@ -67,16 +67,18 @@ function renderLauncher() {
   const all = launcherAllRoutes();
   return `
     <section class="launcher-page page">
-      <header class="launcher-hero">
-        <div class="launcher-hero-copy">
-          <h1 class="launcher-brand"><img class="launcher-brand-mark" src="assets/icons/mylife-icon.svg?v=4" alt=""><span>MY</span><strong>LIFE</strong></h1>
-          <p>${t("launcherTagline")}</p>
-          <div class="launcher-hero-actions">
-            <button class="launcher-footer-edit-button" type="button" data-footer-edit aria-pressed="false">${Icons.edit()}<span>${km ? "រៀបចំ footer" : "Arrange footer"}</span></button>
-          </div>
-        </div>
+      <header class="launcher-hero lh-v2">
         <img class="launcher-hero-art" src="${escapeAttr(appData.profile.launcherCover || "assets/launcher-home-hero.png")}" style="--launcher-cover-x: ${launcherCoverPosition().x}%; --launcher-cover-y: ${launcherCoverPosition().y}%" alt="">
-        <button class="icon-button launcher-edit-button" type="button" data-launcher-cover aria-label="${km ? "ប្តូររូបភាពផ្ទៃខាងក្រោយ" : "Change launcher cover"}" title="${km ? "ប្តូររូបភាពផ្ទៃខាងក្រោយ" : "Change launcher cover"}">${Icons.edit()}</button>
+        <div class="lh-shade" aria-hidden="true"></div>
+        <div class="launcher-hero-copy">
+          <span class="lh-brand"><img src="assets/icons/mylife-icon.svg?v=4" alt="">MY<b>LIFE</b></span>
+          <h1 class="lh-greeting">${escapeHtml(launcherGreeting())}</h1>
+          <p class="lh-date">${escapeHtml(launcherDateLine())}</p>
+        </div>
+        <div class="lh-actions">
+          <button class="lh-btn" type="button" data-footer-edit aria-pressed="false" title="${km ? "រៀបចំ footer" : "Arrange footer"}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span>${km ? "រៀបចំ footer" : "Arrange footer"}</span></button>
+          <button class="lh-btn lh-btn-icon launcher-edit-button" type="button" data-launcher-cover aria-label="${km ? "ប្តូររូបភាពផ្ទៃខាងក្រោយ" : "Change launcher cover"}" title="${km ? "ប្តូររូបភាព" : "Change photo"}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z"/><circle cx="12" cy="13" r="3"/></svg></button>
+        </div>
         <input class="sr-only" type="file" accept="image/*" data-launcher-cover-input>
       </header>
       <section class="footer-editor" data-footer-editor hidden></section>
@@ -346,6 +348,22 @@ function renderLauncherQuickAdd() {
     <strong>${km ? "បន្ថែមរហ័ស" : "Quick add"}</strong>
     <div class="app-quick-row">${actions.map(([id, icon, label, color]) => `<button type="button" class="app-quick-btn" data-launcher-quick="${id}" style="--q:${color}"><span>${icon}</span><small>${escapeHtml(label)}</small></button>`).join("")}</div>
   </section>`;
+}
+
+function launcherGreeting() {
+  const km = languageCode() === "km";
+  const hour = new Date().getHours();
+  const name = String(appData.profile.name || "").trim().split(/\s+/)[0] || "";
+  const hello = km ? (hour < 12 ? "អរុណសួស្តី" : hour < 17 ? "ទិវាសួស្តី" : "សាយណ្ហសួស្តី") : (hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening");
+  return `${hello}${name ? `, ${name}` : ""} ${hour < 17 ? "☀️" : "🌙"}`;
+}
+
+function launcherDateLine() {
+  const km = languageCode() === "km";
+  const now = new Date();
+  const KM_DAYS = ["អាទិត្យ", "ច័ន្ទ", "អង្គារ", "ពុធ", "ព្រហស្បតិ៍", "សុក្រ", "សៅរ៍"];
+  const KM_MONTHS = ["មករា", "កុម្ភៈ", "មីនា", "មេសា", "ឧសភា", "មិថុនា", "កក្កដា", "សីហា", "កញ្ញា", "តុលា", "វិច្ឆិកា", "ធ្នូ"];
+  return km ? `ថ្ងៃ${KM_DAYS[now.getDay()]} ទី${now.getDate()} ខែ${KM_MONTHS[now.getMonth()]} ${now.getFullYear()} · ${t("launcherTagline")}` : `${now.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })} · ${t("launcherTagline")}`;
 }
 
 // Two widgets on top (like a phone home screen): Today and Money.
