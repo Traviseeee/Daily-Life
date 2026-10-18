@@ -24,7 +24,7 @@ const ReportInsights = (() => {
     const n = Number(value || 0);
     const cur = appData.profile.currency || "USD";
     const digits = cur === "KHR" ? 0 : Math.abs(n) < 100 && Math.round(n) !== n ? 2 : 0;
-    return new Intl.NumberFormat("en-US", { style: "currency", currency: cur, minimumFractionDigits: digits, maximumFractionDigits: digits }).format(n);
+    return rielText(new Intl.NumberFormat("en-US", { style: "currency", currency: cur, minimumFractionDigits: digits, maximumFractionDigits: digits }).format(n));
   };
 
   function build(month) {

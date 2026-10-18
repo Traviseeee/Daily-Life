@@ -1504,7 +1504,7 @@ function roundRate(value) {
 }
 
 function formatPlainMoney(value, currency = appData.profile.currency || "USD") {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency, maximumFractionDigits: 2 }).format(Number(value || 0));
+  return rielText(new Intl.NumberFormat("en-US", { style: "currency", currency, maximumFractionDigits: currency === "KHR" ? 0 : 2 }).format(Number(value || 0)));
 }
 
 function openBillModal(item) {

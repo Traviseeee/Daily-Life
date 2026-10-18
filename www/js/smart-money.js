@@ -174,7 +174,7 @@ const SmartMoney = (() => {
         const category = form.querySelector('input[name="qxCategory"]:checked')?.value;
         const status = budgetStatus(category);
         hint.textContent = status.budget
-          ? `${optionLabel(category)}: ${km() ? "នៅសល់" : "left"} ${new Intl.NumberFormat("en-US", { style: "currency", currency: profileCurrency(), maximumFractionDigits: 0 }).format(Math.max(0, status.left))} (${status.percent}%)`
+          ? `${optionLabel(category)}: ${km() ? "នៅសល់" : "left"} ${rielText(new Intl.NumberFormat("en-US", { style: "currency", currency: profileCurrency(), maximumFractionDigits: 0 }).format(Math.max(0, status.left)))} (${status.percent}%)`
           : `${optionLabel(category)} · ${km() ? "ថ្ងៃនេះ" : "today"}`;
         hint.dataset.level = status.budget ? status.level : "";
       };
@@ -201,7 +201,7 @@ const SmartMoney = (() => {
         const currency = currencyButton.dataset.qxCurrency;
         Store.add("expenses", { description: note || optionLabel(category), amount, currency, category, date: localDateInput(), method: "", notes: "" });
         const status = budgetStatus(category);
-        const left = status.budget ? ` · ${km() ? "នៅសល់" : "left"} ${new Intl.NumberFormat("en-US", { style: "currency", currency: profileCurrency(), maximumFractionDigits: 0 }).format(status.left)}` : "";
+        const left = status.budget ? ` · ${km() ? "នៅសល់" : "left"} ${rielText(new Intl.NumberFormat("en-US", { style: "currency", currency: profileCurrency(), maximumFractionDigits: 0 }).format(status.left))}` : "";
         Toast.show(`${km() ? "បានកត់" : "Added"} ${optionLabel(category)}${left}`);
       });
       update();

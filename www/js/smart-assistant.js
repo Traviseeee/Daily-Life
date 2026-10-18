@@ -155,7 +155,7 @@ const SmartAssistant = {
     const amount = data.amount ?? data.targetAmount ?? data.originalAmount;
     const date = data.due || data.date || data.deadline || data.startDate || data.birthday || "";
     const parts = [];
-    if (amount) parts.push(`${data.currency || appData.profile.currency || "USD"} ${Number(amount).toLocaleString("en-US")}`);
+    if (amount) parts.push((data.currency || appData.profile.currency || "USD") === "KHR" ? `${Number(amount).toLocaleString("en-US")} ៛` : `$${Number(amount).toLocaleString("en-US")}`);
     if (data.category) parts.push(optionLabel(data.category));
     if (data.frequency || data.paymentFrequency) parts.push(optionLabel(data.frequency || data.paymentFrequency));
     if (date) parts.push(date);

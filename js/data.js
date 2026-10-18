@@ -1275,8 +1275,13 @@ function hasValue(value) {
   return String(value ?? "").trim() !== "" && Number(value) !== 0;
 }
 
+// "KHR 1,500" → "1,500 ៛" (Intl puts the code in front; Khmer style puts ៛ after the number)
+function rielText(text) {
+  return String(text).replace(/(-?)KHR[\s\u00a0]*([\d.,]+)/g, "$1$2 ៛");
+}
+
 function money(value, currency = appData.profile.currency || "USD") {
-  const formatted = new Intl.NumberFormat("en-US", { style: "currency", currency, maximumFractionDigits: 0 }).format(Number(value || 0));
+  const formatted = rielText(new Intl.NumberFormat("en-US", { style: "currency", currency, maximumFractionDigits: 0 }).format(Number(value || 0)));
   return `<span class="money-value" data-private-money>${formatted}</span>`;
 }
 

@@ -121,7 +121,7 @@ const ExpenseForm = (() => {
       if (status.budget) {
         const after = status.spent + adding;
         const percent = Math.round((after / status.budget) * 100);
-        const fmt = value => new Intl.NumberFormat("en-US", { style: "currency", currency: appData.profile.currency || "USD", maximumFractionDigits: 0 }).format(value);
+        const fmt = value => rielText(new Intl.NumberFormat("en-US", { style: "currency", currency: appData.profile.currency || "USD", maximumFractionDigits: 0 }).format(value));
         budgetEl.textContent = `${L("ថវិកា", "Budget")} ${percent}% · ${after <= status.budget ? `${L("នៅសល់", "left")} ${fmt(status.budget - after)}` : `${L("លើស", "over")} ${fmt(after - status.budget)}`}`;
         budgetEl.dataset.level = percent >= 100 ? "over" : percent >= 80 ? "warn" : "ok";
       } else {

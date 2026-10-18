@@ -1345,6 +1345,8 @@ const translations = {
 
 const optionTranslations = {
   km: {
+    KHR: "៛ រៀល",
+    USD: "$ ដុល្លារ",
     Work: "ការងារ",
     Love: "ស្នេហា",
     Learning: "ការរៀន",

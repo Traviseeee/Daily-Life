@@ -190,6 +190,8 @@ function savingsContributionPaid(saving, monthKey) {
 function moneyLabel(currency, amount) {
   const value = Number(amount || 0);
   if (!value) return "";
+  if (currency === "KHR") return `${value.toLocaleString("en-US")} ៛`;
+  if (currency === "USD") return `$${value.toLocaleString("en-US")}`;
   return `${currency || ""} ${value.toLocaleString("en-US")}`.trim();
 }
 
