@@ -3113,3 +3113,9 @@ body:has(#modalRoot.open) .quick-action-dock {
 :root:not([data-theme="light"]) .home-overview .mood-card .mood-selected strong,
 :root:not([data-theme="light"]) .mood-card .mood-selected strong { color: #f2fbf4 !important; -webkit-text-fill-color: #f2fbf4; }
 :root:not([data-theme="light"]) .mood-card .mood-selected .eyebrow { color: rgba(242, 251, 244, 0.7) !important; }
+
+/* Settings: sound volume row */
+.settings-sound-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.settings-sound-controls { display: flex; align-items: center; gap: 10px; flex: 1 1 220px; justify-content: flex-end; }
+.settings-sound-controls input[type="range"] { flex: 1; max-width: 220px; accent-color: #a6e33f; }
+.settings-sound-controls .button { height: 36px; padding: 0 14px; white-space: nowrap; }

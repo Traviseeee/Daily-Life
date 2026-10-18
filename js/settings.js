@@ -79,6 +79,7 @@ function renderSettings() {
                 <label class="settings-preference-row"><span><strong>${t("language")}</strong><small>${t("languageHelp")}</small></span><select data-preference="language"><option value="English" ${appData.profile.language !== "Khmer" ? "selected" : ""}>English</option><option value="Khmer" ${appData.profile.language === "Khmer" ? "selected" : ""}>ខ្មែរ</option></select></label>
                 <label class="settings-preference-row"><span><strong>${t("clockFormat")}</strong><small>${t("clockFormatHelp")}</small></span><select data-preference="clockFormat"><option value="12-hour" ${appData.profile.clockFormat !== "24-hour" ? "selected" : ""}>12-hour</option><option value="24-hour" ${appData.profile.clockFormat === "24-hour" ? "selected" : ""}>24-hour</option></select></label>
                 <label class="settings-preference-row"><span><strong>${t("soundEnabled")}</strong><small>${t("soundEnabledHelp")}</small></span><input type="checkbox" data-preference="soundEnabled" ${appData.profile.soundEnabled !== false ? "checked" : ""}></label>
+                <div class="settings-preference-row settings-sound-row"><span><strong>${languageCode() === "km" ? "កម្រិតសំឡេង" : "Sound volume"}</strong><small>${languageCode() === "km" ? "សំឡេងពេលចុច កត់លុយ ជូនដំណឹង និងសម្រេចគោលដៅ" : "Taps, money, alerts and goal celebrations"}</small></span><div class="settings-sound-controls"><input type="range" min="0" max="100" step="5" value="${Number.isFinite(Number(appData.profile.soundVolume)) ? Number(appData.profile.soundVolume) : 70}" data-sound-volume aria-label="Volume"><button type="button" class="button ghost-button" data-sound-preview>▶ ${languageCode() === "km" ? "សាក" : "Try"}</button></div></div>
                 <label class="settings-preference-row"><span><strong>${t("notificationsEnabled")}</strong><small>${t("notificationsEnabledHelp")}</small></span><input type="checkbox" data-preference="notificationsEnabled" ${appData.profile.notificationsEnabled !== false ? "checked" : ""}></label>
               </div>
             </article>
@@ -534,6 +535,14 @@ function bindSettings() {
     }
     Toast.show(t("preferenceSaved"));
   }));
+  document.querySelectorAll("[data-sound-volume]").forEach(range => {
+    range.addEventListener("input", () => { appData.profile.soundVolume = Number(range.value); });
+    range.addEventListener("change", () => {
+      Store.updateProfile({ soundVolume: Number(range.value) });
+      Sound.play("success", { force: true });
+    });
+  });
+  document.querySelectorAll("[data-sound-preview]").forEach(button => button.addEventListener("click", () => Sound.preview()));
   document.querySelectorAll("[data-quick-action-preference]").forEach(control => control.addEventListener("change", () => {
     const quickActions = [...document.querySelectorAll("[data-quick-action-preference]:checked")].map(item => item.dataset.quickActionPreference);
     Store.updateProfile({ quickActions });

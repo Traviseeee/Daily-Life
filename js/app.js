@@ -475,7 +475,7 @@ const App = {
   },
   async showDueReminder(item) {
     const payload = this.dueReminderPayload(item);
-    Toast.show(`${payload.title}: ${payload.body}`, "warning", { duration: 6000 });
+    Toast.show(`${payload.title}: ${payload.body}`, "warning", { duration: 6000, sound: "notify" });
     if (!("Notification" in window) || Notification.permission !== "granted") return;
 
     try {
