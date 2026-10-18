@@ -24,9 +24,22 @@ const Sound = {
     if (this.context.state === "suspended") this.context.resume().catch(() => {});
     return this.context;
   },
+  // a sound the browser blocked (no touch yet / app was in background):
+  // it plays on the next touch if that comes within 15 s
+  pending: null,
   unlock() {
     this.unlocked = true;
-    this.ensureContext();
+    const ctx = this.ensureContext();
+    if (!this.pending) return;
+    const { type, at } = this.pending;
+    this.pending = null;
+    if (performance.now() - at > 15000 || !ctx) return;
+    const go = () => {
+      this.master.gain.setValueAtTime(this.volume() * 1.6, ctx.currentTime);
+      try { this.RECIPES[type](this, ctx); } catch (error) { /* best-effort */ }
+    };
+    if (ctx.state === "running") go();
+    else ctx.resume().then(go).catch(() => {});
   },
   volume() {
     const raw = Number(window.appData?.profile?.soundVolume);
@@ -100,9 +113,26 @@ const Sound = {
       try { navigator.vibrate(this.HAPTIC[type]); } catch (error) { /* ignore */ }
     }
     const ctx = this.ensureContext();
-    if (!ctx) return;
-    this.master.gain.setValueAtTime(this.volume() * 1.6, ctx.currentTime);
-    try { recipe(this, ctx); } catch (error) { /* audio is best-effort */ }
+    const important = priority >= 2;
+    if (!ctx) {
+      if (important) this.pending = { type: this.RECIPES[type] ? type : "tap", at: now };
+      return;
+    }
+    const go = () => {
+      this.master.gain.setValueAtTime(this.volume() * 1.6, ctx.currentTime);
+      try { recipe(this, ctx); } catch (error) { /* audio is best-effort */ }
+    };
+    if (ctx.state === "running") {
+      go();
+      return;
+    }
+    // suspended (no touch yet or back from background): try, else wait for a touch
+    if (important) this.pending = { type: this.RECIPES[type] ? type : "tap", at: now };
+    ctx.resume().then(() => {
+      if (ctx.state !== "running" || !this.pending || this.pending.at !== now) return;
+      this.pending = null;
+      go();
+    }).catch(() => {});
   },
   // Settings preview: plays a few sounds in a row
   preview() {
@@ -112,8 +142,9 @@ const Sound = {
 };
 
 window.Sound = Sound;
+// every touch keeps audio alive (phones suspend it in the background) and plays a waiting sound
 ["pointerdown", "keydown", "touchstart"].forEach(eventName => {
-  window.addEventListener(eventName, () => Sound.unlock(), { once: true, passive: true });
+  window.addEventListener(eventName, () => Sound.unlock(), { passive: true, capture: true });
 });
 
 const Toast = {
