@@ -6,8 +6,8 @@
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#070512",
-  "theme_color": "#070512",
+  "background_color": "#061812",
+  "theme_color": "#061812",
   "categories": ["productivity", "finance", "lifestyle"],
   "icons": [
     {
@@ -26,7 +26,7 @@
       "src": "assets/icons/mylife-icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
   ],
   "shortcuts": [

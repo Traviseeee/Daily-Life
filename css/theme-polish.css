@@ -3333,3 +3333,7 @@ body:has(#modalRoot.open) .quick-action-dock {
 :root[data-theme="light"] .financial-report-panel .financial-report-table tbody td:nth-child(5) { color: #15965f !important; }
 :root[data-theme="light"] .financial-report-panel .financial-report-table tbody td.financial-report-outflow { color: #d64545 !important; }
 :root[data-theme="light"] .financial-report-panel .financial-report-table tbody td:nth-child(1) { background: rgba(20, 32, 27, 0.06); }
+
+/* Brand wordmark follows the Day-ring logo: lime on dark, deep green on light */
+.brand strong { color: #d9ff7b; }
+:root[data-theme="light"] .brand strong { color: #2f7d32; }

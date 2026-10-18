@@ -71,7 +71,7 @@ function renderLauncher() {
         <img class="launcher-hero-art" src="${escapeAttr(appData.profile.launcherCover || "assets/launcher-home-hero.png")}" style="--launcher-cover-x: ${launcherCoverPosition().x}%; --launcher-cover-y: ${launcherCoverPosition().y}%" alt="">
         <div class="lh-shade" aria-hidden="true"></div>
         <div class="launcher-hero-copy">
-          <span class="lh-brand"><img src="assets/icons/mylife-icon.svg?v=4" alt="">MY<b>LIFE</b></span>
+          <span class="lh-brand"><img src="assets/icons/mylife-icon.svg?v=5" alt="">MY<b>LIFE</b></span>
           <h1 class="lh-greeting">${escapeHtml(launcherGreeting())}</h1>
           <p class="lh-date">${escapeHtml(launcherDateLine())}</p>
         </div>
