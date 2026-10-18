@@ -1,4 +1,8 @@
-const CACHE_NAME = "mylife-pwa-v82";
+const CACHE_NAME = "mylife-pwa-v83";
+// red number on the Home Screen icon: the app saves its bell count here and a
+// push that arrives while the app is closed adds 1 to it
+const BADGE_CACHE = "mylife-badge";
+const BADGE_KEY = "/__mylife-badge";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -65,7 +69,7 @@ self.addEventListener("install", event => {
 self.addEventListener("activate", event => {
   event.waitUntil(
     caches.keys().then(keys => Promise.all(
-      keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))
+      keys.filter(key => key !== CACHE_NAME && key !== BADGE_CACHE).map(key => caches.delete(key))
     ))
   );
   self.clients.claim();
@@ -77,6 +81,26 @@ function notificationUrl(value) {
     return destination.origin === self.location.origin ? destination.href : `${self.location.origin}/#home`;
   } catch (error) {
     return `${self.location.origin}/#home`;
+  }
+}
+
+async function readBadge() {
+  try {
+    const response = await (await caches.open(BADGE_CACHE)).match(BADGE_KEY);
+    return response ? Number(await response.text()) || 0 : 0;
+  } catch (error) {
+    return 0;
+  }
+}
+
+async function bumpBadge() {
+  if (!self.navigator || !("setAppBadge" in self.navigator)) return;
+  const count = (await readBadge()) + 1;
+  try {
+    await (await caches.open(BADGE_CACHE)).put(BADGE_KEY, new Response(String(count)));
+    await self.navigator.setAppBadge(count);
+  } catch (error) {
+    // the badge is a nicety; never break the notification for it
   }
 }
 
@@ -102,6 +126,7 @@ self.addEventListener("push", event => {
       badge: "/assets/icons/mylife-icon-192.png",
       data: { url: notificationUrl(data.url) }
     });
+    await bumpBadge();
     // an open MYLIFE window pulls the new data right away
     const windows = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
     windows.forEach(client => client.postMessage({ type: "mylife-pull" }));

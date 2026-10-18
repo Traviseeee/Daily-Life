@@ -164,6 +164,32 @@ const NotificationCenter = (() => {
   ];
 
   /* ---------- badge ---------- */
+  // same number on the Home Screen / taskbar icon (iOS 16.4+ web app, Chrome, Edge)
+  let iconCount = -1;
+  function syncAppIcon(count) {
+    if (count === iconCount) return;
+    iconCount = count;
+    try {
+      if ("setAppBadge" in navigator) {
+        (count > 0 ? navigator.setAppBadge(count) : navigator.clearAppBadge()).catch(() => {});
+      }
+      if (window.caches) {
+        caches.open("mylife-badge")
+          .then(cache => cache.put("/__mylife-badge", new Response(String(count))))
+          .catch(() => {});
+      }
+    } catch (error) {
+      // unsupported browser: the bell still shows the number
+    }
+  }
+
+  // back from the background: a push may have bumped the icon, set it to the real count
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState !== "visible") return;
+    iconCount = -1;
+    renderBadge();
+  });
+
   function renderBadge() {
     const bell = document.getElementById("bellButton");
     if (!bell) return;
@@ -191,6 +217,7 @@ const NotificationCenter = (() => {
     bell.classList.toggle("notifications-off", !enabled);
     bell.setAttribute("aria-label", label);
     bell.setAttribute("title", label);
+    syncAppIcon(count);
   }
 
   /* ---------- panel ---------- */
