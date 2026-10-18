@@ -277,5 +277,28 @@ const ExpenseForm = (() => {
     if (!item.id) setTimeout(() => form.elements.amount.focus(), 60);
   }
 
-  return { open };
+  // "Grab 15k" → { amount: 15000, currency: "KHR", category: "Transport", description: "Grab" } (used by the chat)
+  function parseExpense(raw) {
+    const text = normalizeDigits(raw);
+    const keyword = KEYWORDS.find(entry => entry.re.test(text));
+    const number = text.match(/(\d+(?:[.,]\d+)?)\s*(\$|usd|៛|khr|riel|រៀល|k(?![a-z]))?/i);
+    let amount = 0;
+    let currency = "";
+    if (number) {
+      amount = Number(number[1].replace(",", "."));
+      const unit = String(number[2] || "").toLowerCase();
+      if (unit === "k") { amount *= 1000; currency = "KHR"; }
+      else if (/៛|khr|riel|រៀល/.test(unit)) currency = "KHR";
+      else if (/\$|usd/.test(unit)) currency = "USD";
+      else if (amount >= 500) currency = "KHR";
+    }
+    const description = text
+      .replace(number ? number[0] : "", "")
+      .replace(/^(ចាយ|ចំណាយ|spent|spend|pay|paid|ទិញ)\s*/i, "")
+      .replace(/\s{2,}/g, " ")
+      .trim();
+    return { amount, currency: currency || appData.profile.currency || "USD", category: keyword?.category || "Other", description };
+  }
+
+  return { open, parseExpense };
 })();

@@ -1,4 +1,4 @@
-const CACHE_NAME = "mylife-pwa-v66";
+const CACHE_NAME = "mylife-pwa-v67";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -47,7 +47,8 @@ const APP_SHELL = [
   "./js/automation-settings.js",
   "./js/notification-center.js",
   "./js/app.js",
-  "./js/sound-hooks.js"
+  "./js/sound-hooks.js",
+  "./js/chat-bot.js"
 ];
 
 self.addEventListener("install", event => {

@@ -804,6 +804,7 @@ function renderHelp() {
 function renderSmartHelp() {
   const km = languageCode() === "km";
   const tips = km ? [
+    { icon: Icons.spark(), title: "MYLIFE Chat (ប៊ូតុង ✨ លើ header)", body: "សួរ ឬបញ្ជាជាភាសាខ្មែរ — ឆ្លើយពីទិន្នន័យរបស់អ្នក ឯកជន មិនប្រើ internet។", examples: ["ថ្ងៃនេះមានអ្វី?", "ខែនេះចាយប៉ុន្មាន?", "នៅសល់ប៉ុន្មាន?", "ចាយ Grab 15k", "បង់ EDC រួច"] },
     { icon: Icons.calendar(), title: "Form ឆ្លាត", body: "វាយមួយបន្ទាត់ ហើយ app បំពេញឱ្យ។", examples: ["ជួបម៉ាក់ ស្អែក 9 ព្រឹក", "Grab 15k", "Gym 45 នាទី", "សន្សំ $2000 ទិញម៉ូតូ 1 ឆ្នាំ"] },
     { icon: Icons.bell(), title: "Telegram bot", body: "ផ្ញើសារទៅ bot ដើម្បីកត់ ឬមើលភ្លាម។", examples: ["/today", "/help", "ចាយ 5$ អាហារ", "ស្អែក 7 យប់ ញ៉ាំបាយ"] },
     { icon: Icons.money(), title: "មើលលុយតាមពេល", body: "ទំព័រលុយ → ជ្រើស ថ្ងៃ · សប្តាហ៍ · ខែ · ឆ្នាំ ហើយចុច ‹ › ដើម្បីទៅមុន ឬក្រោយ។ ថ្ងៃ/សប្តាហ៍ ប្រាប់ថាអាចចាយបានប៉ុន្មានទៀត។", examples: [] },
@@ -811,6 +812,7 @@ function renderSmartHelp() {
     { icon: Icons.menu(), title: "☰ និង footer", body: "☰ ដូចអេក្រង់ទូរស័ព្ទ៖ លេខក្រហម = រឿងត្រូវធ្វើ។ ចុច ▦ ដើម្បីរៀប footer (‹ › × +)។", examples: [] },
     { icon: Icons.spark(), title: "ប៊ូតុង + និងសំឡេង", body: "ប៊ូតុង + ពណ៌ទឹកក្រូច បន្ថែមអ្វីៗរហ័ស (ជ្រើសក្នុង Settings)។ សំឡេង និងការញ័រ កែបានក្នុង Settings។", examples: [] }
   ] : [
+    { icon: Icons.spark(), title: "MYLIFE Chat (✨ button in the header)", body: "Ask or give commands — answers come from your own data, private, works offline.", examples: ["What's on today?", "How much did I spend this month?", "How much is left?", "spent Grab 15k", "paid EDC"] },
     { icon: Icons.calendar(), title: "Smart forms", body: "Type one line and the app fills the rest.", examples: ["Meet mom tomorrow 9am", "Grab 15k", "Gym 45 min", "Save $2000 for a motorbike in 1 year"] },
     { icon: Icons.bell(), title: "Telegram bot", body: "Message the bot to log or check things fast.", examples: ["/today", "/help", "spent 5$ food", "tomorrow 7pm dinner"] },
     { icon: Icons.money(), title: "Money by period", body: "Money → pick Day · Week · Month · Year and use ‹ › to move. Day/Week shows what you can still spend.", examples: [] },
