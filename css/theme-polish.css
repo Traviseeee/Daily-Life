@@ -2799,3 +2799,68 @@ body:has(#modalRoot.open) .quick-action-dock {
   background: transparent !important;
   padding: 0 !important;
 }
+
+/* =====================================================================
+ * Money → Reports: readable in dark and light mode
+ * ===================================================================== */
+.financial-report-panel { --rp-card: rgba(255, 255, 255, 0.045); --rp-line: rgba(171, 255, 186, 0.12); --rp-ink: #f2fbf4; --rp-ink-2: rgba(242, 251, 244, 0.62); }
+:root[data-theme="light"] .financial-report-panel { --rp-card: #ffffff; --rp-line: rgba(20, 32, 27, 0.1); --rp-ink: #14201b; --rp-ink-2: #5d6b64; }
+
+.financial-report-panel .financial-report-toolbar,
+.financial-report-panel .financial-report-metadata > div,
+.financial-report-panel .financial-report-metric,
+.financial-report-panel .financial-report-table-wrap {
+  background: var(--rp-card) !important;
+  border: 1px solid var(--rp-line) !important;
+  box-shadow: none !important;
+  color: var(--rp-ink) !important;
+}
+.financial-report-panel .financial-report-toolbar { border-radius: 20px !important; padding: 16px !important; flex-wrap: wrap; gap: 12px !important; }
+.financial-report-panel .financial-report-toolbar .section-title,
+.financial-report-panel .financial-report-metadata strong,
+.financial-report-panel .financial-report-metric > strong { color: var(--rp-ink) !important; }
+.financial-report-panel .financial-report-toolbar .eyebrow,
+.financial-report-panel .financial-report-month > span,
+.financial-report-panel .financial-report-metadata span,
+.financial-report-panel .financial-report-metric > span { color: var(--rp-ink-2) !important; }
+.financial-report-panel .financial-report-month > span { font-weight: 700; }
+.financial-report-panel .financial-report-month input {
+  background: rgba(0, 0, 0, 0.18) !important;
+  border: 1px solid var(--rp-line) !important;
+  color: var(--rp-ink) !important;
+  color-scheme: dark;
+}
+:root[data-theme="light"] .financial-report-panel .financial-report-month input { background: #f6f8f5 !important; color-scheme: light; }
+.financial-report-panel .financial-report-export-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.financial-report-panel .financial-report-export-actions .ghost-button {
+  background: transparent !important;
+  border: 1px solid var(--rp-line) !important;
+  color: var(--rp-ink) !important;
+}
+.financial-report-panel .financial-report-export-actions .ghost-button svg { color: var(--rp-ink-2); }
+
+/* metric colours */
+.financial-report-panel .financial-report-metric { position: relative; overflow: hidden; border-radius: 18px !important; }
+.financial-report-panel .financial-report-metric::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 4px; background: var(--rp-tone, #a6e33f); }
+.financial-report-panel .financial-report-metric.income { --rp-tone: #3fd7a4; }
+.financial-report-panel .financial-report-metric.expenses { --rp-tone: #ff9a52; }
+.financial-report-panel .financial-report-metric.payments { --rp-tone: #ff6b7a; }
+.financial-report-panel .financial-report-metric.cash-flow { --rp-tone: #c5ff60; }
+.financial-report-panel .financial-report-metric > strong { color: var(--rp-tone) !important; }
+:root[data-theme="light"] .financial-report-panel .financial-report-metric > strong { color: color-mix(in srgb, var(--rp-tone) 70%, #14201b) !important; }
+
+/* table */
+.financial-report-panel .financial-report-table-wrap { border-radius: 18px !important; overflow: hidden; }
+.financial-report-panel .financial-report-table { background: transparent !important; color: var(--rp-ink) !important; }
+.financial-report-panel .financial-report-table th {
+  background: rgba(197, 255, 96, 0.08) !important;
+  color: var(--rp-ink-2) !important;
+  border-bottom: 1px solid var(--rp-line) !important;
+  font-size: 0.74rem;
+}
+.financial-report-panel .financial-report-table td { background: transparent !important; color: var(--rp-ink) !important; border-bottom: 1px solid var(--rp-line) !important; }
+.financial-report-panel .financial-report-table tr:last-child td { border-bottom: 0 !important; }
+.financial-report-panel .financial-report-table td:last-child { font-weight: 800; }
+.financial-report-panel .financial-report-table td.financial-report-outflow { color: #ff8a7a !important; }
+.financial-report-panel .financial-report-table td::before { color: var(--rp-ink-2) !important; }
+.financial-report-panel .financial-report-empty { color: var(--rp-ink-2) !important; text-align: center; }
