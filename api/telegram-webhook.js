@@ -12,6 +12,7 @@ const { monthSpending, formatMoney, convert, CATEGORY_KM, weeklyReport } = requi
 const { digestItem, eveningItem } = require("./dispatch");
 const { payBill } = require("../lib/bill-pay");
 const { updatePayloadSafe } = require("../lib/payload-store");
+const { detectUtility, findUtilityBill, PROVIDERS } = require("../lib/utility-bills");
 
 const APP_TIME_ZONE = "Asia/Phnom_Penh";
 
@@ -146,6 +147,9 @@ const HELP_TEXT = [
   "📈 <code>/week</code> — របាយការណ៍ 7 ថ្ងៃ + រូប",
   "🗓️ <code>/month</code> — រូបរបាយការណ៍ខែនេះ",
   "💾 <code>/backup</code> — ឯកសារ backup JSON",
+  "",
+  "💧⚡ <b>វិក្កយបត្រទឹក/ភ្លើង · Water & power bills</b>",
+  "• សារពី PPWSA / EDC ក្នុងក្រុមនេះ (ឬ forward មក) → វិក្កយបត្រថ្មី = រំលឹក, បង្កាន់ដៃ = កត់ថាបានបង់",
   "☰ <code>/menu</code> — ម៉ឺនុយប៊ូតុង"
 ].join("\n");
 
@@ -384,7 +388,117 @@ async function runCommand(command, { message, userId, payload, today, redis }) {
   }
 }
 
+/* ---------------- water / electricity bots (PPWSA, EDC) ---------------- */
+
+function daysBetween(a, b) {
+  const toDay = iso => Date.UTC(Number(iso.slice(0, 4)), Number(iso.slice(5, 7)) - 1, Number(iso.slice(8, 10)));
+  return Math.round((toDay(b) - toDay(a)) / 86400000);
+}
+
+function dueLine(bill) {
+  if (!bill?.due) return "";
+  const date = dateLabels(bill.due);
+  return `📆 ផុតកំណត់ ${escapeHtml(date.km)} · <i>Due ${escapeHtml(date.en)}</i>`;
+}
+
+async function handleUtility(message, notice, redis) {
+  const info = PROVIDERS[notice.provider];
+  const label = `${info.icon} ${info.km} · ${info.en} (${info.company})`;
+  // each notice is handled once, even if Telegram retries or it is forwarded again
+  const fresh = await redis.set(`mylife:utility:${notice.provider}:${notice.type}:${notice.ref}`, "1", { nx: true, ex: 60 * 86400 });
+  if (fresh === null) return null;
+
+  const userId = await ownerUserId(redis);
+  const payload = userId ? await readPayload(userId) : null;
+  const linkRow = notice.url ? [{ text: notice.type === "receipt" ? "🧾 មើលបង្កាន់ដៃ · Receipt" : "🔗 មើលវិក្កយបត្រ · View bill", url: notice.url }] : null;
+  const today = zonedToday();
+  const bill = payload ? findUtilityBill(payload.bills, notice.provider) : null;
+
+  if (notice.type === "invoice") {
+    const keyboard = [];
+    if (bill && userId) {
+      const token = await saveAction(redis, { userId, item: { kind: "bill", id: bill.id, sourceId: bill.id, title: bill.name, url: "/#money/bills" } });
+      keyboard.push([{ text: "✅ បានបង់ · Paid", callback_data: `paid|${token}` }]);
+    }
+    if (linkRow) keyboard.push(linkRow);
+    const lines = [
+      `🧾 <b>វិក្កយបត្រ${info.km}ថ្មី · New ${info.en.toLowerCase()} bill</b>`,
+      label,
+      bill ? `📌 ${escapeHtml(bill.name)}${Number(bill.amount) > 0 ? ` · ប្រហែល ${escapeHtml(formatMoney(bill.amount, bill.currency || payload.profile?.currency || "USD"))}` : ""}` : "",
+      bill ? dueLine(bill) : `💡 បន្ថែមវិក្កយបត្រ "${info.en}" ក្នុង MYLIFE ដើម្បីតាមដានថ្ងៃផុតកំណត់ · Add a "${info.en}" bill in MYLIFE to track it`,
+      "",
+      "<i>ពេលបង់រួច បង្កាន់ដៃនឹងត្រូវកត់ដោយស្វ័យប្រវត្តិ · The receipt will be recorded automatically</i>"
+    ].filter(line => line !== "");
+    const sent = await reply(message, lines.join("\n"), keyboard.length ? { inline_keyboard: keyboard } : undefined);
+    if (userId) await pushAdded(userId, `🧾 វិក្កយបត្រ${info.km}ថ្មី · ${info.company}`, bill?.due ? `ផុតកំណត់ ${dateLabels(bill.due).km}` : "មើលក្នុង Telegram", "/#money/bills");
+    return sent;
+  }
+
+  // receipt: payment done → mark the bill paid with the real amount
+  if (!userId || !payload) {
+    return reply(message, `✅ <b>បានទទួលបង្កាន់ដៃ${info.km}</b>\n${label}\n⚠️ សូមចុចប៊ូតុងណាមួយលើការរំលឹក MYLIFE ម្ដងសិន ដើម្បីភ្ជាប់គណនី។`, linkRow ? { inline_keyboard: [linkRow] } : undefined);
+  }
+  // an old receipt (forwarded from weeks ago) must not pay this month's bill
+  if (notice.date && daysBetween(notice.date, today) > 20) {
+    return reply(message, `🗂 <b>បង្កាន់ដៃចាស់ · Old receipt</b>\n${label}\n📆 ${escapeHtml(dateLabels(notice.date).km)}\nℹ️ ចាស់ជាង 20 ថ្ងៃ មិនបានកត់ទេ · Older than 20 days, nothing saved`, linkRow ? { inline_keyboard: [linkRow] } : undefined);
+  }
+  const currency = payload.profile?.currency || "USD";
+  const amount = notice.amount || null;
+  const paidText = amount ? formatMoney(amount, notice.currency || "KHR") : "";
+  let outcome = "added";
+  let billName = "";
+  let nextDue = "";
+  await updatePayload(userId, data => {
+    const target = findUtilityBill(data.bills, notice.provider);
+    if (target) {
+      billName = target.name || info.en;
+      // paid with ✅ a few days ago → that was this payment, don't count it twice
+      if (target.lastPaidAt && daysBetween(target.lastPaidAt, today) < 20) {
+        outcome = "already";
+        nextDue = target.due || "";
+        return "unchanged";
+      }
+      const result = payBill(data, target, today, info.company, { amount, currency: notice.currency, notes: `${info.company} receipt ${notice.ref}`, force: true });
+      outcome = result === "updated" ? "paid" : "already";
+      nextDue = target.due || "";
+      return result === "updated" ? "updated" : "unchanged";
+    }
+    if (!amount) {
+      outcome = "noamount";
+      return "unchanged";
+    }
+    data.expenses = Array.isArray(data.expenses) ? data.expenses : [];
+    const now = new Date().toISOString();
+    data.expenses.push({ id: recordId("expenses"), createdAt: now, updatedAt: now, description: `${info.en} (${info.company})`, amount, currency: notice.currency || currency, date: notice.date && notice.date <= today ? notice.date : today, category: "Bills", method: info.company, notes: `${info.company} receipt ${notice.ref}`, source: "telegram" });
+    return "updated";
+  });
+
+  const lines = [`✅ <b>បានបង់${info.km}រួច · ${info.en} paid</b>`, label];
+  if (paidText) lines.push(`💵 ${escapeHtml(paidText)}`);
+  if (outcome === "paid") {
+    lines.push(`📌 បានកត់ "${escapeHtml(billName)}" ថាបានបង់ + ចំណាយ Bills · Marked paid`);
+    if (nextDue) lines.push(`🔁 លើកក្រោយ ${escapeHtml(dateLabels(nextDue).km)} · <i>Next ${escapeHtml(dateLabels(nextDue).en)}</i>`);
+  } else if (outcome === "already") {
+    lines.push(`👌 "${escapeHtml(billName)}" បានកត់ថាបង់រួចហើយ មិនកត់ស្ទួនទេ · Already recorded`);
+  } else if (outcome === "added") {
+    lines.push("📌 បានកត់ជាចំណាយ Bills · Saved as a Bills expense");
+  } else {
+    lines.push("ℹ️ រកមិនឃើញចំនួនទឹកប្រាក់ មិនបានកត់ទេ · No amount found, nothing saved");
+  }
+  const sent = await reply(message, lines.join("\n"), linkRow ? { inline_keyboard: [linkRow] } : undefined);
+  if (outcome === "paid" || outcome === "added") {
+    await pushAdded(userId, `${info.icon} បានបង់${info.km} · ${info.company}`, paidText ? `${paidText} · បានកត់ក្នុង MYLIFE` : "បានកត់ក្នុង MYLIFE", "/#money/bills");
+  }
+  return sent;
+}
+
 async function handleMessage(message, redis) {
+  // water / electricity bots, or their message forwarded or pasted here
+  const notice = detectUtility(message);
+  if (notice) return handleUtility(message, notice, redis);
+  // any other bot: never read as an expense, an event or a command
+  if (message.from?.is_bot || message.via_bot) return null;
+
   // "/week@MyBot" in groups → "/week"
   const text = String(message.text || "").trim().replace(/^(\/[a-z]+)@\w+/i, "$1");
   if (!text) return;
