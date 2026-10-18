@@ -2939,3 +2939,58 @@ body:has(#modalRoot.open) .quick-action-dock {
   .money-period-nav { justify-content: space-between; }
   .money-period-label { flex: 1; justify-content: center; }
 }
+
+/* =====================================================================
+ * Launcher (☰): groups, smart badges, footer editor
+ * ===================================================================== */
+.tool-launcher-groups { display: grid; gap: 18px; }
+.tool-group { display: grid; gap: 10px; }
+.tool-group-title { margin: 0 4px; font-size: 0.8rem; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-secondary, rgba(242, 251, 244, 0.6)); }
+.tool-launcher-groups .tool-launcher { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr)); gap: 12px; }
+.tool-launcher-groups .tool-launcher-item { min-height: 112px !important; padding: 16px 16px !important; border-radius: 22px !important; gap: 12px !important; }
+.tool-launcher-groups .tool-launcher-copy { display: grid; gap: 3px; min-width: 0; }
+.tool-launcher-groups .tool-launcher-copy strong { font-size: 1rem; }
+.tool-launcher-groups .tool-launcher-copy small { font-size: 0.76rem; line-height: 1.35; opacity: 0.78; }
+.tool-badge { justify-self: start; margin-top: 4px; padding: 3px 9px; border-radius: 999px; font-size: 0.72rem; font-style: normal; font-weight: 800; white-space: nowrap; color: #142a04; background: #c5ff60; }
+.tool-badge-muted { color: rgba(242, 251, 244, 0.78); background: rgba(255, 255, 255, 0.12); }
+.tool-badge-blue { color: #062a44; background: #8fd0ff; }
+.tool-badge-green { color: #053d22; background: #7ee8b4; }
+.tool-badge-red { color: #4a0710; background: #ff9aa6; }
+.tool-badge-pink { color: #4a0a2c; background: #ffb3d6; }
+.tool-badge-purple { color: #22104a; background: #cbb6ff; }
+
+.footer-editor { margin: 0 0 18px; padding: 16px; border: 1px solid rgba(197, 255, 96, 0.35); border-radius: 22px; background: rgba(197, 255, 96, 0.07); }
+.footer-editor[hidden] { display: none; }
+.footer-editor-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+.footer-editor-head strong { display: block; font-size: 1rem; color: var(--text-primary, #f2fbf4); }
+.footer-editor-head small { font-size: 0.78rem; color: var(--text-secondary, rgba(242, 251, 244, 0.62)); }
+.footer-editor-actions { display: flex; gap: 8px; }
+.footer-editor-reset, .footer-editor-done { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px; border-radius: 12px; font: inherit; font-size: 0.82rem; font-weight: 700; cursor: pointer; }
+.footer-editor-reset { border: 1px solid rgba(255, 255, 255, 0.2); background: transparent; color: var(--text-primary, #f2fbf4); }
+.footer-editor-done { border: 0; background: #c5ff60; color: #142a04; }
+.footer-editor-done svg { width: 15px; height: 15px; }
+.footer-slots { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+.footer-slot { display: grid; justify-items: center; gap: 4px; padding: 10px 4px 6px; border-radius: 16px; background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(255, 255, 255, 0.1); min-width: 0; }
+.footer-slot-icon svg { width: 20px; height: 20px; color: #c5ff60; }
+.footer-slot b { max-width: 100%; overflow: hidden; font-size: 0.72rem; white-space: nowrap; text-overflow: ellipsis; color: var(--text-primary, #f2fbf4); }
+.footer-slot-tools { display: flex; gap: 2px; }
+.footer-slot-tools button { width: 24px; height: 24px; padding: 0; border: 0; border-radius: 8px; background: rgba(255, 255, 255, 0.1); color: var(--text-primary, #f2fbf4); font-size: 1rem; line-height: 1; cursor: pointer; }
+.footer-slot-tools button[data-footer-remove] { color: #ff9aa6; }
+.footer-slot-tools button:disabled { opacity: 0.25; cursor: default; }
+.footer-slot.is-empty { place-items: center; min-height: 82px; border-style: dashed; color: rgba(255, 255, 255, 0.35); font-size: 1.4rem; }
+.launcher-page.footer-editing .tool-launcher-item { outline: 1px dashed rgba(197, 255, 96, 0.35); outline-offset: -4px; }
+
+:root[data-theme="light"] .tool-badge-muted { color: #3b4a42; background: rgba(20, 32, 27, 0.08); }
+:root[data-theme="light"] .footer-editor { background: #f6fde9; border-color: #a6e33f; }
+:root[data-theme="light"] .footer-editor-head strong, :root[data-theme="light"] .footer-slot b, :root[data-theme="light"] .footer-editor-reset { color: #14201b; }
+:root[data-theme="light"] .footer-slot { background: #ffffff; border-color: rgba(20, 32, 27, 0.1); }
+:root[data-theme="light"] .footer-slot-icon svg { color: #4d7c0f; }
+:root[data-theme="light"] .footer-slot-tools button { background: #eef2ea; color: #14201b; }
+
+@media (max-width: 560px) {
+  .tool-launcher-groups .tool-launcher { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .tool-launcher-groups .tool-launcher-item { grid-template-columns: minmax(0, 1fr) !important; align-content: start; min-height: 128px !important; padding: 14px !important; }
+  .tool-launcher-groups .tool-launcher-arrow { display: none; }
+  .tool-launcher-groups .tool-launcher-icon { width: 38px; height: 38px; }
+}
+.tool-launcher-groups .tool-footer-pin { left: auto !important; right: 10px; top: 10px; }

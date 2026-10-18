@@ -943,31 +943,6 @@ const App = {
     });
     document.getElementById("bellButton").addEventListener("click", () => NotificationCenter.toggle());
     document.getElementById("smartAssistantButton").addEventListener("click", () => SmartAssistant.open());
-    document.addEventListener("click", event => {
-      const pinButton = event.target.closest("[data-pin-footer]");
-      if (!pinButton) return;
-      if (event.__footerPinHandled) return;
-      event.__footerPinHandled = true;
-      event.preventDefault();
-      event.stopPropagation();
-      const routeId = pinButton.dataset.pinFooter;
-      const selected = footerRoutes().map(route => route.id);
-      if (routeId === "home") return;
-      const next = selected.includes(routeId)
-        ? selected.filter(id => id !== routeId)
-        : ["home", ...selected.filter(id => id !== "home" && id !== routeId).slice(0, 3), routeId];
-      localStorage.setItem(FOOTER_ROUTES_KEY, JSON.stringify(next));
-      renderNavigation();
-      document.querySelectorAll("[data-pin-footer]").forEach(button => {
-        const active = next.includes(button.dataset.pinFooter);
-        const label = active ? "Remove from footer" : "Add to footer";
-        button.classList.toggle("active", active);
-        button.setAttribute("aria-pressed", String(active));
-        button.setAttribute("aria-label", label);
-        button.setAttribute("title", label);
-        button.textContent = active ? "✓" : "+";
-      });
-    });
     document.getElementById("profileButton").addEventListener("click", () => {
       openProfileModal();
     });
