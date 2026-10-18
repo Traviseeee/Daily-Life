@@ -45,6 +45,89 @@ let financeReportMonth = "";
 let financeReportCanvas = null;
 let financeReportCanvasMonth = "";
 
+/* ---------- Overview period: day / week / month / year / all ---------- */
+const MONEY_PERIOD_KEY = "mylife:money-period";
+function moneyPeriod() {
+  try {
+    const saved = JSON.parse(sessionStorage.getItem(MONEY_PERIOD_KEY) || "null");
+    if (saved && ["day", "week", "month", "year", "all"].includes(saved.kind) && /^\d{4}-\d{2}-\d{2}$/.test(saved.anchor)) return saved;
+  } catch (error) { /* ignore */ }
+  return { kind: "month", anchor: localDateInput() };
+}
+function setMoneyPeriod(next) {
+  try { sessionStorage.setItem(MONEY_PERIOD_KEY, JSON.stringify(next)); } catch (error) { /* ignore */ }
+  App.render();
+}
+function moneyIso(date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+function moneyPeriodRange(period = moneyPeriod()) {
+  const isKm = languageCode() === "km";
+  const KM = ["មករា", "កុម្ភៈ", "មីនា", "មេសា", "ឧសភា", "មិថុនា", "កក្កដា", "សីហា", "កញ្ញា", "តុលា", "វិច្ឆិកា", "ធ្នូ"];
+  const monthName = (y, m) => (isKm ? `ខែ${KM[m]} ${y}` : new Date(y, m, 1).toLocaleDateString("en-US", { month: "long", year: "numeric" }));
+  const short = d => (isKm ? `${d.getDate()} ${KM[d.getMonth()]}` : d.toLocaleDateString("en-US", { month: "short", day: "numeric" }));
+  const a = new Date(`${period.anchor}T00:00:00`);
+  const today = localDateInput();
+  let start;
+  let end;
+  let label;
+  if (period.kind === "day") {
+    start = end = period.anchor;
+    label = period.anchor === today ? (isKm ? "ថ្ងៃនេះ" : "Today") : formatDate(period.anchor);
+  } else if (period.kind === "week") {
+    const s0 = new Date(a);
+    s0.setDate(a.getDate() - ((a.getDay() + 6) % 7));
+    const e0 = new Date(s0);
+    e0.setDate(s0.getDate() + 6);
+    start = moneyIso(s0);
+    end = moneyIso(e0);
+    label = today >= start && today <= end ? (isKm ? "សប្តាហ៍នេះ" : "This week") : `${short(s0)} – ${short(e0)}`;
+  } else if (period.kind === "year") {
+    start = `${a.getFullYear()}-01-01`;
+    end = `${a.getFullYear()}-12-31`;
+    label = String(a.getFullYear());
+  } else if (period.kind === "all") {
+    start = "0000-01-01";
+    end = "9999-12-31";
+    label = isKm ? "គ្រប់ពេល" : "All time";
+  } else {
+    start = `${period.anchor.slice(0, 7)}-01`;
+    end = moneyIso(new Date(a.getFullYear(), a.getMonth() + 1, 0));
+    label = monthName(a.getFullYear(), a.getMonth());
+  }
+  const days = Math.round((new Date(`${end}T00:00:00`) - new Date(`${start}T00:00:00`)) / 86400000) + 1;
+  return { ...period, start, end, label, days, month: period.anchor.slice(0, 7), isCurrent: today >= start && today <= end };
+}
+function shiftMoneyPeriod(period, step) {
+  const a = new Date(`${period.anchor}T00:00:00`);
+  if (period.kind === "day") a.setDate(a.getDate() + step);
+  if (period.kind === "week") a.setDate(a.getDate() + step * 7);
+  if (period.kind === "month") { a.setDate(1); a.setMonth(a.getMonth() + step); }
+  if (period.kind === "year") a.setFullYear(a.getFullYear() + step);
+  return { kind: period.kind, anchor: moneyIso(a) };
+}
+function moneyExpensesIn(range) {
+  return (appData.expenses || []).filter(item => {
+    const date = String(item.date || "");
+    return date >= range.start && date <= range.end;
+  });
+}
+function renderMoneyPeriodBar(range) {
+  const isKm = languageCode() === "km";
+  const kinds = [["day", isKm ? "ថ្ងៃ" : "Day"], ["week", isKm ? "សប្តាហ៍" : "Week"], ["month", isKm ? "ខែ" : "Month"], ["year", isKm ? "ឆ្នាំ" : "Year"], ["all", isKm ? "ទាំងអស់" : "All"]];
+  const pickerType = range.kind === "month" ? "month" : "date";
+  const pickerValue = range.kind === "month" ? range.anchor.slice(0, 7) : range.anchor;
+  return `<div class="money-period" role="group" aria-label="${isKm ? "ជ្រើសពេល" : "Choose period"}">
+    <div class="money-period-kinds">${kinds.map(([kind, label]) => `<button type="button" class="money-period-kind ${range.kind === kind ? "active" : ""}" data-money-period="${kind}" aria-pressed="${range.kind === kind}">${label}</button>`).join("")}</div>
+    ${range.kind === "all" ? "" : `<div class="money-period-nav">
+      <button type="button" class="icon-button" data-money-shift="-1" aria-label="${isKm ? "មុន" : "Previous"}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+      <label class="money-period-label">${Icons.calendar()}<strong>${escapeHtml(range.label)}</strong>${range.kind === "year" ? "" : `<input type="${pickerType}" value="${pickerValue}" data-money-pick aria-label="${isKm ? "ជ្រើសថ្ងៃ" : "Pick a date"}">`}</label>
+      <button type="button" class="icon-button" data-money-shift="1" aria-label="${isKm ? "បន្ទាប់" : "Next"}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
+      ${range.isCurrent ? "" : `<button type="button" class="money-period-today" data-money-today>${isKm ? "ថ្ងៃនេះ" : "Today"}</button>`}
+    </div>`}
+  </div>`;
+}
+
 function renderMoney(tab = "overview") {
   const stats = Store.calculate();
   return `
@@ -79,9 +162,41 @@ function renderMoney(tab = "overview") {
   `;
 }
 
-function renderMoneyCards(stats) {
+function renderMoneyCards(stats, range = moneyPeriodRange()) {
   const isKm = languageCode() === "km";
-  const m = moneyMonthNumbers();
+  const m = moneyMonthNumbers(range.month);
+  // spent in the chosen period (day / week / month / year / all)
+  const periodExpenses = moneyExpensesIn(range);
+  const periodSpent = periodExpenses.reduce((total, expense) => total + toProfileCurrency(expense.amount, expense.currency), 0);
+  let periodIncome = m.income;
+  let periodLeft = m.left;
+  if (range.kind === "year") {
+    // only months that have started (no guessing the future)
+    const thisMonthKey = localDateInput().slice(0, 7);
+    const months = Array.from({ length: 12 }, (_, i) => `${range.anchor.slice(0, 4)}-${String(i + 1).padStart(2, "0")}`)
+      .filter(key => key <= thisMonthKey)
+      .map(key => moneyMonthNumbers(key));
+    periodIncome = months.reduce((total, item) => total + item.income, 0);
+    periodLeft = months.reduce((total, item) => total + item.income - item.expenses - item.loans, 0);
+  }
+  if (range.kind === "all") {
+    periodIncome = stats.totalIncome;
+    periodLeft = stats.totalIncome - stats.totalExpenses;
+  }
+  // day / week: how much you can still spend, spread over the days left in the month
+  let allowance = null;
+  if (range.kind === "day" || range.kind === "week") {
+    const [y, mo] = range.month.split("-").map(Number);
+    const lastDay = new Date(y, mo, 0).getDate();
+    const today = localDateInput();
+    const fromDay = today.slice(0, 7) === range.month ? Number(today.slice(8, 10)) : 1;
+    const daysLeft = Math.max(1, lastDay - fromDay + 1);
+    // money still free from today on = what's left + what was already spent from today
+    const spentBefore = (appData.expenses || []).filter(item => String(item.date || "").slice(0, 7) === range.month && String(item.date) < `${range.month}-${String(fromDay).padStart(2, "0")}`).reduce((total, item) => total + toProfileCurrency(item.amount, item.currency), 0);
+    allowance = (m.left + (m.expenses - spentBefore)) / daysLeft;
+    allowance = Math.max(0, allowance) * (range.kind === "week" ? 7 : 1);
+  }
+  const periodWord = range.kind === "month" ? (isKm ? "ខែនេះ" : "this month") : range.label;
   const savingsTarget = sumMoney(appData.savings, "targetAmount");
   const savingsPct = savingsTarget ? Math.min(100, Math.round((stats.totalSavings / savingsTarget) * 100)) : 0;
   const spentPct = m.income ? Math.round((m.expenses / m.income) * 100) : 0;
@@ -93,14 +208,14 @@ function renderMoneyCards(stats) {
 
   return `<div class="summary-grid financial-metric-grid grid mm-grid" role="region" aria-label="${escapeAttr(t("overview"))}" tabindex="0">
     ${moneyMetricCard({
-      tone: "income", section: "income", icon: Icons.salary(), title: isKm ? "ចំណូលខែនេះ" : "Income this month", value: money(m.income),
+      tone: "income", section: "income", icon: Icons.salary(), title: isKm ? `ចំណូល · ${range.kind === "day" || range.kind === "week" ? moneyPeriodRange({ kind: "month", anchor: range.anchor }).label : range.label}` : `Income · ${range.kind === "day" || range.kind === "week" ? moneyPeriodRange({ kind: "month", anchor: range.anchor }).label : range.label}`, value: money(periodIncome),
       pill: `${appData.income.length} ${escapeHtml(t("income"))}`,
       foot: allTime(stats.totalIncome)
     })}
     ${moneyMetricCard({
-      tone: "expense", section: "expenses", icon: Icons.expense(), title: isKm ? "ចំណាយខែនេះ" : "Spent this month", value: money(m.expenses),
-      pill: `${appData.expenses.filter(item => String(item.date || "").startsWith(m.month)).length} ${escapeHtml(t("expenses"))}`,
-      bar: m.income ? { pct: spentPct, level: level(spentPct), label: isKm ? `ប្រើ ${spentPct}% នៃចំណូលខែនេះ` : `${spentPct}% of this month's income` } : null,
+      tone: "expense", section: "expenses", icon: Icons.expense(), title: isKm ? `ចំណាយ · ${range.label}` : `Spent · ${range.label}`, value: money(periodSpent),
+      pill: `${periodExpenses.length} ${escapeHtml(t("expenses"))}`,
+      bar: range.kind === "month" && m.income ? { pct: spentPct, level: level(spentPct), label: isKm ? `ប្រើ ${spentPct}% នៃចំណូល${periodWord}` : `${spentPct}% of ${periodWord}'s income` } : allowance !== null && allowance > 0 ? { pct: Math.round((periodSpent / allowance) * 100), level: level(Math.round((periodSpent / allowance) * 100)), label: isKm ? `ប្រើ ${Math.round((periodSpent / allowance) * 100)}% នៃលុយអាចចាយ` : `${Math.round((periodSpent / allowance) * 100)}% of what you can spend` } : null,
       foot: allTime(stats.totalExpenses)
     })}
     ${moneyMetricCard({
@@ -109,10 +224,22 @@ function renderMoneyCards(stats) {
       bar: savingsTarget ? { pct: savingsPct, level: "good", label: isKm ? `${savingsPct}% នៃគោលដៅ ${money(savingsTarget)}` : `${savingsPct}% of ${money(savingsTarget)} goal` } : null
     })}
     ${moneyMetricCard({
-      tone: short ? "short" : "available", section: "budget", icon: Icons.wallet(), title: isKm ? "នៅសល់ខែនេះ" : "Left this month", value: money(m.left),
+      ...(allowance !== null ? {
+        tone: periodSpent > allowance ? "short" : "available", section: "budget", icon: Icons.wallet(),
+        title: isKm ? (range.kind === "day" ? "អាចចាយក្នុងមួយថ្ងៃ" : "អាចចាយក្នុងមួយសប្តាហ៍") : (range.kind === "day" ? "You can spend / day" : "You can spend / week"),
+        value: money(allowance),
+        pill: allowance <= 0 ? `⚠ ${isKm ? "ថវិកាខែនេះអស់ហើយ" : "No money left this month"}` : periodSpent > allowance ? `⚠ ${isKm ? "ចាយលើស" : "Over by"} ${money(periodSpent - allowance)}` : `✓ ${isKm ? "នៅសល់" : "Left"} ${money(allowance - periodSpent)}`,
+        note: isKm ? "លុយនៅសល់ខែនេះ ÷ ថ្ងៃដែលនៅសល់" : "Money left this month ÷ days left"
+      } : range.kind === "year" || range.kind === "all" ? {
+        tone: periodLeft < 0 ? "short" : "available", section: "budget", icon: Icons.wallet(),
+        title: isKm ? `នៅសល់ · ${range.label}` : `Left · ${range.label}`, value: money(periodLeft),
+        pill: periodLeft < 0 ? `⚠ ${isKm ? "ខ្វះ" : "Short by"} ${money(Math.abs(periodLeft))}` : `✓ ${isKm ? "ចំណូល − ចំណាយ" : "Income − spent"}`
+      } : {
+      tone: short ? "short" : "available", section: "budget", icon: Icons.wallet(), title: isKm ? `នៅសល់ · ${range.label}` : `Left · ${range.label}`, value: money(m.left),
       pill: short ? `⚠ ${isKm ? "ខ្វះ" : "Short by"} ${money(Math.abs(m.left))}` : `✓ ${isKm ? "នៅសល់សម្រាប់ចាយ" : "Left to spend"}`,
       bar: m.income ? { pct: Math.min(usedPct, 100), level: level(usedPct), label: isKm ? `បានប្រើ ${usedPct}% នៃចំណូល` : `${usedPct}% of income used` } : null,
       note: isKm ? "ចំណូល − ចំណាយ − កម្ចី − សន្សំ (ខែនេះ)" : "Income − spent − loans − savings (this month)"
+      })
     })}
   </div>`;
 }
@@ -137,33 +264,33 @@ function moneyMetricCard({ tone, section, icon, title, value, pill = "", bar = n
   `;
 }
 
-function renderCategoryOverview() {
+function renderCategoryOverview(range = moneyPeriodRange()) {
   const isKm = languageCode() === "km";
+  const inRange = moneyExpensesIn(range);
   const categories = expenseCategories.map(category => {
-    const items = appData.expenses.filter(expense => expense.category === category);
+    const items = inRange.filter(expense => expense.category === category);
     return { category, count: items.length, amount: sumMoney(items, "amount"), color: expenseCategoryColors[category] };
   }).filter(item => item.amount > 0).sort((left, right) => right.amount - left.amount);
   const total = categories.reduce((sum, item) => sum + item.amount, 0);
-  const count = appData.expenses.length;
+  const count = inRange.length;
 
-  // this month vs last month
-  const thisKey = localDateInput().slice(0, 7);
-  const [y, m] = thisKey.split("-").map(Number);
-  const lastKey = `${m === 1 ? y - 1 : y}-${String(m === 1 ? 12 : m - 1).padStart(2, "0")}`;
-  const thisMonth = sumMoney(appData.expenses.filter(item => String(item.date || "").startsWith(thisKey)), "amount");
-  const lastMonth = sumMoney(appData.expenses.filter(item => String(item.date || "").startsWith(lastKey)), "amount");
+  // this period vs the one before
+  const prevRange = range.kind === "all" ? null : moneyPeriodRange(shiftMoneyPeriod(range, -1));
+  const thisMonth = total;
+  const lastMonth = prevRange ? sumMoney(moneyExpensesIn(prevRange), "amount") : 0;
+  const unitWord = { day: isKm ? "ម្សិលមិញ" : "yesterday", week: isKm ? "សប្តាហ៍មុន" : "last week", month: isKm ? "ខែមុន" : "last month", year: isKm ? "ឆ្នាំមុន" : "last year" }[range.kind] || "";
   const peak = Math.max(thisMonth, lastMonth, 1);
   const change = lastMonth ? Math.round(((thisMonth - lastMonth) / lastMonth) * 100) : null;
   const changeText = change === null
-    ? (isKm ? "មិនមានទិន្នន័យខែមុន" : "No data for last month")
+    ? (isKm ? `មិនមានទិន្នន័យ${unitWord}` : `No data for ${unitWord}`)
     : change === 0
-      ? (isKm ? "ស្មើខែមុន" : "Same as last month")
-      : `${change > 0 ? "▲" : "▼"} ${Math.abs(change)}% ${isKm ? (change > 0 ? "ច្រើនជាងខែមុន" : "តិចជាងខែមុន") : (change > 0 ? "more than last month" : "less than last month")}`;
+      ? (isKm ? `ស្មើ${unitWord}` : `Same as ${unitWord}`)
+      : `${change > 0 ? "▲" : "▼"} ${Math.abs(change)}% ${isKm ? (change > 0 ? `ច្រើនជាង${unitWord}` : `តិចជាង${unitWord}`) : (change > 0 ? `more than ${unitWord}` : `less than ${unitWord}`)}`;
   const top = categories[0];
 
   return `<article class="glass-card card-pad financial-panel financial-category-overview cat-v2">
     <div class="financial-panel-heading">
-      <div><span class="eyebrow">${t("overview")} · ${isKm ? "គ្រប់ពេល" : "All time"}</span><h2 class="section-title">${t("spendingByCategory")}</h2></div>
+      <div><span class="eyebrow">${t("overview")} · ${escapeHtml(range.label)}</span><h2 class="section-title">${t("spendingByCategory")}</h2></div>
       <div class="financial-category-total"><span>${t("totalExpenses")}</span><strong>${money(total)}</strong></div>
     </div>
     ${categories.length ? `
@@ -190,14 +317,14 @@ function renderCategoryOverview() {
           </div>`;
         }).join("")}
       </div>
-      <div class="cat-compare">
-        <span class="cat-compare-title">${isKm ? "ខែនេះ ធៀបនឹងខែមុន" : "This month vs last"}</span>
+      ${prevRange ? `<div class="cat-compare">
+        <span class="cat-compare-title">${escapeHtml(range.label)} ${isKm ? "ធៀប" : "vs"} ${escapeHtml(unitWord)}</span>
         <div class="cat-bars">
-          <div class="cat-bar is-last"><strong>${money(lastMonth)}</strong><i style="height:${Math.max(4, Math.round((lastMonth / peak) * 100))}%"></i><span>${isKm ? "ខែមុន" : "Last"}</span></div>
-          <div class="cat-bar is-this"><strong>${money(thisMonth)}</strong><i style="height:${Math.max(4, Math.round((thisMonth / peak) * 100))}%"></i><span>${isKm ? "ខែនេះ" : "This"}</span></div>
+          <div class="cat-bar is-last"><strong>${money(lastMonth)}</strong><i style="height:${Math.max(4, Math.round((lastMonth / peak) * 100))}%"></i><span>${escapeHtml(prevRange.label)}</span></div>
+          <div class="cat-bar is-this"><strong>${money(thisMonth)}</strong><i style="height:${Math.max(4, Math.round((thisMonth / peak) * 100))}%"></i><span>${escapeHtml(range.label)}</span></div>
         </div>
         <small class="cat-change ${change > 0 ? "is-up" : change < 0 ? "is-down" : ""}">${changeText}</small>
-      </div>
+      </div>` : ""}
     </div>` : `<div class="financial-category-empty">
       <div class="financial-category-swatches" aria-hidden="true">${expenseCategories.slice(0, 6).map(category => `<span style="--category-color:${expenseCategoryColors[category]}"></span>`).join("")}</div>
       <div><strong>${t("noExpensesYet")}</strong><p>${t("noExpensesBody")}</p></div>
@@ -229,10 +356,13 @@ function renderMoneyTab(tab, stats) {
   if (tab === "bills") return renderBills();
   if (tab === "budget") return renderBudget();
   if (tab === "reports") return renderReports(stats);
+  const range = moneyPeriodRange();
+  const periodExpenses = moneyExpensesIn(range).slice().sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")));
   return `
-    ${renderMoneyCards(stats)}
+    ${renderMoneyPeriodBar(range)}
+    ${renderMoneyCards(stats, range)}
     ${typeof SmartMoney !== "undefined" ? SmartMoney.renderQuickExpense() : ""}
-    ${renderCategoryOverview()}
+    ${renderCategoryOverview(range)}
     <div class="grid two-col financial-overview-grid">
       ${renderMoneySmartOverview()}
       <article class="glass-card card-pad financial-panel">
@@ -241,9 +371,9 @@ function renderMoneyTab(tab, stats) {
             <span class="eyebrow">${t("expenses")}</span>
             <h2 class="section-title">${t("recentTransactions")}</h2>
           </div>
-          <span class="pill">${appData.expenses.length} ${t("expenses")}</span>
+          <span class="pill">${periodExpenses.length} · ${escapeHtml(range.label)}</span>
         </div>
-        ${expenseLedger(appData.expenses.slice(0, 5))}
+        ${periodExpenses.length ? expenseLedger(periodExpenses.slice(0, 8)) : `<p class="secondary money-period-empty">${languageCode() === "km" ? `មិនមានចំណាយ ${escapeHtml(range.label)} ទេ` : `No expenses for ${escapeHtml(range.label)}`}</p>`}
       </article>
     </div>
   `;
@@ -251,9 +381,7 @@ function renderMoneyTab(tab, stats) {
 
 // This month's real numbers (recurring income included), shared by the
 // overview cards so they and the reports agree.
-function moneyMonthNumbers() {
-  const todayIso = localDateInput();
-  const month = todayIso.slice(0, 7);
+function moneyMonthNumbers(month = localDateInput().slice(0, 7)) {
   const report = buildMonthlyFinanceReport(month);
   const expenses = (appData.expenses || [])
     .filter(expense => String(expense.date || "").slice(0, 7) === month)
@@ -943,6 +1071,26 @@ function bindMoney() {
           : (currentIndex + (event.key === "ArrowRight" ? 1 : tabs.length - 1)) % tabs.length;
       selectMoneySmartTab(tabs[nextIndex]);
       tabs[nextIndex].focus();
+    });
+  });
+  document.querySelectorAll("[data-money-period]").forEach(button => button.addEventListener("click", () => {
+    const current = moneyPeriod();
+    setMoneyPeriod({ kind: button.dataset.moneyPeriod, anchor: current.anchor });
+  }));
+  document.querySelectorAll("[data-money-shift]").forEach(button => button.addEventListener("click", () => {
+    setMoneyPeriod(shiftMoneyPeriod(moneyPeriod(), Number(button.dataset.moneyShift)));
+  }));
+  document.querySelectorAll("[data-money-today]").forEach(button => button.addEventListener("click", () => {
+    setMoneyPeriod({ kind: moneyPeriod().kind, anchor: localDateInput() });
+  }));
+  document.querySelectorAll("[data-money-pick]").forEach(input => {
+    input.closest("label")?.addEventListener("click", event => {
+      if (event.target !== input) { event.preventDefault(); try { input.showPicker(); } catch (error) { input.focus(); } }
+    });
+    input.addEventListener("change", () => {
+      if (!input.value) return;
+      const anchor = input.type === "month" ? `${input.value}-01` : input.value;
+      setMoneyPeriod({ kind: moneyPeriod().kind, anchor });
     });
   });
   document.querySelectorAll("[data-finance-report-month]").forEach(input => input.addEventListener("change", () => {

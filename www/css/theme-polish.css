@@ -2914,3 +2914,28 @@ body:has(#modalRoot.open) .quick-action-dock {
   .financial-report-panel .financial-report-month { grid-column: 1; }
   .financial-report-panel .financial-report-export-actions .button { flex-direction: column; height: 58px; gap: 3px; font-size: 0.78rem; }
 }
+
+/* Money overview: period picker (day / week / month / year / all) */
+.money-period { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin: 0 0 14px; padding: 10px; border: 1px solid rgba(171, 255, 186, 0.12); border-radius: 20px; background: rgba(255, 255, 255, 0.04); }
+:root[data-theme="light"] .money-period { background: #ffffff; border-color: rgba(20, 32, 27, 0.1); }
+.money-period-kinds { display: flex; gap: 4px; padding: 4px; border-radius: 14px; background: rgba(0, 0, 0, 0.18); }
+:root[data-theme="light"] .money-period-kinds { background: #f1f4ee; }
+.money-period-kind { min-width: 52px; height: 34px; padding: 0 12px; border: 0; border-radius: 10px; background: transparent; color: var(--text-secondary, #b9c7bd); font: inherit; font-size: 0.84rem; font-weight: 700; cursor: pointer; }
+.money-period-kind.active { background: #c5ff60; color: #142a04; box-shadow: 0 4px 12px rgba(130, 200, 40, 0.25); }
+.money-period-nav { display: flex; align-items: center; gap: 6px; }
+.money-period-nav .icon-button { width: 36px; height: 36px; }
+.money-period-label { position: relative; display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 14px; border-radius: 12px; background: rgba(197, 255, 96, 0.12); color: var(--text-primary, #f2fbf4); cursor: pointer; white-space: nowrap; }
+:root[data-theme="light"] .money-period-label { background: #f2fbe4; color: #14201b; }
+.money-period-label svg { width: 16px; height: 16px; color: #a6e33f; }
+.money-period-label strong { font-size: 0.92rem; }
+.money-period-label input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; border: 0; padding: 0; }
+.money-period-today { height: 34px; padding: 0 12px; border: 1px solid rgba(197, 255, 96, 0.4); border-radius: 10px; background: transparent; color: #c5ff60; font: inherit; font-size: 0.8rem; font-weight: 700; cursor: pointer; }
+:root[data-theme="light"] .money-period-today { color: #4d7c0f; border-color: #a6e33f; }
+.money-period-empty { padding: 18px 4px; text-align: center; }
+@media (max-width: 560px) {
+  .money-period { flex-direction: column; align-items: stretch; }
+  .money-period-kinds { justify-content: space-between; }
+  .money-period-kind { flex: 1; min-width: 0; padding: 0 4px; }
+  .money-period-nav { justify-content: space-between; }
+  .money-period-label { flex: 1; justify-content: center; }
+}
