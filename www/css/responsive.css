@@ -328,7 +328,6 @@
   .search-wrap { justify-self: stretch; width: 100%; }
   .topbar-left { gap: 8px; }
   .topbar-right { gap: 8px; }
-  .topbar-right .smart-assistant-button { display: none; }
   .back-to-top { bottom: calc(102px + env(safe-area-inset-bottom)); }
 
   #app {

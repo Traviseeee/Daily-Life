@@ -3242,3 +3242,11 @@ body:has(#modalRoot.open) .quick-action-dock {
 @keyframes tga-draw { to { stroke-dashoffset: 0; } }
 @keyframes tga-timer { to { transform: scaleX(0); } }
 @media (prefers-reduced-motion: reduce) { .tga-overlay, .tga-card, .tga-check *, .tga-timer span { animation: none !important; stroke-dashoffset: 0 !important; } }
+
+/* MYLIFE Chat button stays on phones; very narrow screens drop the weather chip for room */
+@media (max-width: 900px) {
+  .topbar-right .smart-assistant-button { display: inline-grid; }
+}
+@media (max-width: 430px) {
+  .app-main .topbar .topbar-weather { display: none; }
+}
