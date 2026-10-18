@@ -7,7 +7,7 @@ const { getRedis } = require("../lib/push");
 const crypto = require("crypto");
 const { tgCall, webhookSecret, loadAction, saveAction, addSnooze, appLink } = require("../lib/telegram");
 const { buildTelegramText, dateLabels, timeLabels, escapeHtml } = require("../lib/telegram-message");
-const { parseEvent, parseExpense } = require("../lib/smart-parse");
+const { parseEvent, parseMoney } = require("../lib/smart-parse");
 const { monthSpending, formatMoney, convert, CATEGORY_KM } = require("../lib/money-report");
 const { digestItem } = require("./dispatch");
 
@@ -99,13 +99,18 @@ function applyDone(payload, item) {
     return "updated";
   }
   if (item.kind === "undo") {
-    const list = payload[item.collection];
-    if (!Array.isArray(list) || !list.some(entry => entry.id === item.id)) return "already";
-    payload[item.collection] = list.filter(entry => entry.id !== item.id);
-    payload.deletions = payload.deletions && typeof payload.deletions === "object" ? payload.deletions : {};
-    payload.deletions[item.collection] = payload.deletions[item.collection] || {};
-    payload.deletions[item.collection][item.id] = new Date().toISOString();
-    return "updated";
+    const targets = Array.isArray(item.entries) && item.entries.length ? item.entries : [{ collection: item.collection, id: item.id }];
+    let removed = 0;
+    targets.forEach(({ collection, id: targetId }) => {
+      const list = payload[collection];
+      if (!Array.isArray(list) || !list.some(entry => entry.id === targetId)) return;
+      payload[collection] = list.filter(entry => entry.id !== targetId);
+      payload.deletions = payload.deletions && typeof payload.deletions === "object" ? payload.deletions : {};
+      payload.deletions[collection] = payload.deletions[collection] || {};
+      payload.deletions[collection][targetId] = new Date().toISOString();
+      removed += 1;
+    });
+    return removed ? "updated" : "already";
   }
   if (item.kind === "savings-contribution") {
     const saving = (payload.savings || []).find(entry => entry.id === id);
@@ -190,9 +195,13 @@ const HELP_TEXT = [
   "• <code>25/10 ថ្ងៃកំណើតបង</code>",
   "",
   "💸 <b>កត់ចំណាយ · Log an expense</b>",
-  "• <code>ចាយ 5$ អាហារ</code>",
-  "• <code>ចាយ 15k សាំង</code>",
-  "• <code>spent 3.5 coffee</code>",
+  "• <code>-20$ cloths</code> · <code>lunch $4.5</code>",
+  "• <code>ឡាន 5000៛</code> · <code>15k សាំង</code>",
+  "• <code>-5$ coffee ម្សិលមិញ</code> — ថ្ងៃមុន · yesterday",
+  "• ច្រើនបន្ទាត់ = ច្រើនចំណាយ · one per line",
+  "",
+  "💰 <b>កត់ចំណូល · Log income</b>",
+  "• <code>+100$ salary</code> · <code>+50$ client logo</code>",
   "",
   "☀️ <code>/today</code> — សង្ខេបថ្ងៃនេះ · Today's summary"
 ].join("\n");
@@ -211,6 +220,82 @@ async function reply(message, text, keyboard) {
 async function undoKeyboard(redis, userId, collection, id, url) {
   const token = await saveAction(redis, { userId, item: { kind: "undo", collection, id, url } });
   return { inline_keyboard: [[{ text: "↩️ លុបវិញ · Undo", callback_data: `undo|${token}` }, { text: "📱 Open", url: appLink({ url }) }]] };
+}
+
+/* ---------------- money from chat ---------------- */
+
+const EXPENSE_CATS = ["Food", "Transport", "Shopping", "Home", "Bills", "Family", "Health", "Education", "Entertainment", "Other"];
+const CAT_ICON = { Food: "🍜", Transport: "🚗", Shopping: "🛍", Home: "🏠", Bills: "🧾", Family: "👨‍👩‍👧", Health: "💊", Education: "📚", Entertainment: "🎬", Other: "📦", Salary: "💼", Bonus: "🎁", Freelance: "🎨", Business: "🏪" };
+const INCOME_KM = { Salary: "ប្រាក់ខែ", Bonus: "ប្រាក់រង្វាន់", Freelance: "ការងារក្រៅ", Business: "អាជីវកម្ម", Other: "ផ្សេងៗ" };
+
+function catLabel(entry) {
+  const km = entry.collection === "income" ? INCOME_KM[entry.category] || entry.category : CATEGORY_KM[entry.category] || entry.category;
+  return `${CAT_ICON[entry.category] || "📦"} ${km}`;
+}
+
+function entryRecord(entry, today, fallbackCurrency) {
+  const now = new Date().toISOString();
+  const date = entry.date || today;
+  if (entry.type === "income") {
+    const id = recordId("income");
+    return { collection: "income", record: { id, createdAt: now, updatedAt: now, name: entry.description || INCOME_KM[entry.category] || "Income", amount: entry.amount, currency: entry.currency || fallbackCurrency, category: entry.category || "Other", frequency: "Once", recurring: false, nextPaymentDate: date, notes: "Telegram" } };
+  }
+  const id = recordId("expenses");
+  return { collection: "expenses", record: { id, createdAt: now, updatedAt: now, description: entry.description || CATEGORY_KM[entry.category] || entry.category, amount: entry.amount, currency: entry.currency || fallbackCurrency, category: entry.category || "Other", date, method: "Telegram", notes: "" } };
+}
+
+// Reply text for saved money lines, read from the saved payload so budget % is exact.
+function moneyReplyText(payload, saved, today, skipped = []) {
+  const currency = payload.profile?.currency || "USD";
+  const lines = [];
+  const dayNote = date => (date && date !== today ? ` · 📆 ${escapeHtml(dateLabels(date).km)}` : "");
+  if (saved.length === 1) {
+    const { collection, record } = saved[0];
+    const entry = { collection, category: record.category };
+    lines.push(collection === "income" ? "💰 <b>បានកត់ចំណូល · Income saved</b>" : "💸 <b>បានកត់ចំណាយ · Expense saved</b>", "");
+    lines.push(`<b>${escapeHtml(formatMoney(record.amount, record.currency))}</b> · ${escapeHtml(catLabel(entry))}${dayNote(record.date || record.nextPaymentDate)}`);
+    const name = record.description || record.name;
+    if (name) lines.push(`📝 ${escapeHtml(name)}`);
+  } else {
+    lines.push(`🧾 <b>បានកត់ ${saved.length} · ${saved.length} saved</b>`, "");
+    let out = 0;
+    let inc = 0;
+    saved.forEach(({ collection, record }) => {
+      const sign = collection === "income" ? "+" : "−";
+      const value = convert(record.amount, record.currency, currency);
+      if (collection === "income") inc += value; else out += value;
+      lines.push(`${sign} <b>${escapeHtml(formatMoney(record.amount, record.currency))}</b> · ${escapeHtml(catLabel({ collection, category: record.category }))}${record.description || record.name ? ` · ${escapeHtml(record.description || record.name)}` : ""}${dayNote(record.date || record.nextPaymentDate)}`);
+    });
+    lines.push("");
+    if (out) lines.push(`💸 ចំណាយសរុប · Spent <b>${escapeHtml(formatMoney(out, currency))}</b>`);
+    if (inc) lines.push(`💰 ចំណូលសរុប · Income <b>${escapeHtml(formatMoney(inc, currency))}</b>`);
+  }
+  // budget status for each touched expense category
+  const month = today.slice(0, 7);
+  const spending = monthSpending(payload, month);
+  const cats = [...new Set(saved.filter(item => item.collection === "expenses" && String(item.record.date || "").startsWith(month)).map(item => item.record.category))];
+  cats.forEach(category => {
+    const budget = Number(payload.profile?.categoryBudgets?.[category] || 0);
+    if (!budget) return;
+    const spent = spending[category] || 0;
+    const percent = Math.round((spent / budget) * 100);
+    lines.push(`${percent >= 100 ? "🚨" : percent >= 80 ? "⚠️" : "📊"} ${escapeHtml(CATEGORY_KM[category] || category)} ${percent}% · ${escapeHtml(formatMoney(spent, currency))} / ${escapeHtml(formatMoney(budget, currency))}`);
+  });
+  if (skipped.length) lines.push("", `🤔 មិនយល់ · Skipped: ${skipped.map(line => `<code>${escapeHtml(line)}</code>`).join(", ")}`);
+  if (saved.length === 1 && saved[0].collection === "expenses") lines.push("", "<i>ខុសប្រភេទ? ចុចរូបខាងក្រោម · Wrong category? Tap below</i>");
+  return lines.join("\n");
+}
+
+function moneyKeyboard(token, saved) {
+  const url = saved.every(item => item.collection === "income") ? "/#money/income" : "/#money/expenses";
+  const rows = [];
+  if (saved.length === 1 && saved[0].collection === "expenses") {
+    const current = saved[0].record.category;
+    const buttons = EXPENSE_CATS.map((category, index) => ({ text: category === current ? `✅${CAT_ICON[category]}` : CAT_ICON[category], callback_data: `cat${index}|${token}` }));
+    rows.push(buttons.slice(0, 5), buttons.slice(5));
+  }
+  rows.push([{ text: saved.length > 1 ? "↩️ លុបទាំងអស់ · Undo all" : "↩️ លុបវិញ · Undo", callback_data: `undo|${token}` }, { text: "📱 Open", url: appLink({ url }) }]);
+  return { inline_keyboard: rows };
 }
 
 async function handleMessage(message, redis) {
@@ -232,39 +317,26 @@ async function handleMessage(message, redis) {
   }
 
   const currency = payload.profile?.currency || "USD";
-  const expense = parseExpense(text, currency);
-  if (expense) {
-    const id = recordId("expenses");
-    const record = {
-      id,
-      createdAt: new Date().toISOString(),
-      description: expense.description || CATEGORY_KM[expense.category] || expense.category,
-      amount: expense.amount,
-      currency: expense.currency,
-      category: expense.category,
-      date: today,
-      method: "Telegram",
-      notes: ""
-    };
-    const budget = Number(payload.profile?.categoryBudgets?.[expense.category] || 0);
-    const spentBefore = budget ? monthSpending(payload, today.slice(0, 7))[expense.category] || 0 : 0;
+  const rows = text.split(/\n+/).map(line => line.trim()).filter(Boolean);
+  const parsedRows = rows.map(line => ({ line, entry: parseMoney(line, currency, today) }));
+  const moneyRows = parsedRows.filter(row => row.entry);
+  if (moneyRows.length) {
+    const saved = moneyRows.map(row => entryRecord(row.entry, today, currency));
+    const skipped = parsedRows.filter(row => !row.entry).map(row => row.line);
+    let after = payload;
     await updatePayload(userId, data => {
-      data.expenses = Array.isArray(data.expenses) ? data.expenses : [];
-      data.expenses.push(record);
+      saved.forEach(({ collection, record }) => {
+        data[collection] = Array.isArray(data[collection]) ? data[collection] : [];
+        data[collection].push(record);
+      });
+      after = data;
       return "updated";
     });
-    const lines = [
-      "💸 <b>បានកត់ចំណាយ · Expense saved</b>",
-      "",
-      `<b>${escapeHtml(formatMoney(expense.amount, expense.currency))}</b> · ${escapeHtml(CATEGORY_KM[expense.category] || expense.category)}`,
-      record.description ? `📝 ${escapeHtml(record.description)}` : ""
-    ].filter(Boolean);
-    if (budget) {
-      const spent = spentBefore + convert(expense.amount, expense.currency, currency);
-      const percent = Math.round((spent / budget) * 100);
-      lines.push(`📊 ថវិកាខែនេះ ${percent}% · ${escapeHtml(formatMoney(spent, currency))} / ${escapeHtml(formatMoney(budget, currency))}`);
-    }
-    return reply(message, lines.join("\n"), await undoKeyboard(redis, userId, "expenses", id, "/#money/expenses"));
+    const token = await saveAction(redis, {
+      userId,
+      item: { kind: "undo", entries: saved.map(({ collection, record }) => ({ collection, id: record.id })), collection: saved[0].collection, id: saved[0].record.id, url: "/#money/expenses" }
+    });
+    return reply(message, moneyReplyText(after, saved, today, skipped), moneyKeyboard(token, saved));
   }
 
   const familyNames = (payload.family || []).map(member => member?.name).filter(Boolean);
@@ -368,6 +440,36 @@ module.exports = async (req, res) => {
       const clock = zonedClock(fireAt);
       status = verb === "tomorrow" ? "⏰ ស្អែកម៉ោង 9:00 · Tomorrow 9:00" : `⏰ រំលឹកម្ដងទៀត ${clock} · Again at ${clock}`;
       toast = status;
+    } else if (/^cat\d$/.test(verb) && item.kind === "undo") {
+      const category = EXPENSE_CATS[Number(verb.slice(3))];
+      const target = (item.entries || [])[0] || { collection: item.collection, id: item.id };
+      let after = null;
+      let record = null;
+      const result = await updatePayload(action.userId, payload => {
+        record = (payload[target.collection] || []).find(entry => entry.id === target.id);
+        if (!record || !category) return "missing";
+        const oldDefault = CATEGORY_KM[record.category] || record.category;
+        if (!record.description || record.description === oldDefault) record.description = CATEGORY_KM[category] || category;
+        record.category = category;
+        record.updatedAt = new Date().toISOString();
+        after = payload;
+        return "updated";
+      });
+      if (result !== "updated") {
+        await answer("⚠️ រកមិនឃើញក្នុង MYLIFE · Not found");
+        return res.status(200).json({ ok: true });
+      }
+      const saved = [{ collection: target.collection, record }];
+      await answer(`✅ ${catLabel({ collection: target.collection, category })}`);
+      await tgCall("editMessageText", {
+        chat_id: chatId,
+        message_id: query.message.message_id,
+        text: moneyReplyText(after, saved, zonedToday()),
+        parse_mode: "HTML",
+        disable_web_page_preview: true,
+        reply_markup: moneyKeyboard(token, saved)
+      }).catch(() => {});
+      return res.status(200).json({ ok: true });
     } else if (verb === "seen") {
       status = DONE_TEXT.seen;
       toast = "👍";
