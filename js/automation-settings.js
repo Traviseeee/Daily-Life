@@ -22,13 +22,20 @@ function renderAutomationCard() {
         ${row("morningDigest", p.morningDigest !== false, isKm ? "☀️ សារសង្ខេបព្រឹក" : "☀️ Morning digest", isKm ? "កាលវិភាគថ្ងៃនេះ bill ហួសថ្ងៃ និងថ្ងៃកំណើត" : "Today's plan, overdue bills, birthdays", "digestTime", p.digestTime || "07:00")}
         ${row("weeklyReport", p.weeklyReport !== false, isKm ? "📈 របាយការណ៍ប្រចាំសប្តាហ៍" : "📈 Weekly money report", isKm ? "រៀងរាល់ថ្ងៃអាទិត្យ ធៀបនឹងសប្តាហ៍មុន" : "Every Sunday, compared with last week", "weeklyReportTime", p.weeklyReportTime || "19:00")}
         ${row("budgetAlerts", p.budgetAlerts !== false, isKm ? "📊 ព្រមានថវិកា" : "📊 Budget alerts", isKm ? "ពេលចាយដល់ 80% និង 100% នៃថវិកា" : "At 80% and 100% of a category budget")}
+        ${row("eveningCheck", p.eveningCheck !== false, isKm ? "🌙 សួរពេលយប់" : "🌙 Evening check", isKm ? "\"មានចាយអ្វីទៀតទេ?\" ជាមួយប៊ូតុងចំណាយញឹកញាប់" : "\"Anything else today?\" with one-tap frequent expenses", "eveningCheckTime", p.eveningCheckTime || "21:00")}
+        ${row("unusualAlert", p.unusualAlert !== false, isKm ? "⚠️ ព្រមានចាយមិនធម្មតា" : "⚠️ Unusual spending", isKm ? "ពេលថ្ងៃនេះចាយច្រើនជាងធម្មតា 3 ដង" : "When today is 3× a normal day")}
+        ${row("weeklyImage", p.weeklyImage !== false, isKm ? "🖼️ រូបរបាយការណ៍ប្រចាំសប្តាហ៍" : "🖼️ Weekly report picture", isKm ? "រូបភាពក្រាហ្វ ផ្ញើជាមួយរបាយការណ៍ថ្ងៃអាទិត្យ" : "Chart picture with the Sunday report")}
+        ${row("monthlyImage", p.monthlyImage !== false, isKm ? "🗓️ រូបរបាយការណ៍ប្រចាំខែ" : "🗓️ Monthly report picture", isKm ? "ថ្ងៃទី 1 ម៉ោង 9 ព្រឹក សម្រាប់ខែមុន" : "On the 1st at 9:00, for last month")}
+        ${row("telegramBackup", p.telegramBackup !== false, isKm ? "💾 Backup ទៅ Telegram" : "💾 Backup to Telegram", isKm ? "ឯកសារ JSON រៀងរាល់ថ្ងៃអាទិត្យ (Import វិញបាន)" : "JSON file every Sunday (can be imported)")}
       </div>
       <details class="auto-help">
         <summary>🤖 ${isKm ? "ប្រើ Telegram bot (ផ្ញើសារទៅ bot)" : "Use the Telegram bot (send it a message)"}</summary>
         <ul>
           <li><code>ស្អែក 9 ព្រឹក ជួបម៉ាក់</code> → 📅 ${isKm ? "បន្ថែមព្រឹត្តិការណ៍" : "adds an event"}</li>
-          <li><code>ចាយ 5$ អាហារ</code> · <code>ចាយ 15k សាំង</code> → 💸 ${isKm ? "កត់ចំណាយ" : "logs an expense"}</li>
+          <li><code>coffee 2</code> · <code>-20$ cloths</code> · <code>grab 15k</code> → 💸 ${isKm ? "កត់ចំណាយ (ច្រើនបន្ទាត់ក៏បាន)" : "logs expenses (one per line)"}</li>
+          <li><code>+100$ salary</code> → 💰 ${isKm ? "កត់ចំណូល" : "logs income"}</li>
           <li><code>/today</code> → ☀️ ${isKm ? "សង្ខេបថ្ងៃនេះ" : "today's summary"}</li>
+          <li><code>/evening</code> · <code>/week</code> · <code>/month</code> · <code>/backup</code> → ${isKm ? "សួរពេលយប់ របាយការណ៍ រូបភាព និង backup ភ្លាមៗ" : "evening check, reports, pictures and backup right now"}</li>
           <li>✅ ⏰ ${isKm ? "ចុចប៊ូតុងលើការរំលឹក ដើម្បីកត់ថាបង់រួច ឬរំលឹកម្ដងទៀត" : "tap buttons on alerts to mark paid or snooze"}</li>
         </ul>
       </details>
