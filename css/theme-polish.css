@@ -3108,3 +3108,8 @@ body:has(#modalRoot.open) .quick-action-dock {
 }
 .launcher-hero.lh-v2 .launcher-hero-copy p.lh-date { margin: 0; color: rgba(255, 255, 255, 0.88) !important; text-shadow: 0 1px 6px rgba(0, 0, 0, 0.5); }
 .launcher-hero.lh-v2 .lh-greeting { color: #ffffff !important; }
+
+/* Home mood card: "today's mood" label readable in dark mode */
+:root:not([data-theme="light"]) .home-overview .mood-card .mood-selected strong,
+:root:not([data-theme="light"]) .mood-card .mood-selected strong { color: #f2fbf4 !important; -webkit-text-fill-color: #f2fbf4; }
+:root:not([data-theme="light"]) .mood-card .mood-selected .eyebrow { color: rgba(242, 251, 244, 0.7) !important; }
