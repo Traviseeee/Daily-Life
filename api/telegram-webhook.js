@@ -254,58 +254,103 @@ function entryRecord(entry, today, fallbackCurrency) {
   return { collection: "expenses", record: { id, createdAt: now, updatedAt: now, description: entry.description || CATEGORY_KM[entry.category] || entry.category, amount: entry.amount, currency: entry.currency || fallbackCurrency, category: entry.category || "Other", date, method: "Telegram", notes: "", source: "telegram" } };
 }
 
-// Reply text for saved money lines, read from the saved payload so budget % is exact.
+const fmt = (amount, currency) => {
+  const value = Number(amount || 0);
+  if (currency === "KHR") return formatMoney(value, "KHR");
+  return `$${value.toLocaleString("en-US", { minimumFractionDigits: Number.isInteger(value) ? 0 : 2, maximumFractionDigits: 2 })}`;
+};
+const bar = percent => {
+  const filled = Math.max(0, Math.min(10, Math.round(percent / 10)));
+  return "▰".repeat(filled) + "▱".repeat(10 - filled);
+};
+function dayWord(date, today) {
+  if (!date || date === today) return "ថ្ងៃនេះ";
+  if (date === addDaysIso(today, -1)) return "ម្សិលមិញ";
+  return dateLabels(date).km;
+}
+function addDaysIso(iso, days) {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d + days)).toISOString().slice(0, 10);
+}
+
+// Reply text for saved money lines, read from the saved payload so totals are exact.
 function moneyReplyText(payload, saved, today, skipped = []) {
   const currency = payload.profile?.currency || "USD";
   const lines = [];
-  const dayNote = date => (date && date !== today ? ` · 📆 ${escapeHtml(dateLabels(date).km)}` : "");
+  const nameOf = record => {
+    const name = String(record.description || record.name || "").trim();
+    const cat = String(record.category || "");
+    return name && ![cat.toLowerCase(), String(CATEGORY_KM[cat] || "").toLowerCase(), String(INCOME_KM[cat] || "").toLowerCase()].includes(name.toLowerCase()) ? name : "";
+  };
+
   if (saved.length === 1) {
     const { collection, record } = saved[0];
-    const entry = { collection, category: record.category };
-    lines.push(collection === "income" ? "💰 <b>បានកត់ចំណូល · Income saved</b>" : "💸 <b>បានកត់ចំណាយ · Expense saved</b>", "");
-    lines.push(`<b>${escapeHtml(formatMoney(record.amount, record.currency))}</b> · ${escapeHtml(catLabel(entry))}${dayNote(record.date || record.nextPaymentDate)}`);
-    const name = record.description || record.name;
-    if (name) lines.push(`📝 ${escapeHtml(name)}`);
+    const income = collection === "income";
+    const name = nameOf(record);
+    lines.push(income ? "✅ <b>បានកត់ចំណូល</b>" : "✅ <b>បានកត់ចំណាយ</b>", "");
+    lines.push(`${income ? "💰" : "💸"} <b>${income ? "+" : "−"}${escapeHtml(fmt(record.amount, record.currency))}</b>`);
+    lines.push(`${escapeHtml(catLabel({ collection, category: record.category }))}${name ? `  ·  ${escapeHtml(name)}` : ""}`);
+    lines.push(`📆 ${escapeHtml(dayWord(record.date || record.nextPaymentDate, today))}`);
   } else {
-    lines.push(`🧾 <b>បានកត់ ${saved.length} · ${saved.length} saved</b>`, "");
+    lines.push(`✅ <b>បានកត់ ${saved.length} មុខ</b>`, "");
     let out = 0;
     let inc = 0;
     saved.forEach(({ collection, record }) => {
-      const sign = collection === "income" ? "+" : "−";
+      const income = collection === "income";
       const value = convert(record.amount, record.currency, currency);
-      if (collection === "income") inc += value; else out += value;
-      lines.push(`${sign} <b>${escapeHtml(formatMoney(record.amount, record.currency))}</b> · ${escapeHtml(catLabel({ collection, category: record.category }))}${record.description || record.name ? ` · ${escapeHtml(record.description || record.name)}` : ""}${dayNote(record.date || record.nextPaymentDate)}`);
+      if (income) inc += value; else out += value;
+      const name = nameOf(record);
+      const day = (record.date || record.nextPaymentDate) !== today ? ` <i>(${escapeHtml(dayWord(record.date || record.nextPaymentDate, today))})</i>` : "";
+      lines.push(`<b>${income ? "+" : "−"}${escapeHtml(fmt(record.amount, record.currency))}</b>  ${escapeHtml(catLabel({ collection, category: record.category }))}${name ? ` · ${escapeHtml(name)}` : ""}${day}`);
     });
     lines.push("");
-    if (out) lines.push(`💸 ចំណាយសរុប · Spent <b>${escapeHtml(formatMoney(out, currency))}</b>`);
-    if (inc) lines.push(`💰 ចំណូលសរុប · Income <b>${escapeHtml(formatMoney(inc, currency))}</b>`);
+    if (out) lines.push(`💸 ចំណាយសរុប  <b>${escapeHtml(fmt(out, currency))}</b>`);
+    if (inc) lines.push(`💰 ចំណូលសរុប  <b>${escapeHtml(fmt(inc, currency))}</b>`);
   }
-  // budget status for each touched expense category
-  const month = today.slice(0, 7);
-  const spending = monthSpending(payload, month);
-  const cats = [...new Set(saved.filter(item => item.collection === "expenses" && String(item.record.date || "").startsWith(month)).map(item => item.record.category))];
-  cats.forEach(category => {
-    const budget = Number(payload.profile?.categoryBudgets?.[category] || 0);
-    if (!budget) return;
-    const spent = spending[category] || 0;
-    const percent = Math.round((spent / budget) * 100);
-    lines.push(`${percent >= 100 ? "🚨" : percent >= 80 ? "⚠️" : "📊"} ${escapeHtml(CATEGORY_KM[category] || category)} ${percent}% · ${escapeHtml(formatMoney(spent, currency))} / ${escapeHtml(formatMoney(budget, currency))}`);
-  });
-  if (skipped.length) lines.push("", `🤔 មិនយល់ · Skipped: ${skipped.map(line => `<code>${escapeHtml(line)}</code>`).join(", ")}`);
-  if (saved.length === 1 && saved[0].collection === "expenses") lines.push("", "<i>ខុសប្រភេទ? ចុចរូបខាងក្រោម · Wrong category? Tap below</i>");
+
+  // today's spending + budget bars for touched expense categories
+  const expenses = saved.filter(item => item.collection === "expenses");
+  const quote = [];
+  if (expenses.length) {
+    const todaySpent = (payload.expenses || []).filter(entry => entry.date === today)
+      .reduce((sum, entry) => sum + convert(entry.amount, entry.currency || currency, currency), 0);
+    quote.push(`📅 ថ្ងៃនេះចាយសរុប  <b>${escapeHtml(fmt(todaySpent, currency))}</b>`);
+    const month = today.slice(0, 7);
+    const spending = monthSpending(payload, month);
+    [...new Set(expenses.filter(item => String(item.record.date || "").startsWith(month)).map(item => item.record.category))].forEach(category => {
+      const budget = Number(payload.profile?.categoryBudgets?.[category] || 0);
+      if (!budget) return;
+      const spent = spending[category] || 0;
+      const percent = Math.round((spent / budget) * 100);
+      const icon = percent >= 100 ? "🔴" : percent >= 80 ? "🟡" : "🟢";
+      const note = percent >= 100 ? `លើស ${fmt(spent - budget, currency)}` : `នៅសល់ ${fmt(budget - spent, currency)}`;
+      quote.push("", `${icon} ថវិកា${escapeHtml(CATEGORY_KM[category] || category)}  <b>${percent}%</b>`, `${bar(percent)}`, `${escapeHtml(fmt(spent, currency))} / ${escapeHtml(fmt(budget, currency))} · ${escapeHtml(note)}`);
+    });
+  }
+  if (quote.length) lines.push("", `<blockquote>${quote.join("\n")}</blockquote>`);
+  if (skipped.length) lines.push("", `🤔 មិនយល់៖ ${skipped.map(line => `<code>${escapeHtml(line)}</code>`).join(", ")}`);
   return lines.join("\n");
 }
 
-function moneyKeyboard(token, saved) {
+// mode "main": Change category / Undo / Open — mode "cats": labelled category grid
+function moneyKeyboard(token, saved, mode = "main") {
   const url = saved.every(item => item.collection === "income") ? "/#money/income" : "/#money/expenses";
-  const rows = [];
-  if (saved.length === 1 && saved[0].collection === "expenses") {
+  const single = saved.length === 1 && saved[0].collection === "expenses";
+  if (mode === "cats" && single) {
     const current = saved[0].record.category;
-    const buttons = EXPENSE_CATS.map((category, index) => ({ text: category === current ? `✅${CAT_ICON[category]}` : CAT_ICON[category], callback_data: `cat${index}|${token}` }));
-    rows.push(buttons.slice(0, 5), buttons.slice(5));
+    const buttons = EXPENSE_CATS.map((category, index) => ({
+      text: `${category === current ? "✅ " : ""}${CAT_ICON[category]} ${CATEGORY_KM[category] || category}`,
+      callback_data: `cat${index}|${token}`
+    }));
+    const rows = [];
+    for (let i = 0; i < buttons.length; i += 2) rows.push(buttons.slice(i, i + 2));
+    rows.push([{ text: "‹ ត្រឡប់", callback_data: `catback|${token}` }]);
+    return { inline_keyboard: rows };
   }
-  rows.push([{ text: saved.length > 1 ? "↩️ លុបទាំងអស់ · Undo all" : "↩️ លុបវិញ · Undo", callback_data: `undo|${token}` }, { text: "📱 Open", url: appLink({ url }) }]);
-  return { inline_keyboard: rows };
+  const top = [];
+  if (single) top.push({ text: "🏷 ប្តូរប្រភេទ", callback_data: `cats|${token}` });
+  top.push({ text: saved.length > 1 ? "↩️ លុបទាំងអស់" : "↩️ លុបវិញ", callback_data: `undo|${token}` });
+  return { inline_keyboard: [top, [{ text: "📱 បើក MYLIFE", url: appLink({ url }) }]] };
 }
 
 async function handleMessage(message, redis) {
@@ -462,6 +507,21 @@ module.exports = async (req, res) => {
       const clock = zonedClock(fireAt);
       status = verb === "tomorrow" ? "⏰ ស្អែកម៉ោង 9:00 · Tomorrow 9:00" : `⏰ រំលឹកម្ដងទៀត ${clock} · Again at ${clock}`;
       toast = status;
+    } else if ((verb === "cats" || verb === "catback") && item.kind === "undo") {
+      const target = (item.entries || [])[0] || { collection: item.collection, id: item.id };
+      const payload = await readPayload(action.userId);
+      const record = (payload?.[target.collection] || []).find(entry => entry.id === target.id);
+      if (!record) {
+        await answer("⚠️ រកមិនឃើញក្នុង MYLIFE · Not found");
+        return res.status(200).json({ ok: true });
+      }
+      await answer(verb === "cats" ? "🏷 ជ្រើសប្រភេទ" : "👌");
+      await tgCall("editMessageReplyMarkup", {
+        chat_id: chatId,
+        message_id: query.message.message_id,
+        reply_markup: moneyKeyboard(token, [{ collection: target.collection, record }], verb === "cats" ? "cats" : "main")
+      }).catch(() => {});
+      return res.status(200).json({ ok: true });
     } else if (/^cat\d$/.test(verb) && item.kind === "undo") {
       const category = EXPENSE_CATS[Number(verb.slice(3))];
       const target = (item.entries || [])[0] || { collection: item.collection, id: item.id };
