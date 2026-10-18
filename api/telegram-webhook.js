@@ -792,6 +792,10 @@ module.exports = async (req, res) => {
         status = DONE_TEXT[verb];
       }
       toast = result === "updated" ? `${status} — MYLIFE updated` : status;
+      // tell the app right away (push → it pulls and shows the pop-up)
+      if (result === "updated" && item.kind === "bill") {
+        await pushAdded(action.userId, `✅ បានបង់ · ${item.title || "Bill"}`, "ពី Telegram · បានកត់ក្នុង MYLIFE", "/#money/bills");
+      }
     } else {
       await answer("🤔");
       return res.status(200).json({ ok: true });

@@ -55,7 +55,9 @@ const TelegramArrivals = (() => {
   function lookup(entry) {
     if (entry.collection === "bills") {
       const bill = (appData.bills || []).find(item => item.id === entry.id);
-      return bill && bill.invoiceAt ? { kind: "invoice", record: bill } : null;
+      if (!bill) return null;
+      if (entry.kind === "billpaid") return { kind: "billpaid", record: bill };
+      return bill.invoiceAt ? { kind: "invoice", record: bill } : null;
     }
     const pair = COLLECTIONS.find(([collection]) => collection === entry.collection);
     const record = pair && (appData[pair[0]] || []).find(item => item.id === entry.id);
@@ -93,7 +95,11 @@ const TelegramArrivals = (() => {
     const invoices = (appData.bills || [])
       .filter(bill => bill && bill.invoiceAt)
       .map(bill => ({ kind: "invoice", record: bill, key: `bill:${bill.id}:${bill.invoiceAt}`, at: bill.invoiceAt }));
-    return [...records, ...invoices];
+    // a bill marked paid with ✅ in Telegram that recorded no expense (amount unknown)
+    const paid = (appData.bills || [])
+      .filter(bill => bill && bill.paidAt && bill.paidVia && bill.paidVia !== "app" && !(Number(bill.amount) > 0 && bill.lastPaidExpenseId))
+      .map(bill => ({ kind: "billpaid", record: bill, key: `paid:${bill.id}:${bill.paidAt}`, at: bill.paidAt }));
+    return [...records, ...invoices, ...paid];
   }
 
   const UTILITY_ICON = bill => (/water|ppwsa|ទឹក/i.test(`${bill.name} ${bill.notes || ""}`) ? "💧" : /electric|edc|ភ្លើង|អគ្គិសនី/i.test(`${bill.name} ${bill.notes || ""}`) ? "⚡" : "🧾");
@@ -109,6 +115,7 @@ const TelegramArrivals = (() => {
 
   function describe({ kind, record }) {
     if (kind === "invoice") return `${UTILITY_ICON(record)} ${L("វិក្កយបត្រថ្មី", "New bill")} · ${safe(record.name)}`;
+    if (kind === "billpaid") return `✅ ${L("បានបង់", "Paid")} · ${safe(record.name)}`;
     if (kind === "event") return `📅 ${safe(record.title)}`;
     const sign = kind === "income" ? "+" : "−";
     const name = record.description || record.name;
@@ -126,10 +133,11 @@ const TelegramArrivals = (() => {
       && now - Date.parse(item.at || 0) < MAX_AGE_MS);
     writeSeen(ids);
     if (!fresh.length) return;
-    const collectionOf = kind => (kind === "invoice" ? "bills" : COLLECTIONS.find(([, k]) => k === kind)[0]);
-    const feedNow = readFeed().filter(entry => !fresh.some(item => item.kind === "invoice" && entry.collection === "bills" && entry.id === item.record.id));
+    const isBill = kind => kind === "invoice" || kind === "billpaid";
+    const collectionOf = kind => (isBill(kind) ? "bills" : COLLECTIONS.find(([, k]) => k === kind)[0]);
+    const feedNow = readFeed().filter(entry => !fresh.some(item => isBill(item.kind) && entry.collection === "bills" && entry.id === item.record.id));
     writeFeed([
-      ...fresh.map(item => ({ collection: collectionOf(item.kind), id: item.record.id, at: Date.parse(item.at || 0) || Date.now(), read: false })),
+      ...fresh.map(item => ({ collection: collectionOf(item.kind), id: item.record.id, kind: isBill(item.kind) ? item.kind : undefined, at: Date.parse(item.at || 0) || Date.now(), read: false })),
       ...feedNow
     ]);
     if (typeof NotificationCenter !== "undefined") NotificationCenter.renderBadge();
@@ -156,6 +164,10 @@ const TelegramArrivals = (() => {
   }
 
   function rowHtml({ kind, record }) {
+    if (kind === "billpaid") {
+      const next = record.due ? `${L("លើកក្រោយ", "Next")} ${formatDate(record.due)}` : "";
+      return `<li class="tga-row tga-billpaid"><span class="tga-row-icon">${UTILITY_ICON(record)}</span><span class="tga-row-copy"><strong>${safe(record.name)}</strong><small>✅ ${L("បានបង់", "Paid")}${next ? ` · ${safe(next)}` : ""}</small></span></li>`;
+    }
     if (kind === "invoice") {
       const due = record.due ? `${L("ផុតកំណត់", "Due")} ${formatDate(record.due)}` : "";
       const amount = Number(record.amount) > 0 ? `<span class="tga-amount">${amountText(record.amount, record.currency)}</span>` : "";
@@ -203,8 +215,9 @@ const TelegramArrivals = (() => {
     const onlyEvents = fresh.every(item => item.kind === "event");
     const onlyIncome = fresh.every(item => item.kind === "income");
     const onlyInvoices = fresh.every(item => item.kind === "invoice");
-    const url = onlyInvoices ? "#money/bills" : onlyEvents ? "#calendar" : onlyIncome ? "#money/income" : "#money/expenses";
-    const what = onlyInvoices ? L("វិក្កយបត្រ", "bill") : onlyEvents ? L("ព្រឹត្តិការណ៍", "event") : onlyIncome ? L("ចំណូល", "income") : L("ចំណាយ", "expense");
+    const onlyPaid = fresh.every(item => item.kind === "billpaid");
+    const url = onlyInvoices || onlyPaid ? "#money/bills" : onlyEvents ? "#calendar" : onlyIncome ? "#money/income" : "#money/expenses";
+    const what = onlyInvoices || onlyPaid ? L("វិក្កយបត្រ", "bill") : onlyEvents ? L("ព្រឹត្តិការណ៍", "event") : onlyIncome ? L("ចំណូល", "income") : L("ចំណាយ", "expense");
     const invoice = onlyInvoices && fresh.length === 1 ? fresh[0].record : null;
     const node = document.createElement("div");
     node.id = "tgaPopup";
@@ -212,7 +225,7 @@ const TelegramArrivals = (() => {
     node.innerHTML = `
       <section class="tga-card" role="dialog" aria-modal="true" aria-labelledby="tgaTitle">
         <div class="tga-check" aria-hidden="true"><svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="24"/><path d="M15 27l7 7 15-16"/></svg></div>
-        <h3 id="tgaTitle">${onlyInvoices ? L("មានវិក្កយបត្រថ្មី!", "New bill arrived!") : L("បានបន្ថែមដោយជោគជ័យ!", "Added successfully!")}</h3>
+        <h3 id="tgaTitle">${onlyInvoices ? L("មានវិក្កយបត្រថ្មី!", "New bill arrived!") : onlyPaid ? L("បានបង់រួចរាល់!", "Bill paid!") : L("បានបន្ថែមដោយជោគជ័យ!", "Added successfully!")}</h3>
         <p class="tga-sub">📲 ${fresh.length > 1
           ? L(`${fresh.length} ពី Telegram · រក្សាទុកក្នុង app រួចហើយ`, `${fresh.length} from Telegram · saved in the app`)
           : L(`${what}ពី Telegram · រក្សាទុកក្នុង app រួចហើយ`, `${what} from Telegram · saved in the app`)}</p>
