@@ -35,6 +35,7 @@ function renderAutomationCard() {
           <li><code>coffee 2</code> · <code>-20$ cloths</code> · <code>grab 15k</code> → 💸 ${isKm ? "កត់ចំណាយ (ច្រើនបន្ទាត់ក៏បាន)" : "logs expenses (one per line)"}</li>
           <li><code>+100$ salary</code> → 💰 ${isKm ? "កត់ចំណូល" : "logs income"}</li>
           <li><code>/today</code> → ☀️ ${isKm ? "សង្ខេបថ្ងៃនេះ" : "today's summary"}</li>
+          <li><code>/evening</code> · <code>/week</code> · <code>/month</code> · <code>/backup</code> → ${isKm ? "សួរពេលយប់ របាយការណ៍ រូបភាព និង backup ភ្លាមៗ" : "evening check, reports, pictures and backup right now"}</li>
           <li>✅ ⏰ ${isKm ? "ចុចប៊ូតុងលើការរំលឹក ដើម្បីកត់ថាបង់រួច ឬរំលឹកម្ដងទៀត" : "tap buttons on alerts to mark paid or snooze"}</li>
         </ul>
       </details>

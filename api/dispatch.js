@@ -992,4 +992,5 @@ module.exports = async (req, res) => {
 
 // Shared with /api/telegram-webhook (the /today command).
 module.exports.digestItem = digestItem;
+module.exports.eveningItem = eveningItem;
 module.exports.zonedTodayInput = zonedTodayInput;

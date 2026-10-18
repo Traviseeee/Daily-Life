@@ -5,11 +5,11 @@
 const { createClient } = require("@supabase/supabase-js");
 const { getRedis, sendToUser } = require("../lib/push");
 const crypto = require("crypto");
-const { tgCall, webhookSecret, loadAction, saveAction, addSnooze, appLink } = require("../lib/telegram");
-const { buildTelegramText, dateLabels, timeLabels, escapeHtml } = require("../lib/telegram-message");
+const { tgCall, tgUpload, sendAlert, webhookSecret, loadAction, saveAction, addSnooze, appLink } = require("../lib/telegram");
+const { buildTelegramText, buildWeeklyText, dateLabels, timeLabels, escapeHtml } = require("../lib/telegram-message");
 const { parseEvent, parseMoney } = require("../lib/smart-parse");
-const { monthSpending, formatMoney, convert, CATEGORY_KM } = require("../lib/money-report");
-const { digestItem } = require("./dispatch");
+const { monthSpending, formatMoney, convert, CATEGORY_KM, weeklyReport } = require("../lib/money-report");
+const { digestItem, eveningItem } = require("./dispatch");
 const { payBill } = require("../lib/bill-pay");
 
 const APP_TIME_ZONE = "Asia/Phnom_Penh";
@@ -153,7 +153,11 @@ const HELP_TEXT = [
   "💰 <b>កត់ចំណូល · Log income</b>",
   "• <code>+100$ salary</code> · <code>+50$ client logo</code>",
   "",
-  "☀️ <code>/today</code> — សង្ខេបថ្ងៃនេះ · Today's summary"
+  "☀️ <code>/today</code> — សង្ខេបថ្ងៃនេះ · Today's summary",
+  "🌙 <code>/evening</code> — សួរពេលយប់ (ប៊ូតុងចំណាយញឹកញាប់)",
+  "📈 <code>/week</code> — របាយការណ៍ 7 ថ្ងៃ + រូប",
+  "🗓️ <code>/month</code> — រូបរបាយការណ៍ខែនេះ",
+  "💾 <code>/backup</code> — ឯកសារ backup JSON"
 ].join("\n");
 
 async function reply(message, text, keyboard) {
@@ -319,6 +323,24 @@ async function handleMessage(message, redis) {
   if (/^\/today\b|^ថ្ងៃនេះ$/i.test(text)) {
     const digest = digestItem({ ...payload, profile: { ...(payload.profile || {}), morningDigest: true } }, today);
     return reply(message, buildTelegramText({ ...digest, heading: "📋 <b>សង្ខេបថ្ងៃនេះ · Today</b>" }));
+  }
+
+  // on-demand versions of the scheduled messages
+  if (/^\/evening\b/i.test(text)) {
+    await sendAlert(eveningItem(payload, today, "21:00"), userId, redis);
+    return null;
+  }
+  if (/^\/week\b/i.test(text)) {
+    await reply(message, buildWeeklyText({ kind: "weekly", url: "/#money/reports", weekly: weeklyReport(payload, today) }));
+    const png = await require("../lib/report-image").weeklyImage(payload, today);
+    return tgUpload("sendPhoto", "photo", Buffer.from(png), `mylife-week-${today}.png`, "image/png", { caption: "📊 <b>របាយការណ៍ 7 ថ្ងៃ</b>", parse_mode: "HTML" });
+  }
+  if (/^\/month\b/i.test(text)) {
+    const png = await require("../lib/report-image").monthlyImage(payload, today.slice(0, 7));
+    return tgUpload("sendPhoto", "photo", Buffer.from(png), `mylife-month-${today.slice(0, 7)}.png`, "image/png", { caption: "🗓️ <b>របាយការណ៍ខែនេះ (ដល់ថ្ងៃនេះ)</b>", parse_mode: "HTML" });
+  }
+  if (/^\/backup\b/i.test(text)) {
+    return tgUpload("sendDocument", "document", Buffer.from(JSON.stringify(payload, null, 1)), `mylife-backup-${today}.json`, "application/json", { caption: `💾 <b>Backup</b> · ${today}\nរក្សាទុកឯកសារនេះ។ ពេលត្រូវការ៖ Settings → Import`, parse_mode: "HTML" });
   }
 
   const currency = payload.profile?.currency || "USD";

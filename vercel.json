@@ -26,6 +26,9 @@
   "functions": {
     "api/dispatch.js": {
       "includeFiles": "{lib/fonts/**,node_modules/harfbuzzjs/hb.wasm,node_modules/harfbuzzjs/hb.js}"
+    },
+    "api/telegram-webhook.js": {
+      "includeFiles": "{lib/fonts/**,node_modules/harfbuzzjs/hb.wasm,node_modules/harfbuzzjs/hb.js}"
     }
   }
 }
