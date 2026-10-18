@@ -259,12 +259,15 @@ function homeAgenda(todayIso) {
   });
 
   const items = [...byKey.values()].sort((a, b) => a.date.localeCompare(b.date) || a.title.localeCompare(b.title));
+  const nowClock = `${String(new Date().getHours()).padStart(2, "0")}:${String(new Date().getMinutes()).padStart(2, "0")}`;
+  const isOver = item => item.date === todayIso && item.time && String(item.time).slice(0, 5).padStart(5, "0") < nowClock;
   return {
-    today: items.filter(item => !item.overdue && item.date === todayIso).length,
+    // "Today" counts only what is still ahead today
+    today: items.filter(item => !item.overdue && item.date === todayIso && !isOver(item)).length,
     nextSevenDays: items.filter(item => !item.overdue && item.date > todayIso && item.date <= weekEndIso).length,
     overdueBills: items.filter(item => item.overdue).length,
     // hide today's timed items that are already over
-    items: items.filter(item => !(item.date === todayIso && item.time && item.time < `${String(new Date().getHours()).padStart(2, "0")}:${String(new Date().getMinutes()).padStart(2, "0")}`)).slice(0, 5),
+    items: items.filter(item => !isOver(item)).slice(0, 5),
     allItems: items
   };
 }
@@ -280,7 +283,7 @@ function renderHomeAgenda(agenda) {
         : t("inDays", { count: item.daysLeft });
 
   return '<section class="home-agenda-card" aria-labelledby="homeAgendaTitle">' +
-    '<header class="home-agenda-header"><div><span class="home-agenda-eyebrow">' + t("dailyFocus") + '</span><h2 id="homeAgendaTitle">' + t("todayAndUpcoming") + '</h2></div><a class="home-agenda-view" href="#today">' + (languageCode() === "km" ? "មើលថ្ងៃនេះ" : "Open Today") + ' <span aria-hidden="true">›</span></a></header>' +
+    '<header class="home-agenda-header"><div><span class="home-agenda-eyebrow">' + escapeHtml(new Date().toLocaleDateString(languageCode() === "km" ? "km-KH" : "en-US", { weekday: "long", day: "numeric", month: "long" })) + '</span><h2 id="homeAgendaTitle">' + t("todayAndUpcoming") + '</h2></div><a class="home-agenda-view" href="#today">' + (languageCode() === "km" ? "មើលថ្ងៃនេះ" : "Open Today") + ' <span aria-hidden="true">›</span></a></header>' +
     '<div class="home-agenda-stats">' +
       '<div class="home-agenda-stat"><strong>' + agenda.today + '</strong><span>' + t("today") + '</span></div>' +
       '<div class="home-agenda-stat"><strong>' + agenda.nextSevenDays + '</strong><span>' + t("next7Days") + '</span></div>' +

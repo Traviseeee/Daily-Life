@@ -104,7 +104,7 @@ const MyLifeChat = (() => {
     const top = Object.entries(byCat).sort((a, b) => b[1] - a[1]).slice(0, 4);
     const title = `${L("ចាយ", "Spent")}${cat ? ` ${optionLabel(cat)}` : ""} · ${range.label}`;
     return {
-      html: `<p>${escapeHtml(title)}៖ <strong>${money(total)}</strong> (${items.length} ${L("ដង", "times")})</p>${!cat && top.length ? li(top.map(([c, v]) => row(escapeHtml(optionLabel(c)), money(v)))) : ""}`,
+      html: `<p>${escapeHtml(title)}៖ <strong>${money(total)}</strong> (${items.length} ${L("ដង", items.length === 1 ? "time" : "times")})</p>${!cat && top.length ? li(top.map(([c, v]) => row(escapeHtml(optionLabel(c)), money(v)))) : ""}`,
       actions: [link(L("💰 មើលលុយ", "💰 Open Money"), "#money")]
     };
   }
@@ -130,8 +130,16 @@ const MyLifeChat = (() => {
 
   function answerBills() {
     const today = localDateInput();
+    // same rule as Home: recurring bills show their next cycle date; only one-time bills can be overdue
+    const horizon = new Date(); horizon.setDate(horizon.getDate() + 60);
     const due = appData.bills
       .filter(b => b.due && b.status !== "Paid" && !(typeof billPaidCurrentCycle === "function" && billPaidCurrentCycle(b)))
+      .map(b => {
+        if ((b.frequency || "Monthly") === "Once" || typeof billCycleDates !== "function") return b;
+        const next = billCycleDates(b, today, localDateInput(horizon))[0];
+        return next ? { ...b, due: next } : null;
+      })
+      .filter(Boolean)
       .sort((a, b) => a.due.localeCompare(b.due))
       .slice(0, 6);
     if (!due.length) return { html: L("គ្មានវិក្កយបត្រត្រូវបង់ទេ ✅", "No bills to pay ✅") };
@@ -202,7 +210,7 @@ const MyLifeChat = (() => {
     const byTitle = {};
     week.forEach(h => { byTitle[h.title] = (byTitle[h.title] || 0) + 1; });
     return {
-      html: `<p>${L("៧ ថ្ងៃនេះ", "Last 7 days")}: <strong>${week.length}</strong> ${L("ដង", "times")} · ${fmtMinutes(minutes)}</p>${li(Object.entries(byTitle).slice(0, 5).map(([t2, n]) => row(escapeHtml(t2), `${n}×`)))}`,
+      html: `<p>${L("៧ ថ្ងៃនេះ", "Last 7 days")}: <strong>${week.length}</strong> ${L("ដង", week.length === 1 ? "time" : "times")} · ${fmtMinutes(minutes)}</p>${li(Object.entries(byTitle).slice(0, 5).map(([t2, n]) => row(escapeHtml(t2), `${n}×`)))}`,
       actions: [act(L("+ កត់ចំណង់ចំណូលចិត្ត", "+ Log a hobby"), () => App.openHobbyModal()), link(L("✨ ជីវិតប្រចាំថ្ងៃ", "✨ Daily life"), "#daily")]
     };
   }
@@ -243,6 +251,31 @@ const MyLifeChat = (() => {
         act(L("✏️ កែក្នុង form", "✏️ Edit in form"), () => { close(); openExpenseModal(record); })
       ]
     };
+  }
+
+  // money lines in the same format as the Telegram bot (shared SmartParse)
+  function commandMoney(entries) {
+    const today = localDateInput();
+    const records = entries.map(entry => entry.type === "income"
+      ? { collection: "income", record: { name: entry.description || optionLabel(entry.category), amount: entry.amount, currency: entry.currency, category: entry.category, frequency: "Once", recurring: false, nextPaymentDate: entry.date || today, notes: "" } }
+      : { collection: "expenses", record: { description: entry.description || optionLabel(entry.category), amount: entry.amount, currency: entry.currency, category: entry.category, date: entry.date || today, method: "" } });
+    const rows = records.map(({ collection, record }) => {
+      const day = (record.date || record.nextPaymentDate) !== today ? ` · ${formatDate(record.date || record.nextPaymentDate)}` : "";
+      return row(`${escapeHtml(optionLabel(record.category))}${record.description || record.name ? ` · ${escapeHtml(record.description || record.name)}` : ""}${escapeHtml(day)}`, `${collection === "income" ? "+" : "−"}${plainMoney(record.amount, record.currency)}`);
+    });
+    const single = records.length === 1 ? records[0] : null;
+    const title = single
+      ? (single.collection === "income" ? L("កត់ចំណូលនេះ?", "Save this income?") : L("កត់ចំណាយនេះ?", "Save this expense?"))
+      : L(`កត់ទាំង ${records.length} នេះ?`, `Save these ${records.length}?`);
+    const save = () => {
+      records.forEach(({ collection, record }) => Store.add(collection, { ...record }));
+      return single
+        ? L(`បានកត់ ${plainMoney(single.record.amount, single.record.currency)} · ${optionLabel(single.record.category)} ✅`, `Saved ${plainMoney(single.record.amount, single.record.currency)} · ${optionLabel(single.record.category)} ✅`)
+        : L(`បានកត់ ${records.length} មុខ ✅`, `Saved ${records.length} items ✅`);
+    };
+    const actions = [act(L("✓ កត់", "✓ Save"), save)];
+    if (single && single.collection === "expenses") actions.push(act(L("✏️ កែក្នុង form", "✏️ Edit in form"), () => { close(); openExpenseModal(single.record); }));
+    return { html: `<p>${title}</p>${li(rows)}`, actions };
   }
 
   function commandEvent(raw) {
@@ -302,9 +335,15 @@ const MyLifeChat = (() => {
       const paid = commandPaid(q);
       if (paid) return paid;
     }
-    if (/^(ចាយ|ចំណាយ|spent|spend|ទិញ|bought)\s/.test(q) && /\d/.test(q) && !/[?？]|ប៉ុន្មាន|how much/.test(q)) {
-      const exp = commandExpense(raw);
-      if (exp) return exp;
+    if (/\d/.test(q) && !/[?？]|ប៉ុន្មាន|how much/.test(q)) {
+      const entries = typeof SmartParse !== "undefined"
+        ? raw.split(/\n+/).map(line => line.trim()).filter(Boolean).map(line => SmartParse.parseMoney(line, appData.profile.currency || "USD", localDateInput())).filter(Boolean)
+        : [];
+      if (entries.length) return commandMoney(entries);
+      if (/^(ចាយ|ចំណាយ|spent|spend|ទិញ|bought)\s/.test(q)) {
+        const exp = commandExpense(raw);
+        if (exp) return exp;
+      }
     }
     const isQuestion = /[?？]|អ្វី|ប៉ុន្មាន|ណា|what|how|which|when|who|មានទេ|ឬទេ/.test(q);
     if (!isQuestion && /(ស្អែក|ខានស្អែក|tomorrow|ថ្ងៃ(ច័ន្ទ|អង្គារ|ពុធ|ព្រហ|សុក្រ|សៅរ៍|អាទិត្យ)|ម៉ោង|\d\s*(ព្រឹក|រសៀល|ល្ងាច|យប់|am|pm))/.test(q)) {

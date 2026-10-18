@@ -710,7 +710,7 @@ const Store = {
   add(collection, item) {
     const previous = structuredClone(appData);
     const records = ensureCollection(collection);
-    records.push({ id: id(collection), createdAt: new Date().toISOString(), ...item });
+    records.push({ id: id(collection), createdAt: new Date().toISOString(), ...trimTextFields(item) });
     if (this.save()) App.render();
     else restoreData(previous);
   },
@@ -719,7 +719,7 @@ const Store = {
     const records = ensureCollection(collection);
     const item = records.find(record => record.id === itemId);
     if (!item) return;
-    Object.assign(item, changes, { updatedAt: new Date().toISOString() });
+    Object.assign(item, trimTextFields(changes), { updatedAt: new Date().toISOString() });
     if (this.save()) App.render();
     else restoreData(previous);
   },
@@ -1280,8 +1280,21 @@ function rielText(text) {
   return String(text).replace(/(-?)KHR[\s\u00a0]*([\d.,]+)/g, "$1$2 ៛");
 }
 
+// "Lychee  " → "Lychee": names, titles and notes are saved without stray spaces
+function trimTextFields(record) {
+  if (!record || typeof record !== "object") return record;
+  const out = { ...record };
+  ["name", "title", "description", "relationship", "category", "notes", "method"].forEach(key => {
+    if (typeof out[key] === "string") out[key] = out[key].trim();
+  });
+  return out;
+}
+
 function money(value, currency = appData.profile.currency || "USD") {
-  const formatted = rielText(new Intl.NumberFormat("en-US", { style: "currency", currency, maximumFractionDigits: 0 }).format(Number(value || 0)));
+  // small amounts keep their cents ($4.50, $0.24) so they never show as $0; big totals stay round
+  const number = Number(value || 0);
+  const cents = currency !== "KHR" && Math.abs(number) < 100 && Math.round(number * 100) % 100 !== 0;
+  const formatted = rielText(new Intl.NumberFormat("en-US", { style: "currency", currency, minimumFractionDigits: cents ? 2 : 0, maximumFractionDigits: cents ? 2 : 0 }).format(number));
   return `<span class="money-value" data-private-money>${formatted}</span>`;
 }
 
