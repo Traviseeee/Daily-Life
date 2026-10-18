@@ -3,7 +3,7 @@
 // 👍 just acknowledges. Only the configured chat can use the buttons.
 
 const { createClient } = require("@supabase/supabase-js");
-const { getRedis } = require("../lib/push");
+const { getRedis, sendToUser } = require("../lib/push");
 const crypto = require("crypto");
 const { tgCall, webhookSecret, loadAction, saveAction, addSnooze, appLink } = require("../lib/telegram");
 const { buildTelegramText, dateLabels, timeLabels, escapeHtml } = require("../lib/telegram-message");
@@ -222,6 +222,16 @@ async function undoKeyboard(redis, userId, collection, id, url) {
   return { inline_keyboard: [[{ text: "↩️ លុបវិញ · Undo", callback_data: `undo|${token}` }, { text: "📱 Open", url: appLink({ url }) }]] };
 }
 
+// Phone pop-up (web push) so the app also says "added" — best effort, never blocks the bot.
+async function pushAdded(userId, title, body, url) {
+  if (!process.env.VAPID_PUBLIC_KEY || !process.env.VAPID_PRIVATE_KEY) return;
+  try {
+    await sendToUser(userId, { title, body, url });
+  } catch (error) {
+    console.warn("MYLIFE Telegram pop-up not sent.", error.message);
+  }
+}
+
 /* ---------------- money from chat ---------------- */
 
 const EXPENSE_CATS = ["Food", "Transport", "Shopping", "Home", "Bills", "Family", "Health", "Education", "Entertainment", "Other"];
@@ -336,7 +346,16 @@ async function handleMessage(message, redis) {
       userId,
       item: { kind: "undo", entries: saved.map(({ collection, record }) => ({ collection, id: record.id })), collection: saved[0].collection, id: saved[0].record.id, url: "/#money/expenses" }
     });
-    return reply(message, moneyReplyText(after, saved, today, skipped), moneyKeyboard(token, saved));
+    const sent = await reply(message, moneyReplyText(after, saved, today, skipped), moneyKeyboard(token, saved));
+    const lineOf = ({ collection, record }) => `${collection === "income" ? "+" : "−"}${formatMoney(record.amount, record.currency)} · ${catLabel({ collection, category: record.category })}${record.description || record.name ? ` · ${record.description || record.name}` : ""}`;
+    const onlyIncome = saved.every(item => item.collection === "income");
+    await pushAdded(
+      userId,
+      saved.length > 1 ? `📲 បានកត់ ${saved.length} ពី Telegram` : onlyIncome ? "📲 បានកត់ចំណូលពី Telegram" : "📲 បានកត់ចំណាយពី Telegram",
+      saved.slice(0, 4).map(lineOf).join("\n"),
+      onlyIncome ? "/#money/income" : "/#money/expenses"
+    );
+    return sent;
   }
 
   const familyNames = (payload.family || []).map(member => member?.name).filter(Boolean);
@@ -370,7 +389,9 @@ async function handleMessage(message, redis) {
     event.familyMember ? `👨‍👩‍👧 ${escapeHtml(event.familyMember)}` : "",
     event.time ? "🔔 នឹងរំលឹកតាម Telegram · You'll get an alert" : "🔔 នឹងរំលឹកម៉ោង 9:00 ព្រឹក · Alert at 9:00 AM"
   ].filter(Boolean);
-  return reply(message, lines.join("\n"), await undoKeyboard(redis, userId, "calendarEvents", id, "/#calendar"));
+  const sent = await reply(message, lines.join("\n"), await undoKeyboard(redis, userId, "calendarEvents", id, "/#calendar"));
+  await pushAdded(userId, "📲 បានបន្ថែមព្រឹត្តិការណ៍ពី Telegram", `📅 ${event.title} · ${date.km}${event.time ? ` · ${time.km}` : ""}`, "/#calendar");
+  return sent;
 }
 
 module.exports = async (req, res) => {

@@ -5,6 +5,7 @@
  * the first run only remembers what exists, so old records never pop up. */
 const TelegramArrivals = (() => {
   const KEY = "mylife:tg-seen:v1";
+  const FEED_KEY = "mylife:tg-feed:v1";
   const MAX_AGE_MS = 3 * 24 * 60 * 60 * 1000;
   const FIRST_RUN_MS = 30 * 60 * 1000;
   const COLLECTIONS = [
@@ -31,6 +32,52 @@ const TelegramArrivals = (() => {
     } catch (error) {
       /* storage unavailable: worst case an item is announced again */
     }
+  }
+
+  /* bell feed: [{ collection, id, at, read }] newest first, kept 3 days */
+  function readFeed() {
+    try {
+      const list = JSON.parse(localStorage.getItem(FEED_KEY) || "[]");
+      return Array.isArray(list) ? list : [];
+    } catch (error) {
+      return [];
+    }
+  }
+
+  function writeFeed(list) {
+    try {
+      localStorage.setItem(FEED_KEY, JSON.stringify(list.slice(0, 30)));
+    } catch (error) {
+      /* ignore */
+    }
+  }
+
+  function lookup(entry) {
+    const pair = COLLECTIONS.find(([collection]) => collection === entry.collection);
+    const record = pair && (appData[pair[0]] || []).find(item => item.id === entry.id);
+    return record ? { kind: pair[1], record } : null;
+  }
+
+  // items still in the app (undone ones drop out), with display text
+  function feed() {
+    const now = Date.now();
+    return readFeed()
+      .filter(entry => now - entry.at < MAX_AGE_MS)
+      .map(entry => ({ ...entry, item: lookup(entry) }))
+      .filter(entry => entry.item)
+      .map(entry => ({ ...entry, text: describe(entry.item), url: entry.collection === "calendarEvents" ? "#calendar" : entry.collection === "income" ? "#money/income" : "#money/expenses" }));
+  }
+
+  const unreadCount = () => feed().filter(entry => !entry.read).length;
+
+  function markRead() {
+    const list = readFeed();
+    if (!list.some(entry => !entry.read)) return;
+    writeFeed(list.map(entry => ({ ...entry, read: true })));
+  }
+
+  function clearFeed() {
+    writeFeed([]);
   }
 
   function fromTelegram() {
@@ -66,7 +113,14 @@ const TelegramArrivals = (() => {
     const fresh = items.filter(item => !known.has(item.record.id)
       && now - Date.parse(item.record.createdAt || 0) < MAX_AGE_MS);
     writeSeen(ids);
-    if (!fresh.length || typeof Toast === "undefined") return;
+    if (!fresh.length) return;
+    const collectionOf = kind => COLLECTIONS.find(([, k]) => k === kind)[0];
+    writeFeed([
+      ...fresh.map(item => ({ collection: collectionOf(item.kind), id: item.record.id, at: Date.parse(item.record.createdAt || 0) || Date.now(), read: false })),
+      ...readFeed()
+    ]);
+    if (typeof NotificationCenter !== "undefined") NotificationCenter.renderBadge();
+    if (typeof Toast === "undefined") return;
 
     const money = fresh.filter(item => item.kind !== "event");
     let message;
@@ -102,10 +156,19 @@ const TelegramArrivals = (() => {
       return result;
     };
   }
+  // the service worker got a push ("added from Telegram"): pull now instead of waiting
+  if (navigator.serviceWorker) {
+    navigator.serviceWorker.addEventListener("message", event => {
+      if (event.data?.type !== "mylife-pull" || typeof Store === "undefined") return;
+      Promise.resolve(Store.syncFromSupabase()).then(applied => {
+        if (applied) window.dispatchEvent(new Event("mylife:cloud-merged"));
+      }).catch(() => {});
+    });
+  }
   window.addEventListener("mylife:cloud-merged", () => {
     try { check(); } catch (error) { /* ignore */ }
   });
   setTimeout(() => { try { check(); } catch (error) { /* ignore */ } }, 1500);
 
-  return { check };
+  return { check, feed, unreadCount, markRead, clearFeed };
 })();

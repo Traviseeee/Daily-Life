@@ -169,7 +169,8 @@ const NotificationCenter = (() => {
     if (!bell) return;
     const enabled = appData.profile?.notificationsEnabled !== false;
     const entries = collect().filter(isActive);
-    const count = enabled ? entries.filter(entry => entry.daysLeft <= 1 && entry.group !== "earlier").length : 0;
+    const telegram = typeof TelegramArrivals !== "undefined" ? TelegramArrivals.unreadCount() : 0;
+    const count = (enabled ? entries.filter(entry => entry.daysLeft <= 1 && entry.group !== "earlier").length : 0) + telegram;
     const urgent = enabled && entries.some(entry => entry.group === "soon");
 
     let badge = bell.querySelector(".notification-badge");
@@ -245,6 +246,37 @@ const NotificationCenter = (() => {
     `;
   }
 
+  function agoLabel(at) {
+    const minutes = Math.max(0, Math.round((Date.now() - at) / 60000));
+    if (minutes < 1) return L("ឥឡូវនេះ", "Just now");
+    if (minutes < 60) return L(`${minutes} នាទីមុន`, `${minutes} min ago`);
+    const hours = Math.round(minutes / 60);
+    if (hours < 24) return L(`${hours} ម៉ោងមុន`, `${hours}h ago`);
+    return L(`${Math.round(hours / 24)} ថ្ងៃមុន`, `${Math.round(hours / 24)}d ago`);
+  }
+
+  function telegramHtml() {
+    const list = typeof TelegramArrivals !== "undefined" ? TelegramArrivals.feed().slice(0, 8) : [];
+    if (!list.length) return "";
+    return `
+      <section class="nc-group nc-telegram" data-nc-group="telegram">
+        <h3>📲 ${L("បានបន្ថែមពី Telegram", "Added from Telegram")}<span>${list.length}</span><button class="nc-link nc-tg-clear" type="button" data-nc-tg-clear>${L("សម្អាត", "Clear")}</button></h3>
+        <ul class="nc-list">${list.map(entry => `
+          <li class="nc-item nc-kind-telegram ${entry.read ? "" : "is-new"}">
+            <button class="nc-item-main" type="button" data-nc-tg-open="${escapeAttr(entry.url)}">
+              <span class="nc-icon nc-tg-icon">${entry.collection === "calendarEvents" ? "📅" : entry.collection === "income" ? "💰" : "💸"}</span>
+              <span class="nc-copy">
+                <strong>${entry.text}</strong>
+                <span class="nc-meta"><span class="nc-relative">${escapeHtml(agoLabel(entry.at))}</span>${entry.read ? "" : `<span class="nc-tg-new">${L("ថ្មី", "New")}</span>`}</span>
+              </span>
+              <span class="nc-chevron">${icon.chevron()}</span>
+            </button>
+          </li>`).join("")}
+        </ul>
+      </section>
+    `;
+  }
+
   function panelHtml() {
     const now = new Date();
     const enabled = appData.profile?.notificationsEnabled !== false;
@@ -292,6 +324,7 @@ const NotificationCenter = (() => {
         ` : ""}
 
         <div class="nc-scroll">
+          ${telegramHtml()}
           ${groups.length ? groups.map(([id, title, items]) => `
             <section class="nc-group" data-nc-group="${id}">
               <h3>${escapeHtml(title)}<span>${items.length}</span></h3>
@@ -388,6 +421,17 @@ const NotificationCenter = (() => {
       });
     }));
 
+    root.querySelectorAll("[data-nc-tg-open]").forEach(button => button.addEventListener("click", () => {
+      const url = button.dataset.ncTgOpen;
+      close();
+      location.hash = url;
+    }));
+
+    root.querySelectorAll("[data-nc-tg-clear]").forEach(button => button.addEventListener("click", () => {
+      TelegramArrivals.clearFeed();
+      rerender();
+    }));
+
     root.querySelectorAll("[data-nc-restore]").forEach(button => button.addEventListener("click", () => {
       writeMap(DISMISS_KEY, {});
       writeMap(SNOOZE_KEY, {});
@@ -417,6 +461,10 @@ const NotificationCenter = (() => {
     bind(root);
     document.getElementById("bellButton")?.setAttribute("aria-expanded", "true");
     root.querySelector(".nc-close")?.focus({ preventScroll: true });
+    if (typeof TelegramArrivals !== "undefined") {
+      TelegramArrivals.markRead();
+      renderBadge();
+    }
 
     clearInterval(ticker);
     ticker = setInterval(rerender, 30000);

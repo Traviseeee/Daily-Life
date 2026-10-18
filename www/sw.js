@@ -1,4 +1,4 @@
-const CACHE_NAME = "mylife-pwa-v68";
+const CACHE_NAME = "mylife-pwa-v69";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -99,6 +99,9 @@ self.addEventListener("push", event => {
       badge: "/assets/icons/mylife-icon-192.png",
       data: { url: notificationUrl(data.url) }
     });
+    // an open MYLIFE window pulls the new data right away
+    const windows = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+    windows.forEach(client => client.postMessage({ type: "mylife-pull" }));
   })());
 });
 

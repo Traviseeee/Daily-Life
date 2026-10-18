@@ -3192,3 +3192,10 @@ body:has(#modalRoot.open) .quick-action-dock {
 :root[data-theme="light"] .mlc-btn { background: #f2fbe4; border-color: #a6e33f; }
 :root[data-theme="light"] .mlc-suggest button { background: #ffffff; color: #14201b; border-color: rgba(20, 32, 27, 0.12); }
 :root[data-theme="light"] .mlc-input input { background: #ffffff; color: #14201b; border-color: rgba(20, 32, 27, 0.15); }
+
+/* Notification center: "Added from Telegram" feed */
+.nc-telegram h3 { display: flex; align-items: center; gap: 8px; }
+.nc-telegram .nc-tg-clear { margin-left: auto; font-size: 12px; padding: 2px 8px; }
+.nc-item.nc-kind-telegram .nc-tg-icon { font-size: 18px; display: grid; place-items: center; background: color-mix(in srgb, #2aabee 16%, transparent); }
+.nc-item.nc-kind-telegram.is-new { box-shadow: inset 3px 0 0 #2aabee; }
+.nc-tg-new { font-size: 11px; font-weight: 700; color: #fff; background: #2aabee; border-radius: 999px; padding: 1px 8px; margin-left: 6px; }
