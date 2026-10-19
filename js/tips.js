@@ -59,6 +59,7 @@ const TIPS_GIFT_IDEAS = {
 let tipsActiveFilter = "ALL";
 let tipsOpenSheetId = null;
 let tipsGlobalBound = false;
+let tipsWeekendBudget = 0;
 
 function tipsL(km, en) {
   return languageCode() === "km" ? km : en;
@@ -329,23 +330,17 @@ function renderTipsCheckinCard(state) {
 }
 
 function renderTipsWeekendCard() {
+  const budget = tipsWeekendBudget;
+  const idea = tipsWeekendIdea(budget);
   return `
     <article class="tp-for-card tp-for-weekend">
       <span class="tp-for-icon">🌿</span>
       <h3>${tipsL("គំនិតចុងសប្តាហ៍", "Weekend idea")}</h3>
-      <div class="tp-budget-list">
-        ${[0, 10, 50].map(budget => {
-          const idea = tipsWeekendIdea(budget);
-          return `
-            <button class="tp-budget" type="button" data-tip-weekend="${budget}">
-              <span class="tp-budget-tag">$${budget}</span>
-              <span class="tp-budget-text">${escapeHtml(languageCode() === "km" ? idea.km : idea.en)}</span>
-              <span class="tp-budget-add" aria-hidden="true">🔔</span>
-            </button>
-          `;
-        }).join("")}
+      <div class="tp-budget-chips" role="group" aria-label="${tipsL("ថវិកា", "Budget")}">
+        ${[0, 10, 50].map(value => `<button class="tp-budget-chip ${value === budget ? "active" : ""}" type="button" data-tip-budget="${value}" aria-pressed="${value === budget}">$${value}</button>`).join("")}
       </div>
-      <p class="tp-for-meta">${tipsL("ចុចដើម្បីរំលឹកថ្ងៃសៅរ៍ 9:00 AM", "Tap to get a reminder Saturday 9:00 AM")}</p>
+      <p class="tp-for-text" data-tip-weekend-text>${escapeHtml(languageCode() === "km" ? idea.km : idea.en)}</p>
+      <button class="button ghost-button tp-small-btn" type="button" data-tip-weekend="${budget}">${tipsL("🔔 រំលឹកថ្ងៃសៅរ៍ 9 AM", "🔔 Remind Sat 9 AM")}</button>
     </article>
   `;
 }
@@ -402,6 +397,7 @@ function renderTips() {
       </header>
       <div class="tp-photo-editor" data-tip-photo-editor></div>
 
+      <div class="tp-top">
       <article class="tp-hero">
         <div class="tp-hero-pills">
           <span class="tp-pill tp-pill-strong">${tipsL("គន្លឹះថ្ងៃនេះ", "Today's tip")}</span>
@@ -413,7 +409,7 @@ function renderTips() {
         <ol class="tp-steps">${todayText.steps.map((step, index) => `<li><span>${index + 1}</span>${escapeHtml(step)}</li>`).join("")}</ol>
         <div class="tp-hero-actions">
           <button class="button tp-btn-done ${todayDone ? "is-done" : ""}" type="button" data-tip-done="${escapeAttr(today.id)}">${todayDone ? tipsL("✓ បានធ្វើ (មិនធ្វើវិញ)", "✓ Done (undo)") : tipsL("✓ ខ្ញុំបានធ្វើ", "✓ I did it")}</button>
-          <button class="button ghost-button tp-btn-ghost" type="button" data-tip-remind="${escapeAttr(today.id)}">${tipsL("🔔 រំលឹក 7 PM", "🔔 Remind me 7 PM")}</button>
+          <button class="button ghost-button tp-btn-ghost" type="button" data-tip-remind="${escapeAttr(today.id)}">${tipsL("🔔 រំលឹក 7 PM", "🔔 Remind 7 PM")}</button>
           <button class="icon-button tp-btn-icon ${todaySaved ? "is-on" : ""}" type="button" data-tip-fav="${escapeAttr(today.id)}" aria-label="${tipsL("រក្សាទុក", "Save")}" title="${tipsL("រក្សាទុក", "Save")}">${todaySaved ? "⭐" : "☆"}</button>
           <button class="icon-button tp-btn-icon" type="button" data-tip-next aria-label="${tipsL("គន្លឹះផ្សេង", "Another tip")}" title="${tipsL("គន្លឹះផ្សេង", "Another tip")}">↻</button>
         </div>
@@ -433,6 +429,7 @@ function renderTips() {
           </div>
         </div>
       </article>
+      </div>
 
       <div class="tp-section">
         <h2 class="tp-section-title">${tipsL("សម្រាប់អ្នកសប្តាហ៍នេះ", "For you this week")}</h2>
@@ -693,6 +690,19 @@ function bindTips() {
   page.querySelectorAll("[data-tip-add-date]").forEach(button => button.addEventListener("click", () => tipsAddFamilyDate(button.dataset.tipAddDate)));
   page.querySelector("[data-tip-checkin]")?.addEventListener("click", tipsOpenCheckin);
   page.querySelectorAll("[data-tip-weekend]").forEach(button => button.addEventListener("click", () => tipsAddWeekend(button.dataset.tipWeekend)));
+  page.querySelectorAll("[data-tip-budget]").forEach(chip => chip.addEventListener("click", () => {
+    tipsWeekendBudget = Number(chip.dataset.tipBudget) || 0;
+    page.querySelectorAll("[data-tip-budget]").forEach(item => {
+      const on = item === chip;
+      item.classList.toggle("active", on);
+      item.setAttribute("aria-pressed", String(on));
+    });
+    const idea = tipsWeekendIdea(tipsWeekendBudget);
+    const text = page.querySelector("[data-tip-weekend-text]");
+    if (text) text.textContent = languageCode() === "km" ? idea.km : idea.en;
+    const add = page.querySelector("[data-tip-weekend]");
+    if (add) add.dataset.tipWeekend = String(tipsWeekendBudget);
+  }));
 
   page.querySelector("[data-couple-photo]")?.addEventListener("change", async event => {
     const file = event.target.files?.[0];

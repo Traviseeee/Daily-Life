@@ -98,6 +98,17 @@
 .tp-couple:focus-within { outline: 2px solid var(--accent); outline-offset: 3px; }
 .tp-photo-editor:empty { display: none; }
 
+/* ---------- top: hero + this week ---------- */
+.tp-top { display: grid; gap: 14px; min-width: 0; }
+
+@media (min-width: 1000px) {
+  .tp-top { grid-template-columns: minmax(0, 1fr) 260px; align-items: stretch; }
+  .tp-top .tp-week { flex-direction: column; justify-content: center; text-align: center; padding: 20px; }
+  .tp-top .tp-week-ring, .tp-top .tp-ring { width: 120px; height: 120px; }
+  .tp-top .tp-week-count strong { font-size: 1.8rem; }
+  .tp-top .tp-week-stats { justify-content: center; flex-direction: column; gap: 4px; }
+}
+
 /* ---------- hero ---------- */
 .tp-hero {
   position: relative;
@@ -228,7 +239,7 @@
 
 .tp-for-row {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 12px;
 }
 
@@ -268,28 +279,21 @@
 .tp-small-btn { margin-top: auto; align-self: flex-start; min-height: 38px; padding: 8px 14px; font-size: 0.9rem; }
 .tp-small-btn[disabled] { opacity: 0.7; cursor: default; }
 
-.tp-budget-list { display: grid; gap: 6px; }
+.tp-budget-chips { display: flex; gap: 6px; }
 
-.tp-budget {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  padding: 8px 10px;
-  border-radius: var(--radius-sm);
+.tp-budget-chip {
+  padding: 5px 12px;
+  border-radius: 999px;
   border: 1px solid var(--tp-card-border);
   background: transparent;
-  color: var(--text-primary);
+  color: var(--text-secondary);
   font: inherit;
-  text-align: left;
+  font-size: 0.85rem;
+  font-weight: 700;
   cursor: pointer;
-  transition: background var(--ease), border-color var(--ease);
 }
 
-.tp-budget:hover { background: var(--accent-soft); border-color: var(--accent); }
-.tp-budget-tag { flex: 0 0 auto; min-width: 38px; font-weight: 800; color: var(--accent); }
-.tp-budget-text { flex: 1 1 auto; font-size: 0.88rem; line-height: 1.45; min-width: 0; }
-.tp-budget-add { flex: 0 0 auto; opacity: 0.7; }
+.tp-budget-chip.active { background: var(--accent-soft); border-color: var(--accent); color: var(--text-primary); }
 
 /* ---------- filters ---------- */
 .tp-filters {
@@ -535,25 +539,70 @@ body.tp-sheet-open { overflow: hidden; }
 
 /* phone */
 @media (max-width: 760px) {
-  .tp-page { gap: 16px; }
-  .tp-couple { width: 64px; height: 64px; }
-  .tp-hero { padding: 18px; }
-  .tp-hero-actions .button { flex: 1 1 auto; }
+  .tp-page { gap: 16px; padding-bottom: 96px; }
+  .tp-couple { width: 60px; height: 60px; }
+  .tp-hero { padding: 18px 16px; gap: 10px; border-radius: 22px; }
+  .tp-hero-actions {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) 44px 44px;
+    gap: 8px;
+  }
+  .tp-hero-actions .button { min-width: 0; padding-inline: 10px; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tp-btn-icon { width: 44px; height: 44px; }
 
+  /* swipe row: bleeds to the screen edge, cards keep a natural height */
   .tp-for-row {
     display: flex;
+    align-items: stretch;
     overflow-x: auto;
     scroll-snap-type: x mandatory;
+    scroll-padding-inline: 10px;
     gap: 10px;
-    margin: 0 -16px;
-    padding: 2px 16px 8px;
+    margin: 0 -10px;
+    padding: 2px 10px 10px;
     scrollbar-width: none;
   }
-
   .tp-for-row::-webkit-scrollbar { display: none; }
-  .tp-for-card { flex: 0 0 82%; scroll-snap-align: start; }
-  .tp-grid { grid-template-columns: 1fr; gap: 10px; }
+  .tp-for-card { flex: 0 0 min(78%, 300px); scroll-snap-align: start; padding: 14px; gap: 6px; }
+  .tp-for-card h3 { font-size: 0.98rem; padding-right: 64px; }
+  .tp-for-text { font-size: 0.88rem; }
+  .tp-small-btn { margin-top: auto; }
+  .tp-for-text { flex: 0 0 auto; }
+
+  /* compact tip rows */
+  .tp-grid { grid-template-columns: 1fr; gap: 8px; }
+  .tp-card {
+    display: grid;
+    grid-template-columns: 38px minmax(0, 1fr) auto;
+    grid-template-areas: "icon cat star" "icon title title" "icon short short" "icon done done";
+    column-gap: 12px;
+    row-gap: 2px;
+    align-items: start;
+    padding: 12px 12px 12px 14px;
+    border-radius: 16px;
+  }
+  .tp-card-head { display: contents; }
+  .tp-card-icon { grid-area: icon; width: 38px; height: 38px; border-radius: 12px; align-self: center; }
+  .tp-card-cat { grid-area: cat; font-size: 0.68rem; }
+  .tp-card-star { grid-area: star; margin: 0; font-size: 0.85rem; }
+  .tp-card-title { grid-area: title; font-size: 0.97rem; }
+  .tp-card-short { grid-area: short; font-size: 0.84rem; -webkit-line-clamp: 1; }
+  .tp-card-done { grid-area: done; margin-top: 4px; }
+  .tp-card::before { top: 10px; bottom: 10px; }
+  .tp-card:hover { transform: none; }
+
   .tp-week { gap: 14px; padding: 14px; }
+  .tp-principles { padding: 16px; }
+}
+
+@media (max-width: 380px) {
+  .tp-hero-actions { grid-template-columns: 1fr 44px 44px; }
+  .tp-hero-actions .tp-btn-done { grid-column: 1 / -1; }
+}
+
+/* tablet: two columns of tip rows */
+@media (min-width: 560px) and (max-width: 760px) {
+  .tp-grid { grid-template-columns: 1fr 1fr; }
 }
 
 @media (prefers-reduced-motion: reduce) {
