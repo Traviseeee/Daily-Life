@@ -8719,3 +8719,38 @@ body.money-hidden .money-value {
 :root[data-theme="dark"] .family-profile-card .family-profile-about .fpa-text { color: #dcefe3; }
 :root[data-theme="dark"] .family-profile-card .family-profile-about .fpa-note .fpa-text { color: #b5cdbf; }
 :root[data-theme="dark"] .family-profile-card .family-profile-about .fpa-notes { border-top-color: rgba(201,255,179,0.1); }
+
+
+/* Family page: tidy details, add-missing chips, tap-to-call, coming up, compact empty events */
+.family-profile-stats.family-stats-1 { grid-template-columns: minmax(0, 1fr); }
+.family-profile-stats.family-stats-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.family-profile-stats > a.family-stat-call { position: relative; display: grid; gap: 5px; min-width: 0; padding: 9px 8px; border: 1px solid rgba(31,55,39,0.08); border-radius: 12px; background: rgba(246,249,246,0.84); text-decoration: none; color: inherit; }
+.family-profile-stats > a.family-stat-call > span { display: flex; align-items: center; gap: 4px; overflow: hidden; color: #68746b; font-size: 0.64rem; line-height: 1.2; white-space: nowrap; }
+.family-profile-stats > a.family-stat-call:hover { border-color: #54835f; }
+.family-call-badge { position: absolute; top: 6px; right: 7px; font-style: normal; font-size: 0.72rem; }
+.family-missing { display: flex; flex-wrap: wrap; gap: 6px; }
+.family-missing-chip { padding: 5px 11px; border-radius: 999px; border: 1px dashed rgba(84,131,95,0.45); background: transparent; color: #4d7a59; font: inherit; font-size: 0.74rem; font-weight: 700; cursor: pointer; }
+.family-missing-chip:hover { background: rgba(84,131,95,0.08); }
+:root[data-theme="light"] .family-detail-tags .family-zodiac-tag { color: #5b3fc4; border-color: rgba(120, 90, 220, 0.3); background: rgba(120, 90, 220, 0.1); }
+:root[data-theme="light"] .family-detail-tags .family-mood-tag { color: #0f7f68; border-color: rgba(20, 150, 120, 0.3); background: rgba(20, 150, 120, 0.1); }
+:root[data-theme="light"] .family-detail-tags .family-favorite-tag { color: #946200; border-color: rgba(200, 140, 0, 0.32); background: rgba(240, 180, 40, 0.14); }
+.family-coming-up { padding: 14px 16px; display: grid; gap: 10px; }
+.family-coming-title { margin: 0; font-size: 0.98rem; }
+.family-coming-up ul { list-style: none; margin: 0; padding: 0 0 2px; display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; }
+.family-coming-up ul::-webkit-scrollbar { display: none; }
+.family-coming-up li { flex: 0 0 auto; display: flex; align-items: center; gap: 10px; padding: 8px 14px 8px 10px; border-radius: 14px; border: 1px solid rgba(31,55,39,0.08); background: rgba(246,249,246,0.84); }
+.family-coming-up li.is-soon { border-color: rgba(240,100,138,0.45); background: rgba(240,100,138,0.08); }
+.family-coming-icon { font-size: 1.3rem; line-height: 1; }
+.family-coming-copy { display: grid; gap: 1px; }
+.family-coming-copy strong { font-size: 0.86rem; }
+.family-coming-copy small { font-size: 0.72rem; color: #68746b; white-space: nowrap; }
+.family-events-empty { display: flex; align-items: center; gap: 8px; margin: 0; padding: 12px 14px; border: 1px dashed rgba(31,55,39,0.14); border-radius: 12px; color: #68746b; font-size: 0.86rem; }
+.family-events-empty svg { width: 16px; height: 16px; flex: 0 0 16px; }
+:root[data-theme="dark"] .family-profile-card .family-profile-stats > a.family-stat-call { border-color: rgba(201,255,179,0.12); background: rgba(255,255,255,0.05); }
+:root[data-theme="dark"] .family-profile-card .family-profile-stats > a.family-stat-call > span { color: #c2dccd; }
+:root[data-theme="dark"] .family-profile-card .family-profile-stats > a.family-stat-call strong { color: #f4fff6; }
+:root[data-theme="dark"] .family-missing-chip { border-color: rgba(207,255,155,0.35); color: #cfff9b; }
+:root[data-theme="dark"] .family-coming-up li { border-color: rgba(201,255,179,0.12); background: rgba(255,255,255,0.05); }
+:root[data-theme="dark"] .family-coming-up li.is-soon { border-color: rgba(255,159,178,0.5); background: rgba(255,159,178,0.08); }
+:root[data-theme="dark"] .family-coming-copy small,
+:root[data-theme="dark"] .family-events-empty { color: #c2dccd; border-color: rgba(201,255,179,0.14); }
