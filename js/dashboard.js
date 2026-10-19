@@ -736,6 +736,8 @@ function getTipsData() {
   ];
 }
 
+// renderTips / bindTips / getFamilyPrinciples live in js/tips.js
+
 function getTipsCoupleImage() {
   return appData.profile.tipsCoupleImage || "";
 }
