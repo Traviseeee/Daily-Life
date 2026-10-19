@@ -83,12 +83,12 @@ function renderHome() {
       '<label class="home-challenge-image-edit" title="' + escapeAttr(t(challengeImage ? "changeFocusImage" : "addFocusImage")) + '"><span aria-hidden="true">' + Icons.edit() + '</span><input type="file" accept="image/*" data-home-challenge-image aria-label="' + escapeAttr(t(challengeImage ? "changeFocusImage" : "addFocusImage")) + '"></label>' +
       '<div class="home-challenge-copy">' +
         '<span class="home-challenge-label">' + t("dailyFocus") + '</span>' +
-        '<h2>' + (languageCode() === "km" ? "ត្រូវការជំនួយបន្តិច?" : "Need a nudge?") + '</h2>' +
-        '<p>' + (languageCode() === "km" ? "កត់សម្គាល់អារម្មណ៍ ឬសរសេររឿងល្អមួយយ៉ាង" : "Check in, reflect, and finish a tiny win.") + '</p>' +
+        '<h2 data-home-nudge-title>' + escapeHtml(homeNudge(firstName).title) + '</h2>' +
+        '<p data-home-nudge-body>' + escapeHtml(homeNudge(firstName).body) + '</p>' +
         '<button class="suggestion-button" type="button" data-action="smart-assistant">' + (languageCode() === "km" ? "ជំនួយ" : "Help") + '</button>' +
       '</div>' +
       (challengeImage ? '<img class="home-challenge-image" src="' + escapeAttr(challengeImage) + '" style="--challenge-image-x: ' + challengeImagePosition.x + '%; --challenge-image-y: ' + challengeImagePosition.y + '%;" alt="">' : '') +
-      '<div class="home-challenge-art" aria-hidden="true"><span class="shape orange"></span><span class="shape grey"></span><span class="shape dark"></span></div>' +
+      '<div class="home-challenge-art"><button class="home-nudge-logo" type="button" data-home-nudge-next aria-label="' + (languageCode() === "km" ? "សារថ្មី" : "Another nudge") + '" title="' + (languageCode() === "km" ? "ចុចសម្រាប់សារថ្មី" : "Tap for another nudge") + '">' + homeNudgeLogo() + '</button></div>' +
     '</div>' +
     '<div class="home-week-row" aria-label="' + (languageCode() === "km" ? "អារម្មណ៍ប្រចាំសប្តាហ៍" : "Mood this week") + '">' +
       moodHistoryChart.map(day => '<div class="home-week-day ' + (day.isToday ? "active" : "") + '"' + (day.isToday ? ' aria-current="date"' : '') + '><span class="week-label">' + day.day + '</span><strong>' + day.date + '</strong><span class="week-mood ' + (day.value ? "has-mood" : "no-mood") + '" aria-label="' + escapeHtml(day.label) + '">' + day.emoji + '</span></div>').join("") +
@@ -975,8 +975,74 @@ function openTipsModal() {
   });
 }
 
+// Daily focus card: friendly rotating messages + the animated MYLIFE logo.
+const HOME_NUDGES = [
+  { km: ["ជំហានតូច ជ័យជម្នះធំ 🌱", "ជ្រើសការងារតូចមួយ ហើយធ្វើវាឱ្យរួចក្នុង 5 នាទី។"], en: ["Small step, big win 🌱", "Pick one tiny task and finish it in 5 minutes."] },
+  { km: ["សុខសប្បាយទេថ្ងៃនេះ? 😊", "ចុចជ្រើសអារម្មណ៍ខាងក្រោម — ត្រឹមតែមួយវិនាទី។"], en: ["How are you, really? 😊", "Tap a mood below — it only takes a second."] },
+  { km: ["ផឹកទឹកមួយកែវ 💧", "ផឹកទឹកមួយកែវ ក៏ជាជ័យជម្នះតូចមួយដែរ។"], en: ["Water break 💧", "A glass of water is a tiny win too."] },
+  { km: ["និយាយអរគុណថ្ងៃនេះ 💛", "ផ្ញើសារល្អៗមួយទៅកាន់សមាជិកគ្រួសារ។"], en: ["Say thank you today 💛", "Send a kind message to someone in your family."] },
+  { km: ["ដកដង្ហើមវែងៗ 🍃", "ដកដង្ហើមយឺតៗ 3 ដង មុនការងារបន្ទាប់។"], en: ["Breathe in, breathe out 🍃", "Take 3 slow breaths before the next task."] },
+  { km: ["ពិនិត្យលុយបន្តិច 💸", "កត់ចំណាយថ្ងៃនេះ ដើម្បីឱ្យពេលយប់ស្រួល។"], en: ["Quick money check 💸", "Log today's spending so tonight is easy."] },
+  { km: ["ធ្វើរួច ល្អជាងល្អឥតខ្ចោះ ✅", "បញ្ចប់រឿងមួយ ហើយអបអរខ្លួនឯង។"], en: ["Done beats perfect ✅", "Finish one thing, then celebrate it."] },
+  { km: ["សម្រាកលាតខ្លួន 🙆", "ក្រោកឈរ ហើយលាតខ្លួន 1 នាទី។"], en: ["Stretch break 🙆", "Stand up and stretch for one minute."] },
+  { km: ["រឿងល្អមួយថ្ងៃនេះ ✨", "តើអ្វីធ្វើឱ្យអ្នកញញឹមថ្ងៃនេះ? សរសេរក្នុង Reflection។"], en: ["One good thing ✨", "What made you smile today? Add it to your reflection."] },
+  { km: ["{name} ធ្វើបានល្អណាស់ 💪", "បន្តទៅមុខ — មួយជំហានម្តងៗ។"], en: ["You're doing great, {name} 💪", "Keep going — one step at a time."] },
+  { km: ["ផ្ញើសារទៅម៉ាក់ ឬប៉ា 📱", "សួរសុខទុក្ខខ្លីៗ ធ្វើឱ្យគាត់សប្បាយចិត្តពេញមួយថ្ងៃ។"], en: ["Call Mom or Dad 📱", "A quick hello can make their whole day."] },
+  { km: ["រៀបតុបន្តិច 🧹", "រៀបចំរបស់ 5 មុខ — ចិត្តក៏ស្រឡះដែរ។"], en: ["Tidy one corner 🧹", "Put away 5 things — a clear space, a clear mind."] }
+];
+
+function homeNudgeIndex() {
+  const key = `mylife:nudge:${localDateInput()}`;
+  try {
+    const saved = sessionStorage.getItem(key);
+    if (saved !== null) return Number(saved) % HOME_NUDGES.length;
+    const pick = Math.floor(Math.random() * HOME_NUDGES.length);
+    sessionStorage.setItem(key, String(pick));
+    return pick;
+  } catch (error) {
+    return new Date().getDate() % HOME_NUDGES.length;
+  }
+}
+
+function homeNudge(firstName, index = homeNudgeIndex()) {
+  const item = HOME_NUDGES[index % HOME_NUDGES.length];
+  const [title, body] = languageCode() === "km" ? item.km : item.en;
+  const name = String(firstName || "").trim() || (languageCode() === "km" ? "អ្នក" : "friend");
+  return { title: title.replace("{name}", name), body: body.replace("{name}", name) };
+}
+
+function homeNudgeLogo() {
+  return '<svg class="home-nudge-svg" viewBox="0 0 240 240" aria-hidden="true">' +
+    '<rect width="240" height="240" rx="56" fill="#0f3326"/>' +
+    '<circle cx="120" cy="120" r="66" fill="none" stroke="#1f4a38" stroke-width="22"/>' +
+    '<circle class="hn-ring" cx="120" cy="120" r="66" fill="none" stroke="#d9ff7b" stroke-width="22" stroke-linecap="round" transform="rotate(-90 120 120)"/>' +
+    '<circle class="hn-dot" cx="120" cy="120" r="20" fill="#9ef06a"/>' +
+  '</svg>';
+}
+
 function bindHome() {
   if (typeof bindFamily === "function") bindFamily({ mediaOnly: true });
+  document.querySelector("[data-home-nudge-next]")?.addEventListener("click", event => {
+    const button = event.currentTarget;
+    const card = button.closest(".home-challenge-card");
+    const key = `mylife:nudge:${localDateInput()}`;
+    const next = (homeNudgeIndex() + 1) % HOME_NUDGES.length;
+    try { sessionStorage.setItem(key, String(next)); } catch (error) { /* rotate without memory */ }
+    const firstName = String(appData.profile?.name || "").split(" ")[0];
+    const text = homeNudge(firstName, next);
+    const title = card?.querySelector("[data-home-nudge-title]");
+    const body = card?.querySelector("[data-home-nudge-body]");
+    card?.classList.add("is-nudging");
+    window.setTimeout(() => {
+      if (title) title.textContent = text.title;
+      if (body) body.textContent = text.body;
+      card?.classList.remove("is-nudging");
+    }, 180);
+    button.classList.remove("is-replay");
+    void button.offsetWidth;
+    button.classList.add("is-replay");
+    if (typeof Sound !== "undefined") Sound.play("pop");
+  });
   document.querySelector("[data-home-challenge-image]")?.addEventListener("change", async event => {
     const file = event.target.files?.[0];
     if (!file) return;
