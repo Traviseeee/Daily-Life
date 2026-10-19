@@ -485,21 +485,45 @@ async function handleUtility(message, notice, redis) {
   const amount = notice.amount || null;
   const paidText = amount ? formatMoney(amount, notice.currency || "KHR") : "";
   let outcome = "added";
+  let corrected = null;
   let billName = "";
   let nextDue = "";
   await updatePayload(userId, data => {
     const target = findUtilityBill(data.bills, notice.provider);
     if (target) {
       billName = target.name || info.en;
-      // paid with ✅ a few days ago → that was this payment, don't count it twice
+      // the receipt is the real bill: next month's estimate follows the last real amount
+      const estimate = { amount: Number(target.amount) || 0, currency: target.currency || currency };
+      if (amount) {
+        target.amount = amount;
+        target.currency = notice.currency || target.currency;
+      }
+      // paid with ✅ a few days ago → that was this payment: don't count it twice,
+      // but put the real amount on the expense that ✅ recorded from the estimate
       if (target.lastPaidAt && daysBetween(target.lastPaidAt, today) < 20) {
         outcome = "already";
         nextDue = target.due || "";
-        return "unchanged";
-      }
-      if (!(Number(target.amount) > 0) && amount) {
-        target.amount = amount;
-        target.currency = notice.currency || target.currency;
+        if (!amount) return "unchanged";
+        data.expenses = Array.isArray(data.expenses) ? data.expenses : [];
+        const now = new Date().toISOString();
+        const expense = data.expenses.find(entry => entry.id === target.lastPaidExpenseId)
+          || data.expenses.find(entry => entry.billId === target.id && entry.date === target.lastPaidAt);
+        const realCurrency = notice.currency || currency;
+        if (expense) {
+          const changed = Number(expense.amount) !== amount || (expense.currency || currency) !== realCurrency;
+          if (changed) {
+            corrected = { from: formatMoney(expense.amount, expense.currency || currency), to: formatMoney(amount, realCurrency) };
+            outcome = "corrected";
+          }
+          Object.assign(expense, { amount, currency: realCurrency, notes: `${info.company} receipt ${notice.ref}`, updatedAt: now });
+        } else {
+          const id = recordId("expenses");
+          data.expenses.push({ id, createdAt: now, updatedAt: now, description: target.name || info.en, amount, currency: realCurrency, date: target.lastPaidAt, category: "Bills", method: info.company, notes: `${info.company} receipt ${notice.ref}`, billId: target.id, source: "telegram" });
+          target.lastPaidExpenseId = id;
+          outcome = "corrected";
+          corrected = { from: estimate.amount > 0 ? formatMoney(estimate.amount, estimate.currency) : "—", to: formatMoney(amount, realCurrency) };
+        }
+        return "updated";
       }
       const result = payBill(data, target, today, info.company, { amount, currency: notice.currency, notes: `${info.company} receipt ${notice.ref}`, force: true });
       outcome = result === "updated" ? "paid" : "already";
@@ -521,6 +545,9 @@ async function handleUtility(message, notice, redis) {
   if (outcome === "paid") {
     lines.push(`📌 បានកត់ "${escapeHtml(billName)}" ថាបានបង់ + ចំណាយ Bills · Marked paid`);
     if (nextDue) lines.push(`🔁 លើកក្រោយ ${escapeHtml(dateLabels(nextDue).km)} · <i>Next ${escapeHtml(dateLabels(nextDue).en)}</i>`);
+  } else if (outcome === "corrected") {
+    lines.push(`👌 "${escapeHtml(billName)}" បានកត់ថាបង់រួចហើយ (មិនកត់ស្ទួន)`);
+    lines.push(`📝 កែចំណាយទៅលេខពិត ${escapeHtml(corrected.from)} → <b>${escapeHtml(corrected.to)}</b> · Fixed to the real amount`);
   } else if (outcome === "already") {
     lines.push(`👌 "${escapeHtml(billName)}" បានកត់ថាបង់រួចហើយ មិនកត់ស្ទួនទេ · Already recorded`);
   } else if (outcome === "added") {
@@ -529,7 +556,7 @@ async function handleUtility(message, notice, redis) {
     lines.push("ℹ️ រកមិនឃើញចំនួនទឹកប្រាក់ មិនបានកត់ទេ · No amount found, nothing saved");
   }
   const sent = await reply(message, lines.join("\n"), linkRow ? { inline_keyboard: [linkRow] } : undefined);
-  if (outcome === "paid" || outcome === "added") {
+  if (outcome === "paid" || outcome === "added" || outcome === "corrected") {
     await pushAdded(userId, `${info.icon} បានបង់${info.km} · ${info.company}`, paidText ? `${paidText} · បានកត់ក្នុង MYLIFE` : "បានកត់ក្នុង MYLIFE", "/#money/bills");
   }
   return sent;
