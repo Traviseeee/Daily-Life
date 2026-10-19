@@ -8694,3 +8694,28 @@ body.money-hidden .money-value {
   font-size: 0.85rem;
   color: var(--text-muted);
 }
+
+
+/* Family card: care idea + notes in one compact block (tap to read all) */
+.family-profile-about { display: grid; gap: 0; width: 100%; padding: 0; border: 1px solid rgba(31,55,39,0.08); border-radius: 14px; background: #f3f7f2; color: #526358; font: inherit; text-align: left; cursor: pointer; overflow: hidden; }
+.family-profile-about .fpa-idea { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; background: rgba(84,131,95,0.08); }
+.family-profile-about .fpa-icon { flex: 0 0 26px; width: 26px; height: 26px; display: grid; place-items: center; border-radius: 9px; background: rgba(84,131,95,0.14); color: #3f7a4f; }
+.family-profile-about .fpa-icon svg { width: 15px; height: 15px; }
+.family-profile-about .fpa-copy { display: grid; gap: 2px; min-width: 0; }
+.family-profile-about small { font-size: 0.64rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: #54835f; }
+.family-profile-about .fpa-text { font-size: 0.78rem; line-height: 1.45; color: #3c4c40; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.family-profile-about .fpa-notes { display: grid; gap: 6px; padding: 9px 12px 10px; border-top: 1px solid rgba(31,55,39,0.07); }
+.family-profile-about .fpa-note { display: flex; align-items: flex-start; gap: 8px; min-width: 0; }
+.family-profile-about .fpa-note .fpa-text { -webkit-line-clamp: 1; color: #5d6b61; }
+.family-profile-about .fpa-note-icon { flex: 0 0 14px; margin-top: 2px; color: #c0607a; display: grid; }
+.family-profile-about .fpa-note-icon svg { width: 13px; height: 13px; }
+.family-profile-about .fpa-note + .fpa-note .fpa-note-icon { color: #7a8a7e; }
+.family-profile-about.is-open .fpa-text { -webkit-line-clamp: unset; display: block; }
+.family-profile-about:focus-visible { outline: 2px solid #54835f; outline-offset: 2px; }
+:root[data-theme="dark"] .family-profile-card .family-profile-about { color: #c2dccd; border-color: rgba(201,255,179,0.12); background: rgba(255,255,255,0.04); }
+:root[data-theme="dark"] .family-profile-card .family-profile-about .fpa-idea { background: rgba(207,255,155,0.07); }
+:root[data-theme="dark"] .family-profile-card .family-profile-about .fpa-icon { background: rgba(207,255,155,0.12); color: #cfff9b; }
+:root[data-theme="dark"] .family-profile-card .family-profile-about small { color: #cfff9b; }
+:root[data-theme="dark"] .family-profile-card .family-profile-about .fpa-text { color: #dcefe3; }
+:root[data-theme="dark"] .family-profile-card .family-profile-about .fpa-note .fpa-text { color: #b5cdbf; }
+:root[data-theme="dark"] .family-profile-card .family-profile-about .fpa-notes { border-top-color: rgba(201,255,179,0.1); }

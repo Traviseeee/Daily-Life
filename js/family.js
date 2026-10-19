@@ -220,11 +220,32 @@ function memberCard(member) {
           <div><span>${Icons.user()}${t("phone")}</span><strong>${escapeHtml(member.phone || t("notSet"))}</strong></div>
         </div>
         ${relationshipDays ? `<div class="family-profile-duration">${Icons.heart()}<span>${escapeHtml(t("togetherFor").replace("{days}", relationshipDays))}</span></div>` : ""}
-        <div class="family-profile-insight"><span>${Icons.spark()}</span><span>${escapeHtml(familyCareIdea(member))}</span></div>
-        ${member.relationshipNote ? `<p class="family-profile-note">${escapeHtml(member.relationshipNote)}</p>` : ""}
-        ${member.notes ? `<p class="family-profile-notes">${escapeHtml(member.notes)}</p>` : ""}
+        ${familyAboutBlock(member)}
       </div>
     </article>
+  `;
+}
+
+// One tidy block: the care idea on top, the person's notes below as short lines.
+// Long text is clamped; tapping the block shows everything.
+function familyAboutBlock(member) {
+  const km = languageCode() === "km";
+  const idea = familyCareIdea({ ...member, favorite: "" }).replace(/^[^:]*:\s*/, "");
+  const notes = [
+    member.relationshipNote ? { icon: Icons.heart(), text: member.relationshipNote } : null,
+    member.notes ? { icon: Icons.edit(), text: member.notes } : null
+  ].filter(Boolean);
+  return `
+    <button class="family-profile-about" type="button" data-family-about aria-expanded="false">
+      <span class="fpa-idea">
+        <span class="fpa-icon">${Icons.spark()}</span>
+        <span class="fpa-copy">
+          <small>${km ? "គំនិតថ្ងៃនេះ" : "Care idea"}</small>
+          <span class="fpa-text">${escapeHtml(idea)}</span>
+        </span>
+      </span>
+      ${notes.length ? `<span class="fpa-notes">${notes.map(note => `<span class="fpa-note"><span class="fpa-note-icon">${note.icon}</span><span class="fpa-text">${escapeHtml(note.text)}</span></span>`).join("")}</span>` : ""}
+    </button>
   `;
 }
 
@@ -452,6 +473,11 @@ function bindFamily(options = {}) {
   });
   document.querySelectorAll('[data-action="add-family"]').forEach(button => button.addEventListener("click", () => openFamilyModal()));
   document.querySelectorAll('[data-action="add-self"]').forEach(button => button.addEventListener("click", openSelfFamilyModal));
+  document.querySelectorAll("[data-family-about]").forEach(block => block.addEventListener("click", () => {
+    const open = !block.classList.contains("is-open");
+    block.classList.toggle("is-open", open);
+    block.setAttribute("aria-expanded", String(open));
+  }));
   document.querySelectorAll("[data-edit-family]").forEach(button => button.addEventListener("click", () => openFamilyModal(appData.family.find(item => item.id === button.dataset.editFamily))));
   document.querySelectorAll("[data-delete-family]").forEach(button => button.addEventListener("click", () => {
     Modal.confirm({ title: t("deleteFamilyMember"), message: t("deleteFamilyMessage"), confirmText: t("delete"), onConfirm: () => {
