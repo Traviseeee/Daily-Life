@@ -291,7 +291,7 @@ const App = {
       .catch(error => console.warn("MYLIFE could not reconcile with the cloud at startup.", error));
   },
   parseRoute() {
-    const [route = "home", param = ""] = location.hash.replace("#", "").split("/");
+    const [route = "home", param = ""] = location.hash.replace("#", "").split("?")[0].split("/");
     this.route = route || "home";
     this.param = param;
   },
@@ -328,6 +328,7 @@ const App = {
     }
     else if (route === "settings") app.innerHTML = renderSettings();
     else if (route === "notifications" && typeof NotifyCenter !== "undefined") app.innerHTML = NotifyCenter.renderPage();
+    else if (route === "scan" && typeof SmartScanPage !== "undefined") app.innerHTML = SmartScanPage.render();
     else if (route === "help") app.innerHTML = renderHelp();
     else app.innerHTML = renderHome();
 
@@ -738,6 +739,7 @@ const App = {
     }
     if (route === "settings" && typeof bindSettings === "function") bindSettings();
     if (route === "notifications" && typeof NotifyCenter !== "undefined") NotifyCenter.bindPage();
+    if (route === "scan" && typeof SmartScanPage !== "undefined") SmartScanPage.bind();
   },
   bindInteractionSounds() {
     if (this.interactionSoundBound) return;

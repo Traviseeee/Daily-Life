@@ -3,15 +3,15 @@
 const LAUNCHER_GROUPS = [
   { id: "daily", km: "ប្រចាំថ្ងៃ", en: "Every day", routes: ["today", "calendar", "daily"] },
   { id: "life", km: "ជីវិត", en: "Life", routes: ["family", "goals", "memories"] },
-  { id: "money", km: "លុយ", en: "Money", routes: ["money", "summary"] },
+  { id: "money", km: "លុយ", en: "Money", routes: ["money", "scan", "summary"] },
   { id: "more", km: "ផ្សេងៗ", en: "More", routes: ["notifications", "settings", "tips", "help"] }
 ];
 const LAUNCHER_ICON = { tips: "heart", help: "help" };
-const LAUNCHER_ORDER = ["today", "calendar", "money", "family", "goals", "memories", "daily", "summary", "notifications", "settings", "tips", "help"];
+const LAUNCHER_ORDER = ["today", "calendar", "money", "family", "goals", "memories", "daily", "summary", "scan", "notifications", "settings", "tips", "help"];
 const LAUNCHER_COLORS = {
   today: ["#ffd25e", "#ff9f2e"], calendar: ["#ff7a9c", "#e8436b"], money: ["#ffb35c", "#f07a1a"], family: ["#b28cff", "#7c4dff"],
   goals: ["#62c3ff", "#2f7ff0"], memories: ["#4fe0c8", "#13a89e"], daily: ["#9ef06a", "#3fb84a"], summary: ["#7ee6a8", "#1fa767"],
-  notifications: ["#ff7a6b", "#e8433a"], settings: ["#a5b1c2", "#5f6b7d"], tips: ["#ff9ad1", "#e0559e"], help: ["#8fb6ff", "#4f6fe0"]
+  scan: ["#5fd3f3", "#1f8fd6"], notifications: ["#ff7a6b", "#e8433a"], settings: ["#a5b1c2", "#5f6b7d"], tips: ["#ff9ad1", "#e0559e"], help: ["#8fb6ff", "#4f6fe0"]
 };
 const FOOTER_MAX = 5;
 
@@ -426,6 +426,7 @@ function launcherDescription(routeId) {
     memories: "រក្សាទុករូបថត និងការចងចាំ",
     tips: "គន្លឹះជីវិត គ្រួសារ និងស្នេហា",
     notifications: "Telegram, App និងការរំលឹករបស់ Tool នីមួយៗ",
+    scan: "ស្កេនបង្កាន់ដៃ វិក្កយបត្រ និង slip",
     settings: "កំណត់តាមចំណូលចិត្តរបស់អ្នក",
     help: "របៀបប្រើ MYLIFE"
   } : {
@@ -440,6 +441,7 @@ function launcherDescription(routeId) {
     memories: "Keep photos and memories",
     tips: "Life, family and love tips",
     notifications: "Telegram, app and each tool's alerts",
+    scan: "Scan receipts, bills and slips",
     settings: "Make MYLIFE yours",
     help: "How to use MYLIFE"
   };

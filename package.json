@@ -21,8 +21,11 @@
     "@capacitor/local-notifications": "^7.0.7",
     "@resvg/resvg-js": "^2.6.2",
     "@supabase/supabase-js": "^2.55.0",
+    "@tesseract.js-data/eng": "^1.0.0",
     "@upstash/redis": "^1.39.0",
     "harfbuzzjs": "^0.4.7",
+    "pdfjs-dist": "^4.10.38",
+    "tesseract.js": "^6.0.1",
     "web-push": "^3.6.7"
   },
   "devDependencies": {

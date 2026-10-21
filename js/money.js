@@ -138,6 +138,7 @@ function renderMoney(tab = "overview") {
           <div class="financial-header-copy">
             <h1 class="page-title page-title-with-icon"><span class="page-title-icon">${Icons.money()}</span>${t("money")}</h1>
             <p class="page-subtitle">${t("moneySubtitle")}</p>
+            <a class="ms-scan-link" href="#scan">${Icons.scan()}<span>${t("smartScan")}</span></a>
           </div>
           <div class="financial-nav-dock">
             <button class="financial-nav-toggle" type="button" data-open-financial-nav aria-label="${t("money")} sections" title="${t("money")} sections"><span class="financial-nav-toggle-lines" aria-hidden="true"><i></i><i></i><i></i></span></button>

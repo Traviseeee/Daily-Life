@@ -14,6 +14,7 @@ const { payBill } = require("../lib/bill-pay");
 const { updatePayloadSafe } = require("../lib/payload-store");
 const { detectUtility, findUtilityBill, PROVIDERS } = require("../lib/utility-bills");
 const NotifyPrefs = require("../lib/notify-prefs");
+const SmartScan = require("../lib/scan-telegram");
 
 const APP_TIME_ZONE = "Asia/Phnom_Penh";
 
@@ -566,12 +567,22 @@ async function handleUtility(message, notice, redis) {
   return sent;
 }
 
+// what lib/scan-telegram.js needs from this file
+function scanContext(redis = getRedis()) {
+  return { redis, tgCall, reply, ownerUserId, readPayload, updatePayload, saveAction, pushAdded, appLink, makeId: recordId };
+}
+
 async function handleMessage(message, redis) {
   // water / electricity bots, or their message forwarded or pasted here
   const notice = detectUtility(message);
   if (notice) return handleUtility(message, notice, redis);
   // any other bot: never read as an expense, an event or a command
   if (message.from?.is_bot || message.via_bot) return null;
+
+  // Smart Scan: a receipt / bill / payment slip photo, screenshot or PDF
+  if ((Array.isArray(message.photo) && message.photo.length) || SmartScan.isScanDocument(message.document)) {
+    return SmartScan.handleScan(message, scanContext(redis));
+  }
 
   // "/week@MyBot" in groups → "/week"
   const text = String(message.text || "").trim().replace(/^(\/[a-z]+)@\w+/i, "$1");
@@ -723,6 +734,10 @@ module.exports = async (req, res) => {
 
     const item = action.item;
     if (action.userId) await redis.set("mylife:tg:owner", action.userId);
+    if (item.kind === "scan" && /^scan(save|force|link|kind|cancel)$/.test(verb)) {
+      await SmartScan.handleScanAction(verb, token, action, query, { ...scanContext(redis), answer });
+      return res.status(200).json({ ok: true });
+    }
     let status;
     let toast;
 
