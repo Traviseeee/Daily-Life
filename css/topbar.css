@@ -189,3 +189,9 @@
 @media (max-width: 900px) {
   .topbar-wx-card.is-open .tw-card-tip { white-space: normal; }
 }
+
+/* Home: on phones the header already greets, so the greeting/profile card sits at the
+   bottom (js/dashboard.js order); desktop has no greeting in its header → keep it on top */
+@media (min-width: 901px) {
+  .home-featured-page > .home-hero-panel { order: -1; }
+}

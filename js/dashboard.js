@@ -55,7 +55,54 @@ function renderHome() {
     };
   });
 
+  // order: friendly visual first (daily focus, week), then what's coming, then the
+  // check-in cards; the profile / greeting card last (the phone header already greets)
   return '<section class="page home-featured-page">' +
+    '<div class="home-challenge-card' + (challengeImage ? " has-cover-image" : "") + '">' +
+      '<label class="home-challenge-image-edit" title="' + escapeAttr(t(challengeImage ? "changeFocusImage" : "addFocusImage")) + '"><span aria-hidden="true">' + Icons.edit() + '</span><input type="file" accept="image/*" data-home-challenge-image aria-label="' + escapeAttr(t(challengeImage ? "changeFocusImage" : "addFocusImage")) + '"></label>' +
+      '<div class="home-challenge-copy">' +
+        '<span class="home-challenge-label">' + t("dailyFocus") + '</span>' +
+        '<h2 data-home-nudge-title>' + escapeHtml(homeNudge(firstName).title) + '</h2>' +
+        '<p data-home-nudge-body>' + escapeHtml(homeNudge(firstName).body) + '</p>' +
+        '<button class="suggestion-button" type="button" data-action="smart-assistant">' + (languageCode() === "km" ? "ជំនួយ" : "Help") + '</button>' +
+      '</div>' +
+      (challengeImage ? '<img class="home-challenge-image" src="' + escapeAttr(challengeImage) + '" style="--challenge-image-x: ' + challengeImagePosition.x + '%; --challenge-image-y: ' + challengeImagePosition.y + '%;" alt="">' : '') +
+      '<div class="home-challenge-art"><button class="home-nudge-logo" type="button" data-home-nudge-next aria-label="' + (languageCode() === "km" ? "សារថ្មី" : "Another nudge") + '" title="' + (languageCode() === "km" ? "ចុចសម្រាប់សារថ្មី" : "Tap for another nudge") + '">' + homeNudgeLogo() + '</button></div>' +
+    '</div>' +
+    '<div class="home-week-row" aria-label="' + (languageCode() === "km" ? "អារម្មណ៍ប្រចាំសប្តាហ៍" : "Mood this week") + '">' +
+      moodHistoryChart.map(day => '<div class="home-week-day ' + (day.isToday ? "active" : "") + '"' + (day.isToday ? ' aria-current="date"' : '') + '><span class="week-label">' + day.day + '</span><strong>' + day.date + '</strong><span class="week-mood ' + (day.value ? "has-mood" : "no-mood") + '" aria-label="' + escapeHtml(day.label) + '">' + day.emoji + '</span></div>').join("") +
+    '</div>' +
+    renderHomeAgenda(agenda) +
+    '<a class="home-smart-summary-link" href="#summary"><span>' + Icons.chart() + '</span><span><strong>' + escapeHtml(t("smartSummary")) + '</strong><small>' + escapeHtml(t("smartSummarySubtitle")) + '</small></span>' + Icons.chevron() + '</a>' +
+    '<div class="home-overview">' +
+      '<article class="glass-card mood-card">' +
+        '<span class="eyebrow">' + t("mood") + '</span>' +
+        '<h2 class="section-title section-title-with-icon"><span class="section-title-icon">' + Icons.mood() + '</span>' + t("mood") + '</h2>' +
+        '<div class="mood-selector">' +
+          moodOptions.map(option => '<button class="mood-button ' + (selectedMood && selectedMood.value === option.value ? "active" : "") + '" type="button" data-mood="' + option.value + '" aria-label="' + escapeHtml(option.label) + '"><span class="mood-emoji">' + option.emoji + '</span><span class="mood-label">' + escapeHtml(option.label) + '</span></button>').join("") +
+        '</div>' +
+        (todayMood ? '<div class="mood-selected"><span class="eyebrow">' + t("todayMood") + '</span><span class="mood-emoji-large">' + selectedMood.emoji + '</span><strong>' + escapeHtml(selectedMood.label) + '</strong></div>' : '<p class="secondary" style="margin-top:12px;text-align:center">' + t("tapToLogMood") + '</p>') +
+      '</article>' +
+      '<article class="glass-card focus-card">' +
+        '<span class="eyebrow">' + t("dailyFocus") + '</span>' +
+        '<h2 class="section-title section-title-with-icon"><span class="section-title-icon">' + Icons.target() + '</span>' + t("dailyFocus") + '</h2>' +
+        '<div class="focus-progress"><div class="progress-track"><div class="progress-fill" style="--progress:' + focusProgress + '%"></div></div><span class="focus-progress-text">' + focusProgress + '%</span></div>' +
+        '<ul class="focus-list">' +
+          focusItems.map(item => '<li class="focus-item ' + (item.done ? "done" : "") + '"><label><input type="checkbox" ' + (item.done ? "checked" : "") + ' data-focus-id="' + item.id + '"><span class="focus-text">' + escapeHtml(item.text) + '</span></label></li>').join("") +
+        '</ul>' +
+        '<button class="button ghost-button" type="button" data-action="edit-focus">' + Icons.edit() + ' ' + t("editFocus") + '</button>' +
+      '</article>' +
+      '<article class="glass-card reflection-card">' +
+        '<span class="eyebrow">' + t("dailyReflection") + '</span>' +
+        '<h2 class="section-title section-title-with-icon"><span class="section-title-icon">' + Icons.quote() + '</span>' + t("dailyReflection") + '</h2>' +
+        '<textarea class="reflection-textarea" placeholder="' + t("reflectionPlaceholder") + '" data-reflection-textarea>' + escapeHtml(reflectionText) + '</textarea>' +
+        '<div class="reflection-stats">' +
+          '<span class="stat"><strong>' + reflectionText.trim().length + '</strong> ' + t("characters") + '</span>' +
+          '<span class="stat"><strong>' + reflectionText.trim().split(/\s+/).filter(Boolean).length + '</strong> ' + t("words") + '</span>' +
+        '</div>' +
+        (reflectionReady ? '<button class="button" type="button" data-action="save-reflection">' + t("saveReflection") + '</button>' : '') +
+      '</article>' +
+    '</div>' +
     '<div class="home-hero-panel">' +
       '<div class="home-hero-copy">' +
         '<span class="eyebrow">' + t("privateDashboard") + '</span>' +
@@ -77,52 +124,6 @@ function renderHome() {
           '<button type="button" class="home-profile-menu-item" data-account-action="edit-profile">Edit profile</button>' +
         '</div>' +
       '</div>' +
-    '</div>' +
-    renderHomeAgenda(agenda) +
-    '<div class="home-challenge-card' + (challengeImage ? " has-cover-image" : "") + '">' +
-      '<label class="home-challenge-image-edit" title="' + escapeAttr(t(challengeImage ? "changeFocusImage" : "addFocusImage")) + '"><span aria-hidden="true">' + Icons.edit() + '</span><input type="file" accept="image/*" data-home-challenge-image aria-label="' + escapeAttr(t(challengeImage ? "changeFocusImage" : "addFocusImage")) + '"></label>' +
-      '<div class="home-challenge-copy">' +
-        '<span class="home-challenge-label">' + t("dailyFocus") + '</span>' +
-        '<h2 data-home-nudge-title>' + escapeHtml(homeNudge(firstName).title) + '</h2>' +
-        '<p data-home-nudge-body>' + escapeHtml(homeNudge(firstName).body) + '</p>' +
-        '<button class="suggestion-button" type="button" data-action="smart-assistant">' + (languageCode() === "km" ? "ជំនួយ" : "Help") + '</button>' +
-      '</div>' +
-      (challengeImage ? '<img class="home-challenge-image" src="' + escapeAttr(challengeImage) + '" style="--challenge-image-x: ' + challengeImagePosition.x + '%; --challenge-image-y: ' + challengeImagePosition.y + '%;" alt="">' : '') +
-      '<div class="home-challenge-art"><button class="home-nudge-logo" type="button" data-home-nudge-next aria-label="' + (languageCode() === "km" ? "សារថ្មី" : "Another nudge") + '" title="' + (languageCode() === "km" ? "ចុចសម្រាប់សារថ្មី" : "Tap for another nudge") + '">' + homeNudgeLogo() + '</button></div>' +
-    '</div>' +
-    '<div class="home-week-row" aria-label="' + (languageCode() === "km" ? "អារម្មណ៍ប្រចាំសប្តាហ៍" : "Mood this week") + '">' +
-      moodHistoryChart.map(day => '<div class="home-week-day ' + (day.isToday ? "active" : "") + '"' + (day.isToday ? ' aria-current="date"' : '') + '><span class="week-label">' + day.day + '</span><strong>' + day.date + '</strong><span class="week-mood ' + (day.value ? "has-mood" : "no-mood") + '" aria-label="' + escapeHtml(day.label) + '">' + day.emoji + '</span></div>').join("") +
-    '</div>' +
-    '' +
-    '<a class="home-smart-summary-link" href="#summary"><span>' + Icons.chart() + '</span><span><strong>' + escapeHtml(t("smartSummary")) + '</strong><small>' + escapeHtml(t("smartSummarySubtitle")) + '</small></span>' + Icons.chevron() + '</a>' +
-    '<div class="home-overview">' +
-      '<article class="glass-card mood-card">' +
-        '<span class="eyebrow">' + t("mood") + '</span>' +
-        '<h2 class="section-title section-title-with-icon"><span class="section-title-icon">' + Icons.mood() + '</span>' + t("mood") + '</h2>' +
-        '<div class="mood-selector">' +
-          moodOptions.map(option => '<button class="mood-button ' + (selectedMood && selectedMood.value === option.value ? "active" : "") + '" type="button" data-mood="' + option.value + '" aria-label="' + escapeHtml(option.label) + '"><span class="mood-emoji">' + option.emoji + '</span><span class="mood-label">' + escapeHtml(option.label) + '</span></button>').join("") +
-        '</div>' +
-        (todayMood ? '<div class="mood-selected"><span class="eyebrow">' + t("todayMood") + '</span><span class="mood-emoji-large">' + selectedMood.emoji + '</span><strong>' + escapeHtml(selectedMood.label) + '</strong></div>' : '<p class="secondary" style="margin-top:12px;text-align:center">' + t("tapToLogMood") + '</p>') +
-      '</article>' +
-      '<article class="glass-card reflection-card">' +
-        '<span class="eyebrow">' + t("dailyReflection") + '</span>' +
-        '<h2 class="section-title section-title-with-icon"><span class="section-title-icon">' + Icons.quote() + '</span>' + t("dailyReflection") + '</h2>' +
-        '<textarea class="reflection-textarea" placeholder="' + t("reflectionPlaceholder") + '" data-reflection-textarea>' + escapeHtml(reflectionText) + '</textarea>' +
-        '<div class="reflection-stats">' +
-          '<span class="stat"><strong>' + reflectionText.trim().length + '</strong> ' + t("characters") + '</span>' +
-          '<span class="stat"><strong>' + reflectionText.trim().split(/\s+/).filter(Boolean).length + '</strong> ' + t("words") + '</span>' +
-        '</div>' +
-        (reflectionReady ? '<button class="button" type="button" data-action="save-reflection">' + t("saveReflection") + '</button>' : '') +
-      '</article>' +
-      '<article class="glass-card focus-card">' +
-        '<span class="eyebrow">' + t("dailyFocus") + '</span>' +
-        '<h2 class="section-title section-title-with-icon"><span class="section-title-icon">' + Icons.target() + '</span>' + t("dailyFocus") + '</h2>' +
-        '<div class="focus-progress"><div class="progress-track"><div class="progress-fill" style="--progress:' + focusProgress + '%"></div></div><span class="focus-progress-text">' + focusProgress + '%</span></div>' +
-        '<ul class="focus-list">' +
-          focusItems.map(item => '<li class="focus-item ' + (item.done ? "done" : "") + '"><label><input type="checkbox" ' + (item.done ? "checked" : "") + ' data-focus-id="' + item.id + '"><span class="focus-text">' + escapeHtml(item.text) + '</span></label></li>').join("") +
-        '</ul>' +
-        '<button class="button ghost-button" type="button" data-action="edit-focus">' + Icons.edit() + ' ' + t("editFocus") + '</button>' +
-      '</article>' +
     '</div>' +
   '</section>';
 }
