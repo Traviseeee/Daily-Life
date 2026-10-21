@@ -121,32 +121,74 @@ const DONE_TEXT = {
 };
 
 const HELP_TEXT = [
-  "🤖 <b>MYLIFE Bot</b>",
-  "",
-  "📅 <b>បន្ថែមព្រឹត្តិការណ៍ · Add an event</b>",
-  "• <code>ស្អែក 9 ព្រឹក ជួបម៉ាក់</code>",
-  "• <code>Dentist friday 3:30pm</code>",
-  "• <code>25/10 ថ្ងៃកំណើតបង</code>",
+  "🤖 <b>MYLIFE Bot</b> — វាយសារធម្មតា ខ្ញុំកត់ឱ្យ",
   "",
   "💸 <b>កត់ចំណាយ · Log an expense</b>",
-  "• <code>-20$ cloths</code> · <code>lunch $4.5</code>",
-  "• <code>ឡាន 5000៛</code> · <code>15k សាំង</code>",
-  "• <code>-5$ coffee ម្សិលមិញ</code> — ថ្ងៃមុន · yesterday",
+  "• <code>កាហ្វេ 2.5$</code> · <code>ចាក់សាំង 20000</code> · <code>Grab 15k</code>",
+  "• <code>ខោអាវ 12$ ម្សិលមិញ</code> — ថ្ងៃមុន · yesterday",
   "• ច្រើនបន្ទាត់ = ច្រើនចំណាយ · one per line",
+  "• ប្រភេទជ្រើសដោយខ្លួនឯង — មើល /words",
   "",
   "💰 <b>កត់ចំណូល · Log income</b>",
   "• <code>+100$ salary</code> · <code>+50$ client logo</code>",
   "",
-  "☀️ <code>/today</code> — សង្ខេបថ្ងៃនេះ · Today's summary",
-  "🌙 <code>/evening</code> — សួរពេលយប់ (ប៊ូតុងចំណាយញឹកញាប់)",
-  "📈 <code>/week</code> — របាយការណ៍ 7 ថ្ងៃ + រូប",
-  "🗓️ <code>/month</code> — រូបរបាយការណ៍ខែនេះ",
-  "💾 <code>/backup</code> — ឯកសារ backup JSON",
+  "📅 <b>បន្ថែមព្រឹត្តិការណ៍ · Add an event</b>",
+  "• <code>ស្អែក 9 ព្រឹក ជួបម៉ាក់</code> · <code>Dentist friday 3:30pm</code>",
   "",
-  "💧⚡ <b>វិក្កយបត្រទឹក/ភ្លើង · Water & power bills</b>",
-  "• សារពី PPWSA / EDC ក្នុងក្រុមនេះ (ឬ forward មក) → វិក្កយបត្រថ្មី = រំលឹក, បង្កាន់ដៃ = កត់ថាបានបង់",
-  "☰ <code>/menu</code> — ម៉ឺនុយប៊ូតុង"
+  "📷 <b>ថតបង្កាន់ដៃ · Scan</b> — ផ្ញើរូប ឬ PDF មក",
+  "💧⚡ សារ PPWSA / EDC ក្នុងក្រុមនេះ → វិក្កយបត្រ = រំលឹក, បង្កាន់ដៃ = បានបង់",
+  "",
+  "☰ <b>Commands</b>",
+  "/today ☀️ ថ្ងៃនេះ · /bills 🧾 វិក្កយបត្រ · /evening 🌙 កត់ចំណាយ",
+  "/week 📈 7 ថ្ងៃ · /month 🗓️ ខែនេះ · /lastmonth 📅 ខែមុន",
+  "/scan 📷 · /words 🏷️ · /backup 💾 · /menu ☰"
 ].join("\n");
+
+const SCAN_TEXT = [
+  "📷 <b>ថតបង្កាន់ដៃ · Smart Scan</b>",
+  "",
+  "ផ្ញើ <b>រូបថត</b>, <b>screenshot</b> ឬ <b>PDF</b> មកក្រុមនេះ៖",
+  "• បង្កាន់ដៃហាង → ចំណាយ",
+  "• Slip ABA / ACLEDA / Wing → ចំណាយ",
+  "• វិក្កយបត្រ (មិនទាន់បង់) → Bill + ថ្ងៃផុតកំណត់",
+  "",
+  "ខ្ញុំអានចំនួន ថ្ងៃ និងហាង ហើយសួរបញ្ជាក់មុនរក្សាទុក។",
+  "<i>រូបច្បាស់ ត្រង់ មិនព្រិល = អានបានត្រូវជាង</i>"
+].join("\n");
+
+// a short sample of the category words (js/smart-parse.js) for /words
+function wordsText() {
+  const { EXPENSE_WORDS } = require("../lib/smart-parse");
+  const lines = ["🏷️ <b>ពាក្យប្រភេទចំណាយ · Category words</b>", "<i>សរសេរពាក្យណាមួយ + ចំនួន ខ្ញុំជ្រើសប្រភេទឱ្យ</i>", ""];
+  Object.entries(EXPENSE_WORDS || {}).forEach(([category, words]) => {
+    const sample = [...words.km.filter(word => !word.startsWith("~")).slice(0, 6), ...words.en.filter(word => !word.startsWith("~")).slice(0, 4)];
+    lines.push(`${CAT_ICON[category] || "📦"} <b>${escapeHtml(CATEGORY_KM[category] || category)}</b>: ${escapeHtml(sample.join(", "))}…`);
+  });
+  lines.push("", "<i>ខុសប្រភេទ? ចុច \"ប្តូរប្រភេទ\" ក្រោមសារ</i>");
+  return lines.join("\n");
+}
+
+// /bills: unpaid bills by due date, each with a ✅ Paid button
+async function billsReply(message, { userId, payload, today, redis }) {
+  const bills = (payload.bills || []).filter(bill => bill.status !== "Paid").sort((a, b) => String(a.due || "9999").localeCompare(String(b.due || "9999")));
+  if (!bills.length) return reply(message, "🧾 <b>វិក្កយបត្រ</b>\n\n🎉 មិនមានវិក្កយបត្រត្រូវបង់ទេ · Nothing to pay", { inline_keyboard: [[{ text: "📱 បើក Bills", url: appLink({ url: "/#money/bills" }) }]] });
+  const lines = ["🧾 <b>វិក្កយបត្រត្រូវបង់ · Bills to pay</b>", ""];
+  const keyboard = [];
+  for (const bill of bills.slice(0, 8)) {
+    const gap = bill.due ? daysBetween(today, bill.due) : null;
+    const when = gap === null ? "" : gap < 0 ? `⚠️ ហួស ${-gap} ថ្ងៃ` : gap === 0 ? "🔴 ថ្ងៃនេះ" : gap <= 3 ? `🟠 ${gap} ថ្ងៃទៀត` : `${dateLabels(bill.due).km}`;
+    const money = Number(bill.amount) > 0 ? ` · <b>${escapeHtml(formatMoney(bill.amount, bill.currency || payload.profile?.currency || "USD"))}</b>` : "";
+    const recent = bill.lastPaidAt && daysBetween(bill.lastPaidAt, today) < 20;
+    lines.push(`${recent ? "✅" : "•"} ${escapeHtml(bill.name || "Bill")}${money}${when ? ` · ${when}` : ""}${recent ? " <i>(បានបង់ថ្មីៗ)</i>" : ""}`);
+    if (!recent) {
+      const token = await saveAction(redis, { userId, item: { kind: "bill", id: bill.id, sourceId: bill.id, title: bill.name, url: "/#money/bills" } });
+      keyboard.push([{ text: `✅ បានបង់ · ${String(bill.name || "Bill").slice(0, 24)}`, callback_data: `paid|${token}` }]);
+    }
+  }
+  if (bills.length > 8) lines.push("", `<i>+${bills.length - 8} ទៀតក្នុង app</i>`);
+  keyboard.push([{ text: "📱 បើក Bills", url: appLink({ url: "/#money/bills" }) }]);
+  return reply(message, lines.join("\n"), { inline_keyboard: keyboard });
+}
 
 async function reply(message, text, keyboard) {
   return tgCall("sendMessage", {
@@ -302,7 +344,7 @@ function moneyKeyboard(token, saved, mode = "main") {
 
 // persistent buttons under the chat box
 const REPLY_KEYBOARD = {
-  keyboard: [[{ text: "☀️ ថ្ងៃនេះ" }, { text: "🌙 កត់ចំណាយ" }], [{ text: "📊 របាយការណ៍" }, { text: "☰ ម៉ឺនុយ" }]],
+  keyboard: [[{ text: "☀️ ថ្ងៃនេះ" }, { text: "🧾 វិក្កយបត្រ" }, { text: "🌙 កត់ចំណាយ" }], [{ text: "📊 របាយការណ៍" }, { text: "☰ ម៉ឺនុយ" }]],
   resize_keyboard: true,
   is_persistent: true,
   input_field_placeholder: "coffee 2 · ស្អែក 9 ព្រឹក ជួបម៉ាក់"
@@ -317,7 +359,10 @@ const COMMAND_WORDS = [
   ["week", /^\/week\b/i],
   ["month", /^\/month\b/i],
   ["lastmonth", /^\/lastmonth\b/i],
-  ["backup", /^\/backup\b/i]
+  ["backup", /^\/backup\b/i],
+  ["bills", /^\/bills\b|^🧾 វិក្កយបត្រ$|^វិក្កយបត្រ$|^bills$/i],
+  ["scan", /^\/scan\b/i],
+  ["words", /^\/words\b|^ពាក្យ$/i]
 ];
 
 function commandOf(text) {
@@ -329,9 +374,10 @@ function menuKeyboard() {
   const b = (text, key) => ({ text, callback_data: `m|${key}` });
   return {
     inline_keyboard: [
-      [b("☀️ ថ្ងៃនេះ", "today"), b("🌙 កត់ចំណាយ", "evening")],
-      [b("📈 7 ថ្ងៃ", "week"), b("🗓️ ខែនេះ", "month")],
-      [b("📅 ខែមុន", "lastmonth"), b("💾 Backup", "backup")],
+      [b("☀️ ថ្ងៃនេះ", "today"), b("🧾 វិក្កយបត្រ", "bills")],
+      [b("🌙 កត់ចំណាយ", "evening"), b("📷 Scan", "scan")],
+      [b("📈 7 ថ្ងៃ", "week"), b("🗓️ ខែនេះ", "month"), b("📅 ខែមុន", "lastmonth")],
+      [b("🏷️ ពាក្យប្រភេទ", "words"), b("💾 Backup", "backup")],
       [{ text: "📑 របាយការណ៍ JPG + Excel (app)", url: appLink({ url: "/#money/reports" }) }],
       [b("❓ ជំនួយ", "help"), { text: "📱 បើក MYLIFE", url: appLink({ url: "/" }) }]
     ]
@@ -356,6 +402,12 @@ async function runCommand(command, { message, userId, payload, today, redis }) {
       return reply(message, HELP_TEXT, REPLY_KEYBOARD);
     case "menu":
       return reply(message, "☰ <b>ម៉ឺនុយ MYLIFE</b>\n<i>ជ្រើសខាងក្រោម ឬវាយសារ ឧ.</i> <code>coffee 2</code>", menuKeyboard());
+    case "bills":
+      return billsReply(message, { userId, payload, today, redis });
+    case "scan":
+      return reply(message, SCAN_TEXT);
+    case "words":
+      return reply(message, wordsText());
     case "reports":
       return reply(message, "📊 <b>របាយការណ៍</b> — ជ្រើសមួយ", reportsKeyboard());
     case "today": {
@@ -582,6 +634,8 @@ async function handleMessage(message, redis) {
   if (!text) return;
   const command = commandOf(text);
   if (command === "help") return reply(message, HELP_TEXT, REPLY_KEYBOARD);
+  if (command === "scan") return reply(message, SCAN_TEXT);
+  if (command === "words") return reply(message, wordsText());
 
   const userId = await ownerUserId(redis);
   if (!userId) {
@@ -704,7 +758,7 @@ module.exports = async (req, res) => {
     if (verb === "m" && token) {
       const redisMenu = getRedis();
       const userId = await ownerUserId(redisMenu);
-      if (!userId && token !== "help") {
+      if (!userId && !["help", "scan", "words"].includes(token)) {
         await answer("⚠️ មិនទាន់ភ្ជាប់គណនី");
         return res.status(200).json({ ok: true });
       }
