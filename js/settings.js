@@ -10,15 +10,18 @@ function renderSettings() {
 function renderSettingsPage() {
   const stats = Store.calculate();
   const welcomePoster = App.getWelcomePoster();
+  const isKm = languageCode() === "km";
+  const L = (km, en) => (isKm ? km : en);
+  // 6 groups, like phone settings: account · look & language · money · notifications · data & privacy · about
   const settingsSections = [
     ["account", "accountCategory", "settingsAccountSubtitle", "user"],
-    ["preferences", "preferences", "settingsPreferencesSubtitle", "settings"],
-    ["data", "data", "settingsDataSubtitle", "database"],
-    ["finance", "financialCalculations", "settingsFinanceSubtitle", "calculator"],
-    ["appearance", "appearance", "settingsAppearanceSubtitle", "palette"],
-    ["privacy", "privacySecurity", "settingsPrivacySubtitle", "shield"],
+    ["appearance", L("រូបរាង & ភាសា", "Look & language"), L("ពណ៌, ភាសា, ម៉ោង, សំឡេង, ប៊ូតុងរហ័ស", "Theme, language, clock, sound, quick buttons"), "palette"],
+    ["money", L("លុយ", "Money"), L("ទំព័រលុយ, ថវិកា, ការគណនា", "Money page, budgets, totals"), "calculator"],
+    ["notifications", L("ការជូនដំណឹង", "Notifications"), L("Telegram, App, ការរំលឹក, bot", "Telegram, app, reminders, bot"), "bell"],
+    ["data", L("ទិន្នន័យ & ឯកជនភាព", "Data & privacy"), L("Backup, Sync, Export, លាក់លុយ", "Backup, sync, export, hide money"), "shield"],
     ["about", "about", "settingsAboutSubtitle", "info"]
   ];
+  const label = text => (/^[a-zA-Z]+$/.test(text) ? t(text) : text);
   return `
     <section class="page settings-page">
       <div class="page-header settings-header">
@@ -33,7 +36,7 @@ function renderSettingsPage() {
               <div class="settings-sidebar-handle financial-sidebar-handle" aria-hidden="true"><span></span></div>
               <div class="financial-sidebar-heading"><div class="financial-sidebar-heading-copy"><strong>${t("settingsCategories")}</strong><span>${t("manageSettings")}</span></div><button class="icon-button" type="button" data-close-settings-nav aria-label="${t("close")}">${Icons.close()}</button></div>
               <nav class="settings-sidebar-nav" aria-label="${t("settingsCategories")}">
-                ${settingsSections.map(([id, label, subtitle, icon]) => `<button class="financial-nav-item settings-nav-item" type="button" data-settings-jump="${id}"><span class="financial-nav-icon">${Icons[icon]()}</span><span class="financial-nav-copy"><strong>${t(label)}</strong><small>${t(subtitle)}</small></span>${Icons.chevron()}</button>`).join("")}
+                ${settingsSections.map(([id, title, subtitle, icon]) => `<button class="financial-nav-item settings-nav-item" type="button" data-settings-jump="${id}"><span class="financial-nav-icon">${Icons[icon]()}</span><span class="financial-nav-copy"><strong>${label(title)}</strong><small>${label(subtitle)}</small></span>${Icons.chevron()}</button>`).join("")}
               </nav>
             </dialog>
           </div>
@@ -42,6 +45,7 @@ function renderSettingsPage() {
       <div class="settings-layout settings-layout-single">
         <div class="settings-content" data-settings-view="all">
           ${Login.guestMode ? `<button class="settings-guest-preview" type="button" data-action="connect-guest"><span class="settings-guest-avatar">${initials(t("guestPreview"))}</span><span class="settings-guest-copy"><strong>${t("guestPreview")}</strong><small>${t("guestSaveWarning")}</small></span>${Icons.chevron()}</button>` : ""}
+          ${renderSettingsSummary()}
           <div class="settings-accordion-list">
           <details class="settings-accordion" id="settings-section-account" open>
             ${settingsAccordionSummary("account", t("accountCategory"), t("settingsAccountSubtitle"), Icons.user())}
@@ -66,84 +70,17 @@ function renderSettingsPage() {
               </div>
             </div>
           </details>
-          <details class="settings-accordion" id="settings-section-preferences">
-            ${settingsAccordionSummary("preferences", t("preferences"), t("settingsPreferencesSubtitle"), Icons.settings())}
+          <details class="settings-accordion" id="settings-section-appearance">
+            ${settingsAccordionSummary("appearance", label(settingsSections[1][1]), label(settingsSections[1][2]), Icons.palette())}
             <div class="settings-accordion-body">
-            <article class="glass-card card-pad settings-preferences-card" data-settings-section="preferences">
-              <div class="between">
-                <div>
-                  <h2 class="section-title section-title-with-icon"><span class="section-title-icon">${Icons.settings()}</span>${t("preferences")}</h2>
-                  <p class="secondary">${t("preferencesHelp")}</p>
-                </div>
-                <span class="icon-badge green">${Icons.bell()}</span>
-              </div>
-              <div class="settings-preference-list">
-                <label class="settings-preference-row"><span><strong>${t("quickActions")}</strong><small>${t("quickActionsHelp")}</small></span></label>
-                ${(() => {
-                  const saved = Array.isArray(appData.profile.quickActions) ? appData.profile.quickActions : [];
-                  const oldDefault = saved.length === 3 && ["smart-assistant", "add-event", "add-goal"].every(id => saved.includes(id));
-                  const selected = saved.length && !oldDefault ? saved : QUICK_ACTION_DEFAULTS;
-                  return quickActionList().map(([id, , label]) => `<label class="settings-preference-row settings-quick-action-row"><span><strong>${label}</strong><small>${t("showInQuickActions")}</small></span><input type="checkbox" data-quick-action-preference="${id}" ${selected.includes(id) ? "checked" : ""}></label>`).join("");
-                })()}
+              <div class="settings-preference-list settings-preference-list-standalone">
+                <label class="settings-preference-row"><span><strong>${t("theme")}</strong><small>${t("themeHelp")}</small></span><select data-preference="theme"><option value="dark" ${appData.profile.theme !== "light" ? "selected" : ""}>${t("darkTheme")}</option><option value="light" ${appData.profile.theme === "light" ? "selected" : ""}>${t("lightTheme")}</option></select></label>
                 <label class="settings-preference-row"><span><strong>${t("language")}</strong><small>${t("languageHelp")}</small></span><select data-preference="language"><option value="English" ${appData.profile.language !== "Khmer" ? "selected" : ""}>English</option><option value="Khmer" ${appData.profile.language === "Khmer" ? "selected" : ""}>ខ្មែរ</option></select></label>
                 <label class="settings-preference-row"><span><strong>${t("clockFormat")}</strong><small>${t("clockFormatHelp")}</small></span><select data-preference="clockFormat"><option value="12-hour" ${appData.profile.clockFormat !== "24-hour" ? "selected" : ""}>12-hour</option><option value="24-hour" ${appData.profile.clockFormat === "24-hour" ? "selected" : ""}>24-hour</option></select></label>
                 <label class="settings-preference-row"><span><strong>${t("soundEnabled")}</strong><small>${t("soundEnabledHelp")}</small></span><input type="checkbox" data-preference="soundEnabled" ${appData.profile.soundEnabled !== false ? "checked" : ""}></label>
                 <div class="settings-preference-row settings-sound-row"><span><strong>${languageCode() === "km" ? "កម្រិតសំឡេង" : "Sound volume"}</strong><small>${languageCode() === "km" ? "សំឡេងពេលចុច កត់លុយ ជូនដំណឹង និងសម្រេចគោលដៅ" : "Taps, money, alerts and goal celebrations"}</small></span><div class="settings-sound-controls"><input type="range" min="0" max="100" step="5" value="${Number.isFinite(Number(appData.profile.soundVolume)) ? Number(appData.profile.soundVolume) : 70}" data-sound-volume aria-label="Volume"><button type="button" class="button ghost-button" data-sound-preview>▶ ${languageCode() === "km" ? "សាក" : "Try"}</button></div></div>
                 <label class="settings-preference-row"><span><strong>${languageCode() === "km" ? "ញ័រទូរស័ព្ទ" : "Vibration"}</strong><small>${languageCode() === "km" ? "ញ័រតិចៗពេល save ការរំលឹក និងអបអរ (ទូរស័ព្ទ)" : "Small buzz on save, reminders and celebrations (phones)"}</small></span><input type="checkbox" data-preference="haptics" ${appData.profile.haptics !== false ? "checked" : ""}></label>
                 <label class="settings-preference-row"><span><strong>${languageCode() === "km" ? "រូបស្វាគមន៍ពេលបើក app" : "Welcome photo on open"}</strong><small>${languageCode() === "km" ? "រូបគ្រួសារ និងកិច្ចការថ្ងៃនេះ ពេលបើក app" : "Family photo and today's plan when the app opens"}</small></span><select data-preference="welcomePosterMode">${[["daily", languageCode() === "km" ? "ម្ដងក្នុងមួយថ្ងៃ" : "Once a day"], ["always", languageCode() === "km" ? "រាល់ពេលបើក" : "Every time"], ["off", languageCode() === "km" ? "បិទ" : "Off"]].map(([v, l]) => `<option value="${v}" ${(appData.profile.welcomePosterMode || "daily") === v ? "selected" : ""}>${l}</option>`).join("")}</select></label>
-                <label class="settings-preference-row"><span><strong>${languageCode() === "km" ? "ទំព័រលុយ បង្ហាញដំបូង" : "Money page opens on"}</strong><small>${languageCode() === "km" ? "ពេលដែលទំព័រលុយបង្ហាញមុនគេ" : "The period the Money page shows first"}</small></span><select data-preference="moneyDefaultPeriod">${[["day", languageCode() === "km" ? "ថ្ងៃ" : "Day"], ["week", languageCode() === "km" ? "សប្តាហ៍" : "Week"], ["month", languageCode() === "km" ? "ខែ" : "Month"], ["year", languageCode() === "km" ? "ឆ្នាំ" : "Year"]].map(([v, l]) => `<option value="${v}" ${(appData.profile.moneyDefaultPeriod || "month") === v ? "selected" : ""}>${l}</option>`).join("")}</select></label>
-                <div class="settings-preference-row settings-link-row"><span><strong>${languageCode() === "km" ? "Footer និងថវិកា" : "Footer and budgets"}</strong><small>${languageCode() === "km" ? "រៀបលំដាប់ footer ឬកំណត់ថវិកាតាមប្រភេទចំណាយ" : "Arrange the footer or set spending budgets"}</small></span><div class="settings-link-buttons"><button type="button" class="button ghost-button" data-open-footer-editor>${languageCode() === "km" ? "រៀបចំ footer" : "Arrange footer"}</button><a class="button ghost-button" href="#money/budget">${languageCode() === "km" ? "ថវិកា" : "Budgets"}</a></div></div>
-                <label class="settings-preference-row"><span><strong>${t("notificationsEnabled")}</strong><small>${t("notificationsEnabledHelp")}</small></span><input type="checkbox" data-preference="notificationsEnabled" ${appData.profile.notificationsEnabled !== false ? "checked" : ""}></label>
-                <div class="settings-preference-row settings-link-row"><span><strong>🔔 ${languageCode() === "km" ? "មជ្ឈមណ្ឌលការជូនដំណឹង" : "Notification center"}</strong><small>${languageCode() === "km" ? "Telegram, App និង Tool នីមួយៗ" : "Telegram, app, and each tool"}</small></span><button class="button ghost-button" type="button" data-nfc-open>${languageCode() === "km" ? "គ្រប់គ្រង" : "Manage"}</button></div>
-              </div>
-            </article>
-            ${renderAlertStatusCard()}
-            ${typeof renderAutomationCard === "function" ? renderAutomationCard() : ""}
-            </div>
-          </details>
-          <details class="settings-accordion" id="settings-section-data">
-            ${settingsAccordionSummary("data", t("data"), t("settingsDataSubtitle"), Icons.database())}
-            <div class="settings-accordion-body">
-          <div class="settings-section-grid settings-data-grid" data-settings-panel="data">
-            <article class="glass-card card-pad settings-data-card" data-settings-section="data">
-              <div class="between"><div><h2 class="section-title section-title-with-icon"><span class="section-title-icon">${Icons.database()}</span>${t("backupAndRestore")}</h2><p class="secondary">${t("backupAndRestoreHelp")}</p></div><span class="icon-badge">${Icons.database()}</span></div>
-              <div class="settings-action-grid">
-                ${settingsAction("export-json", Icons.arrowDown(), t("exportJson"), t("backupJsonHelp"))}
-                ${settingsAction("import-json", Icons.arrowUp(), t("importJson"), t("importJsonHelp"))}
-                ${settingsAction("export-excel", Icons.chart(), t("exportExcel"), t("excelExportHelp"))}
-              </div>
-            </article>
-            ${settingsCard(t("database"), [
-              [t("familyMembersCount"), appData.family.length],
-              [t("goals"), appData.goals.length],
-              [t("incomeSourcesCount"), appData.income.length],
-              [t("expenses"), appData.expenses.length],
-              [t("savings"), appData.savings.length],
-              [t("loans"), appData.loans.length],
-              [t("bills"), appData.bills.length],
-              [t("calendarEvents"), appData.calendarEvents.length],
-              [t("memories"), appData.memories.length]
-            ], Icons.database(), "data")}
-          </div>
-            </div>
-          </details>
-          <details class="settings-accordion" id="settings-section-finance">
-            ${settingsAccordionSummary("finance", t("financialCalculations"), t("settingsFinanceSubtitle"), Icons.calculator())}
-            <div class="settings-accordion-body settings-finance-panel" data-settings-panel="finance">
-            ${settingsCard(t("financialCalculations"), [
-              [t("availableMoney"), money(stats.available)],
-              [t("totalIncome"), money(stats.totalIncome)],
-              [t("totalExpenses"), money(stats.totalExpenses)],
-              [t("totalSavings"), money(stats.totalSavings)],
-              [t("loanBalance"), money(stats.loanBalance)]
-            ], Icons.calculator(), "finance")}
-            </div>
-          </details>
-          <details class="settings-accordion" id="settings-section-appearance">
-            ${settingsAccordionSummary("appearance", t("appearance"), t("settingsAppearanceSubtitle"), Icons.palette())}
-            <div class="settings-accordion-body">
-              <div class="settings-preference-list settings-preference-list-standalone">
-                <label class="settings-preference-row"><span><strong>${t("theme")}</strong><small>${t("themeHelp")}</small></span><select data-preference="theme"><option value="dark" ${appData.profile.theme !== "light" ? "selected" : ""}>${t("darkTheme")}</option><option value="light" ${appData.profile.theme === "light" ? "selected" : ""}>${t("lightTheme")}</option></select></label>
               </div>
               <article class="welcome-poster-settings">
                 <div class="welcome-poster-settings-copy">
@@ -159,14 +96,75 @@ function renderSettingsPage() {
                   <button class="button ghost-button" type="button" data-action="remove-welcome-poster" ${welcomePoster ? "" : "hidden"}>${t("removePoster")}</button>
                 </div>
               </article>
+              <article class="glass-card card-pad settings-preferences-card" data-settings-section="appearance">
+                <div class="settings-preference-list">
+                <label class="settings-preference-row"><span><strong>${t("quickActions")}</strong><small>${t("quickActionsHelp")}</small></span></label>
+                ${(() => {
+                  const saved = Array.isArray(appData.profile.quickActions) ? appData.profile.quickActions : [];
+                  const oldDefault = saved.length === 3 && ["smart-assistant", "add-event", "add-goal"].every(id => saved.includes(id));
+                  const selected = saved.length && !oldDefault ? saved : QUICK_ACTION_DEFAULTS;
+                  return quickActionList().map(([id, , label]) => `<label class="settings-preference-row settings-quick-action-row"><span><strong>${label}</strong><small>${t("showInQuickActions")}</small></span><input type="checkbox" data-quick-action-preference="${id}" ${selected.includes(id) ? "checked" : ""}></label>`).join("");
+                })()}
+                <div class="settings-preference-row settings-link-row"><span><strong>${languageCode() === "km" ? "Footer និងថវិកា" : "Footer and budgets"}</strong><small>${languageCode() === "km" ? "រៀបលំដាប់ footer ឬកំណត់ថវិកាតាមប្រភេទចំណាយ" : "Arrange the footer or set spending budgets"}</small></span><div class="settings-link-buttons"><button type="button" class="button ghost-button" data-open-footer-editor>${languageCode() === "km" ? "រៀបចំ footer" : "Arrange footer"}</button></div></div>
+                </div>
+              </article>
             </div>
           </details>
-          <details class="settings-accordion" id="settings-section-privacy">
-            ${settingsAccordionSummary("privacy", t("privacySecurity"), t("settingsPrivacySubtitle"), Icons.shield())}
+          <details class="settings-accordion" id="settings-section-money">
+            ${settingsAccordionSummary("money", label(settingsSections[2][1]), label(settingsSections[2][2]), Icons.calculator())}
+            <div class="settings-accordion-body settings-finance-panel" data-settings-panel="finance">
+              <div class="settings-preference-list settings-preference-list-standalone">
+                <label class="settings-preference-row"><span><strong>${languageCode() === "km" ? "ទំព័រលុយ បង្ហាញដំបូង" : "Money page opens on"}</strong><small>${languageCode() === "km" ? "ពេលដែលទំព័រលុយបង្ហាញមុនគេ" : "The period the Money page shows first"}</small></span><select data-preference="moneyDefaultPeriod">${[["day", languageCode() === "km" ? "ថ្ងៃ" : "Day"], ["week", languageCode() === "km" ? "សប្តាហ៍" : "Week"], ["month", languageCode() === "km" ? "ខែ" : "Month"], ["year", languageCode() === "km" ? "ឆ្នាំ" : "Year"]].map(([v, l]) => `<option value="${v}" ${(appData.profile.moneyDefaultPeriod || "month") === v ? "selected" : ""}>${l}</option>`).join("")}</select></label>
+                <div class="settings-preference-row settings-link-row"><span><strong>${L("ថវិកា", "Budgets")}</strong><small>${L("កំណត់ថវិកាតាមប្រភេទចំណាយ", "Set spending budgets by category")}</small></span><a class="button ghost-button" href="#money/budget">${L("កំណត់", "Set")}</a></div>
+              </div>
+            ${settingsCard(t("financialCalculations"), [
+              [t("availableMoney"), money(stats.available)],
+              [t("totalIncome"), money(stats.totalIncome)],
+              [t("totalExpenses"), money(stats.totalExpenses)],
+              [t("totalSavings"), money(stats.totalSavings)],
+              [t("loanBalance"), money(stats.loanBalance)]
+            ], Icons.calculator(), "finance")}
+            </div>
+          </details>
+          <details class="settings-accordion" id="settings-section-notifications">
+            ${settingsAccordionSummary("notifications", label(settingsSections[3][1]), label(settingsSections[3][2]), Icons.bell())}
+            <div class="settings-accordion-body">
+              <div class="settings-preference-list settings-preference-list-standalone">
+                <div class="settings-preference-row settings-link-row settings-nfc-link"><span><strong>🔔 ${L("កំណត់ការជូនដំណឹង", "Notification settings")}</strong><small>${escapeHtml(settingsNotifySummary())}</small></span><button class="button" type="button" data-nfc-open>${L("បើក", "Open")} ${Icons.chevron()}</button></div>
+              </div>
+              ${renderAlertStatusCard()}
+              ${typeof renderBotHelpCard === "function" ? renderBotHelpCard() : ""}
+            </div>
+          </details>
+          <details class="settings-accordion" id="settings-section-data">
+            ${settingsAccordionSummary("data", label(settingsSections[4][1]), label(settingsSections[4][2]), Icons.shield())}
             <div class="settings-accordion-body">
               <div class="settings-preference-list settings-preference-list-standalone">
                 <label class="settings-preference-row"><span><strong>${t("moneyPrivacy")}</strong><small>${t("moneyPrivacyHelp")}</small></span><input type="checkbox" data-preference="moneyHidden" ${appData.profile.moneyHidden ? "checked" : ""}></label>
               </div>
+          <div class="settings-section-grid settings-data-grid" data-settings-panel="data">
+            <article class="glass-card card-pad settings-data-card" data-settings-section="data">
+              <div class="between"><div><h2 class="section-title section-title-with-icon"><span class="section-title-icon">${Icons.database()}</span>${t("backupAndRestore")}</h2><p class="secondary">${t("backupAndRestoreHelp")}</p></div><span class="icon-badge">${Icons.database()}</span></div>
+              <div class="settings-action-grid">
+                ${settingsAction("export-json", Icons.arrowDown(), t("exportJson"), t("backupJsonHelp"))}
+                ${settingsAction("import-json", Icons.arrowUp(), t("importJson"), t("importJsonHelp"))}
+                ${settingsAction("export-excel", Icons.chart(), t("exportExcel"), t("excelExportHelp"))}
+              </div>
+            </article>
+            ${renderLocalBackupCard()}
+            ${typeof renderCloudBackupsCard === "function" ? renderCloudBackupsCard() : ""}
+            ${settingsCard(t("database"), [
+              [t("familyMembersCount"), appData.family.length],
+              [t("goals"), appData.goals.length],
+              [t("incomeSourcesCount"), appData.income.length],
+              [t("expenses"), appData.expenses.length],
+              [t("savings"), appData.savings.length],
+              [t("loans"), appData.loans.length],
+              [t("bills"), appData.bills.length],
+              [t("calendarEvents"), appData.calendarEvents.length],
+              [t("memories"), appData.memories.length]
+            ], Icons.database(), "data")}
+          </div>
             </div>
           </details>
           <details class="settings-accordion" id="settings-section-about">
@@ -175,7 +173,7 @@ function renderSettingsPage() {
               <section class="settings-about-story" aria-labelledby="settingsAboutTitle">
                 <div class="settings-about-story-heading">
                   <span class="settings-about-brand">MYLIFE</span>
-                  <span class="settings-about-version">Version 1.0.0</span>
+                  <span class="settings-about-version">Version 1.0.0 · ${escapeHtml(settingsAppBuild())}</span>
                 </div>
                 <h3 id="settingsAboutTitle">${t("aboutMylifeTitle")}</h3>
                 <p class="settings-about-tagline">${t("aboutMylifeTagline")}</p>
@@ -205,6 +203,63 @@ function renderSettingsPage() {
   `;
 }
 
+// one line under the title: who · theme · language · currency · cloud sync · last backup
+function renderSettingsSummary() {
+  const isKm = languageCode() === "km";
+  const L = (km, en) => (isKm ? km : en);
+  const p = appData.profile;
+  const pending = typeof SyncState !== "undefined" && SyncState.isPending?.();
+  const backups = typeof Store.listBackups === "function" ? Store.listBackups() : [];
+  const last = backups[0]?.createdAt ? new Date(backups[0].createdAt) : null;
+  const days = last && !Number.isNaN(last.getTime()) ? Math.floor((Date.now() - last.getTime()) / 864e5) : null;
+  const backupText = days === null ? L("មិនទាន់មាន backup", "No backup yet") : days === 0 ? L("Backup ថ្ងៃនេះ", "Backed up today") : L(`Backup ${days} ថ្ងៃមុន`, `Backup ${days}d ago`);
+  const photo = p.photo ? `<img src="${escapeAttr(p.photo)}" alt="">` : escapeHtml(initials(p.name));
+  return `<div class="settings-summary">
+    <span class="settings-summary-avatar">${photo}</span>
+    <div class="settings-summary-copy">
+      <strong>${escapeHtml(p.name || L("មិនទាន់ដាក់ឈ្មោះ", "No name yet"))}</strong>
+      <div class="settings-summary-chips">
+        <span>${p.theme === "light" ? "☀️ Light" : "🌙 Dark"}</span>
+        <span>${p.language === "Khmer" ? "ខ្មែរ" : "English"}</span>
+        <span>${escapeHtml(p.currency || "USD")}</span>
+        <span class="${pending ? "is-warn" : "is-ok"}">☁️ ${pending ? L("រង់ចាំ Sync", "Sync pending") : L("Sync រួច", "Synced")}</span>
+        <span class="${days === null || days > 7 ? "is-warn" : ""}">💾 ${escapeHtml(backupText)}</span>
+      </div>
+    </div>
+    <button class="icon-button settings-summary-sync" type="button" data-settings-sync aria-label="${escapeAttr(L("Sync ឥឡូវ", "Sync now"))}" title="${escapeAttr(L("Sync ឥឡូវ", "Sync now"))}">⟳</button>
+  </div>`;
+}
+
+function settingsNotifySummary() {
+  const isKm = languageCode() === "km";
+  if (appData.profile.notificationsEnabled === false) return isKm ? "បិទទាំងអស់" : "All off";
+  if (typeof NotifyPrefs === "undefined") return isKm ? "Telegram, App និងការរំលឹក" : "Telegram, app and reminders";
+  const p = NotifyPrefs.prefs(appData.profile);
+  const channels = [p.telegram ? "Telegram" : "", p.app ? "App" : ""].filter(Boolean).join(" + ") || (isKm ? "គ្មានកន្លែងផ្ញើ" : "No channel");
+  const on = NotifyPrefs.TOOLS.filter(tool => p.tools[tool]).length;
+  return `${channels} · ${on}/${NotifyPrefs.TOOLS.length} ${isKm ? "បើក" : "on"}`;
+}
+
+function settingsAppBuild() {
+  return window.__MYLIFE_BUILD || "";
+}
+
+// local backups (this device): count + restore, moved here from the alert card
+function renderLocalBackupCard() {
+  const backups = typeof Store.listBackups === "function" ? Store.listBackups() : [];
+  const pendingSync = typeof SyncState !== "undefined" && SyncState.isPending?.();
+  return `
+    <article class="glass-card card-pad settings-preferences-card" data-settings-section="data">
+      <div class="settings-preference-list">
+        <div class="settings-preference-row"><span><strong>${t("cloudSync")}</strong><small>${t("cloudSyncHelp")}</small></span><span class="pill ${pendingSync ? "" : "success"}">${pendingSync ? t("pending") : t("synced")}</span></div>
+        <div class="settings-preference-row"><span><strong>${t("localBackups")}</strong><small>${t("localBackupsHelp")}</small></span><span class="pill ${backups.length ? "success" : ""}">${backups.length}</span></div>
+      </div>
+      <div class="settings-action-grid">
+        ${settingsAction("show-backups", Icons.database(), t("restoreLocalBackup"), t("restoreLocalBackupHelp"))}
+      </div>
+    </article>`;
+}
+
 function renderAlertStatusCard() {
   const notificationsOn = appData.profile.notificationsEnabled !== false;
   const pushSupported = typeof window !== "undefined" && "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
@@ -212,7 +267,7 @@ function renderAlertStatusCard() {
   const backups = typeof Store.listBackups === "function" ? Store.listBackups() : [];
   const pendingSync = typeof SyncState !== "undefined" && SyncState.isPending?.();
   return `
-    <article class="glass-card card-pad settings-preferences-card" data-settings-section="preferences">
+    <article class="glass-card card-pad settings-preferences-card" data-settings-section="notifications">
       <div class="between">
         <div>
           <h2 class="section-title section-title-with-icon"><span class="section-title-icon">${Icons.bell()}</span>${t("alertStatus")}</h2>
@@ -223,13 +278,10 @@ function renderAlertStatusCard() {
       <div class="settings-preference-list">
         <div class="settings-preference-row"><span><strong>${t("inAppAlerts")}</strong><small>${t("inAppAlertsHelp")}</small></span><span class="pill success">${t("ready")}</span></div>
         <div class="settings-preference-row"><span><strong>${t("lockScreenPush")}</strong><small>${t("lockScreenPushHelp")}</small></span><span class="pill">${pushSupported && permission === "granted" ? t("enabled") : t("needsSetup")}</span></div>
-        <div class="settings-preference-row"><span><strong>${t("cloudSync")}</strong><small>${t("cloudSyncHelp")}</small></span><span class="pill ${pendingSync ? "" : "success"}">${pendingSync ? t("pending") : t("synced")}</span></div>
-        <div class="settings-preference-row"><span><strong>${t("localBackups")}</strong><small>${t("localBackupsHelp")}</small></span><span class="pill ${backups.length ? "success" : ""}">${backups.length}</span></div>
       </div>
       <div class="settings-action-grid">
         ${settingsAction("enable-alerts", Icons.bell(), t("enableAlerts"), t("enableAlertsHelp"))}
         ${settingsAction("test-alert", Icons.spark(), t("sendTestAlert"), t("sendTestAlertHelp"))}
-        ${settingsAction("show-backups", Icons.database(), t("restoreLocalBackup"), t("restoreLocalBackupHelp"))}
       </div>
     </article>
   `;
@@ -518,6 +570,31 @@ function bindSettings() {
     if (section.open) settingsOpenSections.add(id);
     else settingsOpenSections.delete(id);
   }));
+  document.querySelector("[data-settings-sync]")?.addEventListener("click", async event => {
+    const button = event.currentTarget;
+    const isKm = languageCode() === "km";
+    button.disabled = true;
+    button.classList.add("is-busy");
+    try {
+      if (navigator.onLine === false) throw new Error("offline");
+      const session = await window.MYLIFE_SUPABASE_API?.getSession?.();
+      if (!session?.data?.session) {
+        Toast.show(isKm ? "សូម login សិន ដើម្បី Sync" : "Sign in first to sync", "warning");
+        button.disabled = false;
+        button.classList.remove("is-busy");
+        return;
+      }
+      if (typeof Store.flushPendingSync === "function") await Store.flushPendingSync();
+      await Store.syncFromSupabase();
+      const pending = typeof SyncState !== "undefined" && SyncState.isPending?.();
+      Toast.show(pending ? (isKm ? "Sync មិនទាន់ចប់ — នឹងសាកម្តងទៀតដោយខ្លួនឯង" : "Not synced yet — it will retry by itself") : (isKm ? "☁️ Sync រួចរាល់" : "☁️ Synced"), pending ? "warning" : "success");
+      App.render();
+    } catch (error) {
+      Toast.show(isKm ? "Sync មិនបាន — សូមពិនិត្យអ៊ីនធឺណិត" : "Couldn't sync — check your connection", "warning");
+      button.disabled = false;
+      button.classList.remove("is-busy");
+    }
+  });
   if (typeof NotifyCenter !== "undefined") document.querySelectorAll("[data-nfc-open]").forEach(button => button.addEventListener("click", () => NotifyCenter.open(button.dataset.nfcOpen || "")));
   bindNavigationSheetGestures();
   if (typeof bindAutomationCard === "function") bindAutomationCard();

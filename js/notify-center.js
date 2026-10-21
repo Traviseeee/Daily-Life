@@ -315,7 +315,20 @@ const NotifyCenter = (() => {
   function bindPage() {
     const page = document.querySelector(".nfc-page");
     if (!page) return;
-    page.querySelector("[data-nfc-master]")?.addEventListener("change", event => saveProfile({ notificationsEnabled: event.target.checked }));
+    page.querySelector("[data-nfc-master]")?.addEventListener("change", event => {
+      const on = event.target.checked;
+      saveProfile({ notificationsEnabled: on });
+      // same phone push setup the old Settings switch did (it now lives only here)
+      try {
+        const plugin = typeof NotificationManager !== "undefined" && NotificationManager.getPlugin?.();
+        if (on) {
+          if (plugin) NotificationManager.requestPermission().then(() => NotificationManager.sync());
+          else window.PushNotifications?.enable?.();
+        } else if (!plugin) {
+          window.PushNotifications?.disable?.();
+        }
+      } catch (error) { console.warn("MYLIFE push setup failed.", error); }
+    });
     page.querySelectorAll("[data-nfc-channel]").forEach(input => input.addEventListener("change", () => save({ [input.dataset.nfcChannel]: input.checked })));
     page.querySelectorAll("[data-nfc-tool-switch]").forEach(input => input.addEventListener("change", () => save({ tools: { [input.dataset.nfcToolSwitch]: input.checked } })));
     page.querySelectorAll("[data-nfc-expand]").forEach(button => button.addEventListener("click", () => {

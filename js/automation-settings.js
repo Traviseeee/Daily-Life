@@ -50,6 +50,22 @@ function renderAutomationCard() {
     </article>`;
 }
 
+// Settings → Notifications: how to use the Telegram bot (the on/off switches for the
+// Telegram messages now live only in the notification center).
+function renderBotHelpCard() {
+  const html = renderAutomationCard();
+  const help = html.slice(html.indexOf('<details class="auto-help">'), html.indexOf("</details>") + "</details>".length);
+  return `<article class="glass-card card-pad settings-preferences-card auto-card" data-settings-section="notifications">${help}</article>`;
+}
+
+// Settings → Data: the weekly cloud backups (download / restore)
+function renderCloudBackupsCard() {
+  const html = renderAutomationCard();
+  const start = html.indexOf('<div class="auto-backups">');
+  const end = html.lastIndexOf("</article>");
+  return `<article class="glass-card card-pad settings-preferences-card auto-card" data-settings-section="data">${html.slice(start, end)}</article>`;
+}
+
 async function cloudBackupRequest(query = "") {
   const session = await window.MYLIFE_SUPABASE_API?.getSession?.();
   const token = session?.data?.session?.access_token;
