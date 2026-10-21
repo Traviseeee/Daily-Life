@@ -11,6 +11,7 @@ const { createClient } = require("@supabase/supabase-js");
 const { getRedis } = require("../lib/push");
 const { tgUpload, tgCall, botConfigured, appLink } = require("../lib/telegram");
 const { buildTelegramText } = require("../lib/telegram-message");
+const { isOwner } = require("../lib/owner");
 
 const TEST_KINDS = {
   bill: "/#money/bills", loan: "/#money/loans", "savings-deadline": "/#money/savings", goal: "/#goals",
@@ -62,6 +63,8 @@ module.exports = async (req, res) => {
     if (error || !data?.user?.id) return res.status(401).json({ error: "unauthorized" });
     const userId = data.user.id;
     const redis = getRedis();
+    // Reports and test messages go to the owner's Telegram group only (B2).
+    if (!(await isOwner(userId, redis, supabase))) return res.status(403).json({ error: "not_owner" });
 
     if (test) {
       const slow = await redis.set(`mylife:notify-test-wait:${userId}`, "1", { nx: true, ex: 10 });

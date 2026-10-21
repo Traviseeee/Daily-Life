@@ -12,6 +12,7 @@ const { monthSpending, formatMoney, convert, CATEGORY_KM, weeklyReport } = requi
 const { digestItem, eveningItem } = require("./dispatch");
 const { payBill } = require("../lib/bill-pay");
 const { updatePayloadSafe } = require("../lib/payload-store");
+const { resolveOwner, linkOwnerIfUnknown } = require("../lib/owner");
 const { detectUtility, findUtilityBill, PROVIDERS } = require("../lib/utility-bills");
 const NotifyPrefs = require("../lib/notify-prefs");
 const SmartScan = require("../lib/scan-telegram");
@@ -97,18 +98,10 @@ async function readPayload(userId) {
   return typeof data.payload === "string" ? JSON.parse(data.payload || "{}") : data.payload || {};
 }
 
-// Which MYLIFE account this Telegram chat belongs to: remembered from button
-// presses, or the only account when there is just one.
+// Which MYLIFE account this Telegram chat belongs to (lib/owner.js: env
+// MYLIFE_OWNER_USER_ID, else the linked account, else the only account).
 async function ownerUserId(redis) {
-  const known = await redis.get("mylife:tg:owner");
-  if (known) return String(known);
-  const { data, error } = await serviceClient().from("app_data").select("user_id").limit(2);
-  if (error) throw error;
-  if ((data || []).length === 1) {
-    await redis.set("mylife:tg:owner", data[0].user_id);
-    return data[0].user_id;
-  }
-  return null;
+  return resolveOwner(redis, serviceClient());
 }
 
 function recordId(collection) {
@@ -733,7 +726,16 @@ module.exports = async (req, res) => {
     }
 
     const item = action.item;
-    if (action.userId) await redis.set("mylife:tg:owner", action.userId);
+    // A button may only act for the owner account; it can link the owner the
+    // first time but never replace one (B2).
+    if (action.userId) {
+      await linkOwnerIfUnknown(action.userId, redis);
+      const owner = await ownerUserId(redis);
+      if (owner && String(owner) !== String(action.userId)) {
+        await answer("⛔ មិនអនុញ្ញាត · Not allowed");
+        return res.status(200).json({ ok: true });
+      }
+    }
     if (item.kind === "scan" && /^scan(save|force|link|kind|cancel)$/.test(verb)) {
       await SmartScan.handleScanAction(verb, token, action, query, { ...scanContext(redis), answer });
       return res.status(200).json({ ok: true });

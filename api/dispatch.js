@@ -12,6 +12,7 @@ const { frequentExpenses, unusualToday, convert } = require("../lib/money-insigh
 const { payBill } = require("../lib/bill-pay");
 const { updatePayloadSafe } = require("../lib/payload-store");
 const NotifyPrefs = require("../lib/notify-prefs");
+const { resolveOwner } = require("../lib/owner");
 
 // Redis dedupe makes a wide window safe: a late or skipped scheduler run still
 // delivers alerts that came due in the last 30 minutes, exactly once.
@@ -848,6 +849,12 @@ module.exports = async (req, res) => {
     let offset = 0;
     const pageSize = 500;
 
+    // Telegram (alerts, backup file, reports, auto-pay messages) is the owner's
+    // group: only the owner account may use it. Unknown owner → none (B2).
+    const ownerId = await resolveOwner(redis, supabase);
+    let otherAccounts = 0;
+    if (!ownerId) console.warn("MYLIFE owner account unknown: Telegram alerts skipped. Set MYLIFE_OWNER_USER_ID.");
+
     while (true) {
       const { data: rows, error } = await supabase
         .from("app_data")
@@ -860,8 +867,11 @@ module.exports = async (req, res) => {
       for (const row of rows || []) {
         const payload = parsePayload(row.payload);
 
+        const isOwnerRow = Boolean(ownerId) && String(row.user_id) === String(ownerId);
+        if (!isOwnerRow) otherAccounts += 1;
+
         jobs.push({ channel: "backup", run: () => weeklyBackup(redis, row.user_id, row.payload) });
-        jobs.push({ channel: "autopay", run: () => autoPayBills(supabase, redis, row.user_id, row.payload) });
+        if (isOwnerRow) jobs.push({ channel: "autopay", run: () => autoPayBills(supabase, redis, row.user_id, row.payload) });
 
         if (payload.profile?.notificationsEnabled === false) {
           continue;
@@ -872,6 +882,7 @@ module.exports = async (req, res) => {
         // Send due alerts to Make.com / Telegram.
         // This works even if the user has no Web Push subscription.
         for (const item of items) {
+          if (!isOwnerRow) break; // never post another account into the owner's group
           if (!NotifyPrefs.allows(payload.profile, item.kind, "telegram")) continue;
           const dueAt = itemDueAt(item, APP_TIME_ZONE);
 
@@ -1011,7 +1022,9 @@ module.exports = async (req, res) => {
       snoozed,
       webhook,
       backup: breakdown.backup,
-      autopay: breakdown.autopay
+      autopay: breakdown.autopay,
+      owner: ownerId ? "known" : "unknown",
+      otherAccounts
     });
   } catch (error) {
     console.error("MYLIFE scheduled notification dispatch failed.", error);
