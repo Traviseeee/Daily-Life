@@ -56,6 +56,7 @@
   <link rel="stylesheet" href="css/tips.css?v=3" media="print" data-app-css>
   <link rel="stylesheet" href="css/notify-center.css?v=2" media="print" data-app-css>
   <link rel="stylesheet" href="css/scan.css?v=1" media="print" data-app-css>
+  <link rel="stylesheet" href="css/topbar.css?v=1" media="print" data-app-css>
   <noscript>
     <link rel="stylesheet" href="css/variables.css">
     <link rel="stylesheet" href="css/global.css">
@@ -67,6 +68,7 @@
     <link rel="stylesheet" href="css/tips.css?v=3">
     <link rel="stylesheet" href="css/notify-center.css?v=2">
     <link rel="stylesheet" href="css/scan.css?v=1">
+    <link rel="stylesheet" href="css/topbar.css?v=1">
   </noscript>
   <script>
     // App styles load without blocking the first paint (the splash has its own
@@ -119,26 +121,28 @@
             <span class="avatar" id="profileAvatar">MY</span>
             <span><strong id="profileName">Set up profile</strong><small>Personal account</small></span>
           </button>
+          <div class="topbar-greet" id="topbarGreet"></div>
         </div>
         <div class="search-wrap">
           <label class="sr-only" for="globalSearch">Search MYLIFE</label>
           <span id="searchIcon"></span>
           <input id="globalSearch" type="search" placeholder="Search MYLIFE..." autocomplete="off">
+          <div class="search-tools">
+            <a class="search-tool search-tool-scan" id="topbarScan" href="#scan" aria-label="Smart Scan" title="Smart Scan"></a>
+            <button class="search-tool smart-assistant-button" id="smartAssistantButton" type="button" aria-label="Smart Assistant"></button>
+          </div>
           <div class="search-results glass-card" id="searchResults" hidden></div>
         </div>
         <div class="topbar-right">
           <div class="topbar-info-group" aria-label="Weather and local time">
-            <div class="topbar-weather" aria-label="Weather">
-              <span>☁</span>
-              <strong>29°</strong>
-            </div>
+            <a class="topbar-weather" id="topbarWeather" href="#home" aria-label="Weather"><strong>--°</strong></a>
             <div class="topbar-clock" aria-label="Local time">
               <span id="topbarClock">--:--</span>
             </div>
           </div>
-          <button class="icon-button smart-assistant-button" id="smartAssistantButton" type="button" aria-label="Smart Assistant"></button>
           <button class="icon-button" id="bellButton" aria-label="Notifications"></button>
         </div>
+        <div class="topbar-wx-card" id="topbarWxCard" aria-label="Weather"></div>
       </header>
 
       <main id="app" tabindex="-1"></main>
@@ -180,7 +184,7 @@
   <script src="js/login.js?v=20" defer></script>
   <script src="js/components/charts.js?v=16" defer></script>
   <script src="js/smart-assistant.js?v=18" defer></script>
-  <script src="js/navigation.js?v=24" defer></script>
+  <script src="js/navigation.js?v=25" defer></script>
   <script src="js/dashboard.js?v=55" defer></script>
   <script src="js/tips.js?v=3" defer></script>
   <script src="js/summary.js?v=7" defer></script>
@@ -207,7 +211,8 @@
   <script src="js/automation-settings.js?v=3" defer></script>
   <script src="js/setup-form-ux.js?v=2" defer></script>
   <script src="js/notification-center.js?v=6" defer></script>
-  <script src="js/app.js?v=49" defer></script>
+  <script src="js/topbar-weather.js?v=1" defer></script>
+  <script src="js/app.js?v=50" defer></script>
   <script src="js/sound-hooks.js?v=1" defer></script>
   <script src="js/smart-parse.js?v=1" defer></script>
   <script src="js/chat-bot.js?v=3" defer></script>

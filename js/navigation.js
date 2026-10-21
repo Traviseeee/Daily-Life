@@ -73,6 +73,8 @@ function renderNavigation() {
   document.getElementById("mobileNav").innerHTML = footerRoutes().map(navLink).join("");
   document.getElementById("searchIcon").innerHTML = Icons.search();
   document.getElementById("bellButton").innerHTML = Icons.bell();
+  const scanLink = document.getElementById("topbarScan");
+  if (scanLink && Icons.scan) scanLink.innerHTML = Icons.scan();
   const menuToggle = document.getElementById("menuToggle");
   const onLauncherPage = location.hash === "#launcher";
   menuToggle.innerHTML = onLauncherPage ? Icons.home() : Icons.menu();

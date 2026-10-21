@@ -19,6 +19,7 @@ const App = {
     this.bindChrome();
     this.bindInteractionSounds();
     this.startShellClock();
+    if (typeof TopbarWeather !== "undefined") TopbarWeather.init();
     window.addEventListener("hashchange", () => this.render());
     window.addEventListener("popstate", () => this.render());
     this.render();
@@ -310,6 +311,8 @@ const App = {
     this.renderSmartAssistant();
     document.body.classList.remove("nav-open");
     document.body.classList.toggle("launcher-page-open", route === "launcher");
+    document.body.classList.toggle("topbar-home", route === "home");
+    if (typeof TopbarWeather !== "undefined") TopbarWeather.render();
 
     if (route === "launcher") app.innerHTML = renderLauncher();
     else if (route === "summary") app.innerHTML = renderSummary();
