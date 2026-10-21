@@ -90,6 +90,4 @@ end $$;
 
 commit;
 
--- Rollback (only if the app breaks): drop the 4 policies above, then re-create
--- the 4 previous policies exactly as they were in supabase/schema.sql before
--- commit "Storage owner-only (QC B3)".
+-- Rollback (only if the app breaks): run 20261021_images_owner_only_rollback.sql
