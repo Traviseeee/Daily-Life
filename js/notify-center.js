@@ -1,8 +1,9 @@
 /*
- * Notification control center (like iPhone Settings → Notifications).
- * - Today page card: channel switches + tool chips, "Manage" opens the center.
- * - Center sheet: channels (Telegram / MYLIFE app), then every tool with its own
- *   switch; tap a tool for its details (bill reminder days, budget alerts, reports…).
+ * Notification center page (#notifications) — like iPhone Settings → Notifications.
+ * - Allow notifications (master switch)
+ * - Channels: Telegram / MYLIFE app
+ * - Manage by tool: one row per tool with its own switch; tap the row to
+ *   expand (collapse) its details — bill reminder days, budget alerts, reports…
  * Settings live in appData.profile.notify (rules in js/notify-prefs.js). The
  * older switches (budgetAlerts, morningDigest, per-bill reminder…) are reused,
  * not duplicated, and a tool switched off keeps working — only its alerts stop.
@@ -10,17 +11,35 @@
 const NotifyCenter = (() => {
   const km = () => languageCode() === "km";
   const L = (k, e) => (km() ? k : e);
-  let view = "home";
+  let openTool = "";
+
+  const svg = paths => `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths}</svg>`;
+  const ICON = {
+    bell: () => Icons.bell(),
+    telegram: () => svg('<path d="M21.5 3.5 2.8 10.7c-.9.4-.9 1.6 0 1.9l4.7 1.6 1.8 5.6c.3.8 1.3 1 1.9.4l2.6-2.5 4.8 3.5c.7.5 1.7.1 1.9-.7l3-15.2c.2-1-.8-1.8-1.9-1.4Z"/><path d="m7.5 14.2 9.9-7.3-7.6 8.3"/>'),
+    app: () => svg('<rect x="6" y="2.5" width="12" height="19" rx="3"/><path d="M10.5 18.5h3"/>'),
+    bills: () => Icons.bill(),
+    expenses: () => Icons.wallet(),
+    loans: () => svg('<path d="M3 10 12 4l9 6"/><path d="M5 10v8M9.5 10v8M14.5 10v8M19 10v8"/><path d="M3 20h18"/>'),
+    savings: () => svg('<path d="M19 9.5c.9.4 1.5 1.2 1.5 2.5v1.5h-1.6a6.6 6.6 0 0 1-2.4 3V20h-3v-2.3a8 8 0 0 1-3 0V20h-3v-3.4A6 6 0 0 1 4 12c0-3.6 3.4-6.5 7.5-6.5 1.4 0 2.7.3 3.8.9L17.5 5v3.2c.6.4 1.1.8 1.5 1.3Z"/><path d="M15 10.5h.01"/>'),
+    calendar: () => Icons.calendar(),
+    family: () => Icons.cake(),
+    reports: () => Icons.chart(),
+    backup: () => svg('<path d="M7 18a4.5 4.5 0 0 1-.6-9A6 6 0 0 1 18 8.5a4 4 0 0 1-.5 9.5"/><path d="M12 12v8M9 15l3-3 3 3"/>'),
+    chevron: () => svg('<path d="m6 9 6 6 6-6"/>'),
+    arrow: () => svg('<path d="M5 12h14M13 6l6 6-6 6"/>'),
+    info: () => Icons.info()
+  };
 
   const TOOL_META = {
-    bills: { icon: "🧾", km: "វិក្កយបត្រ & ទឹកភ្លើង", en: "Bills & utilities", dkm: "ថ្ងៃផុតកំណត់, បង់ស្វ័យប្រវត្តិ, PPWSA / EDC", den: "Due dates, auto-pay, PPWSA / EDC", href: "#money/bills" },
-    expenses: { icon: "💸", km: "ចំណាយ & ថវិកា", en: "Expenses & budget", dkm: "ព្រមានថវិកា, ចាយមិនធម្មតា, សួរពេលយប់", den: "Budget alerts, unusual spending, evening check", href: "#money/expenses" },
-    loans: { icon: "🏦", km: "ប្រាក់កម្ចី", en: "Loans", dkm: "រំលឹកថ្ងៃបង់ប្រាក់", den: "Payment-day reminders", href: "#money/loans" },
-    savings: { icon: "💰", km: "សន្សំ & គោលដៅ", en: "Savings & goals", dkm: "ដាក់សន្សំប្រចាំខែ, ថ្ងៃកំណត់គោលដៅ", den: "Monthly saving, goal deadlines", href: "#money/savings" },
-    calendar: { icon: "📅", km: "ប្រតិទិន & ការរំលឹក", en: "Calendar & reminders", dkm: "ព្រឹត្តិការណ៍ និងការរំលឹក", den: "Events and reminders", href: "#calendar" },
-    family: { icon: "🎂", km: "គ្រួសារ", en: "Family", dkm: "ថ្ងៃកំណើត និងខួប", den: "Birthdays and anniversaries", href: "#family" },
-    reports: { icon: "📊", km: "របាយការណ៍", en: "Reports", dkm: "សង្ខេបព្រឹក, របាយការណ៍សប្តាហ៍ & ខែ", den: "Morning digest, weekly & monthly reports", href: "#money/reports" },
-    backup: { icon: "💾", km: "Backup", en: "Backup", dkm: "ឯកសារ JSON ទៅ Telegram រៀងរាល់សប្តាហ៍", den: "Weekly JSON file to Telegram", href: "#settings" }
+    bills: { km: "វិក្កយបត្រ & ទឹកភ្លើង", en: "Bills & utilities", dkm: "ថ្ងៃផុតកំណត់, បង់ស្វ័យប្រវត្តិ, PPWSA / EDC", den: "Due dates, auto-pay, PPWSA / EDC", href: "#money/bills" },
+    expenses: { km: "ចំណាយ & ថវិកា", en: "Expenses & budget", dkm: "ព្រមានថវិកា, ចាយមិនធម្មតា, សួរពេលយប់", den: "Budget alerts, unusual spending, evening check", href: "#money/expenses" },
+    loans: { km: "ប្រាក់កម្ចី", en: "Loans", dkm: "រំលឹកថ្ងៃបង់ប្រាក់", den: "Payment-day reminders", href: "#money/loans" },
+    savings: { km: "សន្សំ & គោលដៅ", en: "Savings & goals", dkm: "ដាក់សន្សំប្រចាំខែ, ថ្ងៃកំណត់គោលដៅ", den: "Monthly saving, goal deadlines", href: "#money/savings" },
+    calendar: { km: "ប្រតិទិន & ការរំលឹក", en: "Calendar & reminders", dkm: "ព្រឹត្តិការណ៍ និងការរំលឹក", den: "Events and reminders", href: "#calendar" },
+    family: { km: "គ្រួសារ", en: "Family", dkm: "ថ្ងៃកំណើត និងខួប", den: "Birthdays and anniversaries", href: "#family" },
+    reports: { km: "របាយការណ៍", en: "Reports", dkm: "សង្ខេបព្រឹក, របាយការណ៍សប្តាហ៍ & ខែ", den: "Morning digest, weekly & monthly reports", href: "#money/reports" },
+    backup: { km: "Backup", en: "Backup", dkm: "ឯកសារ JSON ទៅ Telegram រៀងរាល់សប្តាហ៍", den: "Weekly JSON file to Telegram", href: "#settings" }
   };
 
   const STAGE_LABEL = { 3: ["3 ថ្ងៃមុន", "3 days before"], 2: ["2 ថ្ងៃមុន", "2 days before"], 1: ["1 ថ្ងៃមុន", "1 day before"], 0: ["ថ្ងៃផុតកំណត់", "On the due date"] };
@@ -28,256 +47,201 @@ const NotifyCenter = (() => {
   const prefs = () => NotifyPrefs.prefs(appData.profile);
   const masterOn = () => appData.profile.notificationsEnabled !== false;
 
+  // save, re-render the page, keep the scroll position
+  function keep(work) {
+    const y = window.scrollY;
+    work();
+    window.requestAnimationFrame(() => window.scrollTo(0, y));
+  }
   function save(changes) {
     const current = prefs();
-    const next = { ...current, ...changes, tools: { ...current.tools, ...(changes.tools || {}) } };
-    const y = window.scrollY;
-    Store.updateProfile({ notify: next });
-    window.scrollTo(0, y);
-    refreshSheet();
+    keep(() => Store.updateProfile({ notify: { ...current, ...changes, tools: { ...current.tools, ...(changes.tools || {}) } } }));
   }
-
-  function saveProfile(changes) {
-    const y = window.scrollY;
-    Store.updateProfile(changes);
-    window.scrollTo(0, y);
-    refreshSheet();
-  }
+  const saveProfile = changes => keep(() => Store.updateProfile(changes));
 
   const toggle = (attrs, on, label) => `<label class="nfc-switch" aria-label="${escapeAttr(label)}"><input type="checkbox" ${attrs} ${on ? "checked" : ""}><span></span></label>`;
+  const tile = (name, tone) => `<span class="nfc-tile nfc-tone-${tone}">${ICON[name]()}</span>`;
+  const TONE = { bills: "amber", expenses: "rose", loans: "blue", savings: "green", calendar: "violet", family: "pink", reports: "teal", backup: "slate" };
 
-  function statusLine() {
+  function summary() {
     const p = prefs();
-    if (!masterOn()) return L("ការជូនដំណឹងទាំងអស់បិទ", "All notifications are off");
+    if (!masterOn()) return { text: L("ការជូនដំណឹងទាំងអស់បិទ", "All notifications are off"), tone: "off" };
     const onTools = NotifyPrefs.TOOLS.filter(tool => p.tools[tool]).length;
-    return `${p.telegram ? "✅" : "⛔"} Telegram · ${p.app ? "✅" : "⛔"} App · ${onTools}/${NotifyPrefs.TOOLS.length} ${L("tools", "tools on")}`;
+    const channels = [p.telegram ? "Telegram" : "", p.app ? "App" : ""].filter(Boolean).join(" + ") || L("គ្មានផ្លូវផ្ញើ", "No channel");
+    return { text: `${channels} · ${onTools}/${NotifyPrefs.TOOLS.length} ${L("Tool បើក", "tools on")}`, tone: p.telegram || p.app ? "on" : "off" };
   }
 
-  /* ---------- Today page card ---------- */
-  function renderTodayCard() {
+  /* ---------- page ---------- */
+  function renderPage() {
     const p = prefs();
     const off = !masterOn();
+    const sum = summary();
     return `
-      <article class="glass-card card-pad td-card nfc-today ${off ? "is-off" : ""}">
-        <div class="td-card-head">
-          <h2 class="section-title">🔔 ${L("ការជូនដំណឹង", "Notifications")}</h2>
-          <button class="td-link nfc-open" type="button" data-nfc-open>${L("គ្រប់គ្រង", "Manage")} ${Icons.chevron()}</button>
+      <section class="page nfc-page">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title page-title-with-icon"><span class="page-title-icon">${ICON.bell()}</span>${L("ការជូនដំណឹង", "Notifications")}</h1>
+            <p class="page-subtitle">${L("គ្រប់គ្រងការជូនដំណឹងរបស់ Tool នីមួយៗ ក្នុងកន្លែងតែមួយ", "Manage notifications for every MYLIFE tool in one place")}</p>
+          </div>
         </div>
-        <p class="nfc-status">${escapeHtml(statusLine())}</p>
-        <div class="nfc-channels nfc-channels-compact">
-          ${channelRow("telegram", p.telegram, "✈️", "Telegram", L("សារពី bot", "Bot messages"), off)}
-          ${channelRow("app", p.app, "📱", "MYLIFE App", L("Pop-up, bell, push", "Pop-ups, bell, push"), off)}
+
+        <div class="nfc-stack">
+          <div class="nfc-group">
+            <div class="nfc-row nfc-master">
+              ${tile("bell", off ? "slate" : "green")}
+              <span class="nfc-copy"><strong>${L("អនុញ្ញាតការជូនដំណឹង", "Allow notifications")}</strong><small class="nfc-sum is-${sum.tone}">${escapeHtml(sum.text)}</small></span>
+              ${toggle("data-nfc-master", !off, L("អនុញ្ញាតការជូនដំណឹង", "Allow notifications"))}
+            </div>
+          </div>
+
+          <div>
+            <h2 class="nfc-label">${L("ផ្លូវផ្ញើ", "Notification channels")}</h2>
+            <div class="nfc-group ${off ? "is-disabled" : ""}">
+              ${channelRow("telegram", p.telegram, "telegram", "blue", "Telegram", L("សារពី bot ក្នុងក្រុម", "Bot messages in your group"), off)}
+              ${channelRow("app", p.app, "app", "violet", "MYLIFE App", L("Pop-up, bell, push លើទូរស័ព្ទ", "Pop-ups, bell, phone push"), off)}
+            </div>
+          </div>
+
+          <div>
+            <h2 class="nfc-label">${L("តាម Tool", "Manage by tool")}</h2>
+            <p class="nfc-hint">${L("បើក/បិទ ហើយចុចលើ Tool ដើម្បីបើកការកំណត់លម្អិត", "Switch on/off, and tap a tool to open its details")}</p>
+            <div class="nfc-group nfc-acc-list ${off ? "is-disabled" : ""}">
+              ${NotifyPrefs.TOOLS.map(tool => toolItem(tool, p, off)).join("")}
+            </div>
+          </div>
+
+          <p class="nfc-foot">${ICON.info()}<span>${L("បិទការជូនដំណឹង មិនបិទ Tool ទេ — ការកត់ទិន្នន័យ និង Telegram bot នៅដំណើរការធម្មតា។", "Turning notifications off never turns a tool off — recording data and the Telegram bot keep working.")}</span></p>
         </div>
-        <div class="nfc-chips">
-          ${NotifyPrefs.TOOLS.map(tool => `<button class="nfc-chip ${p.tools[tool] && !off ? "" : "is-off"}" type="button" data-nfc-open="${tool}" title="${escapeAttr(L(TOOL_META[tool].km, TOOL_META[tool].en))}"><span>${TOOL_META[tool].icon}</span>${escapeHtml(L(TOOL_META[tool].km, TOOL_META[tool].en))}</button>`).join("")}
-        </div>
-      </article>`;
+      </section>`;
   }
 
-  function channelRow(channel, on, icon, title, sub, disabled) {
-    return `<div class="nfc-row nfc-channel ${on && !disabled ? "" : "is-off"}">
-      <span class="nfc-icon">${icon}</span>
+  function channelRow(channel, on, icon, tone, title, sub, disabled) {
+    return `<div class="nfc-row ${on && !disabled ? "" : "is-off"}">
+      ${tile(icon, tone)}
       <span class="nfc-copy"><strong>${escapeHtml(title)}</strong><small>${escapeHtml(sub)}</small></span>
       ${toggle(`data-nfc-channel="${channel}" ${disabled ? "disabled" : ""}`, on, title)}
     </div>`;
   }
 
-  /* ---------- center sheet ---------- */
-  function homeView() {
-    const p = prefs();
-    const off = !masterOn();
-    return `
-      <div class="nfc-sheet-head">
-        <div><h2 id="nfcTitle">${L("ការជូនដំណឹង", "Notifications")}</h2><p>${L("គ្រប់គ្រងការជូនដំណឹងរបស់ Tool នីមួយៗ", "Manage notifications for each MYLIFE tool")}</p></div>
-        <button class="icon-button" type="button" data-nfc-close aria-label="${L("បិទ", "Close")}">${Icons.close()}</button>
+  function toolItem(tool, p, off) {
+    const meta = TOOL_META[tool];
+    const open = openTool === tool;
+    const on = p.tools[tool];
+    return `<div class="nfc-acc ${open ? "is-open" : ""} ${on ? "" : "is-off"}" data-nfc-acc="${tool}">
+      <div class="nfc-row nfc-acc-head">
+        <button class="nfc-acc-toggle" type="button" data-nfc-expand="${tool}" aria-expanded="${open}" aria-controls="nfc-body-${tool}">
+          ${tile(tool, TONE[tool])}
+          <span class="nfc-copy"><strong>${escapeHtml(L(meta.km, meta.en))}</strong><small>${escapeHtml(toolSub(tool, p))}</small></span>
+          <span class="nfc-caret">${ICON.chevron()}</span>
+        </button>
+        ${toggle(`data-nfc-tool-switch="${tool}" ${off ? "disabled" : ""}`, on, L(meta.km, meta.en))}
       </div>
-      <div class="nfc-group">
-        <div class="nfc-row nfc-master">
-          <span class="nfc-icon">🔔</span>
-          <span class="nfc-copy"><strong>${L("អនុញ្ញាតការជូនដំណឹង", "Allow notifications")}</strong><small>${L("បិទ = ស្ងាត់ទាំងអស់ (ទិន្នន័យនៅកត់ធម្មតា)", "Off = everything quiet (data still saves)")}</small></span>
-          ${toggle("data-nfc-master", !off, L("អនុញ្ញាតការជូនដំណឹង", "Allow notifications"))}
+      <div class="nfc-acc-body" id="nfc-body-${tool}" ${open ? "" : "hidden"}>
+        <div class="nfc-acc-inner ${on ? "" : "is-disabled"}">
+          ${toolDetails(tool, p)}
+          <a class="nfc-go" href="${meta.href}">${L("បើក", "Open")} ${escapeHtml(L(meta.km, meta.en))} ${ICON.arrow()}</a>
         </div>
       </div>
-      <h3 class="nfc-label">${L("ផ្លូវផ្ញើ", "Notification channels")}</h3>
-      <div class="nfc-group ${off ? "is-disabled" : ""}">
-        ${channelRow("telegram", p.telegram, "✈️", "Telegram", L("សារពី bot ក្នុងក្រុម", "Bot messages in your group"), off)}
-        ${channelRow("app", p.app, "📱", "MYLIFE App", L("Pop-up, bell 🔔, push លើទូរស័ព្ទ", "Pop-ups, bell 🔔, phone push"), off)}
-      </div>
-      <h3 class="nfc-label">${L("តាម Tool", "Manage by tool")}</h3>
-      <p class="nfc-hint">${L("បើក/បិទ ឬចុចលើ Tool ដើម្បីកំណត់លម្អិត", "Switch on/off, or tap a tool for details")}</p>
-      <div class="nfc-group ${off ? "is-disabled" : ""}">
-        ${NotifyPrefs.TOOLS.map(tool => `
-          <div class="nfc-row nfc-tool ${p.tools[tool] ? "" : "is-off"}">
-            <button class="nfc-tool-open" type="button" data-nfc-tool="${tool}">
-              <span class="nfc-icon">${TOOL_META[tool].icon}</span>
-              <span class="nfc-copy"><strong>${escapeHtml(L(TOOL_META[tool].km, TOOL_META[tool].en))}</strong><small>${escapeHtml(L(TOOL_META[tool].dkm, TOOL_META[tool].den))}</small></span>
-              <span class="nfc-chevron">${Icons.chevron()}</span>
-            </button>
-            ${toggle(`data-nfc-tool-switch="${tool}" ${off ? "disabled" : ""}`, p.tools[tool], L(TOOL_META[tool].km, TOOL_META[tool].en))}
-          </div>`).join("")}
-      </div>
-      <p class="nfc-foot">${L("បិទការជូនដំណឹង មិនបិទ Tool ទេ — ការកត់ទិន្នន័យ និង bot នៅដំណើរការធម្មតា។", "Turning notifications off never turns a tool off — recording data and the bot keep working.")}</p>`;
+    </div>`;
+  }
+
+  // the line under each tool: its description, or the current bill reminder days
+  function toolSub(tool, p) {
+    if (!p.tools[tool]) return L("បិទ — Tool នៅដំណើរការ", "Off — the tool still works");
+    if (tool === "bills") return stageSummary(p.billStages);
+    return L(TOOL_META[tool].dkm, TOOL_META[tool].den);
   }
 
   function flagRow(key, title, sub, timeKey, timeDefault) {
     const p = appData.profile;
     const on = p[key] !== false;
-    return `<div class="nfc-row ${on ? "" : "is-off"}">
+    return `<div class="nfc-row nfc-sub ${on ? "" : "is-off"}">
       <span class="nfc-copy"><strong>${escapeHtml(title)}</strong><small>${escapeHtml(sub)}</small></span>
-      ${timeKey ? `<input class="nfc-time" type="time" value="${escapeAttr(p[timeKey] || timeDefault)}" data-nfc-time="${timeKey}" ${on ? "" : "disabled"}>` : ""}
+      ${timeKey ? `<input class="nfc-time" type="time" value="${escapeAttr(p[timeKey] || timeDefault)}" data-nfc-time="${timeKey}" ${on ? "" : "disabled"} aria-label="${escapeAttr(title)}">` : ""}
       ${toggle(`data-nfc-flag="${key}"`, on, title)}
     </div>`;
   }
 
-  function toolDetails(tool) {
-    const p = prefs();
+  const note = text => `<p class="nfc-note">${ICON.info()}<span>${text}</span></p>`;
+
+  function toolDetails(tool, p) {
     if (tool === "bills") {
       return `
-        <h3 class="nfc-label">${L("រំលឹកមុនថ្ងៃផុតកំណត់", "Remind me")}</h3>
+        <p class="nfc-sublabel">${L("រំលឹកខ្ញុំ", "Remind me")}</p>
         <div class="nfc-stages">
           ${NotifyPrefs.BILL_STAGES.map(days => `<label class="nfc-stage ${p.billStages.includes(days) ? "is-on" : ""}"><input type="checkbox" data-nfc-stage="${days}" ${p.billStages.includes(days) ? "checked" : ""}><span>${escapeHtml(L(...STAGE_LABEL[days]))}</span></label>`).join("")}
         </div>
-        <p class="nfc-hint">${escapeHtml(stageSummary(p.billStages))}</p>
-        <ul class="nfc-notes">
-          <li>${L("វិក្កយបត្រនីមួយៗ នៅតែអាចបិទការរំលឹកក្នុង form របស់វា (☑ Reminder)។", "Each bill can still be muted in its own form (☑ Reminder).")}</li>
-          <li>${L("Auto-pay នៅតែបង់ — មានតែសារប៉ុណ្ណោះដែលធ្វើតាមការកំណត់នេះ។", "Auto-pay still pays — only its message follows this setting.")}</li>
-          <li>${L("សារ PPWSA / EDC នៅតែត្រូវកត់ក្នុង app ជានិច្ច។", "PPWSA / EDC messages are always recorded in the app.")}</li>
-        </ul>`;
+        ${note(L("វិក្កយបត្រនីមួយៗ នៅតែអាចបិទការរំលឹកក្នុង form របស់វា។ Auto-pay នៅតែបង់ ហើយសារ PPWSA / EDC នៅតែត្រូវកត់។", "Each bill can still be muted in its own form. Auto-pay still pays, and PPWSA / EDC messages are always recorded."))}`;
     }
     if (tool === "expenses") {
-      return `<div class="nfc-group">
-        ${flagRow("budgetAlerts", L("📊 ព្រមានថវិកា", "📊 Budget alerts"), L("ពេលចាយដល់ 80% និង 100%", "At 80% and 100% of a budget"))}
-        ${flagRow("unusualAlert", L("⚠️ ចាយមិនធម្មតា", "⚠️ Unusual spending"), L("ពេលថ្ងៃនេះចាយច្រើនជាងធម្មតា", "When today is much higher than usual"))}
-        ${flagRow("eveningCheck", L("🌙 សួរពេលយប់", "🌙 Evening check"), L("“មានចាយអ្វីទៀតទេ?”", "“Anything else spent today?”"), "eveningCheckTime", "21:00")}
+      return `<div class="nfc-subgroup">
+        ${flagRow("budgetAlerts", L("ព្រមានថវិកា", "Budget alerts"), L("ពេលចាយដល់ 80% និង 100%", "At 80% and 100% of a budget"))}
+        ${flagRow("unusualAlert", L("ចាយមិនធម្មតា", "Unusual spending"), L("ពេលថ្ងៃនេះចាយច្រើនជាងធម្មតា", "When today is much higher than usual"))}
+        ${flagRow("eveningCheck", L("សួរពេលយប់", "Evening check"), L("“មានចាយអ្វីទៀតទេ?”", "“Anything else spent today?”"), "eveningCheckTime", "21:00")}
       </div>`;
     }
     if (tool === "reports") {
-      return `<div class="nfc-group">
-        ${flagRow("morningDigest", L("☀️ សង្ខេបពេលព្រឹក", "☀️ Morning digest"), L("កាលវិភាគថ្ងៃនេះ", "Today's plan"), "digestTime", "07:00")}
-        ${flagRow("weeklyReport", L("📈 របាយការណ៍សប្តាហ៍", "📈 Weekly report"), L("សង្ខេបលុយ 7 ថ្ងៃ", "7-day money summary"), "weeklyReportTime", "19:00")}
-        ${flagRow("weeklyImage", L("🖼️ រូបរបាយការណ៍សប្តាហ៍", "🖼️ Weekly picture"), L("រូបភាពរបាយការណ៍", "Report image"))}
-        ${flagRow("monthlyImage", L("🗓️ រូបរបាយការណ៍ខែ", "🗓️ Monthly picture"), L("ថ្ងៃទី 1 នៃខែ", "On the 1st of the month"))}
-        ${flagRow("reportAutoSend", L("📤 របាយការណ៍ខែ (JPG + Excel)", "📤 Monthly report (JPG + Excel)"), L("ផ្ញើដោយស្វ័យប្រវត្តិ", "Sent automatically"))}
+      return `<div class="nfc-subgroup">
+        ${flagRow("morningDigest", L("សង្ខេបពេលព្រឹក", "Morning digest"), L("កាលវិភាគថ្ងៃនេះ", "Today's plan"), "digestTime", "07:00")}
+        ${flagRow("weeklyReport", L("របាយការណ៍សប្តាហ៍", "Weekly report"), L("សង្ខេបលុយ 7 ថ្ងៃ", "7-day money summary"), "weeklyReportTime", "19:00")}
+        ${flagRow("weeklyImage", L("រូបរបាយការណ៍សប្តាហ៍", "Weekly picture"), L("រូបភាពរបាយការណ៍", "Report image"))}
+        ${flagRow("monthlyImage", L("រូបរបាយការណ៍ខែ", "Monthly picture"), L("ថ្ងៃទី 1 នៃខែ", "On the 1st of the month"))}
+        ${flagRow("reportAutoSend", L("របាយការណ៍ខែ (JPG + Excel)", "Monthly report (JPG + Excel)"), L("ផ្ញើដោយស្វ័យប្រវត្តិ", "Sent automatically"))}
       </div>`;
     }
     if (tool === "backup") {
-      return `<div class="nfc-group">${flagRow("telegramBackup", L("💾 Backup ទៅ Telegram", "💾 Backup to Telegram"), L("ឯកសារ JSON រៀងរាល់សប្តាហ៍", "Weekly JSON file"))}</div>
-        <ul class="nfc-notes"><li>${L("Backup ក្នុង Cloud នៅរក្សាទុកជានិច្ច។", "Cloud backups are always kept.")}</li></ul>`;
+      return `<div class="nfc-subgroup">${flagRow("telegramBackup", L("Backup ទៅ Telegram", "Backup to Telegram"), L("ឯកសារ JSON រៀងរាល់សប្តាហ៍", "Weekly JSON file"))}</div>
+        ${note(L("Backup ក្នុង Cloud នៅរក្សាទុកជានិច្ច។", "Cloud backups are always kept."))}`;
     }
     const info = {
       calendar: L("ព្រឹត្តិការណ៍នីមួយៗ មានជម្រើស “រំលឹកមុន” ផ្ទាល់ខ្លួនក្នុង form។", "Each event has its own “remind before” option in its form."),
       family: L("សមាជិកនីមួយៗ កំណត់ “រំលឹកមុនប៉ុន្មានថ្ងៃ” ក្នុង form គ្រួសារ។", "Each member sets “remind days before” in the family form."),
       savings: L("គោលដៅនីមួយៗ កំណត់ការរំលឹកក្នុង form គោលដៅ។", "Each goal sets its reminders in the goal form."),
-      loans: L("រំលឹកនៅថ្ងៃបង់ប្រាក់ម៉ោង 9:00 AM។", "Reminds on the payment day at 9:00 AM.")
+      loans: L("រំលឹកនៅថ្ងៃបង់ប្រាក់ ម៉ោង 9:00 AM។", "Reminds on the payment day at 9:00 AM.")
     };
-    return `<ul class="nfc-notes"><li>${info[tool] || ""}</li></ul>`;
+    return note(info[tool] || "");
   }
 
   function stageSummary(stages) {
-    if (!stages.length) return L("គ្មានការរំលឹកវិក្កយបត្រទេ", "No bill reminders");
-    return L("រំលឹក៖ ", "Reminds: ") + stages.map(days => L(...STAGE_LABEL[days])).join(" · ");
+    if (!stages.length) return L("គ្មានការរំលឹកវិក្កយបត្រ", "No bill reminders");
+    return L("រំលឹក៖ ", "Remind: ") + stages.map(days => L(...STAGE_LABEL[days])).join(" · ");
   }
 
-  function toolView(tool) {
-    const p = prefs();
-    const meta = TOOL_META[tool];
-    return `
-      <div class="nfc-sheet-head">
-        <button class="icon-button nfc-back" type="button" data-nfc-back aria-label="${L("ត្រឡប់", "Back")}">‹</button>
-        <div><h2 id="nfcTitle">${meta.icon} ${escapeHtml(L(meta.km, meta.en))}</h2><p>${escapeHtml(L(meta.dkm, meta.den))}</p></div>
-        <button class="icon-button" type="button" data-nfc-close aria-label="${L("បិទ", "Close")}">${Icons.close()}</button>
-      </div>
-      <div class="nfc-group">
-        <div class="nfc-row nfc-master">
-          <span class="nfc-copy"><strong>${L("ការជូនដំណឹងរបស់ Tool នេះ", "Notifications for this tool")}</strong><small>${L("Tool នៅដំណើរការ ទោះបិទ", "The tool keeps working when off")}</small></span>
-          ${toggle(`data-nfc-tool-switch="${tool}"`, p.tools[tool], L(meta.km, meta.en))}
-        </div>
-      </div>
-      <div class="nfc-detail ${p.tools[tool] ? "" : "is-disabled"}">${toolDetails(tool)}</div>
-      <a class="nfc-go" href="${meta.href}" data-nfc-go>${L("បើក", "Open")} ${escapeHtml(L(meta.km, meta.en))} ${Icons.chevron()}</a>`;
-  }
-
-  function sheetHtml() {
-    return view === "home" ? homeView() : toolView(view);
-  }
-
-  function open(tool = "") {
-    view = tool && TOOL_META[tool] ? tool : "home";
-    close(true);
-    const node = document.createElement("div");
-    node.className = "nfc-overlay";
-    node.id = "notifyCenter";
-    node.innerHTML = `<section class="nfc-sheet" role="dialog" aria-modal="true" aria-labelledby="nfcTitle"><span class="nfc-grip" aria-hidden="true"></span><div data-nfc-body>${sheetHtml()}</div></section>`;
-    document.body.appendChild(node);
-    document.body.classList.add("nfc-lock");
-    requestAnimationFrame(() => node.classList.add("open"));
-    node.addEventListener("click", event => { if (event.target === node) close(); });
-    bindSheet(node);
-    document.addEventListener("keydown", onEsc);
-  }
-
-  function onEsc(event) {
-    if (event.key === "Escape") close();
-  }
-
-  function close(instant = false) {
-    const node = document.getElementById("notifyCenter");
-    document.removeEventListener("keydown", onEsc);
-    document.body.classList.remove("nfc-lock");
-    if (!node) return;
-    if (instant) return node.remove();
-    node.classList.remove("open");
-    setTimeout(() => node.remove(), 220);
-  }
-
-  function refreshSheet() {
-    const node = document.getElementById("notifyCenter");
-    if (!node) return;
-    const body = node.querySelector("[data-nfc-body]");
-    const scroll = node.querySelector(".nfc-sheet").scrollTop;
-    body.innerHTML = sheetHtml();
-    node.querySelector(".nfc-sheet").scrollTop = scroll;
-    bindSheet(node);
-  }
-
-  function bindControls(root) {
-    root.querySelectorAll("[data-nfc-channel]").forEach(input => input.addEventListener("change", () => {
-      save({ [input.dataset.nfcChannel]: input.checked });
+  /* ---------- binding ---------- */
+  function bindPage() {
+    const page = document.querySelector(".nfc-page");
+    if (!page) return;
+    page.querySelector("[data-nfc-master]")?.addEventListener("change", event => saveProfile({ notificationsEnabled: event.target.checked }));
+    page.querySelectorAll("[data-nfc-channel]").forEach(input => input.addEventListener("change", () => save({ [input.dataset.nfcChannel]: input.checked })));
+    page.querySelectorAll("[data-nfc-tool-switch]").forEach(input => input.addEventListener("change", () => save({ tools: { [input.dataset.nfcToolSwitch]: input.checked } })));
+    page.querySelectorAll("[data-nfc-expand]").forEach(button => button.addEventListener("click", () => {
+      const tool = button.dataset.nfcExpand;
+      openTool = openTool === tool ? "" : tool;
+      // open/close in place (no re-render) so it animates and keeps focus
+      page.querySelectorAll("[data-nfc-acc]").forEach(item => {
+        const isOpen = item.dataset.nfcAcc === openTool;
+        item.classList.toggle("is-open", isOpen);
+        item.querySelector("[data-nfc-expand]").setAttribute("aria-expanded", String(isOpen));
+        item.querySelector(".nfc-acc-body").hidden = !isOpen;
+      });
+      if (typeof Sound !== "undefined") Sound.play(openTool ? "open" : "close");
     }));
-    root.querySelectorAll("[data-nfc-tool-switch]").forEach(input => input.addEventListener("change", () => {
-      save({ tools: { [input.dataset.nfcToolSwitch]: input.checked } });
-    }));
-  }
-
-  function bindSheet(node) {
-    bindControls(node);
-    node.querySelectorAll("[data-nfc-close]").forEach(button => button.addEventListener("click", () => close()));
-    node.querySelector("[data-nfc-back]")?.addEventListener("click", () => { view = "home"; refreshSheet(); });
-    node.querySelectorAll("[data-nfc-tool]").forEach(button => button.addEventListener("click", () => { view = button.dataset.nfcTool; refreshSheet(); node.querySelector(".nfc-sheet").scrollTop = 0; }));
-    node.querySelector("[data-nfc-go]")?.addEventListener("click", () => close());
-    node.querySelector("[data-nfc-master]")?.addEventListener("change", event => {
-      saveProfile({ notificationsEnabled: event.target.checked });
-    });
-    node.querySelectorAll("[data-nfc-stage]").forEach(input => input.addEventListener("change", () => {
-      const stages = [...node.querySelectorAll("[data-nfc-stage]")].filter(item => item.checked).map(item => Number(item.dataset.nfcStage));
+    page.querySelectorAll("[data-nfc-stage]").forEach(input => input.addEventListener("change", () => {
+      const stages = [...page.querySelectorAll("[data-nfc-stage]")].filter(item => item.checked).map(item => Number(item.dataset.nfcStage));
       save({ billStages: stages });
     }));
-    node.querySelectorAll("[data-nfc-flag]").forEach(input => input.addEventListener("change", () => {
-      saveProfile({ [input.dataset.nfcFlag]: input.checked });
-    }));
-    node.querySelectorAll("[data-nfc-time]").forEach(input => input.addEventListener("change", () => {
-      if (!/^\d{2}:\d{2}$/.test(input.value)) return;
-      saveProfile({ [input.dataset.nfcTime]: input.value });
+    page.querySelectorAll("[data-nfc-flag]").forEach(input => input.addEventListener("change", () => saveProfile({ [input.dataset.nfcFlag]: input.checked })));
+    page.querySelectorAll("[data-nfc-time]").forEach(input => input.addEventListener("change", () => {
+      if (/^\d{2}:\d{2}$/.test(input.value)) saveProfile({ [input.dataset.nfcTime]: input.value });
     }));
   }
 
-  // Today card (and anything else that renders [data-nfc-open] buttons)
-  function bindPage(root = document) {
-    bindControls(root.querySelector(".nfc-today") || document.createElement("div"));
-    root.querySelectorAll("[data-nfc-open]").forEach(button => button.addEventListener("click", () => open(button.dataset.nfcOpen || "")));
+  // from Settings, the bell panel, etc.: go to the page (optionally with a tool open)
+  function open(tool = "") {
+    openTool = TOOL_META[tool] ? tool : openTool;
+    if (location.hash === "#notifications") App.render();
+    else location.hash = "#notifications";
   }
 
-  window.addEventListener("hashchange", () => close());
-
-  return { renderTodayCard, open, close, bindPage };
+  return { renderPage, bindPage, open };
 })();

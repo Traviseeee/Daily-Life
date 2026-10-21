@@ -12,6 +12,7 @@ const routes = [
 
 const utilityRoutes = [
   { id: "tips", label: "Tips", icon: "help" },
+  { id: "notifications", labelKey: "notificationsEnabled", icon: "bell" },
   { id: "settings", label: "Settings", icon: "settings" },
   { id: "help", label: "Help", icon: "help" }
 ];

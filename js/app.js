@@ -327,6 +327,7 @@ const App = {
       app.innerHTML = renderTipsContent();
     }
     else if (route === "settings") app.innerHTML = renderSettings();
+    else if (route === "notifications" && typeof NotifyCenter !== "undefined") app.innerHTML = NotifyCenter.renderPage();
     else if (route === "help") app.innerHTML = renderHelp();
     else app.innerHTML = renderHome();
 
@@ -736,6 +737,7 @@ const App = {
       else if (typeof bindLegacyTips === "function") bindLegacyTips();
     }
     if (route === "settings" && typeof bindSettings === "function") bindSettings();
+    if (route === "notifications" && typeof NotifyCenter !== "undefined") NotifyCenter.bindPage();
   },
   bindInteractionSounds() {
     if (this.interactionSoundBound) return;

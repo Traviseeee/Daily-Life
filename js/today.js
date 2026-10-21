@@ -174,7 +174,6 @@ function renderToday() {
       </div>
 
       <aside class="td-side">
-        ${typeof NotifyCenter !== "undefined" ? NotifyCenter.renderTodayCard() : ""}
         <article class="glass-card card-pad td-card td-money">
           <div class="td-card-head"><h2 class="section-title">💰 ${isKm ? "លុយថ្ងៃនេះ" : "Money today"}</h2><a class="td-link" href="#money">${t("view")} ${Icons.chevron()}</a></div>
           <div class="td-money-grid">
@@ -194,7 +193,6 @@ function renderToday() {
 }
 
 function bindToday() {
-  if (typeof NotifyCenter !== "undefined") NotifyCenter.bindPage(document.querySelector(".today-page") || document);
   document.querySelector("[data-td-add-event]")?.addEventListener("click", () => App.openEventModal({ date: localDateInput() }));
   document.querySelectorAll("[data-td-paid]").forEach(button => button.addEventListener("click", () => {
     if (typeof markBillPaid === "function") markBillPaid(button.dataset.tdPaid);
