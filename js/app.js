@@ -602,7 +602,8 @@ const App = {
       }
     });
 
-    return items;
+    // notification center: App channel / tool switches
+    return typeof NotifyPrefs === "undefined" ? items : items.filter(item => NotifyPrefs.allows(appData.profile, item.kind, "app"));
   },
   checkDueReminderAlerts() {
     if (appData.profile?.notificationsEnabled === false) return;

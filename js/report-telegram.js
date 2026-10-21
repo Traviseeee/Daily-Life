@@ -100,6 +100,7 @@ const ReportTelegram = (() => {
   // first app open of a new month: last month's report, once (server dedupes too)
   async function autoMonthly() {
     if (appData.profile?.reportAutoSend === false || appData.profile?.notificationsEnabled === false) return;
+    if (typeof NotifyPrefs !== "undefined" && !NotifyPrefs.allows(appData.profile, "report", "telegram")) return;
     const month = prevMonth();
     if (appData.profile?.lastReportSent === month || !hasData(month)) return;
     if (!(await accessToken())) return;

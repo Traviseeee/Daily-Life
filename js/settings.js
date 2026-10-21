@@ -85,6 +85,7 @@ function renderSettings() {
                 <label class="settings-preference-row"><span><strong>${languageCode() === "km" ? "ទំព័រលុយ បង្ហាញដំបូង" : "Money page opens on"}</strong><small>${languageCode() === "km" ? "ពេលដែលទំព័រលុយបង្ហាញមុនគេ" : "The period the Money page shows first"}</small></span><select data-preference="moneyDefaultPeriod">${[["day", languageCode() === "km" ? "ថ្ងៃ" : "Day"], ["week", languageCode() === "km" ? "សប្តាហ៍" : "Week"], ["month", languageCode() === "km" ? "ខែ" : "Month"], ["year", languageCode() === "km" ? "ឆ្នាំ" : "Year"]].map(([v, l]) => `<option value="${v}" ${(appData.profile.moneyDefaultPeriod || "month") === v ? "selected" : ""}>${l}</option>`).join("")}</select></label>
                 <div class="settings-preference-row settings-link-row"><span><strong>${languageCode() === "km" ? "Footer និងថវិកា" : "Footer and budgets"}</strong><small>${languageCode() === "km" ? "រៀបលំដាប់ footer ឬកំណត់ថវិកាតាមប្រភេទចំណាយ" : "Arrange the footer or set spending budgets"}</small></span><div class="settings-link-buttons"><button type="button" class="button ghost-button" data-open-footer-editor>${languageCode() === "km" ? "រៀបចំ footer" : "Arrange footer"}</button><a class="button ghost-button" href="#money/budget">${languageCode() === "km" ? "ថវិកា" : "Budgets"}</a></div></div>
                 <label class="settings-preference-row"><span><strong>${t("notificationsEnabled")}</strong><small>${t("notificationsEnabledHelp")}</small></span><input type="checkbox" data-preference="notificationsEnabled" ${appData.profile.notificationsEnabled !== false ? "checked" : ""}></label>
+                <div class="settings-preference-row settings-link-row"><span><strong>🔔 ${languageCode() === "km" ? "មជ្ឈមណ្ឌលការជូនដំណឹង" : "Notification center"}</strong><small>${languageCode() === "km" ? "Telegram, App និង Tool នីមួយៗ" : "Telegram, app, and each tool"}</small></span><button class="button ghost-button" type="button" data-nfc-open>${languageCode() === "km" ? "គ្រប់គ្រង" : "Manage"}</button></div>
               </div>
             </article>
             ${renderAlertStatusCard()}
@@ -503,6 +504,7 @@ function openEditUserDataModal() {
 }
 
 function bindSettings() {
+  if (typeof NotifyCenter !== "undefined") document.querySelectorAll("[data-nfc-open]").forEach(button => button.addEventListener("click", () => NotifyCenter.open(button.dataset.nfcOpen || "")));
   bindNavigationSheetGestures();
   if (typeof bindAutomationCard === "function") bindAutomationCard();
   document.querySelectorAll("[data-open-settings-nav]").forEach(button => button.addEventListener("click", () => {

@@ -13,6 +13,7 @@ const { digestItem, eveningItem } = require("./dispatch");
 const { payBill } = require("../lib/bill-pay");
 const { updatePayloadSafe } = require("../lib/payload-store");
 const { detectUtility, findUtilityBill, PROVIDERS } = require("../lib/utility-bills");
+const NotifyPrefs = require("../lib/notify-prefs");
 
 const APP_TIME_ZONE = "Asia/Phnom_Penh";
 
@@ -170,9 +171,12 @@ async function undoKeyboard(redis, userId, collection, id, url) {
 }
 
 // Phone pop-up (web push) so the app also says "added" — best effort, never blocks the bot.
-async function pushAdded(userId, title, body, url) {
+// kind decides which tool switch in the notification center applies.
+async function pushAdded(userId, title, body, url, kind = "") {
   if (!process.env.VAPID_PUBLIC_KEY || !process.env.VAPID_PRIVATE_KEY) return;
   try {
+    const payload = await readPayload(userId);
+    if (payload && !NotifyPrefs.allows(payload.profile, kind, "app")) return;
     await sendToUser(userId, { title, body, url });
   } catch (error) {
     console.warn("MYLIFE Telegram pop-up not sent.", error.message);
@@ -469,7 +473,7 @@ async function handleUtility(message, notice, redis) {
       "<i>ពេលបង់រួច បង្កាន់ដៃនឹងត្រូវកត់ដោយស្វ័យប្រវត្តិ · The receipt will be recorded automatically</i>"
     ].filter((line, index, all) => line !== "" || (index > 0 && all[index - 1] !== ""));
     const sent = await reply(message, lines.join("\n"), keyboard.length ? { inline_keyboard: keyboard } : undefined);
-    if (userId) await pushAdded(userId, `🧾 វិក្កយបត្រ${info.km}ថ្មី · ${info.company}`, saved?.due ? `ផុតកំណត់ ${dateLabels(saved.due).km}` : "មើលក្នុង Telegram", "/#money/bills");
+    if (userId) await pushAdded(userId, `🧾 វិក្កយបត្រ${info.km}ថ្មី · ${info.company}`, saved?.due ? `ផុតកំណត់ ${dateLabels(saved.due).km}` : "មើលក្នុង Telegram", "/#money/bills", "utility");
     return sent;
   }
 
@@ -557,7 +561,7 @@ async function handleUtility(message, notice, redis) {
   }
   const sent = await reply(message, lines.join("\n"), linkRow ? { inline_keyboard: [linkRow] } : undefined);
   if (outcome === "paid" || outcome === "added" || outcome === "corrected") {
-    await pushAdded(userId, `${info.icon} បានបង់${info.km} · ${info.company}`, paidText ? `${paidText} · បានកត់ក្នុង MYLIFE` : "បានកត់ក្នុង MYLIFE", "/#money/bills");
+    await pushAdded(userId, `${info.icon} បានបង់${info.km} · ${info.company}`, paidText ? `${paidText} · បានកត់ក្នុង MYLIFE` : "បានកត់ក្នុង MYLIFE", "/#money/bills", "utility");
   }
   return sent;
 }
@@ -611,7 +615,8 @@ async function handleMessage(message, redis) {
       userId,
       saved.length > 1 ? `📲 បានកត់ ${saved.length} ពី Telegram` : onlyIncome ? "📲 បានកត់ចំណូលពី Telegram" : "📲 បានកត់ចំណាយពី Telegram",
       saved.slice(0, 4).map(lineOf).join("\n"),
-      onlyIncome ? "/#money/income" : "/#money/expenses"
+      onlyIncome ? "/#money/income" : "/#money/expenses",
+      "expense"
     );
     return sent;
   }
@@ -648,7 +653,7 @@ async function handleMessage(message, redis) {
     event.time ? "🔔 នឹងរំលឹកតាម Telegram · You'll get an alert" : "🔔 នឹងរំលឹកម៉ោង 9:00 ព្រឹក · Alert at 9:00 AM"
   ].filter(Boolean);
   const sent = await reply(message, lines.join("\n"), await undoKeyboard(redis, userId, "calendarEvents", id, "/#calendar"));
-  await pushAdded(userId, "📲 បានបន្ថែមព្រឹត្តិការណ៍ពី Telegram", `📅 ${event.title} · ${date.km}${event.time ? ` · ${time.km}` : ""}`, "/#calendar");
+  await pushAdded(userId, "📲 បានបន្ថែមព្រឹត្តិការណ៍ពី Telegram", `📅 ${event.title} · ${date.km}${event.time ? ` · ${time.km}` : ""}`, "/#calendar", "event");
   return sent;
 }
 
@@ -803,7 +808,7 @@ module.exports = async (req, res) => {
         reply_to_message_id: query.message.message_id,
         reply_markup: moneyKeyboard(undoToken, saved)
       }).catch(() => {});
-      await pushAdded(action.userId, "📲 បានកត់ចំណាយពី Telegram", `−${formatMoney(entry.amount, entry.currency)} · ${catLabel({ collection: "expenses", category: entry.category })} · ${entry.description}`, "/#money/expenses");
+      await pushAdded(action.userId, "📲 បានកត់ចំណាយពី Telegram", `−${formatMoney(entry.amount, entry.currency)} · ${catLabel({ collection: "expenses", category: entry.category })} · ${entry.description}`, "/#money/expenses", "expense");
       return res.status(200).json({ ok: true });
     } else if (verb === "nomore") {
       status = "✅ ល្អណាស់! ថ្ងៃនេះកត់រួច";
@@ -821,7 +826,7 @@ module.exports = async (req, res) => {
       toast = result === "updated" ? `${status} — MYLIFE updated` : status;
       // tell the app right away (push → it pulls and shows the pop-up)
       if (result === "updated" && item.kind === "bill") {
-        await pushAdded(action.userId, `✅ បានបង់ · ${item.title || "Bill"}`, "ពី Telegram · បានកត់ក្នុង MYLIFE", "/#money/bills");
+        await pushAdded(action.userId, `✅ បានបង់ · ${item.title || "Bill"}`, "ពី Telegram · បានកត់ក្នុង MYLIFE", "/#money/bills", "bill");
       }
     } else {
       await answer("🤔");

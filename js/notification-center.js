@@ -125,6 +125,7 @@ const NotificationCenter = (() => {
     const dismissed = readMap(DISMISS_KEY);
     const snoozed = readMap(SNOOZE_KEY);
     return getUpcomingNotifications(7, 60)
+      .filter(item => typeof NotifyPrefs === "undefined" || NotifyPrefs.allows(appData.profile, item.type, "app"))
       .map(item => enrich(item, now, dismissed, snoozed))
       .sort((left, right) => left.at - right.at);
   }
@@ -467,7 +468,9 @@ const NotificationCenter = (() => {
 
     root.querySelectorAll("[data-nc-settings]").forEach(button => button.addEventListener("click", () => {
       close();
-      location.hash = "#settings";
+      // the notification control center when it is loaded, the Settings page otherwise
+      if (typeof NotifyCenter !== "undefined") NotifyCenter.open();
+      else location.hash = "#settings";
     }));
   }
 

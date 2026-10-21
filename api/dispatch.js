@@ -11,6 +11,7 @@ const { budgetAlerts, weeklyReport, CATEGORY_KM } = require("../lib/money-report
 const { frequentExpenses, unusualToday, convert } = require("../lib/money-insights");
 const { payBill } = require("../lib/bill-pay");
 const { updatePayloadSafe } = require("../lib/payload-store");
+const NotifyPrefs = require("../lib/notify-prefs");
 
 // Redis dedupe makes a wide window safe: a late or skipped scheduler run still
 // delivers alerts that came due in the last 30 minutes, exactly once.
@@ -378,16 +379,24 @@ function notificationItems(payload) {
       }
 
       const amount = moneyLabel(item.currency, item.amount);
-      dates.forEach(date => add({
-        kind: "bill",
-        id: item.id,
-        title: item.name || "Bill due",
-        body: [amount ? `ត្រូវបង់ · Due: ${amount}` : "", item.notes || ""].filter(Boolean).join("\n"),
-        date,
-        amount: Number(item.amount || 0),
-        currency: item.currency || "",
-        url: "/#money/bills"
-      }));
+      // Notification center: remind 3 / 2 / 1 day(s) before and/or on the due date (default: due date only).
+      const stages = NotifyPrefs.prefs(payload.profile).billStages;
+      dates.forEach(date => {
+        const bill = {
+          kind: "bill",
+          id: item.id,
+          title: item.name || "Bill due",
+          body: [amount ? `ត្រូវបង់ · Due: ${amount}` : "", item.notes || ""].filter(Boolean).join("\n"),
+          date,
+          time: "09:00",
+          hasTime: false,
+          amount: Number(item.amount || 0),
+          currency: item.currency || "",
+          url: "/#money/bills"
+        };
+        if (stages.includes(0)) add(bill);
+        stages.filter(days => days > 0).forEach(days => withEarly(items, bill, days * 1440));
+      });
     });
 
   (Array.isArray(payload.loans) ? payload.loans : [])
@@ -685,6 +694,8 @@ async function autoPayBills(supabase, redis, userId, rawPayload) {
   if (!paid.length) return "skipped";
 
   const currency = fresh.profile?.currency || "USD";
+  // the bills are paid either way; only the Telegram message follows the notification settings
+  if (!NotifyPrefs.allows(fresh.profile, "autopay", "telegram")) return "paid";
   await sendAlert({
     kind: "autopay", id: `autopay-${today}`, title: "MYLIFE auto-pay", date: today, url: "/#money/bills",
     html: ["🔁 <b>បង់ស្វ័យប្រវត្តិ</b>", "", ...paid.map(bill => `✅ ${String(bill.name || "Bill").replace(/[<>&]/g, "")} · <b>${fmtMoney(bill.currency || currency, bill.amount)}</b>`), "", "<i>បានកត់ជាចំណាយ (វិក្កយបត្រ) រួចហើយ</i>"].join("\n")
@@ -843,6 +854,7 @@ module.exports = async (req, res) => {
         // Send due alerts to Make.com / Telegram.
         // This works even if the user has no Web Push subscription.
         for (const item of items) {
+          if (!NotifyPrefs.allows(payload.profile, item.kind, "telegram")) continue;
           const dueAt = itemDueAt(item, APP_TIME_ZONE);
 
           if (
@@ -864,6 +876,7 @@ module.exports = async (req, res) => {
 
         for (const item of items) {
           if (["digest", "weekly", "budget", "evening", "weekly-image", "monthly-image", "backup-file", "autopay"].includes(item.kind)) continue;
+          if (!NotifyPrefs.allows(payload.profile, item.kind, "app")) continue;
           const title = String(item.title || "MYLIFE alert");
           const body = String(
             item.body || item.notes || item.category || "It is time."
