@@ -32,12 +32,15 @@ const Login = {
 
   open(mode = "login") {
     if (this.isOpen) return;
+    // Private app: new accounts are closed (also turn off sign-ups in Supabase Auth).
+    // Set SIGNUP_OPEN to true to show "Create account" again.
+    const SIGNUP_OPEN = false;
     const supabaseConfigured = Boolean(window.MYLIFE_SUPABASE?.enabled && window.supabaseClient);
     const hasProfile = Boolean(appData.profile.name);
     const hasAccount = Boolean(hasProfile && appData.profile.passwordHash);
     const isLegacy = hasProfile && !hasAccount;
     const isReset = mode === "reset";
-    const authMode = supabaseConfigured ? (mode === "signup" ? "signup" : "login") : "create";
+    const authMode = supabaseConfigured ? (mode === "signup" && SIGNUP_OPEN ? "signup" : "login") : "create";
     const isSignup = authMode === "signup";
     this.isOpen = true;
     const modal = document.createElement("div");
@@ -50,7 +53,7 @@ const Login = {
           <h2>${isReset ? "Reset password" : hasAccount ? t("unlockMylife") : isLegacy ? t("secureAccount") : supabaseConfigured ? (isSignup ? "Create account" : "Log in") : t("createAccount")}</h2>
           <p>${isReset ? "Enter your email and we’ll send a reset link to your inbox." : hasAccount ? t("enterPassword") : isLegacy ? t("secureAccountHelp") : supabaseConfigured ? (isSignup ? "Create a new MYLIFE account with email and password." : "Sign in to your existing MYLIFE account.") : t("createAccountHelp")}</p>
         </div>
-        ${supabaseConfigured && !isReset ? `
+        ${supabaseConfigured && !isReset && SIGNUP_OPEN ? `
           <div class="login-mode-toggle" aria-label="Authentication mode">
             <button type="button" class="login-mode-button ${!isSignup ? "active" : ""}" data-auth-mode="login">Log in</button>
             <button type="button" class="login-mode-button ${isSignup ? "active" : ""}" data-auth-mode="signup">Create account</button>
