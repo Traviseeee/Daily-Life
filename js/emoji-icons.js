@@ -4,9 +4,12 @@
  * Excel files and toasts that are plain text); this file swaps them for line icons
  * once they are on the page, so every screen gets the same icon style.
  *
- * Not touched (stays emoji):
+ * Not touched (stays emoji) — only emoji the app uses AS AN ICON become SVG:
  *  - mood: the Home mood card, the week row and anything marked [data-keep-emoji]
  *  - faces (😊 😌 😴 😟 🤩 😓 🙆) — they are moods
+ *  - feelings, celebration, nature, food and other expressive emoji (✨ ⭐ 🎉 🎂 🔥 ❤️ 🌿 🍜 …)
+ *  - anything you typed yourself (titles, notes, names… in your data)
+ *  - friendly messages: chat bubbles and the Daily focus nudge
  *  - text boxes, selects, raw OCR text (<pre>), code, and the page <title>
  */
 const EmojiIcons = (() => {
@@ -85,23 +88,16 @@ const EmojiIcons = (() => {
 
   // emoji → [icon, colour] (no colour = the text colour around it)
   const MAP = {
+    // practical UI icons → SVG (the expressive ones — ✨ ⭐ 🎂 🎁 🔥 🎯 💡 ❤️ 🌿 ☀️ 🌙 💧
+    // 🍜 🚗 🛍 💊 📚 🎬 👨‍👩‍👧 … — stay emoji on purpose)
     "✅": ["checkCircle", "#3aa66b"], "✓": ["check"], "✔": ["check"],
-    "📅": ["calendar"], "🗓": ["calendar"], "🎉": ["party", "#a855f7"], "🎂": ["cake", "#ec4899"],
-    "💡": ["bulb", "#f5b301"], "💸": ["cash", "#3aa66b"], "💵": ["cash", "#3aa66b"], "💰": ["wallet", "#e0a21a"],
-    "🧾": ["receipt"], "⚠": ["alert", "#f0a530"], "✏": ["pencil"], "✍": ["pencil"],
-    "⏰": ["alarm"], "⏳": ["hourglass"], "🕰": ["clock"], "👨‍👩‍👧": ["users"],
-    "✨": ["sparkles", "#f5b301"], "🪄": ["wand", "#a855f7"], "✦": ["sparkles"], "🔮": ["sparkles", "#a855f7"], "🆕": ["sparkles"],
-    "⭐": ["star", "#f5b301"], "☆": ["star"], "📤": ["send"], "📲": ["phone"], "📱": ["phone"],
-    "💾": ["save"], "📦": ["box"], "🎯": ["target", "#ef4444"], "☰": ["menu"],
-    "☀": ["sun", "#f5b301"], "🌙": ["moon", "#8b9cff"], "☁": ["cloud"], "💧": ["droplet", "#38bdf8"], "☂": ["umbrella", "#38bdf8"],
-    "🔗": ["link"], "💬": ["message"], "💪": ["zap", "#f97316"], "⚡": ["zap", "#f5b301"],
-    "💞": ["heart", "#ec4899"], "❤": ["heart", "#ef4444"], "💛": ["heart", "#f5b301"], "♡": ["heart"], "🙏": ["heart", "#ec4899"],
-    "👋": ["hand"], "👍": ["thumbsUp"], "🏠": ["home"], "📊": ["chart"], "📈": ["trend", "#3aa66b"],
-    "🏦": ["bank"], "💳": ["card"], "📸": ["camera"], "🔔": ["bell"], "🔁": ["repeat"],
-    "🌿": ["leaf", "#3aa66b"], "🌱": ["leaf", "#3aa66b"], "🍃": ["leaf", "#3aa66b"], "🖼": ["image"],
-    "🧭": ["compass"], "🍜": ["food"], "🚗": ["car"], "🛍": ["bag"], "💊": ["pill"], "📚": ["book"], "🎬": ["film"],
-    "▲": ["up"], "▼": ["down"], "▶": ["play"], "🧪": ["flask"], "🧹": ["brush"], "🤖": ["bot"], "📞": ["call"],
-    "🔥": ["flame", "#f97316"], "💼": ["briefcase"], "🎁": ["gift", "#ec4899"], "🎨": ["palette"], "🏪": ["store"],
+    "📅": ["calendar"], "🗓": ["calendar"], "🧾": ["receipt"], "⚠": ["alert", "#f0a530"],
+    "✏": ["pencil"], "✍": ["pencil"], "⏰": ["alarm"], "⏳": ["hourglass"], "🕰": ["clock"],
+    "📤": ["send"], "💾": ["save"], "📦": ["box"], "☰": ["menu"], "🔗": ["link"], "💬": ["message"],
+    "📲": ["phone"], "📱": ["phone"], "📞": ["call"], "🏠": ["home"], "🔔": ["bell"], "🔁": ["repeat"],
+    "📊": ["chart"], "📈": ["trend", "#3aa66b"], "🏦": ["bank"], "💳": ["card"], "💰": ["wallet", "#e0a21a"],
+    "💸": ["cash", "#3aa66b"], "💵": ["cash", "#3aa66b"], "📸": ["camera"], "🖼": ["image"],
+    "💼": ["briefcase"], "🏪": ["store"], "▲": ["up"], "▼": ["down"], "▶": ["play"],
     "🟢": ["dot", "#22c55e"], "🔴": ["dot", "#ef4444"]
   };
 
@@ -111,7 +107,36 @@ const EmojiIcons = (() => {
   const TEST = new RegExp(RE.source, "u");
 
   const SKIP_TAGS = new Set(["SCRIPT", "STYLE", "TEXTAREA", "INPUT", "SELECT", "OPTION", "PRE", "CODE", "TITLE", "NOSCRIPT"]);
-  const SKIP_SELECTOR = "[data-keep-emoji], .mood-card, .mood-selector, .mood-button, .mood-selected, .home-week-row, [data-mood], svg, [contenteditable=''], [contenteditable='true'], .ei";
+  const SKIP_SELECTOR = "[data-keep-emoji], .mood-card, .mood-selector, .mood-button, .mood-selected, .home-week-row, [data-mood], .mlc-bubble, .mlc-msg, .home-challenge-copy, svg, [contenteditable=''], [contenteditable='true'], .ei";
+
+  // Text you typed (titles, notes, names, descriptions…) keeps its emoji. Collected
+  // from appData (only strings that contain one of the mapped emoji), refreshed when
+  // the data changes.
+  let userTexts = [];
+  let userKey = "";
+  function refreshUserTexts() {
+    if (typeof appData === "undefined" || !appData) return;
+    const key = `${typeof Store !== "undefined" ? Store.saveSequence || "" : ""}|${(appData.expenses || []).length}|${(appData.calendarEvents || []).length}|${(appData.memories || []).length}|${(appData.reminders || []).length}`;
+    if (key === userKey) return;
+    userKey = key;
+    const found = new Set();
+    const walk = (value, depth) => {
+      if (depth > 6 || value == null) return;
+      if (typeof value === "string") {
+        if (value.length < 400 && TEST.test(value)) found.add(value.trim());
+        return;
+      }
+      if (Array.isArray(value)) { value.forEach(item => walk(item, depth + 1)); return; }
+      if (typeof value === "object") Object.entries(value).forEach(([k, v]) => { if (k !== "photo" && k !== "image") walk(v, depth + 1); });
+    };
+    Object.entries(appData).forEach(([key, value]) => { if (key !== "profile") walk(value, 0); });
+    if (appData.profile?.name) walk(appData.profile.name, 0);
+    userTexts = [...found].filter(Boolean);
+  }
+  const isUserText = text => {
+    const t = text.trim();
+    return !!t && userTexts.some(u => u === t || (u.length > 3 && t.includes(u)) || (t.length > 3 && u.includes(t)));
+  };
 
   function svg(emoji) {
     const key = emoji.replace(/️/g, "");
@@ -136,6 +161,7 @@ const EmojiIcons = (() => {
   function convertText(node) {
     const text = node.nodeValue;
     if (!text || !TEST.test(text) || skip(node)) return;
+    if (isUserText(text)) return;
     const frag = document.createDocumentFragment();
     let last = 0;
     text.replace(RE, (match, emoji, index) => {
@@ -167,6 +193,7 @@ const EmojiIcons = (() => {
   let scheduled = false;
   function flush() {
     scheduled = false;
+    refreshUserTexts();
     const list = [...pending];
     pending = new Set();
     list.forEach(node => { if (node.isConnected) convert(node); });
@@ -184,6 +211,7 @@ const EmojiIcons = (() => {
     if (start.done || typeof MutationObserver === "undefined") return;
     start.done = true;
     addStyle();
+    refreshUserTexts();
     convert(document.body);
     new MutationObserver(records => {
       records.forEach(record => {
