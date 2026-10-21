@@ -29,7 +29,8 @@
   }
 
   /* ---------- numbers & currency ---------- */
-  const NUM = String.raw`(\d{1,3}(?:[,\s]\d{3})+(?:\.\d{1,2})?|\d+(?:[.,]\d{1,2})?)`;
+  // "1.500" (dot as thousands) is kept whole so a KHR amount can be read as 1500
+  const NUM = String.raw`(\d{1,3}(?:[,\s]\d{3})+(?:\.\d{1,2})?|\d{1,3}(?:\.\d{3})+(?![\d,])|\d+(?:[.,]\d{1,2})?)`;
 
   function toNumber(raw) {
     let s = String(raw).replace(/\s/g, "");
@@ -52,17 +53,19 @@
     const re = new RegExp(String.raw`(?:^|[^\w.])([-+]?)\s*(?:\$|usd|khr|៛)?\s*${NUM}\s*(?:\$|usd|khr|៛|riel)?`, "gi");
     let m;
     while ((m = re.exec(line))) {
-      const value = toNumber(m[2]);
-      if (!Number.isFinite(value) || value <= 0) continue;
       const chunk = m[0];
+      const currency = currencyOf(chunk) || currencyOf(line);
+      // riel has no cents: "1.500 KHR" is 1500 (OCR or a dot used as thousands)
+      const value = currency === "KHR" && /^\d{1,3}(?:\.\d{3})+$/.test(m[2]) ? Number(m[2].replace(/\./g, "")) : toNumber(m[2]);
+      if (!Number.isFinite(value) || value <= 0) continue;
       // skip things that look like dates, times, phone numbers or long ids
       if (/\d{1,2}:\d{2}/.test(chunk) || /^\s*\d{7,}\s*$/.test(m[2].replace(/[,\s]/g, "")) && !/[,.]/.test(m[2])) continue;
-      out.push({ value, currency: currencyOf(chunk) || currencyOf(line), raw: chunk.trim() });
+      out.push({ value, currency, raw: chunk.trim() });
     }
     return out;
   }
 
-  const TOTAL_WORDS = /\b(grand\s*total|total\s*amount\s*(?:due|paid)?|amount\s*due|total\s*due|total\s*payable|net\s*total|amount\s*paid|total)\b|សរុប|ចំនួនទឹកប្រាក់សរុប|ត្រូវបង់/i;
+  const TOTAL_WORDS = /\b(grand\s*total|total\s*amount\s*(?:due|paid)?|amount\s*due|total\s*due|total\s*payable|net\s*total|amount\s*paid|total)\b|សរុប|ចំនួនទឹកប្រាក់សរុប|ត្រូវបង់|(?:ទឹក)?ប្រាក់(?:ដែល)?បានបង់/i;
   const NOT_TOTAL = /sub\s*-?\s*total|previous|balance\s*(?:b\/f|brought)|outstanding|discount|vat|tax|service\s*charge|fee|tip|cash|change|tender|received|deposit|qty|items?\b|saving|points?/i;
   const PAY_AMOUNT_WORDS = /\b(amount|total|paid|debit|transfer(?:red)?\s*amount)\b|ចំនួនទឹកប្រាក់|ទឹកប្រាក់/i;
 
@@ -154,7 +157,7 @@
       let amounts = amountsIn(line);
       if (!amounts.length && lines[i + 1] && !TOTAL_WORDS.test(lines[i + 1])) amounts = amountsIn(lines[i + 1]);
       if (amounts.length) {
-        const strong = /grand\s*total|amount\s*due|total\s*due|total\s*amount|total\s*payable|ត្រូវបង់|សរុប/i.test(line);
+        const strong = /grand\s*total|amount\s*due|total\s*due|total\s*amount|total\s*payable|amount\s*paid|ត្រូវបង់|សរុប|ប្រាក់(?:ដែល)?បានបង់/i.test(line);
         candidates.push({ ...amounts[amounts.length - 1], score: strong ? 3 : 2, index: i });
       }
     });
@@ -165,7 +168,7 @@
     // 2) payment slips: the big signed amount near the top ("-12.50 USD") or an "Amount" line
     if (kind === "payment") {
       for (let i = 0; i < Math.min(lines.length, 8); i++) {
-        if (/[-+]\s*\$?\s*\d/.test(lines[i]) || /^\s*(?:\$|usd|khr|៛)?\s*[\d,.]+\s*(?:\$|usd|khr|៛|riel)\s*$/i.test(lines[i])) {
+        if (/[-+]\s*\$?\s*\d/.test(lines[i]) || /^\s*[-+]?\s*(?:(?:\$|usd|khr|៛)\s*[\d,.\s]*\d|[\d,.\s]*\d\s*(?:\$|usd|khr|៛|riel))\s*$/i.test(lines[i])) {
           const amounts = amountsIn(lines[i]).filter(a => a.currency);
           if (amounts.length) return { ...amounts[0], sure: true };
         }
