@@ -11,6 +11,7 @@ const { parseEvent, parseMoney } = require("../lib/smart-parse");
 const { monthSpending, formatMoney, convert, CATEGORY_KM, weeklyReport } = require("../lib/money-report");
 const { digestItem, eveningItem } = require("./dispatch");
 const { payBill } = require("../lib/bill-pay");
+const LoanPay = require("../js/loan-pay.js");
 const { updatePayloadSafe } = require("../lib/payload-store");
 const { resolveOwner, linkOwnerIfUnknown } = require("../lib/owner");
 const { detectUtility, findUtilityBill, PROVIDERS } = require("../lib/utility-bills");
@@ -39,11 +40,8 @@ function applyDone(payload, item) {
   if (item.kind === "loan") {
     const loan = (payload.loans || []).find(entry => entry.id === id);
     if (!loan) return "missing";
-    loan.payments = Array.isArray(loan.payments) ? loan.payments : [];
-    if (loan.payments.some(payment => payment.date === item.date)) return "already";
-    loan.payments.unshift({ amount: Number(loan.monthlyPayment || 0), date: item.date, scheduled: true });
-    loan.updatedAt = new Date().toISOString();
-    return "updated";
+    // one payment + one expense (category Loan); a retry or second press → "already"
+    return LoanPay.recordLoanPayment(payload, loan, item.date, { amount: loan.monthlyPayment, via: "Telegram", today: zonedToday(), source: "telegram", makeId: recordId }).result;
   }
   if (item.kind === "reminder") {
     const reminder = (payload.reminders || []).find(entry => entry.id === id);
@@ -222,7 +220,7 @@ async function pushAdded(userId, title, body, url, kind = "") {
 /* ---------------- money from chat ---------------- */
 
 const EXPENSE_CATS = ["Food", "Transport", "Shopping", "Home", "Bills", "Family", "Health", "Education", "Entertainment", "Other"];
-const CAT_ICON = { Food: "🍜", Transport: "🚗", Shopping: "🛍", Home: "🏠", Bills: "🧾", Family: "👨‍👩‍👧", Health: "💊", Education: "📚", Entertainment: "🎬", Other: "📦", Salary: "💼", Bonus: "🎁", Freelance: "🎨", Business: "🏪" };
+const CAT_ICON = { Food: "🍜", Transport: "🚗", Shopping: "🛍", Home: "🏠", Bills: "🧾", Loan: "🏦", Family: "👨‍👩‍👧", Health: "💊", Education: "📚", Entertainment: "🎬", Other: "📦", Salary: "💼", Bonus: "🎁", Freelance: "🎨", Business: "🏪" };
 const INCOME_KM = { Salary: "ប្រាក់ខែ", Bonus: "ប្រាក់រង្វាន់", Freelance: "ការងារក្រៅ", Business: "អាជីវកម្ម", Other: "ផ្សេងៗ" };
 
 function catLabel(entry) {

@@ -3,6 +3,7 @@
  * and the app (Smart Scan). Node: require("../js/bill-pay.js"); browser: window.BillPay.
  */
 (function (root) {
+const LoanPay = typeof module !== "undefined" && module.exports ? require("./loan-pay.js") : root.LoanPay;
 // Marking a bill paid on the server (Telegram ✅ and auto-pay subscriptions).
 // Same rules as markBillPaid() in js/dashboard.js: the bill moves to its next
 // cycle and the payment is recorded as an expense (category Bills).
@@ -54,7 +55,13 @@ function payBill(payload, bill, today, method = "Telegram", paid = {}) {
   const amount = Number(paid.amount) > 0 ? Number(paid.amount) : Number(bill.amount);
   const currency = paid.currency || bill.currency || payload.profile?.currency || "USD";
   const result = markBillPaid(bill, today, Boolean(paid.force));
-  if (result === "updated" && amount > 0) {
+  const loan = bill.loanId ? (payload.loans || []).find(entry => entry.id === bill.loanId) : null;
+  if (result === "updated" && amount > 0 && loan && LoanPay) {
+    // a bill linked to a loan: ONE expense (category Loan) + the loan's payment for that due date
+    const date = LoanPay.scheduleDateFor(loan, bill.lastPaidDue || today);
+    const done = LoanPay.recordLoanPayment(payload, loan, date, { amount, currency, via: method, billId: bill.id, today, notes: paid.notes || "Bill", source: "telegram" });
+    bill.lastPaidExpenseId = done.expense?.id || done.payment?.expenseId || "";
+  } else if (result === "updated" && amount > 0) {
     payload.expenses = Array.isArray(payload.expenses) ? payload.expenses : [];
     const existing = payload.expenses.find(entry => entry.billId === bill.id && entry.date === today);
     const expenseId = existing?.id || `expenses-bill-${bill.id}-${Date.now()}`;

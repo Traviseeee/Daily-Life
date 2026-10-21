@@ -132,7 +132,7 @@ const SmartMoney = (() => {
     return [...expenseCategories].sort((a, b) => (counts[b] || 0) - (counts[a] || 0) || rank(a) - rank(b));
   }
 
-  const FREQ_ICON = { Food: "🍜", Transport: "🚗", Shopping: "🛍", Home: "🏠", Bills: "🧾", Family: "👨‍👩‍👧", Health: "💊", Education: "📚", Entertainment: "🎬", Other: "📦" };
+  const FREQ_ICON = { Food: "🍜", Transport: "🚗", Shopping: "🛍", Home: "🏠", Bills: "🧾", Loan: "🏦", Family: "👨‍👩‍👧", Health: "💊", Education: "📚", Entertainment: "🎬", Other: "📦" };
   // expenses logged 3+ times in 60 days → one-tap buttons
   const frequentList = () => (typeof MoneyInsights !== "undefined" ? MoneyInsights.frequentExpenses(appData, localDateInput(), 4) : []);
   const freqAmount = entry => (entry.currency === "KHR" ? `${Number(entry.amount).toLocaleString("en-US")}៛` : `$${Number(entry.amount).toLocaleString("en-US", { maximumFractionDigits: 2 })}`);

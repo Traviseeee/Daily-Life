@@ -104,6 +104,15 @@ const BillForm = (() => {
           <div class="ev-cats xp-cats bf-cats">${categoryChips(item.category || "")}</div>
         </section>
 
+        ${(appData.loans || []).length ? `
+        <section class="ev-section">
+          <div class="ev-label">${Icons.loan()}<strong>${escapeHtml(L("ភ្ជាប់ទៅកម្ចី", "Linked loan"))}</strong><em class="ev-summary">${escapeHtml(L("បង់ម្តង = រាប់ម្តង", "Pay once, counted once"))}</em></div>
+          <select class="ev-date bf-loan" name="loanId" aria-label="${escapeAttr(L("ភ្ជាប់ទៅកម្ចី", "Linked loan"))}">
+            <option value="">${escapeHtml(L("— មិនភ្ជាប់ —", "— Not a loan —"))}</option>
+            ${(appData.loans || []).map(loan => `<option value="${escapeAttr(loan.id)}" ${item.loanId === loan.id ? "selected" : ""}>${escapeHtml(loan.name || "Loan")}${Number(loan.monthlyPayment) > 0 ? ` · ${escapeHtml(String(loan.monthlyPayment))} ${escapeHtml(loan.currency || "")}` : ""}</option>`).join("")}
+          </select>
+        </section>` : ""}
+
         <section class="ev-section bf-switches">
           ${switchRow("reminder", item.reminder ?? true, "🔔", t("reminder"), L("ជូនដំណឹង និងផ្ញើ Telegram មុនថ្ងៃផុតកំណត់", "Notify and send to Telegram before it is due"))}
           ${switchRow("autoPay", item.autoPay ?? false, "🔁", L("បង់ស្វ័យប្រវត្តិ", "Auto-pay"), L("Netflix, Wi-Fi… កត់ជាចំណាយដោយខ្លួនឯងនៅថ្ងៃបង់", "Netflix, Wi-Fi… logged as an expense on the due date"))}
@@ -202,6 +211,16 @@ const BillForm = (() => {
       sync(root);
       if (!form.elements.amount.value) form.elements.amount.focus();
     }));
+    form.elements.loanId?.addEventListener("change", () => {
+      const loan = (appData.loans || []).find(entry => entry.id === form.elements.loanId.value);
+      if (!loan) return;
+      if (!form.elements.amount.value && Number(loan.monthlyPayment) > 0) form.elements.amount.value = loan.monthlyPayment;
+      if (loan.currency) setCurrency(root, loan.currency);
+      if (!form.elements.name.value.trim()) form.elements.name.value = loan.name || "";
+      const radio = form.querySelector('input[name="category"][value="Loan"]');
+      if (radio) radio.checked = true;
+      flash(root.querySelector(".xp-amount-card"));
+    });
     root.querySelectorAll("[data-bf-due]").forEach(chip => chip.addEventListener("click", () => {
       form.elements.due.value = chip.dataset.bfDue;
       sync(root);
@@ -256,11 +275,17 @@ const BillForm = (() => {
         reminder: form.elements.reminder.checked,
         autoPay: form.elements.autoPay.checked,
         status: form.elements.status.value || "Upcoming",
-        notes: form.elements.notes.value.trim()
+        notes: form.elements.notes.value.trim(),
+        loanId: form.elements.loanId ? form.elements.loanId.value : (item.loanId || "")
       };
+      // choosing "Paid" here is a real payment: go through markBillPaid so the
+      // expense (or the linked loan payment) is recorded once, like the Paid button
+      const payNow = isEdit && record.status === "Paid" && item.status !== "Paid" && typeof markBillPaid === "function";
+      if (payNow) record.status = item.status || "Upcoming";
       if (isEdit) Store.edit("bills", item.id, record);
       else Store.add("bills", record);
-      Toast.show(isEdit ? t("billSaved") : t("billAdded"));
+      if (payNow) markBillPaid(item.id);
+      else Toast.show(isEdit ? t("billSaved") : t("billAdded"));
       Modal.close();
     });
 

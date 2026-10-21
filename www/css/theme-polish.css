@@ -3388,3 +3388,9 @@ a.tga-btn { display: inline-flex; align-items: center; justify-content: center; 
 }
 :root #modalRoot .bill-modal .ev-row { flex-wrap: wrap; overflow: visible; }
 :root #modalRoot .bill-modal .ev-section .ev-row > input.ev-date { flex: 1 1 150px; width: auto; min-width: 150px; }
+:root #modalRoot .bill-modal select.bf-loan { width: 100%; min-height: 42px; border-style: solid !important; }
+.loan-check-card { margin-bottom: 14px; padding: 14px 16px; border: 1px solid rgba(240, 165, 48, 0.45); border-radius: 18px; background: rgba(240, 165, 48, 0.1); }
+.loan-check-card h3 { margin: 0 0 6px; font-size: 0.98rem; }
+.loan-check-card p { margin: 0 0 10px; font-size: 0.84rem; opacity: 0.85; }
+.loan-check-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 0; border-top: 1px solid rgba(127, 127, 127, 0.18); font-size: 0.86rem; }
+.loan-check-row .button { flex: 0 0 auto; min-height: 34px; padding: 0 12px; }

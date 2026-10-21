@@ -55,6 +55,7 @@ function renderHome() {
     };
   });
 
+  // order: greeting/profile, daily focus, week, what's coming, then the check-in cards
   return '<section class="page home-featured-page">' +
     '<div class="home-hero-panel">' +
       '<div class="home-hero-copy">' +
@@ -74,26 +75,27 @@ function renderHome() {
           '<strong>' + escapeHtml(profileName) + '</strong>' +
         '</div>' +
         '<div class="home-profile-menu" aria-hidden="true">' +
-          '<button type="button" class="home-profile-menu-item" data-account-action="edit-profile">Edit profile</button>' +
+          // guest / signed out: "Log in" first, so the account is easy to reach from Home
+          ((typeof Login !== "undefined" && (Login.guestMode || !Login.authenticated)) ? '<button type="button" class="home-profile-menu-item home-profile-menu-login" data-account-action="login">' + (languageCode() === "km" ? "ចូលគណនី (Log in)" : "Log in") + '</button>' : '') +
+          '<button type="button" class="home-profile-menu-item" data-account-action="edit-profile">' + escapeHtml(t("editProfile")) + '</button>' +
         '</div>' +
       '</div>' +
     '</div>' +
-    renderHomeAgenda(agenda) +
     '<div class="home-challenge-card' + (challengeImage ? " has-cover-image" : "") + '">' +
       '<label class="home-challenge-image-edit" title="' + escapeAttr(t(challengeImage ? "changeFocusImage" : "addFocusImage")) + '"><span aria-hidden="true">' + Icons.edit() + '</span><input type="file" accept="image/*" data-home-challenge-image aria-label="' + escapeAttr(t(challengeImage ? "changeFocusImage" : "addFocusImage")) + '"></label>' +
       '<div class="home-challenge-copy">' +
         '<span class="home-challenge-label">' + t("dailyFocus") + '</span>' +
-        '<h2>' + (languageCode() === "km" ? "ត្រូវការជំនួយបន្តិច?" : "Need a nudge?") + '</h2>' +
-        '<p>' + (languageCode() === "km" ? "កត់សម្គាល់អារម្មណ៍ ឬសរសេររឿងល្អមួយយ៉ាង" : "Check in, reflect, and finish a tiny win.") + '</p>' +
+        '<h2 data-home-nudge-title>' + escapeHtml(homeNudge(firstName).title) + '</h2>' +
+        '<p data-home-nudge-body>' + escapeHtml(homeNudge(firstName).body) + '</p>' +
         '<button class="suggestion-button" type="button" data-action="smart-assistant">' + (languageCode() === "km" ? "ជំនួយ" : "Help") + '</button>' +
       '</div>' +
       (challengeImage ? '<img class="home-challenge-image" src="' + escapeAttr(challengeImage) + '" style="--challenge-image-x: ' + challengeImagePosition.x + '%; --challenge-image-y: ' + challengeImagePosition.y + '%;" alt="">' : '') +
-      '<div class="home-challenge-art" aria-hidden="true"><span class="shape orange"></span><span class="shape grey"></span><span class="shape dark"></span></div>' +
+      '<div class="home-challenge-art"><button class="home-nudge-logo" type="button" data-home-nudge-next aria-label="' + (languageCode() === "km" ? "សារថ្មី" : "Another nudge") + '" title="' + (languageCode() === "km" ? "ចុចសម្រាប់សារថ្មី" : "Tap for another nudge") + '">' + homeNudgeLogo() + '</button></div>' +
     '</div>' +
     '<div class="home-week-row" aria-label="' + (languageCode() === "km" ? "អារម្មណ៍ប្រចាំសប្តាហ៍" : "Mood this week") + '">' +
       moodHistoryChart.map(day => '<div class="home-week-day ' + (day.isToday ? "active" : "") + '"' + (day.isToday ? ' aria-current="date"' : '') + '><span class="week-label">' + day.day + '</span><strong>' + day.date + '</strong><span class="week-mood ' + (day.value ? "has-mood" : "no-mood") + '" aria-label="' + escapeHtml(day.label) + '">' + day.emoji + '</span></div>').join("") +
     '</div>' +
-    '' +
+    renderHomeAgenda(agenda) +
     '<a class="home-smart-summary-link" href="#summary"><span>' + Icons.chart() + '</span><span><strong>' + escapeHtml(t("smartSummary")) + '</strong><small>' + escapeHtml(t("smartSummarySubtitle")) + '</small></span>' + Icons.chevron() + '</a>' +
     '<div class="home-overview">' +
       '<article class="glass-card mood-card">' +
@@ -104,6 +106,15 @@ function renderHome() {
         '</div>' +
         (todayMood ? '<div class="mood-selected"><span class="eyebrow">' + t("todayMood") + '</span><span class="mood-emoji-large">' + selectedMood.emoji + '</span><strong>' + escapeHtml(selectedMood.label) + '</strong></div>' : '<p class="secondary" style="margin-top:12px;text-align:center">' + t("tapToLogMood") + '</p>') +
       '</article>' +
+      '<article class="glass-card focus-card">' +
+        '<span class="eyebrow">' + t("dailyFocus") + '</span>' +
+        '<h2 class="section-title section-title-with-icon"><span class="section-title-icon">' + Icons.target() + '</span>' + t("dailyFocus") + '</h2>' +
+        '<div class="focus-progress"><div class="progress-track"><div class="progress-fill" style="--progress:' + focusProgress + '%"></div></div><span class="focus-progress-text">' + focusProgress + '%</span></div>' +
+        '<ul class="focus-list">' +
+          focusItems.map(item => '<li class="focus-item ' + (item.done ? "done" : "") + '"><label><input type="checkbox" ' + (item.done ? "checked" : "") + ' data-focus-id="' + item.id + '"><span class="focus-text">' + escapeHtml(item.text) + '</span></label></li>').join("") +
+        '</ul>' +
+        '<button class="button ghost-button" type="button" data-action="edit-focus">' + Icons.edit() + ' ' + t("editFocus") + '</button>' +
+      '</article>' +
       '<article class="glass-card reflection-card">' +
         '<span class="eyebrow">' + t("dailyReflection") + '</span>' +
         '<h2 class="section-title section-title-with-icon"><span class="section-title-icon">' + Icons.quote() + '</span>' + t("dailyReflection") + '</h2>' +
@@ -113,15 +124,6 @@ function renderHome() {
           '<span class="stat"><strong>' + reflectionText.trim().split(/\s+/).filter(Boolean).length + '</strong> ' + t("words") + '</span>' +
         '</div>' +
         (reflectionReady ? '<button class="button" type="button" data-action="save-reflection">' + t("saveReflection") + '</button>' : '') +
-      '</article>' +
-      '<article class="glass-card focus-card">' +
-        '<span class="eyebrow">' + t("dailyFocus") + '</span>' +
-        '<h2 class="section-title section-title-with-icon"><span class="section-title-icon">' + Icons.target() + '</span>' + t("dailyFocus") + '</h2>' +
-        '<div class="focus-progress"><div class="progress-track"><div class="progress-fill" style="--progress:' + focusProgress + '%"></div></div><span class="focus-progress-text">' + focusProgress + '%</span></div>' +
-        '<ul class="focus-list">' +
-          focusItems.map(item => '<li class="focus-item ' + (item.done ? "done" : "") + '"><label><input type="checkbox" ' + (item.done ? "checked" : "") + ' data-focus-id="' + item.id + '"><span class="focus-text">' + escapeHtml(item.text) + '</span></label></li>').join("") +
-        '</ul>' +
-        '<button class="button ghost-button" type="button" data-action="edit-focus">' + Icons.edit() + ' ' + t("editFocus") + '</button>' +
       '</article>' +
     '</div>' +
   '</section>';
@@ -493,7 +495,12 @@ function markBillPaid(billId) {
   // A paid bill is money spent: record it as an expense so it counts in
   // "left this month", budgets, category charts and the monthly report.
   const amount = Number(bill.amount || 0);
-  if (amount > 0) {
+  const loan = bill.loanId ? (appData.loans || []).find(item => item.id === bill.loanId) : null;
+  if (amount > 0 && loan && typeof LoanPay !== "undefined") {
+    // bill linked to a loan: ONE expense (category Loan) + the loan's payment for that due date
+    const done = LoanPay.recordLoanPayment(appData, loan, LoanPay.scheduleDateFor(loan, bill.due || paidOn), { amount, currency: bill.currency, billId: bill.id, today: paidOn, notes: t("bill") });
+    nextBill.lastPaidExpenseId = done.expense?.id || done.payment?.expenseId || "";
+  } else if (amount > 0) {
     const existing = appData.expenses.find(item => item.billId === bill.id && item.date === paidOn);
     const expenseId = existing?.id || `expenses-bill-${bill.id}-${Date.now()}`;
     if (!existing) {
@@ -525,6 +532,13 @@ function markBillUnpaid(billId) {
     lastPaidStatus: ""
   };
   if (bill.lastPaidDue) changes.due = bill.lastPaidDue;
+  // linked loan: take back the loan payment this bill made (its expense goes below)
+  const loan = bill.loanId ? (appData.loans || []).find(item => item.id === bill.loanId) : null;
+  const loanPayment = loan && bill.lastPaidDue ? (loan.payments || []).find(payment => payment.date === LoanPay.scheduleDateFor(loan, bill.lastPaidDue) && payment.billId === bill.id) : null;
+  if (loanPayment) {
+    loan.payments = loan.payments.filter(payment => payment !== loanPayment);
+    loan.updatedAt = new Date().toISOString();
+  }
   // undo: remove the expense that "paid" created
   if (bill.lastPaidExpenseId && appData.expenses.some(item => item.id === bill.lastPaidExpenseId)) Store.delete("expenses", bill.lastPaidExpenseId);
   changes.lastPaidExpenseId = "";
@@ -736,193 +750,10 @@ function getTipsData() {
   ];
 }
 
-function renderTips() {
-  const groups = getTipsData();
-  const isKhmer = languageCode() === "km";
-  const selectedLang = isKhmer ? "km" : "en";
-  const principles = getFamilyPrinciples();
-  const dayIndex = Math.floor(Date.now() / 86400000) % groups.length;
-  const tipOfDay = groups[dayIndex];
-  const title = isKhmer ? "គន្លឹះ" : t("tips");
-  const subtitle = isKhmer ? "រឿងតូចៗដែលជួយឱ្យជីវិតគ្រួសាររបស់យើងមានភាពកក់ក្តៅ និងរឹងមាំ។" : t("familyTipsIntro");
-  const supporting = isKhmer ? "មិនចាំបាច់ល្អឥតខ្ចោះទេ — សាងសង់ជីវិតជាមួយគ្នា មួយថ្ងៃម្តង។ ❤️" : "You do not need to be perfect. Build life together, one day at a time. ❤️";
-  const categoryLabels = ["ALL", "DAILY", "WEEKLY", "LOVE", "FAMILY", "MONEY", "FUTURE"];
-  const filterCategory = group => ({ BALANCE: "FAMILY", HOLIDAY: "FAMILY", SELF: "LOVE", MINDSET: "LOVE" }[group.category] || group.category);
-  const tipImages = [
-    "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=240&q=75",
-    "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=240&q=75",
-    "https://images.unsplash.com/photo-1491438590914-bc09fcaaf77a?auto=format&fit=crop&w=240&q=75",
-    "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=240&q=75",
-    "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=240&q=75",
-    "https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=240&q=75",
-    "https://images.unsplash.com/photo-1504159506876-f8338247a14a?auto=format&fit=crop&w=240&q=75",
-    "https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=240&q=75",
-    "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=240&q=75",
-    "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=crop&w=240&q=75",
-    "https://images.unsplash.com/photo-1504159506876-f8338247a14a?auto=format&fit=crop&w=240&q=75",
-    "https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&w=240&q=75",
-    "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=240&q=75",
-    "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=240&q=75",
-    "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=240&q=75",
-    "https://images.unsplash.com/photo-1491438590914-bc09fcaaf77a?auto=format&fit=crop&w=240&q=75",
-    "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=240&q=75"
-  ];
-  const coupleImage = getTipsCoupleImage();
-  const text = group => ({
-    title: selectedLang === "km" ? group.khmerTitle : group.title,
-    short: selectedLang === "km" ? group.khmerShort : group.short,
-    quick: selectedLang === "km" ? group.khmerQuick : group.quick,
-    detail: selectedLang === "km" ? group.khmerDetail : group.detail
-  });
-
-  return `
-    <section class="page tips-page">
-      <div class="page-header tips-page-header">
-        <div>
-          <h1 class="page-title page-title-with-icon"><span class="page-title-icon">${Icons.help()}</span>${title}</h1>
-          <p class="page-subtitle">${escapeHtml(subtitle)}</p>
-          <p class="tips-supporting-line">${escapeHtml(supporting)}</p>
-        </div>
-      </div>
-
-      <article class="glass-card tips-day-card">
-        <div class="tips-day-icon">${Icons.spark()}</div>
-        <div class="tips-day-copy">
-          <span class="tips-eyebrow">${isKhmer ? "គន្លឹះប្រចាំថ្ងៃ" : "TIP OF THE DAY"}</span>
-          <strong>${escapeHtml(text(tipOfDay).short)}</strong>
-        </div>
-        <button class="button ghost-button tips-day-button" type="button" data-tip-focus="${dayIndex}">${isKhmer ? "មើលគន្លឹះ" : "View tip"} ${Icons.chevron()}</button>
-        <div class="tips-couple-photo-area">
-          ${coupleImage ? `<img class="tips-couple-photo" src="${escapeAttr(coupleImage)}" alt="${isKhmer ? "រូបថតគូស្នេហ៍" : "Couple photo"}">` : `<span class="tips-couple-photo-empty">${Icons.family()}</span>`}
-          <label class="tips-photo-upload">${coupleImage ? (isKhmer ? "ប្តូររូប" : "Change photo") : (isKhmer ? "បន្ថែមរូបគូស្នេហ៍" : "Add couple photo")}<input type="file" accept="image/*" data-couple-photo></label>
-        </div>
-      </article>
-
-      <div class="tips-filter-row" role="toolbar" aria-label="${isKhmer ? "ច្រោះគន្លឹះ" : "Tip filters"}">
-        ${categoryLabels.map((category, index) => `<button class="tips-filter ${index === 0 ? "active" : ""}" type="button" data-tip-filter="${category}">${category}</button>`).join("")}
-      </div>
-
-      <div class="tips-page-shell tips-card-grid">
-        ${groups.map((group, index) => {
-          const current = text(group);
-          return `
-            <details class="glass-card tips-compact-card" data-tip-card data-category="${filterCategory(group)}" data-tip-index="${index}">
-              <summary>
-                <span class="tips-compact-head">
-                  <span class="tips-group-icon">${group.icon}</span>
-                  <span class="tips-compact-meta"><span class="tips-eyebrow">${group.category}</span><strong>${escapeHtml(current.title)}</strong></span>
-                </span>
-                <img class="tips-compact-image" src="${tipImages[index]}" alt="" loading="lazy">
-                <span class="tips-compact-chevron">${Icons.chevron()}</span>
-              </summary>
-              <div class="tips-compact-body">
-                <p class="tips-short-description">${escapeHtml(current.short)}</p>
-                <ul class="tips-quick-list">${current.quick.map(item => `<li><span>${Icons.check()}</span>${escapeHtml(item)}</li>`).join("")}</ul>
-                <div class="tips-detail-copy"><strong>${isKhmer ? "លម្អិត" : "More"}</strong><p>${escapeHtml(current.detail)}</p></div>
-                <button class="button ghost-button tips-close-detail" type="button">${isKhmer ? "បិទ" : "Close"}</button>
-              </div>
-              <span class="tips-more-label">${isKhmer ? "មើលបន្ថែម" : "View more"} ${Icons.chevron()}</span>
-            </details>
-          `;
-        }).join("")}
-      </div>
-
-      <article class="glass-card tips-principles-card">
-        <div class="tips-principles-header">
-          <div><span class="tips-eyebrow">${isKhmer ? "គ្រួសាររបស់យើង" : "OUR FAMILY PRINCIPLES"}</span><h2>${isKhmer ? "គោលការណ៍របស់យើង" : "Our family principles"}</h2></div>
-          <button class="icon-button" type="button" data-principles-edit aria-label="${isKhmer ? "កែប្រែ" : "Edit"}" title="${isKhmer ? "កែប្រែ" : "Edit"}">${Icons.edit()}</button>
-        </div>
-        <ul class="tips-principles-list">${principles.map(item => `<li><span>${Icons.check()}</span>${escapeHtml(item)}</li>`).join("")}</ul>
-        <form class="tips-principles-form" data-principles-form hidden>
-          <label for="principlesInput">${isKhmer ? "គោលការណ៍មួយក្នុងមួយបន្ទាត់" : "One principle per line"}</label>
-          <textarea id="principlesInput" rows="6">${escapeHtml(principles.join("\n"))}</textarea>
-          <div class="action-row"><button class="button" type="submit">${isKhmer ? "រក្សាទុក" : "Save"}</button><button class="button ghost-button" type="button" data-principles-cancel>${isKhmer ? "បោះបង់" : "Cancel"}</button></div>
-        </form>
-      </article>
-
-      <p class="tips-final-note">${isKhmer ? "គ្រួសារដែលល្អ មិនមែនជាគ្រួសារដែលគ្មានបញ្ហាទេ។ វាគឺជាគ្រួសារដែលចេះស្តាប់ ជួយគ្នា សម្របគ្នា និងដោះស្រាយបញ្ហាជាមួយគ្នា។ ❤️" : "A good family is not a family without problems. It is a family that listens, helps, adapts, and solves problems together. ❤️"}</p>
-    </section>
-  `;
-}
-
-function getFamilyPrinciples() {
-  const defaults = ["ជួយគ្នា", "និយាយគ្នា", "គោរពគ្រួសារទាំងសងខាង", "គ្រប់គ្រងលុយជាមួយគ្នា", "រកពេលសម្រាប់គ្នា", "សម្របគ្នាពេលមានបញ្ហា"];
-  try {
-    const saved = JSON.parse(localStorage.getItem("mylife:family-principles") || "null");
-    return Array.isArray(saved) && saved.length ? saved : defaults;
-  } catch (error) {
-    return defaults;
-  }
-}
+// renderTips / bindTips / getFamilyPrinciples live in js/tips.js
 
 function getTipsCoupleImage() {
   return appData.profile.tipsCoupleImage || "";
-}
-
-function bindTips() {
-  document.querySelectorAll("[data-tip-filter]").forEach(button => button.addEventListener("click", () => {
-    const category = button.dataset.tipFilter;
-    document.querySelectorAll("[data-tip-filter]").forEach(item => item.classList.toggle("active", item === button));
-    document.querySelectorAll("[data-tip-card]").forEach(card => {
-      card.hidden = category !== "ALL" && card.dataset.category !== category;
-      if (card.hidden) card.open = false;
-    });
-  }));
-
-  document.querySelectorAll(".tips-close-detail").forEach(button => button.addEventListener("click", event => {
-    event.preventDefault();
-    button.closest("details").open = false;
-  }));
-
-  document.querySelector("[data-tip-focus]")?.addEventListener("click", event => {
-    const card = document.querySelector(`[data-tip-index="${event.currentTarget.dataset.tipFocus}"]`);
-    if (!card) return;
-    card.open = true;
-    card.scrollIntoView({ behavior: "smooth", block: "center" });
-  });
-
-  document.querySelector("[data-couple-photo]")?.addEventListener("change", async event => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    try {
-      const dataUrl = await readImageFile(file);
-      const container = event.target.closest(".tips-day-card");
-      if (container) {
-        const editor = createImagePositionEditor({
-          src: dataUrl,
-          key: "tips-couple",
-          title: languageCode() === "km" ? "លៃតម្រូវរូបគូស្នេហ៍" : "Adjust couple photo",
-          onSave: position => {
-            Store.updateProfile({ tipsCoupleImage: dataUrl, tipsCoupleImagePosition: position });
-          },
-          onCancel: () => {
-            event.target.value = "";
-          }
-        });
-        container.appendChild(editor);
-      }
-    } catch (error) {
-      Toast.show(languageCode() === "km" ? "មិនអាចបញ្ចូលរូបភាពបានទេ" : "The image could not be uploaded.");
-    }
-  });
-
-  const principlesForm = document.querySelector("[data-principles-form]");
-  const principlesCard = document.querySelector(".tips-principles-card");
-  document.querySelector("[data-principles-edit]")?.addEventListener("click", () => {
-    principlesForm.hidden = false;
-    principlesCard.querySelector(".tips-principles-list").hidden = true;
-    principlesForm.querySelector("textarea").focus();
-  });
-  document.querySelector("[data-principles-cancel]")?.addEventListener("click", () => {
-    principlesForm.hidden = true;
-    principlesCard.querySelector(".tips-principles-list").hidden = false;
-  });
-  principlesForm?.addEventListener("submit", event => {
-    event.preventDefault();
-    const principles = principlesForm.querySelector("textarea").value.split("\n").map(item => item.trim()).filter(Boolean).slice(0, 10);
-    if (!isGuestMode()) localStorage.setItem("mylife:family-principles", JSON.stringify(principles));
-    App.render();
-  });
 }
 
 function renderLegacyTips() {
@@ -1158,8 +989,74 @@ function openTipsModal() {
   });
 }
 
+// Daily focus card: friendly rotating messages + the animated MYLIFE logo.
+const HOME_NUDGES = [
+  { km: ["ជំហានតូច ជ័យជម្នះធំ 🌱", "ជ្រើសការងារតូចមួយ ហើយធ្វើវាឱ្យរួចក្នុង 5 នាទី។"], en: ["Small step, big win 🌱", "Pick one tiny task and finish it in 5 minutes."] },
+  { km: ["សុខសប្បាយទេថ្ងៃនេះ? 😊", "ចុចជ្រើសអារម្មណ៍ខាងក្រោម — ត្រឹមតែមួយវិនាទី។"], en: ["How are you, really? 😊", "Tap a mood below — it only takes a second."] },
+  { km: ["ផឹកទឹកមួយកែវ 💧", "ផឹកទឹកមួយកែវ ក៏ជាជ័យជម្នះតូចមួយដែរ។"], en: ["Water break 💧", "A glass of water is a tiny win too."] },
+  { km: ["និយាយអរគុណថ្ងៃនេះ 💛", "ផ្ញើសារល្អៗមួយទៅកាន់សមាជិកគ្រួសារ។"], en: ["Say thank you today 💛", "Send a kind message to someone in your family."] },
+  { km: ["ដកដង្ហើមវែងៗ 🍃", "ដកដង្ហើមយឺតៗ 3 ដង មុនការងារបន្ទាប់។"], en: ["Breathe in, breathe out 🍃", "Take 3 slow breaths before the next task."] },
+  { km: ["ពិនិត្យលុយបន្តិច 💸", "កត់ចំណាយថ្ងៃនេះ ដើម្បីឱ្យពេលយប់ស្រួល។"], en: ["Quick money check 💸", "Log today's spending so tonight is easy."] },
+  { km: ["ធ្វើរួច ល្អជាងល្អឥតខ្ចោះ ✅", "បញ្ចប់រឿងមួយ ហើយអបអរខ្លួនឯង។"], en: ["Done beats perfect ✅", "Finish one thing, then celebrate it."] },
+  { km: ["សម្រាកលាតខ្លួន 🙆", "ក្រោកឈរ ហើយលាតខ្លួន 1 នាទី។"], en: ["Stretch break 🙆", "Stand up and stretch for one minute."] },
+  { km: ["រឿងល្អមួយថ្ងៃនេះ ✨", "តើអ្វីធ្វើឱ្យអ្នកញញឹមថ្ងៃនេះ? សរសេរក្នុង Reflection។"], en: ["One good thing ✨", "What made you smile today? Add it to your reflection."] },
+  { km: ["{name} ធ្វើបានល្អណាស់ 💪", "បន្តទៅមុខ — មួយជំហានម្តងៗ។"], en: ["You're doing great, {name} 💪", "Keep going — one step at a time."] },
+  { km: ["ផ្ញើសារទៅម៉ាក់ ឬប៉ា 📱", "សួរសុខទុក្ខខ្លីៗ ធ្វើឱ្យគាត់សប្បាយចិត្តពេញមួយថ្ងៃ។"], en: ["Call Mom or Dad 📱", "A quick hello can make their whole day."] },
+  { km: ["រៀបតុបន្តិច 🧹", "រៀបចំរបស់ 5 មុខ — ចិត្តក៏ស្រឡះដែរ។"], en: ["Tidy one corner 🧹", "Put away 5 things — a clear space, a clear mind."] }
+];
+
+function homeNudgeIndex() {
+  const key = `mylife:nudge:${localDateInput()}`;
+  try {
+    const saved = sessionStorage.getItem(key);
+    if (saved !== null) return Number(saved) % HOME_NUDGES.length;
+    const pick = Math.floor(Math.random() * HOME_NUDGES.length);
+    sessionStorage.setItem(key, String(pick));
+    return pick;
+  } catch (error) {
+    return new Date().getDate() % HOME_NUDGES.length;
+  }
+}
+
+function homeNudge(firstName, index = homeNudgeIndex()) {
+  const item = HOME_NUDGES[index % HOME_NUDGES.length];
+  const [title, body] = languageCode() === "km" ? item.km : item.en;
+  const name = String(firstName || "").trim() || (languageCode() === "km" ? "អ្នក" : "friend");
+  return { title: title.replace("{name}", name), body: body.replace("{name}", name) };
+}
+
+function homeNudgeLogo() {
+  return '<svg class="home-nudge-svg" viewBox="0 0 240 240" aria-hidden="true">' +
+    '<rect width="240" height="240" rx="56" fill="#0f3326"/>' +
+    '<circle cx="120" cy="120" r="66" fill="none" stroke="#1f4a38" stroke-width="22"/>' +
+    '<circle class="hn-ring" cx="120" cy="120" r="66" fill="none" stroke="#d9ff7b" stroke-width="22" stroke-linecap="round" transform="rotate(-90 120 120)"/>' +
+    '<circle class="hn-dot" cx="120" cy="120" r="20" fill="#9ef06a"/>' +
+  '</svg>';
+}
+
 function bindHome() {
   if (typeof bindFamily === "function") bindFamily({ mediaOnly: true });
+  document.querySelector("[data-home-nudge-next]")?.addEventListener("click", event => {
+    const button = event.currentTarget;
+    const card = button.closest(".home-challenge-card");
+    const key = `mylife:nudge:${localDateInput()}`;
+    const next = (homeNudgeIndex() + 1) % HOME_NUDGES.length;
+    try { sessionStorage.setItem(key, String(next)); } catch (error) { /* rotate without memory */ }
+    const firstName = String(appData.profile?.name || "").split(" ")[0];
+    const text = homeNudge(firstName, next);
+    const title = card?.querySelector("[data-home-nudge-title]");
+    const body = card?.querySelector("[data-home-nudge-body]");
+    card?.classList.add("is-nudging");
+    window.setTimeout(() => {
+      if (title) title.textContent = text.title;
+      if (body) body.textContent = text.body;
+      card?.classList.remove("is-nudging");
+    }, 180);
+    button.classList.remove("is-replay");
+    void button.offsetWidth;
+    button.classList.add("is-replay");
+    if (typeof Sound !== "undefined") Sound.play("pop");
+  });
   document.querySelector("[data-home-challenge-image]")?.addEventListener("change", async event => {
     const file = event.target.files?.[0];
     if (!file) return;

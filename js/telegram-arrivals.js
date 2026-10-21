@@ -13,7 +13,7 @@ const TelegramArrivals = (() => {
     ["income", "income"],
     ["calendarEvents", "event"]
   ];
-  const ICON = { Food: "🍜", Transport: "🚗", Shopping: "🛍", Home: "🏠", Bills: "🧾", Family: "👨‍👩‍👧", Health: "💊", Education: "📚", Entertainment: "🎬", Other: "📦", Salary: "💼", Bonus: "🎁", Freelance: "🎨", Business: "🏪" };
+  const ICON = { Food: "🍜", Transport: "🚗", Shopping: "🛍", Home: "🏠", Bills: "🧾", Loan: "🏦", Family: "👨‍👩‍👧", Health: "💊", Education: "📚", Entertainment: "🎬", Other: "📦", Salary: "💼", Bonus: "🎁", Freelance: "🎨", Business: "🏪" };
   const km = () => (typeof languageCode === "function" ? languageCode() : "km") === "km";
   const L = (k, e) => (km() ? k : e);
 

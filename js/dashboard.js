@@ -495,7 +495,12 @@ function markBillPaid(billId) {
   // A paid bill is money spent: record it as an expense so it counts in
   // "left this month", budgets, category charts and the monthly report.
   const amount = Number(bill.amount || 0);
-  if (amount > 0) {
+  const loan = bill.loanId ? (appData.loans || []).find(item => item.id === bill.loanId) : null;
+  if (amount > 0 && loan && typeof LoanPay !== "undefined") {
+    // bill linked to a loan: ONE expense (category Loan) + the loan's payment for that due date
+    const done = LoanPay.recordLoanPayment(appData, loan, LoanPay.scheduleDateFor(loan, bill.due || paidOn), { amount, currency: bill.currency, billId: bill.id, today: paidOn, notes: t("bill") });
+    nextBill.lastPaidExpenseId = done.expense?.id || done.payment?.expenseId || "";
+  } else if (amount > 0) {
     const existing = appData.expenses.find(item => item.billId === bill.id && item.date === paidOn);
     const expenseId = existing?.id || `expenses-bill-${bill.id}-${Date.now()}`;
     if (!existing) {
@@ -527,6 +532,13 @@ function markBillUnpaid(billId) {
     lastPaidStatus: ""
   };
   if (bill.lastPaidDue) changes.due = bill.lastPaidDue;
+  // linked loan: take back the loan payment this bill made (its expense goes below)
+  const loan = bill.loanId ? (appData.loans || []).find(item => item.id === bill.loanId) : null;
+  const loanPayment = loan && bill.lastPaidDue ? (loan.payments || []).find(payment => payment.date === LoanPay.scheduleDateFor(loan, bill.lastPaidDue) && payment.billId === bill.id) : null;
+  if (loanPayment) {
+    loan.payments = loan.payments.filter(payment => payment !== loanPayment);
+    loan.updatedAt = new Date().toISOString();
+  }
   // undo: remove the expense that "paid" created
   if (bill.lastPaidExpenseId && appData.expenses.some(item => item.id === bill.lastPaidExpenseId)) Store.delete("expenses", bill.lastPaidExpenseId);
   changes.lastPaidExpenseId = "";

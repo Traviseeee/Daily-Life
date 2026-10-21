@@ -16,7 +16,7 @@ const incomeCategoryColors = {
   Bonus: "#fb923c",
   Other: "#94a3b8"
 };
-const expenseCategories = ["Food", "Home", "Family", "Transport", "Shopping", "Bills", "Education", "Health", "Entertainment", "Other"];
+const expenseCategories = ["Food", "Home", "Family", "Transport", "Shopping", "Bills", "Loan", "Education", "Health", "Entertainment", "Other"];
 const expenseCategoryColors = {
   Food: "#fb7185",
   Home: "#f59e0b",
@@ -24,6 +24,7 @@ const expenseCategoryColors = {
   Transport: "#60a5fa",
   Shopping: "#a78bfa",
   Bills: "#f97316",
+  Loan: "#5b7f95",
   Education: "#2dd4bf",
   Health: "#34d399",
   Entertainment: "#818cf8",
@@ -36,6 +37,7 @@ const expenseCategoryIcons = {
   Transport: "plane",
   Shopping: "wallet",
   Bills: "bill",
+  Loan: "loan",
   Education: "graduation",
   Health: "heart",
   Entertainment: "memory",
@@ -644,8 +646,21 @@ function savingCard(item) {
   </div>`;
 }
 
+// Read-only: bills that look like a loan payment, and months that may be counted
+// twice. Nothing is changed until the user links the bill (or deletes it).
+function renderLoanDoubleCheck() {
+  if (typeof LoanPay === "undefined") return "";
+  const found = LoanPay.findDoubleCounts(appData);
+  if (!found.length) return "";
+  const km = languageCode() === "km";
+  const rows = found.map(entry => entry.type === "counted-twice"
+    ? `<div class="loan-check-row"><span>⚠️ ${escapeHtml(entry.month)} · ${escapeHtml(entry.billName || "")} + ${escapeHtml(entry.loanName || "")} · ${money(entry.amount, entry.currency)} ${km ? "ប្រហែលជារាប់ ២ ដង" : "may be counted twice"}</span></div>`
+    : `<div class="loan-check-row"><span>🔗 ${km ? "វិក្កយបត្រ" : "Bill"} <b>${escapeHtml(entry.billName || "")}</b> ${km ? "ដូចការបង់កម្ចី" : "looks like the payment of"} <b>${escapeHtml(entry.loanName || "")}</b> (${money(entry.amount, entry.currency)})</span><button class="button ghost-button" type="button" data-link-bill="${escapeAttr(entry.billId)}">${km ? "ភ្ជាប់" : "Link"}</button></div>`).join("");
+  return `<div class="loan-check-card"><h3>${km ? "ពិនិត្យការរាប់ស្ទួន" : "Check for double counting"}</h3><p>${km ? "ភ្ជាប់វិក្កយបត្រទៅកម្ចី ដើម្បីបង់ម្តង រាប់ម្តង។ ខ្ញុំមិនប្តូរ ឬលុបអ្វីដោយខ្លួនឯងទេ។" : "Link the bill to the loan so one payment is counted once. Nothing is changed or deleted automatically."}</p>${rows}</div>`;
+}
+
 function renderLoans() {
-  return `<article class="glass-card card-pad financial-panel"><div class="between"><h2 class="section-title">${t("loans")}</h2><button class="button" data-action="add-loan">${Icons.plus()} ${t("addLoan")}</button></div>${appData.loans.length ? `<div class="grid loan-list">${appData.loans.map(loanCard).join("")}</div>` : emptyState(t("noLoansYet"), t("noLoansBody"))}</article>`;
+  return `<article class="glass-card card-pad financial-panel"><div class="between"><h2 class="section-title">${t("loans")}</h2><button class="button" data-action="add-loan">${Icons.plus()} ${t("addLoan")}</button></div>${renderLoanDoubleCheck()}${appData.loans.length ? `<div class="grid loan-list">${appData.loans.map(loanCard).join("")}</div>` : emptyState(t("noLoansYet"), t("noLoansBody"))}</article>`;
 }
 
 function loanCard(loan) {
@@ -828,8 +843,9 @@ function buildMonthlyFinanceReport(month) {
     period: formatDate(item.date),
     amount: -Math.abs(toProfileCurrency(item.amount, item.currency))
   }));
+  // payments with an expenseId are already in expenseRows (category Loan): count them once
   const paymentRows = (appData.loans || []).flatMap(loan => (loan.payments || [])
-    .filter(payment => String(payment.date || "").slice(0, 7) === month)
+    .filter(payment => !payment.expenseId && String(payment.date || "").slice(0, 7) === month)
     .map(payment => ({
       type: t("loan"),
       description: loan.name || t("loan"),
@@ -1166,6 +1182,10 @@ function bindMoney() {
   bindCollectionActions("bill", openBillModal);
   document.querySelectorAll("[data-payment-loan]").forEach(button => button.addEventListener("click", () => openLoanPaymentModal(appData.loans.find(loan => loan.id === button.dataset.paymentLoan))));
   document.querySelectorAll("[data-loan-schedule]").forEach(input => input.addEventListener("change", () => toggleLoanScheduledPayment(input)));
+  document.querySelectorAll("[data-link-bill]").forEach(button => button.addEventListener("click", () => {
+    const bill = appData.bills.find(item => item.id === button.dataset.linkBill);
+    if (bill) openBillModal(bill);
+  }));
   document.querySelectorAll("[data-savings-contribution]").forEach(input => input.addEventListener("change", () => toggleSavingsContribution(input)));
 }
 
@@ -1230,11 +1250,11 @@ function toggleLoanScheduledPayment(input) {
   loan.payments = loan.payments || [];
   const existingIndex = loan.payments.findIndex(payment => payment.date === paymentDate);
   if (input.checked) {
-    if (existingIndex === -1) {
-      loan.payments.unshift({ amount: Number(loan.monthlyPayment || 0), date: paymentDate, scheduled: true });
-    }
+    // one payment + one expense (category Loan); ticking again changes nothing
+    if (existingIndex === -1) LoanPay.recordLoanPayment(appData, loan, paymentDate, { amount: loan.monthlyPayment, today: localDateInput() });
   } else if (existingIndex > -1) {
-    loan.payments.splice(existingIndex, 1);
+    const done = LoanPay.removeLoanPayment(appData, loan, paymentDate);
+    if (done.removedExpenseId) SyncState.record(appData, "expenses", done.removedExpenseId);
   }
   Store.save();
   Toast.show(input.checked ? t("paymentMarkedPaid") : t("paymentMarkedUnpaid"));
@@ -1556,5 +1576,19 @@ function openLoanPaymentModal(loan) {
   Modal.open({ title: t("makePayment"), submitText: t("savePayment"), fields: [
     { name: "amount", label: t("amount"), type: "number", value: loan.monthlyPayment || "", required: true },
     { name: "date", label: t("date"), type: "date", value: localDateInput(), required: true }
-  ], onSubmit(data) { loan.payments = [{ amount: Number(data.amount || 0), date: data.date }, ...(loan.payments || [])]; Store.save(); Toast.show(t("paymentSaved")); App.render(); } });
+  ], onSubmit(data) {
+    const amount = Number(data.amount || 0);
+    if (LoanPay.findPayment(loan, data.date)) {
+      // a second (partial) payment on the same day: its own expense, still counted once
+      const payment = { amount, date: data.date, scheduled: false };
+      const id = `expenses-loan-${loan.id}-${data.date}-${Date.now()}`;
+      appData.expenses.push({ id, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), description: loan.name || t("loan"), amount, currency: loan.currency || appData.profile.currency || "USD", date: data.date, category: "Loan", method: "", notes: "", loanId: loan.id, loanPaymentDate: `${data.date}#${Date.now()}` });
+      payment.expenseId = id;
+      loan.payments = [payment, ...(loan.payments || [])];
+      loan.updatedAt = new Date().toISOString();
+    } else {
+      LoanPay.recordLoanPayment(appData, loan, data.date, { amount, scheduled: false, today: localDateInput() });
+    }
+    Store.save(); Toast.show(t("paymentSaved")); App.render();
+  } });
 }
