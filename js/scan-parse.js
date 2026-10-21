@@ -251,6 +251,11 @@
 
   /* ---------- duplicates & bill matching ---------- */
   const norm = s => String(s || "").toLowerCase().replace(/[^a-z0-9ក-៿]/g, "");
+  const dayGap = (a, b) => Math.abs(new Date(`${a}T00:00:00`) - new Date(`${b}T00:00:00`)) / 86400000;
+  const todayIso = () => new Date().toISOString().slice(0, 10);
+  // a bill already paid in the last 20 days (✅ Paid, auto-pay, a PPWSA/EDC receipt…):
+  // a slip for it is the same payment, never the next cycle
+  const recentlyPaid = (bill, date) => Boolean(bill && bill.lastPaidAt && dayGap(bill.lastPaidAt, date || todayIso()) < 20);
 
   function findDuplicates(payload, draft) {
     const found = [];
@@ -268,6 +273,17 @@
         if (record.date === draft.date && Number(record.amount) === Number(draft.amount) && norm(record.description) && norm(record.description) === norm(draft.merchant)) add("expenses", record, "same-merchant-amount-date");
       });
     }
+    if (draft.kind !== "bill" && Number(draft.amount) > 0 && draft.date) {
+      const currency = draft.currency || "";
+      (payload.expenses || []).forEach(record => {
+        const sameMoney = Number(record.amount) === Number(draft.amount) && (!currency || !record.currency || record.currency === currency);
+        if (!sameMoney) return;
+        // typed in Telegram / the app (no document) on the same day: maybe this same purchase
+        if (record.date === draft.date && !(record.scan && record.scan.ref)) add("expenses", record, "same-amount-date");
+        // a bill payment already recorded within a few days (✅ Paid, auto-pay, PPWSA/EDC receipt)
+        else if (record.billId && record.date && dayGap(record.date, draft.date) <= 3) add("expenses", record, "bill-payment-recorded");
+      });
+    }
     return found;
   }
 
@@ -275,7 +291,7 @@
     if (draft.kind === "bill") {
       return (payload.bills || []).find(bill => draft.provider && new RegExp(draft.provider, "i").test(`${bill.name} ${bill.notes || ""}`)) || null;
     }
-    const open = (payload.bills || []).filter(bill => bill.status !== "Paid" || (bill.due && draft.date && bill.due >= draft.date));
+    const open = (payload.bills || []).filter(bill => !recentlyPaid(bill, draft.date) && (bill.status !== "Paid" || (bill.due && draft.date && bill.due >= draft.date)));
     if (draft.provider) {
       const byProvider = open.find(bill => new RegExp(draft.provider, "i").test(`${bill.name} ${bill.notes || ""}`));
       if (byProvider) return byProvider;
@@ -325,6 +341,10 @@
 
     if (opts.linkBillId) {
       const bill = (payload.bills || []).find(item => item.id === opts.linkBillId);
+      if (bill && recentlyPaid(bill, draft.date || today)) {
+        // already paid for this cycle: never pay the next one by mistake
+        return { outcome: "bill-already-paid", collection: "bills", id: bill.id, billId: bill.id };
+      }
       if (bill) {
         const result = BillPay.payBill(payload, bill, draft.date || today, opts.source || "Scan", { amount, currency, notes: `Scan ${draft.ref || ""}`.trim(), force: true });
         const expense = (payload.expenses || []).find(entry => entry.id === bill.lastPaidExpenseId);
