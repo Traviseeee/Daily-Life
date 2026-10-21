@@ -15,17 +15,78 @@ const EVENT_KEYWORDS = [
   { category: "Reminder", re: /រំលឹក|remind/i }
 ];
 
-const EXPENSE_KEYWORDS = [
-  { category: "Bills", re: /វិក្កយបត្រ|ថ្លៃទឹក|ថ្លៃភ្លើង|អ៊ីនធឺណិត|កាតទូរស័ព្ទ|bill|electric|water bill|internet|wifi|phone card|top ?up|netflix|spotify|youtube|icloud|subscription/i },
-  { category: "Food", re: /អាហារ|ញ៉ាំ|បាយ|កាហ្វេ|ភេសជ្ជៈ|តែ|ទឹកក្រូច|គុយទាវ|មី|នំ|ផ្លែឈើ|food|eat|lunch|dinner|breakfast|brunch|coffee|cafe|tea|drink|meal|snack|noodle|rice|pizza|burger|kfc|starbucks|amazon cafe|grocer/i },
-  { category: "Transport", re: /សាំង|ឡាន|ម៉ូតូ|តាក់ស៊ី|កង់បី|រ៉ឺម៉ក|grab|passapp|pass app|tada|ធ្វើដំណើរ|transport|fuel|gas|petrol|taxi|tuk|bus|parking|ticket|flight/i },
-  { category: "Shopping", re: /ទិញ|ខោអាវ|អាវ|ខោ|ស្បែកជើង|កាបូប|ផ្សារ|shopping|shop|cloth|shirt|t-shirt|pant|jean|shoe|sneaker|dress|bag|watch|amazon|taobao|shopee|lazada|gift/i },
-  { category: "Home", re: /ផ្ទះ|ជួល|home|house|rent|furniture|kitchen|clean/i },
-  { category: "Family", re: /គ្រួសារ|កូន|ម៉ាក់|ប៉ា|family|kid|mom|dad|baby/i },
-  { category: "Education", re: /សាលា|សៀវភៅ|វគ្គ|រៀន|school|book|course|class|education|tuition/i },
-  { category: "Health", re: /ពេទ្យ|ថ្នាំ|មន្ទីរពេទ្យ|ឱសថ|health|doctor|medicine|hospital|pharmacy|clinic|gym|dentist/i },
-  { category: "Entertainment", re: /កុន|ហ្គេម|កម្សាន្ត|movie|cinema|game|fun|party|concert|karaoke|entertainment/i }
-];
+// Expense words by category — shared by the Telegram bot, MYLIFE Chat and the
+// app's expense form, so "សាំង 5$", "ខោអាវ 12$" or "Grab 15k" always land in the
+// same category. Khmer words match anywhere in the text; English words match as
+// whole words (plural s/es allowed). The longest word that matches wins, so
+// "ទិញបាយ" is Food, "សំបុត្រកុន" is Entertainment and "ជួលឡាន" is Transport.
+// Words starting with "~" are weak (e.g. "ទិញ" = buy): used only when nothing else matches.
+// Avoid short Khmer pieces that sit inside other words (តែ, មី, គោ, ត្រី, បង, តុ, មាស).
+const EXPENSE_WORDS = {
+  Bills: {
+    km: ["វិក្កយបត្រ", "ថ្លៃទឹក", "ថ្លៃភ្លើង", "ភ្លើងEDC", "ភ្លើង EDC", "ទឹកPPWSA", "ទឹក PPWSA", "អ៊ីនធឺណិត", "អ៊ីនធើណែត", "វ៉ាយហ្វាយ", "កាតទូរស័ព្ទ", "បញ្ចូលលុយទូរស័ព្ទ", "ថ្លៃសំរាម", "ថ្លៃសេវា", "ធានារ៉ាប់រង", "ថ្លៃខ្សែកាប"],
+    en: ["bill", "electric", "electricity", "edc", "ppwsa", "water bill", "internet", "wifi", "wi-fi", "phone card", "top up", "topup", "data plan", "cellcard", "metfone", "netflix", "spotify", "youtube premium", "youtube", "icloud", "google one", "chatgpt", "subscription", "insurance", "cable tv", "garbage"]
+  },
+  Food: {
+    km: ["អាហារ", "ញ៉ាំ", "បាយ", "ម្ហូប", "កាហ្វេ", "ភេសជ្ជៈ", "ទឹកក្រូច", "ទឹកតែ", "តែបៃតង", "តែទឹកដោះ", "តែក្រូចឆ្មា", "តែគុជ", "គុយទាវ", "មីឆា", "មីសួ", "មីកញ្ចប់", "មីគ្រាប់", "នំបញ្ចុក", "នំប៉័ង", "នំខេក", "នំ", "បបរ", "សម្ល", "ផ្លែឈើ", "សាច់", "សាច់គោ", "សាច់ជ្រូក", "សាច់មាន់", "មាន់", "សាច់ទា", "ត្រីអាំង", "ត្រីចៀន", "ត្រីងៀត", "បង្គា", "ក្តាម", "គ្រឿងសមុទ្រ", "បន្លែ", "អង្ករ", "ស៊ុត", "ទឹកដោះគោ", "ទឹកសុទ្ធ", "ទឹកកក", "ទឹកដូង", "ទឹកអំពៅ", "ការ៉េម", "ស្ករ", "អំបិល", "ប្រេងឆា", "ទឹកត្រី", "ប៊ីយែរ", "ស្រាបៀរ", "បៀរ", "ភោជនីយដ្ឋាន", "ហាងបាយ", "សាច់អាំង", "ស៊ុប", "ផ្សារទំនើប", "អាហារពេលព្រឹក", "អាហារថ្ងៃត្រង់", "អាហារពេលល្ងាច"],
+    en: ["food", "eat", "lunch", "dinner", "breakfast", "brunch", "meal", "snack", "coffee", "cafe", "café", "latte", "cappuccino", "tea", "milk tea", "bubble tea", "boba", "drink", "juice", "smoothie", "water", "noodle", "rice", "soup", "pizza", "burger", "sandwich", "chicken", "pork", "beef", "fish", "seafood", "shrimp", "fruit", "vegetable", "veggie", "grocery", "groceries", "supermarket", "bakery", "bread", "cake", "dessert", "ice cream", "beer", "wine", "restaurant", "bbq", "hotpot", "sushi", "ramen", "kfc", "mcdonald", "mcdonalds", "burger king", "pizza company", "pizza hut", "domino", "starbucks", "amazon cafe", "cafe amazon", "brown coffee", "tube coffee", "chatime", "koi", "texas chicken", "lucky burger", "foodpanda", "nham24", "wow now", "lucky supermarket", "chip mong supermarket"]
+  },
+  Transport: {
+    km: ["សាំង", "ប្រេងសាំង", "ចាក់សាំង", "ម្ស៉ូត", "ឡាន", "ម៉ូតូ", "ម៉ូតូឌុប", "តាក់ស៊ី", "កង់បី", "រ៉ឺម៉ក", "ឡានក្រុង", "យន្តហោះ", "សំបុត្រយន្តហោះ", "សំបុត្រឡាន", "ចតឡាន", "ចំណតឡាន", "ថ្លៃចត", "ផ្លាស់ប្រេង", "ប្តូរប្រេង", "ជួសជុលម៉ូតូ", "ជួសជុលឡាន", "បូមកង់", "កង់ឡាន", "លាងឡាន", "លាងម៉ូតូ", "ជួលឡាន", "ជួលម៉ូតូ", "ធ្វើដំណើរ", "ថ្លៃធ្វើដំណើរ", "ថ្លៃផ្លូវ"],
+    en: ["grab", "passapp", "pass app", "tada", "transport", "fuel", "gas", "petrol", "gasoline", "diesel", "taxi", "tuk", "tuktuk", "tuk tuk", "remork", "bus", "parking", "flight", "plane ticket", "ferry", "train", "toll", "car wash", "oil change", "motorbike", "moto", "car repair", "bike repair", "tire", "tyre", "car rental", "rent car", "rent a car", "rent moto", "caltex", "ptt", "tela", "total energies", "totalenergies", "sokimex", "ticket"]
+  },
+  Shopping: {
+    km: ["~ទិញ", "ខោអាវ", "អាវ", "ខោ", "សំលៀកបំពាក់", "សម្លៀកបំពាក់", "អាវយឺត", "ខោខូវប៊យ", "សំពត់", "ស្បែកជើង", "កាបូប", "មួក", "វ៉ែនតា", "នាឡិកា", "គ្រឿងសំអាង", "ទឹកអប់", "ក្រែម", "ក្រែមលាបមុខ", "ទូរស័ព្ទថ្មី", "កុំព្យូទ័រ", "កាស", "ឆ្នាំងសាក", "ខ្សែសាក", "គ្រឿងអលង្ការ", "កាដូ", "~ផ្សារ", "ហាងទំនិញ", "កាត់សក់", "ធ្វើក្រចក", "ធ្វើសក់"],
+    en: ["~buy", "~bought", "shopping", "shop", "mall", "aeon", "clothes", "cloth", "clothing", "shirt", "t-shirt", "tshirt", "pants", "jeans", "shorts", "shoes", "sneakers", "dress", "skirt", "bag", "watch", "glasses", "hat", "cap", "cosmetics", "makeup", "skincare", "perfume", "lotion", "phone case", "charger", "headphone", "earbuds", "airpods", "laptop", "iphone", "gadget", "electronics", "amazon", "taobao", "shopee", "lazada", "temu", "gift", "present", "haircut", "barber", "salon", "nails"]
+  },
+  Home: {
+    km: ["ផ្ទះ", "ជួលផ្ទះ", "ថ្លៃជួល", "ថ្លៃផ្ទះ", "~ជួល", "គ្រឿងសង្ហារិម", "កៅអី", "ពូក", "ភួយ", "ខ្នើយ", "វាំងនន", "ចានឆ្នាំង", "ឆ្នាំង", "ខ្ទះ", "សម្អាត", "សាប៊ូបោកខោអាវ", "ម្សៅសាប៊ូ", "ទឹកលាងចាន", "អំពូល", "ជួសជុលផ្ទះ", "បំពង់ទឹក", "ម៉ាស៊ីនត្រជាក់", "កង្ហារ", "ទូទឹកកក", "ម៉ាស៊ីនបោកខោអាវ", "បោកអ៊ុត"],
+    en: ["home", "house", "rent", "apartment", "condo", "furniture", "kitchen", "cleaning", "clean", "detergent", "laundry", "plumber", "~repair", "lamp", "bulb", "sofa", "bed", "mattress", "pillow", "curtain", "air conditioner", "aircon", "fan", "fridge", "washing machine", "hardware"]
+  },
+  Family: {
+    km: ["គ្រួសារ", "កូន", "ម៉ាក់", "ប៉ា", "ឪពុក", "ម្តាយ", "ម្ដាយ", "ប្អូន", "យាយ", "ជីដូន", "ជីតា", "ប្រពន្ធ", "ប្តី", "ទារក", "កន្ទប", "ទឹកដោះគោម្សៅ", "ប្រដាប់ក្មេងលេង", "លុយកូន", "ចងដៃ", "មង្គលការ", "បុណ្យ", "ខួប"],
+    en: ["family", "kid", "kids", "child", "children", "mom", "mum", "mother", "dad", "father", "parents", "wife", "husband", "baby", "diaper", "pampers", "formula", "toy", "wedding", "funeral"]
+  },
+  Education: {
+    km: ["សាលា", "ថ្លៃសាលា", "ថ្លៃសិក្សា", "សៀវភៅ", "វគ្គ", "វគ្គសិក្សា", "រៀន", "ថ្នាក់", "គ្រូ", "ប៊ិច", "ខ្មៅដៃ", "សម្ភារៈសិក្សា", "បោះពុម្ព", "ថតចម្លង", "ប្រឡង"],
+    en: ["school", "book", "course", "class", "education", "tuition", "study", "exam", "stationery", "pen", "notebook", "printing", "print", "photocopy", "udemy", "coursera", "ielts", "toefl"]
+  },
+  Health: {
+    km: ["ពេទ្យ", "គ្រូពេទ្យ", "ពេទ្យធ្មេញ", "ថ្នាំ", "មន្ទីរពេទ្យ", "ឱសថ", "ឱសថស្ថាន", "គ្លីនិក", "ពិនិត្យសុខភាព", "ធ្មេញ", "វីតាមីន", "ម៉ាស់", "ហាត់ប្រាណ", "ម៉ាស្សា", "ចាក់ថ្នាំ"],
+    en: ["health", "doctor", "medicine", "med", "meds", "hospital", "pharmacy", "clinic", "gym", "fitness", "dentist", "dental", "vitamin", "checkup", "check up", "mask", "massage", "spa", "u-care", "ucare"]
+  },
+  Entertainment: {
+    km: ["កុន", "ភាពយន្ត", "សំបុត្រកុន", "ហ្គេម", "កម្សាន្ត", "ខារ៉ាអូខេ", "ដើរលេង", "ដំណើរកម្សាន្ត", "សណ្ឋាគារ", "រីសត", "តន្ត្រី", "ប្រគុំតន្ត្រី"],
+    en: ["movie", "cinema", "film", "game", "gaming", "steam", "playstation", "fun", "party", "concert", "karaoke", "entertainment", "hotel", "resort", "trip", "vacation", "holiday", "tour", "bar", "club", "pub", "bowling", "movie ticket", "legend cinema", "major cineplex", "prime cineplex"]
+  }
+};
+
+const escapeRe = text => String(text).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const EXPENSE_MATCHERS = Object.entries(EXPENSE_WORDS).map(([category, words]) => ({
+  category,
+  words: [
+    ...words.km.map(word => ({ weak: word.startsWith("~"), size: word.replace("~", "").length, re: new RegExp(escapeRe(word.replace("~", "")), "i") })),
+    ...words.en.map(word => ({ weak: word.startsWith("~"), size: word.replace("~", "").length, re: new RegExp(String.raw`(?:^|[^a-z0-9])${escapeRe(word.replace("~", "")).replace(/ /g, "\\s*")}(?:s|es)?(?![a-z0-9])`, "i") }))
+  ]
+}));
+
+// best expense category for a text, or "" when no word matches
+function categorizeExpense(text) {
+  const value = String(text || "").toLowerCase();
+  if (!value.trim()) return "";
+  let best = null;
+  EXPENSE_MATCHERS.forEach(({ category, words }, order) => {
+    words.forEach(word => {
+      if (!word.re.test(value)) return;
+      const score = word.weak ? 0.5 : word.size;
+      if (!best || score > best.score) best = { category, score, order };
+    });
+  });
+  return best ? best.category : "";
+}
+
+// kept for older callers: { category, re } with re.test() = "a word of this category is in the text"
+const EXPENSE_KEYWORDS = EXPENSE_MATCHERS.map(({ category, words }) => ({ category, re: { test: text => words.some(word => !word.weak && word.re.test(String(text || "").toLowerCase())) } }));
 
 const INCOME_KEYWORDS = [
   { category: "Salary", re: /ប្រាក់ខែ|salary|payroll|wage/i },
@@ -229,8 +290,7 @@ function parseMoney(raw, defaultCurrency = "USD", today = null) {
     }
   }
 
-  const keywords = type === "income" ? INCOME_KEYWORDS : EXPENSE_KEYWORDS;
-  const keyword = keywords.find(item => item.re.test(rest));
+  const keyword = type === "income" ? INCOME_KEYWORDS.find(item => item.re.test(rest)) : (category => category ? { category } : null)(categorizeExpense(rest));
   const description = rest
     .replace(new RegExp(String.raw`(^|\s)(?:${UNIT.replace(/\|\\\$\|៛\|k\(\?!\[a-z\]\)\|r\(\?!\[a-z\]\)/, "")})(?=\s|$)`, "gi"), " ")
     .replace(/\s+/g, " ")
@@ -241,7 +301,7 @@ function parseMoney(raw, defaultCurrency = "USD", today = null) {
   return { type, amount, currency, category: keyword ? keyword.category : "Other", description, ...(date ? { date } : {}) };
 }
 
-const api = { parseEvent, parseExpense, parseMoney, addDays };
+const api = { parseEvent, parseExpense, parseMoney, addDays, categorizeExpense, EXPENSE_WORDS };
 if (typeof module !== "undefined" && module.exports) module.exports = api;
 else root.SmartParse = api;
 })(typeof window !== "undefined" ? window : globalThis);

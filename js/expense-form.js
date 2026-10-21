@@ -20,6 +20,13 @@ const ExpenseForm = (() => {
   const METHODS = ["Cash", "ABA", "ACLEDA", "Wing", "Card"];
   const METHOD_KM = { Cash: "សាច់ប្រាក់", Card: "កាត" };
 
+  // same words as the Telegram bot and MYLIFE Chat (js/smart-parse.js); the short list above is the fallback
+  const findKeyword = text => {
+    const shared = typeof SmartParse !== "undefined" && SmartParse.categorizeExpense ? SmartParse.categorizeExpense(text) : "";
+    if (shared) return { category: shared };
+    return typeof SmartParse !== "undefined" && SmartParse.categorizeExpense ? null : KEYWORDS.find(entry => entry.re.test(text));
+  };
+
   let touched = new Set();
 
   const km = () => languageCode() === "km";
@@ -135,7 +142,7 @@ const ExpenseForm = (() => {
     const form = root.querySelector("#modalForm");
     const text = normalizeDigits(form.elements.description.value);
     const found = [];
-    const keyword = KEYWORDS.find(entry => entry.re.test(text));
+    const keyword = findKeyword(text);
     if (keyword && !touched.has("category")) {
       const radio = form.querySelector(`input[name="category"][value="${keyword.category}"]`);
       if (radio && !radio.checked) {
@@ -280,7 +287,7 @@ const ExpenseForm = (() => {
   // "Grab 15k" → { amount: 15000, currency: "KHR", category: "Transport", description: "Grab" } (used by the chat)
   function parseExpense(raw) {
     const text = normalizeDigits(raw);
-    const keyword = KEYWORDS.find(entry => entry.re.test(text));
+    const keyword = findKeyword(text);
     const number = text.match(/(\d+(?:[.,]\d+)?)\s*(\$|usd|៛|khr|riel|រៀល|k(?![a-z]))?/i);
     let amount = 0;
     let currency = "";
