@@ -1,4 +1,13 @@
+// Which sections are open survives re-renders: switching anything saves the profile and
+// re-draws the page, which used to fold everything back to the first section.
+const settingsOpenSections = new Set(["account"]);
+
 function renderSettings() {
+  return renderSettingsPage().replace(/<details class="settings-accordion" id="settings-section-([a-z]+)"( open)?>/g,
+    (match, id) => `<details class="settings-accordion" id="settings-section-${id}"${settingsOpenSections.has(id) ? " open" : ""}>`);
+}
+
+function renderSettingsPage() {
   const stats = Store.calculate();
   const welcomePoster = App.getWelcomePoster();
   const settingsSections = [
@@ -504,6 +513,11 @@ function openEditUserDataModal() {
 }
 
 function bindSettings() {
+  document.querySelectorAll("details.settings-accordion[id^='settings-section-']").forEach(section => section.addEventListener("toggle", () => {
+    const id = section.id.replace("settings-section-", "");
+    if (section.open) settingsOpenSections.add(id);
+    else settingsOpenSections.delete(id);
+  }));
   if (typeof NotifyCenter !== "undefined") document.querySelectorAll("[data-nfc-open]").forEach(button => button.addEventListener("click", () => NotifyCenter.open(button.dataset.nfcOpen || "")));
   bindNavigationSheetGestures();
   if (typeof bindAutomationCard === "function") bindAutomationCard();
