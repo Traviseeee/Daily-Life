@@ -1,5 +1,6 @@
-/* MYLIFE "Today" page (#today): one screen with what's next, today's
- * timeline, overdue bills, money left, quick expense and the week ahead. */
+/* MYLIFE "Today" page (#today): greeting + 3 stat tiles, "up next", one card with
+ * tabs (today incl. overdue / tomorrow / this week) and one money card (spent today,
+ * month left + bar, budget warnings, quick expense folded away). Styles: css/today.css */
 
 function todayKm() {
   return languageCode() === "km";
@@ -96,6 +97,25 @@ function todayRow(entry, { past = false, next = false } = {}) {
   </div>`;
 }
 
+// open tab / quick-expense state survive re-renders (saving data re-renders the page)
+let todayTab = "today";
+let todayQuickOpen = false;
+
+function todayWeekRow(item) {
+  const isKm = todayKm();
+  const icon = item.type === "bill" ? Icons.bill()
+    : item.type === "reminder" ? Icons.bell()
+      : String(item.type || "").startsWith("family") ? (item.type === "family-anniversary" ? Icons.heart() : Icons.cake())
+        : Icons.calendar();
+  const tone = item.type === "bill" ? "bill" : item.type === "reminder" ? "reminder" : String(item.type || "").startsWith("family") ? "family" : "personal";
+  const left = isKm ? `នៅសល់ ${item.daysLeft} ថ្ងៃ` : `in ${item.daysLeft} day${item.daysLeft === 1 ? "" : "s"}`;
+  return `<div class="td-row" style="--tone:${todayToneColor(tone)}">
+    <span class="td-time">${escapeHtml(formatDate(item.date, { weekday: "short", day: "numeric" }))}</span>
+    <span class="td-icon">${icon}</span>
+    <div class="td-copy"><strong>${escapeHtml(item.title || "")}</strong><small>${escapeHtml(left)}</small></div>
+  </div>`;
+}
+
 function renderToday() {
   const isKm = todayKm();
   const today = localDateInput();
@@ -112,39 +132,55 @@ function renderToday() {
   const greeting = isKm
     ? (hour < 12 ? "អរុណសួស្តី" : hour < 17 ? "ទិវាសួស្តី" : "សាយណ្ហសួស្តី")
     : (hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening");
-  const name = appData.profile.name ? `, ${appData.profile.name}` : "";
+  const name = appData.profile.name ? `, ${String(appData.profile.name).split(/\s+/)[0]}` : "";
   const kmDays = ["អាទិត្យ", "ចន្ទ", "អង្គារ", "ពុធ", "ព្រហស្បតិ៍", "សុក្រ", "សៅរ៍"];
   const kmMonths = ["មករា", "កុម្ភៈ", "មីនា", "មេសា", "ឧសភា", "មិថុនា", "កក្កដា", "សីហា", "កញ្ញា", "តុលា", "វិច្ឆិកា", "ធ្នូ"];
   const dateLabel = isKm
-    ? `ថ្ងៃ${kmDays[now.getDay()]} ${now.getDate()} ${kmMonths[now.getMonth()]} ${now.getFullYear()}`
+    ? `ថ្ងៃ${kmDays[now.getDay()]} ${now.getDate()} ${kmMonths[now.getMonth()]}`
     : now.toLocaleDateString("en-US", { weekday: "long", day: "numeric", month: "long" });
 
   const stats = Store.calculate();
   // same "left this month" number as the Money page
-  if (typeof moneyMonthNumbers === "function") stats.available = moneyMonthNumbers().left;
+  let month = null;
+  if (typeof moneyMonthNumbers === "function") {
+    month = moneyMonthNumbers();
+    stats.available = month.left;
+  }
   const spentToday = sumMoney(appData.expenses.filter(item => item.date === today), "amount");
   const nearBudgets = typeof SmartMoney !== "undefined"
     ? expenseCategories.map(category => ({ category, ...SmartMoney.budgetStatus(category) })).filter(row => row.budget && row.percent >= 80)
     : [];
+  // month bar: how much of this month's income is already used (spent + loans + saving)
+  const used = month && month.income > 0 ? Math.round(((month.income - month.left) / month.income) * 100) : (stats.available < 0 ? 100 : 0);
+  const usedPct = Math.max(0, Math.min(100, used));
 
   const upcoming = getUpcomingNotifications(7, 8).filter(item => item.date > tomorrow);
+  const tabs = [
+    ["today", isKm ? "ថ្ងៃនេះ" : "Today", entries.length + overdue.length],
+    ["tomorrow", isKm ? "ស្អែក" : "Tomorrow", tomorrowEntries.length],
+    ["week", isKm ? "សប្តាហ៍នេះ" : "This week", upcoming.length]
+  ];
+  if (!tabs.some(([id]) => id === todayTab)) todayTab = "today";
+  const empty = text => `<div class="tdx-empty">${text}</div>`;
+  const bad = stats.available < 0;
 
-  return `<section class="page today-page">
-    <header class="td-hero">
-      <div>
+  return `<section class="page today-page tdx-page">
+    <header class="tdx-hero">
+      <div class="tdx-hello">
         <span class="eyebrow">${escapeHtml(dateLabel)}</span>
         <h1 class="page-title">${escapeHtml(greeting + name)} ${hour < 17 ? "☀️" : "🌙"}</h1>
-        <div class="td-chips">
-          <span class="td-chip">📋 ${entries.length} ${isKm ? "ថ្ងៃនេះ" : "today"}</span>
-          ${overdue.length ? `<span class="td-chip td-chip-warn">⚠️ ${overdue.length} ${isKm ? "ហួសថ្ងៃ" : "overdue"}</span>` : ""}
-          <span class="td-chip ${stats.available < 0 ? "td-chip-warn" : "td-chip-ok"}">💰 ${stats.available < 0 ? `${isKm ? "ចាយលើស" : "Over by"} ${money(-stats.available)}` : `${money(stats.available)} ${isKm ? "អាចចាយ" : "left"}`}</span>
-        </div>
       </div>
-      <button class="button" type="button" data-td-add-event>${Icons.plus()} ${t("addEvent")}</button>
+      <button class="tdx-add" type="button" data-td-add-event aria-label="${escapeAttr(t("addEvent"))}">${Icons.plus()}<span>${isKm ? "បន្ថែម" : "Add"}</span></button>
     </header>
 
-    <div class="td-grid">
-      <div class="td-main">
+    <div class="tdx-stats">
+      <button class="tdx-stat" type="button" data-tdx-go="today"><span>${isKm ? "ថ្ងៃនេះ" : "Today"}</span><b>${entries.length}</b></button>
+      <button class="tdx-stat ${overdue.length ? "is-bad" : ""}" type="button" data-tdx-go="today"><span>${isKm ? "ហួសថ្ងៃ" : "Overdue"}</span><b>${overdue.length}</b></button>
+      <a class="tdx-stat ${bad ? "is-bad" : "is-good"}" href="#money"><span>${isKm ? "លុយខែនេះ" : "Money left"}</span><b>${money(stats.available)}</b></a>
+    </div>
+
+    <div class="tdx-grid">
+      <div class="tdx-main">
         ${next ? `<article class="glass-card td-next" style="--tone:${todayToneColor(next.tone)}">
           <span class="td-next-label">${isKm ? "បន្ទាប់" : "Up next"} · ${escapeHtml(todayCountdown(next.time))}</span>
           <div class="td-next-body">
@@ -153,39 +189,44 @@ function renderToday() {
           </div>
         </article>` : ""}
 
-        <article class="glass-card card-pad td-card">
-          <div class="td-card-head"><h2 class="section-title">${isKm ? "កាលវិភាគថ្ងៃនេះ" : "Today's schedule"}</h2><span class="pill">${entries.length}</span></div>
-          ${entries.length
-            ? `<div class="td-list">${entries.map(entry => todayRow(entry, { past: entry.time && entry.time < nowTime, next: entry === next })).join("")}</div>`
-            : `<div class="td-empty">🌿 ${isKm ? "ថ្ងៃនេះទំនេរ — សម្រាកឱ្យបានល្អ!" : "Nothing scheduled — enjoy your day!"}</div>`}
-        </article>
-
-        ${overdue.length ? `<article class="glass-card card-pad td-card td-overdue">
-          <div class="td-card-head"><h2 class="section-title">⚠️ ${isKm ? "មិនទាន់បង់" : "Overdue"}</h2><span class="pill">${overdue.length}</span></div>
-          <div class="td-list">${overdue.map(entry => todayRow(entry)).join("")}</div>
-        </article>` : ""}
-
-        <article class="glass-card card-pad td-card">
-          <div class="td-card-head"><h2 class="section-title">🔜 ${isKm ? "ស្អែក" : "Tomorrow"}</h2><span class="pill">${tomorrowEntries.length}</span></div>
-          ${tomorrowEntries.length
-            ? `<div class="td-list">${tomorrowEntries.map(entry => todayRow({ ...entry, action: entry.action === "edit" ? "edit" : "" })).join("")}</div>`
-            : `<div class="td-empty">${isKm ? "មិនទាន់មានអ្វីសម្រាប់ស្អែកទេ" : "Nothing planned for tomorrow yet"}</div>`}
+        <article class="glass-card tdx-card tdx-plan">
+          <div class="tdx-tabs" role="tablist" aria-label="${escapeAttr(isKm ? "កាលវិភាគ" : "Schedule")}">
+            ${tabs.map(([id, label, count]) => `<button class="tdx-tab ${todayTab === id ? "is-on" : ""}" type="button" role="tab" aria-selected="${todayTab === id}" data-tdx-tab="${id}">${escapeHtml(label)}${count ? ` <i>${count}</i>` : ""}</button>`).join("")}
+          </div>
+          <div class="tdx-panel" data-tdx-panel="today" ${todayTab === "today" ? "" : "hidden"}>
+            ${overdue.length ? `<p class="tdx-sec is-bad">⚠️ ${isKm ? "មិនទាន់បង់" : "Overdue"}</p><div class="td-list">${overdue.map(entry => todayRow(entry)).join("")}</div>` : ""}
+            ${overdue.length && entries.length ? `<p class="tdx-sec">${isKm ? "ថ្ងៃនេះ" : "Today"}</p>` : ""}
+            ${entries.length
+              ? `<div class="td-list">${entries.map(entry => todayRow(entry, { past: entry.time && entry.time < nowTime, next: entry === next })).join("")}</div>`
+              : overdue.length ? "" : empty(`🌿 ${isKm ? "ថ្ងៃនេះទំនេរ — សម្រាកឱ្យបានល្អ!" : "Nothing today — enjoy your day!"}`)}
+          </div>
+          <div class="tdx-panel" data-tdx-panel="tomorrow" ${todayTab === "tomorrow" ? "" : "hidden"}>
+            ${tomorrowEntries.length
+              ? `<div class="td-list">${tomorrowEntries.map(entry => todayRow({ ...entry, action: entry.action === "edit" ? "edit" : "" })).join("")}</div>`
+              : empty(isKm ? "មិនទាន់មានអ្វីសម្រាប់ស្អែកទេ" : "Nothing planned for tomorrow yet")}
+          </div>
+          <div class="tdx-panel" data-tdx-panel="week" ${todayTab === "week" ? "" : "hidden"}>
+            ${upcoming.length ? `<div class="td-list">${upcoming.map(todayWeekRow).join("")}</div>` : empty(isKm ? "សប្តាហ៍នេះស្ងាត់" : "A quiet week ahead")}
+          </div>
         </article>
       </div>
 
-      <aside class="td-side">
-        <article class="glass-card card-pad td-card td-money">
-          <div class="td-card-head"><h2 class="section-title">💰 ${isKm ? "លុយថ្ងៃនេះ" : "Money today"}</h2><a class="td-link" href="#money">${t("view")} ${Icons.chevron()}</a></div>
-          <div class="td-money-grid">
-            <div><span>${isKm ? "ចាយថ្ងៃនេះ" : "Spent today"}</span><strong>${money(spentToday)}</strong></div>
-            <div class="${stats.available < 0 ? "is-bad" : "is-good"}"><span>${isKm ? "អាចចាយខែនេះ" : "Left this month"}</span><strong>${money(stats.available)}</strong></div>
+      <aside class="tdx-side">
+        <article class="glass-card tdx-card tdx-money">
+          <div class="tdx-money-head">
+            <h2 class="section-title">💰 ${isKm ? "លុយ" : "Money"}</h2>
+            <a class="td-link" href="#money">${t("view")} ${Icons.chevron()}</a>
           </div>
+          <div class="tdx-money-row">
+            <span>${isKm ? "ចាយថ្ងៃនេះ" : "Spent today"} <b>${money(spentToday)}</b></span>
+            <span class="${bad ? "is-bad" : "is-good"}">${bad ? (isKm ? "ចាយលើស" : "Over by") : (isKm ? "នៅសល់" : "Left")} <b>${money(Math.abs(stats.available))}</b></span>
+          </div>
+          <div class="tdx-bar ${bad ? "is-bad" : usedPct >= 80 ? "is-warn" : ""}" role="img" aria-label="${escapeAttr(`${usedPct}%`)}"><i style="width:${usedPct}%"></i></div>
           ${nearBudgets.length ? `<div class="td-budgets">${nearBudgets.map(row => `<a href="#money/budget" class="td-budget ${row.percent >= 100 ? "is-over" : ""}"><b>${escapeHtml(optionLabel(row.category))}</b><span>${row.percent}%</span></a>`).join("")}</div>` : ""}
-        </article>
-        ${typeof SmartMoney !== "undefined" ? SmartMoney.renderQuickExpense("td-qx") : ""}
-        <article class="glass-card card-pad td-card">
-          <div class="td-card-head"><h2 class="section-title">🎉 ${isKm ? "សប្តាហ៍នេះ" : "This week"}</h2></div>
-          ${upcoming.length ? `<div class="td-upcoming">${upcoming.map(item => `<div class="td-up"><span class="td-up-days">${item.daysLeft}<small>${isKm ? "ថ្ងៃ" : "d"}</small></span><div><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(formatDate(item.date, { weekday: "short", month: "short", day: "numeric" }))}</small></div></div>`).join("")}</div>` : `<div class="td-empty">${isKm ? "សប្តាហ៍នេះស្ងាត់" : "A quiet week ahead"}</div>`}
+          ${typeof SmartMoney !== "undefined" ? `<details class="tdx-qx" ${todayQuickOpen ? "open" : ""}>
+            <summary><span>⚡</span>${isKm ? "កត់ចំណាយរហ័ស" : "Quick expense"}${Icons.chevron()}</summary>
+            ${SmartMoney.renderQuickExpense("tdx-qx-card")}
+          </details>` : ""}
         </article>
       </aside>
     </div>
@@ -194,6 +235,22 @@ function renderToday() {
 
 function bindToday() {
   document.querySelector("[data-td-add-event]")?.addEventListener("click", () => App.openEventModal({ date: localDateInput() }));
+  const page = document.querySelector(".tdx-page");
+  const showTab = id => {
+    todayTab = id;
+    page?.querySelectorAll("[data-tdx-tab]").forEach(tab => {
+      const on = tab.dataset.tdxTab === id;
+      tab.classList.toggle("is-on", on);
+      tab.setAttribute("aria-selected", String(on));
+    });
+    page?.querySelectorAll("[data-tdx-panel]").forEach(panel => { panel.hidden = panel.dataset.tdxPanel !== id; });
+  };
+  page?.querySelectorAll("[data-tdx-tab]").forEach(tab => tab.addEventListener("click", () => showTab(tab.dataset.tdxTab)));
+  page?.querySelectorAll("[data-tdx-go]").forEach(button => button.addEventListener("click", () => {
+    showTab(button.dataset.tdxGo);
+    page.querySelector(".tdx-plan")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }));
+  page?.querySelector(".tdx-qx")?.addEventListener("toggle", event => { todayQuickOpen = event.currentTarget.open; });
   document.querySelectorAll("[data-td-paid]").forEach(button => button.addEventListener("click", () => {
     if (typeof markBillPaid === "function") markBillPaid(button.dataset.tdPaid);
   }));
