@@ -7,10 +7,11 @@
 // placeholder) is shown, nothing else in the app depends on it.
 const TopbarWeather = (() => {
   const PLACE = { name: "Phnom Penh", lat: 11.5564, lon: 104.9282 };
-  const CACHE_KEY = "mylife:weather:v1";
+  const CACHE_KEY = "mylife:weather:v2";
   const MAX_AGE = 30 * 60 * 1000;
   let data = null;
   let loading = false;
+  let open = false;
 
   const km = () => (typeof languageCode === "function" ? languageCode() : "en") === "km";
   const TEXT = {
@@ -19,6 +20,8 @@ const TopbarWeather = (() => {
     rain: ["Rain", "ភ្លៀង"], storm: ["Thunderstorm", "ភ្លៀងផ្គររន្ទះ"],
     feels: ["Feels", "មានអារម្មណ៍"], rainChance: ["Chance of rain", "ឱកាសភ្លៀង"],
     umbrella: ["Rain likely, bring an umbrella", "អាចភ្លៀង យកឆ័ត្រទៅផង"],
+    umbrellaAt: ["Rain ~{t}, bring an umbrella", "អាចភ្លៀងម៉ោង {t} យកឆ័ត្រផង"],
+    now: ["Now", "ឥឡូវ"], more: ["Show hourly forecast", "បង្ហាញអាកាសធាតុតាមម៉ោង"],
     morning: ["Good morning", "អរុណសួស្តី"], afternoon: ["Good afternoon", "ទិវាសួស្តី"], evening: ["Good evening", "សាយណ្ហសួស្តី"],
     loading: ["Loading weather…", "កំពុងទាញអាកាសធាតុ…"]
   };
@@ -37,7 +40,7 @@ const TopbarWeather = (() => {
   // Animated SVG (viewBox 0 0 100 100). Classes animate in css/topbar.css.
   function icon(scene) {
     const sun = `<g class="tw-rays" stroke="#ffd34d" stroke-width="6" stroke-linecap="round"><path d="M50 6v12M50 82v12M6 50h12M82 50h12M19 19l8 8M73 73l8 8M19 81l8-8M73 27l8-8"/></g><circle class="tw-core" cx="50" cy="50" r="20" fill="#ffc62e"/>`;
-    const smallSun = `<g transform="translate(-14 -14) scale(.8)">${sun}</g>`;
+    const smallSun = `<g transform="translate(-4 -6) scale(.66)">${sun}</g>`;
     const moon = `<path class="tw-core" d="M58 18a30 30 0 1 0 24 48A26 26 0 0 1 58 18z" fill="#f2e7b5"/><circle class="tw-star" cx="20" cy="24" r="3" fill="#fff"/><circle class="tw-star tw-d2" cx="84" cy="28" r="2.4" fill="#fff"/>`;
     const cloud = (fill = "#e6edf2", back = "#9fb3c2") => `<g class="tw-drift2"><ellipse cx="64" cy="42" rx="20" ry="13" fill="${back}"/></g><g class="tw-drift"><ellipse cx="45" cy="56" rx="27" ry="17" fill="${fill}"/><ellipse cx="65" cy="60" rx="19" ry="13" fill="${fill}"/></g>`;
     const drops = `<g stroke="#5fd3f3" stroke-width="5" stroke-linecap="round"><path class="tw-drop" d="M37 76l-3 8"/><path class="tw-drop tw-d1" d="M51 76l-3 8"/><path class="tw-drop tw-d2" d="M65 76l-3 8"/></g>`;
@@ -68,7 +71,7 @@ const TopbarWeather = (() => {
     if (typeof navigator !== "undefined" && navigator.onLine === false) return;
     loading = true;
     try {
-      const url = `https://api.open-meteo.com/v1/forecast?latitude=${PLACE.lat}&longitude=${PLACE.lon}&current=temperature_2m,apparent_temperature,weather_code,is_day&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto&forecast_days=1`;
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${PLACE.lat}&longitude=${PLACE.lon}&current=temperature_2m,apparent_temperature,weather_code,is_day&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&hourly=temperature_2m,weather_code,precipitation_probability,is_day&timezone=auto&forecast_days=2`;
       const response = await fetch(url, { cache: "no-store" });
       if (!response.ok) throw new Error(`weather ${response.status}`);
       const json = await response.json();
@@ -82,7 +85,8 @@ const TopbarWeather = (() => {
         isDay: c.is_day !== 0,
         max: Math.round((d.temperature_2m_max || [])[0]),
         min: Math.round((d.temperature_2m_min || [])[0]),
-        rain: Math.round((d.precipitation_probability_max || [])[0] || 0)
+        rain: Math.round((d.precipitation_probability_max || [])[0] || 0),
+        hours: nextHours(json)
       };
       try { localStorage.setItem(CACHE_KEY, JSON.stringify(data)); } catch (error) { /* storage full / private */ }
       render();
@@ -91,6 +95,45 @@ const TopbarWeather = (() => {
     } finally {
       loading = false;
     }
+  }
+
+  // next 13 hours from the hourly forecast, in the place's own time zone
+  function nextHours(json) {
+    const h = json.hourly || {};
+    const times = h.time || [];
+    const nowKey = new Date(Date.now() + (json.utc_offset_seconds || 0) * 1000).toISOString().slice(0, 13);
+    let start = times.findIndex(t => String(t).slice(0, 13) >= nowKey);
+    if (start < 0) return [];
+    return times.slice(start, start + 13).map((t, i) => ({
+      h: Number(String(t).slice(11, 13)),
+      temp: Math.round((h.temperature_2m || [])[start + i]),
+      code: (h.weather_code || [])[start + i],
+      day: (h.is_day || [])[start + i] !== 0,
+      pop: Math.round((h.precipitation_probability || [])[start + i] || 0)
+    }));
+  }
+
+  const hourLabel = hour => `${hour % 12 || 12}${hour < 12 ? "AM" : "PM"}`;
+
+  function rainTip(scene) {
+    if (!data || scene === "rain" || scene === "storm") return "";
+    const hours = Array.isArray(data.hours) ? data.hours : [];
+    const wet = hours.slice(1, 13).find(x => x.pop >= 60);
+    if (wet) return tx("umbrellaAt").replace("{t}", hourLabel(wet.h));
+    return data.rain >= 60 ? tx("umbrella") : "";
+  }
+
+  function hoursStrip() {
+    const hours = Array.isArray(data?.hours) ? data.hours : [];
+    if (!hours.length) return "";
+    const slots = [0, 2, 4, 6, 8].map(i => hours[i]).filter(Boolean);
+    return `<div class="tw-hours">${slots.map((x, i) => `
+      <div class="tw-hour${i === 0 ? " is-now" : ""}"><b>${esc(i === 0 ? tx("now") : hourLabel(x.h))}</b>${icon(sceneOf(x.code, x.day))}<span>${num(x.temp)}</span><small>💧${x.pop}%</small></div>`).join("")}</div>`;
+  }
+
+  function toggle(force) {
+    open = typeof force === "boolean" ? force : !open;
+    render();
   }
 
   const isDayNow = () => { const h = new Date().getHours(); return h >= 6 && h < 18; };
@@ -140,9 +183,19 @@ const TopbarWeather = (() => {
         <div class="tw-card-main">
           <div class="tw-card-temp"><strong>${num(data?.temp)}</strong>${data ? `<small>${esc(tx("feels"))} ${num(data.feels)}</small>` : ""}</div>
           <div class="tw-card-meta">${meta}</div>
-          ${data && data.rain >= 60 && scene !== "rain" && scene !== "storm" ? `<div class="tw-card-tip">☂ ${esc(tx("umbrella"))}</div>` : ""}
+          ${rainTip(scene) ? `<div class="tw-card-tip">☂ ${esc(rainTip(scene))}</div>` : ""}
         </div>
-        <div class="tw-card-time"><strong data-tw-clock>${esc(clock)}</strong><small>${esc(ampm || PLACE.name)}</small></div>`;
+        <div class="tw-card-time"><strong data-tw-clock>${esc(clock)}</strong><small>${esc(ampm || PLACE.name)}</small></div>
+        ${data?.hours?.length ? `<span class="tw-card-more" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>${open ? hoursStrip() : ""}` : ""}`;
+      const canOpen = !!data?.hours?.length;
+      card.classList.toggle("is-open", open && canOpen);
+      card.classList.toggle("can-open", canOpen);
+      if (canOpen) {
+        card.setAttribute("role", "button");
+        card.setAttribute("tabindex", "0");
+        card.setAttribute("aria-expanded", String(open));
+        card.setAttribute("title", tx("more"));
+      }
     }
   }
 
@@ -163,9 +216,19 @@ const TopbarWeather = (() => {
     setInterval(tick, 15000);
     setInterval(() => load(false), MAX_AGE);
     document.addEventListener("visibilitychange", () => { if (!document.hidden) load(false); });
+    document.addEventListener("click", event => {
+      const card = event.target.closest("#topbarWxCard.can-open");
+      if (card) toggle();
+    });
+    document.addEventListener("keydown", event => {
+      if ((event.key === "Enter" || event.key === " ") && event.target.matches?.("#topbarWxCard.can-open")) {
+        event.preventDefault();
+        toggle();
+      }
+    });
   }
 
-  return { init, render, load, sceneOf, icon };
+  return { init, render, load, toggle, sceneOf, icon };
 })();
 
 if (typeof window !== "undefined") window.TopbarWeather = TopbarWeather;
