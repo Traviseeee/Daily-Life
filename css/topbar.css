@@ -280,3 +280,17 @@
   background: transparent !important;
 }
 .settings-accordion-body .settings-preference-list > .settings-preference-row:hover { background: rgba(127, 140, 133, 0.08) !important; }
+/* Khmer leading marks (e.g. ្រ in ជ្រើស) draw a little to the LEFT of the letter —
+   keep some room so the first letter is never cut at the edge */
+.settings-accordion-body .settings-preference-row > span { padding-left: 8px !important; overflow: visible !important; }
+.settings-accordion-body .settings-preference-row strong,
+.settings-accordion-body .settings-preference-row small { overflow: visible; padding-left: 2px; }
+.settings-accordion-copy strong, .settings-accordion-copy small { padding-left: 3px; }
+/* thin line under each setting (no box), none under the last one */
+.settings-accordion-body .settings-preference-list > .settings-preference-row { border-radius: 0 !important; border-bottom: 1px solid rgba(127, 140, 133, 0.2) !important; }
+:root:not([data-theme="light"]) .settings-accordion-body .settings-preference-list > .settings-preference-row { border-bottom-color: rgba(255, 255, 255, 0.08) !important; }
+:root[data-theme="light"] .settings-accordion-body .settings-preference-list > .settings-preference-row { border-bottom-color: rgba(16, 32, 26, 0.08) !important; }
+.settings-accordion-body .settings-preference-list > .settings-preference-row:last-child { border-bottom: 0 !important; }
+.settings-accordion-body .settings-preference-list > .settings-preference-row:first-child:not(:last-child) { border-bottom: 1px solid rgba(127, 140, 133, 0.2) !important; }
+:root:not([data-theme="light"]) .settings-accordion-body .settings-preference-list > .settings-preference-row:first-child:not(:last-child) { border-bottom-color: rgba(255, 255, 255, 0.08) !important; }
+:root[data-theme="light"] .settings-accordion-body .settings-preference-list > .settings-preference-row:first-child:not(:last-child) { border-bottom-color: rgba(16, 32, 26, 0.08) !important; }
