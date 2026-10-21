@@ -8,10 +8,28 @@
 
 begin;
 
-drop policy if exists "Public read access to images" on storage.objects;
-drop policy if exists "Authenticated users can upload images" on storage.objects;
-drop policy if exists "Authenticated users can update their own images" on storage.objects;
-drop policy if exists "Authenticated users can delete their own images" on storage.objects;
+-- The old policies have different names in the repo and on the live project
+-- (live, checked 2026-10-21: "Public can view images", "Authenticated users can
+-- upload/update/delete images"). Policies add up (OR), so EVERY old one must go,
+-- or the new rules change nothing. Drop each old image policy by name, any case.
+do $$
+declare p record;
+begin
+  for p in
+    select policyname from pg_policies
+    where schemaname = 'storage' and tablename = 'objects'
+      and lower(policyname) in (
+        'public can view images',
+        'authenticated users can upload images',
+        'authenticated users can update images',
+        'authenticated users can delete images',
+        'public read access to images',
+        'authenticated users can update their own images',
+        'authenticated users can delete their own images')
+  loop
+    execute format('drop policy %I on storage.objects', p.policyname);
+  end loop;
+end $$;
 
 drop policy if exists "images: owner reads own folder" on storage.objects;
 drop policy if exists "images: owner uploads to own folder" on storage.objects;
@@ -54,6 +72,21 @@ create policy "images: owner deletes own files"
     and (storage.foldername(name))[1] = 'users'
     and (storage.foldername(name))[2] = (select auth.uid())::text
   );
+
+-- Safety check: after this, storage.objects must have exactly the 4 new policies.
+-- If any other policy is left (it could still open the bucket), stop and undo everything.
+do $$
+declare extra text;
+begin
+  select string_agg(policyname, ', ') into extra from pg_policies
+  where schemaname = 'storage' and tablename = 'objects' and policyname not like 'images: owner %';
+  if extra is not null then
+    raise exception 'B3 stopped, nothing changed: other storage policies still exist: %', extra;
+  end if;
+  if (select count(*) from pg_policies where schemaname = 'storage' and tablename = 'objects') <> 4 then
+    raise exception 'B3 stopped, nothing changed: expected 4 policies';
+  end if;
+end $$;
 
 commit;
 
