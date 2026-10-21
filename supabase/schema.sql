@@ -48,31 +48,42 @@ create trigger app_data_updated_at
   for each row
   execute procedure public.handle_updated_at();
 
-create policy "Public read access to images"
-  on storage.objects for select
-  using (bucket_id = 'images');
-
-create policy "Authenticated users can upload images"
-  on storage.objects for insert
-  with check (
-    bucket_id = 'images'
-    and auth.role() = 'authenticated'
-  );
-
-create policy "Authenticated users can update their own images"
-  on storage.objects for update
+-- Storage bucket "images" (public bucket, so saved image links keep working).
+-- Owner-only access inside users/<auth.uid()>/... — QC B3, see
+-- supabase/migrations/20261021_images_owner_only.sql for the live change.
+create policy "images: owner reads own folder"
+  on storage.objects for select to authenticated
   using (
     bucket_id = 'images'
-    and auth.role() = 'authenticated'
+    and (storage.foldername(name))[1] = 'users'
+    and (storage.foldername(name))[2] = (select auth.uid())::text
+  );
+
+create policy "images: owner uploads to own folder"
+  on storage.objects for insert to authenticated
+  with check (
+    bucket_id = 'images'
+    and (storage.foldername(name))[1] = 'users'
+    and (storage.foldername(name))[2] = (select auth.uid())::text
+  );
+
+create policy "images: owner updates own files"
+  on storage.objects for update to authenticated
+  using (
+    bucket_id = 'images'
+    and (storage.foldername(name))[1] = 'users'
+    and (storage.foldername(name))[2] = (select auth.uid())::text
   )
   with check (
     bucket_id = 'images'
-    and auth.role() = 'authenticated'
+    and (storage.foldername(name))[1] = 'users'
+    and (storage.foldername(name))[2] = (select auth.uid())::text
   );
 
-create policy "Authenticated users can delete their own images"
-  on storage.objects for delete
+create policy "images: owner deletes own files"
+  on storage.objects for delete to authenticated
   using (
     bucket_id = 'images'
-    and auth.role() = 'authenticated'
+    and (storage.foldername(name))[1] = 'users'
+    and (storage.foldername(name))[2] = (select auth.uid())::text
   );

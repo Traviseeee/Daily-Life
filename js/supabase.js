@@ -302,6 +302,12 @@ window.MYLIFE_SUPABASE_API = {
   async uploadImage(file, folder = "uploads") {
     if (!file || !file.type?.startsWith("image/")) return null;
     if (!window.supabaseClient) return null;
+    // Storage only accepts users/<own user id>/... (QC B3); anything else would be
+    // refused by the server, so keep the image in the data instead.
+    if (!/^users\/[0-9a-f-]{36}\//i.test(String(folder || "") + "/")) {
+      console.warn("MYLIFE image upload skipped: folder must be users/<user id>/", folder);
+      return null;
+    }
 
     try {
       const bucket = "images";
