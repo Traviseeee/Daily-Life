@@ -320,8 +320,20 @@ function withEarly(items, item, remindBefore) {
   items.push({ ...item, id: `${item.id}-before-${minutes}`, sourceId: item.id, early: minutes, fireDate: fire.date, fireTime: fire.time });
 }
 
+// Notification center stages (3 / 2 / 1 days before, 0 = on the day) for a dated item:
+// the on-the-day alert only when 0 is chosen, plus a "coming up" copy per earlier day.
+// `extraMinutes`: the item's own "remind before" (event form, goal form…) still applies.
+function staged(items, add, item, stages, extraMinutes) {
+  if (stages.includes(0)) add(item);
+  const early = new Set(stages.filter(days => days > 0).map(days => days * 1440));
+  const own = Number(extraMinutes || 0);
+  if (own > 0) early.add(own);
+  early.forEach(minutes => withEarly(items, { time: "09:00", hasTime: false, ...item }, minutes));
+}
+
 function notificationItems(payload) {
   const items = [];
+  const stagesOf = tool => NotifyPrefs.stagesFor(payload.profile, tool);
 
   const add = item => {
     if (!item?.date || !item.title) return;
@@ -342,8 +354,7 @@ function notificationItems(payload) {
         hasTime: Boolean(item.time),
         url: "/#daily"
       };
-      add(reminder);
-      if (item.date && item.title) withEarly(items, reminder, item.remindBefore);
+      if (item.date) staged(items, add, reminder, stagesOf("calendar"), item.remindBefore);
     });
 
   (Array.isArray(payload.calendarEvents) ? payload.calendarEvents : [])
@@ -360,8 +371,7 @@ function notificationItems(payload) {
         hasTime: Boolean(item.time),
         url: "/#calendar"
       };
-      add(event);
-      if (item.date) withEarly(items, event, item.remindBefore);
+      if (item.date && event.title) staged(items, add, event, stagesOf("calendar"), item.remindBefore);
     });
 
   const today = zonedTodayInput();
@@ -380,7 +390,7 @@ function notificationItems(payload) {
 
       const amount = moneyLabel(item.currency, item.amount);
       // Notification center: remind 3 / 2 / 1 day(s) before and/or on the due date (default: due date only).
-      const stages = NotifyPrefs.prefs(payload.profile).billStages;
+      const stages = stagesOf("bills");
       dates.forEach(date => {
         const bill = {
           kind: "bill",
@@ -394,8 +404,7 @@ function notificationItems(payload) {
           currency: item.currency || "",
           url: "/#money/bills"
         };
-        if (stages.includes(0)) add(bill);
-        stages.filter(days => days > 0).forEach(days => withEarly(items, bill, days * 1440));
+        staged(items, add, bill, stages);
       });
     });
 
@@ -404,7 +413,8 @@ function notificationItems(payload) {
       const date = loanNextPaymentDate(item);
       if (!date) return;
 
-      add({
+      // loanNextPaymentDate skips a month whose payment is already recorded → stops reminding
+      staged(items, add, {
         kind: "loan",
         id: item.id,
         title: item.name || "Loan payment due",
@@ -414,7 +424,7 @@ function notificationItems(payload) {
         date,
         amount: Number(item.monthlyPayment || 0),
         url: "/#money/loans"
-      });
+      }, stagesOf("loans"));
     });
 
   const monthKey = currentMonthKey();
@@ -439,15 +449,16 @@ function notificationItems(payload) {
         });
       }
 
-      if (item.deadline) {
-        add({
+      const reached = Number(item.targetAmount || 0) > 0 && Number(item.currentAmount || 0) >= Number(item.targetAmount || 0);
+      if (item.deadline && item.deadline >= today && !reached) {
+        staged(items, add, {
           kind: "savings-deadline",
           id: `${item.id || item.name}-deadline`,
           title: item.name || "Savings deadline",
           body: item.notes || "",
           date: item.deadline,
           url: "/#money/savings"
-        });
+        }, stagesOf("savings"));
       }
     });
 
@@ -470,8 +481,9 @@ function notificationItems(payload) {
           date: goal.deadline,
           url: `/#goals/${goal.id || ""}`
         };
+        // the goal's own "remind before" + the notification center's savings stages
         add(deadlineItem);
-        withEarly(items, { time: "09:00", hasTime: false, ...deadlineItem }, Math.round(Number(goal.remindDaysBefore || 0)) * 1440);
+        staged(items, () => {}, deadlineItem, stagesOf("savings"), Math.round(Number(goal.remindDaysBefore || 0)) * 1440);
       }
       if (goal.monthlyNudge && remaining > 0 && today.endsWith("-01")) {
         let monthsLeft = 0;
@@ -498,9 +510,13 @@ function notificationItems(payload) {
       if (!member || !member.name) return;
       if (member.dateReminder === false) return;
 
-      // "N days before" copy for birthdays / anniversaries (set in the family form).
-      const daysBefore = Math.round(Number(member.remindDaysBefore || 0));
-      if (daysBefore > 0 && daysBefore <= 30) {
+      // "N days before" copies for birthdays / anniversaries: the member's own setting
+      // (family form) + the notification center's family stages (3 / 2 / 1 days before).
+      const familyStages = stagesOf("family");
+      const ownBefore = Math.round(Number(member.remindDaysBefore || 0));
+      const beforeDays = new Set(familyStages.filter(days => days > 0));
+      if (ownBefore > 0 && ownBefore <= 30) beforeDays.add(ownBefore);
+      beforeDays.forEach(daysBefore => {
         const ahead = addDaysInput(today, daysBefore);
         const aheadBirthday = yearlyDateYears(member.birthday, ahead);
         if (aheadBirthday !== null) {
@@ -510,7 +526,9 @@ function notificationItems(payload) {
         if (aheadYears !== null && aheadYears > 0) {
           withEarly(items, { kind: "anniversary", id: `${member.id || member.name}-anniversary-${ahead}`, title: member.name, body: `${aheadYears} ឆ្នាំ · ${aheadYears} year${aheadYears === 1 ? "" : "s"}`, date: ahead, time: "09:00", hasTime: false, url: "/#family" }, daysBefore * 1440);
         }
-      }
+      });
+      // the day itself: only when "on the day" is chosen (it always was before → default [0])
+      if (!familyStages.includes(0)) return;
 
       const birthdayYears = yearlyDateYears(member.birthday, today);
       if (birthdayYears !== null) {

@@ -539,7 +539,9 @@ const App = {
     const todayIso = localDateInput();
     appData.bills.forEach(bill => {
       if (bill.reminder === false || !bill.due) return;
-      const dates = new Set(billCycleDates(bill, todayIso, todayIso));
+      // cycles up to 3 days ahead so the "N days before" stages can fire; a paid
+      // current cycle is skipped (same rule as the server)
+      const dates = new Set(billCycleDates(bill, todayIso, shiftIsoDate(todayIso, 3)).filter(date => !(bill.status === "Paid" && date === bill.due)));
       if (bill.status !== "Paid") dates.add(bill.due);
       dates.forEach(date => add({
         kind: "bill",
@@ -552,16 +554,21 @@ const App = {
     });
 
     appData.family.forEach(member => {
+      if (member.dateReminder === false) return;
       [["birthday", member.birthday], ["anniversary", member.anniversaryDate]].forEach(([type, value]) => {
-        const date = typeof yearlyDateInMonth === "function" && value ? yearlyDateInMonth(value, new Date()) : "";
-        if (date !== todayIso || value > todayIso) return;
-        add({
-          kind: type,
-          id: `${member.id}-${type}`,
-          title: `${t(type)}: ${member.name}`,
-          body: member.relationshipNote || "",
-          date,
-          url: "/#family"
+        // today and the next 3 days, so the "N days before" stages can fire
+        [0, 1, 2, 3].forEach(offset => {
+          const dayIso = shiftIsoDate(todayIso, offset);
+          const date = typeof yearlyDateInMonth === "function" && value ? yearlyDateInMonth(value, parseAppDate(dayIso)) : "";
+          if (date !== dayIso || value > dayIso) return;
+          add({
+            kind: type,
+            id: `${member.id}-${type}`,
+            title: `${t(type)}: ${member.name}`,
+            body: member.relationshipNote || "",
+            date,
+            url: "/#family"
+          });
         });
       });
     });
@@ -595,7 +602,8 @@ const App = {
           url: "/#money/savings"
         });
       }
-      if (saving.deadline) {
+      const reached = Number(saving.targetAmount || 0) > 0 && Number(saving.currentAmount || 0) >= Number(saving.targetAmount || 0);
+      if (saving.deadline && saving.deadline >= todayIso && !reached) {
         add({
           kind: "savings-deadline",
           id: `${saving.id || saving.name}-deadline`,
@@ -607,8 +615,25 @@ const App = {
       }
     });
 
-    // notification center: App channel / tool switches
-    return typeof NotifyPrefs === "undefined" ? items : items.filter(item => NotifyPrefs.allows(appData.profile, item.kind, "app"));
+    if (typeof NotifyPrefs === "undefined") return items;
+    // notification center: 3 / 2 / 1 days before + on the day (same stages as Telegram),
+    // then the App channel / tool switches
+    const km = languageCode() === "km";
+    const staged = [];
+    items.forEach(item => {
+      const tool = NotifyPrefs.toolOf(item.kind);
+      if (!NotifyPrefs.STAGE_TOOLS.includes(tool) || item.kind === "savings-contribution") {
+        staged.push(item);
+        return;
+      }
+      const stages = NotifyPrefs.stagesFor(appData.profile, tool);
+      if (stages.includes(0)) staged.push(item);
+      stages.filter(days => days > 0).forEach(days => {
+        const left = km ? `នៅសល់ ${days} ថ្ងៃទៀត` : `${days} day${days === 1 ? "" : "s"} to go`;
+        staged.push({ ...item, id: `${item.id}-before-${days * 1440}`, date: shiftIsoDate(item.date, -days), dueDate: item.date, early: days * 1440, body: item.body ? `⏳ ${left} · ${item.body}` : `⏳ ${left}` });
+      });
+    });
+    return staged.filter(item => NotifyPrefs.allows(appData.profile, item.kind, "app"));
   },
   checkDueReminderAlerts() {
     if (appData.profile?.notificationsEnabled === false) return;
@@ -1266,3 +1291,11 @@ function runQuickAction(action) {
   }, { passive: true });
   window.addEventListener("hashchange", () => document.querySelector(".quick-action-dock")?.classList.remove("fab-away"));
 })();
+
+// "2026-10-21" ± days → "2026-10-24" (local calendar days)
+function shiftIsoDate(iso, days) {
+  const date = parseAppDate(iso);
+  if (Number.isNaN(date.getTime())) return iso;
+  date.setDate(date.getDate() + Number(days || 0));
+  return localDateInput(date);
+}

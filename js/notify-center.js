@@ -43,6 +43,22 @@ const NotifyCenter = (() => {
   };
 
   const STAGE_LABEL = { 3: ["3 ថ្ងៃមុន", "3 days before"], 2: ["2 ថ្ងៃមុន", "2 days before"], 1: ["1 ថ្ងៃមុន", "1 day before"], 0: ["ថ្ងៃផុតកំណត់", "On the due date"] };
+  // what "on the day" means for each tool that has dates
+  const DAY_LABEL = {
+    bills: ["ថ្ងៃផុតកំណត់", "On the due date"],
+    loans: ["ថ្ងៃបង់ប្រាក់", "On the payment day"],
+    savings: ["ថ្ងៃកំណត់", "On the deadline"],
+    calendar: ["ថ្ងៃព្រឹត្តិការណ៍", "On the day"],
+    family: ["ថ្ងៃនោះ", "On the day"]
+  };
+  const stageLabel = (tool, days) => L(...(days === 0 ? DAY_LABEL[tool] || STAGE_LABEL[0] : STAGE_LABEL[days]));
+  const STAGE_NOTE = {
+    bills: ["វិក្កយបត្រនីមួយៗ នៅតែអាចបិទការរំលឹកក្នុង form របស់វា។ ឈប់រំលឹកពេលបង់រួច។ Auto-pay នៅតែបង់ ហើយសារ PPWSA / EDC នៅតែត្រូវកត់។", "Each bill can still be muted in its own form. Reminders stop once it's paid. Auto-pay still pays, and PPWSA / EDC messages are always recorded."],
+    loans: ["សម្រាប់ការបង់ប្រចាំខែនីមួយៗ ម៉ោង 9:00 AM។ ឈប់រំលឹកពេលកត់ការបង់ខែនោះរួច។", "For each monthly payment, at 9:00 AM. Stops once that month's payment is recorded."],
+    savings: ["សម្រាប់ថ្ងៃកំណត់សន្សំ និងគោលដៅ។ ការដាក់សន្សំប្រចាំខែ រំលឹកនៅថ្ងៃទី 1។ គោលដៅនីមួយៗ នៅមានការរំលឹកក្នុង form របស់វា។", "For savings and goal deadlines. Monthly saving is reminded on the 1st. Each goal keeps its own reminder in its form."],
+    calendar: ["បន្ថែមលើ “រំលឹកមុន” ក្នុង form ព្រឹត្តិការណ៍នីមួយៗ។", "Adds to each event's own “remind before” option."],
+    family: ["សម្រាប់ថ្ងៃកំណើត និងខួប។ បន្ថែមលើ “រំលឹកមុន” ក្នុង form សមាជិក។", "For birthdays and anniversaries. Adds to each member's own “days before” option."]
+  };
 
   const prefs = () => NotifyPrefs.prefs(appData.profile);
   const masterOn = () => appData.profile.notificationsEnabled !== false;
@@ -148,7 +164,7 @@ const NotifyCenter = (() => {
   // the line under each tool: its description, or the current bill reminder days
   function toolSub(tool, p) {
     if (!p.tools[tool]) return L("បិទ — Tool នៅដំណើរការ", "Off — the tool still works");
-    if (tool === "bills") return stageSummary(p.billStages);
+    if (NotifyPrefs.STAGE_TOOLS.includes(tool)) return stageSummary(tool, p.stages[tool]);
     return L(TOOL_META[tool].dkm, TOOL_META[tool].den);
   }
 
@@ -164,14 +180,19 @@ const NotifyCenter = (() => {
 
   const note = text => `<p class="nfc-note">${ICON.info()}<span>${text}</span></p>`;
 
+  // 3 / 2 / 1 days before + on the day — every tool whose items have a date
+  function stagePicker(tool, p) {
+    const chosen = p.stages[tool] || [];
+    return `
+      <p class="nfc-sublabel">${L("រំលឹកខ្ញុំ", "Remind me")}</p>
+      <div class="nfc-stages" data-nfc-stages="${tool}">
+        ${NotifyPrefs.STAGES.map(days => `<label class="nfc-stage ${chosen.includes(days) ? "is-on" : ""}"><input type="checkbox" data-nfc-stage="${days}" ${chosen.includes(days) ? "checked" : ""}><span>${escapeHtml(stageLabel(tool, days))}</span></label>`).join("")}
+      </div>`;
+  }
+
   function toolDetails(tool, p) {
-    if (tool === "bills") {
-      return `
-        <p class="nfc-sublabel">${L("រំលឹកខ្ញុំ", "Remind me")}</p>
-        <div class="nfc-stages">
-          ${NotifyPrefs.BILL_STAGES.map(days => `<label class="nfc-stage ${p.billStages.includes(days) ? "is-on" : ""}"><input type="checkbox" data-nfc-stage="${days}" ${p.billStages.includes(days) ? "checked" : ""}><span>${escapeHtml(L(...STAGE_LABEL[days]))}</span></label>`).join("")}
-        </div>
-        ${note(L("វិក្កយបត្រនីមួយៗ នៅតែអាចបិទការរំលឹកក្នុង form របស់វា។ Auto-pay នៅតែបង់ ហើយសារ PPWSA / EDC នៅតែត្រូវកត់។", "Each bill can still be muted in its own form. Auto-pay still pays, and PPWSA / EDC messages are always recorded."))}`;
+    if (NotifyPrefs.STAGE_TOOLS.includes(tool)) {
+      return `${stagePicker(tool, p)}${note(L(...STAGE_NOTE[tool]))}`;
     }
     if (tool === "expenses") {
       return `<div class="nfc-subgroup">
@@ -193,18 +214,12 @@ const NotifyCenter = (() => {
       return `<div class="nfc-subgroup">${flagRow("telegramBackup", L("Backup ទៅ Telegram", "Backup to Telegram"), L("ឯកសារ JSON រៀងរាល់សប្តាហ៍", "Weekly JSON file"))}</div>
         ${note(L("Backup ក្នុង Cloud នៅរក្សាទុកជានិច្ច។", "Cloud backups are always kept."))}`;
     }
-    const info = {
-      calendar: L("ព្រឹត្តិការណ៍នីមួយៗ មានជម្រើស “រំលឹកមុន” ផ្ទាល់ខ្លួនក្នុង form។", "Each event has its own “remind before” option in its form."),
-      family: L("សមាជិកនីមួយៗ កំណត់ “រំលឹកមុនប៉ុន្មានថ្ងៃ” ក្នុង form គ្រួសារ។", "Each member sets “remind days before” in the family form."),
-      savings: L("គោលដៅនីមួយៗ កំណត់ការរំលឹកក្នុង form គោលដៅ។", "Each goal sets its reminders in the goal form."),
-      loans: L("រំលឹកនៅថ្ងៃបង់ប្រាក់ ម៉ោង 9:00 AM។", "Reminds on the payment day at 9:00 AM.")
-    };
-    return note(info[tool] || "");
+    return "";
   }
 
-  function stageSummary(stages) {
-    if (!stages.length) return L("គ្មានការរំលឹកវិក្កយបត្រ", "No bill reminders");
-    return L("រំលឹក៖ ", "Remind: ") + stages.map(days => L(...STAGE_LABEL[days])).join(" · ");
+  function stageSummary(tool, stages) {
+    if (!stages || !stages.length) return L("គ្មានការរំលឹកតាមថ្ងៃ", "No day reminders");
+    return L("រំលឹក៖ ", "Remind: ") + stages.map(days => stageLabel(tool, days)).join(" · ");
   }
 
   /* ---------- binding ---------- */
@@ -226,10 +241,13 @@ const NotifyCenter = (() => {
       });
       if (typeof Sound !== "undefined") Sound.play(openTool ? "open" : "close");
     }));
-    page.querySelectorAll("[data-nfc-stage]").forEach(input => input.addEventListener("change", () => {
-      const stages = [...page.querySelectorAll("[data-nfc-stage]")].filter(item => item.checked).map(item => Number(item.dataset.nfcStage));
-      save({ billStages: stages });
-    }));
+    page.querySelectorAll("[data-nfc-stages]").forEach(group => group.querySelectorAll("[data-nfc-stage]").forEach(input => input.addEventListener("change", () => {
+      const tool = group.dataset.nfcStages;
+      const chosen = [...group.querySelectorAll("[data-nfc-stage]")].filter(item => item.checked).map(item => Number(item.dataset.nfcStage));
+      const stages = { ...prefs().stages, [tool]: chosen };
+      // billStages kept in step for older copies of the app / server
+      save({ stages, billStages: stages.bills });
+    })));
     page.querySelectorAll("[data-nfc-flag]").forEach(input => input.addEventListener("change", () => saveProfile({ [input.dataset.nfcFlag]: input.checked })));
     page.querySelectorAll("[data-nfc-time]").forEach(input => input.addEventListener("change", () => {
       if (/^\d{2}:\d{2}$/.test(input.value)) saveProfile({ [input.dataset.nfcTime]: input.value });
