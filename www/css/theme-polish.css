@@ -3343,3 +3343,48 @@ body:has(#modalRoot.open) .quick-action-dock {
 .bill-invoice-link { display: inline-flex; align-items: center; gap: 6px; margin: 2px 0 6px; font-size: .86rem; font-weight: 600; color: var(--accent, #9ef06a); text-decoration: none; }
 .bill-invoice-link:hover { text-decoration: underline; }
 a.tga-btn { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
+
+/* ---------- Bill form (js/bill-form.js) ---------- */
+:root #modalRoot .bill-modal .bf-head-icon { color: #1d3a08; background: linear-gradient(135deg, #e3ffb0, var(--ev-lime)); }
+:root #modalRoot .bill-modal .ev-title-wrap { gap: 8px; }
+:root #modalRoot .bill-modal .ev-title-wrap .field-error:empty { display: none; }
+:root #modalRoot .bill-modal .bf-picks { gap: 6px; }
+:root #modalRoot .bill-modal .bf-picks .ev-chip { min-height: 32px; padding: 0 12px; font-size: 0.8rem; }
+:root #modalRoot .bill-modal .xp-amount-card:focus-within { border-color: #9fd64a; box-shadow: 0 0 0 4px rgba(197, 255, 96, 0.28); }
+:root #modalRoot .bill-modal .bf-cats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+:root #modalRoot .bill-modal .bf-emoji { font-style: normal; font-size: 1.05rem; line-height: 1; }
+:root #modalRoot .bill-modal .bf-seg .ev-chip { flex: 1 1 auto; justify-content: center; white-space: nowrap; }
+:root #modalRoot .bill-modal .bf-switches { display: grid; gap: 8px; }
+:root #modalRoot .bill-modal .bf-switch-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  border: 1px solid var(--ev-line);
+  border-radius: 16px;
+  background: var(--ev-soft);
+  cursor: pointer;
+  transition: border-color 160ms ease, background 160ms ease;
+}
+:root #modalRoot .bill-modal .bf-switch-row:has(input:checked) { border-color: #cdeb98; background: #f6ffe6; }
+:root #modalRoot .bill-modal .bf-switch-icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  border-radius: 12px;
+  font-size: 1.05rem;
+  background: #ffffff;
+}
+:root #modalRoot .bill-modal .bf-switch-text { display: grid; gap: 2px; flex: 1; min-width: 0; }
+:root #modalRoot .bill-modal .bf-switch-text strong { font-size: 0.9rem; color: var(--ev-ink); }
+:root #modalRoot .bill-modal .bf-switch-text em { font-size: 0.76rem; font-style: normal; line-height: 1.4; color: var(--ev-ink-3); }
+:root #modalRoot .bill-modal input.ev-switch.bf-switch:checked { background: #6fb52c; }
+@media (max-width: 420px) {
+  :root #modalRoot .bill-modal .bf-cats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  :root #modalRoot .bill-modal .bf-cats .ev-cat b { font-size: 0.7rem; }
+  :root #modalRoot .bill-modal .bf-seg .ev-chip { padding: 0 8px; }
+}
+:root #modalRoot .bill-modal .ev-row { flex-wrap: wrap; overflow: visible; }
+:root #modalRoot .bill-modal .ev-section .ev-row > input.ev-date { flex: 1 1 150px; width: auto; min-width: 150px; }

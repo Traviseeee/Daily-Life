@@ -451,10 +451,7 @@ const EventForm = (() => {
       const due = form.elements.date?.value || localDateInput();
       Modal.close();
       if (typeof openBillModal !== "function") return;
-      openBillModal();
-      const billForm = document.querySelector("#modalForm");
-      if (billForm?.elements.name) billForm.elements.name.value = name;
-      if (billForm?.elements.due) billForm.elements.due.value = due;
+      openBillModal({ name, due });
     });
     root.querySelector("[data-ev-delete]")?.addEventListener("click", () => {
       Modal.confirm({ title: t("deleteEvent"), message: t("deleteEventMessage"), confirmText: t("delete"), onConfirm: () => {

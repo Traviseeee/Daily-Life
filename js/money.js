@@ -1537,6 +1537,7 @@ function formatPlainMoney(value, currency = appData.profile.currency || "USD") {
 }
 
 function openBillModal(item) {
+  if (typeof BillForm !== "undefined") return BillForm.open(item);
   Modal.open({ title: item ? t("editBill") : t("addBill"), submitText: item ? t("saveBill") : t("addBill"), fields: [
     { name: "name", label: t("billName"), value: item?.name, required: true },
     { name: "amount", label: t("amount"), type: "number", value: item?.amount, required: true },
