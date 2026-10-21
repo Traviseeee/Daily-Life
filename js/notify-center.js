@@ -32,14 +32,14 @@ const NotifyCenter = (() => {
   };
 
   const TOOL_META = {
-    bills: { km: "វិក្កយបត្រ & ទឹកភ្លើង", en: "Bills & utilities", dkm: "ថ្ងៃផុតកំណត់, បង់ស្វ័យប្រវត្តិ, PPWSA / EDC", den: "Due dates, auto-pay, PPWSA / EDC", href: "#money/bills" },
-    expenses: { km: "ចំណាយ & ថវិកា", en: "Expenses & budget", dkm: "ព្រមានថវិកា, ចាយមិនធម្មតា, សួរពេលយប់", den: "Budget alerts, unusual spending, evening check", href: "#money/expenses" },
+    bills: { km: "វិក្កយបត្រ & ទឹកភ្លើង", en: "Bills & utilities", dkm: "ថ្ងៃផុតកំណត់ ការបង់ស្វ័យប្រវត្តិ PPWSA / EDC", den: "Due dates, auto-pay, PPWSA / EDC", href: "#money/bills" },
+    expenses: { km: "ចំណាយ & ថវិកា", en: "Expenses & budget", dkm: "ព្រមានថវិកា ចាយច្រើនខុសធម្មតា សួរពេលយប់", den: "Budget alerts, unusual spending, evening check", href: "#money/expenses" },
     loans: { km: "ប្រាក់កម្ចី", en: "Loans", dkm: "រំលឹកថ្ងៃបង់ប្រាក់", den: "Payment-day reminders", href: "#money/loans" },
     savings: { km: "សន្សំ & គោលដៅ", en: "Savings & goals", dkm: "ដាក់សន្សំប្រចាំខែ, ថ្ងៃកំណត់គោលដៅ", den: "Monthly saving, goal deadlines", href: "#money/savings" },
     calendar: { km: "ប្រតិទិន & ការរំលឹក", en: "Calendar & reminders", dkm: "ព្រឹត្តិការណ៍ និងការរំលឹក", den: "Events and reminders", href: "#calendar" },
     family: { km: "គ្រួសារ", en: "Family", dkm: "ថ្ងៃកំណើត និងខួប", den: "Birthdays and anniversaries", href: "#family" },
     reports: { km: "របាយការណ៍", en: "Reports", dkm: "សង្ខេបព្រឹក, របាយការណ៍សប្តាហ៍ & ខែ", den: "Morning digest, weekly & monthly reports", href: "#money/reports" },
-    backup: { km: "Backup", en: "Backup", dkm: "ឯកសារ JSON ទៅ Telegram រៀងរាល់សប្តាហ៍", den: "Weekly JSON file to Telegram", href: "#settings" }
+    backup: { km: "Backup", en: "Backup", dkm: "ផ្ញើឯកសារបម្រុងទុកទៅ Telegram រៀងរាល់សប្តាហ៍", den: "Weekly JSON file to Telegram", href: "#settings" }
   };
 
   const STAGE_LABEL = { 3: ["3 ថ្ងៃមុន", "3 days before"], 2: ["2 ថ្ងៃមុន", "2 days before"], 1: ["1 ថ្ងៃមុន", "1 day before"], 0: ["ថ្ងៃផុតកំណត់", "On the due date"] };
@@ -49,15 +49,15 @@ const NotifyCenter = (() => {
     loans: ["ថ្ងៃបង់ប្រាក់", "On the payment day"],
     savings: ["ថ្ងៃកំណត់", "On the deadline"],
     calendar: ["ថ្ងៃព្រឹត្តិការណ៍", "On the day"],
-    family: ["ថ្ងៃនោះ", "On the day"]
+    family: ["ថ្ងៃនោះផ្ទាល់", "On the day"]
   };
   const stageLabel = (tool, days) => L(...(days === 0 ? DAY_LABEL[tool] || STAGE_LABEL[0] : STAGE_LABEL[days]));
   const STAGE_NOTE = {
-    bills: ["វិក្កយបត្រនីមួយៗ នៅតែអាចបិទការរំលឹកក្នុង form របស់វា។ ឈប់រំលឹកពេលបង់រួច។ Auto-pay នៅតែបង់ ហើយសារ PPWSA / EDC នៅតែត្រូវកត់។", "Each bill can still be muted in its own form. Reminders stop once it's paid. Auto-pay still pays, and PPWSA / EDC messages are always recorded."],
-    loans: ["សម្រាប់ការបង់ប្រចាំខែនីមួយៗ ម៉ោង 9:00 AM។ ឈប់រំលឹកពេលកត់ការបង់ខែនោះរួច។", "For each monthly payment, at 9:00 AM. Stops once that month's payment is recorded."],
-    savings: ["សម្រាប់ថ្ងៃកំណត់សន្សំ និងគោលដៅ។ ការដាក់សន្សំប្រចាំខែ រំលឹកនៅថ្ងៃទី 1។ គោលដៅនីមួយៗ នៅមានការរំលឹកក្នុង form របស់វា។", "For savings and goal deadlines. Monthly saving is reminded on the 1st. Each goal keeps its own reminder in its form."],
-    calendar: ["បន្ថែមលើ “រំលឹកមុន” ក្នុង form ព្រឹត្តិការណ៍នីមួយៗ។", "Adds to each event's own “remind before” option."],
-    family: ["សម្រាប់ថ្ងៃកំណើត និងខួប។ បន្ថែមលើ “រំលឹកមុន” ក្នុង form សមាជិក។", "For birthdays and anniversaries. Adds to each member's own “days before” option."]
+    bills: ["អាចបិទការរំលឹកវិក្កយបត្រណាមួយ ពេលកែវិក្កយបត្រនោះ។ បង់រួច វាឈប់រំលឹកដោយខ្លួនឯង។ ការបង់ស្វ័យប្រវត្តិ និងសារពី PPWSA / EDC នៅដំណើរការដដែល។", "Each bill can still be muted in its own form. Reminders stop once it's paid. Auto-pay still pays, and PPWSA / EDC messages are always recorded."],
+    loans: ["រំលឹកម៉ោង 9 ព្រឹក សម្រាប់ការបង់ប្រចាំខែ។ ពេលកត់ថាបង់រួច វាឈប់រំលឹកខែនោះ។", "For each monthly payment, at 9:00 AM. Stops once that month's payment is recorded."],
+    savings: ["សម្រាប់ថ្ងៃកំណត់នៃការសន្សំ និងគោលដៅ។ ការដាក់សន្សំប្រចាំខែ រំលឹកនៅថ្ងៃទី 1។ គោលដៅនីមួយៗ អាចកំណត់ការរំលឹកបន្ថែមបានទៀត។", "For savings and goal deadlines. Monthly saving is reminded on the 1st. Each goal keeps its own reminder in its form."],
+    calendar: ["ប្រើរួមជាមួយ “រំលឹកមុន” ដែលអ្នកកំណត់ក្នុងព្រឹត្តិការណ៍នីមួយៗ។", "Adds to each event's own “remind before” option."],
+    family: ["សម្រាប់ថ្ងៃកំណើត និងខួប។ ប្រើរួមជាមួយ “រំលឹកមុន” ដែលកំណត់ក្នុងព័ត៌មានសមាជិកនីមួយៗ។", "For birthdays and anniversaries. Adds to each member's own “days before” option."]
   };
 
   const prefs = () => NotifyPrefs.prefs(appData.profile);
@@ -83,8 +83,8 @@ const NotifyCenter = (() => {
     const p = prefs();
     if (!masterOn()) return { text: L("ការជូនដំណឹងទាំងអស់បិទ", "All notifications are off"), tone: "off" };
     const onTools = NotifyPrefs.TOOLS.filter(tool => p.tools[tool]).length;
-    const channels = [p.telegram ? "Telegram" : "", p.app ? "App" : ""].filter(Boolean).join(" + ") || L("គ្មានផ្លូវផ្ញើ", "No channel");
-    return { text: `${channels} · ${onTools}/${NotifyPrefs.TOOLS.length} ${L("Tool បើក", "tools on")}`, tone: p.telegram || p.app ? "on" : "off" };
+    const channels = [p.telegram ? "Telegram" : "", p.app ? "App" : ""].filter(Boolean).join(" + ") || L("មិនទាន់ជ្រើសកន្លែងផ្ញើ", "No channel");
+    return { text: `${channels} · ${onTools}/${NotifyPrefs.TOOLS.length} ${L("បើក", "tools on")}`, tone: p.telegram || p.app ? "on" : "off" };
   }
 
   /* ---------- page ---------- */
@@ -97,7 +97,7 @@ const NotifyCenter = (() => {
         <div class="page-header">
           <div>
             <h1 class="page-title page-title-with-icon"><span class="page-title-icon">${ICON.bell()}</span>${L("ការជូនដំណឹង", "Notifications")}</h1>
-            <p class="page-subtitle">${L("គ្រប់គ្រងការជូនដំណឹងរបស់ Tool នីមួយៗ ក្នុងកន្លែងតែមួយ", "Manage notifications for every MYLIFE tool in one place")}</p>
+            <p class="page-subtitle">${L("កំណត់ការរំលឹកទាំងអស់ នៅកន្លែងតែមួយ", "Manage notifications for every MYLIFE tool in one place")}</p>
           </div>
         </div>
 
@@ -111,22 +111,22 @@ const NotifyCenter = (() => {
           </div>
 
           <div>
-            <h2 class="nfc-label">${L("ផ្លូវផ្ញើ", "Notification channels")}</h2>
+            <h2 class="nfc-label">${L("ផ្ញើតាម", "Notification channels")}</h2>
             <div class="nfc-group ${off ? "is-disabled" : ""}">
-              ${channelRow("telegram", p.telegram, "telegram", "blue", "Telegram", L("សារពី bot ក្នុងក្រុម", "Bot messages in your group"), off)}
-              ${channelRow("app", p.app, "app", "violet", "MYLIFE App", L("Pop-up, bell, push លើទូរស័ព្ទ", "Pop-ups, bell, phone push"), off)}
+              ${channelRow("telegram", p.telegram, "telegram", "blue", "Telegram", L("សារពី bot ក្នុងក្រុម Telegram", "Bot messages in your group"), off)}
+              ${channelRow("app", p.app, "app", "violet", "MYLIFE App", L("ផ្ទាំងលោត កណ្ដឹង និងសារលើទូរស័ព្ទ", "Pop-ups, bell, phone push"), off)}
             </div>
           </div>
 
           <div>
-            <h2 class="nfc-label">${L("តាម Tool", "Manage by tool")}</h2>
-            <p class="nfc-hint">${L("បើក/បិទ ហើយចុចលើ Tool ដើម្បីបើកការកំណត់លម្អិត", "Switch on/off, and tap a tool to open its details")}</p>
+            <h2 class="nfc-label">${L("តាមមុខងារ", "Manage by tool")}</h2>
+            <p class="nfc-hint">${L("ចុចលើឈ្មោះ ដើម្បីមើលការកំណត់បន្ថែម", "Switch on/off, and tap a tool to open its details")}</p>
             <div class="nfc-group nfc-acc-list ${off ? "is-disabled" : ""}">
               ${NotifyPrefs.TOOLS.map(tool => toolItem(tool, p, off)).join("")}
             </div>
           </div>
 
-          <p class="nfc-foot">${ICON.info()}<span>${L("បិទការជូនដំណឹង មិនបិទ Tool ទេ — ការកត់ទិន្នន័យ និង Telegram bot នៅដំណើរការធម្មតា។", "Turning notifications off never turns a tool off — recording data and the Telegram bot keep working.")}</span></p>
+          <p class="nfc-foot">${ICON.info()}<span>${L("បិទការរំលឹក មិនប៉ះពាល់ការប្រើប្រាស់ទេ — អ្នកនៅតែកត់ទិន្នន័យ និងប្រើ Telegram bot បានធម្មតា។", "Turning notifications off never turns a tool off — recording data and the Telegram bot keep working.")}</span></p>
         </div>
       </section>`;
   }
@@ -154,7 +154,7 @@ const NotifyCenter = (() => {
       </div>
       <div class="nfc-acc-body" id="nfc-body-${tool}" ${open ? "" : "hidden"}>
         <div class="nfc-acc-inner ${on && !off ? "" : "is-disabled"}">
-          ${on && !off ? "" : `<p class="nfc-locked">${ICON.info()}<span>${off ? L("បើក “អនុញ្ញាតការជូនដំណឹង” ខាងលើ ដើម្បីកែការកំណត់នេះ", "Turn on “Allow notifications” above to change these settings") : L("បើក switch របស់ Tool នេះ ដើម្បីកែការកំណត់", "Turn this tool's switch on to change its settings")}</span></p>`}
+          ${on && !off ? "" : `<p class="nfc-locked">${ICON.info()}<span>${off ? L("សូមបើក “អនុញ្ញាតការជូនដំណឹង” ខាងលើសិន ទើបកែបាន", "Turn on “Allow notifications” above to change these settings") : L("សូមបើកប៊ូតុងខាងស្តាំសិន ទើបកែបាន", "Turn this tool's switch on to change its settings")}</span></p>`}
           ${toolDetails(tool, p, off || !on)}
           <a class="nfc-go" href="${meta.href}">${L("បើក", "Open")} ${escapeHtml(L(meta.km, meta.en))} ${ICON.arrow()}</a>
         </div>
@@ -164,7 +164,7 @@ const NotifyCenter = (() => {
 
   // the line under each tool: its description, or the current bill reminder days
   function toolSub(tool, p) {
-    if (!p.tools[tool]) return L("បិទ — Tool នៅដំណើរការ", "Off — the tool still works");
+    if (!p.tools[tool]) return L("បិទការរំលឹក (នៅប្រើបានធម្មតា)", "Off — the tool still works");
     if (NotifyPrefs.STAGE_TOOLS.includes(tool)) return stageSummary(tool, p.stages[tool]);
     return L(TOOL_META[tool].dkm, TOOL_META[tool].den);
   }
@@ -189,11 +189,11 @@ const NotifyCenter = (() => {
     const lock = locked ? "disabled" : "";
     const next = locked ? null : nextReminder(tool);
     return `
-      <p class="nfc-sublabel">${L("រំលឹកខ្ញុំ", "Remind me")}</p>
+      <p class="nfc-sublabel">${L("រំលឹកនៅ", "Remind me")}</p>
       <div class="nfc-stages" data-nfc-stages="${tool}">
         ${NotifyPrefs.STAGES.map(days => `<label class="nfc-stage ${chosen.includes(days) ? "is-on" : ""}"><input type="checkbox" data-nfc-stage="${days}" ${chosen.includes(days) ? "checked" : ""} ${lock}><span>${escapeHtml(stageLabel(tool, days))}</span></label>`).join("")}
       </div>
-      ${chosen.length ? "" : `<p class="nfc-warn">⚠️ ${L("គ្មានថ្ងៃណាត្រូវបានជ្រើស — Tool នេះនឹងមិនរំលឹកតាមថ្ងៃទេ", "No day chosen — this tool won't send date reminders")}</p>`}
+      ${chosen.length ? "" : `<p class="nfc-warn">⚠️ ${L("មិនទាន់ជ្រើសថ្ងៃណាទេ — ដូច្នេះនឹងមិនមានការរំលឹកទេ", "No day chosen — this tool won't send date reminders")}</p>`}
       ${next ? `<p class="nfc-next">🔔 <span>${L("បន្ទាប់", "Next")}: <b>${escapeHtml(next.title)}</b> · ${escapeHtml(next.when)}</span></p>` : ""}
       ${locked ? "" : `<button class="nfc-test" type="button" data-nfc-test="${tool}">${ICON.telegram()}<span>${L("ផ្ញើសារសាកល្បងទៅ Telegram", "Send a test to Telegram")}</span></button>`}`;
   }
@@ -285,8 +285,8 @@ const NotifyCenter = (() => {
     }
     if (tool === "expenses") {
       return `<div class="nfc-subgroup">
-        ${flagRow("budgetAlerts", L("ព្រមានថវិកា", "Budget alerts"), L("ពេលចាយដល់ 80% និង 100%", "At 80% and 100% of a budget"))}
-        ${flagRow("unusualAlert", L("ចាយមិនធម្មតា", "Unusual spending"), L("ពេលថ្ងៃនេះចាយច្រើនជាងធម្មតា", "When today is much higher than usual"))}
+        ${flagRow("budgetAlerts", L("ព្រមានថវិកា", "Budget alerts"), L("ពេលចាយដល់ 80% និង 100% នៃថវិកា", "At 80% and 100% of a budget"))}
+        ${flagRow("unusualAlert", L("ចាយច្រើនខុសធម្មតា", "Unusual spending"), L("ពេលថ្ងៃនេះចាយច្រើនជាងរាល់ដង", "When today is much higher than usual"))}
         ${flagRow("eveningCheck", L("សួរពេលយប់", "Evening check"), L("“មានចាយអ្វីទៀតទេ?”", "“Anything else spent today?”"), "eveningCheckTime", "21:00")}
       </div>`;
     }
@@ -300,14 +300,14 @@ const NotifyCenter = (() => {
       </div>`;
     }
     if (tool === "backup") {
-      return `<div class="nfc-subgroup">${flagRow("telegramBackup", L("Backup ទៅ Telegram", "Backup to Telegram"), L("ឯកសារ JSON រៀងរាល់សប្តាហ៍", "Weekly JSON file"))}</div>
-        ${note(L("Backup ក្នុង Cloud នៅរក្សាទុកជានិច្ច។", "Cloud backups are always kept."))}`;
+      return `<div class="nfc-subgroup">${flagRow("telegramBackup", L("បម្រុងទុកទៅ Telegram", "Backup to Telegram"), L("រៀងរាល់សប្តាហ៍ (ឯកសារ JSON)", "Weekly JSON file"))}</div>
+        ${note(L("ទិន្នន័យនៅតែបម្រុងទុកក្នុង Cloud ជានិច្ច។", "Cloud backups are always kept."))}`;
     }
     return "";
   }
 
   function stageSummary(tool, stages) {
-    if (!stages || !stages.length) return L("គ្មានការរំលឹកតាមថ្ងៃ", "No day reminders");
+    if (!stages || !stages.length) return L("មិនរំលឹកទេ", "No day reminders");
     return L("រំលឹក៖ ", "Remind: ") + stages.map(days => stageLabel(tool, days)).join(" · ");
   }
 

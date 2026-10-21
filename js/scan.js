@@ -166,9 +166,9 @@ const SmartScanPage = (() => {
   /* ---------- render ---------- */
   const errorText = code => ({
     file_too_big: L("ឯកសារធំពេក (អតិបរមា 10MB)", "File too big (max 10MB)"),
-    unsupported_file: L("ប្រភេទឯកសារមិនគាំទ្រ — JPG, PNG, WebP ឬ PDF", "Unsupported file — use JPG, PNG, WebP or PDF"),
-    load_failed: L("ត្រូវការអ៊ីនធឺណិតដើម្បីបើកកម្មវិធីអានលើកដំបូង", "Needs internet the first time to load the reader"),
-    nothing: L("រកមិនឃើញព័ត៌មានច្បាស់ — សូមបំពេញខាងក្រោម ឬថតម្ដងទៀតឱ្យច្បាស់", "Nothing clear was found — fill in below or try a sharper photo")
+    unsupported_file: L("មិនស្គាល់ប្រភេទឯកសារនេះទេ — សូមប្រើ JPG, PNG, WebP ឬ PDF", "Unsupported file — use JPG, PNG, WebP or PDF"),
+    load_failed: L("លើកដំបូង ត្រូវការអ៊ីនធឺណិតសិន", "Needs internet the first time to load the reader"),
+    nothing: L("អានមិនសូវច្បាស់ទេ — សូមបំពេញខាងក្រោម ឬថតម្តងទៀតឲ្យច្បាស់ជាងនេះ", "Nothing clear was found — fill in below or try a sharper photo")
   }[code] || L("អានមិនបាន សូមសាកម្ដងទៀត", "Could not read it, please try again"));
 
   function pickView() {
@@ -176,15 +176,15 @@ const SmartScanPage = (() => {
       <article class="glass-card sc-pick">
         <span class="sc-pick-icon">${ICON.scan()}</span>
         <h2>${L("ស្កេនបង្កាន់ដៃ វិក្កយបត្រ ឬ Slip", "Scan a receipt, bill or payment slip")}</h2>
-        <p>${L("ABA, ACLEDA, Wing, EDC, PPWSA, ហាង… — រូបថត, screenshot ឬ PDF", "ABA, ACLEDA, Wing, EDC, PPWSA, shops… — photo, screenshot or PDF")}</p>
+        <p>${L("ABA, ACLEDA, Wing, EDC, PPWSA, ហាង… ប្រើរូបថត screenshot ឬ PDF ក៏បាន", "ABA, ACLEDA, Wing, EDC, PPWSA, shops… — photo, screenshot or PDF")}</p>
         <div class="sc-pick-actions">
           <label class="button sc-btn-main">${ICON.camera()}<span>${L("ថតរូប", "Take photo")}</span><input type="file" accept="image/*" capture="environment" data-scan-file hidden></label>
           <label class="button ghost-button">${ICON.upload()}<span>${L("ជ្រើសរូប ឬ PDF", "Upload image or PDF")}</span><input type="file" accept="image/*,application/pdf,.pdf" data-scan-file hidden></label>
         </div>
         ${state.error ? `<p class="sc-error">${ICON.warn()}<span>${escapeHtml(errorText(state.error))}</span></p>` : ""}
         <ul class="sc-tips">
-          <li>${L("ថតឱ្យត្រង់ ពន្លឺល្អ ឃើញពេញបង្កាន់ដៃ", "Straight, well lit, the whole receipt in view")}</li>
-          <li>${L("អានលើទូរស័ព្ទផ្ទាល់ — មិនផ្ញើរូបទៅកន្លែងផ្សេងទេ", "Read on your phone — the photo is not sent anywhere")}</li>
+          <li>${L("ថតឲ្យត្រង់ មានពន្លឺល្អ និងឃើញបង្កាន់ដៃទាំងមូល", "Straight, well lit, the whole receipt in view")}</li>
+          <li>${L("អានលើទូរស័ព្ទរបស់អ្នកផ្ទាល់ — រូបមិនត្រូវបានផ្ញើទៅណាទេ", "Read on your phone — the photo is not sent anywhere")}</li>
           <li>${L("ក៏អាចផ្ញើរូបទៅ Telegram bot បានដែរ", "You can also send the photo to the Telegram bot")}</li>
         </ul>
       </article>`;
@@ -197,7 +197,7 @@ const SmartScanPage = (() => {
         <strong>${L("កំពុងអាន…", "Reading…")}</strong>
         <div class="sc-progress" data-scan-progress style="--p:${state.progress}%"><span></span></div>
         <small data-scan-progress-label>${state.progress}%</small>
-        <p>${L("លើកដំបូងប្រហែល 10 វិនាទី (ទាញយកកម្មវិធីអាន)", "The first scan takes ~10 s (loading the reader)")}</p>
+        <p>${L("លើកដំបូងអាចយូរបន្តិច (ប្រហែល 10 វិនាទី)", "The first scan takes ~10 s (loading the reader)")}</p>
       </article>`;
   }
 
@@ -225,12 +225,12 @@ const SmartScanPage = (() => {
           <div class="sc-kinds" role="radiogroup" aria-label="${L("ប្រភេទ", "Type")}">
             ${KINDS.map(([kind, label]) => `<label class="sc-kind ${d.kind === kind || (kind === "expense" && d.kind === "unknown") ? "is-on" : ""}"><input type="radio" name="kind" value="${kind}" ${d.kind === kind || (kind === "expense" && d.kind === "unknown") ? "checked" : ""}>${escapeHtml(label())}</label>`).join("")}
           </div>
-          ${d.kind === "bill" ? `<p class="sc-note">${L("វិក្កយបត្រមិនទាន់បង់ — នឹងរក្សាទុកជា Bill មិនមែនជាចំណាយទេ។", "Unpaid bill — saved as a Bill, not as an expense.")}</p>` : ""}
+          ${d.kind === "bill" ? `<p class="sc-note">${L("វិក្កយបត្រនេះមិនទាន់បង់ — វានឹងរក្សាទុកជា Bill (មិនទាន់គិតជាចំណាយទេ)។", "Unpaid bill — saved as a Bill, not as an expense.")}</p>` : ""}
           <div class="sc-grid">
             ${field("amount", L("ចំនួនទឹកប្រាក់", "Amount"), d.amount ?? "", "number", 'step="0.01" min="0" inputmode="decimal"')}
             <label class="sc-field ${d.warnings.includes("currency") ? "is-missing" : ""}"><span>${L("រូបិយប័ណ្ណ", "Currency")}</span><select name="currency">${["USD", "KHR"].map(c => `<option ${(d.currency || appData.profile.currency || "USD") === c ? "selected" : ""}>${c}</option>`).join("")}</select></label>
             ${field("merchant", d.kind === "bill" ? L("អ្នកផ្តល់សេវា", "Provider") : L("ហាង / អ្នកទទួល", "Merchant / recipient"), d.merchant)}
-            ${field("date", d.kind === "bill" ? L("ថ្ងៃចេញ", "Issue date") : L("ថ្ងៃ", "Date"), d.date, "date")}
+            ${field("date", d.kind === "bill" ? L("ថ្ងៃចេញវិក្កយបត្រ", "Issue date") : L("ថ្ងៃ", "Date"), d.date, "date")}
             ${d.kind === "bill" ? field("dueDate", L("ថ្ងៃផុតកំណត់", "Due date"), d.dueDate, "date") : ""}
             <label class="sc-field"><span>${L("ប្រភេទចំណាយ", "Category")}</span><select name="category">${categories.map(c => `<option value="${c}" ${d.category === c ? "selected" : ""}>${escapeHtml(typeof optionLabel === "function" ? optionLabel(c) : c)}</option>`).join("")}</select></label>
             ${field("paymentMethod", L("បង់តាម", "Paid with"), d.paymentMethod)}
@@ -239,15 +239,15 @@ const SmartScanPage = (() => {
           ${d.billingPeriod ? `<p class="sc-note">🗓 ${escapeHtml(d.billingPeriod)}</p>` : ""}
           ${bill ? `
             <div class="sc-link">
-              <strong>🔗 ${escapeHtml(d.kind === "bill" ? L(`ត្រូវនឹង bill “${bill.name}”`, `Matches bill “${bill.name}”`) : L(`ប្រហែលជាបង់ bill “${bill.name}”`, `Looks like a payment for “${bill.name}”`))}</strong>
-              <label><input type="radio" name="link" value="${escapeAttr(bill.id)}" ${state.linkBillId === bill.id ? "checked" : ""}> ${escapeHtml(d.kind === "bill" ? L("Update bill នេះ", "Update this bill") : L("កត់ថា bill នេះបានបង់", "Mark this bill paid"))}</label>
-              <label><input type="radio" name="link" value="" ${state.linkBillId ? "" : "checked"}> ${escapeHtml(d.kind === "bill" ? L("បង្កើត Bill ថ្មី", "Create a new bill") : L("រក្សាទុកជាចំណាយដាច់ដោយឡែក", "Save as a separate expense"))}</label>
+              <strong>🔗 ${escapeHtml(d.kind === "bill" ? L(`ដូច Bill “${bill.name}”`, `Matches bill “${bill.name}”`) : L(`ប្រហែលជាការបង់ Bill “${bill.name}”`, `Looks like a payment for “${bill.name}”`))}</strong>
+              <label><input type="radio" name="link" value="${escapeAttr(bill.id)}" ${state.linkBillId === bill.id ? "checked" : ""}> ${escapeHtml(d.kind === "bill" ? L("កែ Bill នេះ", "Update this bill") : L("កត់ថា Bill នេះបង់រួច", "Mark this bill paid"))}</label>
+              <label><input type="radio" name="link" value="" ${state.linkBillId ? "" : "checked"}> ${escapeHtml(d.kind === "bill" ? L("បង្កើត Bill ថ្មី", "Create a new bill") : L("រក្សាទុកជាចំណាយមួយទៀត", "Save as a separate expense"))}</label>
             </div>` : ""}
           ${duplicates.length ? `
             <div class="sc-dup">
-              <strong>${ICON.warn()} ${L("ហាក់ដូចជាមានរួចហើយ", "Possible duplicate")}</strong>
+              <strong>${ICON.warn()} ${L("ហាក់ដូចជាបានកត់រួចហើយ", "Possible duplicate")}</strong>
               <ul>${duplicates.slice(0, 3).map(dup => `<li>${escapeHtml(dup.label || dup.collection)} · ${escapeHtml(dup.amount ? (typeof formatPlainMoney === "function" ? formatPlainMoney(dup.amount, dup.currency) : dup.amount) : "")} · ${escapeHtml(dup.date || "")}</li>`).join("")}</ul>
-              <label><input type="checkbox" data-scan-force ${state.force ? "checked" : ""}> ${L("ខ្ញុំដឹង — រក្សាទុកដដែល", "I know — save anyway")}</label>
+              <label><input type="checkbox" data-scan-force ${state.force ? "checked" : ""}> ${L("ដឹងហើយ — រក្សាទុកទៀត", "I know — save anyway")}</label>
             </div>` : ""}
           <div class="sc-actions">
             <button class="button" type="submit" ${canSave && (!duplicates.length || state.force) ? "" : "disabled"}>${ICON.check()} ${L("រក្សាទុក", "Save")}</button>
@@ -262,8 +262,8 @@ const SmartScanPage = (() => {
     const text = {
       "expense-created": L("បានកត់ចំណាយ", "Expense saved"),
       "bill-created": L("បានបង្កើត Bill (មិនទាន់បង់)", "Bill saved (unpaid)"),
-      "bill-updated": L("បាន update Bill", "Bill updated"),
-      "bill-paid": L("Bill បានបង់ + កត់ចំណាយ", "Bill marked paid + expense saved"),
+      "bill-updated": L("បានកែ Bill រួច", "Bill updated"),
+      "bill-paid": L("បង់ Bill រួច និងកត់ចំណាយ", "Bill marked paid + expense saved"),
       "bill-already-paid": L("Bill នេះបានបង់រួចហើយ", "That bill was already paid")
     }[s.outcome] || L("បានរក្សាទុក", "Saved");
     return `
@@ -289,7 +289,7 @@ const SmartScanPage = (() => {
         <div class="page-header">
           <div>
             <h1 class="page-title page-title-with-icon"><span class="page-title-icon">${ICON.scan()}</span>${t("smartScan")}</h1>
-            <p class="page-subtitle">${L("អានបង្កាន់ដៃ វិក្កយបត្រ និង slip ដោយស្វ័យប្រវត្តិ — ពិនិត្យ ហើយរក្សាទុក", "Read receipts, bills and slips automatically — check, then save")}</p>
+            <p class="page-subtitle">${L("ថតបង្កាន់ដៃ វិក្កយបត្រ ឬ slip ហើយ app នឹងអានលេខឲ្យ — អ្នកគ្រាន់តែពិនិត្យ ហើយរក្សាទុក", "Read receipts, bills and slips automatically — check, then save")}</p>
           </div>
         </div>
         ${body}

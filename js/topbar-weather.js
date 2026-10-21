@@ -15,15 +15,15 @@ const TopbarWeather = (() => {
 
   const km = () => (typeof languageCode === "function" ? languageCode() : "en") === "km";
   const TEXT = {
-    sun: ["Clear sky", "មេឃស្រឡះ"], moon: ["Clear night", "យប់ស្រឡះ"],
+    sun: ["Clear sky", "មេឃស្រឡះ"], moon: ["Clear night", "មេឃស្រឡះ"],
     partly: ["Partly cloudy", "មានពពកខ្លះ"], cloud: ["Cloudy", "មានពពក"], fog: ["Foggy", "អ័ព្ទ"],
     rain: ["Rain", "ភ្លៀង"], storm: ["Thunderstorm", "ភ្លៀងផ្គររន្ទះ"],
     feels: ["Feels", "មានអារម្មណ៍"], rainChance: ["Chance of rain", "ឱកាសភ្លៀង"],
-    umbrella: ["Rain likely, bring an umbrella", "អាចភ្លៀង យកឆ័ត្រទៅផង"],
-    umbrellaAt: ["Rain ~{t}, bring an umbrella", "អាចភ្លៀងម៉ោង {t} យកឆ័ត្រផង"],
-    now: ["Now", "ឥឡូវ"], more: ["Show hourly forecast", "បង្ហាញអាកាសធាតុតាមម៉ោង"],
+    umbrella: ["Rain likely, bring an umbrella", "ថ្ងៃនេះអាចភ្លៀង កុំភ្លេចយកឆ័ត្រ"],
+    umbrellaAt: ["Rain ~{t}, bring an umbrella", "ប្រហែលម៉ោង {t} អាចភ្លៀង កុំភ្លេចឆ័ត្រ"],
+    now: ["Now", "ឥឡូវ"], more: ["Show hourly forecast", "ចុចមើលអាកាសធាតុតាមម៉ោង"],
     morning: ["Good morning", "អរុណសួស្តី"], afternoon: ["Good afternoon", "ទិវាសួស្តី"], evening: ["Good evening", "សាយណ្ហសួស្តី"],
-    loading: ["Loading weather…", "កំពុងទាញអាកាសធាតុ…"]
+    loading: ["Loading weather…", "កំពុងមើលអាកាសធាតុ…"]
   };
   const tx = key => TEXT[key][km() ? 1 : 0];
 

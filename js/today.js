@@ -176,7 +176,7 @@ function renderToday() {
     <div class="tdx-stats">
       <button class="tdx-stat" type="button" data-tdx-go="today"><span>${isKm ? "ថ្ងៃនេះ" : "Today"}</span><b>${entries.length}</b></button>
       <button class="tdx-stat ${overdue.length ? "is-bad" : ""}" type="button" data-tdx-go="today"><span>${isKm ? "ហួសថ្ងៃ" : "Overdue"}</span><b>${overdue.length}</b></button>
-      <a class="tdx-stat ${bad ? "is-bad" : "is-good"}" href="#money"><span>${isKm ? "លុយខែនេះ" : "Money left"}</span><b>${money(stats.available)}</b></a>
+      <a class="tdx-stat ${bad ? "is-bad" : "is-good"}" href="#money"><span>${isKm ? "លុយនៅសល់" : "Money left"}</span><b>${money(stats.available)}</b></a>
     </div>
 
     <div class="tdx-grid">
@@ -206,7 +206,7 @@ function renderToday() {
               : empty(isKm ? "មិនទាន់មានអ្វីសម្រាប់ស្អែកទេ" : "Nothing planned for tomorrow yet")}
           </div>
           <div class="tdx-panel" data-tdx-panel="week" ${todayTab === "week" ? "" : "hidden"}>
-            ${upcoming.length ? `<div class="td-list">${upcoming.map(todayWeekRow).join("")}</div>` : empty(isKm ? "សប្តាហ៍នេះស្ងាត់" : "A quiet week ahead")}
+            ${upcoming.length ? `<div class="td-list">${upcoming.map(todayWeekRow).join("")}</div>` : empty(isKm ? "សប្តាហ៍នេះគ្មានអ្វីពិសេសទេ" : "A quiet week ahead")}
           </div>
         </article>
       </div>
