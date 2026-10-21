@@ -190,8 +190,52 @@
   .topbar-wx-card.is-open .tw-card-tip { white-space: normal; }
 }
 
-/* Home: on phones the header already greets, so the greeting/profile card sits at the
-   bottom (js/dashboard.js order); desktop has no greeting in its header → keep it on top */
-@media (min-width: 901px) {
-  .home-featured-page > .home-hero-panel { order: -1; }
+
+/* Home greeting card: profile = round photo with a ring + name underneath (no box,
+   nothing overlapping) on every screen size. Earlier rules in components/responsive/
+   theme-polish disagreed with each other, so this block has the final say. */
+.home-featured-page .home-hero-panel .home-profile-side {
+  flex: 0 0 auto !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 6px !important;
+  width: 82px !important;
+  min-width: 0 !important;
+  margin: 0 0 0 auto !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  text-align: center !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+.home-featured-page .home-hero-panel .home-profile-side:hover { transform: translateY(-1px); background: transparent !important; }
+.home-featured-page .home-hero-panel .home-avatar-ring {
+  width: 62px !important;
+  height: 62px !important;
+  padding: 3px !important;
+  border-radius: 50% !important;
+  background: linear-gradient(140deg, #c5ff60, #5fd3f3) !important;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.22) !important;
+}
+.home-featured-page .home-hero-panel .home-user-avatar {
+  width: 100% !important;
+  height: 100% !important;
+  border: 2px solid var(--bg-main, #0b1a14) !important;
+  border-radius: 50% !important;
+  overflow: hidden;
+}
+:root[data-theme="light"] .home-featured-page .home-hero-panel .home-user-avatar { border-color: #fff !important; }
+.home-featured-page .home-hero-panel .home-profile-meta { margin: 0 !important; min-width: 0; max-width: 100%; }
+.home-featured-page .home-hero-panel .home-profile-meta strong {
+  display: block;
+  max-width: 82px !important;
+  overflow: hidden;
+  font-size: 0.8rem !important;
+  font-weight: 800;
+  line-height: 1.2 !important;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow-wrap: normal !important;
 }

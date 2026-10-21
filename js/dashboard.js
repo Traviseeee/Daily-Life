@@ -55,9 +55,30 @@ function renderHome() {
     };
   });
 
-  // order: friendly visual first (daily focus, week), then what's coming, then the
-  // check-in cards; the profile / greeting card last (the phone header already greets)
+  // order: greeting/profile, daily focus, week, what's coming, then the check-in cards
   return '<section class="page home-featured-page">' +
+    '<div class="home-hero-panel">' +
+      '<div class="home-hero-copy">' +
+        '<span class="eyebrow">' + t("privateDashboard") + '</span>' +
+        '<h1 class="page-title">' + homeGreeting() + ', ' + escapeHtml(firstName) + '</h1>' +
+        '<div class="home-quote-row">' +
+          '<span class="quote-mark">“</span>' +
+          '<p>' + t("smallStepsBigWins") + '</p>' +
+          '<span class="quote-arrow">›</span>' +
+        '</div>' +
+      '</div>' +
+      '<div class="home-profile-side home-profile-trigger" role="button" tabindex="0" aria-label="' + t("editProfile") + '">' +
+        '<div class="home-avatar-ring">' +
+          '<span class="home-user-avatar">' + profilePhoto + '</span>' +
+        '</div>' +
+        '<div class="home-profile-meta">' +
+          '<strong>' + escapeHtml(profileName) + '</strong>' +
+        '</div>' +
+        '<div class="home-profile-menu" aria-hidden="true">' +
+          '<button type="button" class="home-profile-menu-item" data-account-action="edit-profile">Edit profile</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>' +
     '<div class="home-challenge-card' + (challengeImage ? " has-cover-image" : "") + '">' +
       '<label class="home-challenge-image-edit" title="' + escapeAttr(t(challengeImage ? "changeFocusImage" : "addFocusImage")) + '"><span aria-hidden="true">' + Icons.edit() + '</span><input type="file" accept="image/*" data-home-challenge-image aria-label="' + escapeAttr(t(challengeImage ? "changeFocusImage" : "addFocusImage")) + '"></label>' +
       '<div class="home-challenge-copy">' +
@@ -102,28 +123,6 @@ function renderHome() {
         '</div>' +
         (reflectionReady ? '<button class="button" type="button" data-action="save-reflection">' + t("saveReflection") + '</button>' : '') +
       '</article>' +
-    '</div>' +
-    '<div class="home-hero-panel">' +
-      '<div class="home-hero-copy">' +
-        '<span class="eyebrow">' + t("privateDashboard") + '</span>' +
-        '<h1 class="page-title">' + homeGreeting() + ', ' + escapeHtml(firstName) + '</h1>' +
-        '<div class="home-quote-row">' +
-          '<span class="quote-mark">“</span>' +
-          '<p>' + t("smallStepsBigWins") + '</p>' +
-          '<span class="quote-arrow">›</span>' +
-        '</div>' +
-      '</div>' +
-      '<div class="home-profile-side home-profile-trigger" role="button" tabindex="0" aria-label="' + t("editProfile") + '">' +
-        '<div class="home-avatar-ring">' +
-          '<span class="home-user-avatar">' + profilePhoto + '</span>' +
-        '</div>' +
-        '<div class="home-profile-meta">' +
-          '<strong>' + escapeHtml(profileName) + '</strong>' +
-        '</div>' +
-        '<div class="home-profile-menu" aria-hidden="true">' +
-          '<button type="button" class="home-profile-menu-item" data-account-action="edit-profile">Edit profile</button>' +
-        '</div>' +
-      '</div>' +
     '</div>' +
   '</section>';
 }
