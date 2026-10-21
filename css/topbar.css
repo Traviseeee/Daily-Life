@@ -260,3 +260,23 @@
 .settings-nfc-link .button svg { width: 14px; height: 14px; }
 .settings-accordion-summary[data-settings-tone="money"] { --settings-tone: #22c55e; }
 .settings-accordion-summary[data-settings-tone="notifications"] { --settings-tone: #f59e0b; }
+
+/* Settings rows: no box / border line around each setting — plain rows with spacing */
+.settings-accordion-body .settings-preference-list,
+:root[data-theme="light"] .settings-accordion-body .settings-preference-list {
+  gap: 2px;
+  border: 0 !important;
+  border-radius: 0;
+  background: transparent !important;
+  overflow: visible;
+}
+.settings-accordion-body .settings-preference-list > .settings-preference-row,
+.settings-accordion-body .settings-preference-list > .settings-preference-row:first-child,
+:root[data-theme="light"] .settings-accordion-body .settings-preference-row {
+  min-height: 60px;
+  padding: 8px 4px;
+  border: 0 !important;
+  border-radius: 12px;
+  background: transparent !important;
+}
+.settings-accordion-body .settings-preference-list > .settings-preference-row:hover { background: rgba(127, 140, 133, 0.08) !important; }
