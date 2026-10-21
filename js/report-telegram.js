@@ -119,5 +119,5 @@ const ReportTelegram = (() => {
   });
   setTimeout(() => { autoMonthly(); }, 9000);
 
-  return { send, autoMonthly };
+  return { send, autoMonthly, accessToken };
 })();

@@ -311,6 +311,7 @@ const App = {
     this.renderSmartAssistant();
     document.body.classList.remove("nav-open");
     document.body.classList.toggle("launcher-page-open", route === "launcher");
+    document.body.classList.toggle("notify-page-open", route === "notifications");
     document.body.classList.toggle("topbar-home", route === "home");
     if (typeof TopbarWeather !== "undefined") TopbarWeather.render();
 
@@ -503,7 +504,8 @@ const App = {
       console.warn("MYLIFE could not display the reminder notification.", error);
     }
   },
-  collectDueAlertItems() {
+  // options.anyChannel: ignore the App channel switch (notification center preview)
+  collectDueAlertItems(options = {}) {
     const items = [];
     const add = item => {
       if (!item?.date || !item.title) return;
@@ -633,6 +635,7 @@ const App = {
         staged.push({ ...item, id: `${item.id}-before-${days * 1440}`, date: shiftIsoDate(item.date, -days), dueDate: item.date, early: days * 1440, body: item.body ? `⏳ ${left} · ${item.body}` : `⏳ ${left}` });
       });
     });
+    if (options.anyChannel) return staged;
     return staged.filter(item => NotifyPrefs.allows(appData.profile, item.kind, "app"));
   },
   checkDueReminderAlerts() {

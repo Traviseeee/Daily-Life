@@ -153,8 +153,9 @@ const NotifyCenter = (() => {
         ${toggle(`data-nfc-tool-switch="${tool}" ${off ? "disabled" : ""}`, on, L(meta.km, meta.en))}
       </div>
       <div class="nfc-acc-body" id="nfc-body-${tool}" ${open ? "" : "hidden"}>
-        <div class="nfc-acc-inner ${on ? "" : "is-disabled"}">
-          ${toolDetails(tool, p)}
+        <div class="nfc-acc-inner ${on && !off ? "" : "is-disabled"}">
+          ${on && !off ? "" : `<p class="nfc-locked">${ICON.info()}<span>${off ? L("បើក “អនុញ្ញាតការជូនដំណឹង” ខាងលើ ដើម្បីកែការកំណត់នេះ", "Turn on “Allow notifications” above to change these settings") : L("បើក switch របស់ Tool នេះ ដើម្បីកែការកំណត់", "Turn this tool's switch on to change its settings")}</span></p>`}
+          ${toolDetails(tool, p, off || !on)}
           <a class="nfc-go" href="${meta.href}">${L("បើក", "Open")} ${escapeHtml(L(meta.km, meta.en))} ${ICON.arrow()}</a>
         </div>
       </div>
@@ -168,31 +169,119 @@ const NotifyCenter = (() => {
     return L(TOOL_META[tool].dkm, TOOL_META[tool].den);
   }
 
+  let lockedNow = false; // set while rendering a tool that is switched off (or everything off)
   function flagRow(key, title, sub, timeKey, timeDefault) {
     const p = appData.profile;
     const on = p[key] !== false;
+    const lock = lockedNow ? "disabled" : "";
     return `<div class="nfc-row nfc-sub ${on ? "" : "is-off"}">
       <span class="nfc-copy"><strong>${escapeHtml(title)}</strong><small>${escapeHtml(sub)}</small></span>
-      ${timeKey ? `<input class="nfc-time" type="time" value="${escapeAttr(p[timeKey] || timeDefault)}" data-nfc-time="${timeKey}" ${on ? "" : "disabled"} aria-label="${escapeAttr(title)}">` : ""}
-      ${toggle(`data-nfc-flag="${key}"`, on, title)}
+      ${timeKey ? `<input class="nfc-time" type="time" value="${escapeAttr(p[timeKey] || timeDefault)}" data-nfc-time="${timeKey}" ${on && !lockedNow ? "" : "disabled"} aria-label="${escapeAttr(title)}">` : ""}
+      ${toggle(`data-nfc-flag="${key}" ${lock}`, on, title)}
     </div>`;
   }
 
   const note = text => `<p class="nfc-note">${ICON.info()}<span>${text}</span></p>`;
 
   // 3 / 2 / 1 days before + on the day — every tool whose items have a date
-  function stagePicker(tool, p) {
+  function stagePicker(tool, p, locked) {
     const chosen = p.stages[tool] || [];
+    const lock = locked ? "disabled" : "";
+    const next = locked ? null : nextReminder(tool);
     return `
       <p class="nfc-sublabel">${L("រំលឹកខ្ញុំ", "Remind me")}</p>
       <div class="nfc-stages" data-nfc-stages="${tool}">
-        ${NotifyPrefs.STAGES.map(days => `<label class="nfc-stage ${chosen.includes(days) ? "is-on" : ""}"><input type="checkbox" data-nfc-stage="${days}" ${chosen.includes(days) ? "checked" : ""}><span>${escapeHtml(stageLabel(tool, days))}</span></label>`).join("")}
-      </div>`;
+        ${NotifyPrefs.STAGES.map(days => `<label class="nfc-stage ${chosen.includes(days) ? "is-on" : ""}"><input type="checkbox" data-nfc-stage="${days}" ${chosen.includes(days) ? "checked" : ""} ${lock}><span>${escapeHtml(stageLabel(tool, days))}</span></label>`).join("")}
+      </div>
+      ${chosen.length ? "" : `<p class="nfc-warn">⚠️ ${L("គ្មានថ្ងៃណាត្រូវបានជ្រើស — Tool នេះនឹងមិនរំលឹកតាមថ្ងៃទេ", "No day chosen — this tool won't send date reminders")}</p>`}
+      ${next ? `<p class="nfc-next">🔔 <span>${L("បន្ទាប់", "Next")}: <b>${escapeHtml(next.title)}</b> · ${escapeHtml(next.when)}</span></p>` : ""}
+      ${locked ? "" : `<button class="nfc-test" type="button" data-nfc-test="${tool}">${ICON.telegram()}<span>${L("ផ្ញើសារសាកល្បងទៅ Telegram", "Send a test to Telegram")}</span></button>`}`;
   }
 
-  function toolDetails(tool, p) {
+  /* ---------- next reminder + test message ---------- */
+  const dayFmt = iso => {
+    try { return parseAppDate(iso).toLocaleDateString(km() ? "km-KH" : "en-US", { weekday: "short", day: "numeric", month: "short" }); }
+    catch (error) { return iso; }
+  };
+
+  // this tool's alerts (the same list the App uses, any channel), soonest first
+  function upcoming(tool) {
+    if (typeof App === "undefined" || typeof App.collectDueAlertItems !== "function") return [];
+    const now = new Date();
+    return App.collectDueAlertItems({ anyChannel: true })
+      .filter(item => NotifyPrefs.toolOf(item.kind) === tool && item.kind !== "savings-contribution")
+      .map(item => ({ item, at: App.alertDateTime(item) }))
+      .filter(entry => entry.at && entry.at >= now)
+      .sort((a, b) => a.at - b.at);
+  }
+
+  // birthdays/anniversaries in the App list are "Birthday: Mom" → "Mom"
+  const cleanTitle = item => (["birthday", "anniversary"].includes(item.kind) ? String(item.title || "").replace(/^[^:]{1,20}:\s*/, "") : String(item.title || ""));
+
+  function nextReminder(tool) {
+    const first = upcoming(tool)[0];
+    if (!first) return null;
+    const { item } = first;
+    const days = item.early ? Math.round(item.early / 1440) : 0;
+    const title = cleanTitle(item);
+    return { title, when: `${dayFmt(item.date)}${days ? ` (${stageLabel(tool, days)})` : ""}` };
+  }
+
+  const SAMPLE = {
+    bills: { kind: "bill", title: "EDC", body: "ត្រូវបង់ · Due: 150,000៛" },
+    loans: { kind: "loan", title: "Car loan", body: "ត្រូវបង់ប្រចាំខែ · Monthly payment: $250" },
+    savings: { kind: "savings-deadline", title: "Trip fund", body: "" },
+    calendar: { kind: "calendar", title: "Dinner", body: "" },
+    family: { kind: "birthday", title: "Mom", body: "" }
+  };
+
+  // a real upcoming item of this tool (or a sample), shown the way Telegram will show it
+  function testPayload(tool) {
+    const stages = prefs().stages[tool] || [0];
+    const early = Math.max(0, ...stages) * 1440;
+    const real = upcoming(tool).map(entry => entry.item).find(item => !item.early) || upcoming(tool)[0]?.item;
+    if (real) {
+      const date = real.dueDate || real.date;
+      return { kind: real.kind, title: cleanTitle(real), body: real.body || "", date, time: real.time || "09:00", hasTime: !!real.time && real.time !== "09:00", early };
+    }
+    const sample = SAMPLE[tool];
+    const date = localDateInput(new Date(Date.now() + 3 * 864e5));
+    return { ...sample, title: `${sample.title} (${L("ឧទាហរណ៍", "sample")})`, date, time: "09:00", hasTime: false, early };
+  }
+
+  async function sendTest(button) {
+    const tool = button.dataset.nfcTest;
+    const label = button.innerHTML;
+    button.disabled = true;
+    button.querySelector("span").textContent = L("កំពុងផ្ញើ…", "Sending…");
+    try {
+      const token = typeof ReportTelegram !== "undefined" ? await ReportTelegram.accessToken() : "";
+      if (!token) throw new Error("not_signed_in");
+      const response = await fetch("/api/report-send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ test: testPayload(tool) })
+      });
+      const json = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(json.error || `send_${response.status}`);
+      Toast.show(L("🧪 បានផ្ញើសារសាកល្បងទៅ Telegram", "🧪 Test sent to Telegram"), "success", { sound: "notify" });
+    } catch (error) {
+      const message = error.message === "not_signed_in"
+        ? L("សូម login សិន ដើម្បីផ្ញើទៅ Telegram", "Sign in first to send to Telegram")
+        : error.message === "wait"
+          ? L("ទើបផ្ញើរួច សូមរង់ចាំ 10 វិនាទី", "Just sent — wait 10 seconds")
+          : L("ផ្ញើមិនបាន សូមសាកម្ដងទៀត", "Couldn't send, try again");
+      Toast.show(message, "warning");
+    } finally {
+      button.disabled = false;
+      button.innerHTML = label;
+    }
+  }
+
+  function toolDetails(tool, p, locked = false) {
+    lockedNow = locked;
     if (NotifyPrefs.STAGE_TOOLS.includes(tool)) {
-      return `${stagePicker(tool, p)}${note(L(...STAGE_NOTE[tool]))}`;
+      return `${stagePicker(tool, p, locked)}${note(L(...STAGE_NOTE[tool]))}`;
     }
     if (tool === "expenses") {
       return `<div class="nfc-subgroup">
@@ -248,6 +337,7 @@ const NotifyCenter = (() => {
       // billStages kept in step for older copies of the app / server
       save({ stages, billStages: stages.bills });
     })));
+    page.querySelectorAll("[data-nfc-test]").forEach(button => button.addEventListener("click", () => sendTest(button)));
     page.querySelectorAll("[data-nfc-flag]").forEach(input => input.addEventListener("change", () => saveProfile({ [input.dataset.nfcFlag]: input.checked })));
     page.querySelectorAll("[data-nfc-time]").forEach(input => input.addEventListener("change", () => {
       if (/^\d{2}:\d{2}$/.test(input.value)) saveProfile({ [input.dataset.nfcTime]: input.value });
