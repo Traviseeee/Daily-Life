@@ -261,36 +261,31 @@
 .settings-accordion-summary[data-settings-tone="money"] { --settings-tone: #22c55e; }
 .settings-accordion-summary[data-settings-tone="notifications"] { --settings-tone: #f59e0b; }
 
-/* Settings rows: no box / border line around each setting — plain rows with spacing */
-.settings-accordion-body .settings-preference-list,
-:root[data-theme="light"] .settings-accordion-body .settings-preference-list {
-  gap: 2px;
-  border: 0 !important;
+/* Settings rows: no box around each setting — just a thin line under each row
+   (none under the last). Written with one selector strength so dark/light agree. */
+html body .settings-accordion-body .settings-preference-list {
+  gap: 0;
+  border: 0;
   border-radius: 0;
-  background: transparent !important;
+  background: transparent;
   overflow: visible;
 }
-.settings-accordion-body .settings-preference-list > .settings-preference-row,
-.settings-accordion-body .settings-preference-list > .settings-preference-row:first-child,
-:root[data-theme="light"] .settings-accordion-body .settings-preference-row {
+html body .settings-accordion-body .settings-preference-list > .settings-preference-row {
   min-height: 60px;
-  padding: 8px 4px;
-  border: 0 !important;
-  border-radius: 12px;
-  background: transparent !important;
+  padding: 10px 4px;
+  border: 0;
+  border-bottom: 1px solid rgba(127, 140, 133, 0.2);
+  border-radius: 0;
+  background: transparent;
 }
-.settings-accordion-body .settings-preference-list > .settings-preference-row:hover { background: rgba(127, 140, 133, 0.08) !important; }
+html:not([data-theme="light"]) body .settings-accordion-body .settings-preference-list > .settings-preference-row { border-bottom-color: rgba(255, 255, 255, 0.08); }
+html[data-theme="light"] body .settings-accordion-body .settings-preference-list > .settings-preference-row { border-bottom-color: rgba(16, 32, 26, 0.09); }
+html body .settings-accordion-body .settings-preference-list > .settings-preference-row:last-child { border-bottom: 0; }
+html body .settings-accordion-body .settings-preference-list > .settings-preference-row:first-child { border-top: 0; border-left: 0; border-right: 0; }
+html body .settings-accordion-body .settings-preference-list > .settings-preference-row:hover { background: rgba(127, 140, 133, 0.07); }
 /* Khmer leading marks (e.g. ្រ in ជ្រើស) draw a little to the LEFT of the letter —
    keep some room so the first letter is never cut at the edge */
 .settings-accordion-body .settings-preference-row > span { padding-left: 8px !important; overflow: visible !important; }
 .settings-accordion-body .settings-preference-row strong,
 .settings-accordion-body .settings-preference-row small { overflow: visible; padding-left: 2px; }
 .settings-accordion-copy strong, .settings-accordion-copy small { padding-left: 3px; }
-/* thin line under each setting (no box), none under the last one */
-.settings-accordion-body .settings-preference-list > .settings-preference-row { border-radius: 0 !important; border-bottom: 1px solid rgba(127, 140, 133, 0.2) !important; }
-:root:not([data-theme="light"]) .settings-accordion-body .settings-preference-list > .settings-preference-row { border-bottom-color: rgba(255, 255, 255, 0.08) !important; }
-:root[data-theme="light"] .settings-accordion-body .settings-preference-list > .settings-preference-row { border-bottom-color: rgba(16, 32, 26, 0.08) !important; }
-.settings-accordion-body .settings-preference-list > .settings-preference-row:last-child { border-bottom: 0 !important; }
-.settings-accordion-body .settings-preference-list > .settings-preference-row:first-child:not(:last-child) { border-bottom: 1px solid rgba(127, 140, 133, 0.2) !important; }
-:root:not([data-theme="light"]) .settings-accordion-body .settings-preference-list > .settings-preference-row:first-child:not(:last-child) { border-bottom-color: rgba(255, 255, 255, 0.08) !important; }
-:root[data-theme="light"] .settings-accordion-body .settings-preference-list > .settings-preference-row:first-child:not(:last-child) { border-bottom-color: rgba(16, 32, 26, 0.08) !important; }
