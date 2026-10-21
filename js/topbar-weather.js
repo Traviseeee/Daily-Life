@@ -128,7 +128,7 @@ const TopbarWeather = (() => {
     if (!hours.length) return "";
     const slots = [0, 2, 4, 6, 8].map(i => hours[i]).filter(Boolean);
     return `<div class="tw-hours">${slots.map((x, i) => `
-      <div class="tw-hour${i === 0 ? " is-now" : ""}"><b>${esc(i === 0 ? tx("now") : hourLabel(x.h))}</b>${icon(sceneOf(x.code, x.day))}<span>${num(x.temp)}</span><small>💧${x.pop}%</small></div>`).join("")}</div>`;
+      <div class="tw-hour${i === 0 ? " is-now" : ""}"><b>${esc(i === 0 ? tx("now") : hourLabel(x.h))}</b>${icon(sceneOf(x.code, x.day))}<span>${num(x.temp)}</span>${x.pop >= 50 ? `<small>💧${x.pop}%</small>` : ""}</div>`).join("")}</div>`;
   }
 
   function toggle(force) {
@@ -175,13 +175,13 @@ const TopbarWeather = (() => {
       const time = typeof fmtClockDate === "function" ? fmtClockDate(new Date()) : new Date().toLocaleTimeString();
       const [clock, ampm = ""] = String(time).split(/\s+(?=[AP]M$)/i);
       const meta = data
-        ? `<span>${esc(tx(scene))}</span><span title="${esc(tx("rainChance"))}">💧${data.rain}%</span><span>${num(data.max)} / ${num(data.min)}</span>`
+        ? `<span>${esc(tx(scene))}</span>`
         : `<span>${esc(tx("loading"))}</span>`;
       card.dataset.scene = scene;
       card.innerHTML = `
         <div class="tw-card-icon">${icon(scene)}</div>
         <div class="tw-card-main">
-          <div class="tw-card-temp"><strong>${num(data?.temp)}</strong>${data ? `<small>${esc(tx("feels"))} ${num(data.feels)}</small>` : ""}</div>
+          <div class="tw-card-temp"><strong>${num(data?.temp)}</strong></div>
           <div class="tw-card-meta">${meta}</div>
           ${rainTip(scene) ? `<div class="tw-card-tip">☂ ${esc(rainTip(scene))}</div>` : ""}
         </div>
