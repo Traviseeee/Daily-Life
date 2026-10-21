@@ -75,7 +75,9 @@ function renderHome() {
           '<strong>' + escapeHtml(profileName) + '</strong>' +
         '</div>' +
         '<div class="home-profile-menu" aria-hidden="true">' +
-          '<button type="button" class="home-profile-menu-item" data-account-action="edit-profile">Edit profile</button>' +
+          // guest / signed out: "Log in" first, so the account is easy to reach from Home
+          ((typeof Login !== "undefined" && (Login.guestMode || !Login.authenticated)) ? '<button type="button" class="home-profile-menu-item home-profile-menu-login" data-account-action="login">' + (languageCode() === "km" ? "ចូលគណនី (Log in)" : "Log in") + '</button>' : '') +
+          '<button type="button" class="home-profile-menu-item" data-account-action="edit-profile">' + escapeHtml(t("editProfile")) + '</button>' +
         '</div>' +
       '</div>' +
     '</div>' +
