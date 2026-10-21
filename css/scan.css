@@ -78,3 +78,36 @@
 @media (max-width: 420px) {
   .sc-grid { grid-template-columns: 1fr; }
 }
+
+/* readability: lime buttons need dark text (white on lime was hard to read), clearer
+   secondary buttons and tips; on phones the two pick buttons are full-width */
+.sc-page .button:not(.ghost-button) {
+  color: #142a04 !important;
+  background: #c5ff60 !important;
+  border: 0 !important;
+  box-shadow: 0 8px 20px rgba(197, 255, 96, 0.22);
+  font-weight: 800;
+}
+.sc-page .button:not(.ghost-button) svg { color: #142a04; }
+.sc-page .button:not(.ghost-button)[disabled] { color: rgba(20, 42, 4, 0.55) !important; background: rgba(197, 255, 96, 0.45) !important; box-shadow: none; }
+.sc-page .ghost-button {
+  color: var(--text-primary) !important;
+  border: 1px solid rgba(127, 140, 133, 0.35) !important;
+  background: rgba(127, 140, 133, 0.12) !important;
+  font-weight: 700;
+}
+:root:not([data-theme="light"]) .sc-page .ghost-button { color: #fff !important; border-color: rgba(255, 255, 255, 0.22) !important; background: rgba(255, 255, 255, 0.08) !important; }
+.sc-pick h2 { font-size: 1.25rem; }
+.sc-pick p { font-size: 0.92rem; line-height: 1.5; }
+.sc-tips { color: var(--text-secondary); font-size: 0.84rem; line-height: 1.5; text-align: left; }
+:root:not([data-theme="light"]) .sc-tips { color: rgba(255, 255, 255, 0.72); }
+.sc-raw summary { font-size: 0.86rem; }
+:root:not([data-theme="light"]) .sc-raw summary { color: rgba(255, 255, 255, 0.75); }
+@media (max-width: 520px) {
+  .sc-pick-actions { display: grid; grid-template-columns: 1fr; width: 100%; }
+  .sc-pick-actions .button { justify-content: center; min-height: 50px; font-size: 1rem; }
+}
+/* phones: the floating + button sat on top of the tips / form */
+@media (max-width: 900px) {
+  body:has(.sc-page) .quick-action-dock { display: none; }
+}
