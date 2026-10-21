@@ -63,16 +63,60 @@ const hasMeaningfulAppData = value => {
   });
 };
 
+// Returns the backup's localStorage key (truthy) or false.
 const saveDataBackup = (reason, value = appData) => {
   if (!hasMeaningfulAppData(value)) return false;
   try {
     const key = `${BACKUP_PREFIX}${new Date().toISOString()}:${reason}`;
     localStorage.setItem(key, JSON.stringify(value));
-    return true;
+    return localStorage.getItem(key) !== null ? key : false;
   } catch (error) {
     console.warn("MYLIFE could not create a local data backup.", error);
     return false;
   }
+};
+
+// Checks a JSON backup before an import may touch any data (local or cloud).
+// Every section the app knows must have the type the app expects: records are
+// arrays of objects, profile / deletions are objects. Unknown extra keys are
+// allowed (newer backups). Returns { ok, errors: ["expenses: expected a list, got null", ...] }.
+const IMPORT_RECORD_LISTS = ["family", "familyMedia", "goals", "income", "expenses", "savings", "loans", "bills", "calendarEvents", "memories", "hobbyLogs", "reminders", "moodHistory"];
+const importTypeName = value => (value === undefined ? "nothing" : value === null ? "null" : Array.isArray(value) ? "a list" : typeof value === "object" ? "an object" : `${typeof value} ${String(JSON.stringify(value)).slice(0, 20)}`);
+const isPlainObject = value => Boolean(value) && typeof value === "object" && !Array.isArray(value);
+
+const validateAppDataImport = value => {
+  const errors = [];
+  if (!isPlainObject(value)) return { ok: false, errors: [`backup: expected an object, got ${importTypeName(value)}`] };
+  if (!isPlainObject(value.profile)) errors.push(`profile: expected an object, got ${importTypeName(value.profile)}`);
+
+  Object.entries(emptyData).forEach(([key, defaultValue]) => {
+    if (key === "profile" || !(key in value)) return;
+    const item = value[key];
+    if (Array.isArray(defaultValue)) {
+      if (!Array.isArray(item)) {
+        errors.push(`${key}: expected a list, got ${importTypeName(item)}`);
+        return;
+      }
+      if (IMPORT_RECORD_LISTS.includes(key)) {
+        const bad = item.findIndex(record => !isPlainObject(record));
+        if (bad !== -1) errors.push(`${key}[${bad}]: expected a record object, got ${importTypeName(item[bad])}`);
+      }
+      return;
+    }
+    if (isPlainObject(defaultValue) && !isPlainObject(item)) {
+      errors.push(`${key}: expected an object, got ${importTypeName(item)}`);
+    }
+  });
+
+  if (isPlainObject(value.deletions)) {
+    Object.entries(value.deletions).forEach(([collection, entries]) => {
+      if (!isPlainObject(entries)) errors.push(`deletions.${collection}: expected an object, got ${importTypeName(entries)}`);
+    });
+  }
+  if (isPlainObject(value.dailyFocus) && "items" in value.dailyFocus && !Array.isArray(value.dailyFocus.items)) {
+    errors.push(`dailyFocus.items: expected a list, got ${importTypeName(value.dailyFocus.items)}`);
+  }
+  return { ok: errors.length === 0, errors };
 };
 
 const readLegacyJson = key => {
@@ -1100,6 +1144,53 @@ const Store = {
       console.warn("MYLIFE could not list local backups.", error);
     }
     return backups.sort((a, b) => b.key.localeCompare(a.key));
+  },
+  /**
+   * Replaces all data with an imported JSON backup (Settings › Import JSON).
+   * Order matters: validate → back up the current data → replace → save.
+   * Nothing local or in the cloud changes when validation or the backup fails.
+   * Returns { ok, errors, backupKey }.
+   */
+  importData(imported) {
+    const check = validateAppDataImport(imported);
+    if (!check.ok) return { ok: false, errors: check.errors, backupKey: "" };
+
+    let backupKey = "";
+    if (hasMeaningfulAppData(appData)) {
+      backupKey = saveDataBackup("before-import");
+      if (!backupKey) return { ok: false, errors: ["backup_failed"], backupKey: "" };
+    }
+
+    const previous = structuredClone(appData);
+    let previousLocal = null;
+    try { previousLocal = localStorage.getItem(STORAGE_KEY); } catch (error) { previousLocal = null; }
+    // exact rollback: also drops sections the import added
+    const rollback = () => {
+      Object.keys(appData).forEach(key => delete appData[key]);
+      Object.assign(appData, previous);
+      // a quota failure may have left a compacted copy of the import on disk
+      if (previousLocal !== null) {
+        try { localStorage.setItem(STORAGE_KEY, previousLocal); } catch (error) { /* best effort */ }
+      }
+    };
+    try {
+      Object.assign(appData, structuredClone(emptyData), structuredClone(imported));
+      ensureAppDataShape();
+      appData.profile = { ...emptyData.profile, ...(appData.profile || {}) };
+      // A restore replaces everything, so the cloud copy is replaced rather than
+      // merged — merging would keep records the backup deliberately omits, and
+      // any tombstone carried by the backup still applies to its own contents.
+      SyncState.prune(appData);
+      if (!this.save({ mode: "replace", reason: "import" })) {
+        rollback();
+        return { ok: false, errors: ["save_failed"], backupKey };
+      }
+    } catch (error) {
+      console.warn("MYLIFE could not import the backup.", error);
+      rollback();
+      return { ok: false, errors: ["apply_failed"], backupKey };
+    }
+    return { ok: true, errors: [], backupKey };
   },
   restoreBackup(key) {
     try {

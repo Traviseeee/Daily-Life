@@ -787,30 +787,43 @@ function importJsonData(event) {
   const file = event.target.files?.[0];
   event.target.value = "";
   if (!file) return;
+  const km = languageCode() === "km";
   const reader = new FileReader();
   reader.onload = () => {
+    let imported;
     try {
-      const imported = JSON.parse(reader.result);
-      if (!imported || typeof imported !== "object" || !imported.profile) throw new Error("Invalid MYLIFE backup");
-      Modal.confirm({
-        title: t("importJson"),
-        message: t("importJsonMessage"),
-        confirmText: t("importJson"),
-        onConfirm: () => {
-          Object.assign(appData, structuredClone(emptyData), imported);
-          appData.profile = { ...emptyData.profile, ...(appData.profile || {}) };
-          // A restore replaces everything, so the cloud copy is replaced rather than
-          // merged — merging would keep records the backup deliberately omits, and
-          // any tombstone carried by the backup still applies to its own contents.
-          SyncState.prune(appData);
-          Store.save({ mode: "replace", reason: "import" });
-          App.render();
-          Toast.show(t("jsonImported"));
-        }
-      });
+      imported = JSON.parse(reader.result);
     } catch (error) {
-      Toast.show(t("importFailed"));
+      Toast.show(km ? "នាំចូលមិនបាន៖ ឯកសារនេះមិនមែនជា JSON ត្រឹមត្រូវទេ។ ទិន្នន័យរបស់អ្នកមិនបានប្ដូរទេ។" : "Import failed: this file is not valid JSON. Your data was not changed.", "warning");
+      return;
     }
+    // Check the whole structure before asking — a bad file never reaches the data.
+    const check = validateAppDataImport(imported);
+    if (!check.ok) {
+      const detail = check.errors.slice(0, 2).join("; ") + (check.errors.length > 2 ? ` (+${check.errors.length - 2})` : "");
+      Toast.show(km ? `នាំចូលមិនបាន៖ ឯកសារបម្រុងខូច (${detail})។ ទិន្នន័យរបស់អ្នកមិនបានប្ដូរទេ។` : `Import failed: the backup is damaged (${detail}). Your data was not changed.`, "warning");
+      return;
+    }
+    Modal.confirm({
+      title: t("importJson"),
+      message: t("importJsonMessage"),
+      confirmText: t("importJson"),
+      onConfirm: () => {
+        const result = Store.importData(imported);
+        if (!result.ok) {
+          const reason = result.errors[0] === "backup_failed"
+            ? (km ? "មិនអាចបង្កើតច្បាប់ចម្លងបម្រុងនៃទិន្នន័យបច្ចុប្បន្នបានទេ (ទំហំផ្ទុកពេញ?)" : "could not back up your current data first (storage full?)")
+            : result.errors.join("; ");
+          Toast.show(km ? `នាំចូលមិនបាន៖ ${reason}។ ទិន្នន័យរបស់អ្នកមិនបានប្ដូរទេ។` : `Import failed: ${reason}. Your data was not changed.`, "warning");
+          return;
+        }
+        App.render();
+        const kmNow = languageCode() === "km"; // the backup may switch the language
+        Toast.show(result.backupKey
+          ? (kmNow ? `${t("jsonImported")} · ទិន្នន័យចាស់ត្រូវបានរក្សាទុកជាច្បាប់ចម្លងបម្រុងក្នុងឧបករណ៍នេះ (before-import)` : `${t("jsonImported")} · Your previous data was saved as a local backup on this device (before-import)`)
+          : t("jsonImported"));
+      }
+    });
   };
   reader.readAsText(file);
 }
