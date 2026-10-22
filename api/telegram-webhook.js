@@ -347,6 +347,20 @@ function moneyKeyboard(token, saved, mode = "main") {
 /* ---------------- menu + commands ---------------- */
 
 // persistent buttons under the chat box
+// Telegram keeps showing the last keyboard the bot sent. Bump this when the
+// keyboard changes: the next time someone uses the bot, it sends the new one once.
+const KEYBOARD_VERSION = "2026-10-22";
+async function refreshKeyboard(message, redis) {
+  try {
+    const key = `mylife:tg:kb:${message.chat.id}`;
+    if ((await redis.get(key)) === KEYBOARD_VERSION) return;
+    await redis.set(key, KEYBOARD_VERSION);
+    await tgCall("sendMessage", { chat_id: message.chat.id, text: "⌨️ <b>ប៊ូតុងខាងក្រោមថ្មី</b> · មាន 🤖 សួរ AI ហើយ", parse_mode: "HTML", disable_notification: true, reply_markup: REPLY_KEYBOARD });
+  } catch (error) {
+    console.warn("MYLIFE keyboard refresh failed.", error.message);
+  }
+}
+
 const REPLY_KEYBOARD = {
   keyboard: [[{ text: "☀️ ថ្ងៃនេះ" }, { text: "🧾 វិក្កយបត្រ" }, { text: "🤖 សួរ AI" }], [{ text: "🌙 កត់ចំណាយ" }, { text: "📊 របាយការណ៍" }, { text: "☰ ម៉ឺនុយ" }]],
   resize_keyboard: true,
@@ -797,7 +811,11 @@ async function handleMessage(message, redis) {
   const text = String(message.text || "").trim().replace(/^(\/[a-z]+)@\w+/i, "$1");
   if (!text) return;
   const command = commandOf(text);
-  if (command === "help") return reply(message, HELP_TEXT, REPLY_KEYBOARD);
+  if (command === "help") {
+    const sent = await reply(message, HELP_TEXT, REPLY_KEYBOARD);
+    await redis.set(`mylife:tg:kb:${message.chat.id}`, KEYBOARD_VERSION).catch(() => {});
+    return sent;
+  }
   if (command === "scan") return reply(message, SCAN_TEXT);
   if (command === "words") return reply(message, wordsText());
 
@@ -808,7 +826,10 @@ async function handleMessage(message, redis) {
   const payload = await readPayload(userId);
   if (!payload) return reply(message, "⚠️ រកមិនឃើញទិន្នន័យ MYLIFE · No MYLIFE data found");
   const today = zonedToday();
-  if (command) return runCommand(command, { message, userId, payload, today, redis });
+  if (command) {
+    await refreshKeyboard(message, redis); // new bottom keyboard once, before the answer
+    return runCommand(command, { message, userId, payload, today, redis });
+  }
 
   // a clear question ("…?", "តើ…") goes to the AI first, so "តើចាយលើស 100$ ទេ?" is not saved as $100
   if (AiAssist.looksLikeQuestion(text) && (/[?？]\s*$|^តើ/.test(text) || /^(what|how|why|which|should)\b/i.test(text)) && aiSettings(payload)) {

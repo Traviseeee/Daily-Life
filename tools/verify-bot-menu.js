@@ -204,6 +204,18 @@ const check = (name, ok, extra = "") => { if (ok) pass++; else { fail++; console
   check("bottom keyboard has 🤖 សួរ AI and 6 buttons", kb.includes("🤖 សួរ AI") && (kb.match(/"text"/g) || []).length === 6, kb);
   await say("🤖 សួរ AI");
   check("🤖 សួរ AI button answers (AI status)", /AI/.test((sendTexts().pop() || {}).text || ""));
+  // an old keyboard button: the bot sends the new keyboard once, then never again
+  setup();
+  await say("☰ ម៉ឺនុយ");
+  const kbMsgs = () => sendTexts().filter(m => /ប៊ូតុងខាងក្រោមថ្មី/.test(m.text || ""));
+  check("old keyboard → new keyboard sent once", kbMsgs().length === 1 && JSON.stringify(kbMsgs()[0].reply_markup).includes("🤖 សួរ AI"));
+  await say("☀️ ថ្ងៃនេះ");
+  check("…and not again", kbMsgs().length === 1);
+  setup();
+  await say("/start");
+  await say("☰ ម៉ឺនុយ");
+  check("/start already gave the new keyboard → no extra message", kbMsgs().length === 0);
+  await say("/menu");
   await say("/menu");
   await press("bills");
   check("menu button 🧾 opens the bills list", /Bills to pay/.test((sendTexts().pop() || {}).text || ""));
