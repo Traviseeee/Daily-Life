@@ -52,12 +52,18 @@ function renderAiSettingsSection() {
     if (!form) return;
     event.preventDefault();
     const input = form.querySelector("[data-ai-key]");
-    const key = String(input.value || "").trim().replace(/\s+/g, "");
-    input.value = "";
-    if (!/^[A-Za-z0-9_\-]{20,200}$/.test(key)) {
-      Toast.show(L("Key មិនត្រឹមត្រូវ។ ចម្លង key ពី AI Studio ម្ដងទៀត។", "That doesn't look like a key. Copy it from AI Studio again."), "warning");
+    // keys can have letters, numbers, "-", "_", "." …; pasting can add spaces,
+    // quotes or invisible characters — remove those and let ▶ Test check the key
+    const key = String(input.value || "").replace(/[\s\u200B-\u200D\u2060\uFEFF"'`“”‘’]/g, "");
+    if (!key) {
+      Toast.show(L("សូមដាក់ key ក្នុងប្រអប់សិន។", "Paste the key in the box first."), "warning");
       return;
     }
+    if (key.length < 20 || key.length > 400 || /[<>]/.test(key)) {
+      Toast.show(L(`Key ខ្លី ឬវែងពេក (${key.length} តួ)។ ចម្លង key ទាំងមូលពី AI Studio ម្ដងទៀត។`, `The key looks too short or too long (${key.length} characters). Copy the whole key from AI Studio again.`), "warning");
+      return;
+    }
+    input.value = "";
     save({ apiKey: key, enabled: true });
     Toast.show(L("បានរក្សាទុក key ✅ ចុច ▶ សាក ដើម្បីពិនិត្យ", "Key saved ✅ Tap ▶ Test to check it"), "success");
   });
