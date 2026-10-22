@@ -500,7 +500,18 @@ async function runCommand(command, { message, userId, payload, today, redis }) {
         : saved.enabled === false
           ? "AI ត្រូវបានបិទ។ បើកវិញនៅ ការកំណត់ → AI → <b>បើក AI</b>។"
           : "AI បិទសម្រាប់ Telegram។ បើកវិញនៅ ការកំណត់ → AI → <b>ប្រើក្នុង Telegram bot</b>។";
-      return reply(message, `🤖 <b>AI មិនទាន់បើកក្នុង bot</b>\n${why}`, { inline_keyboard: [[{ text: "⚙️ បើកការកំណត់ AI", url: appLink({ url: "/#settings/ai" }) }]] });
+      // which account the bot reads, so a mix-up with another login is easy to see
+      let account = "";
+      try {
+        const client = serviceClient();
+        const { data: row } = await client.from("app_data").select("updated_at").eq("user_id", userId).maybeSingle();
+        let email = "";
+        try { email = (await client.auth.admin.getUserById(userId))?.data?.user?.email || ""; } catch (error) { /* optional */ }
+        const maskEmail = value => value.replace(/^(.{2}).*(@.*)$/, "$1•••$2");
+        const when = row?.updated_at ? new Date(row.updated_at).toLocaleString("en-GB", { timeZone: "Asia/Phnom_Penh", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) : "?";
+        account = `\n\n<i>🔎 Bot អានគណនី៖ ${escapeHtml(payload.profile?.name || "?")}${email ? ` · ${escapeHtml(maskEmail(email))}` : ""} · id …${escapeHtml(String(userId || "").slice(-4))}\nCloud save ចុងក្រោយ៖ ${escapeHtml(when)} · aiSettings៖ ${payload.profile?.aiSettings ? "មាន" : "គ្មាន"}</i>`;
+      } catch (error) { /* diagnostics only */ }
+      return reply(message, `🤖 <b>AI មិនទាន់បើកក្នុង bot</b>\n${why}${account}`, { inline_keyboard: [[{ text: "⚙️ បើកការកំណត់ AI", url: appLink({ url: "/#settings/ai" }) }]] });
     }
     case "backup":
       return tgUpload("sendDocument", "document", Buffer.from(JSON.stringify(AiAssist.withoutSecrets(payload), null, 1)), `mylife-backup-${today}.json`, "application/json", { caption: `💾 <b>Backup</b> · ${today}\nរក្សាទុកឯកសារនេះ។ ពេលត្រូវការ៖ Settings → Import`, parse_mode: "HTML" });
