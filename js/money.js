@@ -115,6 +115,13 @@ function moneyExpensesIn(range) {
     return date >= range.start && date <= range.end;
   });
 }
+// Loan payments made on the Loans page with no expense of their own. A payment
+// with an expenseId is already an expense (category Loan), so it is never added twice.
+function moneyLoanPaymentsIn(range) {
+  return (appData.loans || []).flatMap(loan => (loan.payments || [])
+    .filter(payment => !payment.expenseId && String(payment.date || "") >= range.start && String(payment.date || "") <= range.end)
+    .map(payment => ({ name: loan.name || t("loan"), date: payment.date, amount: toProfileCurrency(payment.amount || loan.monthlyPayment, payment.currency || loan.currency) })));
+}
 function renderMoneyPeriodBar(range) {
   const isKm = languageCode() === "km";
   const kinds = [["day", isKm ? "ថ្ងៃ" : "Day"], ["week", isKm ? "សប្តាហ៍" : "Week"], ["month", isKm ? "ខែ" : "Month"], ["year", isKm ? "ឆ្នាំ" : "Year"], ["all", isKm ? "ទាំងអស់" : "All"]];
@@ -172,6 +179,10 @@ function renderMoneyCards(stats, range = moneyPeriodRange()) {
   // spent in the chosen period (day / week / month / year / all)
   const periodExpenses = moneyExpensesIn(range);
   const periodSpent = periodExpenses.reduce((total, expense) => total + toProfileCurrency(expense.amount, expense.currency), 0);
+  // the Spent card also shows loan payments, so money out = spending + loans
+  const periodLoans = moneyLoanPaymentsIn(range);
+  const periodLoanTotal = periodLoans.reduce((total, payment) => total + payment.amount, 0);
+  const allLoanTotal = moneyLoanPaymentsIn({ start: "0000-01-01", end: "9999-12-31" }).reduce((total, payment) => total + payment.amount, 0);
   let periodIncome = m.income;
   let periodLeft = m.left;
   if (range.kind === "year") {
@@ -185,7 +196,7 @@ function renderMoneyCards(stats, range = moneyPeriodRange()) {
   }
   if (range.kind === "all") {
     periodIncome = stats.totalIncome;
-    periodLeft = stats.totalIncome - stats.totalExpenses;
+    periodLeft = stats.totalIncome - stats.totalExpenses - allLoanTotal;
   }
   // day / week: how much you can still spend, spread over the days left in the month
   let allowance = null;
@@ -203,7 +214,7 @@ function renderMoneyCards(stats, range = moneyPeriodRange()) {
   const periodWord = range.kind === "month" ? (isKm ? "ខែនេះ" : "this month") : range.label;
   const savingsTarget = sumMoney(appData.savings, "targetAmount");
   const savingsPct = savingsTarget ? Math.min(100, Math.round((stats.totalSavings / savingsTarget) * 100)) : 0;
-  const spentPct = m.income ? Math.round((m.expenses / m.income) * 100) : 0;
+  const spentPct = m.income ? Math.round(((m.expenses + m.loans) / m.income) * 100) : 0;
   const committed = m.expenses + m.loans + Math.max(m.saved, m.plannedSavings);
   const usedPct = m.income ? Math.round((committed / m.income) * 100) : 0;
   const short = m.left < 0;
@@ -217,10 +228,10 @@ function renderMoneyCards(stats, range = moneyPeriodRange()) {
       foot: allTime(stats.totalIncome)
     })}
     ${moneyMetricCard({
-      tone: "expense", section: "expenses", icon: Icons.expense(), title: isKm ? `ចំណាយ · ${range.label}` : `Spent · ${range.label}`, value: money(periodSpent),
-      pill: `${periodExpenses.length} ${escapeHtml(t("expenses"))}`,
+      tone: "expense", section: "expenses", icon: Icons.expense(), title: isKm ? `ចំណាយ · ${range.label}` : `Spent · ${range.label}`, value: money(periodSpent + periodLoanTotal),
+      pill: `${periodExpenses.length} ${escapeHtml(t("expenses"))}${periodLoans.length ? ` · ${isKm ? "កម្ចី" : "loan"} ${money(periodLoanTotal)}` : ""}`,
       bar: range.kind === "month" && m.income ? { pct: spentPct, level: level(spentPct), label: isKm ? `ប្រើ ${spentPct}% នៃចំណូល${periodWord}` : `${spentPct}% of ${periodWord}'s income` } : allowance !== null && allowance > 0 ? { pct: Math.round((periodSpent / allowance) * 100), level: level(Math.round((periodSpent / allowance) * 100)), label: isKm ? `ប្រើ ${Math.round((periodSpent / allowance) * 100)}% នៃលុយអាចចាយ` : `${Math.round((periodSpent / allowance) * 100)}% of what you can spend` } : null,
-      foot: allTime(stats.totalExpenses)
+      foot: allTime(stats.totalExpenses + allLoanTotal)
     })}
     ${moneyMetricCard({
       tone: "savings", section: "savings", icon: Icons.savings(), title: t("totalSavings"), value: money(stats.totalSavings),
@@ -237,7 +248,7 @@ function renderMoneyCards(stats, range = moneyPeriodRange()) {
       } : range.kind === "year" || range.kind === "all" ? {
         tone: periodLeft < 0 ? "short" : "available", section: "budget", icon: Icons.wallet(),
         title: isKm ? `នៅសល់ · ${range.label}` : `Left · ${range.label}`, value: money(periodLeft),
-        pill: periodLeft < 0 ? `⚠ ${isKm ? "ខ្វះ" : "Short by"} ${money(Math.abs(periodLeft))}` : `✓ ${isKm ? "ចំណូល − ចំណាយ" : "Income − spent"}`
+        pill: periodLeft < 0 ? `⚠ ${isKm ? "ខ្វះ" : "Short by"} ${money(Math.abs(periodLeft))}` : `✓ ${isKm ? "ចំណូល − ចំណាយ − កម្ចី" : "Income − spent − loans"}`
       } : {
       tone: short ? "short" : "available", section: "budget", icon: Icons.wallet(), title: isKm ? `នៅសល់ · ${range.label}` : `Left · ${range.label}`, value: money(m.left),
       pill: short ? `⚠ ${isKm ? "ខ្វះ" : "Short by"} ${money(Math.abs(m.left))}` : `✓ ${isKm ? "នៅសល់សម្រាប់ចាយ" : "Left to spend"}`,
