@@ -697,7 +697,7 @@ async function aiReply(message, payload, today, job, heading = "") {
     return reply(message, `${heading ? `${heading}\n\n` : ""}${AiAssist.toHtml(text, escapeHtml)}\n\n<i>🤖 Gemini · អាចខុសបាន សូមពិនិត្យ</i>`);
   } catch (error) {
     console.warn("MYLIFE AI failed.", error.code || "", String(error.message || "").slice(0, 120));
-    return reply(message, `🤖 ${escapeHtml(AiAssist.errorText(error))}`);
+    return reply(message, `🤖 ${escapeHtml(AiAssist.errorText(error, true, true))}`);
   }
 }
 

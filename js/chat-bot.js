@@ -435,7 +435,7 @@ const MyLifeChat = (() => {
       return parsed.reply ? { html: `<p>${escapeHtml(parsed.reply)}</p>${aiFoot()}` } : offline;
     } catch (error) {
       console.warn("MYLIFE AI:", error.code || error.message);
-      return { html: `<p>🤖 ${escapeHtml(AiAssist.errorText(error, km()))}</p>`, actions: error.code === "bad_key" || error.code === "no_key" ? [link(L("⚙️ ការកំណត់ AI", "⚙️ AI settings"), "#settings/ai")] : [] };
+      return { html: `<p>🤖 ${escapeHtml(AiAssist.errorText(error, km(), true))}</p>`, actions: ["bad_key", "no_key", "api_off", "restricted"].includes(error.code) ? [link(L("⚙️ ការកំណត់ AI", "⚙️ AI settings"), "#settings/ai")] : [] };
     }
   }
 

@@ -15,7 +15,7 @@ function renderAiSettingsSection() {
               <div class="ai-set-status ${on ? "is-on" : ""}">
                 <span>${on ? "🤖" : "💤"}</span>
                 <div><strong>${on ? L("AI បើក", "AI is on") : hasKey ? L("AI បិទ", "AI is off") : L("មិនទាន់មាន API key", "No API key yet")}</strong>
-                <small>${hasKey ? `Key ${escapeHtml(AiAssist.maskKey(saved.apiKey))}` : L("យក key ឥតគិតថ្លៃពី Google AI Studio រួចដាក់ខាងក្រោម", "Get a free key from Google AI Studio and paste it below")}</small></div>
+                <small>${hasKey ? `Key ${escapeHtml(AiAssist.maskKey(saved.apiKey))} · ${String(saved.apiKey).length} ${L("តួ", "characters")}` : L("យក key ឥតគិតថ្លៃពី Google AI Studio រួចដាក់ខាងក្រោម", "Get a free key from Google AI Studio and paste it below")}</small></div>
               </div>
               <div class="settings-preference-list settings-preference-list-standalone">
                 <div class="settings-preference-row ai-key-row">
@@ -65,7 +65,14 @@ function renderAiSettingsSection() {
     }
     input.value = "";
     save({ apiKey: key, enabled: true });
-    Toast.show(L("បានរក្សាទុក key ✅ ចុច ▶ សាក ដើម្បីពិនិត្យ", "Key saved ✅ Tap ▶ Test to check it"), "success");
+    // read it back so we know it really was saved, then test it straight away
+    const stored = appData.profile.aiSettings?.apiKey || "";
+    if (stored !== key) {
+      Toast.show(L("រក្សាទុក key មិនបាន។ សាកម្ដងទៀត។", "Couldn't save the key. Please try again."), "warning");
+      return;
+    }
+    Toast.show(L(`បានរក្សាទុក ✅ ${AiAssist.maskKey(stored)} (${stored.length} តួ) · កំពុងសាក…`, `Saved ✅ ${AiAssist.maskKey(stored)} (${stored.length} characters) · testing…`), "success");
+    setTimeout(() => document.querySelector("[data-ai-test]")?.click(), 400);
   });
 
   document.addEventListener("change", event => {
@@ -102,7 +109,7 @@ function renderAiSettingsSection() {
       if (out) out.textContent = `✅ ${L("ដំណើរការ", "Works")} · ${result.model}`;
       Toast.show(`✅ Gemini ${L("ដំណើរការ", "works")} (${result.model})`, "success");
     } catch (error) {
-      if (out) out.textContent = `⚠️ ${AiAssist.errorText(error, km())}`;
+      if (out) out.textContent = `⚠️ ${AiAssist.errorText(error, km(), true)}`;
       Toast.show(AiAssist.errorText(error, km()), "warning");
     } finally {
       test.disabled = false;

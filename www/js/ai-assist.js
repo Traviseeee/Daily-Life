@@ -93,7 +93,13 @@ async function callGemini(settings, { system, prompt, json = false, maxTokens = 
           lastError = new AiError(response.status >= 500 ? "failed" : "model", message);
           continue;
         }
-        if (response.status === 400 || response.status === 401 || response.status === 403) throw new AiError("bad_key", message);
+        // say exactly what Google said, so a real key problem is easy to tell apart
+        const clean = String(message).split(settings.apiKey).join("••••").slice(0, 220);
+        if (/api key not valid|api_key_invalid|invalid api key/i.test(message)) throw new AiError("bad_key", clean);
+        if (/has not been used|is disabled|SERVICE_DISABLED|API_KEY_SERVICE_BLOCKED|blocked/i.test(message)) throw new AiError("api_off", clean);
+        if (/location is not supported|region|country/i.test(message)) throw new AiError("region", clean);
+        if (/referer|referrer|restricted|not authorized|permission/i.test(message)) throw new AiError("restricted", clean);
+        if (response.status === 400 || response.status === 401 || response.status === 403) throw new AiError(response.status === 400 ? "failed" : "bad_key", clean);
         if (response.status === 429) throw new AiError("quota", message);
         throw new AiError("failed", message);
       }
@@ -114,18 +120,23 @@ async function callGemini(settings, { system, prompt, json = false, maxTokens = 
 }
 
 // short Khmer message for an error code (the bot and the app show this)
-function errorText(error, km = true) {
+function errorText(error, km = true, withDetail = false) {
   const code = error && error.code;
   const T = {
     no_key: ["មិនទាន់មាន API key ទេ។ ដាក់ key នៅ ការកំណត់ → AI។", "No API key yet. Add one in Settings → AI."],
-    bad_key: ["API key មិនត្រឹមត្រូវ ឬត្រូវបានបិទ។ សូមពិនិត្យនៅ ការកំណត់ → AI។", "The API key is wrong or disabled. Check Settings → AI."],
+    bad_key: ["Google ថា API key មិនត្រឹមត្រូវ។ ចម្លង key ទាំងមូលពី AI Studio ម្ដងទៀត (កុំចម្លងពីបញ្ជីដែលលាក់ ••••)។", "Google says the API key is not valid. Copy the whole key from AI Studio again (not the hidden •••• one)."],
+    api_off: ["Key នេះមិនទាន់បើក Gemini API ទេ។ បង្កើត key ថ្មីនៅ aistudio.google.com/apikey។", "Gemini API is not turned on for this key. Create a new key at aistudio.google.com/apikey."],
+    region: ["Google មិនទាន់អនុញ្ញាត Gemini API ពីទីតាំងនេះទេ។", "Google doesn't allow the Gemini API from this location yet."],
+    restricted: ["Key នេះមានការកំណត់ (restriction) ដែលបិទ app នេះ។ ដក restriction ឬបង្កើត key ថ្មី។", "This key has a restriction that blocks the app. Remove it or create a new key."],
     quota: ["AI ប្រើអស់កម្រិតឥតគិតថ្លៃសម្រាប់ពេលនេះហើយ។ សាកម្ដងទៀតបន្តិចក្រោយ។", "The free AI limit is used up for now. Try again a bit later."],
     timeout: ["AI ឆ្លើយយឺតពេក។ សាកម្ដងទៀត។", "AI took too long. Please try again."],
     network: ["ភ្ជាប់ AI មិនបាន។ ពិនិត្យអ៊ីនធឺណិត។", "Couldn't reach the AI. Check the internet."],
     model: ["រក model Gemini មិនឃើញ។ សាកប្ដូរ model នៅ ការកំណត់ → AI។", "Gemini model not found. Try another model in Settings → AI."]
   };
   const pair = T[code] || ["AI មានបញ្ហាបន្តិច។ សាកម្ដងទៀត។", "The AI had a problem. Please try again."];
-  return km ? pair[0] : pair[1];
+  const text = km ? pair[0] : pair[1];
+  const detail = withDetail && error && error.message && !["no_key", "timeout"].includes(code) ? ` (Google: ${String(error.message).slice(0, 160)})` : "";
+  return text + detail;
 }
 
 /* ---------------- data summary sent to the AI ---------------- */
