@@ -145,6 +145,7 @@ function renderSettingsPage() {
             <div class="settings-accordion-body">
               <div class="settings-preference-list settings-preference-list-standalone">
                 <label class="settings-preference-row"><span><strong>${t("moneyPrivacy")}</strong><small>${t("moneyPrivacyHelp")}</small></span><input type="checkbox" data-preference="moneyHidden" ${appData.profile.moneyHidden ? "checked" : ""}></label>
+                ${typeof AppLock !== "undefined" ? AppLock.settingsRows() : ""}
               </div>
           <div class="settings-section-grid settings-data-grid" data-settings-panel="data">
             <article class="glass-card card-pad settings-data-card" data-settings-section="data">
