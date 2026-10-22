@@ -581,7 +581,8 @@ function expenseGroupOf(item) {
 
 function expenseMethodChip(method) {
   const value = String(method || "").trim();
-  if (!value) return "";
+  // only real ways of paying — "Telegram" / "Scan" say where it was recorded, not how it was paid
+  if (!value || /^(telegram|scan|smart scan|bot|app|mylife)$/i.test(value)) return "";
   const km = languageCode() === "km";
   const label = /^cash$/i.test(value) ? (km ? "សាច់ប្រាក់" : "Cash") : /^card$/i.test(value) ? (km ? "កាត" : "Card") : /khqr|^qr$/i.test(value) ? "KHQR" : value;
   const icon = /^cash$/i.test(value) ? "💵" : /^card$/i.test(value) ? "💳" : "📱";
