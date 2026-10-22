@@ -279,6 +279,15 @@ window.MYLIFE_SUPABASE_API = {
     }
     return window.supabaseClient.auth.signUp({ email, password });
   },
+  // "Continue with Google": leaves the page, Google sends the user back here signed in
+  async signInWithGoogle() {
+    if (!window.supabaseClient) return { error: new Error("Supabase is not configured.") };
+    try { sessionStorage.setItem("mylife:oauth-pending", "1"); } catch (error) { /* ignore */ }
+    return window.supabaseClient.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: `${getAppBaseUrl()}${window.location.pathname}`, queryParams: { prompt: "select_account" } }
+    });
+  },
   async resetPassword(email) {
     if (!window.supabaseClient) {
       throw new Error("Supabase is not configured.");

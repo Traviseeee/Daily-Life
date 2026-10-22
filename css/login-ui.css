@@ -58,3 +58,9 @@
 #loginModal .login-mode-toggle { margin: 0; }
 #loginModal .login-remember-row { flex-wrap: wrap; }
 #loginModal .login-remember span, #loginModal .login-remember-row .login-reset-link { white-space: nowrap; }
+
+/* Continue with Google */
+#loginModal .login-google-button { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; min-height: 48px; margin: 4px 0 0; border: 1px solid rgba(15, 51, 38, 0.18); border-radius: 14px; font: inherit; font-weight: 800; color: #1f2d24; background: #fff; cursor: pointer; box-shadow: 0 2px 8px rgba(15, 51, 38, 0.08); }
+#loginModal .login-google-button:disabled { opacity: 0.6; cursor: wait; }
+#loginModal .login-or { display: flex; align-items: center; gap: 10px; margin: 12px 0 4px; font-size: 0.78rem; color: #6b7d70; }
+#loginModal .login-or::before, #loginModal .login-or::after { content: ""; flex: 1; height: 1px; background: rgba(15, 51, 38, 0.14); }
