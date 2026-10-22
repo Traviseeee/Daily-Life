@@ -24,7 +24,7 @@ const expenseCategoryColors = {
   Transport: "#60a5fa",
   Shopping: "#a78bfa",
   Bills: "#f97316",
-  Loan: "#5b7f95",
+  Loan: "#d946ef",
   Education: "#2dd4bf",
   Health: "#34d399",
   Entertainment: "#818cf8",
@@ -282,17 +282,21 @@ function moneyMetricCard({ tone, section, icon, title, value, pill = "", bar = n
 function renderCategoryOverview(range = moneyPeriodRange()) {
   const isKm = languageCode() === "km";
   const inRange = moneyExpensesIn(range);
+  // loan payments with no expense of their own join the "Loan" slice (never twice)
+  const loanPays = moneyLoanPaymentsIn(range);
+  const loanPaid = payments => payments.reduce((sum, payment) => sum + payment.amount, 0);
   const categories = expenseCategories.map(category => {
     const items = inRange.filter(expense => expense.category === category);
-    return { category, count: items.length, amount: sumMoney(items, "amount"), color: expenseCategoryColors[category] };
+    const extra = category === "Loan" ? loanPays : [];
+    return { category, count: items.length + extra.length, amount: sumMoney(items, "amount") + loanPaid(extra), color: expenseCategoryColors[category] };
   }).filter(item => item.amount > 0).sort((left, right) => right.amount - left.amount);
   const total = categories.reduce((sum, item) => sum + item.amount, 0);
-  const count = inRange.length;
+  const count = inRange.length + loanPays.length;
 
   // this period vs the one before
   const prevRange = range.kind === "all" ? null : moneyPeriodRange(shiftMoneyPeriod(range, -1));
   const thisMonth = total;
-  const lastMonth = prevRange ? sumMoney(moneyExpensesIn(prevRange), "amount") : 0;
+  const lastMonth = prevRange ? sumMoney(moneyExpensesIn(prevRange), "amount") + loanPaid(moneyLoanPaymentsIn(prevRange)) : 0;
   const unitWord = { day: isKm ? "ម្សិលមិញ" : "yesterday", week: isKm ? "សប្តាហ៍មុន" : "last week", month: isKm ? "ខែមុន" : "last month", year: isKm ? "ឆ្នាំមុន" : "last year" }[range.kind] || "";
   const peak = Math.max(thisMonth, lastMonth, 1);
   const change = lastMonth ? Math.round(((thisMonth - lastMonth) / lastMonth) * 100) : null;
