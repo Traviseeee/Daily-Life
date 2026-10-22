@@ -1,4 +1,5 @@
 function renderMemories() {
+  if (typeof MemoryFeed !== "undefined") return MemoryFeed.render();
   const memories = appData.memories || [];
   const years = [...new Set(memories.map(memory => memory.date?.slice(0, 4)).filter(Boolean))].sort((left, right) => right.localeCompare(left));
   const locations = [...new Set(memories.map(memory => memory.location?.trim()).filter(Boolean))].sort((left, right) => left.localeCompare(right));
@@ -145,6 +146,7 @@ function splitList(value) {
 }
 
 function bindMemories() {
+  if (typeof MemoryFeed !== "undefined") return MemoryFeed.bind();
   document.querySelectorAll('[data-action="add-memory"]').forEach(button => button.addEventListener("click", () => openMemoryModal()));
   document.querySelectorAll("[data-edit-memory]").forEach(button => button.addEventListener("click", () => openMemoryModal(appData.memories.find(item => item.id === button.dataset.editMemory))));
   const search = document.querySelector("[data-memory-search]");
