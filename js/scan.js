@@ -138,11 +138,60 @@ const SmartScanPage = (() => {
     return { ...read, hash };
   }
 
+  /* ---------- AI reader (Gemini) — used first when a key is set ---------- */
+  const aiReady = () => typeof AiAssist !== "undefined" && AiAssist.settingsOf(appData).enabled;
+  // a colour JPEG, at most 1600 px, as base64 (PDFs are sent as they are)
+  async function fileForAi(file) {
+    const isPdf = /pdf/i.test(file.type) || /\.pdf$/i.test(file.name);
+    if (isPdf) {
+      const buffer = await file.arrayBuffer();
+      let binary = "";
+      new Uint8Array(buffer).forEach(byte => { binary += String.fromCharCode(byte); });
+      return { mime: "application/pdf", data: btoa(binary) };
+    }
+    const url = URL.createObjectURL(file);
+    try {
+      const image = await new Promise((resolve, reject) => { const img = new Image(); img.onload = () => resolve(img); img.onerror = reject; img.src = url; });
+      const scale = Math.min(1, 1600 / Math.max(image.width, image.height));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(image.width * scale);
+      canvas.height = Math.round(image.height * scale);
+      canvas.getContext("2d").drawImage(image, 0, 0, canvas.width, canvas.height);
+      return { mime: "image/jpeg", data: canvas.toDataURL("image/jpeg", 0.85).split(",")[1] };
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+  }
+  async function readWithAi(file) {
+    const buffer = await file.arrayBuffer();
+    const hash = await sha256(buffer);
+    if (!state.preview && /^image\//i.test(file.type)) state.preview = URL.createObjectURL(file);
+    const ai = await AiAssist.readReceipt(await fileForAi(file), { today: localDateInput(), settings: AiAssist.settingsOf(appData), defaultCurrency: appData.profile.currency || "USD" });
+    const ruleDraft = { ...ScanParse.parse(ai.text || "", { defaultCurrency: appData.profile.currency }), hash, ocrConfidence: 100 };
+    return { text: ai.text || "", draft: { ...AiAssist.mergeScan(ruleDraft, ai), hash, ocrConfidence: 100 } };
+  }
+
   async function handleFile(file) {
     if (!file) return;
     state = { ...state, step: "reading", progress: 0, error: "", fileName: file.name || "", draft: null, saved: null, force: false, linkBillId: "" };
+    state.byAi = aiReady() && file.size <= 15 * 1024 * 1024;
     rerender();
     try {
+      // AI first; if it fails (no internet, quota…) the free OCR reads it instead
+      if (state.byAi) {
+        try {
+          const read = await readWithAi(file);
+          const bill = ScanParse.matchBill(appData, read.draft);
+          state = { ...state, step: "review", text: read.text, draft: read.draft, linkBillId: bill ? bill.id : "" };
+          if (!read.draft.amount && !read.draft.merchant && !read.draft.date) state.error = "nothing";
+          rerender();
+          return;
+        } catch (error) {
+          console.warn("MYLIFE AI scan failed, using OCR.", error.code || error.message);
+          state.byAi = false;
+          rerender();
+        }
+      }
       const read = await readFile(file);
       const draft = { ...ScanParse.parse(read.text, { defaultCurrency: appData.profile.currency }), hash: read.hash, ocrConfidence: read.confidence };
       const bill = ScanParse.matchBill(appData, draft);
@@ -194,10 +243,11 @@ const SmartScanPage = (() => {
     return `
       <article class="glass-card sc-reading">
         ${state.preview ? `<img class="sc-thumb" src="${escapeAttr(state.preview)}" alt="">` : ""}
-        <strong>${L("កំពុងអាន…", "Reading…")}</strong>
-        <div class="sc-progress" data-scan-progress style="--p:${state.progress}%"><span></span></div>
+        <strong>${state.byAi ? L("🤖 AI កំពុងអាន…", "🤖 AI is reading…") : L("កំពុងអាន…", "Reading…")}</strong>
+        ${state.byAi ? `<div class="sc-progress sc-progress-ai"><span></span></div>
+        <p>${L("Gemini អានអក្សរខ្មែរ អង់គ្លេស និងលេខ · ប្រហែល 3–8 វិនាទី", "Gemini reads Khmer, English and numbers · about 3–8 s")}</p>` : `<div class="sc-progress" data-scan-progress style="--p:${state.progress}%"><span></span></div>
         <small data-scan-progress-label>${state.progress}%</small>
-        <p>${L("លើកដំបូងអាចយូរបន្តិច (ប្រហែល 10 វិនាទី)", "The first scan takes ~10 s (loading the reader)")}</p>
+        <p>${L("លើកដំបូងអាចយូរបន្តិច (ប្រហែល 10 វិនាទី)", "The first scan takes ~10 s (loading the reader)")}</p>`}
       </article>`;
   }
 
@@ -222,6 +272,7 @@ const SmartScanPage = (() => {
         </article>
         <article class="glass-card sc-fields">
           ${state.error ? `<p class="sc-error">${ICON.warn()}<span>${escapeHtml(errorText(state.error))}</span></p>` : ""}
+          ${d.readBy === "ai" ? `<p class="sc-ai-badge">🤖 ${L("AI អានរួច · សូមពិនិត្យលេខមុនរក្សាទុក", "Read by AI · please check before saving")}${Array.isArray(d.items) && d.items.length > 1 ? ` · ${d.items.length} ${L("មុខ", "items")}` : ""}</p>` : ""}
           <div class="sc-kinds" role="radiogroup" aria-label="${L("ប្រភេទ", "Type")}">
             ${KINDS.map(([kind, label]) => `<label class="sc-kind ${d.kind === kind || (kind === "expense" && d.kind === "unknown") ? "is-on" : ""}"><input type="radio" name="kind" value="${kind}" ${d.kind === kind || (kind === "expense" && d.kind === "unknown") ? "checked" : ""}>${escapeHtml(label())}</label>`).join("")}
           </div>

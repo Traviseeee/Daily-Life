@@ -396,9 +396,11 @@ const MyLifeChat = (() => {
   /* ---------------- Gemini AI (when a key is set in Settings → AI) ---------------- */
   const aiSettings = () => (typeof AiAssist !== "undefined" ? AiAssist.settingsOf(appData) : null);
   const aiReady = () => Boolean(aiSettings()?.enabled);
-  const wantsAi = text => /^(ai|🤖)\s*/i.test(text) || /ដំបូន្មាន|ណែនាំ|គួរ|ហេតុអ្វី|វិភាគ|ប្រៀបធៀប|សន្សំបានម៉េច|advice|advise|suggest|tips?\b|why|analy[sz]e|compare|should i/i.test(text);
+  const wantsAi = text => /^(ai|🤖)\s*/i.test(text) || /^(សួស្តី|ជម្រាបសួរ|hello|hi(?![a-z])|hey|អរគុណ|thanks?|thank you)/i.test(text) || /ធុញ|នឿយ|សប្បាយចិត្ត|ពិបាកចិត្ត|tired|happy|sad|stressed/i.test(text) || /ដំបូន្មាន|ណែនាំ|គួរ|ហេតុអ្វី|វិភាគ|ប្រៀបធៀប|សន្សំបានម៉េច|advice|advise|suggest|tips?\b|why|analy[sz]e|compare|should i/i.test(text);
   const aiFoot = () => `<small class="mlc-note">🤖 Gemini · ${L("អាចខុសបាន សូមពិនិត្យ", "may be wrong, please check")}</small>`;
 
+  // the last messages of this chat, so a follow-up ("and last month?") makes sense
+  const chatTurns = () => history.slice(-9, -1).map(m => ({ role: m.from === "me" ? "user" : "model", text: String(m.html || "").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim() })).filter(m => m.text);
   async function aiAnswer(text, offline) {
     const settings = aiSettings();
     const today = localDateInput();
@@ -409,7 +411,7 @@ const MyLifeChat = (() => {
         return { html: `<p>${AiAssist.toHtml(out, escapeHtml).replace(/\n/g, "<br>")}</p>${aiFoot()}`, actions: [link(L("💰 មើលលុយ", "💰 Open Money"), "#money")] };
       }
       if (!offline.suggest || AiAssist.looksLikeQuestion(question)) {
-        const out = await AiAssist.ask(appData, question, { today, settings });
+        const out = await AiAssist.ask(appData, question, { today, settings, history: chatTurns() });
         return { html: `<p>${AiAssist.toHtml(out, escapeHtml).replace(/\n/g, "<br>")}</p>${aiFoot()}` };
       }
       // a message the offline parser could not read → let Gemini turn it into a record
@@ -429,10 +431,12 @@ const MyLifeChat = (() => {
         };
       }
       if (parsed.type === "question") {
-        const out = await AiAssist.ask(appData, question, { today, settings });
+        const out = await AiAssist.ask(appData, question, { today, settings, history: chatTurns() });
         return { html: `<p>${AiAssist.toHtml(out, escapeHtml).replace(/\n/g, "<br>")}</p>${aiFoot()}` };
       }
-      return parsed.reply ? { html: `<p>${escapeHtml(parsed.reply)}</p>${aiFoot()}` } : offline;
+      // just chatting: a warm reply that knows the conversation
+      const out = await AiAssist.ask(appData, question, { today, settings, history: chatTurns() });
+      return { html: `<p>${AiAssist.toHtml(out, escapeHtml).replace(/\n/g, "<br>")}</p>${aiFoot()}` };
     } catch (error) {
       console.warn("MYLIFE AI:", error.code || error.message);
       return { html: `<p>🤖 ${escapeHtml(AiAssist.errorText(error, km(), true))}</p>`, actions: ["bad_key", "bad_chars", "no_key", "api_off", "restricted"].includes(error.code) ? [link(L("⚙️ ការកំណត់ AI", "⚙️ AI settings"), "#settings/ai")] : [] };

@@ -47,7 +47,24 @@ class AiError extends Error {
   constructor(code, message) { super(message || code); this.code = code; }
 }
 
-async function callGemini(settings, { system, prompt, json = false, maxTokens = 700, temperature = 0.4, timeoutMs = 14000, totalMs = 40000 }) {
+// Gemini wants the turns to start with the user and take turns user/model:
+// drop a leading bot greeting and join two messages in a row from the same side
+function historyContents(history) {
+  const out = [];
+  (Array.isArray(history) ? history : []).filter(turn => turn && turn.text).slice(-8).forEach(turn => {
+    const role = turn.role === "model" ? "model" : "user";
+    const text = String(turn.text).slice(0, 1200);
+    if (!out.length && role === "model") return;
+    const last = out[out.length - 1];
+    if (last && last.role === role) last.parts[0].text += `\n${text}`;
+    else out.push({ role, parts: [{ text }] });
+  });
+  if (out.length && out[out.length - 1].role === "user") out.pop(); // the new message is the user turn
+  return out;
+}
+
+// history: earlier turns [{ role: "user" | "model", text }]; images: [{ mime, data (base64) }]
+async function callGemini(settings, { system, prompt, json = false, maxTokens = 700, temperature = 0.4, timeoutMs = 14000, totalMs = 40000, history = [], images = [] }) {
   if (!settings || !settings.apiKey) throw new AiError("no_key", "No Gemini API key");
   // a key with "•", "…" or other symbols can't even be sent (and would never work)
   if (/[^A-Za-z0-9._\-]/.test(settings.apiKey)) throw new AiError("bad_chars", "The saved key has characters a key never has");
@@ -72,7 +89,10 @@ async function callGemini(settings, { system, prompt, json = false, maxTokens = 
         signal: controller ? controller.signal : undefined,
         body: JSON.stringify({
           systemInstruction: system ? { parts: [{ text: system }] } : undefined,
-          contents: [{ role: "user", parts: [{ text: prompt }] }],
+          contents: [
+            ...historyContents(history),
+            { role: "user", parts: [{ text: prompt }, ...images.map(image => ({ inlineData: { mimeType: image.mime, data: image.data } }))] }
+          ],
           generationConfig: {
             temperature,
             maxOutputTokens: maxTokens,
@@ -215,19 +235,84 @@ function buildContext(payload, today) {
 
 /* ---------------- the three jobs ---------------- */
 const SYSTEM_BASE = [
-  "You are MYLIFE AI, a friendly personal assistant inside the user's own life app (money, bills, loans, calendar, goals, family).",
+  "You are MYLIFE AI, a warm, caring friend and personal assistant inside the user's own life app (money, bills, loans, calendar, goals, family).",
+  "Talk like a kind friend: call the user by their first name now and then, notice good things (spending less, a bill paid, a birthday coming) and cheer them on, and be gentle about problems. One fitting emoji is fine; never be cheesy.",
+  "If the user just chats (hello, tired, happy, thanks, a joke), reply warmly in one to three short lines and, when it fits, offer one small helpful thing.",
   "Answer in the same language as the user (Khmer if they write Khmer; keep common English words like app names). Write natural, simple, human Khmer.",
   "Use ONLY the data given. If the data does not have the answer, say so briefly. Never invent numbers.",
   "Be short: at most 8 lines. Use plain text and simple bullets (•). You may use **bold** for one or two key numbers. No tables, no headings.",
   "You are not a licensed financial advisor; give practical everyday tips only."
 ].join(" ");
 
-async function ask(payload, question, { today, settings }) {
+// history: the last few messages of this chat, so a follow-up ("and last month?") makes sense
+async function ask(payload, question, { today, settings, history = [] }) {
   const result = await callGemini(settings, {
     system: SYSTEM_BASE,
-    prompt: `MY DATA:\n${buildContext(payload, today)}\n\nMY QUESTION:\n${String(question).slice(0, 800)}`
+    history,
+    temperature: 0.6,
+    prompt: `MY DATA:\n${buildContext(payload, today)}\n\nMY MESSAGE:\n${String(question).slice(0, 800)}`
   });
   return result.text;
+}
+
+/* ---------------- receipts, slips and bills read from a picture ---------------- */
+const SCAN_KINDS = ["expense", "payment", "bill", "unknown"];
+// image: { mime, data (base64) } → fields in the same shape as js/scan-parse.js drafts
+async function readReceipt(image, { today, settings, defaultCurrency = "USD" }) {
+  const result = await callGemini(settings, {
+    json: true,
+    temperature: 0.1,
+    maxTokens: 1400,
+    timeoutMs: 25000,
+    totalMs: 45000,
+    images: [image],
+    system: "You read Cambodian receipts, bank payment slips (ABA, ACLEDA, Wing, KHQR…) and utility bills (EDC electricity, PPWSA water, internet). Text can be Khmer, English or both. Reply with JSON only.",
+    prompt: [
+      `Today is ${today}. Default currency ${defaultCurrency}. Riel = KHR (៛). Dollar = USD ($).`,
+      `kind: "payment" = bank transfer/payment slip; "expense" = shop or restaurant receipt; "bill" = an invoice that is NOT paid yet (has a due date); "unknown" if it is none of these.`,
+      `Return {"kind":string,"merchant":string,"amount":number,"currency":"USD"|"KHR","date":"YYYY-MM-DD","dueDate":"YYYY-MM-DD" or "","category":one of ${EXPENSE_CATEGORIES.join("/")},"paymentMethod":bank or wallet name or "","ref":transaction or invoice number or "","items":[{"name":string,"amount":number}],"text":all the text you can read, line by line}.`,
+      "amount = the final total actually paid (or due, for a bill), after discount and tax — not a subtotal, not a balance, not a fee alone. merchant = the shop, or the person/company the money went to. For a bill, merchant = the company (EDC, PPWSA…). Food, drinks, fruit and groceries are Food. Leave a field empty when you cannot read it; never guess numbers."
+    ].join("\n")
+  });
+  let data;
+  try { data = JSON.parse(result.text.replace(/^```(?:json)?\s*|\s*```$/g, "")); } catch (error) { throw new AiError("failed", "AI reply was not JSON"); }
+  const amount = Math.round(Number(data.amount) * 100) / 100;
+  const okDate = value => (/^\d{4}-\d{2}-\d{2}$/.test(String(value || "")) ? String(value) : "");
+  return {
+    kind: SCAN_KINDS.includes(data.kind) ? data.kind : "unknown",
+    merchant: String(data.merchant || "").trim().slice(0, 80),
+    amount: amount > 0 && amount < 1e10 ? amount : null,
+    currency: String(data.currency || "").toUpperCase() === "KHR" ? "KHR" : String(data.currency || "").toUpperCase() === "USD" ? "USD" : "",
+    date: okDate(data.date),
+    dueDate: okDate(data.dueDate),
+    category: EXPENSE_CATEGORIES.find(c => c.toLowerCase() === String(data.category || "").toLowerCase()) || "",
+    paymentMethod: String(data.paymentMethod || "").trim().slice(0, 40),
+    ref: String(data.ref || "").trim().slice(0, 60),
+    items: list(data.items).map(item => ({ name: String(item && item.name || "").slice(0, 60), amount: Number(item && item.amount) || 0 })).filter(item => item.name).slice(0, 30),
+    text: String(data.text || "").slice(0, 6000),
+    model: result.model
+  };
+}
+
+// AI fields win where they are filled; the rule reader (ScanParse) fills the rest
+// and still finds things like the EDC / PPWSA provider and billing period.
+function mergeScan(ruleDraft, ai) {
+  const draft = { ...ruleDraft };
+  ["kind", "merchant", "amount", "currency", "date", "dueDate", "category", "paymentMethod", "ref"].forEach(key => {
+    if (ai[key] !== "" && ai[key] !== null && ai[key] !== undefined && !(key === "kind" && ai.kind === "unknown")) draft[key] = ai[key];
+  });
+  if (ai.items && ai.items.length) draft.items = ai.items;
+  if (draft.kind === "bill") draft.status = "unpaid";
+  else if (draft.kind === "payment" || draft.kind === "expense") draft.status = "paid";
+  draft.missing = [];
+  if (!draft.amount) draft.missing.push("amount");
+  if (!draft.date) draft.missing.push("date");
+  if (!draft.merchant) draft.missing.push("merchant");
+  if (draft.kind === "bill" && !draft.dueDate) draft.missing.push("dueDate");
+  draft.warnings = (draft.warnings || []).filter(w => !(w === "currency" && draft.currency) && !(w === "kind" && draft.kind !== "unknown"));
+  draft.readBy = "ai";
+  draft.aiModel = ai.model || "";
+  return draft;
 }
 
 async function advice(payload, { today, settings, km = true }) {
@@ -310,7 +395,7 @@ function toHtml(text, escape) {
     .replace(/\*([^*\n]+)\*/g, "$1");
 }
 
-const api = { MODELS, settingsOf, withoutSecrets, maskKey, callGemini, errorText, buildContext, ask, advice, parseText, cleanParsed, looksLikeQuestion, toHtml, AiError };
+const api = { MODELS, settingsOf, withoutSecrets, maskKey, callGemini, errorText, buildContext, ask, advice, parseText, cleanParsed, looksLikeQuestion, toHtml, readReceipt, mergeScan, AiError };
 if (typeof module !== "undefined" && module.exports) module.exports = api;
 else root.AiAssist = api;
 })(typeof window !== "undefined" ? window : globalThis);

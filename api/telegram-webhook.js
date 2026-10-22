@@ -486,7 +486,7 @@ async function runCommand(command, { message, userId, payload, today, redis }) {
     case "ask": {
       const question = String(message.text || "").replace(/^\/ask(@\w+)?\s*/i, "").trim();
       if (!question) return reply(message, "💬 វាយ <code>/ask</code> បន្ទាប់មកសំណួរ ឧ. <code>/ask ខែនេះចាយអ្វីច្រើនជាងគេ?</code>\nឬវាយសំណួរធម្មតាដែលបញ្ចប់ដោយ <b>?</b>");
-      return aiReply(message, payload, today, settings => AiAssist.ask(payload, question, { today, settings }));
+      return aiReply(message, payload, today, (settings, history) => AiAssist.ask(payload, question, { today, settings, history }));
     }
     case "ai": {
       const settings = AiAssist.settingsOf(payload, process.env);
@@ -696,7 +696,7 @@ async function handleUtility(message, notice, redis) {
 
 // what lib/scan-telegram.js needs from this file
 function scanContext(redis = getRedis()) {
-  return { redis, tgCall, reply, ownerUserId, readPayload, updatePayload, saveAction, pushAdded, appLink, makeId: recordId };
+  return { redis, tgCall, reply, ownerUserId, readPayload, updatePayload, saveAction, pushAdded, appLink, makeId: recordId, aiSettings, AiAssist, zonedToday };
 }
 
 /* ---------------- AI (Gemini) ---------------- */
@@ -707,12 +707,32 @@ function aiSettings(payload) {
 }
 
 // runs one AI job and replies; a clear Khmer line when the AI is off or fails
+// the last few messages of this chat, so the AI can follow a conversation
+const CHAT_KEY = chatId => `mylife:ai:chat:${chatId}`;
+async function chatHistory(chatId) {
+  try {
+    const raw = await getRedis().get(CHAT_KEY(chatId));
+    const list = typeof raw === "string" ? JSON.parse(raw) : raw;
+    return Array.isArray(list) ? list : [];
+  } catch (error) { return []; }
+}
+async function rememberTurn(chatId, userText, aiText) {
+  try {
+    const list = await chatHistory(chatId);
+    list.push({ role: "user", text: String(userText || "").slice(0, 600) }, { role: "model", text: String(aiText || "").slice(0, 900) });
+    await getRedis().set(CHAT_KEY(chatId), JSON.stringify(list.slice(-12)), { ex: 3 * 60 * 60 });
+  } catch (error) { /* memory is a bonus */ }
+}
+
+// job(settings, history) → text. The question and the answer are remembered.
 async function aiReply(message, payload, today, job, heading = "") {
   const settings = aiSettings(payload);
   if (!settings) return runCommand("ai", { message, payload, today });
   tgCall("sendChatAction", { chat_id: message.chat.id, action: "typing" }).catch(() => {});
   try {
-    const text = await job(settings);
+    const history = await chatHistory(message.chat.id);
+    const text = await job(settings, history);
+    await rememberTurn(message.chat.id, message.text || heading, text);
     return reply(message, `${heading ? `${heading}\n\n` : ""}${AiAssist.toHtml(text, escapeHtml)}\n\n<i>🤖 Gemini · អាចខុសបាន សូមពិនិត្យ</i>`);
   } catch (error) {
     console.warn("MYLIFE AI failed.", error.code || "", String(error.message || "").slice(0, 120));
@@ -794,7 +814,7 @@ async function handleWithAi(message, text, ctx) {
   const settings = aiSettings(ctx.payload);
   if (!settings) return null;
   if (AiAssist.looksLikeQuestion(text)) {
-    return aiReply(message, ctx.payload, ctx.today, s => AiAssist.ask(ctx.payload, text, { today: ctx.today, settings: s }));
+    return aiReply(message, ctx.payload, ctx.today, (s, history) => AiAssist.ask(ctx.payload, text, { today: ctx.today, settings: s, history }));
   }
   tgCall("sendChatAction", { chat_id: message.chat.id, action: "typing" }).catch(() => {});
   let parsed;
@@ -809,9 +829,10 @@ async function handleWithAi(message, text, ctx) {
   }
   if (parsed.type === "event") return saveEventEntry(message, ctx, parsed.event, true);
   if (parsed.type === "question") {
-    return aiReply(message, ctx.payload, ctx.today, s => AiAssist.ask(ctx.payload, text, { today: ctx.today, settings: s }));
+    return aiReply(message, ctx.payload, ctx.today, (s, history) => AiAssist.ask(ctx.payload, text, { today: ctx.today, settings: s, history }));
   }
-  return reply(message, `🤖 ${escapeHtml(parsed.reply || "ខ្ញុំមិនទាន់ដឹងថាត្រូវកត់អ្វីទេ។")}\n\n<i>ចង់កត់ចំណាយ វាយ ឧ.</i> <code>កាហ្វេ 2.5$</code> <i>· ចង់សួរ បញ្ចប់ដោយ</i> <b>?</b>`);
+  // just chatting (hello, tired, thanks…): a warm reply that knows the conversation
+  return aiReply(message, ctx.payload, ctx.today, (s, history) => AiAssist.ask(ctx.payload, text, { today: ctx.today, settings: s, history }));
 }
 
 async function handleMessage(message, redis) {
@@ -852,7 +873,7 @@ async function handleMessage(message, redis) {
 
   // a clear question ("…?", "តើ…") goes to the AI first, so "តើចាយលើស 100$ ទេ?" is not saved as $100
   if (AiAssist.looksLikeQuestion(text) && (/[?？]\s*$|^តើ/.test(text) || /^(what|how|why|which|should)\b/i.test(text)) && aiSettings(payload)) {
-    return aiReply(message, payload, today, s => AiAssist.ask(payload, text, { today, settings: s }));
+    return aiReply(message, payload, today, (s, history) => AiAssist.ask(payload, text, { today, settings: s, history }));
   }
   const currency = payload.profile?.currency || "USD";
   const rows = text.split(/\n+/).map(line => line.trim()).filter(Boolean);

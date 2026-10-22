@@ -90,6 +90,7 @@ global.fetch = async (url, options = {}) => {
     const out = geminiReply ? geminiReply(model, body) : { status: 200, json: answer("OK") };
     return { ok: out.status === 200, status: out.status, json: async () => out.json };
   }
+  if (String(url).includes("/file/bot")) return { ok: true, arrayBuffer: async () => Buffer.from("iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAAAAAA6mKC9AAAAEUlEQVR42mP8z8DAwMAwCgYAAP8BAZ3pO5sAAAAASUVORK5CYII=", "base64") };
   const method = String(url).split("/").pop();
   let body = {};
   if (options.body instanceof FormData) {
@@ -98,7 +99,7 @@ global.fetch = async (url, options = {}) => {
   }
   else if (options.body) { try { body = JSON.parse(options.body); } catch (error) { body = { raw: String(options.body) }; } }
   telegram.push({ method, body });
-  const result = method === "getWebhookInfo" ? { url: "https://daily-life-2.vercel.app/api/telegram-webhook" } : {};
+  const result = method === "getWebhookInfo" ? { url: "https://daily-life-2.vercel.app/api/telegram-webhook" } : method === "getFile" ? { file_path: "photos/receipt.jpg" } : {};
   return { ok: true, json: async () => ({ ok: true, result }) };
 };
 
@@ -109,6 +110,9 @@ Object.assign(process.env, {
 });
 delete process.env.MAKE_WEBHOOK_URL;
 
+// the real OCR needs to download language files (no network here): use a stand-in
+const scanOcr = require(path.join(root, "lib/scan-ocr.js"));
+scanOcr.readDocument = async buffer => ({ text: "Shop ABC\nTotal $4.00", confidence: 80, hash: scanOcr.sha256(buffer), type: "image" });
 const dispatch = require(path.join(root, "api/dispatch.js"));
 const reportSend = require(path.join(root, "api/report-send.js"));
 const webhook = require(path.join(root, "api/telegram-webhook.js"));
@@ -303,9 +307,15 @@ const KEY = "AIzaTEST_fake_key_1234567890";
   check("hard text → AI event with time", evs.length === 1 && evs[0].time === "15:00" && evs[0].category === "Health", JSON.stringify(evs));
 
   // other → friendly reply, nothing saved (no more junk events)
-  withAi(); geminiReply = () => ({ status: 200, json: answer(JSON.stringify({ type: "other", reply: "សួស្តី! ចង់ឲ្យជួយអ្វី?" })) });
+  withAi(); geminiReply = (m, b) => b.generationConfig.responseMimeType ? { status: 200, json: answer(JSON.stringify({ type: "other", reply: "x" })) } : { status: 200, json: answer("សួស្តី Tra 😊 ថ្ងៃនេះអ្នកចាយតិចណាស់!") };
   await say("hello bot");
-  check("chit-chat → reply only, nothing saved", !(db.get(OWNER).payload.calendarEvents || []).length && db.get(OWNER).payload.expenses.length === 1 && /សួស្តី/.test(lastText()), lastText());
+  check("chit-chat → warm AI reply, nothing saved", !(db.get(OWNER).payload.calendarEvents || []).length && db.get(OWNER).payload.expenses.length === 1 && /សួស្តី Tra/.test(lastText()), lastText());
+  // memory: the next message carries the conversation so far
+  gemini = [];
+  await say("ចុះខែមុនវិញ?");
+  const turns = gemini[gemini.length - 1].body.contents;
+  check("follow-up message carries the earlier turns (memory)", turns.length >= 3 && turns[0].role === "user" && turns[1].role === "model" && /សួស្តី Tra/.test(turns[1].parts[0].text), JSON.stringify(turns.map(t => t.role)));
+  check("the friend-like personality is in the instructions", /warm, caring friend/.test(gemini[gemini.length - 1].body.systemInstruction.parts[0].text));
 
   // normal lines never call Gemini
   withAi();
@@ -325,6 +335,26 @@ const KEY = "AIzaTEST_fake_key_1234567890";
   withAi({ telegram: false }); geminiReply = () => ({ status: 200, json: answer("x") });
   await say("ខែនេះចាយអាហារប៉ុន្មាន?");
   check("'use in Telegram' off → bot does not call Gemini", gemini.length === 0);
+
+  // AI scan: a photo → Gemini reads it (image sent inline) → summary says AI read it
+  withAi();
+  geminiReply = (m, b) => ({ status: 200, json: answer(JSON.stringify({ kind: "expense", merchant: "ហាងកាហ្វេ Brown", amount: 6.5, currency: "USD", date: today, dueDate: "", category: "Food", paymentMethod: "ABA", ref: "TX99", items: [{ name: "Latte", amount: 3.5 }, { name: "Croissant", amount: 3 }], text: "Brown Coffee\nLatte 3.50\nCroissant 3.00\nTotal 6.50" })) });
+  gemini = [];
+  await call(webhook, { method: "POST", headers: { "x-telegram-bot-api-secret-token": webhookSecret() }, body: { update_id: 777, message: { message_id: 55, chat: { id: 100 }, from: { id: 1, is_bot: false }, photo: [{ file_id: "f1", file_unique_id: "u1", file_size: 1200 }] } } });
+  const scanMsg = lastText();
+  const sentImage = gemini.find(g => g.body.contents.some(c => c.parts.some(part => part.inlineData)));
+  check("AI scan: the photo is sent to Gemini as an image", Boolean(sentImage) && sentImage.body.contents.slice(-1)[0].parts.some(part => part.inlineData && part.inlineData.mimeType === "image/jpeg"));
+  check("AI scan: summary shows AI read it, amount, shop, items", /AI អានរួចហើយ/.test(scanMsg) && /\$6\.5/.test(scanMsg) && /Brown/.test(scanMsg) && /Latte/.test(scanMsg), scanMsg.replace(/\n/g, " ⏎ "));
+  check("AI scan: nothing saved before ✅", db.get(OWNER).payload.expenses.length === 1);
+  // AI fails → the OCR path still answers (no crash, no silence)
+  withAi(); geminiReply = () => ({ status: 429, json: { error: { message: "quota" } } });
+  const before = sendTexts().length;
+  await call(webhook, { method: "POST", headers: { "x-telegram-bot-api-secret-token": webhookSecret() }, body: { update_id: 778, message: { message_id: 56, chat: { id: 100 }, from: { id: 1, is_bot: false }, photo: [{ file_id: "f2", file_unique_id: "u2", file_size: 1200 }] } } });
+  check("AI scan fails → falls back to OCR and still replies", sendTexts().length > before && !/AI អានរួចហើយ/.test(lastText()), lastText());
+
+  // mergeScan: AI wins where filled, rules keep the rest
+  const merged = AI.mergeScan({ kind: "unknown", merchant: "", amount: null, currency: "", date: "", provider: "edc", billingPeriod: "2026-09-01 – 2026-09-30", missing: ["amount", "date", "merchant"], warnings: ["currency", "kind"] }, { kind: "bill", merchant: "EDC", amount: 40000, currency: "KHR", date: today, dueDate: today, category: "Bills", paymentMethod: "", ref: "", items: [], text: "" });
+  check("mergeScan: AI fields + rule-only fields (provider, period), missing recomputed", merged.kind === "bill" && merged.amount === 40000 && merged.provider === "edc" && merged.billingPeriod && merged.missing.length === 0 && merged.status === "unpaid" && !merged.warnings.length, JSON.stringify(merged));
 
   // /advice, /ask, /ai, menu
   withAi(); geminiReply = () => ({ status: 200, json: answer("• ចាយអាហារតិច\n• សន្សំ 10%") });
