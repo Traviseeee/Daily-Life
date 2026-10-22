@@ -88,47 +88,104 @@ const NotifyCenter = (() => {
   }
 
   /* ---------- page ---------- */
+  // tabs keep the page short: money tools · dated things · reports & backup
+  const TABS = [
+    { id: "money", km: "លុយ", en: "Money", tools: ["bills", "expenses", "loans", "savings"] },
+    { id: "days", km: "ថ្ងៃ", en: "Days", tools: ["calendar", "family"] },
+    { id: "reports", km: "របាយការណ៍", en: "Reports", tools: ["reports", "backup"] }
+  ];
+  let tab = "money";
+  const tabOf = tool => (TABS.find(entry => entry.tools.includes(tool)) || TABS[0]).id;
+
+  // next 7 days of alerts across every tool (+ salary days), soonest first
+  function nextAlerts(limit = 4) {
+    const now = new Date();
+    const until = new Date(now.getTime() + 7 * 86400000);
+    const list = [];
+    if (typeof App !== "undefined" && typeof App.collectDueAlertItems === "function") {
+      App.collectDueAlertItems({ anyChannel: true }).forEach(item => {
+        const at = App.alertDateTime(item);
+        const tool = NotifyPrefs.toolOf(item.kind);
+        if (!at || at < now || at > until || item.early || (tool && !prefs().tools[tool])) return;
+        list.push({ at, tool: tool || "calendar", title: cleanTitle(item), time: item.time || "09:00" });
+      });
+    }
+    if (typeof MoneyDue !== "undefined" && appData.profile.moneyAsk !== false) {
+      for (let i = 0; i <= 7; i += 1) {
+        const d = new Date(`${localDateInput()}T00:00:00`);
+        d.setDate(d.getDate() + i);
+        const day = localDateInput(d);
+        MoneyDue.dueToday(appData, day).filter(item => item.kind === "income" && item.date === day).forEach(item => {
+          const at = new Date(`${day}T09:00:00`);
+          if (at >= now) list.push({ at, tool: "income", title: item.title, time: "09:00" });
+        });
+      }
+    }
+    const seen = new Set();
+    return list.sort((a, b) => a.at - b.at).filter(entry => { const key = `${entry.title}|${entry.at.toDateString()}`; if (seen.has(key)) return false; seen.add(key); return true; }).slice(0, limit);
+  }
+
+  function whenLabel(at, time) {
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const day = new Date(at); day.setHours(0, 0, 0, 0);
+    const diff = Math.round((day - today) / 86400000);
+    const label = diff === 0 ? L("ថ្ងៃនេះ", "Today") : diff === 1 ? L("ស្អែក", "Tomorrow") : formatDate(localDateInput(at), { month: "short", day: "numeric" });
+    return { text: `${label} · ${time}`, soon: diff <= 1 };
+  }
+
   function renderPage() {
     const p = prefs();
     const off = !masterOn();
     const sum = summary();
+    const next = off ? [] : nextAlerts();
+    const via = `${p.telegram ? `<i title="Telegram">${ICON.telegram()}</i>` : ""}${p.app ? `<i title="App">${ICON.app()}</i>` : ""}`;
+    const toolIcon = tool => (tool === "income" ? Icons.salary() : ICON[tool] ? ICON[tool]() : Icons.bell());
+    const toolTone = tool => (tool === "income" ? "green" : TONE[tool] || "slate");
+    const current = TABS.find(entry => entry.id === tab) || TABS[0];
+    const onCount = entry => entry.tools.filter(tool => p.tools[tool]).length;
     return `
       <section class="page nfc-page">
         <div class="page-header">
           <div>
             <h1 class="page-title page-title-with-icon"><span class="page-title-icon">${ICON.bell()}</span>${L("ការជូនដំណឹង", "Notifications")}</h1>
-            <p class="page-subtitle">${L("កំណត់ការរំលឹកទាំងអស់ នៅកន្លែងតែមួយ", "Manage notifications for every MYLIFE tool in one place")}</p>
           </div>
         </div>
 
         <div class="nfc-stack">
-          <div class="nfc-group">
+          <div class="nfc-group nfc-top">
             <div class="nfc-row nfc-master">
               ${tile("bell", off ? "slate" : "green")}
-              <span class="nfc-copy"><strong>${L("អនុញ្ញាតការជូនដំណឹង", "Allow notifications")}</strong><small class="nfc-sum is-${sum.tone}">${escapeHtml(sum.text)}</small></span>
+              <span class="nfc-copy"><strong>${L("ការជូនដំណឹង", "Notifications")}</strong><small class="nfc-sum is-${sum.tone}">${escapeHtml(sum.text)}</small></span>
               ${toggle("data-nfc-master", !off, L("អនុញ្ញាតការជូនដំណឹង", "Allow notifications"))}
             </div>
-          </div>
-
-          <div>
-            <h2 class="nfc-label">${L("ផ្ញើតាម", "Notification channels")}</h2>
-            <div class="nfc-group ${off ? "is-disabled" : ""}">
-              ${channelRow("telegram", p.telegram, "telegram", "blue", "Telegram", L("សារពី bot ក្នុងក្រុម Telegram", "Bot messages in your group"), off)}
-              ${channelRow("app", p.app, "app", "violet", "MYLIFE App", L("ផ្ទាំងលោត កណ្ដឹង និងសារលើទូរស័ព្ទ", "Pop-ups, bell, phone push"), off)}
+            <div class="nfc-chips ${off ? "is-disabled" : ""}">
+              ${[["telegram", "Telegram"], ["app", "App"]].map(([channel, label]) => `<label class="nfc-chip ${p[channel] && !off ? "is-on" : ""}"><input type="checkbox" data-nfc-channel="${channel}" ${p[channel] ? "checked" : ""} ${off ? "disabled" : ""}>${ICON[channel]()}<span>${label}</span></label>`).join("")}
             </div>
           </div>
 
-          ${moneyAskGroup(off)}
+          ${off ? "" : `<div class="nfc-group nfc-next-card">
+            <div class="nfc-next-head"><b>${L("ការរំលឹកបន្ទាប់", "Coming up")}</b><span>${L("7 ថ្ងៃខាងមុខ", "Next 7 days")}</span></div>
+            ${next.length ? next.map(entry => { const w = whenLabel(entry.at, entry.time); return `<div class="nfc-next-row">
+              <span class="nfc-tile nfc-tone-${toolTone(entry.tool)} nfc-tile-sm">${toolIcon(entry.tool)}</span>
+              <span class="nfc-copy"><strong>${escapeHtml(entry.title)}</strong><small class="${w.soon ? "is-soon" : ""}">${escapeHtml(w.text)}</small></span>
+              <span class="nfc-via">${via}</span>
+            </div>`; }).join("") : `<p class="nfc-next-empty">${L("7 ថ្ងៃខាងមុខ គ្មានការរំលឹក", "Nothing in the next 7 days")}</p>`}
+          </div>`}
+
+          <div class="nfc-tabs" role="tablist">
+            ${TABS.map(entry => `<button type="button" role="tab" class="nfc-tab ${entry.id === current.id ? "is-on" : ""}" data-nfc-tab="${entry.id}" aria-selected="${entry.id === current.id}">${L(entry.km, entry.en)}${onCount(entry) < entry.tools.length ? ` <em>${onCount(entry)}/${entry.tools.length}</em>` : ""}</button>`).join("")}
+          </div>
+
+          ${current.id === "money" ? moneyAskGroup(off) : ""}
 
           <div>
-            <h2 class="nfc-label">${L("តាមមុខងារ", "Manage by tool")}</h2>
-            <p class="nfc-hint">${L("ចុចលើឈ្មោះ ដើម្បីមើលការកំណត់បន្ថែម", "Switch on/off, and tap a tool to open its details")}</p>
+            ${current.id === "money" ? `<h2 class="nfc-label">${L("មុខងារ", "Tools")}</h2>` : ""}
             <div class="nfc-group nfc-acc-list ${off ? "is-disabled" : ""}">
-              ${NotifyPrefs.TOOLS.map(tool => toolItem(tool, p, off)).join("")}
+              ${current.tools.map(tool => toolItem(tool, p, off)).join("")}
             </div>
           </div>
 
-          <p class="nfc-foot">${ICON.info()}<span>${L("បិទការរំលឹក មិនប៉ះពាល់ការប្រើប្រាស់ទេ — អ្នកនៅតែកត់ទិន្នន័យ និងប្រើ Telegram bot បានធម្មតា។", "Turning notifications off never turns a tool off — recording data and the Telegram bot keep working.")}</span></p>
+          <p class="nfc-foot">${ICON.info()}<span>${L("បិទការរំលឹក មិនបិទមុខងារទេ — កត់ទិន្នន័យ និង bot នៅប្រើបាន។", "Turning alerts off never turns a tool off.")}</span></p>
         </div>
       </section>`;
   }
@@ -439,6 +496,12 @@ const NotifyCenter = (() => {
       save({ stages, billStages: stages.bills });
     })));
     page.querySelectorAll("[data-nfc-test]").forEach(button => button.addEventListener("click", () => sendTest(button)));
+    page.querySelectorAll("[data-nfc-tab]").forEach(button => button.addEventListener("click", () => {
+      if (tab === button.dataset.nfcTab) return;
+      tab = button.dataset.nfcTab;
+      if (typeof Sound !== "undefined") Sound.play("open");
+      keep(() => App.render());
+    }));
     page.querySelector("[data-nfc-money-ask]")?.addEventListener("change", event => saveProfile({ moneyAsk: event.target.checked }));
     page.querySelector("[data-nfc-ask-now]")?.addEventListener("click", () => { if (typeof MoneyAsk !== "undefined") MoneyAsk.askNow(); });
     // per item switch = the same switch as in its own form (income/loan "ask", bill "reminder")
@@ -465,6 +528,7 @@ const NotifyCenter = (() => {
   // from Settings, the bell panel, etc.: go to the page (optionally with a tool open)
   function open(tool = "") {
     openTool = TOOL_META[tool] ? tool : openTool;
+    if (TOOL_META[tool]) tab = tabOf(tool);
     if (location.hash === "#notifications") App.render();
     else location.hash = "#notifications";
   }
