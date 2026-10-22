@@ -95,7 +95,27 @@
       const date = String(item.nextPaymentDate || item.createdAt || "").slice(0, 10);
       if (!recurring && date.slice(0, 7) !== month) return sum;
       const factor = recurring ? ({ Weekly: 52 / 12, Quarterly: 1 / 3, Yearly: 1 / 12 }[frequency] || 1) : 1;
+      // a month answered "received" (app pop-up / Telegram ✅) counts the real amount, same as the app report
+      const got = item.received && typeof item.received === "object" ? item.received[month] : null;
+      if (got && Number(got.amount) > 0) return sum + convert(Number(got.amount), got.currency || item.currency || currency, currency);
       return sum + convert(Number(item.amount || 0) * factor, item.currency || currency, currency);
+    }, 0);
+  }
+
+  // money that really came in between two days (weekly reports): months answered
+  // "received" on their received date + one-off income on its own date
+  function incomeBetween(payload, from, to) {
+    const currency = currencyOf(payload);
+    return list(payload, "income").reduce((sum, item) => {
+      const received = item.received && typeof item.received === "object" ? Object.values(item.received).filter(Boolean) : [];
+      received.forEach(entry => {
+        const day = String(entry.date || entry.at || "").slice(0, 10);
+        if (day >= from && day <= to) sum += convert(Number(entry.amount || item.amount || 0), entry.currency || item.currency || currency, currency);
+      });
+      const once = item.recurring === false || item.frequency === "Once";
+      const day = String(item.nextPaymentDate || "").slice(0, 10);
+      if (once && !received.length && day >= from && day <= to) sum += convert(Number(item.amount || 0), item.currency || currency, currency);
+      return sum;
     }, 0);
   }
 
@@ -175,7 +195,7 @@
     };
   }
 
-  const api = { frequentExpenses, unusualToday, monthForecast, incomeThisMonth, convert };
+  const api = { frequentExpenses, unusualToday, monthForecast, incomeThisMonth, incomeBetween, convert };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.MoneyInsights = api;
 })(typeof window !== "undefined" ? window : globalThis);

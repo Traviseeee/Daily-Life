@@ -413,6 +413,10 @@ function notificationItems(payload) {
 
   (Array.isArray(payload.loans) ? payload.loans : [])
     .forEach(item => {
+      // same rules as the app pop-up (js/money-due.js): "don't ask" switch, and a loan
+      // paid through a linked bill is asked once, as that bill
+      if (item.ask === false) return;
+      if ((payload.bills || []).some(bill => bill.loanId === item.id)) return;
       const date = loanNextPaymentDate(item);
       if (!date) return;
 
@@ -426,6 +430,7 @@ function notificationItems(payload) {
           : "",
         date,
         amount: Number(item.monthlyPayment || 0),
+        currency: item.currency || "",
         url: "/#money/loans"
       }, stagesOf("loans"));
     });

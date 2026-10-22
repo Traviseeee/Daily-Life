@@ -72,6 +72,9 @@ function dueToday(payload, today) {
     if (income.ask === false) return;
     const date = incomeDateInMonth(income, month);
     if (!date || date > today || incomeReceived(income, month)) return;
+    // a one-off income logged on/after its day (Telegram "+50 freelance", the app form) came in already
+    const once = income.recurring === false || income.frequency === "Once";
+    if (once && String(income.createdAt || "").slice(0, 10) >= date) return;
     out.push({ kind: "income", id: income.id, key: `income:${income.id}:${month}`, title: income.name || "Income", amount: Number(income.amount || 0), currency: income.currency || "", date, month, overdueDays: days(date) });
   });
 
