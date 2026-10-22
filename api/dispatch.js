@@ -10,6 +10,7 @@ const { sendAlert, flushSnoozes, ensureWebhook } = require("../lib/telegram");
 const { budgetAlerts, weeklyReport, CATEGORY_KM } = require("../lib/money-report");
 const { frequentExpenses, unusualToday, convert } = require("../lib/money-insights");
 const { payBill } = require("../lib/bill-pay");
+const MoneyDue = require("../js/money-due.js");
 const { updatePayloadSafe } = require("../lib/payload-store");
 const NotifyPrefs = require("../lib/notify-prefs");
 const { resolveOwner } = require("../lib/owner");
@@ -427,6 +428,26 @@ function notificationItems(payload) {
         amount: Number(item.monthlyPayment || 0),
         url: "/#money/loans"
       }, stagesOf("loans"));
+    });
+
+  // salary / income day: "did you get it?" with ✅ Received (js/money-due.js, same rule as the app pop-up)
+  (Array.isArray(payload.income) ? payload.income : [])
+    .forEach(item => {
+      const month = zonedTodayInput().slice(0, 7);
+      const date = MoneyDue.incomeDateInMonth(item, month);
+      if (!date || MoneyDue.incomeReceived(item, month)) return;
+      add({
+        kind: "income",
+        id: `${item.id}-received-${month}`,
+        sourceId: item.id,
+        month,
+        title: item.name || "Income",
+        body: `💰 បានទទួល ${moneyLabel(item.currency, item.amount)} ហើយឬនៅ? · Did you get it?`,
+        date,
+        amount: Number(item.amount || 0),
+        currency: item.currency || "",
+        url: "/#money/income"
+      });
     });
 
   const monthKey = currentMonthKey();
@@ -1041,3 +1062,4 @@ module.exports = async (req, res) => {
 module.exports.digestItem = digestItem;
 module.exports.eveningItem = eveningItem;
 module.exports.zonedTodayInput = zonedTodayInput;
+module.exports.notificationItems = notificationItems;

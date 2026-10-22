@@ -12,6 +12,7 @@ const { monthSpending, formatMoney, convert, CATEGORY_KM, weeklyReport } = requi
 const { digestItem, eveningItem } = require("./dispatch");
 const { payBill } = require("../lib/bill-pay");
 const LoanPay = require("../js/loan-pay.js");
+const MoneyDue = require("../js/money-due.js");
 const { updatePayloadSafe } = require("../lib/payload-store");
 const { resolveOwner, linkOwnerIfUnknown } = require("../lib/owner");
 const { detectUtility, findUtilityBill, PROVIDERS } = require("../lib/utility-bills");
@@ -66,6 +67,12 @@ function applyDone(payload, item) {
     });
     return removed ? "updated" : "already";
   }
+  if (item.kind === "income") {
+    // salary day ✅: saved once per month (same rule as the app pop-up)
+    const income = (payload.income || []).find(entry => entry.id === id);
+    if (!income) return "missing";
+    return MoneyDue.recordIncomeReceived(income, item.month || today.slice(0, 7), { date: today, via: "Telegram" });
+  }
   if (item.kind === "savings-contribution") {
     const saving = (payload.savings || []).find(entry => entry.id === id);
     if (!saving) return "missing";
@@ -114,6 +121,7 @@ async function updatePayload(userId, mutate) {
 const DONE_TEXT = {
   undo: "↩️ បានលុបវិញ · Undone",
   paid: "✅ បានបង់ · Paid",
+  received: "✅ បានទទួល · Received",
   done: "✅ រួចរាល់ · Done",
   saved: "✅ បានសន្សំ · Saved",
   seen: "👍 បានឃើញ · Seen"
@@ -1076,6 +1084,9 @@ module.exports = async (req, res) => {
       }
       toast = result === "updated" ? `${status} — MYLIFE updated` : status;
       // tell the app right away (push → it pulls and shows the pop-up)
+      if (result === "updated" && item.kind === "income") {
+        await pushAdded(action.userId, `💰 បានទទួល · ${item.title || "Income"}`, "ពី Telegram · បានកត់ក្នុង MYLIFE", "/#money/income", "income");
+      }
       if (result === "updated" && item.kind === "bill") {
         await pushAdded(action.userId, `✅ បានបង់ · ${item.title || "Bill"}`, "ពី Telegram · បានកត់ក្នុង MYLIFE", "/#money/bills", "bill");
       }

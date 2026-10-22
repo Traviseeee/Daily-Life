@@ -943,7 +943,11 @@ function buildMonthlyFinanceReport(month) {
     const monthlyFactor = recurring
       ? ({ Weekly: 52 / 12, Quarterly: 1 / 3, Yearly: 1 / 12 }[frequency] || 1)
       : 1;
-    const amount = toProfileCurrency(Number(item.amount || 0) * monthlyFactor, item.currency);
+    // a month answered "received" (pop-up / Telegram ✅) counts the real amount
+    const received = item.received && typeof item.received === "object" ? item.received[month] : null;
+    const amount = received && Number(received.amount) > 0
+      ? toProfileCurrency(Number(received.amount), received.currency || item.currency)
+      : toProfileCurrency(Number(item.amount || 0) * monthlyFactor, item.currency);
     return [{
       type: t("income"),
       description: item.name || t("income"),
