@@ -97,3 +97,9 @@
 .fg-join strong { font-size: 1.15rem; }
 .fg-join p { margin: 0 0 6px; font-size: 0.86rem; color: #a9c9b4; }
 .fg-text-btn { padding: 8px; border: 0; font: inherit; font-size: 0.86rem; color: #a9c9b4; background: none; cursor: pointer; }
+.fg-invites { display: grid; gap: 6px; }
+.fg-invites .fg-label { margin: 4px 0 2px; }
+.fg-invite-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 14px; background: rgba(255, 255, 255, 0.05); }
+.fg-invite-row small { flex: 1; min-width: 0; font-size: 0.78rem; color: #a9c9b4; }
+.fg-mini.is-ghost { color: #ff8b9b; background: transparent; border: 1px solid rgba(251, 113, 133, 0.35); }
+.fg-mini.is-ghost[data-armed="1"] { color: #fff; background: #e0475f; }

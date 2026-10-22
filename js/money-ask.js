@@ -83,7 +83,8 @@ const MoneyAsk = (() => {
       || ["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement?.tagName);
   }
 
-  const enabled = () => appData?.profile?.notificationsEnabled !== false && appData?.profile?.moneyAsk !== false;
+  const guest = () => typeof Login !== "undefined" && Login.guestMode;
+  const enabled = () => !guest() && appData?.profile?.notificationsEnabled !== false && appData?.profile?.moneyAsk !== false;
 
   function check(tries = 0) {
     clearTimeout(checkTimer);

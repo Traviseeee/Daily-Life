@@ -1,0 +1,51 @@
+# Runs every check in tools/ on each push and pull request (no production data, no secrets).
+name: verify
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  node-checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: tools/verify-*.js
+        run: |
+          fail=0
+          for t in tools/verify-*.js; do
+            echo "::group::$t"
+            if node "$t"; then echo "PASS $t"; else echo "::error::FAIL $t"; fail=1; fi
+            echo "::endgroup::"
+          done
+          exit $fail
+
+  sql-policies:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports: ["5432:5432"]
+        options: --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: postgres
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # verify-storage-policies.sh reads an older schema from git history
+      - name: storage bucket policies
+        run: bash tools/verify-storage-policies.sh
+      - name: family tables + RLS
+        run: bash tools/verify-family-core.sh

@@ -35,9 +35,9 @@ const FamilyGroup = (() => {
     { key: "savings", group: "private", km: "គោលដៅសន្សំ", en: "Savings goals", sub: ["មើលបានប៉ុណ្ណោះ", "View only"], short: ["សន្សំ", "Savings"], icon: () => icon("target") }
   ];
   const DEFAULT_PERMS = { memories: true, calendar: true, shopping: true };
-  const ROLE = { admin: ["Admin", "Admin"], member: ["Member", "Member"], viewer: ["Viewer", "Viewer"] };
+  const ROLE = { admin: ["អ្នកគ្រប់គ្រង", "Admin"], member: ["សមាជិក", "Member"], viewer: ["អ្នកមើល", "Viewer"] };
 
-  const state = { status: "idle", family: null, members: [], me: null, error: "" };
+  const state = { status: "idle", family: null, members: [], invites: [], me: null, error: "" };
   let loading = null;
 
   const client = () => (typeof window !== "undefined" ? window.supabaseClient : null);
@@ -65,6 +65,12 @@ const FamilyGroup = (() => {
       state.family = (family.data || [])[0] || null;
       const order = { admin: 0, member: 1, viewer: 2 };
       state.members = (members.data || []).sort((a, b) => (order[a.role] - order[b.role]) || String(a.joined_at).localeCompare(String(b.joined_at)));
+      state.invites = [];
+      if (row.role === "admin") { // links not used yet and not expired (RLS: admin only)
+        const invites = await client().from("family_invites").select("token, role, created_at, expires_at, used_at").eq("family_id", row.family_id);
+        const now = Date.now();
+        state.invites = (invites.data || []).filter(entry => !entry.used_at && Date.parse(entry.expires_at) > now).sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)));
+      }
       state.status = "ready";
       return state;
     })().finally(() => { loading = null; });
@@ -85,7 +91,7 @@ const FamilyGroup = (() => {
   const avatar = (member, size = "") => `<span class="fg-avatar ${size}" style="--fg-tone:${toneOf(member.user_id)}">${escapeHtml(member.avatar || initials(nameOf(member)))}</span>`;
   const rolePill = role => `<span class="fg-role is-${role}">${escapeHtml(L(...ROLE[role]))}</span>`;
   function seesText(member) {
-    if (member.role === "admin") return isOwner(member) ? L("ម្ចាស់គ្រួសារ", "Family owner") : "Admin";
+    if (member.role === "admin") return isOwner(member) ? L("ម្ចាស់គ្រួសារ", "Family owner") : L("អ្នកគ្រប់គ្រង", "Admin");
     const list = PERMS.filter(perm => member.permissions?.[perm.key]).map(perm => L(...perm.short));
     const text = list.join(" · ") || L("មិនទាន់ឲ្យមើលអ្វីទេ", "Nothing shared yet");
     return member.role === "viewer" ? `${L("មើលប៉ុណ្ណោះ", "View only")} · ${text}` : text;
@@ -111,6 +117,7 @@ const FamilyGroup = (() => {
         ${member.role !== "admin" && member.permissions?.money ? `<span class="fg-money-on" title="${escapeAttr(L("មើលលុយបាន", "Can view money"))}">${IC.unlock()}</span>` : ""}
         ${rolePill(member.role)}
       </button>`).join("")}</div>
+      ${admin && state.invites?.length ? `<div class="fg-invites"><h3 class="fg-label">${escapeHtml(L(`Link អញ្ជើញកំពុងរង់ចាំ (${state.invites.length})`, `Pending invite links (${state.invites.length})`))}</h3>${state.invites.map(entry => `<div class="fg-invite-row">${rolePill(entry.role)}<small>${escapeHtml(L("ផុតកំណត់", "Expires"))} ${escapeHtml(formatDate(String(entry.expires_at).slice(0, 10)))}</small><button type="button" class="fg-mini is-ghost" data-fg-cancel="${escapeAttr(entry.token)}">${escapeHtml(L("បោះបង់", "Cancel"))}</button></div>`).join("")}</div>` : ""}
       ${admin ? `<button type="button" class="fg-primary" data-fg-invite>${IC.userPlus()}<span>${escapeHtml(L("អញ្ជើញសមាជិក", "Invite a member"))}</span></button>` : ""}
       <p class="fg-note">${moneyTo.length ? `${IC.unlock()}<span>${escapeHtml(L(`${moneyTo.join(", ")} មើលលុយបាន (មើលប៉ុណ្ណោះ)`, `${moneyTo.join(", ")} can view money (view only)`))}</span>` : `${IC.lock()}<span>${escapeHtml(L("លុយ និងកម្ចី មិនចែករំលែកទេ", "Money and loans are not shared"))}</span>`}</p>
     </article>`;
@@ -123,6 +130,13 @@ const FamilyGroup = (() => {
       slot.querySelector("[data-fg-create]")?.addEventListener("click", createFamily);
       slot.querySelector("[data-fg-invite]")?.addEventListener("click", openInvite);
       slot.querySelectorAll("[data-fg-member]").forEach(button => button.addEventListener("click", () => openMember(button.dataset.fgMember)));
+      slot.querySelectorAll("[data-fg-cancel]").forEach(button => button.addEventListener("click", async () => {
+        if (button.dataset.armed !== "1") { button.dataset.armed = "1"; button.textContent = L("ចុចម្តងទៀត", "Tap again"); setTimeout(() => { button.dataset.armed = ""; button.textContent = L("បោះបង់", "Cancel"); }, 4000); return; }
+        button.disabled = true;
+        const { error } = await client().from("family_invites").delete().eq("token", button.dataset.fgCancel);
+        Toast.show(error ? `⚠️ ${error.message}` : L("បានបោះបង់ link — ប្រើលែងបាន", "Link cancelled — it no longer works"));
+        refresh(true);
+      }));
     });
   }
 
@@ -181,7 +195,7 @@ const FamilyGroup = (() => {
       ${self ? `<form class="fg-rename" data-fg-rename><input maxlength="40" value="${escapeAttr(member.display_name || nameOf(member))}" aria-label="${escapeAttr(L("ឈ្មោះក្នុងគ្រួសារ", "Name in the family"))}"><button type="submit">${escapeHtml(L("រក្សាទុក", "Save"))}</button></form>` : ""}
       ${editable ? `
         <h3 class="fg-label">${escapeHtml(L("តួនាទី", "Role"))}</h3>
-        <div class="fg-pills">${["member", "viewer"].map(role => `<button type="button" class="fg-pill ${member.role === role ? "is-on" : ""}" data-fg-role="${role}">${escapeHtml(L(...ROLE[role]))}<small>${escapeHtml(role === "member" ? L("post, ❤️, comment", "post, ❤️, comment") : L("មើល និង ❤️ ប៉ុណ្ណោះ", "view and ❤️ only"))}</small></button>`).join("")}</div>
+        <div class="fg-pills">${["member", "viewer"].map(role => `<button type="button" class="fg-pill ${member.role === role ? "is-on" : ""}" data-fg-role="${role}">${escapeHtml(L(...ROLE[role]))}<small>${escapeHtml(role === "member" ? L("post, ❤️, បញ្ចេញមតិ", "post, ❤️, comment") : L("មើល និង ❤️ ប៉ុណ្ណោះ", "view and ❤️ only"))}</small></button>`).join("")}</div>
         <h3 class="fg-label">${escapeHtml(L("ឲ្យមើល និងប្រើ", "Can see and use"))}</h3>
         ${PERMS.filter(perm => perm.group === "shared").map(perm => permRow(perm, perms[perm.key], "data-fg-perm")).join("")}
         <h3 class="fg-label">${escapeHtml(L("ឯកជន (បិទជាស្រេច)", "Private (off by default)"))}</h3>
@@ -256,7 +270,7 @@ const FamilyGroup = (() => {
       <div class="fg-sheet-title"><strong>${escapeHtml(L("អញ្ជើញសមាជិកថ្មី", "Invite a new member"))}</strong><button type="button" class="fg-icon-btn" data-fg-close aria-label="Close">${icon("close")}</button></div>
       <div data-fg-step="choose">
         <h3 class="fg-label">${escapeHtml(L("ជ្រើសតួនាទី", "Choose a role"))}</h3>
-        <div class="fg-pills">${["member", "viewer"].map(entry => `<button type="button" class="fg-pill ${entry === role ? "is-on" : ""}" data-fg-irole="${entry}">${escapeHtml(L(...ROLE[entry]))}<small>${escapeHtml(entry === "member" ? L("post, ❤️, comment", "post, ❤️, comment") : L("មើល និង ❤️ ប៉ុណ្ណោះ", "view and ❤️ only"))}</small></button>`).join("")}</div>
+        <div class="fg-pills">${["member", "viewer"].map(entry => `<button type="button" class="fg-pill ${entry === role ? "is-on" : ""}" data-fg-irole="${entry}">${escapeHtml(L(...ROLE[entry]))}<small>${escapeHtml(entry === "member" ? L("post, ❤️, បញ្ចេញមតិ", "post, ❤️, comment") : L("មើល និង ❤️ ប៉ុណ្ណោះ", "view and ❤️ only"))}</small></button>`).join("")}</div>
         <h3 class="fg-label">${escapeHtml(L("ឲ្យមើលអ្វីខ្លះ៖", "What they can see:"))}</h3>
         <div class="fg-chips" data-fg-chips>${chips()}</div>
         ${LATER_NOTE()}

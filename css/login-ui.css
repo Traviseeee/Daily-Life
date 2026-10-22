@@ -64,3 +64,5 @@
 #loginModal .login-google-button:disabled { opacity: 0.6; cursor: wait; }
 #loginModal .login-or { display: flex; align-items: center; gap: 10px; margin: 12px 0 4px; font-size: 0.78rem; color: #6b7d70; }
 #loginModal .login-or::before, #loginModal .login-or::after { content: ""; flex: 1; height: 1px; background: rgba(15, 51, 38, 0.14); }
+#loginModal .login-google-button:disabled { opacity: 0.55; cursor: not-allowed; }
+#loginModal .login-soon { padding: 2px 8px; border-radius: 999px; font-size: 0.7rem; font-style: normal; font-weight: 800; color: #142a04; background: #d9ff7b; }
