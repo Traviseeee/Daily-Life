@@ -238,7 +238,10 @@ const FamilyGroup = (() => {
       document.head.appendChild(script);
     });
   }
-  const joinUrl = token => `${location.origin}${location.pathname.replace(/index\.html$/, "")}?join=${encodeURIComponent(token)}`;
+  // the link is opened on someone else's phone: never localhost / a LAN address
+  const APP_URL = "https://daily-life-2.vercel.app/";
+  const publicBase = () => (/^https:$/.test(location.protocol) && !/^(localhost|127\.|10\.|192\.168\.|\[::1\])/.test(location.hostname) ? `${location.origin}${location.pathname.replace(/index\.html$/, "")}` : APP_URL);
+  const joinUrl = token => `${publicBase()}?join=${encodeURIComponent(token)}`;
 
   function openInvite() {
     if (!isAdmin() || !state.family) return;
