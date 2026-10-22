@@ -3,6 +3,8 @@
 const settingsOpenSections = new Set(["account"]);
 
 function renderSettings() {
+  // #settings/ai (from the bot or the chat) opens that section
+  if (typeof App !== "undefined" && /^[a-z]+$/.test(String(App.param || ""))) settingsOpenSections.add(App.param);
   return renderSettingsPage().replace(/<details class="settings-accordion" id="settings-section-([a-z]+)"( open)?>/g,
     (match, id) => `<details class="settings-accordion" id="settings-section-${id}"${settingsOpenSections.has(id) ? " open" : ""}>`);
 }
@@ -18,6 +20,7 @@ function renderSettingsPage() {
     ["appearance", L("រូបរាង & ភាសា", "Look & language"), L("ពណ៌, ភាសា, ម៉ោង, សំឡេង, ប៊ូតុងរហ័ស", "Theme, language, clock, sound, quick buttons"), "palette"],
     ["money", L("លុយ", "Money"), L("ទំព័រលុយ, ថវិកា, ការគណនា", "Money page, budgets, totals"), "calculator"],
     ["notifications", L("ការជូនដំណឹង", "Notifications"), L("Telegram, App, ការរំលឹក, bot", "Telegram, app, reminders, bot"), "bell"],
+    ["ai", "AI · Gemini", L("សួរ AI, ដំបូន្មានលុយ, ជួយអានសារ", "Ask AI, money advice, hard messages"), "spark"],
     ["data", L("ទិន្នន័យ & ឯកជនភាព", "Data & privacy"), L("Backup, Sync, Export, លាក់លុយ", "Backup, sync, export, hide money"), "shield"],
     ["about", "about", "settingsAboutSubtitle", "info"]
   ];
@@ -136,8 +139,9 @@ function renderSettingsPage() {
               ${typeof renderBotHelpCard === "function" ? renderBotHelpCard() : ""}
             </div>
           </details>
+          ${typeof renderAiSettingsSection === "function" && typeof AiAssist !== "undefined" ? renderAiSettingsSection() : ""}
           <details class="settings-accordion" id="settings-section-data">
-            ${settingsAccordionSummary("data", label(settingsSections[4][1]), label(settingsSections[4][2]), Icons.shield())}
+            ${settingsAccordionSummary("data", label(settingsSections[5][1]), label(settingsSections[5][2]), Icons.shield())}
             <div class="settings-accordion-body">
               <div class="settings-preference-list settings-preference-list-standalone">
                 <label class="settings-preference-row"><span><strong>${t("moneyPrivacy")}</strong><small>${t("moneyPrivacyHelp")}</small></span><input type="checkbox" data-preference="moneyHidden" ${appData.profile.moneyHidden ? "checked" : ""}></label>
@@ -779,7 +783,7 @@ function openLocalBackupsModal() {
 }
 
 function exportJsonData() {
-  downloadFile(`mylife-backup-${backupDate()}.json`, "application/json", JSON.stringify(appData, null, 2));
+  downloadFile(`mylife-backup-${backupDate()}.json`, "application/json", JSON.stringify(typeof AiAssist !== "undefined" ? AiAssist.withoutSecrets(appData) : appData, null, 2));
   Toast.show(t("jsonExported"));
 }
 
@@ -809,7 +813,12 @@ function importJsonData(event) {
       message: t("importJsonMessage"),
       confirmText: t("importJson"),
       onConfirm: () => {
+        const keepAi = appData.profile?.aiSettings ? { ...appData.profile.aiSettings } : null; // backups never hold the AI key
         const result = Store.importData(imported);
+        if (result.ok && keepAi?.apiKey && !appData.profile?.aiSettings?.apiKey) {
+          appData.profile.aiSettings = { ...(appData.profile.aiSettings || {}), apiKey: keepAi.apiKey };
+          Store.save?.();
+        }
         if (!result.ok) {
           const reason = result.errors[0] === "backup_failed"
             ? (km ? "មិនអាចបង្កើតច្បាប់ចម្លងបម្រុងនៃទិន្នន័យបច្ចុប្បន្នបានទេ (ទំហំផ្ទុកពេញ?)" : "could not back up your current data first (storage full?)")
@@ -835,7 +844,7 @@ function exportExcelData() {
       <head><meta charset="utf-8"><style>table{border-collapse:collapse;margin-bottom:24px}td,th{border:1px solid #999;padding:6px 8px}th{background:#d9ff8c}</style></head>
       <body>
         <h1>MYLIFE Export ${backupDate()}</h1>
-        ${sections.map(section => excelTable(section, section === "profile" ? [appData.profile] : appData[section])).join("")}
+        ${sections.map(section => excelTable(section, section === "profile" ? [(({ aiSettings, ...rest }) => rest)(appData.profile)] : appData[section])).join("")}
       </body>
     </html>
   `;

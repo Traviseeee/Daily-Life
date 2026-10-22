@@ -17,6 +17,7 @@ const { resolveOwner, linkOwnerIfUnknown } = require("../lib/owner");
 const { detectUtility, findUtilityBill, PROVIDERS } = require("../lib/utility-bills");
 const NotifyPrefs = require("../lib/notify-prefs");
 const SmartScan = require("../lib/scan-telegram");
+const AiAssist = require("../lib/ai-assist");
 
 const APP_TIME_ZONE = "Asia/Phnom_Penh";
 
@@ -139,7 +140,12 @@ const HELP_TEXT = [
   "☰ <b>Commands</b>",
   "/today ☀️ ថ្ងៃនេះ · /bills 🧾 វិក្កយបត្រ · /evening 🌙 កត់ចំណាយ",
   "/week 📈 7 ថ្ងៃ · /month 🗓️ ខែនេះ · /lastmonth 📅 ខែមុន",
-  "/scan 📷 · /words 🏷️ · /backup 💾 · /menu ☰"
+  "/scan 📷 · /words 🏷️ · /backup 💾 · /menu ☰",
+  "",
+  "🤖 <b>AI (Gemini)</b> — ពេលមាន key នៅ ការកំណត់ → AI",
+  "• សួរធម្មតា ឧ. <code>ខែនេះចាយអាហារប៉ុន្មាន?</code>",
+  "• សារពិបាកអាន AI ជួយកត់ឱ្យ ឧ. <code>ទិញដូងពីរផ្លែ ប្រាំមួយពាន់</code>",
+  "• /advice 🤖 ដំបូន្មានលុយ · /ai ស្ថានភាព AI"
 ].join("\n");
 
 const SCAN_TEXT = [
@@ -360,7 +366,10 @@ const COMMAND_WORDS = [
   ["backup", /^\/backup\b/i],
   ["bills", /^\/bills\b|^🧾 វិក្កយបត្រ$|^វិក្កយបត្រ$|^bills$/i],
   ["scan", /^\/scan\b/i],
-  ["words", /^\/words\b|^ពាក្យ$/i]
+  ["words", /^\/words\b|^ពាក្យ$/i],
+  ["advice", /^\/advice\b|^🤖 ដំបូន្មានលុយ$|^ដំបូន្មាន(លុយ)?$/i],
+  ["ask", /^\/ask\b/i],
+  ["ai", /^\/ai\b|^💬 សួរ AI$/i]
 ];
 
 function commandOf(text) {
@@ -375,6 +384,7 @@ function menuKeyboard() {
       [b("☀️ ថ្ងៃនេះ", "today"), b("🧾 វិក្កយបត្រ", "bills")],
       [b("🌙 កត់ចំណាយ", "evening"), b("📷 Scan", "scan")],
       [b("📈 7 ថ្ងៃ", "week"), b("🗓️ ខែនេះ", "month"), b("📅 ខែមុន", "lastmonth")],
+      [b("🤖 ដំបូន្មានលុយ", "advice"), b("💬 សួរ AI", "ai")],
       [b("🏷️ ពាក្យប្រភេទ", "words"), b("💾 Backup", "backup")],
       [{ text: "📑 របាយការណ៍ JPG + Excel (app)", url: appLink({ url: "/#money/reports" }) }],
       [b("❓ ជំនួយ", "help"), { text: "📱 បើក MYLIFE", url: appLink({ url: "/" }) }]
@@ -429,8 +439,21 @@ async function runCommand(command, { message, userId, payload, today, redis }) {
         reply_markup: { inline_keyboard: [[{ text: "📑 Excel ពី app", url: appLink({ url: "/#money/reports" }) }]] }
       });
     }
+    case "advice":
+      return aiReply(message, payload, today, settings => AiAssist.advice(payload, { today, settings }), "🤖 <b>ដំបូន្មានលុយ</b>");
+    case "ask": {
+      const question = String(message.text || "").replace(/^\/ask(@\w+)?\s*/i, "").trim();
+      if (!question) return reply(message, "💬 វាយ <code>/ask</code> បន្ទាប់មកសំណួរ ឧ. <code>/ask ខែនេះចាយអ្វីច្រើនជាងគេ?</code>\nឬវាយសំណួរធម្មតាដែលបញ្ចប់ដោយ <b>?</b>");
+      return aiReply(message, payload, today, settings => AiAssist.ask(payload, question, { today, settings }));
+    }
+    case "ai": {
+      const settings = AiAssist.settingsOf(payload, process.env);
+      return reply(message, settings.enabled && settings.telegram
+        ? `🤖 <b>AI បើក</b> · Gemini${settings.model ? ` (${escapeHtml(settings.model)})` : ""}\n\n💬 សួរបានភ្លាម ឧ. <code>ខែនេះចាយអាហារប៉ុន្មាន?</code>\n🤖 /advice — ដំបូន្មានលុយ`
+        : "🤖 <b>AI មិនទាន់បើក</b>\nដាក់ Gemini API key (ឥតគិតថ្លៃ ពី aistudio.google.com) នៅ MYLIFE → ការកំណត់ → AI។", settings.enabled ? null : { inline_keyboard: [[{ text: "⚙️ បើកការកំណត់ AI", url: appLink({ url: "/#settings" }) }]] });
+    }
     case "backup":
-      return tgUpload("sendDocument", "document", Buffer.from(JSON.stringify(payload, null, 1)), `mylife-backup-${today}.json`, "application/json", { caption: `💾 <b>Backup</b> · ${today}\nរក្សាទុកឯកសារនេះ។ ពេលត្រូវការ៖ Settings → Import`, parse_mode: "HTML" });
+      return tgUpload("sendDocument", "document", Buffer.from(JSON.stringify(AiAssist.withoutSecrets(payload), null, 1)), `mylife-backup-${today}.json`, "application/json", { caption: `💾 <b>Backup</b> · ${today}\nរក្សាទុកឯកសារនេះ។ ពេលត្រូវការ៖ Settings → Import`, parse_mode: "HTML" });
     default:
       return null;
   }
@@ -615,6 +638,121 @@ function scanContext(redis = getRedis()) {
   return { redis, tgCall, reply, ownerUserId, readPayload, updatePayload, saveAction, pushAdded, appLink, makeId: recordId };
 }
 
+/* ---------------- AI (Gemini) ---------------- */
+
+function aiSettings(payload) {
+  const settings = AiAssist.settingsOf(payload, process.env);
+  return settings.enabled && settings.telegram ? settings : null;
+}
+
+// runs one AI job and replies; a clear Khmer line when the AI is off or fails
+async function aiReply(message, payload, today, job, heading = "") {
+  const settings = aiSettings(payload);
+  if (!settings) return runCommand("ai", { message, payload, today });
+  tgCall("sendChatAction", { chat_id: message.chat.id, action: "typing" }).catch(() => {});
+  try {
+    const text = await job(settings);
+    return reply(message, `${heading ? `${heading}\n\n` : ""}${AiAssist.toHtml(text, escapeHtml)}\n\n<i>🤖 Gemini · អាចខុសបាន សូមពិនិត្យ</i>`);
+  } catch (error) {
+    console.warn("MYLIFE AI failed.", error.code || "", String(error.message || "").slice(0, 120));
+    return reply(message, `🤖 ${escapeHtml(AiAssist.errorText(error))}`);
+  }
+}
+
+// saves parsed money lines (from the parser or the AI) and replies with undo buttons
+async function saveMoneyEntries(message, { userId, payload, today, redis }, entries, skipped = [], viaAi = false) {
+  const currency = payload.profile?.currency || "USD";
+  const saved = entries.map(entry => entryRecord(entry, today, currency));
+  if (viaAi) saved.forEach(({ record }) => { record.notes = record.notes ? `${record.notes} · AI` : "AI"; });
+  let after = payload;
+  await updatePayload(userId, data => {
+    saved.forEach(({ collection, record }) => {
+      data[collection] = Array.isArray(data[collection]) ? data[collection] : [];
+      data[collection].push(record);
+    });
+    after = data;
+    return "updated";
+  });
+  const token = await saveAction(redis, {
+    userId,
+    item: { kind: "undo", entries: saved.map(({ collection, record }) => ({ collection, id: record.id })), collection: saved[0].collection, id: saved[0].record.id, url: "/#money/expenses" }
+  });
+  const text = moneyReplyText(after, saved, today, skipped) + (viaAi ? "\n<i>🤖 AI អានសារនេះ — បើខុស ចុច ↩️ ដើម្បីលុបវិញ</i>" : "");
+  const sent = await reply(message, text, moneyKeyboard(token, saved));
+  const lineOf = ({ collection, record }) => `${collection === "income" ? "+" : "−"}${formatMoney(record.amount, record.currency)} · ${catLabel({ collection, category: record.category })}${record.description || record.name ? ` · ${record.description || record.name}` : ""}`;
+  const onlyIncome = saved.every(item => item.collection === "income");
+  await pushAdded(
+    userId,
+    saved.length > 1 ? `📲 បានកត់ ${saved.length} ពី Telegram` : onlyIncome ? "📲 បានកត់ចំណូលពី Telegram" : "📲 បានកត់ចំណាយពី Telegram",
+    saved.slice(0, 4).map(lineOf).join("\n"),
+    onlyIncome ? "/#money/income" : "/#money/expenses",
+    "expense"
+  );
+  return sent;
+}
+
+async function saveEventEntry(message, { userId, today, redis }, parsed, viaAi = false) {
+  const id = recordId("calendarEvents");
+  const event = {
+    id,
+    createdAt: new Date().toISOString(),
+    title: parsed.title,
+    date: parsed.date || today,
+    time: parsed.time || "",
+    category: parsed.category || "Personal",
+    familyMember: parsed.familyMember || "",
+    reminder: true,
+    notes: viaAi ? "AI" : "",
+    source: "telegram"
+  };
+  await updatePayload(userId, data => {
+    data.calendarEvents = Array.isArray(data.calendarEvents) ? data.calendarEvents : [];
+    data.calendarEvents.push(event);
+    return "updated";
+  });
+  const date = dateLabels(event.date);
+  const time = timeLabels(event.time, Boolean(event.time));
+  const lines = [
+    "📅 <b>បានបន្ថែមព្រឹត្តិការណ៍ · Event added</b>",
+    "",
+    `<b>${escapeHtml(event.title)}</b>`,
+    `📆 ${escapeHtml(date.km)} · <i>${escapeHtml(date.en)}</i>`,
+    `🕒 ${escapeHtml(time.km)} · <i>${escapeHtml(time.en)}</i>`,
+    event.familyMember ? `👨‍👩‍👧 ${escapeHtml(event.familyMember)}` : "",
+    event.time ? "🔔 នឹងរំលឹកតាម Telegram · You'll get an alert" : "🔔 នឹងរំលឹកម៉ោង 9:00 ព្រឹក · Alert at 9:00 AM",
+    viaAi ? "<i>🤖 AI អានសារនេះ — បើខុស ចុច ↩️ ដើម្បីលុបវិញ</i>" : ""
+  ].filter(Boolean);
+  const sent = await reply(message, lines.join("\n"), await undoKeyboard(redis, userId, "calendarEvents", id, "/#calendar"));
+  await pushAdded(userId, "📲 បានបន្ថែមព្រឹត្តិការណ៍ពី Telegram", `📅 ${event.title} · ${date.km}${event.time ? ` · ${time.km}` : ""}`, "/#calendar", "event");
+  return sent;
+}
+
+// text the normal parser could not read: a question, or a message the AI turns
+// into an expense / income / event. Returns null when the AI is off.
+async function handleWithAi(message, text, ctx) {
+  const settings = aiSettings(ctx.payload);
+  if (!settings) return null;
+  if (AiAssist.looksLikeQuestion(text)) {
+    return aiReply(message, ctx.payload, ctx.today, s => AiAssist.ask(ctx.payload, text, { today: ctx.today, settings: s }));
+  }
+  tgCall("sendChatAction", { chat_id: message.chat.id, action: "typing" }).catch(() => {});
+  let parsed;
+  try {
+    parsed = await AiAssist.parseText(ctx.payload, text, { today: ctx.today, settings });
+  } catch (error) {
+    console.warn("MYLIFE AI parse failed.", error.code || "", String(error.message || "").slice(0, 120));
+    return null; // fall back to the old behaviour
+  }
+  if (parsed.type === "expense" || parsed.type === "income") {
+    return saveMoneyEntries(message, ctx, parsed.items.map(item => ({ ...item, type: parsed.type })), [], true);
+  }
+  if (parsed.type === "event") return saveEventEntry(message, ctx, parsed.event, true);
+  if (parsed.type === "question") {
+    return aiReply(message, ctx.payload, ctx.today, s => AiAssist.ask(ctx.payload, text, { today: ctx.today, settings: s }));
+  }
+  return reply(message, `🤖 ${escapeHtml(parsed.reply || "ខ្ញុំមិនទាន់ដឹងថាត្រូវកត់អ្វីទេ។")}\n\n<i>ចង់កត់ចំណាយ វាយ ឧ.</i> <code>កាហ្វេ 2.5$</code> <i>· ចង់សួរ បញ្ចប់ដោយ</i> <b>?</b>`);
+}
+
 async function handleMessage(message, redis) {
   // water / electricity bots, or their message forwarded or pasted here
   const notice = detectUtility(message);
@@ -644,73 +782,28 @@ async function handleMessage(message, redis) {
   const today = zonedToday();
   if (command) return runCommand(command, { message, userId, payload, today, redis });
 
+  // a clear question ("…?", "តើ…") goes to the AI first, so "តើចាយលើស 100$ ទេ?" is not saved as $100
+  if (AiAssist.looksLikeQuestion(text) && (/[?？]\s*$|^តើ/.test(text) || /^(what|how|why|which|should)\b/i.test(text)) && aiSettings(payload)) {
+    return aiReply(message, payload, today, s => AiAssist.ask(payload, text, { today, settings: s }));
+  }
   const currency = payload.profile?.currency || "USD";
   const rows = text.split(/\n+/).map(line => line.trim()).filter(Boolean);
   const parsedRows = rows.map(line => ({ line, entry: parseMoney(line, currency, today) }));
   const moneyRows = parsedRows.filter(row => row.entry);
   if (moneyRows.length) {
-    const saved = moneyRows.map(row => entryRecord(row.entry, today, currency));
     const skipped = parsedRows.filter(row => !row.entry).map(row => row.line);
-    let after = payload;
-    await updatePayload(userId, data => {
-      saved.forEach(({ collection, record }) => {
-        data[collection] = Array.isArray(data[collection]) ? data[collection] : [];
-        data[collection].push(record);
-      });
-      after = data;
-      return "updated";
-    });
-    const token = await saveAction(redis, {
-      userId,
-      item: { kind: "undo", entries: saved.map(({ collection, record }) => ({ collection, id: record.id })), collection: saved[0].collection, id: saved[0].record.id, url: "/#money/expenses" }
-    });
-    const sent = await reply(message, moneyReplyText(after, saved, today, skipped), moneyKeyboard(token, saved));
-    const lineOf = ({ collection, record }) => `${collection === "income" ? "+" : "−"}${formatMoney(record.amount, record.currency)} · ${catLabel({ collection, category: record.category })}${record.description || record.name ? ` · ${record.description || record.name}` : ""}`;
-    const onlyIncome = saved.every(item => item.collection === "income");
-    await pushAdded(
-      userId,
-      saved.length > 1 ? `📲 បានកត់ ${saved.length} ពី Telegram` : onlyIncome ? "📲 បានកត់ចំណូលពី Telegram" : "📲 បានកត់ចំណាយពី Telegram",
-      saved.slice(0, 4).map(lineOf).join("\n"),
-      onlyIncome ? "/#money/income" : "/#money/expenses",
-      "expense"
-    );
-    return sent;
+    return saveMoneyEntries(message, { userId, payload, today, redis }, moneyRows.map(row => row.entry), skipped);
   }
 
   const familyNames = (payload.family || []).map(member => member?.name).filter(Boolean);
   const parsed = parseEvent(text, today, familyNames);
-  const id = recordId("calendarEvents");
-  const event = {
-    id,
-    createdAt: new Date().toISOString(),
-    title: parsed.title,
-    date: parsed.date || today,
-    time: parsed.time || "",
-    category: parsed.category || "Personal",
-    familyMember: parsed.familyMember || "",
-    reminder: true,
-    notes: "",
-    source: "telegram"
-  };
-  await updatePayload(userId, data => {
-    data.calendarEvents = Array.isArray(data.calendarEvents) ? data.calendarEvents : [];
-    data.calendarEvents.push(event);
-    return "updated";
-  });
-  const date = dateLabels(event.date);
-  const time = timeLabels(event.time, Boolean(event.time));
-  const lines = [
-    "📅 <b>បានបន្ថែមព្រឹត្តិការណ៍ · Event added</b>",
-    "",
-    `<b>${escapeHtml(event.title)}</b>`,
-    `📆 ${escapeHtml(date.km)} · <i>${escapeHtml(date.en)}</i>`,
-    `🕒 ${escapeHtml(time.km)} · <i>${escapeHtml(time.en)}</i>`,
-    event.familyMember ? `👨‍👩‍👧 ${escapeHtml(event.familyMember)}` : "",
-    event.time ? "🔔 នឹងរំលឹកតាម Telegram · You'll get an alert" : "🔔 នឹងរំលឹកម៉ោង 9:00 ព្រឹក · Alert at 9:00 AM"
-  ].filter(Boolean);
-  const sent = await reply(message, lines.join("\n"), await undoKeyboard(redis, userId, "calendarEvents", id, "/#calendar"));
-  await pushAdded(userId, "📲 បានបន្ថែមព្រឹត្តិការណ៍ពី Telegram", `📅 ${event.title} · ${date.km}${event.time ? ` · ${time.km}` : ""}`, "/#calendar", "event");
-  return sent;
+  // no day and no time in the text: let the AI read it (a question, an expense
+  // written in words, …) instead of saving it as an event for today
+  if (!parsed.date && !parsed.time) {
+    const handled = await handleWithAi(message, text, { userId, payload, today, redis });
+    if (handled !== null) return handled;
+  }
+  return saveEventEntry(message, { userId, today, redis }, parsed);
 }
 
 module.exports = async (req, res) => {

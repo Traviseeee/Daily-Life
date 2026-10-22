@@ -13,6 +13,7 @@ const { payBill } = require("../lib/bill-pay");
 const { updatePayloadSafe } = require("../lib/payload-store");
 const NotifyPrefs = require("../lib/notify-prefs");
 const { resolveOwner } = require("../lib/owner");
+const { withoutSecrets } = require("../lib/ai-assist");
 
 // Redis dedupe makes a wide window safe: a late or skipped scheduler run still
 // delivers alerts that came due in the last 30 minutes, exactly once.
@@ -600,7 +601,7 @@ function notificationItems(payload) {
         time: plusMinutes(profile.weeklyReportTime, "19:00", 2), hasTime: true, url: "/#settings",
         makeFile: async () => ({
           method: "sendDocument", field: "document", mime: "application/json", filename: `mylife-backup-${today}.json`,
-          buffer: Buffer.from(JSON.stringify(payload, null, 1)),
+          buffer: Buffer.from(JSON.stringify(withoutSecrets(payload), null, 1)),
           caption: `💾 <b>Backup ប្រចាំសប្តាហ៍</b> · ${today}\nរក្សាទុកឯកសារនេះ។ ពេលត្រូវការ៖ Settings → Import`
         })
       });
@@ -739,7 +740,8 @@ const BACKUP_MAX_BYTES = 900 * 1024;
 async function weeklyBackup(redis, userId, rawPayload) {
   const lastKey = `mylife:backup:last:${userId}`;
   if (await redis.get(lastKey)) return "recent";
-  const json = typeof rawPayload === "string" ? rawPayload : JSON.stringify(rawPayload || {});
+  // the AI key is never kept in a backup
+  const json = JSON.stringify(withoutSecrets(typeof rawPayload === "string" ? JSON.parse(rawPayload || "{}") : rawPayload || {}));
   if (json.length > BACKUP_MAX_BYTES) {
     await redis.set(lastKey, "too-big", { ex: 24 * 60 * 60 });
     return "too_big";

@@ -393,10 +393,56 @@ const MyLifeChat = (() => {
     return { html: L("ខ្ញុំមិនទាន់យល់សំណួរនេះទេ 🙏 សាកសួរម្យ៉ាងទៀត ឬចុចសំណួរខាងក្រោម។", "I didn't get that yet 🙏 Try asking another way or tap a suggestion below."), suggest: true };
   }
 
+  /* ---------------- Gemini AI (when a key is set in Settings → AI) ---------------- */
+  const aiSettings = () => (typeof AiAssist !== "undefined" ? AiAssist.settingsOf(appData) : null);
+  const aiReady = () => Boolean(aiSettings()?.enabled);
+  const wantsAi = text => /^(ai|🤖)\s*/i.test(text) || /ដំបូន្មាន|ណែនាំ|គួរ|ហេតុអ្វី|វិភាគ|ប្រៀបធៀប|សន្សំបានម៉េច|advice|advise|suggest|tips?\b|why|analy[sz]e|compare|should i/i.test(text);
+  const aiFoot = () => `<small class="mlc-note">🤖 Gemini · ${L("អាចខុសបាន សូមពិនិត្យ", "may be wrong, please check")}</small>`;
+
+  async function aiAnswer(text, offline) {
+    const settings = aiSettings();
+    const today = localDateInput();
+    const question = text.replace(/^(ai|🤖)\s*/i, "");
+    try {
+      if (/ដំបូន្មានលុយ|^money advice/i.test(question)) {
+        const out = await AiAssist.advice(appData, { today, settings, km: km() });
+        return { html: `<p>${AiAssist.toHtml(out, escapeHtml).replace(/\n/g, "<br>")}</p>${aiFoot()}`, actions: [link(L("💰 មើលលុយ", "💰 Open Money"), "#money")] };
+      }
+      if (!offline.suggest || AiAssist.looksLikeQuestion(question)) {
+        const out = await AiAssist.ask(appData, question, { today, settings });
+        return { html: `<p>${AiAssist.toHtml(out, escapeHtml).replace(/\n/g, "<br>")}</p>${aiFoot()}` };
+      }
+      // a message the offline parser could not read → let Gemini turn it into a record
+      const parsed = await AiAssist.parseText(appData, question, { today, settings });
+      if (parsed.type === "expense" || parsed.type === "income") {
+        const out = commandMoney(parsed.items.map(item => ({ ...item, type: parsed.type })));
+        return { ...out, html: `${out.html}${aiFoot()}` };
+      }
+      if (parsed.type === "event" && parsed.event) {
+        const event = { ...parsed.event, reminder: true, remindBefore: 0 };
+        return {
+          html: `<p>${L("បន្ថែម event នេះ?", "Add this event?")}</p>${li([row(L("ចំណងជើង", "Title"), escapeHtml(event.title)), row(L("ថ្ងៃ", "Date"), formatDate(event.date)), row(L("ម៉ោង", "Time"), event.time ? fmtClock(event.time) : L("ពេញថ្ងៃ", "All day"))])}${aiFoot()}`,
+          actions: [
+            act(L("✓ បន្ថែម", "✓ Add"), () => { Store.add("calendarEvents", event); return L(`បានបន្ថែម "${event.title}" ${formatDate(event.date)} 📅`, `Added "${event.title}" on ${formatDate(event.date)} 📅`); }),
+            act(L("✏️ កែក្នុង form", "✏️ Edit in form"), () => { close(); App.openEventModal(event); })
+          ]
+        };
+      }
+      if (parsed.type === "question") {
+        const out = await AiAssist.ask(appData, question, { today, settings });
+        return { html: `<p>${AiAssist.toHtml(out, escapeHtml).replace(/\n/g, "<br>")}</p>${aiFoot()}` };
+      }
+      return parsed.reply ? { html: `<p>${escapeHtml(parsed.reply)}</p>${aiFoot()}` } : offline;
+    } catch (error) {
+      console.warn("MYLIFE AI:", error.code || error.message);
+      return { html: `<p>🤖 ${escapeHtml(AiAssist.errorText(error, km()))}</p>`, actions: error.code === "bad_key" || error.code === "no_key" ? [link(L("⚙️ ការកំណត់ AI", "⚙️ AI settings"), "#settings/ai")] : [] };
+    }
+  }
+
   /* ---------------- UI ---------------- */
-  const SUGGESTIONS = () => (km()
+  const SUGGESTIONS = () => [...(aiReady() ? [L("🤖 ដំបូន្មានលុយ", "🤖 Money advice")] : []), ...(km()
     ? ["ថ្ងៃនេះមានអ្វី?", "ខែនេះចាយប៉ុន្មាន?", "នៅសល់ប៉ុន្មាន?", "វិក្កយបត្រណាត្រូវបង់?", "ថ្ងៃកំណើតជិតដល់", "គោលដៅ", "ជំនួយ"]
-    : ["What's on today?", "How much did I spend this month?", "How much is left?", "Which bills to pay?", "Upcoming birthdays", "Goals", "Help"]);
+    : ["What's on today?", "How much did I spend this month?", "How much is left?", "Which bills to pay?", "Upcoming birthdays", "Goals", "Help"])];
 
   function saveHistory() {
     try { sessionStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(-30).map(m => ({ from: m.from, html: m.html })))); } catch (error) { /* ignore */ }
@@ -433,10 +479,15 @@ const MyLifeChat = (() => {
     typing.innerHTML = '<div class="mlc-bubble"><i></i><i></i><i></i></div>';
     root.querySelector("[data-mlc-messages]").appendChild(typing);
     root.querySelector("[data-mlc-messages]").scrollTop = 1e9;
-    setTimeout(() => {
-      typing.remove();
+    setTimeout(async () => {
       let answer;
       try { answer = reply(clean); } catch (error) { answer = { html: L("មានបញ្ហាបន្តិច 🙏 សាកម្ដងទៀត។", "Something went wrong 🙏 Please try again.") }; console.warn(error); }
+      // Gemini: advice / "why" questions, and anything the offline answers did not understand
+      if (aiReady() && (answer.suggest || wantsAi(clean))) {
+        answer = await aiAnswer(clean, answer);
+        if (!root) return;
+      }
+      typing.remove();
       push({ from: "bot", html: answer.html, actions: answer.actions });
       if (typeof Sound !== "undefined") Sound.play("pop");
       if (answer.go) setTimeout(() => { close(); location.hash = answer.go; }, 450);
@@ -457,7 +508,7 @@ const MyLifeChat = (() => {
       <section class="mlc-panel" role="dialog" aria-modal="true" aria-label="MYLIFE Chat">
         <header class="mlc-head">
           <span class="mlc-avatar">${Icons.spark()}</span>
-          <div><strong>MYLIFE Chat</strong><small>${L("ឆ្លើយពីទិន្នន័យរបស់អ្នក · ឯកជន", "Answers from your data · private")}</small></div>
+          <div><strong>MYLIFE Chat</strong><small>${aiReady() ? L("ឆ្លើយពីទិន្នន័យរបស់អ្នក · 🤖 Gemini AI បើក", "Answers from your data · 🤖 Gemini AI on") : L("ឆ្លើយពីទិន្នន័យរបស់អ្នក · ឯកជន", "Answers from your data · private")}</small></div>
           <button class="icon-button" type="button" data-mlc-clear title="${L("សម្អាត", "Clear")}" aria-label="${L("សម្អាត", "Clear")}">${Icons.trash()}</button>
           <button class="icon-button" type="button" data-mlc-close aria-label="${L("បិទ", "Close")}">${Icons.close()}</button>
         </header>
