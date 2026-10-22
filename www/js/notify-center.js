@@ -150,9 +150,9 @@ const NotifyCenter = (() => {
     const pill = (tone, text) => `<span class="nfc-ma-pill is-${tone}">${text}</span>`;
     const dayEvery = day => L(`ថ្ងៃ ${day} រាល់ខែ`, `Day ${day} monthly`);
 
-    const row = ({ kind, id, icon, name, amount, currency, meta, status, switchOn, switchable, warn }) => `
+    const row = ({ kind, id, icon, tone, name, amount, currency, meta, status, switchOn, switchable, warn }) => `
       <div class="nfc-row nfc-sub nfc-ma-item ${switchable && !switchOn ? "is-off" : ""}">
-        <span class="nfc-ma-icon">${icon}</span>
+        <span class="nfc-ma-icon is-${tone}">${icon}</span>
         <button type="button" class="nfc-ma-open" data-nfc-ma-edit="${kind}:${escapeAttr(id)}">
           <strong>${escapeHtml(name)}</strong>
           <small>${amount > 0 ? `<b>${escapeHtml(plain(amount, currency))}</b> · ` : ""}${meta}</small>
@@ -161,20 +161,20 @@ const NotifyCenter = (() => {
         ${switchable ? toggle(`data-nfc-ma-item="${kind}:${escapeAttr(id)}" ${locked ? "disabled" : ""}`, switchOn, name) : ""}
       </div>`;
 
-    const waitPill = key => (later.has(key) ? pill("later", `⏰ ${L("ស្អែក", "Tmrw")}`) : pill("wait", `⏳ ${L("រង់ចាំ", "Waiting")}`));
+    const waitPill = key => (later.has(key) ? pill("later", `${Icons.bell()}${L("ស្អែក", "Tmrw")}`) : pill("wait", `<i class="nfc-ma-dot"></i>${L("រង់ចាំ", "Waiting")}`));
 
     const incomes = (appData.income || []).map(income => {
       const date = MoneyDue.incomeDateInMonth(income, month);
       const got = MoneyDue.incomeReceived(income, month);
       const freq = income.frequency || "Monthly";
       const day = Number(/^\d{4}-\d{2}-(\d{2})/.exec(String(income.nextPaymentDate || ""))?.[1] || 0);
-      const meta = !income.nextPaymentDate ? `⚠️ ${L("គ្មានថ្ងៃ", "No day")}` : freq === "Monthly" ? dayEvery(day) : freq === "Weekly" ? L("ប្រចាំសប្តាហ៍", "Weekly") : short(income.nextPaymentDate);
+      const meta = !income.nextPaymentDate ? `<span class="nfc-ma-warn">${L("គ្មានថ្ងៃ", "No day")}</span>` : freq === "Monthly" ? dayEvery(day) : freq === "Weekly" ? L("ប្រចាំសប្តាហ៍", "Weekly") : short(income.nextPaymentDate);
       let status = "";
-      if (got) status = pill("ok", `✅ ${L("បានទទួល", "Got it")}`);
+      if (got) status = pill("ok", `${Icons.check()}${L("បានទទួល", "Got it")}`);
       else if (date && waitingKeys.has(`income:${income.id}`)) status = waitPill(`income:${income.id}:${month}`);
       else if (date && date > today) status = pill("soon", short(date));
       else if (income.nextPaymentDate) { const nd = MoneyDue.incomeDateInMonth(income, nextMonth); if (nd) status = pill("soon", short(nd)); }
-      return row({ kind: "income", id: income.id, icon: "💰", name: income.name || L("ចំណូល", "Income"), amount: Number(income.amount || 0), currency: income.currency, meta, status, switchOn: income.ask !== false, switchable: true, warn: !income.nextPaymentDate });
+      return row({ kind: "income", id: income.id, icon: Icons.salary(), tone: "income", name: income.name || L("ចំណូល", "Income"), amount: Number(income.amount || 0), currency: income.currency, meta, status, switchOn: income.ask !== false, switchable: true, warn: !income.nextPaymentDate });
     });
 
     const loans = (appData.loans || []).map(loan => {
@@ -184,32 +184,32 @@ const NotifyCenter = (() => {
       const finished = loan.dueDate && loan.dueDate < `${month}-01`;
       const paid = date && (loan.payments || []).some(payment => payment.date === date);
       const linked = (appData.bills || []).some(bill => bill.loanId === loan.id);
-      const meta = !first ? `⚠️ ${L("គ្មានថ្ងៃ", "No day")}` : finished ? L("បង់អស់ហើយ", "Finished") : `${dayEvery(day)}${linked ? " · 🔗" : ""}`;
+      const meta = !first ? `<span class="nfc-ma-warn">${L("គ្មានថ្ងៃ", "No day")}</span>` : finished ? L("បង់អស់ហើយ", "Finished") : `${dayEvery(day)}${linked ? ` · ${L("ភ្ជាប់វិក្កយបត្រ", "linked bill")}` : ""}`;
       let status = "";
       if (first && !finished) {
-        if (paid) status = pill("ok", `✅ ${L("បានបង់", "Paid")}`);
+        if (paid) status = pill("ok", `${Icons.check()}${L("បានបង់", "Paid")}`);
         else if (waitingKeys.has(`loan:${loan.id}`)) status = waitPill(`loan:${loan.id}:${date}`);
         else if (date && date > today) status = pill("soon", short(date));
       }
-      return row({ kind: "loan", id: loan.id, icon: "🏦", name: loan.name || L("កម្ចី", "Loan"), amount: Number(loan.monthlyPayment || 0), currency: loan.currency, meta, status, switchOn: loan.ask !== false, switchable: true, warn: !first });
+      return row({ kind: "loan", id: loan.id, icon: Icons.loan(), tone: "loan", name: loan.name || L("កម្ចី", "Loan"), amount: Number(loan.monthlyPayment || 0), currency: loan.currency, meta, status, switchOn: loan.ask !== false, switchable: true, warn: !first });
     });
 
     const bills = (appData.bills || []).slice().sort((a, b) => String(a.due || "9").localeCompare(String(b.due || "9"))).map(bill => {
       const paid = MoneyDue.billPaidThisCycle(bill, today);
-      const meta = !bill.due ? `⚠️ ${L("គ្មានថ្ងៃ", "No day")}` : `${optionLabel(bill.frequency || "Monthly")}${bill.autoPay ? ` · 🔁 ${L("ស្វ័យប្រវត្តិ", "Auto")}` : ""}${bill.loanId ? " · 🔗" : ""}`;
+      const meta = !bill.due ? `<span class="nfc-ma-warn">${L("គ្មានថ្ងៃ", "No day")}</span>` : `${optionLabel(bill.frequency || "Monthly")}${bill.autoPay ? ` · ${L("ស្វ័យប្រវត្តិ", "Auto")}` : ""}${bill.loanId ? ` · ${L("ភ្ជាប់កម្ចី", "linked loan")}` : ""}`;
       let status = "";
-      if (paid && bill.lastPaidAt) status = pill("ok", `✅ ${L("បានបង់", "Paid")}`);
+      if (paid && bill.lastPaidAt) status = pill("ok", `${Icons.check()}${L("បានបង់", "Paid")}`);
       else if (waitingKeys.has(`bill:${bill.id}`)) status = waitPill(`bill:${bill.id}:${bill.due}`);
       else if (bill.due && bill.due > today) status = pill("soon", short(bill.due));
-      return row({ kind: "bill", id: bill.id, icon: "🧾", name: bill.name || L("វិក្កយបត្រ", "Bill"), amount: Number(bill.amount || 0), currency: bill.currency, meta, status, switchOn: bill.reminder !== false, switchable: !bill.autoPay, warn: !bill.due });
+      return row({ kind: "bill", id: bill.id, icon: Icons.bill(), tone: "bill", name: bill.name || L("វិក្កយបត្រ", "Bill"), amount: Number(bill.amount || 0), currency: bill.currency, meta, status, switchOn: bill.reminder !== false, switchable: !bill.autoPay, warn: !bill.due });
     });
 
     const all = [...incomes, ...loans, ...bills];
     return `<div>
-      <h2 class="nfc-label">💸 ${L("សួរលុយចូល · លុយចេញ", "Money check-in")}</h2>
+      <h2 class="nfc-label">${L("សួរលុយចូល · លុយចេញ", "Money check-in")}</h2>
       <div class="nfc-group nfc-ma-group ${off ? "is-disabled" : ""}">
         <div class="nfc-row ${on && !off ? "" : "is-off"}">
-          <span class="nfc-ma-icon nfc-ma-main">💸</span>
+          <span class="nfc-ma-icon nfc-ma-main">${Icons.wallet()}</span>
           <span class="nfc-copy"><strong>${L("សួរពេលដល់ថ្ងៃ", "Ask on the day")}</strong><small>${L("App + Telegram", "App + Telegram")}</small></span>
           ${waiting.length ? `<button type="button" class="nfc-ma-now" data-nfc-ask-now ${locked ? "disabled" : ""}>${L("សួរឥឡូវ", "Ask now")} <b>${waiting.length}</b></button>` : ""}
           ${toggle(`data-nfc-money-ask ${off ? "disabled" : ""}`, on && !off, L("សួរពេលដល់ថ្ងៃ", "Ask on the day"))}

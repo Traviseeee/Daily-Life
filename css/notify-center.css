@@ -128,3 +128,19 @@
 .nfc-ma-now b { display: grid; place-items: center; min-width: 20px; height: 20px; border-radius: 999px; font-size: 0.72rem; color: #c5ff60; background: #142a04; }
 .nfc-ma-now:disabled { opacity: 0.5; cursor: default; }
 .nfc-ma-item.is-off .nfc-ma-open, .nfc-ma-item.is-off .nfc-ma-pill { opacity: 0.45; }
+
+/* svg icons instead of emoji */
+.nfc-ma-icon svg { width: 18px; height: 18px; }
+.nfc-ma-main { color: #142a04; }
+.nfc-ma-main svg { width: 20px; height: 20px; }
+.nfc-ma-icon.is-income { color: #23864f; background: rgba(35, 134, 79, 0.12); }
+.nfc-ma-icon.is-loan { color: #2f6fb0; background: rgba(47, 111, 176, 0.12); }
+.nfc-ma-icon.is-bill { color: #b8580c; background: rgba(240, 165, 48, 0.14); }
+:root:not([data-theme="light"]) .nfc-ma-icon.is-income { color: #8fe0a8; background: rgba(143, 224, 168, 0.12); }
+:root:not([data-theme="light"]) .nfc-ma-icon.is-loan { color: #8cc4ff; background: rgba(140, 196, 255, 0.12); }
+:root:not([data-theme="light"]) .nfc-ma-icon.is-bill { color: #ffc27a; background: rgba(255, 194, 122, 0.12); }
+.nfc-ma-pill { display: inline-flex; align-items: center; gap: 4px; }
+.nfc-ma-pill svg { width: 13px; height: 13px; }
+.nfc-ma-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.nfc-ma-warn { color: #b8580c; font-weight: 700; }
+:root:not([data-theme="light"]) .nfc-ma-warn { color: #ffc27a; }

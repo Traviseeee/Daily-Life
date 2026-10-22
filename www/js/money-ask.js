@@ -55,7 +55,7 @@ const MoneyAsk = (() => {
 
   function rowHtml(item) {
     const amount = amountText(item);
-    const icon = item.kind === "income" ? "💰" : item.kind === "loan" ? "🏦" : "🧾";
+    const icon = item.kind === "income" ? Icons.salary() : item.kind === "loan" ? Icons.loan() : Icons.bill();
     const question = item.kind === "income"
       ? L(`បានទទួល${amount ? ` ${amount}` : ""} ហើយឬនៅ?`, `Got ${amount || "it"} yet?`)
       : L(`បានបង់${amount ? ` ${amount}` : ""} ហើយឬនៅ?`, `Paid ${amount || "it"} yet?`);
@@ -115,7 +115,7 @@ const MoneyAsk = (() => {
     node.setAttribute("role", "dialog");
     node.setAttribute("aria-modal", "true");
     node.innerHTML = `<div class="ma-card">
-      <div class="ma-head"><span class="ma-head-icon">💸</span><div><strong>${escapeHtml(L("លុយចូល · លុយចេញ ថ្ងៃនេះ", "Money due today"))}</strong><small>${escapeHtml(L("ឆ្លើយម្តង កត់ម្តង — មិនស្ទួន", "Answer once, saved once"))}</small></div><button type="button" class="ma-close" data-ma-close aria-label="Close">${Icons.close()}</button></div>
+      <div class="ma-head"><span class="ma-head-icon">${Icons.wallet()}</span><div><strong>${escapeHtml(L("លុយចូល · លុយចេញ ថ្ងៃនេះ", "Money due today"))}</strong><small>${escapeHtml(L("ឆ្លើយម្តង កត់ម្តង — មិនស្ទួន", "Answer once, saved once"))}</small></div><button type="button" class="ma-close" data-ma-close aria-label="Close">${Icons.close()}</button></div>
       <div class="ma-list">${list.map(rowHtml).join("")}</div>
     </div>`;
     document.body.appendChild(node);

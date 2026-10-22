@@ -37,3 +37,10 @@
 .ma-done[data-tone="later"] { color: #a9c9b4; background: rgba(255, 255, 255, 0.06); }
 .ma-done[data-tone="warn"] { color: #ffd08a; background: rgba(240, 165, 48, 0.14); }
 .ma-row.is-done .ma-row-top { opacity: 0.6; }
+
+.ma-icon svg { width: 19px; height: 19px; }
+.ma-icon.ma-income { color: #c5ff60; }
+.ma-icon.ma-bill { color: #ffc27a; background: rgba(255, 194, 122, 0.12); }
+.ma-icon.ma-loan { color: #8cc4ff; background: rgba(140, 196, 255, 0.12); }
+.ma-head-icon { color: #142a04; }
+.ma-head-icon svg { width: 22px; height: 22px; }
