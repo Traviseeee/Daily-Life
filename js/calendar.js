@@ -59,7 +59,7 @@ function renderCalendar(view = "month") {
     const isSelected = iso === selectedCalendarDate;
     const todayIso = localDateInput();
     const dayState = iso ? `${iso === todayIso ? "is-today" : iso < todayIso ? "is-past" : ""} ${events.length ? "has-items" : "no-items"}` : "";
-    return `<button class="day ${iso ? "has-date" : "empty-day"} ${dayState} ${isWeekend ? "weekend" : ""} ${holiday ? "public-holiday" : ""} ${isSelected ? "selected-day" : ""}" type="button" ${iso ? `data-calendar-date="${iso}"` : "disabled"} aria-pressed="${isSelected}" aria-label="${iso ? formatDate(iso) : ""}"><strong>${iso ? Number(iso.slice(8)) : ""}</strong>${holiday ? `<span class="holiday-label" title="${escapeAttr(holiday.name)}">${languageCode() === "km" ? "ថ្ងៃឈប់សម្រាក" : "Holiday"}</span>` : ""}<span class="calendar-event-indicators">${calendarEventIndicators(events)}</span></button>`;
+    return `<button class="day ${iso ? "has-date" : "empty-day"} ${dayState} ${isWeekend ? "weekend" : ""} ${holiday ? "public-holiday" : ""} ${isSelected ? "selected-day" : ""}" type="button" ${iso ? `data-calendar-date="${iso}"` : "disabled"} aria-pressed="${isSelected}" aria-label="${iso ? formatDate(iso) : ""}"><strong>${iso ? Number(iso.slice(8)) : ""}</strong>${holiday ? `<span class="holiday-label" title="${escapeAttr(holiday.name)}">${languageCode() === "km" ? "ថ្ងៃឈប់សម្រាក" : "Holiday"}</span>` : ""}<span class="calendar-event-indicators">${calendarEventIndicators(events)}</span>${view === "month" ? calendarDots(events, holiday) : ""}</button>`;
   });
 
   const locale = languageCode() === "km" ? "km-KH" : "en-US";
@@ -87,14 +87,14 @@ function renderCalendar(view = "month") {
 
   return `
     <section class="page">
-      <div class="page-header">
+      <div class="page-header cal-head">
         <div>
           <h1 class="page-title page-title-with-icon"><span class="page-title-icon">${Icons.calendar()}</span>${t("calendar")}</h1>
           <p class="page-subtitle">${t("calendarSubtitle")}</p>
         </div>
-        <button class="button" data-action="add-calendar">${Icons.plus()} ${t("addEvent")}</button>
+        <button class="cal-add" type="button" data-action="add-calendar" aria-label="${escapeAttr(t("addEvent"))}" title="${escapeAttr(t("addEvent"))}">${Icons.plus()}</button>
       </div>
-      <div class="tabs">${[["month", "month"], ["week", "week"], ["day", "day"]].map(([id, label]) => `<a class="tab ${view === id ? "active" : ""}" href="#calendar/${id}/${id === "month" ? visibleMonth : selectedLinkDate}">${t(label)}</a>`).join("")}</div>
+      <div class="tabs cal-seg">${[["month", "month"], ["week", "week"], ["day", "day"]].map(([id, label]) => `<a class="tab ${view === id ? "active" : ""}" href="#calendar/${id}/${id === "month" ? visibleMonth : selectedLinkDate}">${t(label)}</a>`).join("")}</div>
       <article class="glass-card card-pad">
         <div class="calendar-toolbar">
           <div>
@@ -126,9 +126,17 @@ function dayDetailRows(date, events) {
   const today = localDateInput();
   const now = new Date();
   const nowTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+  const spent = events.filter(event => event.source === "expense");
   const sorted = events
-    .filter(event => event.source !== "holiday")
+    .filter(event => event.source !== "holiday" && event.source !== "expense")
     .sort((a, b) => (a.time || "").localeCompare(b.time || ""));
+  // all the day's spending in one row (it opens the expense list)
+  const spentRow = spent.length ? `<a class="calendar-detail-event tone-row cde-spent" href="#money/expenses" style="--tone:${CALENDAR_TONES.expense.color}">
+      <span class="cde-icon">💸</span>
+      <div class="cde-main"><strong>${isKm ? `ចំណាយ ${spent.length} មុខ` : `${spent.length} expense${spent.length > 1 ? "s" : ""}`}</strong><small>${escapeHtml(spent.slice(0, 3).map(item => String(item.title || "").replace(/^[^:]+:\s*/, "")).join(" · "))}${spent.length > 3 ? " …" : ""}</small></div>
+      <span class="cde-amount">${money(spent.reduce((sum, item) => sum + toProfileCurrency(item.amount, item.currency), 0))}</span>
+      <span class="icon-button cde-action" aria-hidden="true">${Icons.chevron()}</span>
+    </a>` : "";
   const nextId = date === today ? sorted.find(event => event.time && event.time >= nowTime)?.id : null;
   return sorted.map(event => {
     const state = date < today || (date === today && event.time && event.time < nowTime) ? "is-past" : event.id === nextId ? "is-next" : "";
@@ -144,7 +152,7 @@ function dayDetailRows(date, events) {
       <span class="cde-time">${state === "is-next" ? `<em>${isKm ? "បន្ទាប់" : "Next"}</em>` : ""}${when}</span>
       ${action}
     </div>`;
-  }).join("");
+  }).join("") + spentRow;
 }
 
 function renderSelectedDayDetails(date, monthEvents) {
@@ -458,6 +466,10 @@ function calendarDateInput(date) {
 const CALENDAR_TONES = {
   personal: { color: "#5aa9ff", km: "ផ្ទាល់ខ្លួន", en: "Personal" },
   family: { color: "#ff7eb3", km: "គ្រួសារ", en: "Family" },
+  work: { color: "#7c83ff", km: "ការងារ", en: "Work" },
+  health: { color: "#2dd4bf", km: "សុខភាព", en: "Health" },
+  learning: { color: "#e2b04a", km: "ការសិក្សា", en: "Learning" },
+  love: { color: "#ff5fa2", km: "ស្នេហា", en: "Love" },
   goal: { color: "#b38cff", km: "គោលដៅ", en: "Goal" },
   bill: { color: "#ffad4a", km: "វិក្កយបត្រ", en: "Bill" },
   loan: { color: "#ff6b7a", km: "កម្ចី", en: "Loan" },
@@ -498,6 +510,18 @@ function calendarEventIndicators(events) {
   if (remaining <= 0) return visibleEvents;
   const hiddenTitles = events.slice(2).map(event => event.title).join(", ");
   return `${visibleEvents}<span class="event-more" title="${escapeAttr(hiddenTitles)}" aria-label="${remaining} ${escapeAttr(t("events"))}">+${remaining}</span>`;
+}
+
+// Month cell (phone): up to 3 dots, one per kind of plan (holiday first), and
+// "+N" for the rest. Spending and memories are history, not plans, so they
+// stay in the day list below and do not crowd the cell.
+function calendarDots(events, holiday) {
+  const plans = events.filter(event => !AGENDA_HIDDEN_SOURCES.has(event.source));
+  const tones = [...new Set([...(holiday ? ["holiday"] : []), ...plans.map(calendarTone)])];
+  if (!tones.length) return '<span class="cal-dots"></span>';
+  const shown = tones.slice(0, 3);
+  const more = plans.length + (holiday ? 1 : 0) - shown.length;
+  return `<span class="cal-dots">${shown.map(tone => `<i style="--tone:${CALENDAR_TONES[tone].color}"></i>`).join("")}</span>${more > 0 ? `<span class="cal-more">+${more}</span>` : ""}`;
 }
 
 function eventRow(event) {

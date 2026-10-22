@@ -1,0 +1,38 @@
+/* Calendar (js/calendar.js): small round + button, segmented month/week/day,
+   and on phones a calm month grid — coloured dots per kind instead of chips. */
+.cal-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.cal-add { display: grid; place-items: center; flex: 0 0 46px; width: 46px; height: 46px; padding: 0; border: 0; border-radius: 50%; color: #142a04; background: #c5ff60; box-shadow: 0 6px 16px rgba(197, 255, 96, 0.28); cursor: pointer; transition: transform 140ms ease; }
+.cal-add:hover { transform: translateY(-1px); }
+.cal-add:active { transform: scale(0.94); }
+.cal-add svg { width: 22px; height: 22px; }
+
+.tabs.cal-seg { display: inline-flex; gap: 2px; padding: 3px; border: 1px solid rgba(127, 140, 133, 0.22); border-radius: 999px; background: rgba(127, 140, 133, 0.12); }
+.tabs.cal-seg .tab { min-width: 76px; justify-content: center; border: 0; border-radius: 999px; color: var(--text-secondary); background: transparent; box-shadow: none; }
+.tabs.cal-seg .tab.active { color: var(--text-primary); background: rgba(255, 255, 255, 0.16); box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18); }
+:root[data-theme="light"] .tabs.cal-seg .tab.active { background: #fff; box-shadow: 0 1px 4px rgba(16, 32, 26, 0.12); }
+
+.cal-dots, .cal-more { display: none; }
+
+@media (max-width: 700px) {
+  .cal-head .page-subtitle { display: none; }
+  .tabs.cal-seg { display: flex; width: 100%; }
+  .tabs.cal-seg .tab { flex: 1; min-width: 0; }
+
+  .calendar-grid[data-calendar-view="month"] .day { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 4px; min-height: 54px; padding: 8px 2px 6px; }
+  .calendar-grid[data-calendar-view="month"] .day strong { margin: 0; }
+  .calendar-grid[data-calendar-view="month"] .calendar-event-indicators,
+  .calendar-grid[data-calendar-view="month"] .holiday-label { display: none !important; }
+  .calendar-grid[data-calendar-view="month"] .cal-dots { display: flex; justify-content: center; gap: 3px; min-height: 6px; }
+  .calendar-grid[data-calendar-view="month"] .cal-dots i { display: block; width: 6px; height: 6px; border-radius: 50%; background: var(--tone); }
+  .calendar-grid[data-calendar-view="month"] .cal-more { display: block; font-size: 0.6rem; font-weight: 800; line-height: 1; color: var(--text-secondary); }
+  .calendar-grid[data-calendar-view="month"] .day.is-today .cal-dots i { box-shadow: 0 0 0 1.5px rgba(0, 0, 0, 0.25); }
+}
+
+/* header stays one row on every screen: title left, + right */
+html body .page-header.cal-head { display: flex !important; flex-direction: row !important; align-items: center; justify-content: space-between; text-align: left; }
+html body .page-header.cal-head > div { min-width: 0; }
+a.cde-spent { text-decoration: none; color: inherit; }
+@media (max-width: 700px) {
+  .calendar-grid[data-calendar-view="month"] { grid-template-rows: auto; }
+  .calendar-grid[data-calendar-view="month"] .calendar-weekday { padding-bottom: 2px; }
+}
