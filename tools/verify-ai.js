@@ -213,6 +213,10 @@ const KEY = "AIzaTEST_fake_key_1234567890";
   let noKey = "";
   try { await AI.callGemini({ apiKey: "" }, { prompt: "x" }); } catch (e) { noKey = e.code; }
   check("no key → no_key", noKey === "no_key");
+  let badChars = "";
+  gemini = [];
+  try { await AI.callGemini({ apiKey: "AQ.Ab8RN6\u2026SKkg_fake_key_000000000000000" }, { prompt: "x" }); } catch (e) { badChars = e.code; }
+  check("key with … or • → bad_chars, nothing sent", badChars === "bad_chars" && gemini.length === 0 && /•••/.test(AI.errorText({ code: "bad_chars" })));
   check("errors read as Khmer sentences", /API key/.test(AI.errorText({ code: "bad_key" })) && /ឥតគិតថ្លៃ/.test(AI.errorText({ code: "quota" })));
 
   // settings + secrets

@@ -49,6 +49,8 @@ class AiError extends Error {
 
 async function callGemini(settings, { system, prompt, json = false, maxTokens = 700, temperature = 0.4, timeoutMs = 14000, totalMs = 40000 }) {
   if (!settings || !settings.apiKey) throw new AiError("no_key", "No Gemini API key");
+  // a key with "•", "…" or other symbols can't even be sent (and would never work)
+  if (/[^A-Za-z0-9._\-]/.test(settings.apiKey)) throw new AiError("bad_chars", "The saved key has characters a key never has");
   const order = [settings.model, goodModel, ...MODELS].filter(Boolean);
   const models = order.filter((model, index) => order.indexOf(model) === index);
   const started = Date.now();
@@ -128,6 +130,7 @@ function errorText(error, km = true, withDetail = false) {
   const T = {
     no_key: ["មិនទាន់មាន API key ទេ។ ដាក់ key នៅ ការកំណត់ → AI។", "No API key yet. Add one in Settings → AI."],
     bad_key: ["Google ថា API key មិនត្រឹមត្រូវ។ ចម្លង key ទាំងមូលពី AI Studio ម្ដងទៀត (កុំចម្លងពីបញ្ជីដែលលាក់ ••••)។", "Google says the API key is not valid. Copy the whole key from AI Studio again (not the hidden •••• one)."],
+    bad_chars: ["Key ដែលបានរក្សាទុកមានតួអក្សរខុស (ប្រហែលចម្លង key ដែលលាក់ •••/…)។ នៅ AI Studio ចុចលើ key ហើយចុច Copy រួចដាក់ម្ដងទៀត។", "The saved key has wrong characters (probably the hidden •••/… version). In AI Studio open the key, press Copy and paste it again."],
     api_off: ["Key នេះមិនទាន់បើក Gemini API ទេ។ បង្កើត key ថ្មីនៅ aistudio.google.com/apikey។", "Gemini API is not turned on for this key. Create a new key at aistudio.google.com/apikey."],
     region: ["Google មិនទាន់អនុញ្ញាត Gemini API ពីទីតាំងនេះទេ។", "Google doesn't allow the Gemini API from this location yet."],
     restricted: ["Key នេះមានការកំណត់ (restriction) ដែលបិទ app នេះ។ ដក restriction ឬបង្កើត key ថ្មី។", "This key has a restriction that blocks the app. Remove it or create a new key."],
@@ -138,7 +141,7 @@ function errorText(error, km = true, withDetail = false) {
   };
   const pair = T[code] || ["AI មានបញ្ហាបន្តិច។ សាកម្ដងទៀត។", "The AI had a problem. Please try again."];
   const text = km ? pair[0] : pair[1];
-  const detail = withDetail && error && error.message && !["no_key", "timeout"].includes(code) ? ` (Google: ${String(error.message).slice(0, 160)})` : "";
+  const detail = withDetail && error && error.message && !["no_key", "timeout", "bad_chars"].includes(code) ? ` (Google: ${String(error.message).slice(0, 160)})` : "";
   return text + detail;
 }
 

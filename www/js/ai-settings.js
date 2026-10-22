@@ -59,6 +59,17 @@ function renderAiSettingsSection() {
       Toast.show(L("សូមដាក់ key ក្នុងប្រអប់សិន។", "Paste the key in the box first."), "warning");
       return;
     }
+    // a real key is plain letters, numbers and - _ . only; "•" or "…" means it was
+    // copied from a hidden (masked) view, other symbols come from the paste
+    const odd = [...key].map((ch, index) => ({ ch, index })).filter(({ ch }) => !/[A-Za-z0-9._\-]/.test(ch));
+    if (odd.length) {
+      const first = odd[0];
+      const masked = /[•…*]/.test(odd.map(item => item.ch).join(""));
+      Toast.show(masked
+        ? L("Key នេះត្រូវបានលាក់ (•••/…)។ នៅ AI Studio ចុចលើ key ហើយចុច Copy ដើម្បីចម្លង key ពេញ។", "This key is the hidden (•••/…) version. In AI Studio open the key and press Copy to copy the full key.")
+        : L(`Key មានតួអក្សរមិនត្រឹមត្រូវ "${first.ch}" នៅតួទី ${first.index + 1}។ ចម្លង key ម្ដងទៀត។`, `The key has an invalid character "${first.ch}" at position ${first.index + 1}. Copy the key again.`), "warning");
+      return;
+    }
     if (key.length < 20 || key.length > 400 || /[<>]/.test(key)) {
       Toast.show(L(`Key ខ្លី ឬវែងពេក (${key.length} តួ)។ ចម្លង key ទាំងមូលពី AI Studio ម្ដងទៀត។`, `The key looks too short or too long (${key.length} characters). Copy the whole key from AI Studio again.`), "warning");
       return;
