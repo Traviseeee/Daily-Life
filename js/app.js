@@ -600,7 +600,7 @@ const App = {
           id: `${saving.id || saving.name}-${currentMonth}`,
           title: saving.name || "Savings contribution",
           body: `${t("monthlyContribution")}: ${typeof formatPlainMoney === "function" ? formatPlainMoney(monthlyAmount, saving.currency) : monthlyAmount}`,
-          date: `${currentMonth}-01`,
+          date: typeof MoneyDue !== "undefined" ? MoneyDue.savingsDayInMonth(appData, currentMonth) : `${currentMonth}-01`,
           url: "/#money/savings"
         });
       }

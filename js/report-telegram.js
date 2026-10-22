@@ -42,7 +42,8 @@ const ReportTelegram = (() => {
       `💵 ${L("ចំណូល", "Income")}: <b>${plain(r.incomeTotal)}</b>`,
       `💸 ${L("ចំណាយ", "Spent")}: <b>${plain(r.expenseTotal)}</b>`,
       r.loanPaymentTotal ? `🏦 ${L("កម្ចី", "Loans")}: <b>${plain(r.loanPaymentTotal)}</b>` : "",
-      `${net >= 0 ? "🟢" : "🔴"} ${L("សល់", "Net")}: <b>${plain(net)}</b>`
+      `${net >= 0 ? "🟢" : "🔴"} ${L("សល់", "Net")}: <b>${plain(net)}</b>`,
+      r.savingsGoalCount ? `🐷 ${L("ដាក់សន្សំ", "Saved")}: <b>${plain(r.savedTotal)}</b> (${r.savedCount}/${r.savingsGoalCount})` : ""
     ].filter(Boolean).join("\n");
   }
 

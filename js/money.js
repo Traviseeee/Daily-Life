@@ -905,6 +905,7 @@ function renderReports() {
       <div class="financial-report-metric payments"><span>${t("monthlyPayment")}</span><strong>${money(report.loanPaymentTotal)}</strong></div>
       <div class="financial-report-metric cash-flow"><span>${t("netCashFlow")}</span><strong>${money(report.netCashFlow)}</strong></div>
     </div>
+    ${report.savingsGoalCount ? `<p class="financial-report-saved"><span>${Icons.savings()}</span>${escapeHtml(languageCode() === "km" ? "ដាក់សន្សំខែនេះ" : "Saved this month")} <strong>${money(report.savedTotal)}</strong><small>${report.savedCount}/${report.savingsGoalCount}</small></p>` : ""}
     ${typeof ReportInsights !== "undefined" ? (() => {
       const info = ReportInsights.build(month);
       return `<div class="financial-report-insights">
@@ -978,6 +979,10 @@ function buildMonthlyFinanceReport(month) {
   const incomeTotal = incomeRows.reduce((total, row) => total + row.amount, 0);
   const expenseTotal = sumMoney(monthExpenses, "amount");
   const loanPaymentTotal = paymentRows.reduce((total, row) => total - row.amount, 0);
+  // money put into savings this month (ticked on the card, the pop-up after salary, or Telegram ✅)
+  const savingGoals = (appData.savings || []).filter(saving => Number(saving.monthlyContribution) > 0);
+  const savedEntries = (appData.savings || []).map(saving => ({ saving, entry: getSavingsContribution(saving, month) })).filter(({ entry }) => entry && entry.paid);
+  const savedTotal = savedEntries.reduce((total, { saving, entry }) => total + toProfileCurrency(Number(entry.amount || saving.monthlyContribution || 0), saving.currency), 0);
 
   return {
     month,
@@ -989,6 +994,9 @@ function buildMonthlyFinanceReport(month) {
     expenseTotal,
     loanPaymentTotal,
     netCashFlow: incomeTotal - expenseTotal - loanPaymentTotal,
+    savedTotal,
+    savedCount: savedEntries.length,
+    savingsGoalCount: savingGoals.length,
     rows: [...incomeRows, ...outflowRows]
   };
 }
@@ -999,7 +1007,8 @@ function monthlyFinanceReportHtml(report) {
     [t("monthlyIncome"), formatPlainMoney(report.incomeTotal)],
     [t("monthlyExpenses"), formatPlainMoney(report.expenseTotal)],
     [t("monthlyPayment"), formatPlainMoney(report.loanPaymentTotal)],
-    [t("netCashFlow"), formatPlainMoney(report.netCashFlow)]
+    [t("netCashFlow"), formatPlainMoney(report.netCashFlow)],
+    ...(report.savingsGoalCount ? [[languageCode() === "km" ? "ដាក់សន្សំ" : "Saved", formatPlainMoney(report.savedTotal)]] : [])
   ];
   const details = [
     [t("reportOwner"), report.ownerName],
@@ -1110,7 +1119,8 @@ async function createMonthlyFinanceReportCanvas(report) {
     [t("monthlyIncome"), formatPlainMoney(report.incomeTotal)],
     [t("monthlyExpenses"), formatPlainMoney(report.expenseTotal)],
     [t("monthlyPayment"), formatPlainMoney(report.loanPaymentTotal)],
-    [t("netCashFlow"), formatPlainMoney(report.netCashFlow)]
+    [t("netCashFlow"), formatPlainMoney(report.netCashFlow)],
+    ...(report.savingsGoalCount ? [[languageCode() === "km" ? "ដាក់សន្សំ" : "Saved", formatPlainMoney(report.savedTotal)]] : [])
   ];
   const summaryWidth = (width - margin * 2) / summary.length;
   summary.forEach(([label, value], index) => {

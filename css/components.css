@@ -8754,3 +8754,10 @@ body.money-hidden .money-value {
 :root[data-theme="dark"] .family-coming-up li.is-soon { border-color: rgba(255,159,178,0.5); background: rgba(255,159,178,0.08); }
 :root[data-theme="dark"] .family-coming-copy small,
 :root[data-theme="dark"] .family-events-empty { color: #c2dccd; border-color: rgba(201,255,179,0.14); }
+
+/* monthly report: saved this month */
+.financial-report-saved { display: flex; align-items: center; gap: 8px; margin: -8px 0 18px; padding: 10px 14px; border-radius: 14px; font-size: 0.9rem; background: color-mix(in srgb, #c5ff60 12%, transparent); }
+.financial-report-saved > span { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 9px; color: #142a04; background: #c5ff60; }
+.financial-report-saved > span svg { width: 16px; height: 16px; }
+.financial-report-saved strong { margin-left: auto; }
+.financial-report-saved small { opacity: 0.7; font-weight: 700; }

@@ -99,7 +99,18 @@ function dueToday(payload, today) {
   return out.sort((a, b) => order[a.kind] - order[b.kind] || a.date.localeCompare(b.date));
 }
 
-const api = { incomeDateInMonth, incomeReceived, recordIncomeReceived, billPaidThisCycle, dueToday };
+// the monthly-saving reminder day: salary day (the first monthly income of the month),
+// so "put money in savings" comes when the money is there — day 1 when there is no salary
+function savingsDayInMonth(payload, month) {
+  const days = (payload.income || [])
+    .filter(income => (income.frequency || "Monthly") === "Monthly" && income.recurring !== false)
+    .map(income => incomeDateInMonth(income, month))
+    .filter(Boolean)
+    .sort();
+  return days[0] || `${month}-01`;
+}
+
+const api = { incomeDateInMonth, incomeReceived, recordIncomeReceived, billPaidThisCycle, dueToday, savingsDayInMonth };
 if (typeof module !== "undefined" && module.exports) module.exports = api;
 else root.MoneyDue = api;
 })(typeof window !== "undefined" ? window : globalThis);

@@ -297,9 +297,11 @@ function digestItem(payload, today) {
       if (years !== null && years > 0) upcoming.push({ kind: "anniversary", title: member.name, days, date: day });
     });
   }
-  const overdue = (payload.bills || [])
-    .filter(bill => bill.name && bill.due && bill.due < today && bill.status !== "Paid" && bill.reminder !== false)
-    .map(bill => ({ kind: "bill", title: bill.name, extra: moneyLabel(bill.currency, bill.amount) }));
+  // still open from earlier days: late bills, loan payments, salary not answered —
+  // the same list the app pop-up keeps asking (js/money-due.js)
+  const overdue = MoneyDue.dueToday(payload, today)
+    .filter(entry => entry.overdueDays > 0)
+    .map(entry => ({ kind: entry.kind, title: entry.title, extra: [entry.amount > 0 ? moneyLabel(entry.currency, entry.amount) : "", `${entry.overdueDays} ថ្ងៃ`].filter(Boolean).join(" · ") }));
   const todayEntries = dayEntries(payload, today);
   return {
     kind: "digest",
@@ -473,7 +475,7 @@ function notificationItems(payload) {
           month: monthKey,
           title: item.name || "Savings contribution",
           body: `សន្សំខែនេះ · Monthly saving: ${moneyLabel(item.currency, monthlyAmount)}`,
-          date: `${monthKey}-01`,
+          date: MoneyDue.savingsDayInMonth(payload, monthKey),
           url: "/#money/savings"
         });
       }

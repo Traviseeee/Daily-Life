@@ -84,6 +84,8 @@ const createFakeSupabase = ({ row = null } = {}) => {
 
 const createSandbox = (client, localStorage, sessionStorage) => {
   const sandbox = {
+    // js/i18n.js loads after data.js in the app; Store.load() runs later (app.js) when t exists
+    t: key => key,
     console,
     structuredClone,
     setTimeout,

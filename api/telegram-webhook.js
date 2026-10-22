@@ -31,13 +31,14 @@ function zonedClock(ms) {
 }
 
 // Applies ✅ to the payload. Returns "updated", "already" or "missing".
-function applyDone(payload, item) {
+// opts.amount: the real amount typed after "✏️ Other amount" (bill / income)
+function applyDone(payload, item, opts = {}) {
   const today = zonedToday();
   const id = item.sourceId || item.id;
   if (item.kind === "bill") {
     const bill = (payload.bills || []).find(entry => entry.id === id);
     if (!bill) return "missing";
-    return payBill(payload, bill, today, "Telegram");
+    return payBill(payload, bill, today, "Telegram", Number(opts.amount) > 0 ? { amount: Number(opts.amount) } : {});
   }
   if (item.kind === "loan") {
     const loan = (payload.loans || []).find(entry => entry.id === id);
@@ -71,7 +72,7 @@ function applyDone(payload, item) {
     // salary day ✅: saved once per month (same rule as the app pop-up)
     const income = (payload.income || []).find(entry => entry.id === id);
     if (!income) return "missing";
-    return MoneyDue.recordIncomeReceived(income, item.month || today.slice(0, 7), { date: today, via: "Telegram" });
+    return MoneyDue.recordIncomeReceived(income, item.month || today.slice(0, 7), { date: today, via: "Telegram", amount: opts.amount });
   }
   if (item.kind === "savings-contribution") {
     const saving = (payload.savings || []).find(entry => entry.id === id);
@@ -117,6 +118,68 @@ function recordId(collection) {
 async function updatePayload(userId, mutate) {
   return updatePayloadSafe(serviceClient(), userId, mutate);
 }
+
+/* ---- salary received → "put this month's savings in?" (same record as the app) ---- */
+async function savingsOffer(userId, redis) {
+  const payload = await readPayload(userId);
+  if (!payload) return null;
+  const month = zonedToday().slice(0, 7);
+  const open = (payload.savings || []).filter(saving => Number(saving.monthlyContribution) > 0
+    && !(saving.contributions || []).some(entry => entry && entry.month === month && entry.paid)).slice(0, 4);
+  if (!open.length) return null;
+  const rows = [];
+  for (const saving of open) {
+    const token = await saveAction(redis, { userId, item: { kind: "savings-contribution", id: saving.id, sourceId: saving.id, month, title: saving.name || "Savings", url: "/#money/savings", keepOthers: true } });
+    rows.push([{ text: `🐷 ${String(saving.name || "Savings").slice(0, 22)} · ${formatMoney(Number(saving.monthlyContribution), saving.currency || payload.profile?.currency || "USD")}`, callback_data: `saved|${token}` }]);
+  }
+  rows.push([{ text: "📱 បើក MYLIFE · Open", url: appLink({ url: "/#money/savings" }) }]);
+  return { text: "🐷 <b>ដាក់សន្សំខែនេះឥឡូវ?</b>\n<i>Put this month's savings in now? ចុចមួយ ឬច្រើន</i>", keyboard: { inline_keyboard: rows } };
+}
+async function sendSavingsOffer(chatId, userId, redis) {
+  const offer = await savingsOffer(userId, redis).catch(() => null);
+  if (offer) await tgCall("sendMessage", { chat_id: chatId, text: offer.text, parse_mode: "HTML", reply_markup: offer.keyboard }).catch(() => {});
+}
+
+/* ---- "✏️ Other amount": the next number typed in the chat is the real amount ---- */
+const amountKey = chatId => `mylife:tg:amount:${chatId}`;
+function readJsonValue(value) {
+  if (!value) return null;
+  if (typeof value === "object") return value;
+  try { return JSON.parse(value); } catch (error) { return null; }
+}
+function typedAmount(text) {
+  const match = /^\s*\$?\s*([\d][\d,\s]*(?:\.\d+)?)\s*(៛|r|riel|khr|\$|usd)?\s*$/i.exec(String(text || ""));
+  if (!match) return null;
+  const value = Number(match[1].replace(/[,\s]/g, ""));
+  return value > 0 ? value : null;
+}
+async function handleTypedAmount(message, text, redis) {
+  const pending = readJsonValue(await redis.get(amountKey(message.chat.id)).catch(() => null));
+  if (!pending?.item) return undefined;
+  await redis.del(amountKey(message.chat.id)).catch(() => {});
+  const amount = typedAmount(text);
+  if (!amount) return undefined; // something else typed: cancel and read it as usual
+  const item = pending.item;
+  const result = await updatePayload(pending.userId, payload => applyDone(payload, item, { amount }));
+  const shown = formatMoney(amount, item.currency || "USD");
+  const status = result === "missing" ? "⚠️ រកមិនឃើញក្នុង MYLIFE · Not found"
+    : result === "already" ? "✅ បានកត់រួចហើយ · Already saved"
+    : item.kind === "income" ? `✅ បានទទួល ${shown} · Received` : `✅ បានបង់ ${shown} · Paid`;
+  if (pending.messageId) {
+    await tgCall("editMessageReplyMarkup", { chat_id: message.chat.id, message_id: pending.messageId, reply_markup: { inline_keyboard: [[{ text: status, callback_data: "noop" }], [{ text: "📱 បើក MYLIFE · Open", url: appLink(item) }]] } }).catch(() => {});
+  }
+  const sent = await reply(message, `${status}\n<b>${escapeHtml(item.title || "")}</b>${result === "updated" ? "\n<i>បានកត់ក្នុង MYLIFE</i>" : ""}`);
+  if (result === "updated" && item.kind === "income") {
+    await pushAdded(pending.userId, `💰 បានទទួល · ${item.title || "Income"}`, `${shown} · ពី Telegram`, "/#money/income", "income");
+    await sendSavingsOffer(message.chat.id, pending.userId, redis);
+  }
+  if (result === "updated" && item.kind === "bill") {
+    await pushAdded(pending.userId, `✅ បានបង់ · ${item.title || "Bill"}`, `${shown} · ពី Telegram`, "/#money/bills", "bill");
+  }
+  return sent;
+}
+
+const LABEL_PAID = { bill: "✅ បង់តាមចំនួនដើម · Paid as set", income: "✅ ទទួលតាមចំនួនដើម · As set" };
 
 const DONE_TEXT = {
   undo: "↩️ បានលុបវិញ · Undone",
@@ -858,6 +921,9 @@ async function handleMessage(message, redis) {
   // "/week@MyBot" in groups → "/week"
   const text = String(message.text || "").trim().replace(/^(\/[a-z]+)@\w+/i, "$1");
   if (!text) return;
+  // waiting for the real amount after "✏️ ចំនួនផ្សេង"
+  const typed = await handleTypedAmount(message, text, redis);
+  if (typed !== undefined) return typed;
   const command = commandOf(text);
   if (command === "help") {
     const sent = await reply(message, HELP_TEXT, REPLY_KEYBOARD);
@@ -1069,6 +1135,16 @@ module.exports = async (req, res) => {
       }).catch(() => {});
       await pushAdded(action.userId, "📲 បានកត់ចំណាយពី Telegram", `−${formatMoney(entry.amount, entry.currency)} · ${catLabel({ collection: "expenses", category: entry.category })} · ${entry.description}`, "/#money/expenses", "expense");
       return res.status(200).json({ ok: true });
+    } else if (verb === "other" && (item.kind === "bill" || item.kind === "income")) {
+      await redis.set(amountKey(chatId), JSON.stringify({ userId: action.userId, item, messageId: query.message?.message_id }), { ex: 900 });
+      await answer("✏️ វាយចំនួនពិត");
+      await tgCall("sendMessage", { chat_id: chatId, text: `✏️ <b>${escapeHtml(item.title || "")}</b>\nវាយចំនួនពិតជាសារ ឧ. <code>52300</code> ឬ <code>760</code>\n<i>Type the real amount${item.currency ? ` (${escapeHtml(item.currency)})` : ""}</i>`, parse_mode: "HTML", reply_markup: { force_reply: true, input_field_placeholder: "52300" } }).catch(() => {});
+      await tgCall("editMessageReplyMarkup", {
+        chat_id: chatId,
+        message_id: query.message.message_id,
+        reply_markup: { inline_keyboard: [[{ text: "✏️ រង់ចាំចំនួន… · Waiting for amount", callback_data: "noop" }], [{ text: LABEL_PAID[item.kind], callback_data: `${item.kind === "income" ? "received" : "paid"}|${token}` }], [{ text: "📱 បើក MYLIFE · Open", url: appLink(item) }]] }
+      }).catch(() => {});
+      return res.status(200).json({ ok: true });
     } else if (verb === "nomore") {
       status = "✅ ល្អណាស់! ថ្ងៃនេះកត់រួច";
       toast = "👍 រាត្រីសួស្តី";
@@ -1086,6 +1162,15 @@ module.exports = async (req, res) => {
       // tell the app right away (push → it pulls and shows the pop-up)
       if (result === "updated" && item.kind === "income") {
         await pushAdded(action.userId, `💰 បានទទួល · ${item.title || "Income"}`, "ពី Telegram · បានកត់ក្នុង MYLIFE", "/#money/income", "income");
+        await sendSavingsOffer(chatId, action.userId, redis);
+      }
+      // savings offer: tick only the pressed goal, keep the other buttons
+      if (item.keepOthers && Array.isArray(query.message?.reply_markup?.inline_keyboard)) {
+        const label = result === "missing" ? "⚠️" : `✅ ${String(item.title || "").slice(0, 22)}`;
+        const rows = query.message.reply_markup.inline_keyboard.map(row => row.map(button => (button.callback_data === query.data ? { text: label, callback_data: "noop" } : button)));
+        await answer(result === "updated" ? "🐷 បានដាក់សន្សំ" : status);
+        await tgCall("editMessageReplyMarkup", { chat_id: chatId, message_id: query.message.message_id, reply_markup: { inline_keyboard: rows } }).catch(() => {});
+        return res.status(200).json({ ok: true });
       }
       if (result === "updated" && item.kind === "bill") {
         await pushAdded(action.userId, `✅ បានបង់ · ${item.title || "Bill"}`, "ពី Telegram · បានកត់ក្នុង MYLIFE", "/#money/bills", "bill");

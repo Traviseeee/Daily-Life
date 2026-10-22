@@ -55,7 +55,7 @@ const NotifyCenter = (() => {
   const STAGE_NOTE = {
     bills: ["អាចបិទការរំលឹកវិក្កយបត្រណាមួយ ពេលកែវិក្កយបត្រនោះ។ បង់រួច វាឈប់រំលឹកដោយខ្លួនឯង។ ការបង់ស្វ័យប្រវត្តិ និងសារពី PPWSA / EDC នៅដំណើរការដដែល។", "Each bill can still be muted in its own form. Reminders stop once it's paid. Auto-pay still pays, and PPWSA / EDC messages are always recorded."],
     loans: ["រំលឹកម៉ោង 9 ព្រឹក សម្រាប់ការបង់ប្រចាំខែ។ ពេលកត់ថាបង់រួច វាឈប់រំលឹកខែនោះ។", "For each monthly payment, at 9:00 AM. Stops once that month's payment is recorded."],
-    savings: ["សម្រាប់ថ្ងៃកំណត់នៃការសន្សំ និងគោលដៅ។ ការដាក់សន្សំប្រចាំខែ រំលឹកនៅថ្ងៃទី 1។ គោលដៅនីមួយៗ អាចកំណត់ការរំលឹកបន្ថែមបានទៀត។", "For savings and goal deadlines. Monthly saving is reminded on the 1st. Each goal keeps its own reminder in its form."],
+    savings: ["សម្រាប់ថ្ងៃកំណត់នៃការសន្សំ និងគោលដៅ។ ការដាក់សន្សំប្រចាំខែ រំលឹកនៅថ្ងៃបើកប្រាក់ខែ (ឬថ្ងៃទី 1 បើគ្មានប្រាក់ខែ)។ គោលដៅនីមួយៗ អាចកំណត់ការរំលឹកបន្ថែមបានទៀត។", "For savings and goal deadlines. Monthly saving is reminded on salary day (or the 1st with no salary). Each goal keeps its own reminder in its form."],
     calendar: ["ប្រើរួមជាមួយ “រំលឹកមុន” ដែលអ្នកកំណត់ក្នុងព្រឹត្តិការណ៍នីមួយៗ។", "Adds to each event's own “remind before” option."],
     family: ["សម្រាប់ថ្ងៃកំណើត និងខួប។ ប្រើរួមជាមួយ “រំលឹកមុន” ដែលកំណត់ក្នុងព័ត៌មានសមាជិកនីមួយៗ។", "For birthdays and anniversaries. Adds to each member's own “days before” option."]
   };

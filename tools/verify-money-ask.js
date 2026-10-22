@@ -122,5 +122,18 @@ if (dispatch && dispatch.notificationItems) {
   check("Telegram: loan with linked bill → only the bill alerts", loanAlerts(linkedP).length === 0 && dispatch.notificationItems(linkedP).some(item => item.kind === "bill"));
 }
 
+/* savings reminder on salary day */
+p = base();
+check("savings day = salary day 5", MoneyDue.savingsDayInMonth(p, "2026-10") === "2026-10-05");
+check("savings day = 1st with no salary", MoneyDue.savingsDayInMonth({ income: [] }, "2026-10") === "2026-10-01");
+if (dispatch && dispatch.digestItem) {
+  const today = dispatch.zonedTodayInput();
+  const d = new Date(`${today}T00:00:00Z`); d.setUTCDate(d.getUTCDate() - 3);
+  const late = d.toISOString().slice(0, 10);
+  const dg = dispatch.digestItem({ profile: {}, income: [], bills: [{ id: "b", name: "Water", amount: 5, due: late, status: "Upcoming" }, { id: "n", name: "Netflix", amount: 9, due: late, status: "Upcoming", autoPay: true }], loans: [{ id: "l", name: "Car", monthlyPayment: 100, firstPaymentDate: late, durationMonths: 12, payments: [] }] }, today);
+  const kindsOpen = dg.digest.overdue.map(e => `${e.kind}:${e.title}`).join(",");
+  check("digest 'still open' = late bill + late loan, not auto-pay", kindsOpen === "bill:Water,loan:Car", kindsOpen);
+}
+
 console.log(`\n${pass}/${pass + fail} money-ask checks passed`);
 process.exit(fail ? 1 : 0);
