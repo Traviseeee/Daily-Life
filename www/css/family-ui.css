@@ -1,0 +1,28 @@
+/* Family (js/family.js): one-row header with a round +, and a row of round
+   photos (me · family · +). Same look as the calendar header. */
+html body .page-header.fam-head { display: flex !important; flex-direction: row !important; align-items: center; justify-content: space-between; gap: 12px; text-align: left; }
+html body .page-header.fam-head > div { min-width: 0; }
+.fam-add { display: grid; place-items: center; flex: 0 0 46px; width: 46px; height: 46px; padding: 0; border: 0; border-radius: 50%; color: #142a04; background: #c5ff60; box-shadow: 0 6px 16px rgba(197, 255, 96, 0.28); cursor: pointer; transition: transform 140ms ease; }
+.fam-add:hover { transform: translateY(-1px); }
+.fam-add:active { transform: scale(0.94); }
+.fam-add svg { width: 22px; height: 22px; }
+
+.fam-avatars { display: flex; gap: 14px; margin: 0 0 16px; padding: 4px 2px 6px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.fam-avatars::-webkit-scrollbar { display: none; }
+.fam-av { display: grid; justify-items: center; gap: 6px; flex: 0 0 auto; width: 62px; padding: 0; border: 0; font: inherit; color: var(--text-primary); background: transparent; cursor: pointer; }
+.fam-av-face { display: grid; place-items: center; width: 56px; height: 56px; overflow: hidden; border-radius: 50%; font-size: 1.05rem; font-weight: 800; color: #fff; background: linear-gradient(135deg, #7c83ff, #b38cff); box-shadow: 0 0 0 2px var(--fam-gap, #f5f7f2); }
+.fam-av-face img { width: 100%; height: 100%; object-fit: cover; }
+.fam-av small { max-width: 100%; overflow: hidden; font-size: 0.74rem; font-weight: 700; white-space: nowrap; text-overflow: ellipsis; color: var(--text-secondary); }
+.fam-av.has-ring .fam-av-face { box-shadow: 0 0 0 2px var(--fam-gap, #f5f7f2), 0 0 0 4.5px #ff7eb3; }
+.fam-av-me .fam-av-face { color: #3b5a2a; background: transparent; border: 2px dashed rgba(127, 160, 110, 0.7); box-shadow: none; }
+.fam-av-add .fam-av-face { color: #142a04; background: #c5ff60; box-shadow: none; }
+.fam-av-me .fam-av-face svg, .fam-av-add .fam-av-face svg { width: 22px; height: 22px; }
+:root:not([data-theme="light"]) .fam-avatars { --fam-gap: #0f1a14; }
+:root:not([data-theme="light"]) .fam-av-me .fam-av-face { color: #c5ff60; border-color: rgba(197, 255, 96, 0.5); }
+
+.family-profile-card.fam-flash { animation: famFlash 1.2s ease; }
+@keyframes famFlash { 0%, 100% { box-shadow: none; } 30% { box-shadow: 0 0 0 3px #c5ff60; } }
+
+@media (max-width: 700px) {
+  .fam-head .page-subtitle { display: none; }
+}

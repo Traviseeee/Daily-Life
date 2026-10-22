@@ -14,16 +14,15 @@ function renderFamily() {
 
   return `
     <section class="page family-page">
-      <div class="page-header">
+      <div class="page-header fam-head">
         <div>
           <h1 class="page-title page-title-with-icon"><span class="page-title-icon">${Icons.family()}</span>${t("family")}</h1>
           <p class="page-subtitle">${t("familySubtitle")}</p>
         </div>
-        <div class="action-row family-page-actions">
-          <button class="button ghost-button" data-action="add-self">${Icons.user()} ${t("addMyself")}</button>
-          <button class="button" data-action="add-family">${Icons.plus()} ${t("addFamilyMember")}</button>
-        </div>
+        <button class="fam-add" type="button" data-action="add-family" aria-label="${escapeAttr(t("addFamilyMember"))}" title="${escapeAttr(t("addFamilyMember"))}">${Icons.plus()}</button>
       </div>
+      ${familyAvatarRow()}
+      ${familyComingUp()}
       ${familyMediaCard()}
       <div class="grid three-col">${appData.family.map(memberCard).join("")}</div>
       ${relationshipAnniversaryCards()}
@@ -35,7 +34,7 @@ function renderFamily() {
             <button class="button ghost-button" type="button" data-action="add-event">${Icons.plus()} ${t("addEvent")}</button>
           </div>
           <div class="list family-event-list">
-            ${familyEvents.map(event => `<div class="family-event-card"><span class="icon-badge green">${Icons.calendar()}</span><div class="family-event-copy"><strong>${escapeHtml(event.title)}</strong><span>${formatDate(event.date)}</span></div><div class="family-event-actions"><button class="icon-button" data-edit-event="${escapeAttr(event.id)}" aria-label="${escapeAttr(t("editEvent"))}">${Icons.edit()}</button><button class="icon-button" data-delete-event="${escapeAttr(event.id)}" aria-label="${escapeAttr(t("deleteEvent"))}">${Icons.trash()}</button></div></div>`).join("") || emptyState(t("noFamilyEvents"), t("noFamilyEventsBody"), t("addEvent"), "add-event")}
+            ${familyEvents.map(event => `<div class="family-event-card"><span class="icon-badge green">${Icons.calendar()}</span><div class="family-event-copy"><strong>${escapeHtml(event.title)}</strong><span>${formatDate(event.date)}</span></div><div class="family-event-actions"><button class="icon-button" data-edit-event="${escapeAttr(event.id)}" aria-label="${escapeAttr(t("editEvent"))}">${Icons.edit()}</button><button class="icon-button" data-delete-event="${escapeAttr(event.id)}" aria-label="${escapeAttr(t("deleteEvent"))}">${Icons.trash()}</button></div></div>`).join("") || `<p class="family-events-empty">${Icons.calendar()}<span>${escapeHtml(t("noFamilyEvents"))}</span></p>`}
           </div>
         </article>
         <article class="glass-card card-pad family-summary-panel">
@@ -49,6 +48,30 @@ function renderFamily() {
       </div>
     </section>
   `;
+}
+
+// One row of round photos: "me" first (dashed + when not added yet), then the
+// family, then +. Tap a photo to jump to that person's card. A ring marks a
+// birthday in the next 14 days.
+function familyAvatarRow() {
+  const isKm = languageCode() === "km";
+  const today = localDateInput();
+  const soon = (() => { const d = new Date(); d.setDate(d.getDate() + 14); return localDateInput(d); })();
+  const me = appData.family.find(member => member.relationship === "Me");
+  const others = appData.family.filter(member => member !== me);
+  const colors = ["#ff7eb3", "#5aa9ff", "#b38cff", "#ffad4a", "#2dd4bf", "#7c83ff", "#ff6b7a", "#e2b04a"];
+  const colorOf = member => colors[[...String(member.id || member.name || "")].reduce((sum, ch) => sum + ch.charCodeAt(0), 0) % colors.length];
+  const face = member => member.photo ? `<img src="${escapeAttr(member.photo)}" alt="">` : escapeHtml(initials(member.name || "?"));
+  const item = (member, label) => {
+    const next = nextBirthdayDate(member.birthday);
+    const ring = next && next >= today && next <= soon;
+    return `<button class="fam-av ${ring ? "has-ring" : ""}" type="button" data-fam-jump="${escapeAttr(member.id)}" title="${escapeAttr(member.name || "")}"><span class="fam-av-face" style="background:${colorOf(member)}">${face(member)}</span><small>${escapeHtml(label)}</small></button>`;
+  };
+  return `<nav class="fam-avatars" aria-label="${escapeAttr(t("family"))}">
+    ${me ? item(me, isKm ? "ខ្ញុំ" : "Me") : `<button class="fam-av fam-av-me" type="button" data-action="add-self"><span class="fam-av-face">${Icons.plus()}</span><small>${isKm ? "ខ្ញុំ" : "Me"}</small></button>`}
+    ${others.map(member => item(member, String(member.name || "").split(/\s+/)[0] || optionLabel(member.relationship || ""))).join("")}
+    <button class="fam-av fam-av-add" type="button" data-action="add-family"><span class="fam-av-face">${Icons.plus()}</span><small>${isKm ? "បន្ថែម" : "Add"}</small></button>
+  </nav>`;
 }
 
 function familyMediaCard() {
@@ -192,7 +215,7 @@ function memberCard(member) {
   const relatedMember = appData.family.find(item => item.id === member.relatedMemberId);
   const relationshipDays = relatedMember ? daysSinceDate(member.anniversaryDate) : 0;
   return `
-    <article class="glass-card family-profile-card">
+    <article class="glass-card family-profile-card" id="family-member-${escapeAttr(member.id || "")}">
       <div class="family-profile-cover">
         ${member.photo ? `<img src="${escapeAttr(member.photo)}" alt="">` : `<span class="family-profile-cover-art" aria-hidden="true">${Icons.family()}</span>`}
         <span class="family-profile-category">${escapeHtml(t("family"))}</span>
@@ -209,22 +232,87 @@ function memberCard(member) {
             <button class="icon-button" data-delete-family="${escapeAttr(member.id)}" aria-label="Delete ${escapeAttr(member.name)}">${Icons.trash()}</button>
           </div>
         </div>
-        <div class="family-detail-tags">
+        ${member.zodiacSign || member.characterMood || member.favorite ? `<div class="family-detail-tags">
           ${member.zodiacSign ? `<span class="pill family-zodiac-tag">${escapeHtml(member.zodiacSign)}</span>` : ""}
           ${member.characterMood ? `<span class="pill family-mood-tag">${escapeHtml(member.characterMood)}</span>` : ""}
           ${member.favorite ? `<span class="pill family-favorite-tag">${escapeHtml(member.favorite)}</span>` : ""}
-        </div>
-        <div class="family-profile-stats">
-          <div><span>${Icons.calendar()}${t("birthday")}</span><strong>${formatDate(member.birthday, { month: "short", day: "numeric" })}</strong></div>
-          <div><span>${Icons.heart()}${t("anniversary")}</span><strong>${formatDate(member.anniversaryDate, { month: "short", day: "numeric" })}</strong></div>
-          <div><span>${Icons.user()}${t("phone")}</span><strong>${escapeHtml(member.phone || t("notSet"))}</strong></div>
-        </div>
+        </div>` : ""}
+        ${familyProfileStats(member)}
         ${relationshipDays ? `<div class="family-profile-duration">${Icons.heart()}<span>${escapeHtml(t("togetherFor").replace("{days}", relationshipDays))}</span></div>` : ""}
-        <div class="family-profile-insight"><span>${Icons.spark()}</span><span>${escapeHtml(familyCareIdea(member))}</span></div>
-        ${member.relationshipNote ? `<p class="family-profile-note">${escapeHtml(member.relationshipNote)}</p>` : ""}
-        ${member.notes ? `<p class="family-profile-notes">${escapeHtml(member.notes)}</p>` : ""}
+        ${familyAboutBlock(member)}
       </div>
     </article>
+  `;
+}
+
+// Only the details that are filled in; missing ones become small "+ add" chips
+// that open the edit form. The phone number is a tap-to-call link.
+function familyProfileStats(member) {
+  const km = languageCode() === "km";
+  const stats = [];
+  const missing = [];
+  if (member.birthday) stats.push(`<div><span>${Icons.calendar()}${t("birthday")}</span><strong>${formatDate(member.birthday, { month: "short", day: "numeric" })}</strong></div>`);
+  else missing.push(km ? "ថ្ងៃកំណើត" : "Birthday");
+  if (member.anniversaryDate) stats.push(`<div><span>${Icons.heart()}${t("anniversary")}</span><strong>${formatDate(member.anniversaryDate, { month: "short", day: "numeric" })}</strong></div>`);
+  else if (["wife", "husband", "girlfriend", "boyfriend", "partner", "mother", "father"].includes(String(member.relationship || "").toLowerCase())) missing.push(km ? "ខួប" : "Anniversary");
+  if (member.phone) {
+    const tel = String(member.phone).replace(/[^\d+]/g, "");
+    stats.push(`<a class="family-stat-call" href="tel:${escapeAttr(tel)}" aria-label="${escapeAttr((km ? "ហៅទៅ " : "Call ") + member.name)}"><span>${Icons.user()}${t("phone")}</span><strong>${escapeHtml(member.phone)}</strong><em class="family-call-badge" aria-hidden="true">📞</em></a>`);
+  } else missing.push(km ? "លេខទូរស័ព្ទ" : "Phone");
+  return `
+    ${stats.length ? `<div class="family-profile-stats family-stats-${stats.length}">${stats.join("")}</div>` : ""}
+    ${missing.length ? `<div class="family-missing">${missing.map(label => `<button class="family-missing-chip" type="button" data-edit-family="${escapeAttr(member.id)}">+ ${escapeHtml(label)}</button>`).join("")}</div>` : ""}
+  `;
+}
+
+// "Coming up": birthdays and anniversaries in the next 30 days.
+function familyComingUp() {
+  const km = languageCode() === "km";
+  const today = parseAppDate(localDateInput());
+  const items = [];
+  appData.family.forEach(member => {
+    [["birthday", "🎂"], ["anniversaryDate", "💞"]].forEach(([field, icon]) => {
+      const value = member[field];
+      if (!value) return;
+      const next = nextBirthdayDate(value);
+      if (!next) return;
+      const days = Math.round((parseAppDate(next) - today) / 86400000);
+      if (days < 0 || days > 30) return;
+      const years = parseAppDate(next).getFullYear() - parseAppDate(value).getFullYear();
+      const when = days === 0 ? (km ? "ថ្ងៃនេះ!" : "Today!") : days === 1 ? (km ? "ស្អែក" : "Tomorrow") : (km ? `${days} ថ្ងៃទៀត` : `in ${days} days`);
+      const extra = years > 0 && years < 120 ? (field === "birthday" ? (km ? `អាយុ ${years}` : `turns ${years}`) : (km ? `${years} ឆ្នាំ` : `${years} yrs`)) : "";
+      items.push({ days, html: `<li class="${days <= 3 ? "is-soon" : ""}"><span class="family-coming-icon">${icon}</span><span class="family-coming-copy"><strong>${escapeHtml(member.name)}</strong><small>${escapeHtml(when)} · ${escapeHtml(formatDate(next, { month: "short", day: "numeric" }))}${extra ? ` · ${escapeHtml(extra)}` : ""}</small></span></li>` });
+    });
+  });
+  if (!items.length) return "";
+  return `
+    <article class="glass-card family-coming-up">
+      <h2 class="family-coming-title">${km ? "ថ្ងៃពិសេសខាងមុខ" : "Coming up"}</h2>
+      <ul>${items.sort((a, b) => a.days - b.days).slice(0, 6).map(item => item.html).join("")}</ul>
+    </article>
+  `;
+}
+
+// One tidy block: the care idea on top, the person's notes below as short lines.
+// Long text is clamped; tapping the block shows everything.
+function familyAboutBlock(member) {
+  const km = languageCode() === "km";
+  const idea = familyCareIdea({ ...member, favorite: "" }).replace(/^[^:]*:\s*/, "");
+  const notes = [
+    member.relationshipNote ? { icon: Icons.heart(), text: member.relationshipNote } : null,
+    member.notes ? { icon: Icons.edit(), text: member.notes } : null
+  ].filter(Boolean);
+  return `
+    <button class="family-profile-about" type="button" data-family-about aria-expanded="false">
+      <span class="fpa-idea">
+        <span class="fpa-icon">${Icons.spark()}</span>
+        <span class="fpa-copy">
+          <small>${km ? "គំនិតថ្ងៃនេះ" : "Care idea"}</small>
+          <span class="fpa-text">${escapeHtml(idea)}</span>
+        </span>
+      </span>
+      ${notes.length ? `<span class="fpa-notes">${notes.map(note => `<span class="fpa-note"><span class="fpa-note-icon">${note.icon}</span><span class="fpa-text">${escapeHtml(note.text)}</span></span>`).join("")}</span>` : ""}
+    </button>
   `;
 }
 
@@ -452,6 +540,19 @@ function bindFamily(options = {}) {
   });
   document.querySelectorAll('[data-action="add-family"]').forEach(button => button.addEventListener("click", () => openFamilyModal()));
   document.querySelectorAll('[data-action="add-self"]').forEach(button => button.addEventListener("click", openSelfFamilyModal));
+  document.querySelectorAll("[data-fam-jump]").forEach(button => button.addEventListener("click", () => {
+    const card = document.getElementById(`family-member-${button.dataset.famJump}`);
+    if (!card) return;
+    card.scrollIntoView({ behavior: "smooth", block: "center" });
+    card.classList.remove("fam-flash");
+    void card.offsetWidth;
+    card.classList.add("fam-flash");
+  }));
+  document.querySelectorAll("[data-family-about]").forEach(block => block.addEventListener("click", () => {
+    const open = !block.classList.contains("is-open");
+    block.classList.toggle("is-open", open);
+    block.setAttribute("aria-expanded", String(open));
+  }));
   document.querySelectorAll("[data-edit-family]").forEach(button => button.addEventListener("click", () => openFamilyModal(appData.family.find(item => item.id === button.dataset.editFamily))));
   document.querySelectorAll("[data-delete-family]").forEach(button => button.addEventListener("click", () => {
     Modal.confirm({ title: t("deleteFamilyMember"), message: t("deleteFamilyMessage"), confirmText: t("delete"), onConfirm: () => {

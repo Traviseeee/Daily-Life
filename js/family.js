@@ -14,16 +14,14 @@ function renderFamily() {
 
   return `
     <section class="page family-page">
-      <div class="page-header">
+      <div class="page-header fam-head">
         <div>
           <h1 class="page-title page-title-with-icon"><span class="page-title-icon">${Icons.family()}</span>${t("family")}</h1>
           <p class="page-subtitle">${t("familySubtitle")}</p>
         </div>
-        <div class="action-row family-page-actions">
-          <button class="button ghost-button" data-action="add-self">${Icons.user()} ${t("addMyself")}</button>
-          <button class="button" data-action="add-family">${Icons.plus()} ${t("addFamilyMember")}</button>
-        </div>
+        <button class="fam-add" type="button" data-action="add-family" aria-label="${escapeAttr(t("addFamilyMember"))}" title="${escapeAttr(t("addFamilyMember"))}">${Icons.plus()}</button>
       </div>
+      ${familyAvatarRow()}
       ${familyComingUp()}
       ${familyMediaCard()}
       <div class="grid three-col">${appData.family.map(memberCard).join("")}</div>
@@ -50,6 +48,30 @@ function renderFamily() {
       </div>
     </section>
   `;
+}
+
+// One row of round photos: "me" first (dashed + when not added yet), then the
+// family, then +. Tap a photo to jump to that person's card. A ring marks a
+// birthday in the next 14 days.
+function familyAvatarRow() {
+  const isKm = languageCode() === "km";
+  const today = localDateInput();
+  const soon = (() => { const d = new Date(); d.setDate(d.getDate() + 14); return localDateInput(d); })();
+  const me = appData.family.find(member => member.relationship === "Me");
+  const others = appData.family.filter(member => member !== me);
+  const colors = ["#ff7eb3", "#5aa9ff", "#b38cff", "#ffad4a", "#2dd4bf", "#7c83ff", "#ff6b7a", "#e2b04a"];
+  const colorOf = member => colors[[...String(member.id || member.name || "")].reduce((sum, ch) => sum + ch.charCodeAt(0), 0) % colors.length];
+  const face = member => member.photo ? `<img src="${escapeAttr(member.photo)}" alt="">` : escapeHtml(initials(member.name || "?"));
+  const item = (member, label) => {
+    const next = nextBirthdayDate(member.birthday);
+    const ring = next && next >= today && next <= soon;
+    return `<button class="fam-av ${ring ? "has-ring" : ""}" type="button" data-fam-jump="${escapeAttr(member.id)}" title="${escapeAttr(member.name || "")}"><span class="fam-av-face" style="background:${colorOf(member)}">${face(member)}</span><small>${escapeHtml(label)}</small></button>`;
+  };
+  return `<nav class="fam-avatars" aria-label="${escapeAttr(t("family"))}">
+    ${me ? item(me, isKm ? "ខ្ញុំ" : "Me") : `<button class="fam-av fam-av-me" type="button" data-action="add-self"><span class="fam-av-face">${Icons.plus()}</span><small>${isKm ? "ខ្ញុំ" : "Me"}</small></button>`}
+    ${others.map(member => item(member, String(member.name || "").split(/\s+/)[0] || optionLabel(member.relationship || ""))).join("")}
+    <button class="fam-av fam-av-add" type="button" data-action="add-family"><span class="fam-av-face">${Icons.plus()}</span><small>${isKm ? "បន្ថែម" : "Add"}</small></button>
+  </nav>`;
 }
 
 function familyMediaCard() {
@@ -193,7 +215,7 @@ function memberCard(member) {
   const relatedMember = appData.family.find(item => item.id === member.relatedMemberId);
   const relationshipDays = relatedMember ? daysSinceDate(member.anniversaryDate) : 0;
   return `
-    <article class="glass-card family-profile-card">
+    <article class="glass-card family-profile-card" id="family-member-${escapeAttr(member.id || "")}">
       <div class="family-profile-cover">
         ${member.photo ? `<img src="${escapeAttr(member.photo)}" alt="">` : `<span class="family-profile-cover-art" aria-hidden="true">${Icons.family()}</span>`}
         <span class="family-profile-category">${escapeHtml(t("family"))}</span>
@@ -518,6 +540,14 @@ function bindFamily(options = {}) {
   });
   document.querySelectorAll('[data-action="add-family"]').forEach(button => button.addEventListener("click", () => openFamilyModal()));
   document.querySelectorAll('[data-action="add-self"]').forEach(button => button.addEventListener("click", openSelfFamilyModal));
+  document.querySelectorAll("[data-fam-jump]").forEach(button => button.addEventListener("click", () => {
+    const card = document.getElementById(`family-member-${button.dataset.famJump}`);
+    if (!card) return;
+    card.scrollIntoView({ behavior: "smooth", block: "center" });
+    card.classList.remove("fam-flash");
+    void card.offsetWidth;
+    card.classList.add("fam-flash");
+  }));
   document.querySelectorAll("[data-family-about]").forEach(block => block.addEventListener("click", () => {
     const open = !block.classList.contains("is-open");
     block.classList.toggle("is-open", open);
