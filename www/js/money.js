@@ -567,20 +567,90 @@ function incomeRow(item) {
   </div>`;
 }
 
+// Expenses page: a month filter, then one group per category (header with count and
+// total, compact one-line rows inside). Items saved as "Other" are grouped by what
+// their name says (fuel → Transport) — display only, nothing is changed.
+let expenseMonthFilter = "";
+
+function expenseGroupOf(item) {
+  const category = item.category || "Other";
+  if (category !== "Other" || typeof SmartParse === "undefined") return category;
+  const guess = SmartParse.categorizeExpense(item.description || "");
+  return guess && expenseCategories.includes(guess) ? guess : "Other";
+}
+
+function expenseMethodChip(method) {
+  const value = String(method || "").trim();
+  if (!value) return "";
+  const km = languageCode() === "km";
+  const label = /^cash$/i.test(value) ? (km ? "សាច់ប្រាក់" : "Cash") : /^card$/i.test(value) ? (km ? "កាត" : "Card") : /khqr|^qr$/i.test(value) ? "KHQR" : value;
+  const icon = /^cash$/i.test(value) ? "💵" : /^card$/i.test(value) ? "💳" : "📱";
+  return `<span class="xl-method">${icon} ${escapeHtml(label)}</span>`;
+}
+
 function renderExpenses() {
-  return `${typeof SmartMoney !== "undefined" ? SmartMoney.renderQuickExpense() : ""}<article class="glass-card card-pad financial-panel"><div class="between"><h2 class="section-title">${t("expenses")}</h2><button class="button" data-action="add-expense">${Icons.plus()} ${t("addExpense")}</button></div>${expenseLedger(appData.expenses)}</article>`;
+  const km = languageCode() === "km";
+  const all = appData.expenses || [];
+  const months = [...new Set(all.map(item => String(item.date || "").slice(0, 7)).filter(Boolean))].sort().reverse();
+  const current = localDateInput().slice(0, 7);
+  if (!months.includes(current)) months.unshift(current);
+  if (expenseMonthFilter && expenseMonthFilter !== "all" && !months.includes(expenseMonthFilter)) expenseMonthFilter = "";
+  const month = expenseMonthFilter || current;
+  const items = month === "all" ? all : all.filter(item => String(item.date || "").startsWith(month));
+  const monthName = key => {
+    const [y, m] = key.split("-").map(Number);
+    return new Date(y, m - 1, 1).toLocaleDateString(km ? "km-KH" : "en-US", { month: "long", year: "numeric" });
+  };
+  const filter = `<label class="xl-month"><span class="sr-only">${km ? "ខែ" : "Month"}</span><select data-expense-month>
+      ${months.map(key => `<option value="${key}" ${key === month ? "selected" : ""}>${escapeHtml(monthName(key))}</option>`).join("")}
+      <option value="all" ${month === "all" ? "selected" : ""}>${km ? "ទាំងអស់" : "All time"}</option>
+    </select></label>`;
+  return `${typeof SmartMoney !== "undefined" ? SmartMoney.renderQuickExpense() : ""}<article class="glass-card card-pad financial-panel">
+    <div class="between xl-head"><h2 class="section-title">${t("expenses")}</h2><button class="button" data-action="add-expense">${Icons.plus()} ${t("addExpense")}</button></div>
+    <div class="xl-toolbar">${filter}<span class="xl-total">${items.length} · <b>${money(sumMoney(items, "amount"))}</b></span></div>
+    ${items.length ? expenseGroups(items) : emptyState(t("noExpensesYet"), t("noExpensesBody"), t("addExpense"), "add-expense")}
+  </article>`;
+}
+
+function expenseGroups(items) {
+  const groups = new Map();
+  items.forEach(item => {
+    const key = expenseGroupOf(item);
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(item);
+  });
+  return `<div class="xl-groups">${[...groups.entries()]
+    .map(([category, list]) => ({ category, list: list.sort((a, b) => String(b.date || "").localeCompare(String(a.date || ""))), total: sumMoney(list, "amount") }))
+    .sort((a, b) => b.total - a.total)
+    .map(({ category, list, total }) => `<details class="xl-group" open style="--cat:${expenseCategoryColors[category] || "#8a94a6"}">
+      <summary><span class="xl-group-icon">${Icons[expenseCategoryIcons[category] || "expense"]()}</span><strong>${escapeHtml(optionLabel(category))}</strong><em>${list.length}</em><b>-${money(total)}</b>${Icons.chevron()}</summary>
+      <div class="xl-rows">${list.map(item => expenseRow(item, { compact: true })).join("")}</div>
+    </details>`).join("")}</div>`;
 }
 
 function expenseLedger(items) {
   if (!items.length) return emptyState(t("noExpensesYet"), t("noExpensesBody"), t("addExpense"), "add-expense");
-  return `<div class="financial-record-list">${items.map(expenseRow).join("")}</div>`;
+  return `<div class="xl-rows xl-rows-plain">${items.map(item => expenseRow(item, { compact: true, showCategory: true })).join("")}</div>`;
 }
 
-function expenseRow(item) {
+function expenseRow(item, { compact = false, showCategory = false } = {}) {
   const category = item.category || "Other";
+  const group = expenseGroupOf(item);
+  const date = formatDate(item.date, { month: "short", day: "numeric" });
+  if (compact) {
+    return `<div class="xl-row" style="--cat:${expenseCategoryColors[group] || "#8a94a6"}">
+      ${showCategory ? `<span class="xl-row-icon">${Icons[expenseCategoryIcons[group] || "expense"]()}</span>` : ""}
+      <div class="xl-row-copy"><strong>${escapeHtml(item.description || optionLabel(category))}</strong><span>${showCategory ? `${escapeHtml(optionLabel(group))} · ` : ""}${escapeHtml(date)}${expenseMethodChip(item.method)}</span></div>
+      <strong class="xl-row-amount">-${money(item.amount, item.currency)}</strong>
+      <div class="xl-row-actions">
+        <button class="icon-button" data-edit-expense="${escapeAttr(item.id)}" aria-label="${escapeAttr(`${t("edit")} ${item.description}`)}" title="${escapeAttr(t("edit"))}">${Icons.edit()}</button>
+        <button class="icon-button" data-delete-expense="${escapeAttr(item.id)}" aria-label="${escapeAttr(`${t("delete")} ${item.description}`)}" title="${escapeAttr(t("delete"))}">${Icons.trash()}</button>
+      </div>
+    </div>`;
+  }
   return `<div class="financial-record-card">
     <span class="financial-record-icon expense">${Icons[expenseCategoryIcons[category] || "expense"]()}</span>
-    <div class="financial-record-copy"><strong>${escapeHtml(item.description)}</strong><span>${optionLabel(category)} · ${formatDate(item.date, { month: "short", day: "numeric" })}</span></div>
+    <div class="financial-record-copy"><strong>${escapeHtml(item.description)}</strong><span>${optionLabel(category)} · ${date}</span></div>
     <strong class="financial-record-value danger">-${money(item.amount, item.currency)}</strong>
     <div class="financial-record-actions">
       <button class="icon-button" data-edit-expense="${escapeAttr(item.id)}" aria-label="${escapeAttr(`${t("edit")} ${item.description}`)}" title="${escapeAttr(t("edit"))}">${Icons.edit()}</button>
@@ -737,7 +807,7 @@ function renderBills() {
 
 function billCard(bill) {
   const paid = billPaidCurrentCycle(bill);
-  const statusLabel = paid ? `${Icons.check()}${escapeHtml(t("billPaidLabel"))}` : escapeHtml(t("billUnpaidLabel"));
+  const statusLabel = paid ? `${Icons.check()}${escapeHtml(t("billPaidLabel"))}` : `⏳ ${escapeHtml(t("billUnpaidLabel"))}`;
   return `<div class="financial-bill-card">
     <div class="financial-bill-header"><span class="financial-record-icon bill">${Icons.bill()}</span><span class="pill bill-status ${paid ? "is-paid" : "is-unpaid"}">${statusLabel}</span></div>
     <h3>${escapeHtml(bill.name)}</h3>
@@ -746,7 +816,9 @@ function billCard(bill) {
     <div class="financial-bill-tags"><span>${optionLabel(bill.frequency)}</span><span>${optionLabel(bill.category)}</span>${bill.autoPay ? `<span class="bill-autopay-tag">🔁 ${languageCode() === "km" ? "ស្វ័យប្រវត្តិ" : "Auto-pay"}</span>` : ""}${!paid && bill.invoiceAt && Date.now() - Date.parse(bill.invoiceAt) < 20 * 86400000 ? `<span class="bill-invoice-tag">🆕 ${languageCode() === "km" ? "វិក្កយបត្រថ្មី" : "New invoice"}</span>` : ""}</div>
     ${/^https:\/\//.test(bill.invoiceUrl || "") ? `<a class="bill-invoice-link" href="${escapeAttr(bill.invoiceUrl)}" target="_blank" rel="noopener">🔗 ${languageCode() === "km" ? "មើលវិក្កយបត្រ" : "View invoice"}</a>` : ""}
     <div class="financial-bill-actions">
-      <button class="button ghost-button bill-payment-action ${paid ? "is-paid" : "is-unpaid"}" data-finance-toggle-bill="${escapeAttr(bill.id)}" aria-pressed="${paid}">${paid ? Icons.check() : ""}${escapeHtml(paid ? t("billPaidLabel") : t("billUnpaidLabel"))}</button>
+      ${paid
+        ? `<button class="button ghost-button bill-payment-action bill-act-undo" data-finance-toggle-bill="${escapeAttr(bill.id)}" aria-pressed="true" title="${escapeAttr(languageCode() === "km" ? "ប្តូរទៅជាមិនទាន់បង់" : "Mark as not paid")}">↺ ${languageCode() === "km" ? "មិនទាន់បង់" : "Not paid"}</button>`
+        : `<button class="button bill-payment-action bill-act-pay" data-finance-toggle-bill="${escapeAttr(bill.id)}" aria-pressed="false">${Icons.check()}${languageCode() === "km" ? "កត់ថាបង់រួច" : "Mark paid"}</button>`}
       <button class="icon-button" data-edit-bill="${escapeAttr(bill.id)}" aria-label="${escapeAttr(`${t("edit")} ${bill.name}`)}" title="${escapeAttr(t("edit"))}">${Icons.edit()}</button>
       <button class="icon-button" data-delete-bill="${escapeAttr(bill.id)}" aria-label="${escapeAttr(`${t("delete")} ${bill.name}`)}" title="${escapeAttr(t("delete"))}">${Icons.trash()}</button>
     </div>
@@ -1188,6 +1260,10 @@ function bindMoney() {
     const bill = appData.bills.find(item => item.id === button.dataset.linkBill);
     if (bill) openBillModal(bill);
   }));
+  document.querySelector("[data-expense-month]")?.addEventListener("change", event => {
+    expenseMonthFilter = event.target.value;
+    App.render();
+  });
   document.querySelectorAll("[data-link-expense]").forEach(button => button.addEventListener("click", () => {
     if (typeof LoanPay === "undefined") return;
     const { linkExpense, linkLoan, linkDate } = button.dataset;

@@ -17,7 +17,7 @@ const ExpenseForm = (() => {
     { category: "Health", re: /ពេទ្យ|ថ្នាំ|មន្ទីរពេទ្យ|health|doctor|medicine|hospital|gym|clinic|pharmacy/i },
     { category: "Entertainment", re: /កុន|ហ្គេម|កម្សាន្ត|movie|game|netflix|spotify|fun|party|cinema|entertainment/i }
   ];
-  const METHODS = ["Cash", "ABA", "ACLEDA", "Wing", "Card"];
+  const METHODS = ["Cash", "KHQR", "ABA", "ACLEDA", "Wing", "Card"];
   const METHOD_KM = { Cash: "សាច់ប្រាក់", Card: "កាត" };
 
   // same words as the Telegram bot and MYLIFE Chat (js/smart-parse.js); the short list above is the fallback
