@@ -50,28 +50,46 @@ function renderFamily() {
   `;
 }
 
-// One row of round photos: "me" first (dashed + when not added yet), then the
-// family, then +. Tap a photo to jump to that person's card. A ring marks a
-// birthday in the next 14 days.
+// Hero card: "my family · N", the next birthday, and a row of round photos —
+// "me" first (dashed + when not added yet), the family, then +. Tap a photo to
+// jump to that person's card. A ring marks a birthday in the next 14 days.
 function familyAvatarRow() {
   const isKm = languageCode() === "km";
-  const today = localDateInput();
+  const todayIso = localDateInput();
+  const today = parseAppDate(todayIso);
   const soon = (() => { const d = new Date(); d.setDate(d.getDate() + 14); return localDateInput(d); })();
   const me = appData.family.find(member => member.relationship === "Me");
   const others = appData.family.filter(member => member !== me);
+  // one colour per person, in order, so two people never share a colour
   const colors = ["#ff7eb3", "#5aa9ff", "#b38cff", "#ffad4a", "#2dd4bf", "#7c83ff", "#ff6b7a", "#e2b04a"];
-  const colorOf = member => colors[[...String(member.id || member.name || "")].reduce((sum, ch) => sum + ch.charCodeAt(0), 0) % colors.length];
+  const colorOf = member => colors[Math.max(0, appData.family.indexOf(member)) % colors.length];
   const face = member => member.photo ? `<img src="${escapeAttr(member.photo)}" alt="">` : escapeHtml(initials(member.name || "?"));
   const item = (member, label) => {
     const next = nextBirthdayDate(member.birthday);
-    const ring = next && next >= today && next <= soon;
+    const ring = next && next >= todayIso && next <= soon;
     return `<button class="fam-av ${ring ? "has-ring" : ""}" type="button" data-fam-jump="${escapeAttr(member.id)}" title="${escapeAttr(member.name || "")}"><span class="fam-av-face" style="background:${colorOf(member)}">${face(member)}</span><small>${escapeHtml(label)}</small></button>`;
   };
-  return `<nav class="fam-avatars" aria-label="${escapeAttr(t("family"))}">
-    ${me ? item(me, isKm ? "ខ្ញុំ" : "Me") : `<button class="fam-av fam-av-me" type="button" data-action="add-self"><span class="fam-av-face">${Icons.plus()}</span><small>${isKm ? "ខ្ញុំ" : "Me"}</small></button>`}
-    ${others.map(member => item(member, String(member.name || "").split(/\s+/)[0] || optionLabel(member.relationship || ""))).join("")}
-    <button class="fam-av fam-av-add" type="button" data-action="add-family"><span class="fam-av-face">${Icons.plus()}</span><small>${isKm ? "បន្ថែម" : "Add"}</small></button>
-  </nav>`;
+  const nextBirthday = appData.family
+    .map(member => ({ member, next: nextBirthdayDate(member.birthday) }))
+    .filter(item => item.next)
+    .map(item => ({ ...item, days: Math.round((parseAppDate(item.next) - today) / 86400000) }))
+    .filter(item => item.days >= 0 && item.days <= 60)
+    .sort((x, y) => x.days - y.days)[0];
+  const when = nextBirthday ? (nextBirthday.days === 0 ? (isKm ? "ថ្ងៃនេះ 🎉" : "today 🎉") : nextBirthday.days === 1 ? (isKm ? "ស្អែក" : "tomorrow") : (isKm ? `${nextBirthday.days} ថ្ងៃទៀត` : `in ${nextBirthday.days} days`)) : "";
+  const count = appData.family.length;
+  return `<article class="fam-hero">
+    <span class="fam-hero-blob fam-hero-blob-a" aria-hidden="true"></span>
+    <span class="fam-hero-blob fam-hero-blob-b" aria-hidden="true"></span>
+    <div class="fam-hero-top">
+      <strong>${isKm ? `គ្រួសារខ្ញុំ · ${count} នាក់` : `My family · ${count}`}</strong>
+      ${nextBirthday ? `<span class="fam-hero-next">${Icons.cake()} ${escapeHtml(String(nextBirthday.member.name || "").split(/\s+/)[0])} · ${isKm ? "ថ្ងៃកំណើត" : "birthday"} ${escapeHtml(when)}</span>` : ""}
+    </div>
+    <nav class="fam-avatars" aria-label="${escapeAttr(t("family"))}">
+      ${me ? item(me, isKm ? "ខ្ញុំ" : "Me") : `<button class="fam-av fam-av-me" type="button" data-action="add-self"><span class="fam-av-face">${Icons.plus()}</span><small>${isKm ? "ខ្ញុំ" : "Me"}</small></button>`}
+      ${others.map(member => item(member, String(member.name || "").split(/\s+/)[0] || optionLabel(member.relationship || ""))).join("")}
+      <button class="fam-av fam-av-add" type="button" data-action="add-family"><span class="fam-av-face">${Icons.plus()}</span><small>${isKm ? "បន្ថែម" : "Add"}</small></button>
+    </nav>
+  </article>`;
 }
 
 function familyMediaCard() {

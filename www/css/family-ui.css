@@ -26,3 +26,22 @@ html body .page-header.fam-head > div { min-width: 0; }
 @media (max-width: 700px) {
   .fam-head .page-subtitle { display: none; }
 }
+
+/* hero card around the photo row: soft colour circles behind, next birthday */
+.fam-hero { position: relative; overflow: hidden; margin: 0 0 16px; padding: 14px 14px 6px; border: 1px solid rgba(127, 160, 110, 0.22); border-radius: 22px; background: #fff; box-shadow: 0 8px 24px rgba(16, 32, 26, 0.06); --fam-gap: #fff; }
+.fam-hero-blob { position: absolute; border-radius: 50%; pointer-events: none; }
+.fam-hero-blob-a { top: -46px; right: -40px; width: 170px; height: 170px; background: #ffe3ef; }
+.fam-hero-blob-b { bottom: -60px; right: 70px; width: 130px; height: 130px; background: #e6f4cc; }
+.fam-hero > *:not(.fam-hero-blob) { position: relative; }
+.fam-hero-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+.fam-hero-top strong { font-size: 1rem; font-weight: 800; }
+.fam-hero-next { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 999px; font-size: 0.76rem; font-weight: 700; color: #993556; background: #fff0f6; }
+.fam-hero-next svg { width: 15px; height: 15px; }
+.fam-hero .fam-avatars { margin: 0; }
+.fam-hero .fam-av-face { box-shadow: 0 0 0 3px var(--fam-gap), 0 6px 14px rgba(16, 32, 26, 0.12); }
+.fam-hero .fam-av.has-ring .fam-av-face { box-shadow: 0 0 0 2px var(--fam-gap), 0 0 0 4.5px #ff7eb3, 0 6px 14px rgba(255, 126, 179, 0.25); }
+.fam-hero .fam-av-me .fam-av-face, .fam-hero .fam-av-add .fam-av-face { box-shadow: none; }
+:root:not([data-theme="light"]) .fam-hero { --fam-gap: #16241b; border-color: rgba(255, 255, 255, 0.08); background: #16241b; box-shadow: none; }
+:root:not([data-theme="light"]) .fam-hero-blob-a { background: rgba(255, 126, 179, 0.16); }
+:root:not([data-theme="light"]) .fam-hero-blob-b { background: rgba(197, 255, 96, 0.1); }
+:root:not([data-theme="light"]) .fam-hero-next { color: #ffb3d1; background: rgba(255, 126, 179, 0.16); }
