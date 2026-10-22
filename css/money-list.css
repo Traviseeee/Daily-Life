@@ -73,3 +73,7 @@ button.xl-row-tap:hover { background: rgba(127, 140, 133, 0.08); }
 .xl-recent-note b { color: #e5484d; }
 :root:not([data-theme="light"]) .xl-recent-note b { color: #ff8a8d; }
 a.xl-see-all { text-decoration: none; font-weight: 800; }
+
+/* Left card: how the number is made (income − spent − loans − savings) */
+.mm-calc { position: relative; z-index: 1; display: flex; flex-wrap: wrap; gap: 2px 6px; margin-top: 8px; font-size: 0.72rem; font-weight: 700; line-height: 1.4; color: #3f5146 !important; }
+.mm-calc span { white-space: nowrap; }

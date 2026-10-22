@@ -253,14 +253,20 @@ function renderMoneyCards(stats, range = moneyPeriodRange()) {
       tone: short ? "short" : "available", section: "budget", icon: Icons.wallet(), title: isKm ? `នៅសល់ · ${range.label}` : `Left · ${range.label}`, value: money(m.left),
       pill: short ? `⚠ ${isKm ? "ខ្វះ" : "Short by"} ${money(Math.abs(m.left))}` : `✓ ${isKm ? "នៅសល់សម្រាប់ចាយ" : "Left to spend"}`,
       bar: m.income ? { pct: Math.min(usedPct, 100), level: level(usedPct), label: isKm ? `បានប្រើ ${usedPct}% នៃចំណូល` : `${usedPct}% of income used` } : null,
-      note: isKm ? "ចំណូល − ចំណាយ − កម្ចី − សន្សំ (ខែនេះ)" : "Income − spent − loans − savings (this month)"
+      // how the number is made: income − spent − loans − savings (parts that are 0 are left out)
+      calc: [
+        money(m.income),
+        ...[[isKm ? "ចំណាយ" : "spent", m.expenses], [isKm ? "កម្ចី" : "loans", m.loans], [isKm ? "សន្សំ" : "savings", Math.max(m.saved, m.plannedSavings)]]
+          .filter(([, value]) => value > 0)
+          .map(([label, value]) => `<span>− ${label} ${money(value)}</span>`)
+      ].join(" ")
       })
     })}
   </div>`;
 }
 
 // Money overview card: tone colour, quick status pill and an optional progress bar.
-function moneyMetricCard({ tone, section, icon, title, value, pill = "", bar = null, foot = "", note = "" }) {
+function moneyMetricCard({ tone, section, icon, title, value, pill = "", bar = null, foot = "", note = "", calc = "" }) {
   return `
     <article class="glass-card card-pad financial-metric-card mm-card mm-${tone}">
       <a class="financial-metric-card-link" href="#money/${section}" aria-label="${escapeAttr(title)}"></a>
@@ -272,6 +278,7 @@ function moneyMetricCard({ tone, section, icon, title, value, pill = "", bar = n
       </div>
       <div class="metric mm-value">${value}</div>
       ${pill ? `<div class="mm-pill">${pill}</div>` : ""}
+      ${calc ? `<div class="mm-calc">${calc}</div>` : ""}
       ${bar ? `<div class="mm-bar mm-${bar.level}" ><div class="mm-track"><i style="width:${Math.max(3, Math.min(100, bar.pct))}%"></i></div><small>${bar.label}</small></div>` : ""}
       ${foot ? `<div class="mm-foot">${foot}</div>` : ""}
       ${note ? `<div class="mm-note">${escapeHtml(note)}</div>` : ""}
