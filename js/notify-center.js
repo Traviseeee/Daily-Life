@@ -90,8 +90,8 @@ const NotifyCenter = (() => {
   /* ---------- page ---------- */
   // tabs keep the page short: money tools · dated things · reports & backup
   const TABS = [
-    { id: "money", km: "លុយ", en: "Money", tools: ["bills", "expenses", "loans", "savings"] },
-    { id: "days", km: "ថ្ងៃ", en: "Days", tools: ["calendar", "family"] },
+    { id: "money", km: "ហិរញ្ញវត្ថុ", en: "Money", tools: ["bills", "expenses", "loans", "savings"] },
+    { id: "days", km: "ថ្ងៃសំខាន់", en: "Dates", tools: ["calendar", "family"] },
     { id: "reports", km: "របាយការណ៍", en: "Reports", tools: ["reports", "backup"] }
   ];
   let tab = "money";
