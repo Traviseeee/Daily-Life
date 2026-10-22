@@ -653,10 +653,12 @@ function renderLoanDoubleCheck() {
   const found = LoanPay.findDoubleCounts(appData);
   if (!found.length) return "";
   const km = languageCode() === "km";
-  const rows = found.map(entry => entry.type === "counted-twice"
+  const rows = found.map(entry => entry.type === "expense-counted-twice"
+    ? `<div class="loan-check-row"><span>⚠️ ${escapeHtml(entry.month)} · ${km ? "ចំណាយ" : "Expense"} <b>${escapeHtml(entry.expenseName)}</b> ${km ? "និង" : "and"} <b>${escapeHtml(entry.loanName || "")}</b> · ${money(entry.amount, entry.currency)} ${km ? "ជាការបង់តែមួយ ប៉ុន្តែរាប់ ២ ដង" : "are one payment but counted twice"}</span><button class="button ghost-button" type="button" data-link-expense="${escapeAttr(entry.expenseId)}" data-link-loan="${escapeAttr(entry.loanId)}" data-link-date="${escapeAttr(entry.date)}">${km ? "ភ្ជាប់" : "Link"}</button></div>`
+    : entry.type === "counted-twice"
     ? `<div class="loan-check-row"><span>⚠️ ${escapeHtml(entry.month)} · ${escapeHtml(entry.billName || "")} + ${escapeHtml(entry.loanName || "")} · ${money(entry.amount, entry.currency)} ${km ? "ប្រហែលជារាប់ ២ ដង" : "may be counted twice"}</span></div>`
     : `<div class="loan-check-row"><span>🔗 ${km ? "វិក្កយបត្រ" : "Bill"} <b>${escapeHtml(entry.billName || "")}</b> ${km ? "ដូចការបង់កម្ចី" : "looks like the payment of"} <b>${escapeHtml(entry.loanName || "")}</b> (${money(entry.amount, entry.currency)})</span><button class="button ghost-button" type="button" data-link-bill="${escapeAttr(entry.billId)}">${km ? "ភ្ជាប់" : "Link"}</button></div>`).join("");
-  return `<div class="loan-check-card"><h3>${km ? "ពិនិត្យការរាប់ស្ទួន" : "Check for double counting"}</h3><p>${km ? "ភ្ជាប់វិក្កយបត្រទៅកម្ចី ដើម្បីបង់ម្តង រាប់ម្តង។ ខ្ញុំមិនប្តូរ ឬលុបអ្វីដោយខ្លួនឯងទេ។" : "Link the bill to the loan so one payment is counted once. Nothing is changed or deleted automatically."}</p>${rows}</div>`;
+  return `<div class="loan-check-card"><h3>${km ? "ពិនិត្យការរាប់ស្ទួន" : "Check for double counting"}</h3><p>${km ? "ចុច “ភ្ជាប់” ដើម្បីឲ្យការបង់តែមួយ រាប់តែម្តង។ មិនលុបអ្វីទេ ហើយមិនប្តូរអ្វីដោយខ្លួនឯងទេ។" : "Tap “Link” so one payment is counted once. Nothing is deleted, and nothing changes on its own."}</p>${rows}</div>`;
 }
 
 function renderLoans() {
@@ -1185,6 +1187,18 @@ function bindMoney() {
   document.querySelectorAll("[data-link-bill]").forEach(button => button.addEventListener("click", () => {
     const bill = appData.bills.find(item => item.id === button.dataset.linkBill);
     if (bill) openBillModal(bill);
+  }));
+  document.querySelectorAll("[data-link-expense]").forEach(button => button.addEventListener("click", () => {
+    if (typeof LoanPay === "undefined") return;
+    const { linkExpense, linkLoan, linkDate } = button.dataset;
+    const loan = appData.loans.find(item => item.id === linkLoan);
+    const expense = appData.expenses.find(item => item.id === linkExpense);
+    if (!loan || !expense) return;
+    if (typeof saveDataBackup === "function") saveDataBackup("before-link-loan-expense");
+    const payments = (loan.payments || []).map(payment => (payment.date === linkDate ? { ...payment, expenseId: expense.id } : payment));
+    Store.edit("expenses", expense.id, { loanId: loan.id, loanPaymentDate: linkDate, category: "Loan" });
+    Store.edit("loans", loan.id, { payments });
+    Toast.show(languageCode() === "km" ? "បានភ្ជាប់ — ឥឡូវរាប់តែម្តង" : "Linked — counted once now", "success");
   }));
   document.querySelectorAll("[data-savings-contribution]").forEach(input => input.addEventListener("change", () => toggleSavingsContribution(input)));
 }

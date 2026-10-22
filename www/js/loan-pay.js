@@ -134,11 +134,36 @@ function findDoubleCounts(payload) {
         }
       });
     });
+    // an expense typed by hand (not from a bill, not linked) with the same amount in a
+    // month where the loan also has its own payment → the same money counted twice
+    const cur = loan.currency || "";
+    expenses
+      .filter(entry => !entry.loanId && !entry.billId && same(entry.amount, loan.monthlyPayment) && (!cur || !entry.currency || entry.currency === cur))
+      .forEach(entry => {
+        const month = String(entry.date || "").slice(0, 7);
+        const payment = standaloneLoanPayments(loan).find(item => String(item.date || "").slice(0, 7) === month && same(item.amount || loan.monthlyPayment, entry.amount));
+        if (!payment) return;
+        found.push({ type: "expense-counted-twice", loanId: loan.id, loanName: loan.name, expenseId: entry.id, expenseName: entry.description || entry.category || "", month, date: payment.date, amount: Number(entry.amount), currency: entry.currency || cur });
+      });
   });
   return found;
 }
 
-const api = { recordLoanPayment, removeLoanPayment, scheduleDateFor, standaloneLoanPayments, findDoubleCounts, findPayment };
+/**
+ * Links a typed expense to the loan payment of that month, so the money is counted
+ * once (as the expense). Nothing is deleted. Returns { expense, payment } or null.
+ */
+function linkExpenseToPayment(payload, loanId, expenseId, date) {
+  const loan = (payload.loans || []).find(item => item.id === loanId);
+  const expense = (payload.expenses || []).find(item => item.id === expenseId);
+  const payment = loan && findPayment(loan, date);
+  if (!loan || !expense || !payment) return null;
+  Object.assign(expense, { loanId: loan.id, loanPaymentDate: date, category: "Loan" });
+  payment.expenseId = expense.id;
+  return { expense, payment, loan };
+}
+
+const api = { recordLoanPayment, removeLoanPayment, scheduleDateFor, standaloneLoanPayments, findDoubleCounts, findPayment, linkExpenseToPayment };
 if (typeof module !== "undefined" && module.exports) module.exports = api;
 else root.LoanPay = api;
 })(typeof window !== "undefined" ? window : globalThis);
