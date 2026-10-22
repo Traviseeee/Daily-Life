@@ -118,6 +118,8 @@ const NotifyCenter = (() => {
             </div>
           </div>
 
+          ${moneyAskGroup(off)}
+
           <div>
             <h2 class="nfc-label">${L("តាមមុខងារ", "Manage by tool")}</h2>
             <p class="nfc-hint">${L("ចុចលើឈ្មោះ ដើម្បីមើលការកំណត់បន្ថែម", "Switch on/off, and tap a tool to open its details")}</p>
@@ -129,6 +131,42 @@ const NotifyCenter = (() => {
           <p class="nfc-foot">${ICON.info()}<span>${L("បិទការរំលឹក មិនប៉ះពាល់ការប្រើប្រាស់ទេ — អ្នកនៅតែកត់ទិន្នន័យ និងប្រើ Telegram bot បានធម្មតា។", "Turning notifications off never turns a tool off — recording data and the Telegram bot keep working.")}</span></p>
         </div>
       </section>`;
+  }
+
+  // "did you get / pay it?" pop-up (js/money-ask.js): switch, what is waiting today, what is coming
+  function moneyAskGroup(off) {
+    if (typeof MoneyDue === "undefined") return "";
+    const on = appData.profile.moneyAsk !== false;
+    const today = localDateInput();
+    const icon = kind => (kind === "income" ? "💰" : kind === "loan" ? "🏦" : "🧾");
+    const plain = (value, currency) => { try { return formatPlainMoney(Number(value), currency || appData.profile.currency || "USD"); } catch (error) { return String(value); } };
+    const later = typeof MoneyAsk !== "undefined" ? new Set(MoneyAsk.laterKeys()) : new Set();
+    const now = MoneyDue.dueToday(appData, today);
+    const coming = [];
+    for (let i = 1; i <= 7; i += 1) {
+      const d = new Date(`${today}T00:00:00`);
+      d.setDate(d.getDate() + i);
+      const day = localDateInput(d);
+      MoneyDue.dueToday(appData, day).filter(item => item.date === day).forEach(item => coming.push(item));
+    }
+    const row = (item, soon) => `<div class="nfc-row nfc-sub nfc-ma-item">
+      <span class="nfc-ma-icon">${icon(item.kind)}</span>
+      <span class="nfc-copy"><strong>${escapeHtml(item.title)}${item.amount > 0 ? ` · ${escapeHtml(plain(item.amount, item.currency))}` : ""}</strong><small>${soon ? `${L("ខាងមុខ", "Coming")} · ${escapeHtml(formatDate(item.date))}` : `${escapeHtml(formatDate(item.date))}${item.overdueDays > 0 ? ` · ${L(`${item.overdueDays} ថ្ងៃមុន`, `${item.overdueDays} days ago`)}` : ` · ${L("ថ្ងៃនេះ", "today")}`}${later.has(item.key) ? ` · ⏰ ${L("សួរស្អែក", "ask tomorrow")}` : ""}`}</small></span>
+    </div>`;
+    return `<div>
+      <h2 class="nfc-label">💸 ${L("សួរលុយចូល · លុយចេញ", "Money check-in")}</h2>
+      <p class="nfc-hint">${L("ថ្ងៃប្រាក់ខែ ថ្ងៃបង់វិក្កយបត្រ ឬកម្ចី — បើក app វាសួរ “បានទទួល / បានបង់ហើយឬនៅ?”", "On salary, bill and loan days the app asks “got it / paid yet?” when you open it")}</p>
+      <div class="nfc-group ${off ? "is-disabled" : ""}">
+        <div class="nfc-row ${on && !off ? "" : "is-off"}">
+          <span class="nfc-ma-icon nfc-ma-main">💸</span>
+          <span class="nfc-copy"><strong>${L("ផ្ទាំងសួរពេលបើក app", "Ask when I open the app")}</strong><small>${L("Telegram ក៏សួរប្រាក់ខែ (✅ បានទទួល) ដែរ", "Telegram also asks about salary (✅ Received)")}</small></span>
+          ${toggle(`data-nfc-money-ask ${off ? "disabled" : ""}`, on && !off, L("ផ្ទាំងសួរពេលបើក app", "Ask when I open the app"))}
+        </div>
+        ${now.length ? now.map(item => row(item, false)).join("") : `<div class="nfc-row nfc-sub"><span class="nfc-copy"><small>✅ ${L("ថ្ងៃនេះគ្មានអ្វីត្រូវសួរ", "Nothing to ask today")}</small></span></div>`}
+        ${coming.map(item => row(item, true)).join("")}
+        ${now.length ? `<div class="nfc-row nfc-sub"><button type="button" class="button nfc-ma-now" data-nfc-ask-now ${off || !on ? "disabled" : ""}>💸 ${L("សួរឥឡូវ", "Ask me now")} (${now.length})</button></div>` : ""}
+      </div>
+    </div>`;
   }
 
   function channelRow(channel, on, icon, tone, title, sub, disabled) {
@@ -351,6 +389,8 @@ const NotifyCenter = (() => {
       save({ stages, billStages: stages.bills });
     })));
     page.querySelectorAll("[data-nfc-test]").forEach(button => button.addEventListener("click", () => sendTest(button)));
+    page.querySelector("[data-nfc-money-ask]")?.addEventListener("change", event => saveProfile({ moneyAsk: event.target.checked }));
+    page.querySelector("[data-nfc-ask-now]")?.addEventListener("click", () => { if (typeof MoneyAsk !== "undefined") MoneyAsk.askNow(); });
     page.querySelectorAll("[data-nfc-flag]").forEach(input => input.addEventListener("change", () => saveProfile({ [input.dataset.nfcFlag]: input.checked })));
     page.querySelectorAll("[data-nfc-time]").forEach(input => input.addEventListener("change", () => {
       if (/^\d{2}:\d{2}$/.test(input.value)) saveProfile({ [input.dataset.nfcTime]: input.value });

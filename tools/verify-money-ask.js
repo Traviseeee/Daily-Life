@@ -77,6 +77,11 @@ check("EDC still asked 3 days late", MoneyDue.dueToday(p, "2026-10-09").find(ite
 p.loans[0].dueDate = "2026-09-06";
 check("finished loan not asked", !MoneyDue.dueToday(p, "2026-10-06").some(item => item.kind === "loan"));
 
+/* per item "don't ask" */
+p = base();
+p.income[0].ask = false; p.bills[0].reminder = false; p.loans[0].ask = false;
+check("ask off on salary / bill reminder off / loan ask off → nothing asked", MoneyDue.dueToday(p, "2026-10-06").length === 0, kinds(MoneyDue.dueToday(p, "2026-10-06")));
+
 /* old data (no received field) still works */
 const old = { profile: {}, income: [{ id: "x", name: "Old salary", amount: 500, nextPaymentDate: "2025-01-05" }] };
 check("old income without frequency = monthly", MoneyDue.dueToday(old, "2026-10-05").length === 1);

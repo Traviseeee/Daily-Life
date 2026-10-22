@@ -1423,6 +1423,7 @@ function openIncomeModal(item) {
     { name: "frequency", label: t("frequency"), type: "select", options: ["Once", "Weekly", "Monthly", "Yearly"], value: item?.frequency || "Monthly" },
     { name: "nextPaymentDate", label: t("nextPaymentDate"), type: "date", value: item?.nextPaymentDate },
     { name: "recurring", label: t("recurring"), type: "checkbox", value: item?.recurring ?? true },
+    { name: "ask", label: languageCode() === "km" ? "💸 សួរ “បានទទួលហើយឬនៅ?” ពេលដល់ថ្ងៃ" : "💸 Ask “got it yet?” on the day", type: "checkbox", value: item?.ask ?? true },
     { name: "notes", label: t("notes"), type: "textarea", value: item?.notes }
   ], onSubmit(data) { const record = { ...data, amount: Number(data.amount || 0), currency: data.currency || appData.profile.currency || "USD" }; item ? Store.edit("income", item.id, record) : Store.add("income", record); Toast.show(item ? t("incomeSaved") : t("incomeAdded")); } });
 }
@@ -1463,6 +1464,7 @@ function openLoanModal(item) {
     { name: "firstPaymentDate", label: t("firstPaymentDate"), type: "date", value: normalizeLoanPaymentDate(item?.firstPaymentDate || item?.startDate) },
     { name: "paymentDay", label: t("paymentDay"), type: "number", value: item ? (item.paymentDay || loanPaymentDay(item)) : "" },
     { name: "dueDate", label: t("dueDate"), type: "date", value: item?.dueDate },
+    { name: "ask", label: languageCode() === "km" ? "💸 សួរ “បានបង់ហើយឬនៅ?” ពេលដល់ថ្ងៃ" : "💸 Ask “paid yet?” on the day", type: "checkbox", value: item?.ask ?? true },
     { name: "notes", label: t("notes"), type: "textarea", value: item?.notes }
   ], onSubmit(data) {
     const rawFirstPaymentDate = normalizeLoanPaymentDate(data.firstPaymentDate || data.startDate || "");

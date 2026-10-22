@@ -1,0 +1,114 @@
+/* Notification center page #notifications (js/notify-center.js) — classes start with .nfc- */
+
+.nfc-page { --nfc-card: var(--glass-strong); --nfc-line: var(--border-light); }
+:root:not([data-theme="light"]) .nfc-page { --nfc-card: rgba(255, 255, 255, 0.05); }
+.nfc-stack { display: grid; gap: 22px; max-width: 760px; padding-bottom: 96px; }
+
+/* switch (iOS style) */
+.nfc-switch { position: relative; flex: 0 0 auto; width: 48px; height: 29px; cursor: pointer; }
+.nfc-switch input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; z-index: 1; }
+.nfc-switch span { position: absolute; inset: 0; border-radius: 999px; background: rgba(120, 130, 125, 0.32); transition: background 180ms ease; }
+.nfc-switch span::after { content: ""; position: absolute; top: 3px; left: 3px; width: 23px; height: 23px; border-radius: 50%; background: #fff; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.22); transition: transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1); }
+.nfc-switch input:checked + span { background: #34c759; }
+.nfc-switch input:checked + span::after { transform: translateX(19px); }
+.nfc-switch input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+.nfc-switch input:disabled { cursor: not-allowed; }
+.nfc-switch input:disabled + span { opacity: 0.45; }
+
+/* icon tiles */
+.nfc-tile { flex: 0 0 38px; width: 38px; height: 38px; display: grid; place-items: center; border-radius: 11px; color: #fff; background: var(--nfc-tone, #8e8e93); box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.12); }
+.nfc-tile svg { width: 20px; height: 20px; }
+.nfc-tone-amber { --nfc-tone: linear-gradient(145deg, #ffb347, #f08c1b); }
+.nfc-tone-rose { --nfc-tone: linear-gradient(145deg, #ff7a98, #e8466b); }
+.nfc-tone-blue { --nfc-tone: linear-gradient(145deg, #4fb3ff, #1f84e0); }
+.nfc-tone-green { --nfc-tone: linear-gradient(145deg, #5ed67d, #2fae55); }
+.nfc-tone-violet { --nfc-tone: linear-gradient(145deg, #a98bff, #7a5be0); }
+.nfc-tone-pink { --nfc-tone: linear-gradient(145deg, #ff8fc8, #e0559f); }
+.nfc-tone-teal { --nfc-tone: linear-gradient(145deg, #3fd0c0, #129e8e); }
+.nfc-tone-slate { --nfc-tone: linear-gradient(145deg, #9aa5b1, #66717d); }
+
+/* groups & rows */
+.nfc-label { margin: 0 6px 6px; font-size: 0.74rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); }
+.nfc-hint { margin: -2px 6px 8px; font-size: 0.8rem; color: var(--text-secondary); }
+.nfc-group { border-radius: 18px; background: var(--nfc-card); border: 1px solid var(--border); overflow: hidden; box-shadow: var(--shadow-card); }
+.nfc-group.is-disabled { opacity: 0.55; }
+.nfc-row { display: flex; align-items: center; gap: 12px; min-height: 58px; padding: 9px 14px; }
+.nfc-group > .nfc-row + .nfc-row, .nfc-acc + .nfc-acc { border-top: 1px solid var(--nfc-line); }
+.nfc-copy { flex: 1 1 auto; display: grid; gap: 2px; min-width: 0; }
+.nfc-copy strong { font-size: 0.95rem; color: var(--text-primary); line-height: 1.3; }
+.nfc-copy small { font-size: 0.79rem; color: var(--text-secondary); line-height: 1.35; }
+.nfc-row.is-off .nfc-tile, .nfc-acc.is-off .nfc-tile { filter: grayscale(1); opacity: 0.55; }
+.nfc-master { min-height: 66px; }
+.nfc-sum.is-on { color: #2fae55; font-weight: 600; }
+.nfc-sum.is-off { color: var(--danger); font-weight: 600; }
+
+/* accordion (one tool open at a time) */
+.nfc-acc-head { padding: 0 14px 0 0; }
+.nfc-acc-toggle { flex: 1 1 auto; display: flex; align-items: center; gap: 12px; min-width: 0; min-height: 58px; padding: 9px 4px 9px 14px; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.nfc-acc-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: 14px; }
+.nfc-caret { flex: 0 0 auto; display: grid; color: var(--text-muted); transition: transform 220ms ease; }
+.nfc-caret svg { width: 18px; height: 18px; }
+.nfc-acc.is-open .nfc-caret { transform: rotate(180deg); color: var(--text-primary); }
+.nfc-acc.is-open { background: color-mix(in srgb, var(--accent) 5%, transparent); }
+.nfc-acc-body[hidden] { display: none; }
+.nfc-acc-inner { padding: 2px 16px 16px 64px; display: grid; gap: 12px; animation: nfcOpen 220ms ease both; }
+.nfc-acc-inner.is-disabled { opacity: 0.5; }
+@keyframes nfcOpen { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+
+.nfc-sublabel { margin: 0; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); }
+.nfc-subgroup { border: 1px solid var(--nfc-line); border-radius: 14px; overflow: hidden; }
+.nfc-subgroup .nfc-row { min-height: 52px; padding: 8px 12px; }
+.nfc-subgroup .nfc-row + .nfc-row { border-top: 1px solid var(--nfc-line); }
+.nfc-time { flex: 0 0 auto; padding: 5px 6px; border: 1px solid var(--nfc-line); border-radius: 8px; background: transparent; color: var(--text-primary); font: inherit; font-size: 0.82rem; }
+.nfc-time:disabled { opacity: 0.45; }
+
+.nfc-stages { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.nfc-stage { display: flex; align-items: center; gap: 8px; padding: 10px 11px; border-radius: 12px; border: 1px solid var(--nfc-line); cursor: pointer; font-size: 0.84rem; font-weight: 600; color: var(--text-primary); }
+.nfc-stage input { width: 17px; height: 17px; margin: 0; flex: 0 0 auto; accent-color: #34c759; }
+.nfc-stage.is-on { border-color: #34c759; background: rgba(52, 199, 89, 0.08); }
+
+.nfc-note, .nfc-foot { display: flex; align-items: flex-start; gap: 8px; margin: 0; font-size: 0.8rem; line-height: 1.5; color: var(--text-secondary); }
+.nfc-note svg, .nfc-foot svg { flex: 0 0 16px; width: 16px; height: 16px; margin-top: 2px; color: var(--text-muted); }
+.nfc-foot { margin: 0 6px; color: var(--text-muted); }
+.nfc-go { justify-self: start; display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 999px; border: 1px solid var(--nfc-line); color: var(--text-primary); text-decoration: none; font-weight: 700; font-size: 0.84rem; }
+.nfc-go svg { width: 15px; height: 15px; }
+.nfc-go:hover { border-color: var(--accent); }
+
+@media (max-width: 640px) {
+  .nfc-stack { gap: 18px; }
+  .nfc-acc-inner { padding: 2px 14px 14px 14px; }
+  .nfc-stages { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nfc-switch span, .nfc-switch span::after, .nfc-caret { transition: none; }
+  .nfc-acc-inner { animation: none; }
+}
+
+/* locked tool / warning / next reminder / test button */
+.nfc-locked { display: flex; align-items: flex-start; gap: 8px; margin: 0; padding: 8px 10px; border-radius: 10px; background: var(--accent-soft, rgba(127, 127, 127, 0.1)); font-size: 0.8rem; font-weight: 700; color: var(--text-secondary); opacity: 1; }
+.nfc-locked svg { flex: 0 0 16px; width: 16px; height: 16px; margin-top: 2px; }
+.nfc-acc-inner.is-disabled > :not(.nfc-locked) { pointer-events: none; }
+.nfc-acc-inner.is-disabled { opacity: 1; }
+.nfc-acc-inner.is-disabled > :not(.nfc-locked):not(.nfc-go) { opacity: 0.45; }
+.nfc-acc-inner.is-disabled > .nfc-go { pointer-events: auto; }
+.nfc-warn { margin: 0; padding: 8px 10px; border-radius: 10px; background: rgba(232, 160, 58, 0.14); color: #b9741a; font-size: 0.8rem; font-weight: 700; }
+:root:not([data-theme="light"]) .nfc-warn { color: #f3b65c; }
+.nfc-next { display: flex; gap: 6px; margin: 0; font-size: 0.82rem; color: var(--text-secondary); }
+.nfc-next b { color: var(--text-primary); }
+.nfc-test { justify-self: start; display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 999px; border: 1px solid rgba(42, 171, 238, 0.45); background: rgba(42, 171, 238, 0.1); color: #1f8fd6; font: inherit; font-weight: 700; font-size: 0.84rem; cursor: pointer; }
+:root:not([data-theme="light"]) .nfc-test { color: #6cc6f5; }
+.nfc-test svg { width: 16px; height: 16px; }
+.nfc-test[disabled] { opacity: 0.6; cursor: wait; }
+
+/* phones: the floating + and back-to-top buttons sat on top of the right-hand switches */
+@media (max-width: 900px) {
+  body.notify-page-open .quick-action-dock { display: none; }
+  body.notify-page-open .back-to-top { display: none; }
+}
+
+/* money check-in group (js/notify-center.js moneyAskGroup) */
+.nfc-ma-icon { display: grid; place-items: center; width: 34px; height: 34px; flex: 0 0 auto; border-radius: 11px; font-size: 1.05rem; background: rgba(127, 160, 110, 0.16); }
+.nfc-ma-main { width: 40px; height: 40px; border-radius: 13px; background: #c5ff60; }
+.nfc-ma-item .nfc-copy strong { font-size: 0.9rem; }
+.nfc-ma-now { width: 100%; justify-content: center; }

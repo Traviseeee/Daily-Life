@@ -106,3 +106,9 @@
   body.notify-page-open .quick-action-dock { display: none; }
   body.notify-page-open .back-to-top { display: none; }
 }
+
+/* money check-in group (js/notify-center.js moneyAskGroup) */
+.nfc-ma-icon { display: grid; place-items: center; width: 34px; height: 34px; flex: 0 0 auto; border-radius: 11px; font-size: 1.05rem; background: rgba(127, 160, 110, 0.16); }
+.nfc-ma-main { width: 40px; height: 40px; border-radius: 13px; background: #c5ff60; }
+.nfc-ma-item .nfc-copy strong { font-size: 0.9rem; }
+.nfc-ma-now { width: 100%; justify-content: center; }

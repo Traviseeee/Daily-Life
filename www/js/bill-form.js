@@ -114,7 +114,7 @@ const BillForm = (() => {
         </section>` : ""}
 
         <section class="ev-section bf-switches">
-          ${switchRow("reminder", item.reminder ?? true, "🔔", t("reminder"), L("ជូនដំណឹង និងផ្ញើ Telegram មុនថ្ងៃផុតកំណត់", "Notify and send to Telegram before it is due"))}
+          ${switchRow("reminder", item.reminder ?? true, "🔔", t("reminder"), L("ជូនដំណឹង, Telegram និងសួរ “បានបង់ហើយឬនៅ?” ពេលដល់ថ្ងៃ", "Notify, Telegram, and ask “paid yet?” on the day"))}
           ${switchRow("autoPay", item.autoPay ?? false, "🔁", L("បង់ស្វ័យប្រវត្តិ", "Auto-pay"), L("Netflix, Wi-Fi… កត់ជាចំណាយដោយខ្លួនឯងនៅថ្ងៃបង់", "Netflix, Wi-Fi… logged as an expense on the due date"))}
         </section>
 

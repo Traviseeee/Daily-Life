@@ -83,9 +83,11 @@ const MoneyAsk = (() => {
       || ["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement?.tagName);
   }
 
+  const enabled = () => appData?.profile?.notificationsEnabled !== false && appData?.profile?.moneyAsk !== false;
+
   function check(tries = 0) {
     clearTimeout(checkTimer);
-    if (showing || document.hidden) return;
+    if (showing || document.hidden || !enabled()) return;
     const list = items();
     if (!list.length) return;
     if (busy()) {
@@ -208,5 +210,15 @@ const MoneyAsk = (() => {
   }
   schedule(3500);
 
-  return { check, items, close };
+  // Notification Center → "Ask me now": also brings back what was put off today
+  function askNow() {
+    try { localStorage.removeItem(SNOOZE_KEY); } catch (error) { /* ignore */ }
+    const list = items();
+    if (!list.length) { Toast.show(L("ថ្ងៃនេះគ្មានអ្វីត្រូវសួរ", "Nothing to ask today")); return; }
+    close(false);
+    showing = false;
+    show(list);
+  }
+
+  return { check, items, close, askNow, laterKeys: readLater };
 })();

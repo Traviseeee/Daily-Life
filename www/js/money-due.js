@@ -67,7 +67,9 @@ function dueToday(payload, today) {
   const days = date => Math.round((new Date(`${today}T00:00:00`) - new Date(`${date}T00:00:00`)) / 86400000);
   const out = [];
 
+  // each item can say "don't ask me" (income/loan: ask = false · bill: reminder off)
   (payload.income || []).forEach(income => {
+    if (income.ask === false) return;
     const date = incomeDateInMonth(income, month);
     if (!date || date > today || incomeReceived(income, month)) return;
     out.push({ kind: "income", id: income.id, key: `income:${income.id}:${month}`, title: income.name || "Income", amount: Number(income.amount || 0), currency: income.currency || "", date, month, overdueDays: days(date) });
@@ -75,12 +77,12 @@ function dueToday(payload, today) {
 
   const bills = payload.bills || [];
   bills.forEach(bill => {
-    if (!bill.due || bill.due > today || billPaidThisCycle(bill, today) || bill.autoPay) return;
+    if (!bill.due || bill.due > today || billPaidThisCycle(bill, today) || bill.autoPay || bill.reminder === false) return;
     out.push({ kind: "bill", id: bill.id, key: `bill:${bill.id}:${bill.due}`, title: bill.name || "Bill", amount: Number(bill.amount || 0), currency: bill.currency || "", date: bill.due, month, overdueDays: days(bill.due), loanId: bill.loanId || "" });
   });
 
   (payload.loans || []).forEach(loan => {
-    if (!(Number(loan.monthlyPayment) > 0) || !(loan.firstPaymentDate || loan.startDate)) return;
+    if (loan.ask === false || !(Number(loan.monthlyPayment) > 0) || !(loan.firstPaymentDate || loan.startDate)) return;
     if (bills.some(bill => bill.loanId === loan.id)) return; // asked through its bill
     const date = LoanPay ? LoanPay.scheduleDateFor(loan, today) : "";
     if (!date || date > today) return;

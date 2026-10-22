@@ -434,6 +434,7 @@ function notificationItems(payload) {
   (Array.isArray(payload.income) ? payload.income : [])
     .forEach(item => {
       const month = zonedTodayInput().slice(0, 7);
+      if (item.ask === false) return;
       const date = MoneyDue.incomeDateInMonth(item, month);
       if (!date || MoneyDue.incomeReceived(item, month)) return;
       add({
