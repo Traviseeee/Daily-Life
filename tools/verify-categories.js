@@ -36,6 +36,10 @@ const CASES = [
   // Entertainment
   ["មើលកុន 6$", "Entertainment"], ["សំបុត្រកុន 5$", "Entertainment"], ["movie ticket 5$", "Entertainment"], ["karaoke 20$", "Entertainment"],
   ["hotel 45$", "Entertainment"], ["ដំណើរកម្សាន្ត 100$", "Entertainment"],
+  // fruit is food
+  ["Coconut + Banana 2$", "Food"], ["mango 1.5$", "Food"], ["ដូង 3000៛", "Food"], ["ចេក 1$", "Food"], ["ផ្លែស្វាយ 2$", "Food"],
+  ["ធុរេន 10$", "Food"], ["watermelon 2$", "Food"], ["apple 1$", "Food"], ["ក្រូច ប៉ោម 4$", "Food"], ["strawberries 5$", "Food"],
+  ["iphone 900$", "Shopping"], ["apple music 5$", "Bills"], ["បច្ចេកវិទ្យា 5$", "Other"],
   // must NOT be pulled into a category by a word hidden inside another word
   ["ការងារ 5$", "Other"], ["ម៉ាស៊ីនថត 200$", "Other"], ["facebook ads 10$", "Other"], ["business 5$", "Other"]
 ];
