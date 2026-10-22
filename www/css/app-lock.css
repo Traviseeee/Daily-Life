@@ -26,5 +26,53 @@
 }
 body.app-locked { overflow: hidden; }
 body.app-lock-confirm .modal-root { z-index: 6000; }
-.al-bio { display: inline-flex; align-items: center; gap: 8px; margin: -8px 0 18px; padding: 9px 16px; border: 0; border-radius: 999px; font: inherit; font-size: 0.86rem; font-weight: 800; color: #d9ff7b; background: #0f3326; cursor: pointer; box-shadow: 0 8px 18px rgba(15, 51, 38, 0.25); }
-.al-bio svg { width: 20px; height: 20px; }
+
+/* opening and unlocking feel like a real app */
+.app-lock { animation: alIn 220ms ease both; }
+@keyframes alIn { from { opacity: 0; } to { opacity: 1; } }
+.app-lock.al-out { animation: alOut 300ms ease forwards; }
+@keyframes alOut { to { opacity: 0; transform: translateY(-30px) scale(1.02); } }
+
+/* Face ID first: big button, PIN hidden behind "use PIN" */
+.al-face { display: grid; justify-items: center; gap: 12px; margin: 26px 0 8px; }
+.al-face-btn { position: relative; display: grid; place-items: center; width: 112px; height: 112px; padding: 0; border: 0; border-radius: 32px; color: #d9ff7b; background: #0f3326; box-shadow: 0 16px 34px rgba(15, 51, 38, 0.32); cursor: pointer; -webkit-tap-highlight-color: transparent; transition: transform 120ms ease, background 200ms ease; }
+.al-face-btn:active { transform: scale(0.94); }
+.al-face-btn svg { width: 60px; height: 60px; }
+.al-face-btn::after { content: ""; position: absolute; inset: -8px; border: 2px solid rgba(15, 51, 38, 0.25); border-radius: 38px; animation: alPulse 1.8s ease-out infinite; }
+@keyframes alPulse { 0% { opacity: 0.9; transform: scale(0.94); } 100% { opacity: 0; transform: scale(1.12); } }
+.al-face-ok { position: absolute; inset: 0; display: grid; place-items: center; opacity: 0; transform: scale(0.6); transition: opacity 180ms ease, transform 220ms ease; }
+.al-face-icon { display: grid; transition: opacity 160ms ease; }
+.al-scanning .al-face-btn svg { animation: alScan 900ms ease-in-out infinite alternate; }
+@keyframes alScan { from { opacity: 1; } to { opacity: 0.45; } }
+.al-face-label { font-size: 0.9rem; font-weight: 700; color: #26392d; }
+.al-link { display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border: 0; border-radius: 999px; font: inherit; font-size: 0.86rem; font-weight: 800; color: #2f6f3e; background: rgba(255, 255, 255, 0.6); cursor: pointer; }
+.al-link svg { width: 18px; height: 18px; }
+.al-back-face { margin-top: 16px; }
+.al-bio-mode .al-pin { display: none; }
+.al-bio-mode.al-show-pin .al-pin { display: block; animation: alIn 200ms ease both; }
+.al-bio-mode.al-show-pin .al-face { display: none; }
+/* success: green ✓ (Face ID button, or the PIN dots) */
+.al-ok .al-face-btn { background: #2f9e55; color: #fff; }
+.al-ok .al-face-btn::after { display: none; }
+.al-ok .al-face-icon { opacity: 0; }
+.al-ok .al-face-ok { opacity: 1; transform: scale(1); }
+.al-ok .al-face-ok svg { width: 56px; height: 56px; }
+.al-ok .al-dots i { border-color: #2f9e55; background: #2f9e55; }
+
+/* forgot PIN: confirm with Face ID or the account password (no log out) */
+.al-reset { display: grid; gap: 12px; width: 100%; margin-top: 18px; animation: alIn 200ms ease both; }
+.al-reset-face { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 52px; padding: 0 16px; border: 0; border-radius: 16px; font: inherit; font-weight: 800; color: #d9ff7b; background: #0f3326; cursor: pointer; box-shadow: 0 10px 22px rgba(15, 51, 38, 0.25); }
+.al-reset-face svg { width: 26px; height: 26px; }
+.al-or { display: flex; align-items: center; gap: 10px; font-size: 0.78rem; color: #6f8577; }
+.al-or::before, .al-or::after { content: ""; flex: 1; height: 1px; background: rgba(15, 51, 38, 0.15); }
+.al-reset-form { display: grid; gap: 10px; }
+.al-reset-email { padding: 10px 12px; border-radius: 12px; font-size: 0.86rem; font-weight: 700; text-align: left; color: #26392d; background: rgba(255, 255, 255, 0.6); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.al-reset-field { position: relative; display: flex; }
+.al-reset-field input { width: 100%; min-height: 50px; padding: 0 48px 0 14px; border: 1px solid #d5e0cd; border-radius: 14px; font: inherit; font-size: 1rem; color: #10201a; background: #fff; }
+.al-reset-field input:focus { outline: none; border-color: #7cc04a; box-shadow: 0 0 0 3px rgba(197, 255, 96, 0.45); }
+.al-reset-field button { position: absolute; top: 7px; right: 6px; width: 36px; height: 36px; border: 0; border-radius: 10px; background: transparent; cursor: pointer; }
+.al-reset-form .al-done { width: 100%; margin-top: 0; }
+.al-reset-links { display: flex; justify-content: space-between; gap: 8px; }
+.al-link-quiet { color: #8a5a00; background: rgba(255, 255, 255, 0.4); }
+.app-lock .al-box { transition: transform 200ms ease; }
+.app-lock.al-instant { animation: none; }

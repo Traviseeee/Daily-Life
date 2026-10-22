@@ -53,7 +53,7 @@ const AppLock = (() => {
     const credential = await navigator.credentials.create({ publicKey: {
       challenge: crypto.getRandomValues(new Uint8Array(32)),
       rp: { name: "MYLIFE", id: location.hostname },
-      user: { id: crypto.getRandomValues(new Uint8Array(16)), name: "mylife-lock", displayName: `${name} · MYLIFE` },
+      user: { id: crypto.getRandomValues(new Uint8Array(16)), name: "MYLIFE", displayName: `MYLIFE · ${name}` },
       pubKeyCredParams: [{ type: "public-key", alg: -7 }, { type: "public-key", alg: -257 }],
       authenticatorSelection: { authenticatorAttachment: "platform", userVerification: "required", residentKey: "discouraged" },
       timeout: 60000,
@@ -88,7 +88,8 @@ const AppLock = (() => {
     close();
     let entry = "";
     root = document.createElement("div");
-    root.className = `app-lock app-lock-${mode}`;
+    const bioMode = mode === "unlock" && hasBio();
+    root.className = `app-lock app-lock-${mode}${bioMode ? " al-bio-mode" : ""}`;
     root.setAttribute("role", "dialog");
     root.setAttribute("aria-modal", "true");
     root.setAttribute("aria-label", title);
@@ -100,8 +101,13 @@ const AppLock = (() => {
         ${LOGO}
         <h2>${escapeHtml(title)}</h2>
         <p class="al-hint" data-al-hint>${escapeHtml(hint)}</p>
+        ${bioMode ? `<div class="al-face">
+          <button type="button" class="al-face-btn" data-al-bio aria-label="${L("បើកដោយ Face ID / ស្នាមម្រាមដៃ", "Unlock with Face ID / fingerprint")}"><span class="al-face-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 10v1M15 10v1M12 10v3h-1M9.5 16a3.5 3.5 0 0 0 5 0"/></svg></span><span class="al-face-ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></span></button>
+          <span class="al-face-label">${L("ចុចដើម្បីបើកដោយ Face ID", "Tap to unlock with Face ID")}</span>
+          <button type="button" class="al-link" data-al-usepin>${L("ប្រើ PIN ជំនួស", "Use PIN instead")}</button>
+        </div>` : ""}
+        <div class="al-pin">
         <div class="al-dots" data-al-dots aria-hidden="true"></div>
-        ${mode === "unlock" && hasBio() ? `<button type="button" class="al-bio" data-al-bio><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 10v1M15 10v1M12 10v3h-1M9.5 16a3.5 3.5 0 0 0 5 0"/></svg>${L("Face ID / ស្នាមម្រាមដៃ", "Face ID / fingerprint")}</button>` : ""}
         <div class="al-pad">
           ${keys.map(k => k === "back"
             ? `<button type="button" class="al-key al-key-text" data-al-back aria-label="${L("លុប", "Delete")}">⌫</button>`
@@ -110,6 +116,8 @@ const AppLock = (() => {
                 ? `<button type="button" class="al-key al-key-text" data-al-forgot>${L("ភ្លេច?", "Forgot?")}</button>`
                 : `<button type="button" class="al-key al-key-text" data-al-cancel>${L("បោះបង់", "Cancel")}</button>`)
               : `<button type="button" class="al-key" data-al-key="${k}">${k}</button>`).join("")}
+        </div>
+        ${bioMode ? `<button type="button" class="al-link al-back-face" data-al-useface><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 10v1M15 10v1M12 10v3h-1M9.5 16a3.5 3.5 0 0 0 5 0"/></svg> ${L("ប្រើ Face ID វិញ", "Use Face ID")}</button>` : ""}
         </div>
         ${mode === "set" ? `<button type="button" class="al-done" data-al-done disabled>${L("រួច", "Done")}</button>` : ""}
       </div>`;
@@ -135,15 +143,39 @@ const AppLock = (() => {
     const finish = async () => {
       const value = entry;
       const result = await onDone(value, { fail, setHint: text => { hintEl.textContent = text; entry = ""; paint(); } });
-      if (result === "ok") close();
+      if (result === "ok") (mode === "unlock" ? unlocked() : close());
     };
+    // a short ✓, then the lock slides away — feels like a real app unlock
+    const unlocked = () => {
+      root.classList.add("al-ok");
+      setTimeout(() => root && root.classList.add("al-out"), 380);
+      setTimeout(close, 700);
+    };
+    const showPin = on => {
+      root.classList.toggle("al-show-pin", on);
+      hintEl.textContent = on ? L("ដាក់ PIN ដើម្បីបើក MYLIFE", "Enter your PIN to open MYLIFE") : L("បើកដោយ Face ID / ស្នាមម្រាមដៃ", "Unlock with Face ID / fingerprint");
+    };
+    let bioFails = 0;
+    let bioBusy = false;
     const tryBio = async () => {
-      if (!hasBio()) return;
-      hintEl.textContent = L("កំពុងពិនិត្យ…", "Checking…");
-      if (await useBio()) { tries = 0; close(); return; }
-      hintEl.textContent = L("មិនបាន · ដាក់ PIN ជំនួស", "Didn't work · use your PIN");
+      if (!hasBio() || bioBusy) return;
+      bioBusy = true;
+      root.classList.add("al-scanning");
+      const ok = await useBio();
+      bioBusy = false;
+      if (!root) return;
+      root.classList.remove("al-scanning");
+      if (ok) { tries = 0; return unlocked(); }
+      bioFails += 1;
+      if (bioFails >= 2) showPin(true);
+      else hintEl.textContent = L("មិនបាន · ចុចម្ដងទៀត ឬប្រើ PIN", "Didn't work · tap again or use your PIN");
     };
-    if (mode === "unlock" && hasBio()) setTimeout(tryBio, 350); // ask the face / finger straight away
+    if (bioMode) {
+      showPin(false);
+      // iPhone / iPad only allow Face ID after a tap; other phones ask straight away
+      const needsTap = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+      if (!needsTap) setTimeout(tryBio, 450);
+    }
     const press = key => {
       if (Date.now() < waitUntil) {
         hintEl.textContent = L(`រង់ចាំ ${Math.ceil((waitUntil - Date.now()) / 1000)} វិនាទី`, `Wait ${Math.ceil((waitUntil - Date.now()) / 1000)} seconds`);
@@ -162,9 +194,12 @@ const AppLock = (() => {
       if (event.target.closest("[data-al-cancel]")) { close(); return onCancel && onCancel(); }
       if (event.target.closest("[data-al-forgot]")) return forgot();
       if (event.target.closest("[data-al-bio]")) return tryBio();
+      if (event.target.closest("[data-al-usepin]")) return showPin(true);
+      if (event.target.closest("[data-al-useface]")) { showPin(false); return tryBio(); }
     });
     root.addEventListener("keydown", event => {
-      if (/^[0-9]$/.test(event.key)) press(event.key);
+      if (event.target.closest && event.target.closest("input")) return; // typing in the reset form
+      if (/^[0-9]$/.test(event.key)) { if (bioMode) showPin(true); press(event.key); }
       else if (event.key === "Backspace") { entry = entry.slice(0, -1); paint(); }
       else if (event.key === "Enter" && doneBtn && !doneBtn.disabled) finish();
     });
@@ -182,6 +217,17 @@ const AppLock = (() => {
   /* ---------------- lock / unlock ---------------- */
   function lock() {
     if (!isOn() || root || document.getElementById("loginModal")) return;
+    // right after opening, the Face ID check may not have answered yet: show the
+    // lock now, and switch it to Face ID as soon as the phone says it can
+    if (bioAvailable === null && config().bio) {
+      checkBio().then(() => {
+        if (!root || !hasBio() || !root.classList.contains("app-lock-unlock") || root.classList.contains("al-bio-mode")) return;
+        const instant = root.classList.contains("al-instant");
+        close();
+        lock();
+        if (instant && root) root.classList.add("al-instant");
+      });
+    }
     const cfg = config();
     const name = String((typeof appData !== "undefined" && appData.profile && appData.profile.name) || "").split(/\s+/)[0];
     show({
@@ -207,7 +253,90 @@ const AppLock = (() => {
     });
   }
 
-  function forgot() {
+  // Forgot the PIN: prove it is you WITHOUT logging out — Face ID, or the
+  // account password — then set a new PIN. Logging out stays as the last way.
+  async function accountEmail() {
+    try {
+      const res = await window.MYLIFE_SUPABASE_API?.getUser?.();
+      return res?.data?.user?.email || "";
+    } catch (error) { return ""; }
+  }
+  async function forgot() {
+    if (!root) return;
+    const box = root.querySelector(".al-box");
+    const supa = Boolean(window.MYLIFE_SUPABASE?.enabled && window.supabaseClient);
+    const localHash = typeof appData !== "undefined" ? appData.profile?.passwordHash : "";
+    const email = supa ? await accountEmail() : "";
+    const canPassword = Boolean((supa && email) || localHash);
+    const FACE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 10v1M15 10v1M12 10v3h-1M9.5 16a3.5 3.5 0 0 0 5 0"/></svg>';
+    const keep = box.innerHTML;
+    box.innerHTML = `
+      ${LOGO}
+      <h2>${L("ភ្លេច PIN?", "Forgot your PIN?")}</h2>
+      <p class="al-hint" data-al-rhint>${L("បញ្ជាក់ថាជាអ្នក រួចកំណត់ PIN ថ្មី · មិនចាំបាច់ log out", "Prove it's you, then set a new PIN · no need to log out")}</p>
+      <div class="al-reset">
+        ${hasBio() ? `<button type="button" class="al-reset-face" data-al-rface>${FACE}<span>${L("បញ្ជាក់ដោយ Face ID / ស្នាមម្រាមដៃ", "Confirm with Face ID / fingerprint")}</span></button>` : ""}
+        ${canPassword ? `${hasBio() ? `<div class="al-or"><span>${L("ឬ", "or")}</span></div>` : ""}
+        <form class="al-reset-form" data-al-rform>
+          ${email ? `<div class="al-reset-email">✉ ${escapeHtml(email)}</div>` : ""}
+          <label class="al-reset-field"><input type="password" data-al-rpass autocomplete="current-password" placeholder="${escapeAttr(L("ពាក្យសម្ងាត់គណនី", "Account password"))}" required><button type="button" data-al-reye aria-label="${escapeAttr(L("បង្ហាញ", "Show"))}">👁</button></label>
+          <button type="submit" class="al-done">${L("បញ្ជាក់ ហើយកំណត់ PIN ថ្មី", "Confirm and set a new PIN")}</button>
+        </form>` : ""}
+        <div class="al-reset-links">
+          <button type="button" class="al-link" data-al-rback>‹ ${L("ត្រលប់", "Back")}</button>
+          <button type="button" class="al-link al-link-quiet" data-al-rlogout>${L("Log out ជំនួសវិញ", "Log out instead")}</button>
+        </div>
+      </div>`;
+    const hint = box.querySelector("[data-al-rhint]");
+    const newPin = () => { write({ ...config(), hash: "", salt: "" }); setPin(null, { afterReset: true }); };
+    box.querySelector("[data-al-rface]")?.addEventListener("click", async () => {
+      hint.textContent = L("កំពុងពិនិត្យ…", "Checking…");
+      if (await useBio()) newPin();
+      else hint.textContent = L("Face ID មិនបាន · ប្រើពាក្យសម្ងាត់", "Face ID didn't work · use your password");
+    });
+    box.querySelector("[data-al-reye]")?.addEventListener("click", () => {
+      const input = box.querySelector("[data-al-rpass]");
+      input.type = input.type === "password" ? "text" : "password";
+    });
+    box.querySelector("[data-al-rform]")?.addEventListener("submit", async event => {
+      event.preventDefault();
+      if (Date.now() < waitUntil) { hint.textContent = L(`រង់ចាំ ${Math.ceil((waitUntil - Date.now()) / 1000)} វិនាទី`, `Wait ${Math.ceil((waitUntil - Date.now()) / 1000)} seconds`); return; }
+      const password = box.querySelector("[data-al-rpass]").value;
+      const submit = box.querySelector(".al-reset-form .al-done");
+      submit.disabled = true;
+      hint.textContent = L("កំពុងពិនិត្យ…", "Checking…");
+      let ok = false;
+      try {
+        if (supa && email) {
+          const { error } = await window.MYLIFE_SUPABASE_API.signIn(email, password);
+          ok = !error;
+          if (error && !/invalid|credential|password/i.test(error.message || "")) {
+            hint.textContent = L("ពិនិត្យមិនបាន · ពិនិត្យអ៊ីនធឺណិត", "Couldn't check · check the internet");
+            submit.disabled = false;
+            return;
+          }
+        } else if (localHash && typeof Login !== "undefined" && Login.hash) {
+          ok = (await Login.hash(password)) === localHash;
+        }
+      } catch (error) {
+        hint.textContent = L("ពិនិត្យមិនបាន · ពិនិត្យអ៊ីនធឺណិត", "Couldn't check · check the internet");
+        submit.disabled = false;
+        return;
+      }
+      submit.disabled = false;
+      if (ok) { tries = 0; return newPin(); }
+      tries += 1;
+      if (tries >= MAX_TRIES) { tries = 0; waitUntil = Date.now() + WAIT_MS; }
+      hint.textContent = L("ពាក្យសម្ងាត់មិនត្រឹមត្រូវ", "Wrong password");
+      box.classList.remove("al-shake"); void box.offsetWidth; box.classList.add("al-shake");
+    });
+    box.querySelector("[data-al-rback]").addEventListener("click", () => { close(); lock(); });
+    box.querySelector("[data-al-rlogout]").addEventListener("click", logoutInstead);
+    setTimeout(() => box.querySelector("[data-al-rpass]")?.focus(), 80);
+    void keep;
+  }
+
+  function logoutInstead() {
     const go = async () => {
       write(null);
       close();
@@ -215,20 +344,19 @@ const AppLock = (() => {
       else location.reload();
     };
     if (typeof Modal !== "undefined" && Modal.confirm) {
-      // the confirm sits above the lock screen
-      document.body.classList.add("app-lock-confirm");
+      document.body.classList.add("app-lock-confirm"); // the confirm sits above the lock screen
       Modal.confirm({
-        title: L("ភ្លេច PIN?", "Forgot your PIN?"),
-        message: L("App នឹង log out។ Login ឡើងវិញដោយ email និងពាក្យសម្ងាត់ ហើយកំណត់ PIN ថ្មីនៅ ការកំណត់។", "You'll be logged out. Log in again with your email and password, then set a new PIN in Settings."),
-        confirmText: L("Log out", "Log out"),
-        onConfirm: go,
-        onCancel: () => document.body.classList.remove("app-lock-confirm")
+        title: L("Log out?", "Log out?"),
+        message: L("PIN នឹងត្រូវលុប។ Login ឡើងវិញដោយ email និងពាក្យសម្ងាត់ ហើយកំណត់ PIN ថ្មីនៅ ការកំណត់។", "Your PIN will be removed. Log in again with your email and password, then set a new PIN in Settings."),
+        confirmText: "Log out",
+        onConfirm: go
       });
     } else go();
   }
 
+
   // new PIN, typed twice
-  function setPin(onSaved) {
+  function setPin(onSaved, { afterReset = false } = {}) {
     let first = "";
     show({
       mode: "set",
@@ -250,7 +378,10 @@ const AppLock = (() => {
         if (onSaved) onSaved();
         return "ok";
       },
-      onCancel: () => { if (onSaved) onSaved(); }
+      onCancel: () => {
+        if (afterReset) { write({ ...config(), enabled: false }); if (typeof Toast !== "undefined") Toast.show(L("បានបិទការចាក់សោ · កំណត់ PIN ថ្មីនៅ ការកំណត់", "App lock is off · set a new PIN in Settings")); }
+        if (onSaved) onSaved();
+      }
     });
   }
 
@@ -333,9 +464,14 @@ const AppLock = (() => {
     if (away && Date.now() - away >= Number(config().after ?? 5) * 60000) lock();
   });
   // on open: wait for the login check, then lock (not over the login screen)
-  const start = () => setTimeout(() => { if (isOn()) lock(); }, 700);
-  if (document.readyState === "complete") start();
-  else window.addEventListener("load", start);
+  // on open: the lock is put in place right away, under the MYLIFE splash, so
+  // when the splash fades the lock is already fully there (no flash of the app)
+  const start = () => setTimeout(() => {
+    if (!isOn()) return;
+    lock();
+    if (root) root.classList.add("al-instant");
+  }, 0);
+  start(); // this file loads with "defer": the page is parsed, the app not shown yet
 
   return { lock, isOn, settingsRows, setPin, close };
 })();
