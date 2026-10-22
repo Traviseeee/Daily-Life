@@ -7,6 +7,7 @@ function renderFamily() {
   if (!hasFamily) {
     return `
       <section class="page family-empty-page">
+        <div data-family-group></div>
         ${familyEmptyCard()}
       </section>
     `;
@@ -21,6 +22,7 @@ function renderFamily() {
         </div>
         <button class="fam-add" type="button" data-action="add-family" aria-label="${escapeAttr(t("addFamilyMember"))}" title="${escapeAttr(t("addFamilyMember"))}">${Icons.plus()}</button>
       </div>
+      <div data-family-group></div>
       ${familyAvatarRow()}
       ${typeof MemoryFeed !== "undefined" ? MemoryFeed.familyTeaser() : ""}
       ${familyComingUp()}
@@ -503,6 +505,7 @@ function zodiacSignForDate(value) {
 
 function bindFamily(options = {}) {
   if (typeof MemoryFeed !== "undefined") MemoryFeed.afterFamilyRender();
+  if (typeof FamilyGroup !== "undefined") FamilyGroup.mount();
   document.querySelector("[data-family-media]")?.addEventListener("change", async event => {
     const files = [...(event.target.files || [])].slice(0, 8);
     const validFiles = files.filter(file => file.size <= 15 * 1024 * 1024);
