@@ -348,7 +348,7 @@ function moneyKeyboard(token, saved, mode = "main") {
 
 // persistent buttons under the chat box
 const REPLY_KEYBOARD = {
-  keyboard: [[{ text: "☀️ ថ្ងៃនេះ" }, { text: "🧾 វិក្កយបត្រ" }, { text: "🌙 កត់ចំណាយ" }], [{ text: "📊 របាយការណ៍" }, { text: "☰ ម៉ឺនុយ" }]],
+  keyboard: [[{ text: "☀️ ថ្ងៃនេះ" }, { text: "🧾 វិក្កយបត្រ" }, { text: "🤖 សួរ AI" }], [{ text: "🌙 កត់ចំណាយ" }, { text: "📊 របាយការណ៍" }, { text: "☰ ម៉ឺនុយ" }]],
   resize_keyboard: true,
   is_persistent: true,
   input_field_placeholder: "coffee 2 · ស្អែក 9 ព្រឹក ជួបម៉ាក់"
@@ -369,7 +369,7 @@ const COMMAND_WORDS = [
   ["words", /^\/words\b|^ពាក្យ$/i],
   ["advice", /^\/advice\b|^🤖 ដំបូន្មានលុយ$|^ដំបូន្មាន(លុយ)?$/i],
   ["ask", /^\/ask\b/i],
-  ["ai", /^\/ai\b|^💬 សួរ AI$/i]
+  ["ai", /^\/ai\b|^💬 សួរ AI$|^🤖 សួរ AI$/i]
 ];
 
 function commandOf(text) {
@@ -377,19 +377,47 @@ function commandOf(text) {
   return found ? found[0] : "";
 }
 
+// /menu: grouped buttons — today · reports · AI · the rest — 5 rows
 function menuKeyboard() {
   const b = (text, key) => ({ text, callback_data: `m|${key}` });
   return {
     inline_keyboard: [
-      [b("☀️ ថ្ងៃនេះ", "today"), b("🧾 វិក្កយបត្រ", "bills")],
-      [b("🌙 កត់ចំណាយ", "evening"), b("📷 Scan", "scan")],
+      [b("☀️ ថ្ងៃនេះ", "today"), b("🧾 វិក្កយបត្រ", "bills"), b("🌙 កត់ចំណាយ", "evening")],
       [b("📈 7 ថ្ងៃ", "week"), b("🗓️ ខែនេះ", "month"), b("📅 ខែមុន", "lastmonth")],
       [b("🤖 ដំបូន្មានលុយ", "advice"), b("💬 សួរ AI", "ai")],
-      [b("🏷️ ពាក្យប្រភេទ", "words"), b("💾 Backup", "backup")],
-      [{ text: "📑 របាយការណ៍ JPG + Excel (app)", url: appLink({ url: "/#money/reports" }) }],
-      [b("❓ ជំនួយ", "help"), { text: "📱 បើក MYLIFE", url: appLink({ url: "/" }) }]
+      [b("📷 Scan", "scan"), b("🏷️ ពាក្យ", "words"), b("💾 Backup", "backup"), b("❓ ជំនួយ", "help")],
+      [{ text: "📱 បើក MYLIFE", url: appLink({ url: "/" }) }]
     ]
   };
+}
+
+// /menu text: a short money summary on top, so opening the menu already says something
+function menuText(payload, today) {
+  const currency = payload.profile?.currency || "USD";
+  const sumIn = items => items.reduce((sum, item) => sum + convert(item.amount, item.currency || currency, currency), 0);
+  const expenses = Array.isArray(payload.expenses) ? payload.expenses : [];
+  const month = today.slice(0, 7);
+  const spentToday = sumIn(expenses.filter(item => item.date === today));
+  const spentMonth = Object.values(monthSpending(payload, month)).reduce((sum, value) => sum + value, 0);
+  const incomeMonth = sumIn((payload.income || []).filter(item => String(item.nextPaymentDate || item.date || "").startsWith(month) && !item.recurring));
+  const due = (payload.bills || [])
+    .filter(bill => bill.status !== "Paid" && bill.due && !(bill.lastPaidAt && daysBetween(bill.lastPaidAt, today) < 20))
+    .map(bill => ({ bill, gap: daysBetween(today, bill.due) }))
+    .filter(item => item.gap <= 3)
+    .sort((x, y) => x.gap - y.gap);
+  const whenOf = gap => (gap < 0 ? `ហួស ${-gap} ថ្ងៃ` : gap === 0 ? "ថ្ងៃនេះ" : gap === 1 ? "ស្អែក" : `${gap} ថ្ងៃទៀត`);
+  const quote = [
+    `💸 ថ្ងៃនេះចាយ <b>${escapeHtml(fmt(spentToday, currency))}</b>`,
+    `🗓️ ខែនេះចាយ <b>${escapeHtml(fmt(spentMonth, currency))}</b>${incomeMonth ? ` · ចំណូល <b>${escapeHtml(fmt(incomeMonth, currency))}</b>` : ""}`,
+    due.length
+      ? `🧾 ជិតដល់ <b>${due.length}</b> វិក្កយបត្រ · ${escapeHtml(String(due[0].bill.name || "Bill").slice(0, 24))} ${escapeHtml(whenOf(due[0].gap))}`
+      : "🧾 គ្មានវិក្កយបត្រជិតដល់ទេ"
+  ];
+  return [
+    `☰ <b>MYLIFE</b> · ${escapeHtml(dateLabels(today).km)}`,
+    `<blockquote>${quote.join("\n")}</blockquote>`,
+    "<i>វាយសារ ឧ.</i> <code>កាហ្វេ 2.5$</code> <i>ឬសួរ</i> <code>ខែនេះចាយអ្វីច្រើន?</code>"
+  ].join("\n");
 }
 
 function reportsKeyboard() {
@@ -409,7 +437,7 @@ async function runCommand(command, { message, userId, payload, today, redis }) {
     case "help":
       return reply(message, HELP_TEXT, REPLY_KEYBOARD);
     case "menu":
-      return reply(message, "☰ <b>ម៉ឺនុយ MYLIFE</b>\n<i>ជ្រើសខាងក្រោម ឬវាយសារ ឧ.</i> <code>coffee 2</code>", menuKeyboard());
+      return reply(message, menuText(payload || {}, today), menuKeyboard());
     case "bills":
       return billsReply(message, { userId, payload, today, redis });
     case "scan":

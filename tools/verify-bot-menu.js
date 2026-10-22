@@ -194,6 +194,17 @@ const check = (name, ok, extra = "") => { if (ok) pass++; else { fail++; console
   const keys = menu.flat().map(b => b.callback_data).filter(Boolean);
   check("menu has bills, scan, words, today, evening, week, month, lastmonth, backup, help",
     ["m|bills", "m|scan", "m|words", "m|today", "m|evening", "m|week", "m|month", "m|lastmonth", "m|backup", "m|help"].every(k => keys.includes(k)), keys.join(","));
+  const menuMsg = sendTexts().pop() || {};
+  check("menu is 5 grouped rows", (menuMsg.reply_markup?.inline_keyboard || []).length === 5, JSON.stringify(menuMsg.reply_markup));
+  check("menu text: today's and this month's spending", /ថ្ងៃនេះចាយ/.test(menuMsg.text || "") && /ខែនេះចាយ/.test(menuMsg.text || ""), menuMsg.text);
+  check("menu text: the nearest bill (overdue Rent first)", /ជិតដល់ <b>2<\/b> វិក្កយបត្រ · Rent ហួស 1 ថ្ងៃ/.test(menuMsg.text || ""), menuMsg.text);
+  check("menu has AI buttons", ["m|advice", "m|ai"].every(k => keys.includes(k)));
+  await say("/help");
+  const kb = JSON.stringify((sendTexts().pop() || {}).reply_markup || {});
+  check("bottom keyboard has 🤖 សួរ AI and 6 buttons", kb.includes("🤖 សួរ AI") && (kb.match(/"text"/g) || []).length === 6, kb);
+  await say("🤖 សួរ AI");
+  check("🤖 សួរ AI button answers (AI status)", /AI/.test((sendTexts().pop() || {}).text || ""));
+  await say("/menu");
   await press("bills");
   check("menu button 🧾 opens the bills list", /Bills to pay/.test((sendTexts().pop() || {}).text || ""));
   await press("words");
