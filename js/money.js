@@ -400,9 +400,9 @@ function renderMoneyTab(tab, stats) {
             <span class="eyebrow">${t("expenses")}</span>
             <h2 class="section-title">${t("recentTransactions")}</h2>
           </div>
-          <span class="pill">${periodExpenses.length} · ${escapeHtml(range.label)}</span>
+          <a class="pill xl-see-all" href="#money/expenses">${languageCode() === "km" ? "មើលទាំងអស់" : "See all"} ›</a>
         </div>
-        ${periodExpenses.length ? expenseLedger(periodExpenses.slice(0, 8)) : `<p class="secondary money-period-empty">${languageCode() === "km" ? `មិនមានចំណាយ ${escapeHtml(range.label)} ទេ` : `No expenses for ${escapeHtml(range.label)}`}</p>`}
+        ${renderRecentExpenses()}
       </article>
     </div>
   `;
@@ -613,7 +613,20 @@ function renderExpenses() {
   </article>`;
 }
 
-function expenseGroups(items) {
+// Money overview: only the last 3 days, grouped by category; tap a row to edit it
+function renderRecentExpenses() {
+  const km = languageCode() === "km";
+  const today = localDateInput();
+  const from = new Date(`${today}T00:00:00`);
+  from.setDate(from.getDate() - 2);
+  const fromIso = localDateInput(from);
+  const items = (appData.expenses || []).filter(item => item.date && item.date >= fromIso && item.date <= today);
+  const head = `<p class="xl-recent-note">${km ? "៣ ថ្ងៃចុងក្រោយ" : "Last 3 days"} · ${items.length} · <b>-${money(sumMoney(items, "amount"))}</b></p>`;
+  if (!items.length) return `${head}<p class="secondary money-period-empty">${km ? "មិនមានចំណាយក្នុង ៣ ថ្ងៃចុងក្រោយទេ" : "No expenses in the last 3 days"}</p>`;
+  return head + expenseGroups(items, { actions: false });
+}
+
+function expenseGroups(items, { actions = true } = {}) {
   const groups = new Map();
   items.forEach(item => {
     const key = expenseGroupOf(item);
@@ -625,7 +638,7 @@ function expenseGroups(items) {
     .sort((a, b) => b.total - a.total)
     .map(({ category, list, total }) => `<details class="xl-group" open style="--cat:${expenseCategoryColors[category] || "#8a94a6"}">
       <summary><span class="xl-group-icon">${Icons[expenseCategoryIcons[category] || "expense"]()}</span><strong>${escapeHtml(optionLabel(category))}</strong><em>${list.length}</em><b>-${money(total)}</b>${Icons.chevron()}</summary>
-      <div class="xl-rows">${list.map(item => expenseRow(item, { compact: true })).join("")}</div>
+      <div class="xl-rows">${list.map(item => expenseRow(item, { compact: true, actions })).join("")}</div>
     </details>`).join("")}</div>`;
 }
 
@@ -634,10 +647,17 @@ function expenseLedger(items) {
   return `<div class="xl-rows xl-rows-plain">${items.map(item => expenseRow(item, { compact: true, showCategory: true })).join("")}</div>`;
 }
 
-function expenseRow(item, { compact = false, showCategory = false } = {}) {
+function expenseRow(item, { compact = false, showCategory = false, actions = true } = {}) {
   const category = item.category || "Other";
   const group = expenseGroupOf(item);
   const date = formatDate(item.date, { month: "short", day: "numeric" });
+  if (compact && !actions) {
+    // whole row opens the edit form (no small buttons → calmer list)
+    return `<button type="button" class="xl-row xl-row-tap" data-edit-expense="${escapeAttr(item.id)}" style="--cat:${expenseCategoryColors[group] || "#8a94a6"}">
+      <div class="xl-row-copy"><strong>${escapeHtml(item.description || optionLabel(category))}</strong><span>${escapeHtml(date)}${expenseMethodChip(item.method)}</span></div>
+      <strong class="xl-row-amount">-${money(item.amount, item.currency)}</strong>
+    </button>`;
+  }
   if (compact) {
     return `<div class="xl-row" style="--cat:${expenseCategoryColors[group] || "#8a94a6"}">
       ${showCategory ? `<span class="xl-row-icon">${Icons[expenseCategoryIcons[group] || "expense"]()}</span>` : ""}

@@ -52,3 +52,24 @@
 .financial-bill-actions .bill-act-pay { color: #142a04 !important; border: 0 !important; background: #c5ff60 !important; font-weight: 800; box-shadow: 0 6px 16px rgba(197, 255, 96, 0.25); }
 .financial-bill-actions .bill-act-pay svg { color: #142a04; }
 .financial-bill-actions .bill-act-undo { color: var(--text-secondary) !important; border: 1px dashed rgba(127, 140, 133, 0.45) !important; background: transparent !important; font-weight: 700; }
+
+/* v2 colours: solid category tile (white icon) so each group is easy to spot;
+   rows stay calm (neutral amount), the group total is the one red number */
+.xl-group { background: transparent; border-color: rgba(127, 140, 133, 0.22); }
+:root:not([data-theme="light"]) .xl-group { background: rgba(255, 255, 255, 0.03); border-color: rgba(255, 255, 255, 0.1); }
+.xl-group > summary { border-left: 4px solid var(--cat); }
+.xl-group-icon, .xl-row-icon { color: #fff; background: var(--cat); box-shadow: 0 4px 12px color-mix(in srgb, var(--cat) 35%, transparent); }
+.xl-row-amount { color: var(--text-primary) !important; font-weight: 700; }
+:root:not([data-theme="light"]) .xl-row-amount { color: #f2f5f3 !important; }
+.xl-row-copy span { color: var(--text-secondary); }
+:root:not([data-theme="light"]) .xl-row-copy span { color: rgba(255, 255, 255, 0.62); }
+:root:not([data-theme="light"]) .xl-row-copy strong { color: #fff; }
+
+/* overview: tappable rows (no edit / delete buttons) */
+button.xl-row-tap { width: 100%; border: 0; border-bottom: 1px solid rgba(127, 140, 133, 0.12); font: inherit; text-align: left; color: inherit; background: transparent; cursor: pointer; }
+button.xl-row-tap:hover { background: rgba(127, 140, 133, 0.08); }
+.xl-rows button.xl-row-tap:last-child { border-bottom: 0; }
+.xl-recent-note { margin: 0 0 10px; font-size: 0.82rem; color: var(--text-secondary); }
+.xl-recent-note b { color: #e5484d; }
+:root:not([data-theme="light"]) .xl-recent-note b { color: #ff8a8d; }
+a.xl-see-all { text-decoration: none; font-weight: 800; }
