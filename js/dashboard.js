@@ -95,6 +95,7 @@ function renderHome() {
     '<div class="home-week-row" aria-label="' + (languageCode() === "km" ? "អារម្មណ៍ប្រចាំសប្តាហ៍" : "Mood this week") + '">' +
       moodHistoryChart.map(day => '<div class="home-week-day ' + (day.isToday ? "active" : "") + '"' + (day.isToday ? ' aria-current="date"' : '') + '><span class="week-label">' + day.day + '</span><strong>' + day.date + '</strong><span class="week-mood ' + (day.value ? "has-mood" : "no-mood") + '" aria-label="' + escapeHtml(day.label) + '">' + day.emoji + '</span></div>').join("") +
     '</div>' +
+    (typeof MoneyAsk !== "undefined" ? MoneyAsk.homeCard() : '') +
     renderHomeAgenda(agenda) +
     '<a class="home-smart-summary-link" href="#summary"><span>' + Icons.chart() + '</span><span><strong>' + escapeHtml(t("smartSummary")) + '</strong><small>' + escapeHtml(t("smartSummarySubtitle")) + '</small></span>' + Icons.chevron() + '</a>' +
     '<div class="home-overview">' +
@@ -461,7 +462,8 @@ function billPaidCurrentCycle(bill) {
   return bill.due > localDashboardDate(new Date());
 }
 
-function markBillPaid(billId) {
+// paidAmount: the real amount when it differs from the bill (EDC / water change each month)
+function markBillPaid(billId, paidAmount) {
   const bill = appData.bills.find(item => item.id === billId);
   if (!bill || billPaidCurrentCycle(bill)) return;
   const frequency = bill.frequency || "Monthly";
@@ -494,7 +496,8 @@ function markBillPaid(billId) {
   }
   // A paid bill is money spent: record it as an expense so it counts in
   // "left this month", budgets, category charts and the monthly report.
-  const amount = Number(bill.amount || 0);
+  const amount = Number(paidAmount) > 0 ? Number(paidAmount) : Number(bill.amount || 0);
+  if (Number(paidAmount) > 0 && Number(paidAmount) !== Number(bill.amount || 0)) nextBill.lastPaidAmount = Number(paidAmount);
   const loan = bill.loanId ? (appData.loans || []).find(item => item.id === bill.loanId) : null;
   if (amount > 0 && loan && typeof LoanPay !== "undefined") {
     // bill linked to a loan: ONE expense (category Loan) + the loan's payment for that due date

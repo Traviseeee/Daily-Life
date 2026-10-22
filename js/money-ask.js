@@ -66,7 +66,7 @@ const MoneyAsk = (() => {
       </div>
       <div class="ma-actions">
         <button type="button" class="ma-yes" data-ma-yes>${escapeHtml(item.kind === "income" ? L("✅ បានហើយ", "✅ Got it") : L("✅ បង់ហើយ", "✅ Paid"))}</button>
-        ${item.kind === "income" ? `<button type="button" class="ma-other" data-ma-other>${escapeHtml(L("✏️ ចំនួនផ្សេង", "✏️ Other amount"))}</button>` : ""}
+        ${item.kind !== "loan" ? `<button type="button" class="ma-other" data-ma-other>${escapeHtml(L("✏️ ចំនួនផ្សេង", "✏️ Other amount"))}</button>` : ""}
         <button type="button" class="ma-later" data-ma-later>${escapeHtml(L("⏰ មិនទាន់", "⏰ Not yet"))}</button>
       </div>
       <form class="ma-amount" data-ma-amount hidden><input type="number" min="0" step="any" inputmode="decimal" value="${escapeAttr(item.amount || "")}" aria-label="${escapeAttr(L("ចំនួនពិត", "Real amount"))}"><span>${escapeHtml(item.currency || "")}</span><button type="submit">${escapeHtml(L("រក្សាទុក", "Save"))}</button></form>
@@ -134,7 +134,7 @@ const MoneyAsk = (() => {
     done.dataset.tone = tone;
     done.textContent = text;
     const pop = row.closest(".ma-pop");
-    if (pop && !pop.querySelector("[data-ma-row]:not(.is-done)")) setTimeout(() => close(false), 1300);
+    if (pop && !pop.querySelector("[data-ma-row]:not(.is-done), [data-ma-row].is-holding")) setTimeout(() => { if (!pop.querySelector("[data-ma-row].is-holding")) close(false); }, 1300);
   }
 
   // pull the newest cloud copy first: an answer given on Telegram is then seen here
@@ -152,8 +152,9 @@ const MoneyAsk = (() => {
       return;
     }
     if (item.kind === "bill") {
-      markBillPaid(item.id); // records the expense (or the linked loan payment) once
-      finishRow(row, L("✅ បានកត់ថាបង់ + ចំណាយ", "✅ Marked paid + expense saved"));
+      markBillPaid(item.id, amount); // records the expense (or the linked loan payment) once
+      const paid = amount && Number(amount) !== Number(item.amount) ? ` ${plain(amount, item.currency)}` : "";
+      finishRow(row, L(`✅ បានកត់ថាបង់${paid} + ចំណាយ`, `✅ Marked paid${paid} + expense saved`));
       return;
     }
     if (item.kind === "loan") {
@@ -167,8 +168,70 @@ const MoneyAsk = (() => {
     const result = income ? MoneyDue.recordIncomeReceived(income, item.month, { amount, date: today(), via: "App" }) : "missing";
     if (result === "updated") { Store.save(); App.render(); }
     const got = amount && Number(amount) !== Number(item.amount) ? plain(amount, item.currency) : "";
+    if (result === "updated") offerSavings(row);
     finishRow(row, result === "missing" ? L("⚠️ រកមិនឃើញ", "⚠️ Not found") : L(`✅ បានកត់ថាទទួល${got ? ` ${got}` : ""}`, `✅ Marked received${got ? ` ${got}` : ""}`), result === "missing" ? "warn" : "ok");
   }
+
+  /* ---- salary received → "put some into savings?" (one tap = this month's deposit) ---- */
+  const month = () => today().slice(0, 7);
+  function savingsOpen() {
+    return (appData.savings || []).filter(saving => Number(saving.monthlyContribution) > 0
+      && !(saving.contributions || []).some(entry => entry && entry.month === month() && entry.paid)).slice(0, 3);
+  }
+  // same record as the tick on the Savings card: { month, amount, paid } + currentAmount
+  function depositSaving(saving) {
+    const contributions = Array.isArray(saving.contributions) ? saving.contributions.slice() : [];
+    const index = contributions.findIndex(entry => entry && entry.month === month());
+    if (index >= 0 && contributions[index].paid) return "already";
+    const amount = Number(saving.monthlyContribution || 0);
+    const entry = { ...(index >= 0 ? contributions[index] : {}), month: month(), amount, paid: true, via: "App" };
+    if (index >= 0) contributions[index] = entry; else contributions.unshift(entry);
+    saving.contributions = contributions;
+    saving.currentAmount = Number(saving.currentAmount || 0) + amount;
+    saving.updatedAt = new Date().toISOString();
+    return "updated";
+  }
+  function offerSavings(row) {
+    const list = savingsOpen();
+    if (!list.length) return;
+    row.classList.add("is-holding");
+    const box = document.createElement("div");
+    box.className = "ma-save";
+    box.innerHTML = `<p><span class="ma-save-icon">${Icons.savings()}</span>${escapeHtml(L("ដាក់សន្សំខែនេះឥឡូវ?", "Put this month's savings in now?"))}</p>
+      <div class="ma-save-list">${list.map(saving => `<button type="button" data-ma-save="${escapeAttr(saving.id)}"><b>${escapeHtml(saving.name || L("សន្សំ", "Savings"))}</b><small>${escapeHtml(plain(saving.monthlyContribution, saving.currency))}</small></button>`).join("")}</div>
+      <button type="button" class="ma-save-skip" data-ma-save-skip>${escapeHtml(L("ពេលក្រោយ", "Later"))}</button>`;
+    row.appendChild(box);
+    const release = () => {
+      row.classList.remove("is-holding");
+      const pop = row.closest(".ma-pop");
+      if (pop && !pop.querySelector("[data-ma-row]:not(.is-done), [data-ma-row].is-holding")) setTimeout(() => close(false), 1100);
+    };
+    box.querySelectorAll("[data-ma-save]").forEach(button => button.addEventListener("click", async () => {
+      button.disabled = true;
+      await freshData();
+      const saving = (appData.savings || []).find(entry => entry.id === button.dataset.maSave);
+      const result = saving ? depositSaving(saving) : "missing";
+      if (result === "updated") { Store.save(); App.render(); }
+      button.classList.add("is-done");
+      button.querySelector("small").textContent = result === "missing" ? "⚠️" : L("✓ បានដាក់", "✓ Added");
+      if (![...box.querySelectorAll("[data-ma-save]")].some(entry => !entry.classList.contains("is-done"))) { box.querySelector("[data-ma-save-skip]").hidden = true; release(); }
+    }));
+    box.querySelector("[data-ma-save-skip]").addEventListener("click", () => { box.remove(); release(); });
+  }
+
+  /* ---- Home card: what is still waiting today (also after "Not yet" / closing the pop-up) ---- */
+  function homeCard() {
+    if (!enabled() || typeof MoneyDue === "undefined") return "";
+    const list = MoneyDue.dueToday(appData, today());
+    if (!list.length) return "";
+    const kindIcon = kind => kind === "income" ? Icons.salary() : kind === "loan" ? Icons.loan() : Icons.bill();
+    const shown = list.slice(0, 3);
+    return `<section class="ma-home" aria-label="${escapeAttr(L("លុយត្រូវឆ្លើយ", "Money to confirm"))}">
+      <div class="ma-home-head"><span class="ma-home-icon">${Icons.wallet()}</span><div><strong>${escapeHtml(L("រង់ចាំឆ្លើយ", "Waiting for you"))}</strong><small>${escapeHtml(L(`${list.length} ត្រូវបញ្ជាក់ថ្ងៃនេះ`, `${list.length} to confirm today`))}</small></div><button type="button" class="ma-home-go" data-ma-home>${escapeHtml(L("ឆ្លើយ", "Answer"))}</button></div>
+      <div class="ma-home-list">${shown.map(item => `<button type="button" class="ma-home-row" data-ma-home><span class="ma-icon ma-${item.kind}">${kindIcon(item.kind)}</span><span class="ma-home-name">${escapeHtml(item.title)}</span><span class="ma-home-amt">${escapeHtml(amountText(item))}</span><em class="${item.overdueDays > 0 ? "is-late" : ""}">${escapeHtml(whenText(item))}</em></button>`).join("")}${list.length > shown.length ? `<button type="button" class="ma-home-more" data-ma-home>+${list.length - shown.length}</button>` : ""}</div>
+    </section>`;
+  }
+  document.addEventListener("click", event => { if (event.target.closest("[data-ma-home]")) askNow(); });
 
   function bindRow(row, item) {
     if (!row) return;
@@ -220,5 +283,5 @@ const MoneyAsk = (() => {
     show(list);
   }
 
-  return { check, items, close, askNow, laterKeys: readLater };
+  return { check, items, close, askNow, homeCard, laterKeys: readLater, depositSaving };
 })();
