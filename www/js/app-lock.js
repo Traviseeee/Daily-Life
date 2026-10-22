@@ -31,6 +31,55 @@ const AppLock = (() => {
     write({ ...config(), enabled: true, salt, hash: await hashPin(pin, salt), digits: pin.length });
   }
 
+  /* ---------------- Face ID / fingerprint (WebAuthn, this device only) ---------------- */
+  // The phone checks the face / finger itself; MYLIFE only keeps the id of a
+  // device key that can be used after that check. Nothing about the face or
+  // finger ever reaches the app. PIN stays as the backup.
+  let bioAvailable = null;
+  const b64 = buffer => btoa(String.fromCharCode(...new Uint8Array(buffer))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  const unb64 = text => Uint8Array.from(atob(String(text).replace(/-/g, "+").replace(/_/g, "/") + "===".slice((String(text).length + 3) % 4)), c => c.charCodeAt(0));
+  async function checkBio() {
+    try {
+      bioAvailable = Boolean(window.PublicKeyCredential && window.isSecureContext && !/^\d+\.\d+\.\d+\.\d+$/.test(location.hostname)
+        && await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable());
+    } catch (error) { bioAvailable = false; }
+    return bioAvailable;
+  }
+  checkBio();
+  const hasBio = () => Boolean(bioAvailable && config().bio && config().bio.id);
+
+  async function addBio() {
+    const name = String((typeof appData !== "undefined" && appData.profile && appData.profile.name) || "MYLIFE");
+    const credential = await navigator.credentials.create({ publicKey: {
+      challenge: crypto.getRandomValues(new Uint8Array(32)),
+      rp: { name: "MYLIFE", id: location.hostname },
+      user: { id: crypto.getRandomValues(new Uint8Array(16)), name: "mylife-lock", displayName: `${name} · MYLIFE` },
+      pubKeyCredParams: [{ type: "public-key", alg: -7 }, { type: "public-key", alg: -257 }],
+      authenticatorSelection: { authenticatorAttachment: "platform", userVerification: "required", residentKey: "discouraged" },
+      timeout: 60000,
+      attestation: "none"
+    } });
+    write({ ...config(), bio: { id: b64(credential.rawId), at: new Date().toISOString() } });
+  }
+
+  // true when the phone confirmed the face / finger
+  async function useBio() {
+    const id = config().bio && config().bio.id;
+    if (!id) return false;
+    try {
+      const result = await navigator.credentials.get({ publicKey: {
+        challenge: crypto.getRandomValues(new Uint8Array(32)),
+        rpId: location.hostname,
+        allowCredentials: [{ type: "public-key", id: unb64(id) }],
+        userVerification: "required",
+        timeout: 60000
+      } });
+      return Boolean(result && b64(result.rawId) === id);
+    } catch (error) {
+      return false;
+    }
+  }
+
   /* ---------------- the keypad screen ---------------- */
   const LOGO = '<svg class="al-logo" viewBox="0 0 240 240" aria-hidden="true"><rect width="240" height="240" rx="56" fill="#0f3326"/><circle cx="120" cy="120" r="66" fill="none" stroke="#1f4a38" stroke-width="22"/><circle cx="120" cy="120" r="66" fill="none" stroke="#d9ff7b" stroke-width="22" stroke-linecap="round" stroke-dasharray="311 415" transform="rotate(-90 120 120)"/><circle cx="120" cy="120" r="20" fill="#9ef06a"/></svg>';
 
@@ -52,6 +101,7 @@ const AppLock = (() => {
         <h2>${escapeHtml(title)}</h2>
         <p class="al-hint" data-al-hint>${escapeHtml(hint)}</p>
         <div class="al-dots" data-al-dots aria-hidden="true"></div>
+        ${mode === "unlock" && hasBio() ? `<button type="button" class="al-bio" data-al-bio><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 10v1M15 10v1M12 10v3h-1M9.5 16a3.5 3.5 0 0 0 5 0"/></svg>${L("Face ID / ស្នាមម្រាមដៃ", "Face ID / fingerprint")}</button>` : ""}
         <div class="al-pad">
           ${keys.map(k => k === "back"
             ? `<button type="button" class="al-key al-key-text" data-al-back aria-label="${L("លុប", "Delete")}">⌫</button>`
@@ -87,6 +137,13 @@ const AppLock = (() => {
       const result = await onDone(value, { fail, setHint: text => { hintEl.textContent = text; entry = ""; paint(); } });
       if (result === "ok") close();
     };
+    const tryBio = async () => {
+      if (!hasBio()) return;
+      hintEl.textContent = L("កំពុងពិនិត្យ…", "Checking…");
+      if (await useBio()) { tries = 0; close(); return; }
+      hintEl.textContent = L("មិនបាន · ដាក់ PIN ជំនួស", "Didn't work · use your PIN");
+    };
+    if (mode === "unlock" && hasBio()) setTimeout(tryBio, 350); // ask the face / finger straight away
     const press = key => {
       if (Date.now() < waitUntil) {
         hintEl.textContent = L(`រង់ចាំ ${Math.ceil((waitUntil - Date.now()) / 1000)} វិនាទី`, `Wait ${Math.ceil((waitUntil - Date.now()) / 1000)} seconds`);
@@ -104,6 +161,7 @@ const AppLock = (() => {
       if (event.target.closest("[data-al-done]")) return finish();
       if (event.target.closest("[data-al-cancel]")) { close(); return onCancel && onCancel(); }
       if (event.target.closest("[data-al-forgot]")) return forgot();
+      if (event.target.closest("[data-al-bio]")) return tryBio();
     });
     root.addEventListener("keydown", event => {
       if (/^[0-9]$/.test(event.key)) press(event.key);
@@ -221,6 +279,7 @@ const AppLock = (() => {
       <label class="settings-preference-row"><span><strong>🔒 ${L("ចាក់សោ app ដោយ PIN", "Lock the app with a PIN")}</strong><small>${L("សួរ PIN ពេលបើក app លើឧបករណ៍នេះ", "Ask for a PIN when MYLIFE opens on this device")}</small></span><input type="checkbox" data-applock-toggle ${on ? "checked" : ""}></label>
       ${on ? `
       <label class="settings-preference-row"><span><strong>${L("ចាក់សោពេលណា", "Lock after")}</strong><small>${L("ក្រោយចេញពី app", "Time away from the app")}</small></span><select data-applock-after>${options.map(([v, l]) => `<option value="${v}" ${Number(cfg.after ?? 5) === v ? "selected" : ""}>${l}</option>`).join("")}</select></label>
+      ${bioAvailable ? `<label class="settings-preference-row"><span><strong>😊 ${L("Face ID / ស្នាមម្រាមដៃ", "Face ID / fingerprint")}</strong><small>${L("បើកដោយមុខ ឬម្រាមដៃ · PIN នៅតែជាបម្រុង", "Unlock with your face or finger · PIN stays as backup")}</small></span><input type="checkbox" data-applock-bio ${cfg.bio && cfg.bio.id ? "checked" : ""}></label>` : ""}
       <div class="settings-preference-row settings-link-row"><span><strong>${L("ប្ដូរ PIN", "Change PIN")}</strong><small>${L("PIN នៅតែលើឧបករណ៍នេះ (មិន sync)។ ភ្លេច PIN → login ឡើងវិញ។", "The PIN stays on this device (not synced). Forgot it → log in again.")}</small></span><button type="button" class="button ghost-button" data-applock-change>${L("ប្ដូរ", "Change")}</button></div>` : ""}`;
   }
   const rerender = () => { if (typeof App !== "undefined" && App.render) App.render(); };
@@ -231,7 +290,23 @@ const AppLock = (() => {
       if (toggle.checked) setPin(rerender);
       else if (isOn()) {
         toggle.checked = true; // turns off only after the PIN is right
-        checkPin(() => { write({ ...config(), enabled: false, hash: "", salt: "" }); if (typeof Toast !== "undefined") Toast.show(L("បានបិទការចាក់សោ", "App lock is off")); rerender(); });
+        checkPin(() => { write({ ...config(), enabled: false, hash: "", salt: "", bio: null }); if (typeof Toast !== "undefined") Toast.show(L("បានបិទការចាក់សោ", "App lock is off")); rerender(); });
+      }
+      return;
+    }
+    const bio = event.target.closest?.("[data-applock-bio]");
+    if (bio) {
+      if (bio.checked) {
+        addBio()
+          .then(() => { if (typeof Toast !== "undefined") Toast.show(L("បានបើក Face ID / ស្នាមម្រាមដៃ 😊", "Face ID / fingerprint is on 😊"), "success"); rerender(); })
+          .catch(error => {
+            bio.checked = false;
+            console.warn("MYLIFE biometric setup:", error && error.name);
+            if (typeof Toast !== "undefined") Toast.show(L("បើកមិនបាន · ទូរសព្ទមិនអនុញ្ញាត ឬបានបោះបង់", "Couldn't turn it on · not allowed or cancelled"), "warning");
+          });
+      } else {
+        write({ ...config(), bio: null });
+        if (typeof Toast !== "undefined") Toast.show(L("បានបិទ Face ID / ស្នាមម្រាមដៃ", "Face ID / fingerprint is off"));
       }
       return;
     }

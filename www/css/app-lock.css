@@ -26,3 +26,5 @@
 }
 body.app-locked { overflow: hidden; }
 body.app-lock-confirm .modal-root { z-index: 6000; }
+.al-bio { display: inline-flex; align-items: center; gap: 8px; margin: -8px 0 18px; padding: 9px 16px; border: 0; border-radius: 999px; font: inherit; font-size: 0.86rem; font-weight: 800; color: #d9ff7b; background: #0f3326; cursor: pointer; box-shadow: 0 8px 18px rgba(15, 51, 38, 0.25); }
+.al-bio svg { width: 20px; height: 20px; }
