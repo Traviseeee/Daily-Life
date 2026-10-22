@@ -82,24 +82,27 @@ async function callGemini(settings, { system, prompt, json = false, maxTokens = 
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
         const message = String(data && data.error && data.error.message || response.status);
-        // this model does not take thinkingConfig → same model again without it
-        if (response.status === 400 && thinking && /thinking/i.test(message)) {
+        const clean = String(message).split(settings.apiKey).join("••••").slice(0, 220);
+        const keyProblem = /api key|api_key|has not been used|disabled|blocked|referer|referrer|restricted|not authorized|permission|location is not supported/i.test(message);
+        // this model does not take our thinkingConfig (newer models answer with a
+        // plain "invalid argument") → same model again without it
+        if (response.status === 400 && thinking && !keyProblem) {
           skipNoThinking = false;
-          lastError = new AiError("model", message);
+          lastError = new AiError("model", clean);
           continue;
         }
         // the model name is unknown for this key, or busy → try the next one
         if (response.status === 404 || response.status === 503 || response.status === 500 || (response.status === 400 && /model/i.test(message) && !/api key/i.test(message))) {
-          lastError = new AiError(response.status >= 500 ? "failed" : "model", message);
+          lastError = new AiError(response.status >= 500 ? "failed" : "model", clean);
           continue;
         }
         // say exactly what Google said, so a real key problem is easy to tell apart
-        const clean = String(message).split(settings.apiKey).join("••••").slice(0, 220);
         if (/api key not valid|api_key_invalid|invalid api key/i.test(message)) throw new AiError("bad_key", clean);
         if (/has not been used|is disabled|SERVICE_DISABLED|API_KEY_SERVICE_BLOCKED|blocked/i.test(message)) throw new AiError("api_off", clean);
         if (/location is not supported|region|country/i.test(message)) throw new AiError("region", clean);
         if (/referer|referrer|restricted|not authorized|permission/i.test(message)) throw new AiError("restricted", clean);
-        if (response.status === 400 || response.status === 401 || response.status === 403) throw new AiError(response.status === 400 ? "failed" : "bad_key", clean);
+        if (response.status === 400) { lastError = new AiError("failed", clean); continue; } // this model rejects the request → next model
+        if (response.status === 401 || response.status === 403) throw new AiError("bad_key", clean);
         if (response.status === 429) throw new AiError("quota", message);
         throw new AiError("failed", message);
       }

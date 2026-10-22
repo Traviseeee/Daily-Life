@@ -196,6 +196,15 @@ const KEY = "AIzaTEST_fake_key_1234567890";
   r = await AI.callGemini({ ...settings, model: AI.MODELS[0] }, { prompt: "hi" });
   check("only-thinking (empty) answer → next model; thoughts never shown", r.text === "third", JSON.stringify(r));
 
+  // newer models reject thinkingConfig with a plain "invalid argument" → retried without it
+  gemini = []; geminiReply = (m, b) => b.generationConfig.thinkingConfig ? { status: 400, json: { error: { message: "Request contains an invalid argument.", status: "INVALID_ARGUMENT" } } } : { status: 200, json: answer("works without thinking") };
+  r = await AI.callGemini({ ...settings, model: AI.MODELS[0] }, { prompt: "hi" });
+  check("plain 'invalid argument' → same model again without thinkingConfig", r.text === "works without thinking" && r.model === AI.MODELS[0] && gemini.length === 2, JSON.stringify(gemini.map(g => [g.model, !!g.body.generationConfig.thinkingConfig])));
+  geminiReply = () => ({ status: 400, json: { error: { message: "Request contains an invalid argument." } } });
+  let invalidCode = "";
+  try { await AI.callGemini(settings, { prompt: "hi" }); } catch (e) { invalidCode = e.code + ":" + e.message; }
+  check("every model says invalid argument → 'failed' with Google's words", /^failed:Request contains an invalid argument/.test(invalidCode), invalidCode);
+
   const codeOf = async reply => { geminiReply = () => reply; try { await AI.callGemini(settings, { prompt: "x" }); return "none"; } catch (e) { return e.code; } };
   check("429 → quota", await codeOf({ status: 429, json: { error: { message: "Resource exhausted" } } }) === "quota");
   check("400 API key not valid → bad_key", await codeOf({ status: 400, json: { error: { message: "API key not valid. Please pass a valid API key." } } }) === "bad_key");
