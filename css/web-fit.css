@@ -1,0 +1,53 @@
+/* Web (tablet / laptop / desktop) fit fixes. Every rule here is for screens
+   700px and wider, so the phone layout is not touched. */
+
+/* main gets focus on every page change (screen readers): no green box around it */
+@media (min-width: 700px) {
+  #app:focus,
+  #app:focus-visible { outline: none; }
+}
+
+/* ---------- topbar: never wider than the screen ---------- */
+@media (min-width: 901px) {
+  html body .app-main .topbar {
+    grid-template-columns: minmax(max-content, 1fr) minmax(180px, 460px) minmax(max-content, 1fr);
+  }
+  html body .app-main .topbar .topbar-right { justify-self: end; }
+}
+/* 700–900: one short row on every page (Home has its own header) */
+@media (min-width: 700px) and (max-width: 900px) {
+  html body:not(.topbar-home) .app-main .topbar {
+    grid-template-columns: max-content minmax(160px, 1fr) max-content;
+  }
+  html body:not(.topbar-home) .app-main .topbar .brand { display: inline-flex; align-items: center; gap: 8px; }
+  html body:not(.topbar-home) .app-main .topbar .brand,
+  html body:not(.topbar-home) .app-main .topbar .brand strong,
+  html body:not(.topbar-home) .app-main .topbar .brand span { white-space: nowrap; }
+}
+/* small laptop / iPad landscape: hide the second line under the name to save room */
+@media (min-width: 901px) and (max-width: 1100px) {
+  html body .app-main .topbar .profile-button small { display: none; }
+}
+
+@media (min-width: 700px) {
+  /* Money tabs: all tabs fit in one row, no cut-off tab */
+  .financial-shortcuts { -webkit-mask-image: none; mask-image: none; }
+  .financial-shortcuts .financial-shortcut { flex: 1 1 0; min-width: 0; padding-inline: 4px; }
+  .financial-shortcuts .financial-shortcut > *:not(svg) { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+
+  /* Calendar: the weekday row is only as tall as its text */
+  .calendar-grid { grid-template-rows: auto; }
+
+  /* Family (no members yet): text reads as normal lines, not one word per line */
+  .family-empty-copy { flex: 1; }
+  .family-empty-copy p { max-width: 34ch; font-size: clamp(1.05rem, 1.5vw, 1.4rem); line-height: 1.5; }
+
+  /* Goals: the add button stays on one line */
+  .goals-header > .button { white-space: nowrap; flex-shrink: 0; }
+
+}
+
+/* big screens: Home uses more of the width */
+@media (min-width: 1500px) {
+  .home-featured-page { max-width: 940px; }
+}

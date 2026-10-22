@@ -81,7 +81,7 @@ function goalCard(goal) {
     <article class="glass-card goal-profile-card" style="--goal-cover-start:${coverStart};--goal-cover-end:${coverEnd}">
       <div class="goal-profile-cover">
         ${goal.coverImage ? `<img class="goal-profile-cover-image" src="${escapeAttr(goal.coverImage)}" style="--image-position-x:${Number(coverPosition.x) || 0}%;--image-position-y:${Number(coverPosition.y) || 0}%" alt="">` : ""}
-        <span class="goal-profile-category">${optionLabel(goal.category)}</span>
+        ${goal.category ? `<span class="goal-profile-category">${optionLabel(goal.category)}</span>` : ""}
         <label class="goal-profile-cover-upload" title="${escapeAttr(t("photo"))}" aria-label="${escapeAttr(t("photo"))}">${goal.coverImage ? Icons.edit() : Icons.plus()}<input type="file" accept="image/*" data-goal-cover="${escapeAttr(goal.id)}"></label>
       </div>
       <div class="goal-profile-body">
@@ -136,7 +136,7 @@ function renderGoalDetail(goal) {
           ${hasTarget ? `<div class="progress-track"><div class="progress-fill" style="--progress:${progress}%"></div></div><p class="trend">${progress}% complete</p>` : `<p class="trend">${t("target")}: ${t("notSet")}</p>`}
           ${typeof SmartMoney !== "undefined" ? `${SmartMoney.linkedBadge(goal)}${SmartMoney.goalPace(goal)}` : ""}
           <div class="kv">
-            <div><span>${t("category")}</span><strong>${optionLabel(goal.category)}</strong></div>
+            <div><span>${t("category")}</span><strong>${goal.category ? optionLabel(goal.category) : "—"}</strong></div>
             <div><span>${t("target")}</span><strong>${hasTarget ? money(goal.targetAmount) : t("notSet")}</strong></div>
             <div><span>${t("deadline")}</span><strong>${formatDate(goal.deadline)}</strong></div>
           </div>
