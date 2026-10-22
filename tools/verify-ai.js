@@ -338,7 +338,7 @@ const KEY = "AIzaTEST_fake_key_1234567890";
   check("/ai → status on", /AI បើក/.test(lastText()));
   reset({ accounts: [OWNER], linked: OWNER });
   await say("/ai");
-  check("/ai with no key → how to add one", /aistudio/.test(lastText()));
+  check("/ai with no key → says the bot cannot see a key in the cloud", /cloud/.test(lastText()) && /localhost/.test(lastText()), lastText());
   await say("/menu");
   const keys = ((sendTexts().pop() || {}).reply_markup?.inline_keyboard || []).flat().map(b => b.callback_data);
   check("menu has 🤖 advice and 💬 AI", keys.includes("m|advice") && keys.includes("m|ai"));

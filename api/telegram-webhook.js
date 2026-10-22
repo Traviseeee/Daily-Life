@@ -490,9 +490,17 @@ async function runCommand(command, { message, userId, payload, today, redis }) {
     }
     case "ai": {
       const settings = AiAssist.settingsOf(payload, process.env);
-      return reply(message, settings.enabled && settings.telegram
-        ? `🤖 <b>AI បើក</b> · Gemini${settings.model ? ` (${escapeHtml(settings.model)})` : ""}\n\n💬 សួរបានភ្លាម ឧ. <code>ខែនេះចាយអាហារប៉ុន្មាន?</code>\n🤖 /advice — ដំបូន្មានលុយ`
-        : "🤖 <b>AI មិនទាន់បើក</b>\nដាក់ Gemini API key (ឥតគិតថ្លៃ ពី aistudio.google.com) នៅ MYLIFE → ការកំណត់ → AI។", settings.enabled ? null : { inline_keyboard: [[{ text: "⚙️ បើកការកំណត់ AI", url: appLink({ url: "/#settings" }) }]] });
+      const saved = payload.profile?.aiSettings || {};
+      if (settings.enabled && settings.telegram) {
+        return reply(message, `🤖 <b>AI បើក</b> · Gemini${settings.model ? ` (${escapeHtml(settings.model)})` : ""}\n\n💬 សួរបានភ្លាម ឧ. <code>ខែនេះចាយអាហារប៉ុន្មាន?</code>\n🤖 /advice — ដំបូន្មានលុយ`);
+      }
+      // say exactly why, so it is easy to fix
+      const why = !settings.apiKey
+        ? "Bot មិនឃើញ API key ក្នុងទិន្នន័យ cloud ទេ។ ដាក់ key នៅ MYLIFE <b>ដែល login ហើយ</b> (ទូរសព្ទ ឬ daily-life-2.vercel.app) → ការកំណត់ → AI → រក្សាទុក ហើយរង់ចាំ Sync ✓។ Key ដែលដាក់លើ localhost / guest មិនទៅដល់ bot ទេ។"
+        : saved.enabled === false
+          ? "AI ត្រូវបានបិទ។ បើកវិញនៅ ការកំណត់ → AI → <b>បើក AI</b>។"
+          : "AI បិទសម្រាប់ Telegram។ បើកវិញនៅ ការកំណត់ → AI → <b>ប្រើក្នុង Telegram bot</b>។";
+      return reply(message, `🤖 <b>AI មិនទាន់បើកក្នុង bot</b>\n${why}`, { inline_keyboard: [[{ text: "⚙️ បើកការកំណត់ AI", url: appLink({ url: "/#settings/ai" }) }]] });
     }
     case "backup":
       return tgUpload("sendDocument", "document", Buffer.from(JSON.stringify(AiAssist.withoutSecrets(payload), null, 1)), `mylife-backup-${today}.json`, "application/json", { caption: `💾 <b>Backup</b> · ${today}\nរក្សាទុកឯកសារនេះ។ ពេលត្រូវការ៖ Settings → Import`, parse_mode: "HTML" });
