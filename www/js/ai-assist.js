@@ -9,7 +9,10 @@
  * Only a short summary of the user's data is sent to Gemini (totals, recent
  * expenses, bills, loans, events, goals), never photos, phone numbers or notes. */
 (function (root) {
-const MODELS = ["gemini-flash-latest", "gemini-2.5-flash", "gemini-flash-lite-latest", "gemini-2.0-flash"];
+// fastest first: a phone or the bot should get an answer in a few seconds.
+// A slow model (long "thinking") is skipped after a few seconds and the next one tried.
+const MODELS = ["gemini-flash-lite-latest", "gemini-flash-latest", "gemini-2.5-flash-lite", "gemini-2.5-flash", "gemini-2.0-flash"];
+let goodModel = ""; // the last model that answered — tried first next time
 const ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/";
 const KHR_PER_USD = 4100;
 const EXPENSE_CATEGORIES = ["Food", "Home", "Family", "Transport", "Shopping", "Bills", "Loan", "Education", "Health", "Entertainment", "Other"];
@@ -44,9 +47,11 @@ class AiError extends Error {
   constructor(code, message) { super(message || code); this.code = code; }
 }
 
-async function callGemini(settings, { system, prompt, json = false, maxTokens = 700, temperature = 0.4, timeoutMs = 15000 }) {
+async function callGemini(settings, { system, prompt, json = false, maxTokens = 700, temperature = 0.4, timeoutMs = 14000, totalMs = 40000 }) {
   if (!settings || !settings.apiKey) throw new AiError("no_key", "No Gemini API key");
-  const models = settings.model ? [settings.model, ...MODELS.filter(m => m !== settings.model)] : MODELS;
+  const order = [settings.model, goodModel, ...MODELS].filter(Boolean);
+  const models = order.filter((model, index) => order.indexOf(model) === index);
+  const started = Date.now();
   let lastError = null;
   const attempts = [];
   models.forEach(model => { attempts.push({ model, thinking: true }); attempts.push({ model, thinking: false, onlyIf: "thinking" }); });
@@ -54,8 +59,10 @@ async function callGemini(settings, { system, prompt, json = false, maxTokens = 
   for (const { model, thinking, onlyIf } of attempts) {
     if (onlyIf && skipNoThinking) continue;
     skipNoThinking = true;
+    const left = totalMs - (Date.now() - started);
+    if (left < 2500) break; // out of time: stop with the last error
     const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
-    const timer = controller ? setTimeout(() => controller.abort(), timeoutMs) : null;
+    const timer = controller ? setTimeout(() => controller.abort(), Math.min(timeoutMs, left)) : null;
     try {
       const response = await fetch(`${ENDPOINT}${encodeURIComponent(model)}:generateContent`, {
         method: "POST",
@@ -81,9 +88,9 @@ async function callGemini(settings, { system, prompt, json = false, maxTokens = 
           lastError = new AiError("model", message);
           continue;
         }
-        // the model name is unknown for this key → try the next one
-        if (response.status === 404 || (response.status === 400 && /model/i.test(message) && !/api key/i.test(message))) {
-          lastError = new AiError("model", message);
+        // the model name is unknown for this key, or busy → try the next one
+        if (response.status === 404 || response.status === 503 || response.status === 500 || (response.status === 400 && /model/i.test(message) && !/api key/i.test(message))) {
+          lastError = new AiError(response.status >= 500 ? "failed" : "model", message);
           continue;
         }
         if (response.status === 400 || response.status === 401 || response.status === 403) throw new AiError("bad_key", message);
@@ -91,12 +98,13 @@ async function callGemini(settings, { system, prompt, json = false, maxTokens = 
         throw new AiError("failed", message);
       }
       const parts = (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) || [];
-      const text = parts.map(part => part.text || "").join("").trim();
-      if (!text) throw new AiError("empty", "Empty answer");
+      const text = parts.filter(part => !part.thought).map(part => part.text || "").join("").trim();
+      if (!text) { lastError = new AiError("empty", "Empty answer"); continue; } // e.g. all tokens spent thinking
+      goodModel = model;
       return { text, model };
     } catch (error) {
       if (error instanceof AiError) throw error;
-      if (error && error.name === "AbortError") throw new AiError("timeout", "Gemini took too long");
+      if (error && error.name === "AbortError") { lastError = new AiError("timeout", `${model} took too long`); continue; }
       throw new AiError("network", error && error.message);
     } finally {
       if (timer) clearTimeout(timer);

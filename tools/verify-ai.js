@@ -174,6 +174,28 @@ const KEY = "AIzaTEST_fake_key_1234567890";
   r = await AI.callGemini({ ...settings, model: "gemini-2.0-flash" }, { prompt: "hi" });
   check("model without thinking → same model again without thinkingConfig", r.text === "no thinking" && r.model === "gemini-2.0-flash" && gemini.length === 2, JSON.stringify(gemini.map(g => g.model)));
 
+  // a slow model (long thinking) is skipped: the next model answers
+  gemini = []; geminiReply = null;
+  const realFetch = global.fetch;
+  global.fetch = async (url, options) => {
+    if (String(url).includes(AI.MODELS[0])) {
+      return new Promise((resolve, reject) => options.signal.addEventListener("abort", () => reject(Object.assign(new Error("aborted"), { name: "AbortError" }))));
+    }
+    return realFetch(url, options);
+  };
+  geminiReply = () => ({ status: 200, json: answer("fast answer") });
+  const t0 = Date.now();
+  r = await AI.callGemini({ ...settings, model: AI.MODELS[0] }, { prompt: "hi", timeoutMs: 300 });
+  check("slow model → times out and the next model answers", r.text === "fast answer" && r.model !== AI.MODELS[0] && Date.now() - t0 < 3000, JSON.stringify(r));
+  let slowCode = "";
+  try { await AI.callGemini({ ...settings, model: AI.MODELS[0] }, { prompt: "hi", timeoutMs: 300, totalMs: 2600 }); } catch (e) { slowCode = e.code; }
+  global.fetch = realFetch;
+  r = await AI.callGemini(settings, { prompt: "hi" });
+  check("the model that answered is tried first next time", gemini[gemini.length - 1].model === r.model && r.text === "fast answer");
+  geminiReply = (model) => ({ status: 200, json: model === AI.MODELS[2] ? answer("third") : { candidates: [{ content: { parts: [{ text: "secret thoughts", thought: true }] } }] } });
+  r = await AI.callGemini({ ...settings, model: AI.MODELS[0] }, { prompt: "hi" });
+  check("only-thinking (empty) answer → next model; thoughts never shown", r.text === "third", JSON.stringify(r));
+
   const codeOf = async reply => { geminiReply = () => reply; try { await AI.callGemini(settings, { prompt: "x" }); return "none"; } catch (e) { return e.code; } };
   check("429 → quota", await codeOf({ status: 429, json: { error: { message: "Resource exhausted" } } }) === "quota");
   check("400 API key not valid → bad_key", await codeOf({ status: 400, json: { error: { message: "API key not valid. Please pass a valid API key." } } }) === "bad_key");
