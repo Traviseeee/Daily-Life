@@ -43,15 +43,24 @@ const Login = {
     const authMode = supabaseConfigured ? (mode === "signup" && SIGNUP_OPEN ? "signup" : "login") : "create";
     const isSignup = authMode === "signup";
     this.isOpen = true;
+    const L = (km, en) => (typeof languageCode === "function" && languageCode() === "km" ? km : en);
+    const LOGO = '<svg class="login-logo" viewBox="0 0 240 240" aria-hidden="true"><rect width="240" height="240" rx="56" fill="#0f3326"/><circle cx="120" cy="120" r="66" fill="none" stroke="#1f4a38" stroke-width="22"/><circle class="login-logo-ring" cx="120" cy="120" r="66" fill="none" stroke="#d9ff7b" stroke-width="22" stroke-linecap="round" stroke-dasharray="311 415" transform="rotate(-90 120 120)"/><circle cx="120" cy="120" r="20" fill="#9ef06a"/></svg>';
     const modal = document.createElement("div");
     modal.className = "login-modal glass-card";
     modal.id = "loginModal";
     modal.innerHTML = `
       <div class="login-content">
+        <span class="login-blob login-blob-a" aria-hidden="true"></span>
+        <span class="login-blob login-blob-b" aria-hidden="true"></span>
+        <span class="login-blob login-blob-c" aria-hidden="true"></span>
+        <div class="login-brand">
+          ${LOGO}
+          <div><strong>MY <em>LIFE</em></strong><small>${L("លុយ · គ្រួសារ · ប្រតិទិន · AI", "Money · family · calendar · AI")}</small></div>
+        </div>
+        <div class="login-glass">
         <div class="login-header">
-          <span class="login-mark">${Icons.home()}</span>
-          <h2>${isReset ? "Reset password" : hasAccount ? t("unlockMylife") : isLegacy ? t("secureAccount") : supabaseConfigured ? (isSignup ? "Create account" : "Log in") : t("createAccount")}</h2>
-          <p>${isReset ? "Enter your email and we’ll send a reset link to your inbox." : hasAccount ? t("enterPassword") : isLegacy ? t("secureAccountHelp") : supabaseConfigured ? (isSignup ? "Create a new MYLIFE account with email and password." : "Sign in to your existing MYLIFE account.") : t("createAccountHelp")}</p>
+          <h2>${isReset ? L("ប្ដូរពាក្យសម្ងាត់", "Reset password") : hasAccount ? t("unlockMylife") : isLegacy ? t("secureAccount") : supabaseConfigured ? (isSignup ? L("បង្កើតគណនី", "Create account") : L("ចូលគណនី", "Log in")) : t("createAccount")}</h2>
+          <p>${isReset ? L("ដាក់ email របស់អ្នក យើងនឹងផ្ញើតំណប្ដូរពាក្យសម្ងាត់ទៅ inbox។", "Enter your email and we’ll send a reset link to your inbox.") : hasAccount ? t("enterPassword") : isLegacy ? t("secureAccountHelp") : supabaseConfigured ? (isSignup ? L("បង្កើតគណនី MYLIFE ថ្មីដោយ email និងពាក្យសម្ងាត់។", "Create a new MYLIFE account with email and password.") : L("សូមស្វាគមន៍ត្រលប់មកវិញ 👋 ចូលដើម្បីបន្ត។", "Welcome back 👋 Sign in to continue.")) : t("createAccountHelp")}</p>
         </div>
         ${supabaseConfigured && !isReset && SIGNUP_OPEN ? `
           <div class="login-mode-toggle" aria-label="Authentication mode">
@@ -63,14 +72,14 @@ const Login = {
           ${isReset ? `
             <div class="login-input-group">
               <label for="loginName">Email</label>
-              <input id="loginName" type="email" placeholder="you@example.com" autocomplete="email" value="${appData.profile.name || ""}" required />
+              <input id="loginName" type="email" placeholder="${L("ឈ្មោះ@gmail.com", "you@example.com")}" autocomplete="email" value="${appData.profile.name || ""}" required />
             </div>
           ` : supabaseConfigured ? `
             <div class="login-input-group">
               <label for="loginName">Email</label>
-              <input id="loginName" type="email" placeholder="you@example.com" autocomplete="email" value="" required />
+              <input id="loginName" type="email" placeholder="${L("ឈ្មោះ@gmail.com", "you@example.com")}" autocomplete="email" value="" required />
             </div>
-            ${isSignup ? `<div class="login-input-group"><label for="loginPassword">Password</label><input id="loginPassword" type="password" placeholder="Enter your password" autocomplete="new-password" minlength="6" required /></div><div class="login-input-group"><label for="loginPasswordConfirm">Confirm password</label><input id="loginPasswordConfirm" type="password" placeholder="Confirm your password" autocomplete="new-password" minlength="6" required /></div>` : `<div class="login-input-group"><label for="loginPassword">Password</label><input id="loginPassword" type="password" placeholder="Enter your password" autocomplete="current-password" minlength="6" required /></div>`}
+            ${isSignup ? `<div class="login-input-group"><label for="loginPassword">${L("ពាក្យសម្ងាត់", "Password")}</label><input id="loginPassword" type="password" placeholder="${L("ពាក្យសម្ងាត់របស់អ្នក", "Enter your password")}" autocomplete="new-password" minlength="6" required /></div><div class="login-input-group"><label for="loginPasswordConfirm">${L("បញ្ជាក់ពាក្យសម្ងាត់", "Confirm password")}</label><input id="loginPasswordConfirm" type="password" placeholder="${L("វាយម្ដងទៀត", "Confirm your password")}" autocomplete="new-password" minlength="6" required /></div>` : `<div class="login-input-group"><label for="loginPassword">${L("ពាក្យសម្ងាត់", "Password")}</label><input id="loginPassword" type="password" placeholder="${L("ពាក្យសម្ងាត់របស់អ្នក", "Enter your password")}" autocomplete="current-password" minlength="6" required /></div>`}
           ` : `
             <div class="login-input-group">
               <label for="loginName">${t("yourName")}</label>
@@ -90,18 +99,20 @@ const Login = {
             </label>
           </div>
           <p class="login-error" id="loginError" role="alert"></p>
-          <button type="submit" class="button login-button">${isReset ? "Send reset link" : hasAccount ? t("unlock") : isLegacy ? t("secureAccount") : supabaseConfigured ? (isSignup ? "Create account" : "Log in") : t("createAccount")}</button>
+          <button type="submit" class="button login-button">${isReset ? L("ផ្ញើតំណ", "Send reset link") : hasAccount ? t("unlock") : isLegacy ? t("secureAccount") : supabaseConfigured ? (isSignup ? L("បង្កើតគណនី", "Create account") : L("ចូល →", "Log in →")) : t("createAccount")}</button>
           <button type="button" class="login-guest-button" id="loginGuestButton">${t("continueAsGuest")}</button>
           ${(supabaseConfigured || hasAccount) && !isReset ? `<button type="button" class="login-reset-link" id="loginResetButton">${t("forgotPassword")}</button>` : ""}
         </form>
         <div class="login-footer">
-          <p class="secondary">${supabaseConfigured ? "Your data is securely synced to your Supabase account." : t("noDataStored")}</p>
+          <p class="secondary">${supabaseConfigured ? L("🔒 ទិន្នន័យ sync សុវត្ថិភាពជាមួយគណនីរបស់អ្នក", "🔒 Your data syncs securely with your account") : t("noDataStored")}</p>
+        </div>
         </div>
       </div>
     `;
     const modalRoot = document.getElementById("modalRoot");
     modalRoot.classList.add("open");
     modalRoot.appendChild(modal);
+    this.decorate(modal, L);
 
     document.getElementById("loginForm").addEventListener("submit", (e) => {
       e.preventDefault();
@@ -124,6 +135,44 @@ const Login = {
     document.getElementById("loginGuestButton")?.addEventListener("click", () => this.startGuest());
 
     document.getElementById(isReset ? "loginName" : hasAccount ? "loginPassword" : "loginName").focus();
+  },
+
+  // icons in the fields, a 👁 button for passwords, "remember" + "forgot" on one
+  // row, and an "or" line before "continue as guest" — the form logic is unchanged
+  decorate(modal, L) {
+    const ICON = {
+      mail: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 7 8 6 8-6"/></svg>',
+      lock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>',
+      user: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>',
+      eye: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>'
+    };
+    modal.querySelectorAll(".login-input-group input:not([type=checkbox])").forEach(input => {
+      const field = document.createElement("div");
+      field.className = "login-field";
+      input.replaceWith(field);
+      const icon = input.type === "email" ? ICON.mail : input.type === "password" ? ICON.lock : ICON.user;
+      field.insertAdjacentHTML("afterbegin", `<span class="login-field-icon" aria-hidden="true">${icon}</span>`);
+      field.appendChild(input);
+      if (input.type === "password") {
+        const eye = document.createElement("button");
+        eye.type = "button";
+        eye.className = "login-eye";
+        eye.setAttribute("aria-label", L("បង្ហាញពាក្យសម្ងាត់", "Show password"));
+        eye.innerHTML = ICON.eye;
+        eye.addEventListener("click", () => {
+          const show = input.type === "password";
+          input.type = show ? "text" : "password";
+          eye.classList.toggle("is-on", show);
+          input.focus();
+        });
+        field.appendChild(eye);
+      }
+    });
+    const rememberRow = modal.querySelector(".login-remember-row");
+    const reset = modal.querySelector("#loginResetButton");
+    if (rememberRow && reset) rememberRow.appendChild(reset);
+    const guest = modal.querySelector("#loginGuestButton");
+    if (guest) guest.insertAdjacentHTML("beforebegin", `<div class="login-or"><span>${L("ឬ", "or")}</span></div>`);
   },
 
   startGuest() {

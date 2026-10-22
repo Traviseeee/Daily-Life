@@ -1,0 +1,60 @@
+/* Login (js/login.js): glass card on a soft colour background, the MY LIFE ring
+   logo on top, icons in the fields, 👁 for passwords, switch for "remember". */
+#loginModal.login-modal {
+  overflow: hidden auto;
+  padding: 22px 18px 18px;
+  border: 0;
+  background: #dff3c4;
+  box-shadow: 0 30px 70px rgba(10, 30, 20, 0.35);
+}
+#loginModal .login-content { position: relative; gap: 14px; }
+#loginModal .login-blob { position: absolute; z-index: 0; border-radius: 50%; pointer-events: none; }
+#loginModal .login-blob-a { top: -90px; right: -70px; width: 220px; height: 220px; background: #c5ff60; opacity: 0.55; }
+#loginModal .login-blob-b { bottom: -80px; left: -70px; width: 200px; height: 200px; background: #ffd3e6; opacity: 0.75; }
+#loginModal .login-blob-c { top: 150px; left: -60px; width: 120px; height: 120px; background: #b9dcff; opacity: 0.6; }
+#loginModal .login-content > *:not(.login-blob) { position: relative; z-index: 1; }
+
+#loginModal .login-brand { display: flex; align-items: center; gap: 12px; }
+#loginModal .login-logo { flex: 0 0 52px; width: 52px; height: 52px; border-radius: 14px; box-shadow: 0 10px 22px rgba(15, 51, 38, 0.3); }
+#loginModal .login-logo-ring { animation: loginRing 2.4s ease-out 1 both; }
+@keyframes loginRing { from { stroke-dasharray: 20 415; } to { stroke-dasharray: 311 415; } }
+#loginModal .login-brand strong { display: block; font-size: 1.25rem; font-weight: 900; letter-spacing: 0.02em; color: #0f3326; }
+#loginModal .login-brand strong em { font-style: normal; color: #3b8a1c; }
+#loginModal .login-brand small { display: block; font-size: 0.76rem; font-weight: 600; color: #4e6355; }
+
+#loginModal .login-glass { display: grid; gap: 12px; padding: 18px 16px 14px; border: 1px solid rgba(255, 255, 255, 0.9); border-radius: 22px; background: rgba(255, 255, 255, 0.74); -webkit-backdrop-filter: blur(16px) saturate(1.2); backdrop-filter: blur(16px) saturate(1.2); box-shadow: 0 10px 30px rgba(15, 51, 38, 0.1); }
+#loginModal .login-header { text-align: left; gap: 4px; }
+#loginModal .login-header h2 { margin: 0; font-size: 1.35rem; color: #10201a; }
+#loginModal .login-header p { margin: 0; font-size: 0.85rem; color: #4e6355; }
+#loginModal form { display: grid; gap: 10px; }
+#loginModal .login-input-group { gap: 5px; margin: 0; }
+#loginModal .login-input-group label { font-size: 0.8rem; font-weight: 700; color: #3b4a40; }
+
+#loginModal .login-field { position: relative; display: flex; align-items: center; }
+#loginModal .login-field-icon { position: absolute; left: 13px; display: grid; width: 18px; height: 18px; color: #6f8577; pointer-events: none; }
+#loginModal .login-field-icon svg { width: 18px; height: 18px; }
+#loginModal .login-field input { width: 100%; min-height: 48px; padding: 0 44px 0 40px; border: 1px solid #d5e0cd; border-radius: 14px; font: inherit; font-size: 0.95rem; color: #10201a; background: #fff; box-shadow: none; }
+#loginModal .login-field input:focus { outline: none; border-color: #7cc04a; box-shadow: 0 0 0 3px rgba(197, 255, 96, 0.45); }
+#loginModal .login-eye { position: absolute; right: 6px; display: grid; place-items: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 10px; color: #6f8577; background: transparent; cursor: pointer; }
+#loginModal .login-eye svg { width: 18px; height: 18px; }
+#loginModal .login-eye.is-on { color: #0f3326; background: rgba(197, 255, 96, 0.45); }
+
+#loginModal .login-remember-row { display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 8px; }
+#loginModal .login-remember { display: inline-flex; align-items: center; gap: 8px; font-size: 0.8rem; font-weight: 600; color: #3b4a40; cursor: pointer; }
+#loginModal .login-remember input { appearance: none; -webkit-appearance: none; position: relative; flex: 0 0 34px; width: 34px; height: 20px; margin: 0; border-radius: 999px; background: #c9d4c3; cursor: pointer; transition: background 160ms ease; }
+#loginModal .login-remember input::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: transform 160ms ease; }
+#loginModal .login-remember input:checked { background: #0f3326; }
+#loginModal .login-remember input:checked::after { transform: translateX(14px); background: #d9ff7b; }
+#loginModal .login-remember-row .login-reset-link { margin: 0; padding: 4px 0; border: 0; font-size: 0.8rem; font-weight: 700; text-decoration: none; color: #2f6f3e; background: transparent; }
+
+#loginModal .login-button { min-height: 50px; margin-top: 4px; border: 0; border-radius: 14px; font-size: 1rem; font-weight: 800; color: #d9ff7b; background: #0f3326; box-shadow: 0 10px 22px rgba(15, 51, 38, 0.28); }
+#loginModal .login-button:hover { background: #134434; }
+#loginModal .login-or { display: flex; align-items: center; gap: 10px; font-size: 0.75rem; color: #6f8577; }
+#loginModal .login-or::before, #loginModal .login-or::after { content: ""; flex: 1; height: 1px; background: rgba(15, 51, 38, 0.14); }
+#loginModal .login-guest-button { width: 100%; min-height: 46px; margin: 0; border: 1px solid rgba(15, 51, 38, 0.18); border-radius: 14px; font-weight: 700; color: #26392d; background: rgba(255, 255, 255, 0.5); }
+#loginModal .login-footer { padding: 0; border: 0; text-align: center; }
+#loginModal .login-footer p { margin: 0; font-size: 0.74rem; color: #4e6355; }
+#loginModal .login-error:empty { display: none; }
+#loginModal .login-mode-toggle { margin: 0; }
+#loginModal .login-remember-row { flex-wrap: wrap; }
+#loginModal .login-remember span, #loginModal .login-remember-row .login-reset-link { white-space: nowrap; }
