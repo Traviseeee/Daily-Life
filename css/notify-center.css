@@ -111,4 +111,23 @@
 .nfc-ma-icon { display: grid; place-items: center; width: 34px; height: 34px; flex: 0 0 auto; border-radius: 11px; font-size: 1.05rem; background: rgba(127, 160, 110, 0.16); }
 .nfc-ma-main { width: 40px; height: 40px; border-radius: 13px; background: #c5ff60; }
 .nfc-ma-item .nfc-copy strong { font-size: 0.9rem; }
-.nfc-ma-now { width: 100%; justify-content: center; }
+.nfc-ma-now { justify-content: center; }
+.nfc-ma-head { padding-top: 12px !important; padding-bottom: 4px !important; }
+.nfc-ma-head strong { font-size: 0.8rem; font-weight: 800; letter-spacing: 0.02em; text-transform: uppercase; opacity: 0.75; }
+.nfc-ma-head .nfc-ma-icon { width: 26px; height: 26px; font-size: 0.85rem; border-radius: 8px; }
+.nfc-ma-open { display: flex; flex: 1; min-width: 0; padding: 0; border: 0; font: inherit; text-align: left; color: inherit; background: transparent; cursor: pointer; }
+.nfc-ma-open .nfc-copy { display: grid; gap: 2px; min-width: 0; }
+.nfc-ma-open:hover strong { text-decoration: underline; text-underline-offset: 3px; }
+.nfc-ma-state { display: inline-block; margin-top: 3px; font-size: 0.76rem; font-style: normal; font-weight: 700; }
+.nfc-ma-state + .nfc-ma-state { margin-left: 6px; }
+.nfc-ma-state.is-ok { color: #23864f; }
+.nfc-ma-state.is-wait { color: #b8580c; }
+.nfc-ma-state.is-soon { color: #5d6b62; }
+:root:not([data-theme="light"]) .nfc-ma-state.is-ok { color: #8fe0a8; }
+:root:not([data-theme="light"]) .nfc-ma-state.is-wait { color: #ffc27a; }
+:root:not([data-theme="light"]) .nfc-ma-state.is-soon { color: #a9b8ac; }
+.nfc-ma-fix { flex: 0 0 auto; min-height: 30px; padding: 0 10px; border: 1px solid rgba(240, 165, 48, 0.5); border-radius: 999px; font: inherit; font-size: 0.74rem; font-weight: 800; color: #b8580c; background: rgba(240, 165, 48, 0.12); cursor: pointer; }
+.nfc-ma-auto { flex: 0 0 auto; font-size: 0.74rem; font-weight: 700; opacity: 0.7; }
+.nfc-ma-waiting { align-items: center; }
+.nfc-ma-waiting .button { width: auto; flex: 0 0 auto; }
+.nfc-ma-item.is-off .nfc-copy { opacity: 0.55; }
