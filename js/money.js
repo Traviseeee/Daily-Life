@@ -638,6 +638,12 @@ function renderExpenses() {
 }
 
 // Money overview: only the last 3 days, grouped by category; tap a row to edit it
+// a forwarded ABA Pay request saved with the whole message shows only the name
+function expenseName(item) {
+  const text = item.description || "";
+  return typeof SmartParse !== "undefined" && SmartParse.cleanPayText ? SmartParse.cleanPayText(text) : text;
+}
+
 function renderRecentExpenses() {
   const km = languageCode() === "km";
   const today = localDateInput();
@@ -678,14 +684,14 @@ function expenseRow(item, { compact = false, showCategory = false, actions = tru
   if (compact && !actions) {
     // whole row opens the edit form (no small buttons → calmer list)
     return `<button type="button" class="xl-row xl-row-tap" data-edit-expense="${escapeAttr(item.id)}" style="--cat:${expenseCategoryColors[group] || "#8a94a6"}">
-      <div class="xl-row-copy"><strong>${escapeHtml(item.description || optionLabel(category))}</strong><span>${escapeHtml(date)}${expenseMethodChip(item.method)}</span></div>
+      <div class="xl-row-copy"><strong>${escapeHtml(expenseName(item) || optionLabel(category))}</strong><span>${escapeHtml(date)}${expenseMethodChip(item.method)}</span></div>
       <strong class="xl-row-amount">-${money(item.amount, item.currency)}</strong>
     </button>`;
   }
   if (compact) {
     return `<div class="xl-row" style="--cat:${expenseCategoryColors[group] || "#8a94a6"}">
       ${showCategory ? `<span class="xl-row-icon">${Icons[expenseCategoryIcons[group] || "expense"]()}</span>` : ""}
-      <div class="xl-row-copy"><strong>${escapeHtml(item.description || optionLabel(category))}</strong><span>${showCategory ? `${escapeHtml(optionLabel(group))} · ` : ""}${escapeHtml(date)}${expenseMethodChip(item.method)}</span></div>
+      <div class="xl-row-copy"><strong>${escapeHtml(expenseName(item) || optionLabel(category))}</strong><span>${showCategory ? `${escapeHtml(optionLabel(group))} · ` : ""}${escapeHtml(date)}${expenseMethodChip(item.method)}</span></div>
       <strong class="xl-row-amount">-${money(item.amount, item.currency)}</strong>
       <div class="xl-row-actions">
         <button class="icon-button" data-edit-expense="${escapeAttr(item.id)}" aria-label="${escapeAttr(`${t("edit")} ${item.description}`)}" title="${escapeAttr(t("edit"))}">${Icons.edit()}</button>
@@ -695,7 +701,7 @@ function expenseRow(item, { compact = false, showCategory = false, actions = tru
   }
   return `<div class="financial-record-card">
     <span class="financial-record-icon expense">${Icons[expenseCategoryIcons[category] || "expense"]()}</span>
-    <div class="financial-record-copy"><strong>${escapeHtml(item.description)}</strong><span>${optionLabel(category)} · ${date}</span></div>
+    <div class="financial-record-copy"><strong>${escapeHtml(expenseName(item))}</strong><span>${optionLabel(category)} · ${date}</span></div>
     <strong class="financial-record-value danger">-${money(item.amount, item.currency)}</strong>
     <div class="financial-record-actions">
       <button class="icon-button" data-edit-expense="${escapeAttr(item.id)}" aria-label="${escapeAttr(`${t("edit")} ${item.description}`)}" title="${escapeAttr(t("edit"))}">${Icons.edit()}</button>

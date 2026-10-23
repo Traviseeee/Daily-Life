@@ -7,7 +7,7 @@ const { getRedis, sendToUser } = require("../lib/push");
 const crypto = require("crypto");
 const { tgCall, tgUpload, sendAlert, webhookSecret, loadAction, saveAction, addSnooze, appLink } = require("../lib/telegram");
 const { buildTelegramText, buildWeeklyText, dateLabels, timeLabels, escapeHtml } = require("../lib/telegram-message");
-const { parseEvent, parseMoney } = require("../lib/smart-parse");
+const { parseEvent, parseMoney, parsePayRequest } = require("../lib/smart-parse");
 const { monthSpending, formatMoney, convert, CATEGORY_KM, weeklyReport } = require("../lib/money-report");
 const { digestItem, eveningItem } = require("./dispatch");
 const { payBill } = require("../lib/bill-pay");
@@ -313,7 +313,7 @@ function entryRecord(entry, today, fallbackCurrency) {
     return { collection: "income", record: { id, createdAt: now, updatedAt: now, name: entry.description || INCOME_KM[entry.category] || "Income", amount: entry.amount, currency: entry.currency || fallbackCurrency, category: entry.category || "Other", frequency: "Once", recurring: false, nextPaymentDate: date, notes: "Telegram", source: "telegram" } };
   }
   const id = recordId("expenses");
-  return { collection: "expenses", record: { id, createdAt: now, updatedAt: now, description: entry.description || CATEGORY_KM[entry.category] || entry.category, amount: entry.amount, currency: entry.currency || fallbackCurrency, category: entry.category || "Other", date, method: "Telegram", notes: "", source: "telegram" } };
+  return { collection: "expenses", record: { id, createdAt: now, updatedAt: now, description: entry.description || CATEGORY_KM[entry.category] || entry.category, amount: entry.amount, currency: entry.currency || fallbackCurrency, category: entry.category || "Other", date, method: "Telegram", notes: entry.via || "", source: "telegram" } };
 }
 
 const fmt = (amount, currency) => {
@@ -950,6 +950,9 @@ async function handleMessage(message, redis) {
     return aiReply(message, payload, today, (s, history) => AiAssist.ask(payload, text, { today, settings: s, history }));
   }
   const currency = payload.profile?.currency || "USD";
+  // forwarded ABA Pay request ("Hi, NAME has requested you to pay $1.91 …"): one expense, name + amount only
+  const payRequest = parsePayRequest(text);
+  if (payRequest) return saveMoneyEntries(message, { userId, payload, today, redis }, [payRequest], []);
   const rows = text.split(/\n+/).map(line => line.trim()).filter(Boolean);
   const parsedRows = rows.map(line => ({ line, entry: parseMoney(line, currency, today) }));
   const moneyRows = parsedRows.filter(row => row.entry);

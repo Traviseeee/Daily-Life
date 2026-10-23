@@ -128,7 +128,8 @@ const TelegramArrivals = (() => {
     if (kind === "invoice") return { icon: UTILITY_ICON(record), title: safe(record.name), sub: L("វិក្កយបត្រថ្មី", "New bill"), amount: Number(record.amount) > 0 ? amountText(record.amount, record.currency) : "", tone: "bill" };
     if (kind === "billpaid") return { icon: "✅", title: safe(record.name), sub: L("បានបង់", "Paid"), amount: "", tone: "paid" };
     if (kind === "event") return { icon: "📅", title: safe(record.title), sub: L("ព្រឹត្តិការណ៍", "Event"), amount: "", tone: "event" };
-    const name = String(record.description || record.name || "").trim();
+    let name = String(record.description || record.name || "").trim();
+    if (typeof SmartParse !== "undefined" && SmartParse.cleanPayText) name = SmartParse.cleanPayText(name);
     const sameAsCat = !name || [String(record.category).toLowerCase(), String(catName).toLowerCase()].includes(name.toLowerCase());
     return {
       icon: ICON[record.category] || (kind === "income" ? "💰" : "📦"),

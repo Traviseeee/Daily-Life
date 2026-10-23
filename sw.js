@@ -1,4 +1,4 @@
-const CACHE_NAME = "mylife-pwa-4cc06ced";
+const CACHE_NAME = "mylife-pwa-841dc5a5";
 // red number on the Home Screen icon: the app saves its bell count here and a
 // push that arrives while the app is closed adds 1 to it
 const BADGE_CACHE = "mylife-badge";

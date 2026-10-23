@@ -301,7 +301,31 @@ function parseMoney(raw, defaultCurrency = "USD", today = null) {
   return { type, amount, currency, category: keyword ? keyword.category : "Other", description, ...(date ? { date } : {}) };
 }
 
-const api = { parseEvent, parseExpense, parseMoney, addDays, categorizeExpense, EXPENSE_WORDS };
+// A forwarded ABA / PayWay payment request:
+//   "Hi, Lyhuor HAM has requested you to pay $1.91 securely by tapping the ABA Pay link above."
+// → expense $1.91, description "Lyhuor HAM" (the link and the rest of the message are left out)
+const PAY_REQUEST_RE = /(?:^|\s)(?:hi,?\s+)?(.{2,60}?)\s+has\s+requested\s+(?:you\s+)?to\s+pay\s+(\$|៛|usd\s*|khr\s*)?\s*(\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?)\s*(usd|khr|riel|៛|\$)?/i;
+function parsePayRequest(raw) {
+  // line by line, links removed, so the name is never glued to the URL above it
+  const lines = normalizeDigits(String(raw || "")).replace(/https?:\/\/\S+/gi, " ").split(/\n+/).map(line => line.replace(/\s+/g, " ").trim());
+  const match = lines.map(line => line.match(PAY_REQUEST_RE)).find(Boolean);
+  if (!match) return null;
+  const name = match[1].replace(/^[\s,.:;\-–]+|[\s,.:;\-–]+$/g, "").trim();
+  const amount = Number(match[3].replace(/,/g, ""));
+  if (!name || !(amount > 0)) return null;
+  const unit = `${match[2] || ""}${match[4] || ""}`.toLowerCase();
+  const currency = /khr|៛|riel/.test(unit) ? "KHR" : "USD";
+  return { type: "expense", amount, currency, category: "Other", description: name, via: "ABA Pay" };
+}
+// old records saved with the whole message: show only the name
+function cleanPayText(description) {
+  const entry = parsePayRequest(description);
+  if (entry) return entry.description;
+  const short = String(description || "").match(/^\s*(?:hi,?\s+)?(.{2,60}?)\s+has\s+requested\b/i);
+  return short ? short[1].trim() : description;
+}
+
+const api = { parseEvent, parseExpense, parseMoney, parsePayRequest, cleanPayText, addDays, categorizeExpense, EXPENSE_WORDS };
 if (typeof module !== "undefined" && module.exports) module.exports = api;
 else root.SmartParse = api;
 })(typeof window !== "undefined" ? window : globalThis);

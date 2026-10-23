@@ -204,6 +204,14 @@ const month = today.slice(0, 7);
   check("words after other: bill not paid", p().bills[0].due === today && !p().expenses.some(e => e.billId === "edc"));
   check("words after other: saved as a normal expense", p().expenses.some(e => /coffee/i.test(e.description || "")), JSON.stringify(p().expenses));
 
+  /* forwarded ABA Pay request → one expense: name + amount only */
+  setup();
+  await say("https://pay.ababank.com/oRF8/ox6dh68b\n\nHi, Lyhuor HAM has requested you to pay $1.91 securely by tapping the ABA Pay link above.\n\nlink.payway.com.kh\nPayWay - Payment Link\nDirect Payment Link 2.0");
+  check("ABA Pay: one expense", p().expenses.length === 1, JSON.stringify(p().expenses));
+  check("ABA Pay: $1.91 USD", p().expenses[0]?.amount === 1.91 && p().expenses[0]?.currency === "USD");
+  check("ABA Pay: name only", p().expenses[0]?.description === "Lyhuor HAM", p().expenses[0]?.description);
+  check("ABA Pay: marked in notes", p().expenses[0]?.notes === "ABA Pay");
+
   /* buttons on alerts */
   const { verbsFor } = require(path.join(root, "lib/telegram.js"));
   if (typeof verbsFor === "function") {
