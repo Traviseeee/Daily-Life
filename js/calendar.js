@@ -84,6 +84,10 @@ function renderCalendar(view = "month") {
   const today = new Date();
   const todayLink = view === "month" ? monthKey(today) : calendarDateInput(today);
   const selectedLinkDate = selectedCalendarDate.startsWith(visibleMonth) ? selectedCalendarDate : calendarDateInput(current);
+  // Calendar V2 (js/calendar-v2.js); the old layout below stays as a fallback
+  if (typeof CalendarV2 !== "undefined") {
+    return CalendarV2.render({ view, current, visibleMonth, dates, periodEvents, selectedLinkDate, prevHref: `#calendar/${view}/${cursorLink(previousDate)}`, nextHref: `#calendar/${view}/${cursorLink(nextDate)}`, todayHref: `#calendar/${view}/${todayLink}` });
+  }
 
   return `
     <section class="page">

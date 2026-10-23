@@ -1,0 +1,108 @@
+/* MYLIFE Calendar V2 (js/calendar-v2.js). Dark = green + lime (default), light = sky blue.
+   Not run through tools/build-theme-sky.py: both themes are set here with variables. */
+.cv2 {
+  --cv-bg: #0b1712; --cv-card: #122019; --cv-soft: #1a2e24; --cv-line: #1f3329;
+  --cv-ink: #eef6e8; --cv-ink2: #9fb8a9; --cv-ink3: #5f7a6b; --cv-acc: #c5ff60; --cv-acc-ink: #d9ff7b; --cv-on: #142a04;
+  --cv-grad: linear-gradient(120deg, #d9ff7b, #a6e33f);
+  --cv-hero: radial-gradient(120% 80% at 90% 0, #24452f 0, transparent 60%), linear-gradient(180deg, #143024, #0f2119);
+  --cv-shadow: 0 6px 20px rgba(0, 0, 0, 0.35); --cv-glow: 0 10px 22px rgba(166, 227, 63, 0.2);
+  --cv-hol: #ff8b8b; --cv-hol-bg: rgba(255, 139, 139, 0.12); --cv-now: #ff8b8b;
+  display: block; width: 100%; max-width: 660px; box-sizing: border-box; margin: 0 auto; padding: 0 0 120px; color: var(--cv-ink);
+}
+:root[data-theme="light"] .cv2 {
+  --cv-bg: #f4f8ff; --cv-card: #ffffff; --cv-soft: #e6f0ff; --cv-line: #e8eef9;
+  --cv-ink: #0f1b33; --cv-ink2: #5b6b85; --cv-ink3: #97a3b8; --cv-acc: #3b82f6; --cv-acc-ink: #1d4ed8; --cv-on: #ffffff;
+  --cv-grad: linear-gradient(120deg, #5aa2ff, #2f7bf5);
+  --cv-hero: radial-gradient(120% 80% at 90% 0, #9cc6ff 0, transparent 60%), linear-gradient(180deg, #cfe3ff, #eaf2ff);
+  --cv-shadow: 0 6px 20px rgba(37, 99, 235, 0.08); --cv-glow: 0 10px 22px rgba(47, 123, 245, 0.3);
+  --cv-hol: #e5484d; --cv-hol-bg: #ffe9ea; --cv-now: #ef4444;
+}
+.cv2 * { box-sizing: border-box; }
+.cv2 a { color: inherit; text-decoration: none; }
+.cv2 button { font: inherit; color: inherit; }
+#app:has(.cv2) { padding-left: 0 !important; padding-right: 0 !important; padding-top: 0 !important; }
+
+/* top: title, count line, + button, month / week / day */
+.cv2-hero { padding: calc(env(safe-area-inset-top, 0px) + 16px) 18px 16px; border-radius: 0 0 30px 30px; background: var(--cv-hero); }
+.cv2-title { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.cv2-title h1 { margin: 0; font-size: 1.62rem; font-weight: 800; line-height: 1.35; color: var(--cv-ink); }
+.cv2-title p { margin: 2px 0 0; font-size: 0.8rem; color: var(--cv-ink2); }
+.cv2-add { display: grid; place-items: center; width: 46px; height: 46px; flex: 0 0 auto; padding: 0; border: 0; border-radius: 50%; color: var(--cv-on) !important; background: var(--cv-grad); box-shadow: var(--cv-glow); cursor: pointer; }
+.cv2-add svg { width: 24px; height: 24px; }
+.cv2-seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-top: 14px; padding: 5px; border-radius: 999px; background: var(--cv-card); box-shadow: var(--cv-shadow); }
+.cv2-seg a { padding: 8px 0; border-radius: 999px; text-align: center; font-size: 0.86rem; font-weight: 600; color: var(--cv-ink2); }
+.cv2-seg a.on { color: var(--cv-on); background: var(--cv-grad); }
+
+.cv2-body { display: grid; gap: 0; padding: 12px 14px 0; }
+.cv2-card { margin-bottom: 12px; padding: 14px; border-radius: 26px; background: var(--cv-card); box-shadow: var(--cv-shadow); min-width: 0; }
+
+/* month card */
+.cv2-nav { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.cv2-nav b { flex: 1; min-width: 0; font-size: 1.06rem; font-weight: 700; }
+.cv2-nav b small { margin-left: 6px; font-size: 0.76rem; font-weight: 400; color: var(--cv-ink2); }
+.cv2-nb { display: grid; place-items: center; width: 34px; height: 34px; flex: 0 0 auto; border-radius: 50%; font-size: 1.1rem; font-weight: 600; color: var(--cv-ink2) !important; background: var(--cv-soft); }
+.cv2-today { padding: 6px 12px; border-radius: 999px; font-size: 0.76rem; font-weight: 700; color: var(--cv-acc-ink) !important; background: var(--cv-soft); }
+.cv2-wd, .cv2-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); text-align: center; }
+.cv2-wd span { padding-bottom: 6px; font-size: 0.7rem; font-weight: 600; color: var(--cv-ink3); }
+.cv2-wd .is-weekend { color: var(--cv-hol); }
+.cv2-c { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; height: 44px; margin: 1px; padding: 4px 0 0; border: 0; border-radius: 14px; background: transparent; font-size: 0.92rem; font-weight: 500; color: var(--cv-ink); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.cv2-c b { font-weight: inherit; line-height: 1.3; }
+.cv2-c.is-blank { cursor: default; }
+.cv2-c.is-past { color: var(--cv-ink3); }
+.cv2-c.is-weekend:not(.is-past) { color: var(--cv-hol); }
+.cv2-c.is-holiday { color: var(--cv-hol); background: var(--cv-hol-bg); }
+.cv2-c.is-today { color: var(--cv-on); background: var(--cv-grad); font-weight: 600; box-shadow: var(--cv-glow); }
+.cv2-c.is-selected { box-shadow: inset 0 0 0 2px var(--cv-acc); }
+.cv2-c:focus-visible { outline: 2px solid var(--cv-acc); outline-offset: 1px; }
+.cv2-dots { display: flex; gap: 3px; height: 5px; margin-top: 4px; }
+.cv2-dots i { width: 5px; height: 5px; border-radius: 50%; }
+.cv2-c.is-today .cv2-dots i { background: var(--cv-on) !important; }
+.cv2-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.cv2-chip { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 999px; font-size: 0.72rem; font-weight: 600; color: var(--cv-ink2); background: var(--cv-soft); }
+.cv2-chip i { width: 7px; height: 7px; border-radius: 50%; }
+
+/* section heads */
+.cv2-sec { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin: 6px 4px 8px; }
+.cv2-sec b { font-size: 1rem; font-weight: 700; }
+.cv2-sec small { font-size: 0.76rem; color: var(--cv-ink2); }
+.cv2-link { padding: 4px 0; border: 0; background: none; font-size: 0.8rem; font-weight: 600; color: var(--cv-acc-ink) !important; cursor: pointer; }
+
+/* the chosen day: timeline */
+.cv2-day { padding: 6px 14px; }
+.cv2-tl { display: flex; align-items: stretch; gap: 12px; padding: 10px 0; cursor: pointer; }
+.cv2-tl + .cv2-tl { border-top: 1px solid var(--cv-line); }
+.cv2-tm { width: 62px; flex: 0 0 auto; white-space: nowrap; padding-top: 3px; font-size: 0.8rem; font-weight: 600; color: var(--cv-ink2); }
+.cv2-bx { display: block; flex: 1; min-width: 0; padding: 9px 12px; border-left: 4px solid var(--k); border-radius: 16px; background: color-mix(in srgb, var(--k) 12%, var(--cv-card)); }
+.cv2-bx b { display: block; overflow: hidden; font-size: 0.9rem; font-weight: 700; white-space: nowrap; text-overflow: ellipsis; }
+.cv2-bx small { display: block; font-size: 0.75rem; color: var(--cv-ink2); }
+.cv2-amt { float: right; margin-left: 8px; font-size: 0.82rem; font-weight: 600; }
+.cv2-tl.is-done .cv2-bx { opacity: 0.55; }
+.cv2-tl.is-done .cv2-tm { text-decoration: line-through; }
+.cv2-now { display: flex; align-items: center; gap: 8px; margin: 2px 0; font-size: 0.72rem; font-weight: 700; color: var(--cv-now); }
+.cv2-now::after { content: ""; flex: 1; height: 2px; border-radius: 2px; background: var(--cv-now); }
+.cv2-empty { display: flex; align-items: center; gap: 10px; width: 100%; padding: 12px 0; border: 0; background: none; font-size: 0.86rem; color: var(--cv-ink2); cursor: pointer; text-align: left; }
+.cv2-empty svg { width: 20px; height: 20px; color: var(--cv-acc-ink); }
+
+/* coming up */
+.cv2-up { padding: 4px 14px; }
+.cv2-ag { display: flex; align-items: center; gap: 12px; padding: 10px 0; cursor: pointer; }
+.cv2-ag + .cv2-ag { border-top: 1px solid var(--cv-line); }
+.cv2-dt { display: grid; place-items: center; width: 46px; height: 50px; flex: 0 0 auto; border-radius: 14px; text-align: center; line-height: 1.1; background: var(--cv-soft); }
+.cv2-dt b { font-size: 1.06rem; font-weight: 700; }
+.cv2-dt small { display: block; max-width: 44px; overflow: hidden; font-size: 0.66rem; white-space: nowrap; text-overflow: ellipsis; color: var(--cv-ink2); }
+.cv2-tx { display: grid; flex: 1; min-width: 0; }
+.cv2-tx b { overflow: hidden; font-size: 0.9rem; font-weight: 700; white-space: nowrap; text-overflow: ellipsis; }
+.cv2-tx small { overflow: hidden; font-size: 0.75rem; white-space: nowrap; text-overflow: ellipsis; color: var(--cv-ink2); }
+.cv2-tag { flex: 0 0 auto; padding: 4px 10px; border-radius: 999px; font-size: 0.7rem; font-weight: 700; color: var(--k); background: color-mix(in srgb, var(--k) 15%, transparent); }
+:root[data-theme="light"] .cv2-tag { color: color-mix(in srgb, var(--k) 78%, #000); }
+
+/* phone: the page has its own header, so the app top bar hides (like Home) */
+@media (max-width: 900px) {
+  body:has(#app .cv2) .app-main .topbar { display: none !important; }
+}
+@media (min-width: 901px) {
+  .cv2 { padding-top: 12px; }
+  .cv2-hero { border-radius: 30px; }
+}
+/* dark: the + button is lime like the draft */
+:root:not([data-theme="light"]) body:has(#app .cv2) .quick-action-toggle { color: #142a04; border-color: rgba(217, 255, 123, 0.7); background: linear-gradient(135deg, #d9ff7b, #a6e33f); box-shadow: 0 12px 26px rgba(166, 227, 63, 0.3); }
