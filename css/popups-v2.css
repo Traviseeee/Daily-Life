@@ -129,3 +129,45 @@
 }
 /* tip detail in dark mode was a white card with pale text (--glass-strong is light) */
 :root:not([data-theme="light"]) .tp-sheet { --tp-card: #1a2e24; --tp-line: rgba(197, 255, 96, 0.16); --tp-ink: #eef6e8; --tp-sub: #a9c9b4; border: 1px solid rgba(197, 255, 96, 0.18); color: #eef6e8 !important; background: #121a17 !important; }
+
+/* ---------- weather pop-up: glass (24 Oct) ----------
+ * frosted card over two soft colour lights that match the weather
+ * (sun = warm yellow + sky blue, cloud = grey blue, rain = deep blue, night = indigo) */
+.wxp { --g1: #ffcf3f; --g2: #4f9bff; background: rgba(4, 12, 8, 0.38); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); overflow: hidden; }
+.wxp[data-scene="cloud"], .wxp[data-scene="fog"] { --g1: #a9bccf; --g2: #5f84b5; }
+.wxp[data-scene="rain"], .wxp[data-scene="storm"] { --g1: #4a7fe0; --g2: #7a5cff; }
+.wxp[data-scene="moon"] { --g1: #6d5cff; --g2: #2c3f9e; }
+:root[data-theme="light"] .wxp { background: rgba(15, 27, 51, 0.16); }
+.wxp::before, .wxp::after {
+  content: ""; position: absolute; z-index: 0; width: 300px; height: 300px; border-radius: 50%;
+  filter: blur(40px); opacity: 0.75; pointer-events: none;
+  animation: wxpBlob 7s ease-in-out infinite alternate, wxpFade 500ms ease both;
+}
+.wxp::before { top: calc(50% - 300px); left: calc(50% - 250px); background: var(--g1); }
+.wxp::after { top: calc(50% - 20px); left: calc(50% - 40px); background: var(--g2); animation-direction: alternate-reverse, normal; }
+@keyframes wxpBlob { from { transform: translate(0, 0) scale(1); } to { transform: translate(40px, 30px) scale(1.15); } }
+.wxp .wxp-card { position: relative; z-index: 1; }
+
+.wxp {
+  --wx-card: linear-gradient(160deg, rgba(48, 84, 62, 0.5) 0%, rgba(10, 22, 16, 0.38) 100%);
+  --wx-line: rgba(255, 255, 255, 0.14);
+  --wx-box: rgba(255, 255, 255, 0.07);
+  --wx-now: rgba(197, 255, 96, 0.18);
+  --wx-boxline: rgba(255, 255, 255, 0.1);
+  --wx-hi: rgba(255, 255, 255, 0.18);
+}
+:root[data-theme="light"] .wxp {
+  --wx-card: linear-gradient(160deg, rgba(255, 255, 255, 0.62) 0%, rgba(255, 255, 255, 0.3) 100%);
+  --wx-line: rgba(255, 255, 255, 0.7);
+  --wx-box: rgba(255, 255, 255, 0.42);
+  --wx-now: rgba(47, 123, 245, 0.16);
+  --wx-boxline: rgba(255, 255, 255, 0.65);
+  --wx-hi: rgba(255, 255, 255, 0.9);
+}
+.wxp-card, :root[data-theme="light"] .wxp-card {
+  -webkit-backdrop-filter: blur(28px) saturate(1.8); backdrop-filter: blur(28px) saturate(1.8);
+  box-shadow: inset 0 1px 0 var(--wx-hi), 0 30px 70px rgba(0, 0, 0, 0.28);
+}
+.wxp-stat, .wxp-tip, .wxp-hours, .wxp-x { border: 1px solid var(--wx-boxline); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+@media (prefers-reduced-motion: reduce) { .wxp::before, .wxp::after { animation: none !important; } }
+:root:not([data-theme="light"]) .wxp::before, :root:not([data-theme="light"]) .wxp::after { opacity: 0.45; }

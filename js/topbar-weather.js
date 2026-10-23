@@ -263,6 +263,7 @@ const TopbarWeather = (() => {
     const stat = (label, value) => `<span class="wxp-stat"><small>${esc(label)}</small><b>${esc(value)}</b></span>`;
     const node = document.createElement("div");
     node.className = "wxp";
+    node.dataset.scene = scene;
     node.setAttribute("role", "dialog");
     node.setAttribute("aria-modal", "true");
     node.setAttribute("aria-label", tx(scene));
