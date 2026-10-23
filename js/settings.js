@@ -5,6 +5,8 @@ const settingsOpenSections = new Set(["account"]);
 function renderSettings() {
   // #settings/ai (from the bot or the chat) opens that section
   if (typeof App !== "undefined" && /^[a-z]+$/.test(String(App.param || ""))) settingsOpenSections.add(App.param);
+  // Settings V2 (js/settings-v2.js): overview list, each section on its own page; old page = fallback
+  if (typeof SettingsV2 !== "undefined") return SettingsV2.render(renderSettingsPage);
   return renderSettingsPage().replace(/<details class="settings-accordion" id="settings-section-([a-z]+)"( open)?>/g,
     (match, id) => `<details class="settings-accordion" id="settings-section-${id}"${settingsOpenSections.has(id) ? " open" : ""}>`);
 }

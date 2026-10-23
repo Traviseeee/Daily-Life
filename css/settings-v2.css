@@ -1,0 +1,140 @@
+/* MYLIFE Settings V2 (js/settings-v2.js). Dark = green + lime (default), light = sky blue.
+   Not run through tools/build-theme-sky.py: both themes are set here with variables. */
+.sv2 {
+  --sv-card: #122019; --sv-soft: #1a2e24; --sv-line: #1f3329; --sv-page: #0b1712;
+  --sv-ink: #eef6e8; --sv-ink2: #9fb8a9; --sv-ink3: #5f7a6b; --sv-acc-ink: #d9ff7b; --sv-on: #142a04;
+  --sv-grad: linear-gradient(120deg, #d9ff7b, #a6e33f);
+  --sv-hero: radial-gradient(120% 80% at 90% 0, #24452f 0, transparent 60%), linear-gradient(180deg, #143024, #0f2119);
+  --sv-shadow: 0 6px 20px rgba(0, 0, 0, 0.35); --sv-glow: 0 10px 22px rgba(166, 227, 63, 0.2);
+  --sv-ok: #7ee2a8; --sv-ok-bg: rgba(126, 226, 168, 0.14); --sv-warn: #ffc76b; --sv-warn-bg: rgba(255, 199, 107, 0.14);
+  --sv-red: #ff8b8b; --sv-red-bg: rgba(255, 139, 139, 0.12); --sv-ic: #1a2e24; --sv-off: #2a3d33;
+  display: block; width: 100%; max-width: 660px; box-sizing: border-box; margin: 0 auto; padding: 0 0 120px; color: var(--sv-ink);
+}
+:root[data-theme="light"] .sv2 {
+  --sv-card: #ffffff; --sv-soft: #e6f0ff; --sv-line: #edf2fb; --sv-page: #f4f8ff;
+  --sv-ink: #0f1b33; --sv-ink2: #5b6b85; --sv-ink3: #97a3b8; --sv-acc-ink: #1d4ed8; --sv-on: #ffffff;
+  --sv-grad: linear-gradient(120deg, #5aa2ff, #2f7bf5);
+  --sv-hero: radial-gradient(120% 80% at 90% 0, #9cc6ff 0, transparent 60%), linear-gradient(180deg, #cfe3ff, #eaf2ff);
+  --sv-shadow: 0 6px 20px rgba(37, 99, 235, 0.08); --sv-glow: 0 10px 22px rgba(47, 123, 245, 0.3);
+  --sv-ok: #13804a; --sv-ok-bg: #dcf5e5; --sv-warn: #a35b00; --sv-warn-bg: #fff1d6;
+  --sv-red: #dc2626; --sv-red-bg: #fee2e2; --sv-off: #cfdcf0;
+}
+.sv2 * { box-sizing: border-box; }
+.sv2 a { color: inherit; text-decoration: none; }
+.sv2 button { font: inherit; color: inherit; }
+#app:has(.sv2) { padding-left: 0 !important; padding-right: 0 !important; padding-top: 0 !important; }
+
+/* top */
+.sv-hero { padding: calc(env(safe-area-inset-top, 0px) + 16px) 18px 18px; border-radius: 0 0 30px 30px; background: var(--sv-hero); }
+.sv-hero h1 { margin: 0; font-size: 1.62rem; font-weight: 800; line-height: 1.35; color: var(--sv-ink); }
+.sv-prof { display: flex; align-items: center; gap: 12px; margin-top: 14px; padding: 14px; border-radius: 24px; background: var(--sv-card); box-shadow: var(--sv-shadow); }
+.sv-av { display: block; width: 58px; height: 58px; flex: 0 0 auto; padding: 3px; border-radius: 50%; background: var(--sv-grad); }
+.sv-face { display: grid; place-items: center; width: 100%; height: 100%; overflow: hidden; border: 3px solid var(--sv-card); border-radius: 50%; font-weight: 700; color: var(--sv-on); background: var(--sv-grad); }
+.sv-face img { width: 100%; height: 100%; object-fit: cover; }
+.sv-prof-tx { display: grid; flex: 1; min-width: 0; }
+.sv-prof-tx b { overflow: hidden; font-size: 1.06rem; font-weight: 700; white-space: nowrap; text-overflow: ellipsis; }
+.sv-prof-tx small { overflow: hidden; font-size: 0.76rem; white-space: nowrap; text-overflow: ellipsis; color: var(--sv-ink2); }
+.sv-edit { flex: 0 0 auto; padding: 8px 16px; border: 0; border-radius: 999px; font-size: 0.8rem; font-weight: 700; color: var(--sv-acc-ink) !important; background: var(--sv-soft); cursor: pointer; }
+.sv-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.sv-chip { display: inline-flex; align-items: center; gap: 5px; padding: 6px 11px; border: 0; border-radius: 999px; font-size: 0.75rem; font-weight: 600; color: var(--sv-ink2) !important; background: var(--sv-card); box-shadow: var(--sv-shadow); cursor: default; }
+button.sv-chip, a.sv-chip { cursor: pointer; }
+.sv-chip.is-ok { color: var(--sv-ok) !important; }
+.sv-chip.is-warn { color: var(--sv-warn) !important; }
+.sv-chip.is-busy { opacity: 0.6; }
+
+.sv-body { display: grid; padding: 14px 14px 0; }
+.sv-body > * { min-width: 0; }
+
+/* quick switches */
+.sv-quick { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.sv-q { display: block; padding: 12px; border-radius: 22px; background: var(--sv-card); box-shadow: var(--sv-shadow); cursor: pointer; }
+.sv-q small { display: block; margin-bottom: 8px; font-size: 0.72rem; font-weight: 600; color: var(--sv-ink2); }
+.sv-seg { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; padding: 3px; border-radius: 999px; background: var(--sv-soft); }
+.sv-seg button { padding: 6px 0; border: 0; border-radius: 999px; font-size: 0.76rem; font-weight: 600; color: var(--sv-ink2) !important; background: none; cursor: pointer; }
+.sv-seg button.on { color: var(--sv-on) !important; background: var(--sv-grad); }
+.sv-q-sw { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.sv-q-sw b { font-size: 0.82rem; font-weight: 700; }
+
+/* switch */
+.sv2 .sv-switch { -webkit-appearance: none; appearance: none; position: relative; flex: 0 0 auto; width: 44px; height: 26px; margin: 0; border: 0; border-radius: 99px; background: var(--sv-off); cursor: pointer; transition: background 160ms ease; }
+.sv2 .sv-switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2); transition: transform 160ms ease; }
+.sv2 .sv-switch:checked { background: var(--sv-grad); }
+.sv2 .sv-switch:checked::after { transform: translateX(18px); }
+.sv2 .sv-switch:focus-visible { outline: 2px solid var(--sv-acc-ink); outline-offset: 2px; }
+
+/* grouped rows */
+.sv-lbl { margin: 4px 8px 6px; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.02em; color: var(--sv-ink2); }
+.sv-grp { margin-bottom: 14px; padding: 2px 14px; border-radius: 24px; background: var(--sv-card); box-shadow: var(--sv-shadow); }
+.sv-row { display: flex; align-items: center; gap: 12px; width: 100%; padding: 11px 0; border: 0; background: none; text-align: left; cursor: pointer; }
+.sv-row + .sv-row { border-top: 1px solid var(--sv-line); }
+.sv-ic { display: grid; place-items: center; width: 38px; height: 38px; flex: 0 0 auto; border-radius: 12px; font-size: 1.1rem; background: var(--sv-ic); }
+:root[data-theme="light"] .sv-ic.is-blue { background: #e6f0ff; }
+:root[data-theme="light"] .sv-ic.is-amber { background: #fff1d6; }
+:root[data-theme="light"] .sv-ic.is-green { background: #dcf5e5; }
+:root[data-theme="light"] .sv-ic.is-violet { background: #ece6ff; }
+:root[data-theme="light"] .sv-ic.is-pink { background: #ffe8f0; }
+:root[data-theme="light"] .sv-ic.is-cyan { background: #e0f7fa; }
+:root[data-theme="light"] .sv-ic.is-grey { background: #eef1f6; }
+.sv-tx { display: grid; flex: 1; min-width: 0; }
+.sv-tx b { font-size: 0.88rem; font-weight: 700; color: var(--sv-ink); }
+.sv-tx small { overflow: hidden; font-size: 0.72rem; white-space: nowrap; text-overflow: ellipsis; color: var(--sv-ink2); }
+.sv-val { flex: 0 0 auto; font-size: 0.78rem; color: var(--sv-ink2); }
+.sv-chev { flex: 0 0 auto; margin-left: 2px; font-size: 1.1rem; color: var(--sv-ink3); }
+.sv-badge { flex: 0 0 auto; padding: 3px 9px; border-radius: 999px; font-size: 0.68rem; font-weight: 700; color: var(--sv-ok); background: var(--sv-ok-bg); }
+.sv-badge.is-warn { color: var(--sv-warn); background: var(--sv-warn-bg); }
+
+/* sign out / delete */
+.sv-out { display: flex; gap: 10px; margin-bottom: 12px; }
+.sv-out button { flex: 1; padding: 12px 0; border: 0; border-radius: 18px; font-size: 0.86rem; font-weight: 700; cursor: pointer; }
+.sv-logout { color: var(--sv-ink) !important; background: var(--sv-card) !important; box-shadow: var(--sv-shadow); }
+.sv-clear { color: var(--sv-red) !important; background: var(--sv-red-bg) !important; }
+.sv-ver { margin: 0; text-align: center; font-size: 0.72rem; color: var(--sv-ink3); }
+
+/* a section page: back header + only that section of the old page */
+.sv-subhead { display: flex; align-items: center; gap: 10px; padding-bottom: 16px; }
+.sv-back { display: grid; place-items: center; width: 40px; height: 40px; flex: 0 0 auto; border-radius: 50%; font-size: 1.5rem; line-height: 1; color: var(--sv-ink) !important; background: var(--sv-card); box-shadow: var(--sv-shadow); }
+.sv-subhead h1 { font-size: 1.32rem; }
+.sv2-sub > .settings-header, .sv2-sub .settings-summary, .sv2-sub .settings-guest-preview, .sv2-sub .settings-danger-zone { display: none !important; }
+.sv2-sub .settings-layout { padding: 12px 14px 0; }
+.sv2-sub .settings-accordion { display: none !important; }
+.sv2-sub[data-sv2="account"] #settings-section-account,
+.sv2-sub[data-sv2="appearance"] #settings-section-appearance,
+.sv2-sub[data-sv2="money"] #settings-section-money,
+.sv2-sub[data-sv2="notifications"] #settings-section-notifications,
+.sv2-sub[data-sv2="ai"] #settings-section-ai,
+.sv2-sub[data-sv2="data"] #settings-section-data,
+.sv2-sub[data-sv2="about"] #settings-section-about { display: block !important; margin: 0 !important; padding: 0 !important; border: 0 !important; background: none !important; box-shadow: none !important; }
+.sv2-sub .settings-accordion > summary { display: none !important; }
+.sv2-sub .settings-accordion-body { padding: 0 !important; }
+.sv2-sub .settings-preference-list, .sv2-sub .glass-card, .sv2-sub .welcome-poster-settings, .sv2-sub .settings-about-story, .sv2-sub .settings-release { margin-bottom: 12px; border: 0 !important; border-radius: 24px !important; background: var(--sv-card) !important; box-shadow: var(--sv-shadow) !important; }
+.sv2-sub .settings-preference-list { padding: 4px 14px !important; }
+.sv2-sub .settings-preference-row { border-color: var(--sv-line) !important; }
+.sv2-sub .settings-preference-row strong { color: var(--sv-ink) !important; }
+.sv2-sub .settings-preference-row small { color: var(--sv-ink2) !important; }
+
+/* phone: own header, the app top bar hides (like Home) */
+@media (max-width: 900px) {
+  body:has(#app .sv2) .app-main .topbar { display: none !important; }
+}
+@media (min-width: 901px) {
+  .sv2 { padding-top: 12px; }
+  .sv-hero { border-radius: 30px; }
+}
+:root:not([data-theme="light"]) body:has(#app .sv2) .quick-action-toggle { color: #142a04; border-color: rgba(217, 255, 123, 0.7); background: linear-gradient(135deg, #d9ff7b, #a6e33f); box-shadow: 0 12px 26px rgba(166, 227, 63, 0.3); }
+
+/* section pages: old controls in the new look */
+.sv2-sub input[type="checkbox"]:not(.sr-only) { -webkit-appearance: none; appearance: none; position: relative; flex: 0 0 auto; width: 44px; height: 26px; margin: 0; border: 0 !important; border-radius: 99px !important; background: var(--sv-off) !important; box-shadow: none !important; cursor: pointer; transition: background 160ms ease; }
+.sv2-sub input[type="checkbox"]:not(.sr-only)::before { display: none !important; }
+.sv2-sub input[type="checkbox"]:not(.sr-only)::after { display: block !important; content: "" !important; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2); transition: transform 160ms ease; }
+.sv2-sub input[type="checkbox"]:not(.sr-only):checked { background: var(--sv-grad) !important; }
+.sv2-sub input[type="checkbox"]:not(.sr-only):checked::after { transform: translateX(18px); }
+.sv2-sub .settings-action { border: 0 !important; border-radius: 18px !important; background: var(--sv-card) !important; box-shadow: var(--sv-shadow) !important; }
+.sv2-sub .icon-badge, .sv2-sub .section-title-icon { color: var(--sv-acc-ink) !important; background: var(--sv-soft) !important; border-color: transparent !important; }
+.sv2-sub .ai-set-status { border: 0 !important; border-radius: 22px !important; background: var(--sv-card) !important; box-shadow: var(--sv-shadow) !important; }
+.sv2-sub .ai-set-status.is-on { background: var(--sv-ok-bg) !important; }
+.sv2-sub select, .sv2-sub input:not([type="checkbox"]):not([type="range"]):not(.sr-only) { border-color: var(--sv-line) !important; background-color: var(--sv-page) !important; color: var(--sv-ink) !important; }
+.sv2-sub .section-title, .sv2-sub h2, .sv2-sub h3 { color: var(--sv-ink) !important; }
+.sv2-sub .secondary, .sv2-sub p { color: var(--sv-ink2); }
+.sv2-sub .settings-data-card { padding: 14px !important; }
+.sv2-sub input[type="checkbox"]:not(.sr-only)::after { opacity: 1 !important; border: 0 !important; transform: none !important; }
+.sv2-sub input[type="checkbox"]:not(.sr-only):checked::after { transform: translateX(18px) !important; }
