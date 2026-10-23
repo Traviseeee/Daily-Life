@@ -126,3 +126,5 @@
 /* savings ring */
 .fv2-ring { --p: 0; display: grid; place-items: center; width: 50px; height: 50px; flex: 0 0 auto; border-radius: 50%; background: conic-gradient(var(--fv-acc) calc(var(--p) * 1%), var(--fv-soft) 0); }
 .fv2-ring span { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; font-size: 0.72rem; font-weight: 700; color: var(--fv-ink); background: var(--fv-card); }
+/* dark: the + button is lime like the draft (light mode is already blue) */
+:root:not([data-theme="light"]) body:has(#app .fv2-page) .quick-action-toggle { color: #142a04; border-color: rgba(217, 255, 123, 0.7); background: linear-gradient(135deg, #d9ff7b, #a6e33f); box-shadow: 0 12px 26px rgba(166, 227, 63, 0.3); }

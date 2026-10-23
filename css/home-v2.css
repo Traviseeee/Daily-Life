@@ -159,3 +159,35 @@
 .hv2 .mf-teaser-head strong { color: var(--hv-ink) !important; }
 .hv2 .mf-teaser-head span { color: var(--hv-acc-ink) !important; }
 .hv2 .mf-teaser .secondary { color: var(--hv-ink2) !important; }
+
+/* ---- header like the draft: avatar · greeting · weather · bell on a soft colour block ---- */
+.hv2 { --hv-head: linear-gradient(180deg, #1f3d2c 0%, #142519 62%, rgba(11, 23, 18, 0) 100%); }
+:root[data-theme="light"] .hv2 { --hv-head: linear-gradient(180deg, #b3d3ff 0%, #d9e9ff 58%, rgba(244, 248, 255, 0) 100%); }
+.hv2-head { margin: -4px -16px 14px; padding: 14px 16px 18px; border-radius: 0 0 32px 32px; background: var(--hv-head); }
+.hv2-top { display: flex; align-items: center; gap: 10px; margin-bottom: 2px; }
+.hv2-top .hv2-avatar-face { width: 48px; height: 48px; font-size: 1.05rem; }
+.hv2-hello { display: grid; flex: 1; min-width: 0; line-height: 1.35; }
+.hv2-hello small { overflow: hidden; font-size: 0.8rem; white-space: nowrap; text-overflow: ellipsis; color: var(--hv-ink2); }
+.hv2-hello b { overflow: hidden; font-size: 1.08rem; font-weight: 700; white-space: nowrap; text-overflow: ellipsis; color: var(--hv-ink); }
+.hv2-wx { display: inline-flex; align-items: center; gap: 4px; height: 38px; padding: 0 12px; flex: 0 0 auto; border-radius: 999px; font-size: 0.92rem; color: var(--hv-ink); background: var(--hv-card); box-shadow: var(--hv-shadow); }
+.hv2-wx:empty { display: none; }
+.hv2-wx svg { width: 20px; height: 20px; }
+.hv2-wx strong { font-weight: 600; }
+.hv2-bell { position: relative; display: grid; place-items: center; width: 46px; height: 46px; flex: 0 0 auto; padding: 0; border: 0; border-radius: 50%; color: var(--hv-ink); background: var(--hv-card); box-shadow: var(--hv-shadow); cursor: pointer; }
+.hv2-bell svg { width: 22px; height: 22px; }
+.hv2-bell .notification-badge { position: absolute; top: 6px; right: 6px; }
+.hv2-title-row { margin-top: 2px; }
+
+/* phone: Home V2 has its own header, so the app top bar (greeting, weather card, search) hides;
+   "Search" in the avatar menu brings it back until the page changes */
+@media (max-width: 900px) {
+  body.topbar-home:not(.hv2-search-open):has(#app .hv2) .app-main .topbar { display: none !important; }
+  .hv2-head { padding-top: calc(env(safe-area-inset-top, 0px) + 14px); }
+}
+/* desktop keeps the full top bar (it already has weather + bell) */
+@media (min-width: 901px) {
+  .hv2-wx, .hv2-bell, .hv2 .hv2-only-phone { display: none !important; }
+  .hv2-head { margin: 0 0 14px; border-radius: 28px; }
+}
+/* dark: the + button is lime like the draft (light mode is already blue) */
+:root:not([data-theme="light"]) body:has(#app .hv2) .quick-action-toggle { color: #142a04; border-color: rgba(217, 255, 123, 0.7); background: linear-gradient(135deg, #d9ff7b, #a6e33f); box-shadow: 0 12px 26px rgba(166, 227, 63, 0.3); }

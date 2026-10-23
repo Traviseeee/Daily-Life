@@ -55,21 +55,31 @@ const HomeV2 = (() => {
     const photo = appData.profile.photo ? `<img src="${escapeAttr(appData.profile.photo)}" alt="">` : escapeHtml(initials(appData.profile.name || "ML"));
     const dates = new Set((d.agenda.allItems || []).map(item => item.date));
     (appData.calendarEvents || []).forEach(event => event.date && dates.add(event.date));
-    const week = Array.from({ length: 7 }, (_, index) => { const date = new Date(); date.setHours(0, 0, 0, 0); date.setDate(date.getDate() - 3 + index); return date; });
+    const week = Array.from({ length: 7 }, (_, index) => { const date = new Date(); date.setHours(0, 0, 0, 0); date.setDate(date.getDate() - 6 + index); return date; });
     const parts = [L(`${d.agenda.today} ព្រឹត្តិការណ៍`, `${d.agenda.today} event${d.agenda.today === 1 ? "" : "s"}`)];
     if (d.due.length) parts.push(L(`${d.due.length} លុយត្រូវឆ្លើយ`, `${d.due.length} money to confirm`));
+    const hour = today.getHours();
+    const hello = hour < 12 ? L("សួស្តីពេលព្រឹក", "Good morning") : hour < 17 ? L("សួស្តីពេលថ្ងៃ", "Good afternoon") : L("សួស្តីពេលល្ងាច", "Good evening");
+    const loggedOut = typeof Login !== "undefined" && (Login.guestMode || !Login.authenticated);
     return `<header class="hv2-head">
+      <div class="hv2-top">
+        <div class="home-profile-side home-profile-trigger hv2-avatar" role="button" tabindex="0" aria-label="${escapeAttr(t("editProfile"))}" title="${escapeAttr(name)}">
+          <span class="hv2-avatar-face">${photo}</span>
+          <div class="home-profile-menu" aria-hidden="true">
+            ${loggedOut ? `<button type="button" class="home-profile-menu-item home-profile-menu-login" data-account-action="login">${L("ចូលគណនី (Log in)", "Log in")}</button>` : ""}
+            <button type="button" class="home-profile-menu-item" data-account-action="edit-profile">${escapeHtml(t("editProfile"))}</button>
+            <button type="button" class="home-profile-menu-item hv2-only-phone" data-hv2-search>🔍 ${escapeHtml(L("ស្វែងរក", "Search"))}</button>
+            <button type="button" class="home-profile-menu-item hv2-only-phone" data-hv2-menu>☰ ${escapeHtml(L("ម៉ឺនុយទាំងអស់", "All menus"))}</button>
+          </div>
+        </div>
+        <div class="hv2-hello"><small>${escapeHtml(hello)} 👋</small><b>${escapeHtml(String(appData.profile.name || L("ភ្ញៀវ", "Guest")).split(/\s+/)[0])}</b></div>
+        <span class="hv2-wx" data-hv2-wx>${document.getElementById("topbarWeather")?.innerHTML || ""}</span>
+        <button type="button" class="hv2-bell" data-hv2-bell aria-label="${escapeAttr(L("ការជូនដំណឹង", "Notifications"))}">${document.getElementById("bellButton")?.innerHTML || Icons.bell()}</button>
+      </div>
       <div class="hv2-title-row">
         <div class="hv2-title">
           <h1>${things ? L(`ថ្ងៃនេះមាន <span>${things} រឿង</span> ត្រូវធ្វើ`, `<span>${things} thing${things === 1 ? "" : "s"}</span> to do today`) : L(`ថ្ងៃនេះ <span>ទំនេរ</span> 🌿`, `Today is <span>free</span> 🌿`)}</h1>
           <p>${escapeHtml(longDate(today))} · ${escapeHtml(parts.join(" · "))}</p>
-        </div>
-        <div class="home-profile-side home-profile-trigger hv2-avatar" role="button" tabindex="0" aria-label="${escapeAttr(t("editProfile"))}" title="${escapeAttr(name)}">
-          <span class="hv2-avatar-face">${photo}</span>
-          <div class="home-profile-menu" aria-hidden="true">
-            ${(typeof Login !== "undefined" && (Login.guestMode || !Login.authenticated)) ? `<button type="button" class="home-profile-menu-item home-profile-menu-login" data-account-action="login">${L("ចូលគណនី (Log in)", "Log in")}</button>` : ""}
-            <button type="button" class="home-profile-menu-item" data-account-action="edit-profile">${escapeHtml(t("editProfile"))}</button>
-          </div>
         </div>
       </div>
       <nav class="hv2-week" aria-label="${escapeAttr(L("សប្តាហ៍នេះ", "This week"))}">${week.map(date => {
@@ -195,7 +205,27 @@ const HomeV2 = (() => {
     if (go) { location.hash = go.dataset.hv2Go; return; }
     const quickAction = event.target.closest("[data-hv2-quick]");
     if (quickAction && typeof runQuickAction === "function") runQuickAction(quickAction.dataset.hv2Quick);
+    if (event.target.closest("[data-hv2-bell]")) document.getElementById("bellButton")?.click();
+    if (event.target.closest("[data-hv2-menu]")) document.getElementById("menuToggle")?.click();
+    if (event.target.closest("[data-hv2-search]")) {
+      // phone Home hides the app top bar; show it again for the search box
+      document.body.classList.add("hv2-search-open");
+      setTimeout(() => document.getElementById("globalSearch")?.focus(), 50);
+    }
   });
+  window.addEventListener("hashchange", () => document.body.classList.remove("hv2-search-open"));
+
+  // the Home header copies the app's weather chip and bell (with its badge); keep them in step
+  function mirror(sourceId, selector) {
+    const source = document.getElementById(sourceId);
+    if (!source || typeof MutationObserver === "undefined") return;
+    new MutationObserver(() => {
+      const target = document.querySelector(selector);
+      if (target && target.innerHTML !== source.innerHTML) target.innerHTML = source.innerHTML;
+    }).observe(source, { childList: true, subtree: true, characterData: true, attributes: true });
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", () => { mirror("topbarWeather", "[data-hv2-wx]"); mirror("bellButton", "[data-hv2-bell]"); });
+  else { mirror("topbarWeather", "[data-hv2-wx]"); mirror("bellButton", "[data-hv2-bell]"); }
 
   return { render };
 })();
