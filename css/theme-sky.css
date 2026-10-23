@@ -582,3 +582,50 @@ body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; 
 :root[data-theme="light"] .nc-tg-amount.is-in { color: #13804a; }
 /* next-up card and filters in blue */
 :root[data-theme="light"] .nc-filter.active, :root[data-theme="light"] .nc-filter[aria-selected="true"] { color: #ffffff !important; background: linear-gradient(120deg, #5aa2ff, #2f7bf5) !important; border-color: transparent !important; }
+
+/* ---- add / edit forms (event, expense, income, bill, memory…) in light mode: sky blue ----
+   the forms share --ev-* variables; swap them, then fix the few hard-coded lime / green bits */
+:root[data-theme="light"] #modalRoot .modal {
+  --ev-ink: #0f1b33; --ev-ink-2: #4b5b76; --ev-ink-3: #8593ab;
+  --ev-line: rgba(15, 27, 51, 0.1); --ev-soft: #eef4ff;
+  --ev-lime: #3b82f6; --ev-lime-ink: #1d4ed8;
+}
+:root[data-theme="light"] #modalRoot .modal.event-modal,
+:root[data-theme="light"] #modalRoot .modal.modal-setup.su-modern { background: #f7faff !important; box-shadow: 0 30px 70px rgba(15, 27, 51, 0.28) !important; }
+:root[data-theme="light"] #modalRoot .modal .ev-section { background: #ffffff !important; border-color: #e3ecfa !important; }
+:root[data-theme="light"] #modalRoot .modal .ev-head-icon,
+:root[data-theme="light"] #modalRoot .modal .su-head-icon { color: #ffffff !important; background: linear-gradient(135deg, #5aa2ff, #2f7bf5) !important; border-color: transparent !important; box-shadow: 0 8px 18px rgba(47, 123, 245, 0.28) !important; }
+:root[data-theme="light"] #modalRoot .modal .icon-button { color: #33425c !important; background: #ffffff !important; border-color: #e3ecfa !important; }
+:root[data-theme="light"] #modalRoot .modal input.ev-title { border-color: #dbe7fb !important; background: #ffffff !important; }
+:root[data-theme="light"] #modalRoot .modal input.ev-title:focus,
+:root[data-theme="light"] #modalRoot .modal input:focus,
+:root[data-theme="light"] #modalRoot .modal textarea:focus,
+:root[data-theme="light"] #modalRoot .modal select:focus { border-color: #5aa2ff !important; box-shadow: 0 0 0 4px rgba(90, 162, 255, 0.2) !important; outline: none; }
+:root[data-theme="light"] #modalRoot .modal .ev-smart i { color: #3b82f6 !important; }
+:root[data-theme="light"] #modalRoot .modal .ev-summary { color: #1d4ed8 !important; }
+/* chips: soft blue-white, the chosen one blue with white text */
+:root[data-theme="light"] #modalRoot .modal .ev-chip { color: #33425c !important; background: #f4f8ff !important; border-color: #dbe7fb !important; box-shadow: none !important; }
+:root[data-theme="light"] #modalRoot .modal .ev-chip.active,
+:root[data-theme="light"] #modalRoot .modal .ev-chip[aria-pressed="true"],
+:root[data-theme="light"] #modalRoot .modal .ev-chip[aria-checked="true"] { color: #ffffff !important; background: linear-gradient(120deg, #5aa2ff, #2f7bf5) !important; border-color: transparent !important; box-shadow: 0 6px 14px rgba(47, 123, 245, 0.28) !important; }
+:root[data-theme="light"] #modalRoot .modal input.ev-date, :root[data-theme="light"] #modalRoot .modal input.ev-time { color: #33425c !important; background: #ffffff !important; border-color: #cfdcf0 !important; }
+/* main button: solid blue, white text; cancel: white */
+:root[data-theme="light"] #modalRoot .modal .ev-submit,
+:root[data-theme="light"] #modalRoot .modal .button:not(.ghost-button):not(.danger-button):not(.icon-button) { color: #ffffff !important; background: linear-gradient(120deg, #5aa2ff, #2f7bf5) !important; border: 0 !important; box-shadow: 0 10px 22px rgba(47, 123, 245, 0.3) !important; }
+:root[data-theme="light"] #modalRoot .modal .ev-submit svg { color: #ffffff !important; }
+:root[data-theme="light"] #modalRoot .modal .button.ghost-button { color: #33425c !important; background: #ffffff !important; border: 1px solid #dbe7fb !important; box-shadow: none !important; }
+/* switch rows and switches */
+:root[data-theme="light"] #modalRoot .modal .bf-switch-row,
+:root[data-theme="light"] #modalRoot .modal .su-switch-row,
+:root[data-theme="light"] #modalRoot .modal .toggle-row { background: #f4f8ff !important; border-color: #e3ecfa !important; }
+:root[data-theme="light"] #modalRoot .modal .ev-switch:not(:checked) { background: #cfdcf0 !important; }
+:root[data-theme="light"] #modalRoot .modal .ev-switch:checked { background: #3b82f6 !important; }
+:root[data-theme="light"] #modalRoot .modal label, :root[data-theme="light"] #modalRoot .modal .ev-label { color: #33425c; }
+:root[data-theme="light"] #modalRoot .modal input:not([type="checkbox"]):not([type="radio"]),
+:root[data-theme="light"] #modalRoot .modal textarea,
+:root[data-theme="light"] #modalRoot .modal select { border-color: #dbe7fb; background-color: #ffffff; color: #0f1b33; }
+
+/* + menu (quick actions) in light mode: white pills, blue icons */
+:root[data-theme="light"] .quick-action-item { color: #0f1b33 !important; background: rgba(255, 255, 255, 0.96) !important; border: 1px solid #e3ecfa !important; box-shadow: 0 8px 22px rgba(15, 27, 51, 0.12) !important; -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+:root[data-theme="light"] .quick-action-item span { color: #ffffff !important; background: linear-gradient(135deg, #5aa2ff, #2f7bf5) !important; }
+:root[data-theme="light"] .quick-action-item:hover { border-color: #9cc6ff !important; }
