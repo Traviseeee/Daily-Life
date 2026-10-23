@@ -7,6 +7,32 @@ const MoneyV2 = (() => {
   const km = () => languageCode() === "km";
   const L = (k, e) => (km() ? k : e);
 
+  // amounts with cents, like the draft ($1,700.00); still hidden by the privacy switch
+  const full = (value, currency) => `<span class="money-value" data-private-money>${escapeHtml(formatPlainMoney(Number(value) || 0, currency || appData.profile.currency || "USD"))}</span>`;
+  const KM_M = ["មករា", "កុម្ភៈ", "មីនា", "មេសា", "ឧសភា", "មិថុនា", "កក្កដា", "សីហា", "កញ្ញា", "តុលា", "វិច្ឆិកា", "ធ្នូ"];
+  // "ថ្ងៃ 25" in this month, "ថ្ងៃ 6 វិច្ឆិកា" in another month
+  function dayText(isoDate, withMonth) {
+    const date = new Date(`${isoDate}T00:00:00`);
+    if (Number.isNaN(date.getTime())) return "";
+    const month = km() ? KM_M[date.getMonth()] : date.toLocaleDateString("en-US", { month: "short" });
+    return withMonth ? L(`ថ្ងៃ ${date.getDate()} ${month}`, `${month} ${date.getDate()}`) : L(`ថ្ងៃ ${date.getDate()}`, `Day ${date.getDate()}`);
+  }
+  // drawn icons: EmojiIcons swaps these emoji for the app's own flat drawings
+  const CAT_EMOJI = { Food: "🍜", Home: "🏠", Family: "👨‍👩‍👧", Transport: "🚗", Shopping: "🛍️", Bills: "🧾", Loan: "🏦", Education: "📚", Health: "💊", Entertainment: "🎬", Other: "📦" };
+  function billEmoji(name = "", category = "") {
+    const text = `${name} ${category}`.toLowerCase();
+    if (/wi-?fi|internet|អ៊ីនធឺណិត/.test(text)) return "📶";
+    if (/water|ppwsa|ទឹក/.test(text)) return "💧";
+    if (/edc|electric|ភ្លើង/.test(text)) return "⚡";
+    if (/phone|mobile|smart|cellcard|metfone|ទូរស័ព្ទ/.test(text)) return "📱";
+    if (/rent|house|ផ្ទះ/.test(text)) return "🏠";
+    if (/car|ឡាន|moto|ម៉ូតូ/.test(text)) return "🚘";
+    if (/netflix|spotify|youtube|tv/.test(text)) return "🎬";
+    return "🧾";
+  }
+  const ARROW_DOWN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg>';
+  const ARROW_UP = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg>';
+
   function daysBetween(fromIso, toIso) {
     return Math.round((new Date(`${toIso}T00:00:00`) - new Date(`${fromIso}T00:00:00`)) / 86400000);
   }
@@ -55,7 +81,7 @@ const MoneyV2 = (() => {
     const short = left < 0;
     return `<a class="fv2-hero ${short ? "is-short" : ""}" href="#money/budget">
       <small>${escapeHtml(label)}</small>
-      <strong class="fv2-hero-value">${short ? "−" : ""}${money(Math.abs(left))}</strong>
+      <strong class="fv2-hero-value">${short ? "−" : ""}${full(Math.abs(left))}</strong>
       ${short ? `<span class="fv2-hero-warn">⚠ ${escapeHtml(L("ចាយលើសចំណូល", "Spent more than income"))}</span>` : ""}
       <span class="fv2-hero-bar"><i style="width:${Math.max(3, pct)}%"></i></span>
       <span class="fv2-hero-foot"><span>${escapeHtml(L("ចាយ", "Spent"))} <b>${money(spent)}</b> / ${money(income)}</span>${perDay ? `<b>${perDay}</b>` : ""}</span>
@@ -89,10 +115,10 @@ const MoneyV2 = (() => {
     const loanLeft = loans.reduce((t, loan) => t + toProfileCurrency(loanRemaining(loan), loan.currency), 0);
     const monthsLeft = loans.reduce((max, loan) => Math.max(max, loan.monthlyPayment ? Math.ceil(loanRemaining(loan) / Number(loan.monthlyPayment)) : 0), 0);
     return `<div class="fv2-grid">
-      ${mini({ tone: "in", href: "#money/income", icon: Icons.arrowDown(), label: L("ចំណូល", "Income"), value: money(income === null ? stats.totalIncome : income), sub: incomeSub })}
-      ${mini({ tone: "out", href: "#money/expenses", icon: Icons.arrowUp(), label: L("ចំណាយ", "Spent"), value: money(spent), sub: spentSub })}
-      ${mini({ tone: "save", href: "#money/savings", icon: Icons.savings(), label: L("សន្សំ", "Savings"), value: money(stats.totalSavings), sub: savedThisMonth > 0 ? `+${money(savedThisMonth)} ${escapeHtml(L("ខែនេះ", "this month"))}` : m.plannedSavings > 0 ? `${money(m.plannedSavings)} / ${escapeHtml(L("ខែ", "mo"))}` : escapeHtml(L("មិនទាន់មានគោលដៅ", "No goal yet")) })}
-      ${mini({ tone: "loan", href: "#money/loans", icon: Icons.loan(), label: L("កម្ចី", "Loans"), value: money(loanLeft), sub: loans.length ? escapeHtml(L(`នៅសល់ ${monthsLeft} ខែ`, `${monthsLeft} months left`)) : `✓ ${escapeHtml(L("គ្មានកម្ចី", "No loans"))}` })}
+      ${mini({ tone: "in", href: "#money/income", icon: ARROW_DOWN, label: L("ចំណូល", "Income"), value: money(income === null ? stats.totalIncome : income), sub: incomeSub })}
+      ${mini({ tone: "out", href: "#money/expenses", icon: ARROW_UP, label: L("ចំណាយ", "Spent"), value: money(spent), sub: spentSub })}
+      ${mini({ tone: "save", href: "#money/savings", icon: "🐷", label: L("សន្សំ", "Savings"), value: money(stats.totalSavings), sub: savedThisMonth > 0 ? `+${money(savedThisMonth)} ${escapeHtml(L("ខែនេះ", "this month"))}` : m.plannedSavings > 0 ? `${money(m.plannedSavings)} / ${escapeHtml(L("ខែ", "mo"))}` : escapeHtml(L("មិនទាន់មានគោលដៅ", "No goal yet")) })}
+      ${mini({ tone: "loan", href: "#money/loans", icon: "🏦", label: L("កម្ចី", "Loans"), value: money(loanLeft), sub: loans.length ? escapeHtml(L(`នៅសល់ ${monthsLeft} ខែ`, `${monthsLeft} months left`)) : `✓ ${escapeHtml(L("គ្មានកម្ចី", "No loans"))}` })}
     </div>`;
   }
 
@@ -108,8 +134,8 @@ const MoneyV2 = (() => {
     const plain = item => (item.amount > 0 ? money(item.amount, item.currency || undefined) : "");
     const when = item => (item.overdueDays <= 0 ? L("ថ្ងៃនេះ", "today") : item.overdueDays === 1 ? L("ម្សិលមិញ", "yesterday") : L(`${item.overdueDays} ថ្ងៃមុន`, `${item.overdueDays} days ago`));
     const rows = waiting.slice(0, 4).map(item => `<div class="fv2-item">
-      <span class="fv2-ico fv2-ico-${item.kind}" aria-hidden="true">${item.kind === "income" ? Icons.salary() : item.kind === "loan" ? Icons.loan() : Icons.bill()}</span>
-      <span class="fv2-item-text"><b>${escapeHtml(item.title)}</b><small>${plain(item)}${plain(item) ? " · " : ""}${escapeHtml(when(item))}</small></span>
+      <span class="fv2-ico fv2-icon fv2-ico-${item.kind}" aria-hidden="true">${item.kind === "income" ? "$" : item.kind === "loan" ? "🏦" : billEmoji(item.title)}</span>
+      <span class="fv2-item-text"><b>${escapeHtml(item.title)}</b><small>${item.kind === "income" || !plain(item) ? escapeHtml(dayText(item.date)) : plain(item)} · ${escapeHtml(when(item))}</small></span>
       <button type="button" class="fv2-answer" data-ma-home>${escapeHtml(item.kind === "income" ? L("ទទួលហើយ", "Got it") : L("បង់ហើយ", "Paid"))}</button>
     </div>`).join("");
     const more = waiting.length > 4 ? `<button type="button" class="fv2-more" data-ma-home>+${waiting.length - 4} ${escapeHtml(L("ទៀត", "more"))}</button>` : "";
@@ -129,7 +155,7 @@ const MoneyV2 = (() => {
       ? list.slice(0, 5).map(x => {
         const share = Math.round((x.amount / total) * 100);
         return `<a class="fv2-cat" href="#money/expenses" style="--c:${x.color};--w:${Math.max(share, 2)}%">
-          <span class="fv2-ico fv2-ico-cat" aria-hidden="true">${Icons[expenseCategoryIcons[x.category]] ? Icons[expenseCategoryIcons[x.category]]() : Icons.chart()}</span>
+          <span class="fv2-ico fv2-icon fv2-ico-cat" aria-hidden="true">${CAT_EMOJI[x.category] || "📦"}</span>
           <span class="fv2-cat-main"><b>${escapeHtml(optionLabel(x.category))}</b><span class="fv2-cat-track"><i></i></span></span>
           <span class="fv2-cat-num"><b>${money(x.amount)}</b><small>${share}%</small></span>
         </a>`;
@@ -143,8 +169,8 @@ const MoneyV2 = (() => {
     const bills = (appData.bills || [])
       .filter(bill => bill.status !== "Paid" && !billPaidCurrentCycle(bill) && bill.due)
       .map(bill => ({
-        title: bill.name || t("bill"), date: bill.due, amount: money(bill.amount, bill.currency || undefined), href: "#money/bills", icon: Icons.bill(), kind: "bill",
-        tag: bill.autoPay ? L("ស្វ័យប្រវត្តិ", "Auto-pay") : optionLabel(bill.frequency || "Monthly"), tagTone: bill.autoPay ? "ok" : "warn"
+        title: bill.name || t("bill"), date: bill.due, amount: full(bill.amount, bill.currency), href: "#money/bills", icon: billEmoji(bill.name, bill.category), kind: "bill",
+        tag: bill.autoPay ? L("ស្វ័យប្រវត្តិ", "Auto-pay") : daysBetween(today, bill.due) <= 3 ? L("ឆាប់ៗ", "Soon") : "", tagTone: bill.autoPay ? "ok" : "warn"
       }));
     const loans = (appData.loans || []).filter(loan => loanRemaining(loan) > 0).map(loan => {
       const due = nextLoanPaymentDate(loan);
@@ -152,7 +178,7 @@ const MoneyV2 = (() => {
       const total = Number(loan.durationMonths || 0);
       const paidCount = total && loan.monthlyPayment ? Math.round(loanPaid(loan) / Number(loan.monthlyPayment)) : 0;
       return {
-        title: loan.name || t("loan"), date: due, amount: money(loan.monthlyPayment, loan.currency || undefined), href: "#money/loans", icon: Icons.loan(), kind: "loan",
+        title: loan.name || t("loan"), date: due, amount: full(loan.monthlyPayment, loan.currency), href: "#money/loans", icon: /car|ឡាន|moto|ម៉ូតូ/i.test(loan.name || "") ? "🚘" : "🏦", kind: "loan",
         tag: total ? `${paidCount}/${total}` : "", tagTone: "loan"
       };
     }).filter(Boolean);
@@ -161,9 +187,9 @@ const MoneyV2 = (() => {
     const body = list.map(item => {
       const days = daysBetween(today, item.date);
       return `<a class="fv2-item ${days < 0 ? "is-late" : ""}" href="${item.href}">
-        <span class="fv2-ico fv2-ico-${item.kind}" aria-hidden="true">${item.icon}</span>
-        <span class="fv2-item-text"><b>${escapeHtml(item.title)}</b><small>${escapeHtml(formatDate(item.date))} · ${escapeHtml(inDaysText(days))}</small></span>
-        <span class="fv2-item-num"><b>${item.amount}</b>${item.tag ? `<small class="fv2-tag-${days < 0 ? "late" : item.tagTone}">${escapeHtml(item.tag)}</small>` : ""}</span>
+        <span class="fv2-ico fv2-icon fv2-ico-${item.kind}" aria-hidden="true">${item.icon}</span>
+        <span class="fv2-item-text"><b>${escapeHtml(item.title)}</b><small>${escapeHtml(item.date.slice(0, 7) === today.slice(0, 7) || days < 0 ? `${dayText(item.date)} · ${inDaysText(days)}` : dayText(item.date, true))}</small></span>
+        <span class="fv2-item-num"><b>${item.amount}</b>${days < 0 ? `<small class="fv2-tag-late">${escapeHtml(L("ហួសកំណត់", "Overdue"))}</small>` : item.tag ? `<small class="fv2-tag-${item.tagTone}">${escapeHtml(item.tag)}</small>` : ""}</span>
       </a>`;
     }).join("");
     return section(L("វិក្កយបត្រខាងមុខ", "Coming up"), "#money/bills", body);
@@ -191,7 +217,7 @@ const MoneyV2 = (() => {
     const range = moneyPeriodRange();
     const waiting = typeof MoneyAsk !== "undefined" ? MoneyAsk.items() : [];
     return `<div class="fv2">
-      ${renderMoneyPeriodBar(range)}
+      ${renderMoneyPeriodBar(range).replace("<strong>ខែ", "<strong>")}
       ${hero(stats, range)}
       ${miniGrid(stats, range, waiting)}
       ${waitingList(waiting)}
