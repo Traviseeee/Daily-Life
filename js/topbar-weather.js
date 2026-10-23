@@ -38,23 +38,25 @@ const TopbarWeather = (() => {
   }
 
   // Animated SVG (viewBox 0 0 100 100). Classes animate in css/topbar.css.
-  // Soft pastel flat style (same family as js/emoji-icons.js) with a small face.
+  // Simple flat style: one colour per shape, rays as separate dashes, soft sky-blue clouds.
   function icon(scene) {
-    const face = (x, y, k = 1) => `<g transform="translate(${x} ${y}) scale(${k})"><path d="M-13-2q3.6-4 7.2 0M5.8-2q3.6-4 7.2 0" stroke="#6b4a3a" stroke-width="3.2" stroke-linecap="round" fill="none"/><circle cx="-16" cy="5.4" r="4" fill="#ff9fb3" opacity=".85"/><circle cx="16" cy="5.4" r="4" fill="#ff9fb3" opacity=".85"/><path d="M-4 4.6q4 4.4 8 0" stroke="#6b4a3a" stroke-width="3.2" stroke-linecap="round" fill="none"/></g>`;
-    const sun = `<g class="tw-rays" stroke="#f9b43c" stroke-width="7" stroke-linecap="round"><path d="M50 6v11M50 83v11M6 50h11M83 50h11M19 19l8 8M73 73l8 8M19 81l8-8M73 27l8-8"/></g><g class="tw-core"><circle cx="50" cy="50" r="23" fill="#ffd25e"/><path d="M50 27a23 23 0 0 1 0 46Z" fill="#f9b43c" opacity=".35"/>${face(50, 51, .9)}</g>`;
-    const smallSun = `<g transform="translate(-4 -6) scale(.66)">${sun}</g>`;
-    const moon = `<g class="tw-core"><path d="M60 14a34 34 0 1 0 26 52A28 28 0 0 1 60 14z" fill="#ffd25e"/><path d="M86 66a34 34 0 0 1-44 18 28 28 0 0 0 44-18z" fill="#f9b43c" opacity=".45"/>${face(44, 54, .8)}</g><path class="tw-star" d="M82 18l2 5 5 2-5 2-2 5-2-5-5-2 5-2z" fill="#ffd25e"/><circle class="tw-star tw-d2" cx="16" cy="26" r="3" fill="#ffe395"/>`;
-    const cloud = (fill = "#dde7f6", back = "#bccbe4", shade = "#c4d3ea", withFace = true) => `<g class="tw-drift2"><ellipse cx="64" cy="42" rx="20" ry="13" fill="${back}"/></g><g class="tw-drift"><ellipse cx="45" cy="56" rx="27" ry="17" fill="${fill}"/><ellipse cx="65" cy="60" rx="19" ry="13" fill="${fill}"/><path d="M19 62a27 17 0 0 0 26 11h20a19 13 0 0 0 18-8Z" fill="${shade}"/>${withFace ? face(50, 58, .62) : ""}</g>`;
-    const drops = `<g stroke="#78a6ff" stroke-width="5" stroke-linecap="round"><path class="tw-drop" d="M37 76l-3 8"/><path class="tw-drop tw-d1" d="M51 76l-3 8"/><path class="tw-drop tw-d2" d="M65 76l-3 8"/></g>`;
-    const bolt = `<path class="tw-bolt" d="M54 66l-10 16h9l-5 14 14-20h-9l5-10z" fill="#ffd25e"/>`;
-    const fog = `<g class="tw-drift" stroke="#a8b7cf" stroke-width="5" stroke-linecap="round"><path d="M20 74h46M30 84h50"/></g>`;
+    const Y = "#fdd023";
+    const rays = `<g class="tw-rays" stroke="${Y}" stroke-width="6" stroke-linecap="round"><path d="M50 6v8M50 86v8M6 50h8M86 50h8M19 19l6 6M75 75l6 6M19 81l6-6M75 25l6-6"/></g>`;
+    const sun = `${rays}<circle class="tw-core" cx="50" cy="50" r="23" fill="${Y}"/>`;
+    const smallSun = `<g transform="translate(28 4) scale(.7)">${sun}</g>`;
+    const moon = `<path class="tw-core" d="M60 14a34 34 0 1 0 26 52A28 28 0 0 1 60 14z" fill="${Y}"/><path class="tw-star" d="M82 18l2 5 5 2-5 2-2 5-2-5-5-2 5-2z" fill="${Y}"/><circle class="tw-star tw-d2" cx="16" cy="26" r="3" fill="${Y}"/>`;
+    const cloudShape = fill => `<g fill="${fill}"><circle cx="40" cy="52" r="17"/><circle cx="60" cy="58" r="12"/><rect x="16" y="58" width="68" height="22" rx="11"/></g>`;
+    const cloud = (fill = "#a6d4f7", back = "#d2e9fb") => `<g class="tw-drift2"><g transform="translate(14 -12) scale(.7)" opacity=".9">${cloudShape(back)}</g></g><g class="tw-drift">${cloudShape(fill)}</g>`;
+    const drops = `<g stroke="#5aa9e6" stroke-width="5" stroke-linecap="round"><path class="tw-drop" d="M37 82l-3 8"/><path class="tw-drop tw-d1" d="M51 82l-3 8"/><path class="tw-drop tw-d2" d="M65 82l-3 8"/></g>`;
+    const bolt = `<path class="tw-bolt" d="M54 70l-10 15h9l-5 13 14-19h-9l5-9z" fill="${Y}"/>`;
+    const fog = `<g class="tw-drift" stroke="#a6c4dc" stroke-width="5" stroke-linecap="round"><path d="M20 86h46M32 94h48"/></g>`;
     const body = {
       sun, moon,
-      partly: `${smallSun}<g transform="translate(8 6)">${cloud()}</g>`,
+      partly: `${smallSun}<g transform="translate(-4 4)">${cloud("#a6d4f7", "#a6d4f7").replace('<g class="tw-drift2">', '<g class="tw-drift2" style="display:none">')}</g>`,
       cloud: cloud(),
-      fog: cloud("#e3eaf5", "#c4d0e2", "#cfd9ea") + fog,
-      rain: `<g transform="translate(0 -8)">${cloud("#cfdcf1", "#a9bcdc", "#b6c7e4")}</g>${drops}`,
-      storm: `<g transform="translate(0 -10)">${cloud("#b9c8e2", "#8fa3c6", "#a2b4d4")}</g>${bolt}<g stroke="#78a6ff" stroke-width="5" stroke-linecap="round"><path class="tw-drop" d="M32 76l-3 8"/><path class="tw-drop tw-d2" d="M72 76l-3 8"/></g>`
+      fog: cloud("#cfe2f2", "#e3eef8") + fog,
+      rain: `<g transform="translate(0 -6)">${cloud("#8fc3ee", "#c3dff6")}</g>${drops}`,
+      storm: `<g transform="translate(0 -8)">${cloud("#8fb0d0", "#b9cde2")}</g>${bolt}<g stroke="#5aa9e6" stroke-width="5" stroke-linecap="round"><path class="tw-drop" d="M30 82l-3 8"/><path class="tw-drop tw-d2" d="M72 82l-3 8"/></g>`
     }[scene] || sun;
     return `<svg class="tw-icon tw-${scene}" viewBox="0 0 100 100" aria-hidden="true" focusable="false">${body}</svg>`;
   }
