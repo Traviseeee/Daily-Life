@@ -67,10 +67,20 @@ function navLink(route) {
   return `<a class="nav-item" href="#${route.id}" data-route="${route.id}" aria-label="${escapeAttr(t(route.labelKey || route.id))}">${Icons[route.icon]()}<span>${t(route.labelKey || route.id)}</span></a>`;
 }
 
+// only rebuild a menu when its content really changed (language, routes): keeping
+// the same buttons lets the footer animate from the old tab to the new one
+const navMarkup = {};
+function setNavHtml(id, html) {
+  const node = document.getElementById(id);
+  if (!node || (navMarkup[id] === html && node.childElementCount)) return;
+  navMarkup[id] = html;
+  node.innerHTML = html;
+}
+
 function renderNavigation() {
-  document.getElementById("sideNav").innerHTML = routes.map(navLink).join("");
-  document.getElementById("utilityNav").innerHTML = utilityRoutes.map(navLink).join("");
-  document.getElementById("mobileNav").innerHTML = footerRoutes().map(navLink).join("");
+  setNavHtml("sideNav", routes.map(navLink).join(""));
+  setNavHtml("utilityNav", utilityRoutes.map(navLink).join(""));
+  setNavHtml("mobileNav", footerRoutes().map(navLink).join(""));
   document.getElementById("searchIcon").innerHTML = Icons.search();
   document.getElementById("bellButton").innerHTML = Icons.bell();
   const scanLink = document.getElementById("topbarScan");
