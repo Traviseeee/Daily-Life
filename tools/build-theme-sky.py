@@ -10,7 +10,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SKIP = {"theme-sky.css", "theme-sky-base.css"}
 LIGHT = ':root[data-theme="light"]'
 
-STRONG_LIME = "c5ff60 d9ff7b a6e33f 9bef4f 9fd64a bce950 9ef06a b9f58c c8f56a".split()
+STRONG_LIME = "c5ff60 d9ff7b d7ff8a a6e33f 9bef4f 9fd64a bce950 9ef06a b9f58c c8f56a b8ff5a".split()
 PALE_LIME = "cdefa9 cfff9b dfff88 dcff9c a6df79 cdeb98 c9e5a7 e9fbc4".split()
 INK_ON_LIME = "142a04 1d3a08 31501a 3d6604".split()
 DARK_GREEN = "0f3326 10201a 102016 203427 1f4a38 1b2c23 26392d".split()

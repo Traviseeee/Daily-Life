@@ -23,7 +23,7 @@
 /* from components.css */
 :root[data-theme="light"] .settings-accordion-summary[data-settings-tone="appearance"] { --settings-tone: #3b82f6 !important; }
 :root[data-theme="light"] .family-empty-actions .ghost-button { border: 2px solid rgba(59, 130, 246, 0.9) !important; }
-:root[data-theme="light"] .family-empty-actions .button:not(.ghost-button) { background: linear-gradient(135deg, #d7ff8a 0%, #3b82f6 100%) !important; box-shadow: 0 8px 20px rgba(59, 130, 246, 0.22) !important; }
+:root[data-theme="light"] .family-empty-actions .button:not(.ghost-button) { background: linear-gradient(135deg, #3b82f6 0%, #3b82f6 100%) !important; box-shadow: 0 8px 20px rgba(59, 130, 246, 0.22) !important; }
 :root[data-theme="light"] .button:not(.ghost-button) { background: #3b82f6 !important; box-shadow: 0 5px 14px rgba(59, 130, 246, 0.24) !important; }
 :root[data-theme="light"] .summary-overview-card { border-color: #dbeafe !important; }
 :root[data-theme="light"] .summary-shortcut:hover,
@@ -514,3 +514,27 @@
 :root[data-theme="light"] .login-logo circle:nth-of-type(3),
 :root[data-theme="light"] .al-logo circle:nth-of-type(3) { fill: #5aa2ff; }
 :root[data-theme="light"] .home-nudge-logo { box-shadow: 0 10px 24px rgba(15, 27, 51, 0.18) !important; border-radius: 22px; }
+
+/* audit 23 Oct: no dark text on blue (higher specificity on purpose) */
+:root[data-theme="light"]:root .nav-item.active,
+:root[data-theme="light"]:root .nav-item.active span,
+:root[data-theme="light"]:root .nav-item.active svg,
+:root[data-theme="light"]:root .mobile-nav .nav-item.active span,
+:root[data-theme="light"]:root .mobile-nav .nav-item.active svg,
+:root[data-theme="light"]:root .sidebar .nav-item.active span { color: #fff !important; stroke: currentColor; }
+:root[data-theme="light"]:root .button:not(.ghost-button):not(.danger-button),
+:root[data-theme="light"]:root .button:not(.ghost-button):not(.danger-button) * { color: #fff !important; }
+:root[data-theme="light"]:root .ghost-button { background: var(--sky-soft) !important; color: var(--sky-ink-blue) !important; border-color: var(--sky-line) !important; box-shadow: none !important; }
+:root[data-theme="light"]:root .ghost-button * { color: var(--sky-ink-blue) !important; }
+:root[data-theme="light"]:root .mf-view.active,
+:root[data-theme="light"]:root .mf-view.active * { color: #fff !important; }
+:root[data-theme="light"]:root .thumb { color: #fff !important; }
+:root[data-theme="light"]:root .family-profile-stats strong,
+:root[data-theme="light"]:root .family-profile-stats span { color: inherit; }
+:root[data-theme="light"]:root #mobileNav .nav-item.active,
+:root[data-theme="light"]:root #mobileNav .nav-item.active span,
+:root[data-theme="light"]:root #mobileNav .nav-item.active svg { color: #fff !important; }
+:root[data-theme="light"]:root #mobileNav .nav-item.active { box-shadow: 0 8px 18px rgba(47, 123, 245, 0.3) !important; }
+:root[data-theme="light"]:root .family-profile-stats > div,
+:root[data-theme="light"]:root .family-profile-stats > a { background: #fff !important; border-color: var(--sky-line) !important; }
+:root[data-theme="light"]:root .family-profile-stats strong { color: var(--sky-ink) !important; }
