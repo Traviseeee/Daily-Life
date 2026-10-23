@@ -247,8 +247,17 @@ function settingsNotifySummary() {
 }
 
 // shown in Settings → About; newest first
-const APP_VERSION = "2.0.1";
+const APP_VERSION = "2.0.2";
 const RELEASE_NOTES = [
+  {
+    version: "2.0.2",
+    date: "2026-10-23",
+    items: [
+      ["🎨 Light mode ថ្មី ពណ៌ខៀវមេឃ — ផ្ទៃភ្លឺ card ស ប៊ូតុង និង menu ខៀវ", "New sky-blue light mode — bright background, white cards, blue buttons and menu"],
+      ["💳 Card លុយ pop-up និង card គ្រួសារ មិនងងឹតទៀតក្នុង Light mode", "Money cards, pop-ups and the family card are no longer dark in light mode"],
+      ["🌙 Dark mode រក្សាបៃតង + lime ដដែល", "Dark mode keeps its green + lime look"]
+    ]
+  },
   {
     version: "2.0.1",
     date: "2026-10-23",

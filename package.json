@@ -1,6 +1,6 @@
 {
   "name": "mylife-dashboard",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "private": true,
   "description": "MYLIFE private life dashboard packaged for web, PWA, Android, and iOS.",
   "scripts": {

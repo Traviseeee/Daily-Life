@@ -1,0 +1,148 @@
+/* Light mode = sky blue (hand-written part, copied into css/theme-sky.css by tools/build-theme-sky.py) */
+:root[data-theme="light"] {
+  --sky-bg: #f4f8ff;
+  --sky-soft: #e6f0ff;
+  --sky-line: #d8e6fb;
+  --sky-blue: #3b82f6;
+  --sky-blue-2: #2563eb;
+  --sky-ink-blue: #1d4ed8;
+  --sky-grad: linear-gradient(120deg, #5aa2ff, #2f7bf5);
+  --sky-ink: #0f1b33;
+  --sky-ink-2: #4b5b76;
+  --sky-shadow: 0 6px 20px rgba(37, 99, 235, 0.08);
+
+  --bg-main: var(--sky-bg);
+  --bg-secondary: var(--sky-soft);
+  --lm-paper: var(--sky-bg);
+  --lm-ink: var(--sky-ink);
+  --lm-ink-2: var(--sky-ink-2);
+  --lm-line: rgba(37, 99, 235, 0.1);
+  --lm-lime: var(--sky-blue);
+  --lm-lime-soft: var(--sky-soft);
+  --lm-lime-ink: var(--sky-ink-blue);
+  --text-primary: var(--sky-ink);
+  --text-secondary: var(--sky-ink-2);
+  --border: rgba(37, 99, 235, 0.1);
+  --border-light: rgba(37, 99, 235, 0.18);
+  --accent: var(--sky-blue);
+  --accent-light: var(--sky-blue-2);
+  --accent-soft: rgba(59, 130, 246, 0.14);
+  --purple: #6c8cff;
+  --blue: var(--sky-blue);
+  --shadow-card: var(--sky-shadow);
+  --shadow-card-hover: 0 10px 26px rgba(37, 99, 235, 0.12);
+  --shadow-glow: 0 10px 28px rgba(59, 130, 246, 0.22);
+  --gradient-main: linear-gradient(180deg, #eaf2ff, var(--sky-bg) 420px);
+  --gradient-button: var(--sky-grad);
+  --gradient-text: linear-gradient(120deg, #2f7bf5, #5aa2ff);
+}
+:root[data-theme="light"] body {
+  background: radial-gradient(120% 60% at 85% -10%, #b9d6ff 0, rgba(185, 214, 255, 0) 60%), linear-gradient(180deg, #dceaff 0, #eef5ff 260px, var(--sky-bg) 560px) !important;
+  background-attachment: fixed !important;
+}
+
+/* bottom bar: white pill, active tab = blue circle-pill */
+:root[data-theme="light"] .nav-item.active,
+:root[data-theme="light"] .mobile-nav .nav-item.active { background: var(--sky-grad) !important; color: #fff !important; box-shadow: 0 8px 18px rgba(47, 123, 245, 0.3) !important; }
+:root[data-theme="light"] .nav-item.active *,
+:root[data-theme="light"] .mobile-nav .nav-item.active * { color: #fff !important; }
+
+/* quick-add (+) and other orange floating buttons → blue */
+:root[data-theme="light"] .fab,
+:root[data-theme="light"] .quick-add-fab,
+:root[data-theme="light"] [class*="fab-button"],
+:root[data-theme="light"] .floating-add { background: var(--sky-grad) !important; color: #fff !important; box-shadow: 0 12px 24px rgba(47, 123, 245, 0.35) !important; }
+
+/* money check-in: Home "waiting" card + pop-up become white cards */
+:root[data-theme="light"] .ma-home,
+:root[data-theme="light"] .ma-card { background: #fff !important; color: var(--sky-ink) !important; border-color: var(--sky-line) !important; box-shadow: var(--sky-shadow) !important; }
+:root[data-theme="light"] .ma-home small,
+:root[data-theme="light"] .ma-home-row em,
+:root[data-theme="light"] .ma-head small,
+:root[data-theme="light"] .ma-text em { color: var(--sky-ink-2) !important; }
+:root[data-theme="light"] .ma-home-row,
+:root[data-theme="light"] .ma-row { background: var(--sky-bg) !important; border-color: var(--sky-line) !important; }
+:root[data-theme="light"] .ma-text span,
+:root[data-theme="light"] .ma-home-amt { color: var(--sky-ink-blue) !important; }
+:root[data-theme="light"] .ma-home-icon,
+:root[data-theme="light"] .ma-head-icon,
+:root[data-theme="light"] .ma-home-go,
+:root[data-theme="light"] .ma-yes,
+:root[data-theme="light"] .ma-amount button { background: var(--sky-grad) !important; color: #fff !important; }
+:root[data-theme="light"] .ma-other,
+:root[data-theme="light"] .ma-close { background: var(--sky-soft) !important; color: var(--sky-ink-blue) !important; }
+:root[data-theme="light"] .ma-later { color: var(--sky-ink-2) !important; border-color: var(--sky-line) !important; }
+:root[data-theme="light"] .ma-done { background: var(--sky-soft) !important; color: var(--sky-ink-blue) !important; }
+:root[data-theme="light"] .ma-amount input { background: #fff !important; color: var(--sky-ink) !important; border-color: var(--sky-line) !important; }
+:root[data-theme="light"] .ma-pop { background: rgba(15, 27, 51, 0.35) !important; }
+
+/* family group card + sheets */
+:root[data-theme="light"] .fg-card,
+:root[data-theme="light"] .fg-panel { background: #fff !important; color: var(--sky-ink) !important; border-color: var(--sky-line) !important; box-shadow: var(--sky-shadow) !important; }
+:root[data-theme="light"] .fg-head h2,
+:root[data-theme="light"] .fg-row-text strong,
+:root[data-theme="light"] .fg-perm-text strong,
+:root[data-theme="light"] .fg-sheet-head strong,
+:root[data-theme="light"] .fg-sheet-title strong,
+:root[data-theme="light"] .fg-join strong { color: var(--sky-ink) !important; }
+:root[data-theme="light"] .fg-head small,
+:root[data-theme="light"] .fg-row-text small,
+:root[data-theme="light"] .fg-row-text strong em,
+:root[data-theme="light"] .fg-note,
+:root[data-theme="light"] .fg-label,
+:root[data-theme="light"] .fg-later,
+:root[data-theme="light"] .fg-qr-note,
+:root[data-theme="light"] .fg-soft-row small,
+:root[data-theme="light"] .fg-sheet-head small,
+:root[data-theme="light"] .fg-invite-row small,
+:root[data-theme="light"] .fg-join p { color: var(--sky-ink-2) !important; }
+:root[data-theme="light"] .fg-row { border-top-color: #eef3fb !important; }
+:root[data-theme="light"] .fg-primary,
+:root[data-theme="light"] .fg-mini:not(.is-ghost),
+:root[data-theme="light"] .fg-role.is-admin,
+:root[data-theme="light"] .fg-pill.is-on,
+:root[data-theme="light"] .fg-join-icon,
+:root[data-theme="light"] .fg-rename button { background: var(--sky-grad) !important; color: #fff !important; }
+:root[data-theme="light"] .fg-pill.is-on small { color: rgba(255, 255, 255, 0.85) !important; }
+:root[data-theme="light"] .fg-role.is-member,
+:root[data-theme="light"] .fg-chip.is-on,
+:root[data-theme="light"] .fg-soft-icon { background: #e1ecff !important; color: var(--sky-ink-blue) !important; border-color: transparent !important; }
+:root[data-theme="light"] .fg-role.is-viewer { background: #eef1f6 !important; color: var(--sky-ink-2) !important; }
+:root[data-theme="light"] .fg-pill,
+:root[data-theme="light"] .fg-chip,
+:root[data-theme="light"] .fg-invite-row,
+:root[data-theme="light"] .fg-icon-btn,
+:root[data-theme="light"] .fg-link,
+:root[data-theme="light"] .fg-rename input { background: var(--sky-bg) !important; color: var(--sky-ink) !important; border-color: var(--sky-line) !important; }
+:root[data-theme="light"] .fg-perm { border-bottom-color: #eef3fb !important; }
+:root[data-theme="light"] .fg-perm-icon { color: var(--sky-ink-2) !important; }
+:root[data-theme="light"] .fg-secondary { color: var(--sky-ink-blue) !important; border-color: var(--sky-line) !important; }
+:root[data-theme="light"] .fg-sheet { background: rgba(15, 27, 51, 0.35) !important; }
+:root[data-theme="light"] .fg-switch input:checked + span { background: var(--sky-blue) !important; }
+:root[data-theme="light"] .fg-switch span { background: #d5deec !important; }
+
+/* quick-add (+): blue instead of orange */
+:root[data-theme="light"] .quick-action-toggle { background: var(--sky-grad) !important; border-color: rgba(255, 255, 255, 0.6) !important; box-shadow: 0 12px 26px rgba(47, 123, 245, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.4) !important; }
+:root[data-theme="light"] .quick-action-toggle:hover { background: linear-gradient(120deg, #6aaeff, #3b82f6) !important; }
+
+/* money summary: white cards, colour only on the icon and the thin bottom line */
+:root[data-theme="light"] .financial-metric-grid .financial-metric-card.mm-card { background: #fff !important; color: var(--sky-ink) !important; border-color: var(--sky-line) !important; box-shadow: var(--sky-shadow) !important; }
+:root[data-theme="light"] .financial-metric-grid .mm-card.mm-available { --mm: #2f7bf5; }
+
+/* week strip: today = blue, not black */
+:root[data-theme="light"] .home-week-day.active { background: var(--sky-grad) !important; color: #fff !important; border-color: transparent !important; box-shadow: 0 8px 18px rgba(47, 123, 245, 0.3) !important; }
+:root[data-theme="light"] .home-week-day.active * { color: #fff !important; }
+
+/* switches: blue when on */
+:root[data-theme="light"] .nfc-switch input:checked + span,
+:root[data-theme="light"] .auto-switch:checked,
+:root[data-theme="light"] .bf-switch:checked,
+:root[data-theme="light"] .ev-switch:checked,
+:root[data-theme="light"] .su-switch:checked { background: var(--sky-blue) !important; border-color: var(--sky-blue) !important; }
+:root[data-theme="light"] .nfc-stage input { accent-color: var(--sky-blue); }
+:root[data-theme="light"] .nfc-stage.is-on { border-color: var(--sky-blue) !important; background: rgba(59, 130, 246, 0.08) !important; }
+:root[data-theme="light"] input[type="checkbox"], :root[data-theme="light"] input[type="radio"], :root[data-theme="light"] input[type="range"] { accent-color: var(--sky-blue); }
+
+/* family hero: soft blue blobs instead of pink / lime */
+:root[data-theme="light"] .fam-hero-blob-a { background: #cfe2ff !important; }
+:root[data-theme="light"] .fam-hero-blob-b { background: #e6f0ff !important; }
