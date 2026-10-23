@@ -153,3 +153,15 @@
 .fv2-page .financial-shortcuts { -webkit-mask-image: none !important; mask-image: none !important; }
 .fv2-page .financial-shortcuts::before, .fv2-page .financial-shortcuts::after { display: none !important; }
 :root[data-theme="light"] .fv2-loan .fv2-mini-icon, :root[data-theme="light"] .fv2-ico-loan { background: #cdc2ff; }
+
+/* light: quick-expense category chips in the sky look — white chips, the chosen one blue */
+:root[data-theme="light"] .fv2-page .qx-cat { border: 1px solid #dbe7fb !important; background: #ffffff !important; color: #0f1b33 !important; box-shadow: 0 2px 8px rgba(37, 99, 235, 0.06); }
+:root[data-theme="light"] .fv2-page .qx-cat b { color: #0f1b33 !important; }
+:root[data-theme="light"] .fv2-page .qx-cat i { color: #2f7bf5 !important; background: #e6f0ff !important; }
+:root[data-theme="light"] .fv2-page .qx-cat:has(input:checked) { border-color: transparent !important; background: linear-gradient(120deg, #5aa2ff, #2f7bf5) !important; box-shadow: 0 8px 18px rgba(47, 123, 245, 0.28); }
+:root[data-theme="light"] .fv2-page .qx-cat:has(input:checked) b { color: #ffffff !important; }
+:root[data-theme="light"] .fv2-page .qx-cat:has(input:checked) i { color: #2f7bf5 !important; background: #ffffff !important; }
+:root[data-theme="light"] .fv2-page .qx-cat:has(input:focus-visible) { outline-color: #2f7bf5; }
+:root[data-theme="light"] .fv2-page .qx-fav { border-color: #dbe7fb !important; background: #e6f0ff !important; color: #0f1b33 !important; }
+:root[data-theme="light"] .fv2-page .qx-form input:not([type="radio"]):not([type="checkbox"]) { border-color: #dbe7fb !important; background: #f4f8ff !important; color: #0f1b33 !important; }
+:root[data-theme="light"] .fv2-page .qx-more { border-color: #dbe7fb !important; background: #e6f0ff !important; color: #1d4ed8 !important; }
