@@ -309,6 +309,21 @@ const Login = {
     App.render();
   },
 
+  // a Google account that isn't part of MYLIFE (see OAuthGate in js/data.js)
+  blockedGoogle(reason) {
+    const km = languageCode() === "km";
+    this.authenticated = false;
+    this.setRememberedSession(false);
+    try { sessionStorage.removeItem("mylife:oauth-pending"); } catch (error) { /* ignore */ }
+    const text = reason === "check_failed"
+      ? (km ? "មិនអាចពិនិត្យគណនី Google បានទេ។ សូមពិនិត្យ internet ហើយសាកម្ដងទៀត។" : "Couldn't check this Google account. Check your internet and try again.")
+      : (km ? "គណនី Google នេះមិនទាន់ភ្ជាប់ជាមួយ MYLIFE ទេ។ សូម login ដោយ email និងពាក្យសម្ងាត់ ឬសុំ invite link ពីម្ចាស់គ្រួសារ។" : "This Google account isn't part of MYLIFE yet. Log in with your email and password, or ask the family owner for an invite link.");
+    if (!this.isOpen) this.open();
+    const show = () => { const box = document.getElementById("loginError"); if (box) box.textContent = text; };
+    show();
+    setTimeout(show, 300);
+  },
+
   // back from Google: pull this account's data, take the name Google gives, remember the device
   async finishOAuth(session) {
     let pending = false;
@@ -316,6 +331,9 @@ const Login = {
     if (!pending) return;
     try {
       await Store.syncFromSupabase();
+      // signed out by the Google check (not part of MYLIFE): stop here
+      const { data: still } = await window.supabaseClient.auth.getSession();
+      if (!still?.session) return;
       const meta = session.user?.user_metadata || {};
       if (!String(appData.profile.name || "").trim()) Store.updateProfile({ name: meta.full_name || meta.name || String(session.user?.email || "").split("@")[0] || "User" }, { sync: false });
       await Store.syncToSupabase();
@@ -402,3 +420,8 @@ const Login = {
     });
   }
 };
+
+if (typeof window !== "undefined") {
+  window.addEventListener("mylife:oauth-blocked", event => Login.blockedGoogle(event.detail?.reason));
+}
+

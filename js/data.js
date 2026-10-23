@@ -145,6 +145,56 @@ const removeLegacyKeys = keys => {
   });
 };
 
+// Google sign-in creates an account for ANY Google user. MYLIFE is private, so a
+// Google-only account is let in only when it already has MYLIFE data (an existing
+// account), came with a family invite link, or is already in a family. Otherwise it
+// is signed out before anything is read from or written to this device.
+const OAuthGate = {
+  KEY: "mylife:oauth-ok",
+  approved() { try { return JSON.parse(localStorage.getItem(this.KEY) || "[]"); } catch (error) { return []; } },
+  approve(id) { try { localStorage.setItem(this.KEY, JSON.stringify([...new Set([...this.approved(), id])].slice(-10))); } catch (error) { /* ignore */ } },
+  providers(user) {
+    const list = [...(user?.identities || []).map(item => item.provider), ...(user?.app_metadata?.providers || []), user?.app_metadata?.provider];
+    return [...new Set(list.filter(Boolean))];
+  },
+  // only accounts that have NO email/password login need the check
+  needsCheck(user) {
+    const providers = this.providers(user);
+    return providers.length > 0 && !providers.includes("email") && !this.approved().includes(user.id);
+  },
+  invitePending() {
+    try { return Boolean(sessionStorage.getItem("mylife:family-join") || localStorage.getItem("mylife:family-join")); } catch (error) { return false; }
+  },
+  async allow(client, user, row) {
+    if (!user || !this.needsCheck(user)) return true;
+    try {
+      let payload = row === undefined ? undefined : toPayloadObject(row?.payload);
+      if (payload === undefined) {
+        const { data, error } = await client.from(SUPABASE_TABLE).select("payload").eq("user_id", user.id).maybeSingle();
+        if (error) throw error;
+        payload = toPayloadObject(data?.payload);
+      }
+      let ok = Boolean(payload && !isEmptyPayload(payload)) || this.invitePending();
+      if (!ok) {
+        const member = await client.from("family_members").select("family_id").eq("user_id", user.id).limit(1);
+        ok = !member.error && (member.data || []).length > 0;
+      }
+      if (ok) { this.approve(user.id); return true; }
+      await this.block(client, "not_linked");
+      return false;
+    } catch (error) {
+      console.warn("MYLIFE: could not check the Google account", error);
+      await this.block(client, "check_failed");
+      return false;
+    }
+  },
+  async block(client, reason) {
+    try { await client.auth.signOut(); } catch (error) { /* ignore */ }
+    if (typeof window !== "undefined" && typeof CustomEvent === "function") window.dispatchEvent(new CustomEvent("mylife:oauth-blocked", { detail: { reason } }));
+  }
+};
+if (typeof window !== "undefined") window.OAuthGate = OAuthGate;
+
 const isSupabaseReady = () => {
   const client = getSupabaseClient();
   const { enabled } = getSupabaseConfig();
@@ -437,6 +487,9 @@ const Store = {
         return false;
       }
 
+      // a Google account nobody invited: sign out before touching this device's data
+      if (!(await OAuthGate.allow(client, user, data || null))) return false;
+
       // A cached payload belonging to another account must never be merged into this
       // one, so drop it before anything else can read it.
       if (SyncState.isDifferentAccount(user.id)) {
@@ -521,6 +574,7 @@ const Store = {
       const client = getSupabaseClient();
       const { data: { user }, error: userError } = await client.auth.getUser();
       if (userError || !user) return false;
+      if (!(await OAuthGate.allow(client, user))) return false;
 
       await this.moveImagesToSupabase(user.id);
 
