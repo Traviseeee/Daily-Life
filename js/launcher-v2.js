@@ -23,7 +23,7 @@ const LauncherV2 = (() => {
       <div class="lv-hi">
         <a class="lv-av" href="#settings" aria-label="${escapeAttr(t("settings"))}"><span class="lv-face">${photo}</span></a>
         <span class="lv-hi-tx"><small>${escapeHtml(`${date} · ${hello}`)}</small><b>${escapeHtml(String(p.name || L("ភ្ញៀវ", "Guest")).split(/\s+/)[0])}</b></span>
-        <span class="lv-wx" data-hv2-wx>${document.getElementById("topbarWeather")?.innerHTML || ""}</span>
+        <span class="lv-wx" data-hv2-wx role="button" tabindex="0">${document.getElementById("topbarWeather")?.innerHTML || ""}</span>
       </div>
       <div class="lv-search">
         <button type="button" class="lv-search-go" data-lv-search>🔍 <span>${escapeHtml(L("ស្វែងរកក្នុង MYLIFE…", "Search MYLIFE…"))}</span></button>

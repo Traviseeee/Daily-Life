@@ -243,6 +243,58 @@ const TopbarWeather = (() => {
     if (el.textContent !== clock) render();
   }
 
+
+  // Weather pop-up (Home V2 / Launcher chip → centre of the screen): big animated
+  // icon, temperature counts up, details + next 12 hours cascade in. css/popups-v2.css
+  function closePopup() {
+    const node = document.querySelector(".wxp");
+    if (!node || node.classList.contains("is-closing")) return;
+    node.classList.add("is-closing");
+    document.removeEventListener("keydown", popupEsc);
+    setTimeout(() => node.remove(), reduceMotion() ? 0 : 200);
+  }
+  function popupEsc(event) { if (event.key === "Escape") closePopup(); }
+  function popup() {
+    document.querySelector(".wxp")?.remove();
+    const scene = sceneOf(data?.code, data ? data.isDay : isDayNow());
+    const hours = Array.isArray(data?.hours) ? data.hours : [];
+    const slots = [0, 2, 4, 6, 8, 10].map(i => hours[i]).filter(Boolean);
+    const tip = rainTip(scene);
+    const stat = (label, value) => `<span class="wxp-stat"><small>${esc(label)}</small><b>${esc(value)}</b></span>`;
+    const node = document.createElement("div");
+    node.className = "wxp";
+    node.setAttribute("role", "dialog");
+    node.setAttribute("aria-modal", "true");
+    node.setAttribute("aria-label", tx(scene));
+    node.innerHTML = `<div class="wxp-card" data-scene="${esc(scene)}">
+      <button type="button" class="wxp-x" data-wxp-close aria-label="Close">×</button>
+      <small class="wxp-place">📍 ${esc(PLACE.name)} · ${esc(dateLabel())}</small>
+      <div class="wxp-icon">${icon(scene)}</div>
+      <strong class="wxp-temp">${num(data?.temp)}</strong>
+      <span class="wxp-cond">${esc(data ? tx(scene) : tx("loading"))}</span>
+      ${data ? `<div class="wxp-stats">${stat(tx("feels"), num(data.feels))}${stat(km() ? "ខ្ពស់ / ទាប" : "High / Low", `${num(data.max)} / ${num(data.min)}`)}${stat(tx("rainChance"), `${data.rain || 0}%`)}</div>` : ""}
+      ${tip ? `<div class="wxp-tip">☂ ${esc(tip)}</div>` : ""}
+      ${slots.length ? `<div class="wxp-hours">${slots.map((x, i) => `<div class="wxp-hour${i === 0 ? " is-now" : ""}" style="--d:${320 + i * 60}ms"><b>${esc(i === 0 ? tx("now") : hourLabel(x.h))}</b>${icon(sceneOf(x.code, x.day))}<span>${num(x.temp)}</span><small>${x.pop >= 30 ? `💧${x.pop}%` : "&nbsp;"}</small></div>`).join("")}</div>` : ""}
+    </div>`;
+    document.body.appendChild(node);
+    document.addEventListener("keydown", popupEsc);
+    node.addEventListener("click", event => { if (event.target === node || event.target.closest("[data-wxp-close]")) closePopup(); });
+    const el = node.querySelector(".wxp-temp");
+    const target = Number(data?.temp);
+    if (el && !reduceMotion() && Number.isFinite(target) && target !== 0) {
+      const start = performance.now() + 180;
+      const step = now => {
+        const t = Math.max(0, Math.min(1, (now - start) / 700));
+        if (!el.isConnected) return;
+        el.textContent = num(Math.round(target * (1 - Math.pow(1 - t, 3))));
+        if (t < 1) requestAnimationFrame(step);
+      };
+      el.textContent = num(0);
+      requestAnimationFrame(step);
+    }
+    if (!data) load(true).then(() => { if (node.isConnected && data) popup(); });
+  }
+
   function init() {
     if (init.done) return;
     init.done = true;
@@ -257,6 +309,7 @@ const TopbarWeather = (() => {
     document.addEventListener("click", event => {
       const card = event.target.closest("#topbarWxCard.can-open");
       if (card) toggle();
+      if (event.target.closest("[data-hv2-wx]")) popup();
     });
     document.addEventListener("keydown", event => {
       if ((event.key === "Enter" || event.key === " ") && event.target.matches?.("#topbarWxCard.can-open")) {
@@ -266,7 +319,7 @@ const TopbarWeather = (() => {
     });
   }
 
-  return { init, render, load, toggle, sceneOf, icon };
+  return { init, render, load, toggle, sceneOf, icon, popup };
 })();
 
 if (typeof window !== "undefined") window.TopbarWeather = TopbarWeather;
