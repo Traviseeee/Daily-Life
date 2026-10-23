@@ -896,11 +896,13 @@ const Store = {
     };
     if (!this.save()) restoreData(previous);
   },
-  updateDailyFocus(items) {
+  updateDailyFocus(items, options = {}) {
     const previous = structuredClone(appData);
     const today = localDateInput();
+    const custom = "custom" in options ? !!options.custom : !!appData.dailyFocus?.custom;
     appData.dailyFocus = {
       date: today,
+      ...(custom ? { custom: true } : {}),
       items: Array.isArray(items) ? items.map((item, index) => ({
         id: item.id || `focus-${today}-${index}`,
         text: String(item.text || "").trim(),

@@ -24,9 +24,9 @@ function renderHome() {
     { id: "focus-water", text: t("drinkWater"), done: false },
     { id: "focus-family", text: t("checkInWithFamily"), done: false }
   ];
-  const focusItems = appData.dailyFocus?.date === todayIso && Array.isArray(appData.dailyFocus.items) && appData.dailyFocus.items.length
+  const focusItems = typeof FocusEditor !== "undefined" ? FocusEditor.items(todayIso) : (appData.dailyFocus?.date === todayIso && Array.isArray(appData.dailyFocus.items) && appData.dailyFocus.items.length
     ? appData.dailyFocus.items
-    : focusDefaults;
+    : focusDefaults);
   const focusDoneCount = focusItems.filter(item => item.done).length;
   const focusProgress = focusItems.length ? Math.round((focusDoneCount / focusItems.length) * 100) : 0;
   const reflectionReady = (reflectionText || "").trim().length > 0;
@@ -107,10 +107,10 @@ function renderHome() {
         '</div>' +
         (todayMood ? '<div class="mood-selected"><span class="eyebrow">' + t("todayMood") + '</span><span class="mood-emoji-large">' + selectedMood.emoji + '</span><strong>' + escapeHtml(selectedMood.label) + '</strong></div>' : '<p class="secondary" style="margin-top:12px;text-align:center">' + t("tapToLogMood") + '</p>') +
       '</article>' +
-      '<article class="glass-card focus-card">' +
+      '<article class="glass-card focus-card' + (focusProgress === 100 ? ' all-done' : '') + '">' +
         '<span class="eyebrow">' + t("dailyFocus") + '</span>' +
         '<h2 class="section-title section-title-with-icon"><span class="section-title-icon">' + Icons.target() + '</span>' + t("dailyFocus") + '</h2>' +
-        '<div class="focus-progress"><div class="progress-track"><div class="progress-fill" style="--progress:' + focusProgress + '%"></div></div><span class="focus-progress-text">' + focusProgress + '%</span></div>' +
+        '<div class="focus-progress"><span class="focus-count">' + focusDoneCount + '/' + focusItems.length + '</span><div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + focusProgress + '" aria-label="' + escapeHtml(t("dailyFocus")) + '"><div class="progress-fill" style="--progress:' + focusProgress + '%;--p:' + (focusProgress / 100) + '"></div></div><span class="focus-progress-text">' + focusProgress + '%</span></div>' +
         '<ul class="focus-list">' +
           focusItems.map(item => '<li class="focus-item ' + (item.done ? "done" : "") + '"><label><input type="checkbox" ' + (item.done ? "checked" : "") + ' data-focus-id="' + item.id + '"><span class="focus-text">' + escapeHtml(item.text) + '</span></label></li>').join("") +
         '</ul>' +
@@ -1109,6 +1109,7 @@ function bindHome() {
 
   document.querySelectorAll("[data-focus-id]").forEach(input => {
     input.addEventListener("change", event => {
+      if (typeof FocusEditor !== "undefined") return FocusEditor.toggle(event.target.dataset.focusId, event.target.checked);
       const items = (appData.dailyFocus?.date === localDateInput() && Array.isArray(appData.dailyFocus.items) && appData.dailyFocus.items.length
         ? appData.dailyFocus.items
         : [
@@ -1131,6 +1132,7 @@ function bindHome() {
 
   document.querySelectorAll('[data-action="edit-focus"]').forEach(button => {
     button.addEventListener("click", () => {
+      if (typeof FocusEditor !== "undefined") return FocusEditor.open();
       const focusList = document.querySelector(".focus-list");
       if (!focusList) return;
       focusList.scrollIntoView({ behavior: "smooth", block: "center" });

@@ -1,6 +1,6 @@
 function renderSummary() {
   const todayIso = localDashboardDate(new Date());
-  const focusItems = appData.dailyFocus?.date === todayIso && Array.isArray(appData.dailyFocus.items) && appData.dailyFocus.items.length
+  const focusItems = typeof FocusEditor !== "undefined" ? FocusEditor.items(todayIso) : appData.dailyFocus?.date === todayIso && Array.isArray(appData.dailyFocus.items) && appData.dailyFocus.items.length
     ? appData.dailyFocus.items
     : [
         { id: "focus-move", text: t("moveMyBody"), done: false },
