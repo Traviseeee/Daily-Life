@@ -1,0 +1,59 @@
+/* Phone touch feel (loaded near the end).
+   1. no surprise zoom: double-tap zoom off (pinch still works), fields at 16px so
+      iOS does not zoom in when you tap a box
+   2. scrolling inside a sheet never drags the page behind it
+   3. no accidental sideways browser back/forward while swiping a carousel */
+
+html {
+  touch-action: manipulation;          /* kills double-tap zoom + the 300ms tap delay; pinch stays */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  overscroll-behavior-x: none;
+}
+body { overscroll-behavior-x: none; }
+a, button, label, summary, [role="button"], .nav-item { -webkit-tap-highlight-color: transparent; }
+
+/* iOS zooms into any text field under 16px and stays zoomed */
+@media (max-width: 900px) and (pointer: coarse) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"]),
+  select,
+  textarea { font-size: max(16px, 1em) !important; }
+}
+
+/* sheets / windows: scroll stays inside, page behind is locked */
+#modalRoot, #modalRoot .modal, #modalForm,
+dialog, .nfc-sheet, .financial-sidebar, .goals-sidebar, .mlc-messages, .tdx-sheet, .mf-sheet {
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+html:has(#modalRoot.open), html:has(#modalRoot.open) body,
+html:has(dialog[open]), html:has(dialog[open]) body { overflow: hidden; }
+
+/* only the photo editor needs drag-to-move; elsewhere a photo must still scroll the page */
+[data-image-position]:not(.draggable-image), .image-empty-card { touch-action: manipulation; }
+
+/* horizontal strips scroll sideways only, the page still scrolls up/down through them */
+.fam-avatars, .mf-people, .mf-car { overscroll-behavior-x: contain; touch-action: pan-x pan-y; }
+
+/* swipe-from-left-edge = back (installed app, js/touch-fit.js) */
+.edge-back {
+  position: fixed;
+  top: 50%;
+  left: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  margin-top: -20px;
+  border-radius: 50%;
+  color: #0f3326;
+  background: #c5ff60;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-44px) scale(0.8);
+}
+.edge-back svg { width: 20px; height: 20px; }
+.edge-back.is-ready { background: #d9ff7b; }
+.edge-back.is-leaving { transition: transform 180ms ease, opacity 180ms ease; }
