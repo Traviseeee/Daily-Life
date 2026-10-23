@@ -168,3 +168,13 @@
 /* family hero: soft blue blobs instead of pink / lime */
 :root[data-theme="light"] .fam-hero-blob-a { background: #cfe2ff !important; }
 :root[data-theme="light"] .fam-hero-blob-b { background: #e6f0ff !important; }
+
+/* blue Daily Focus card: white text */
+:root[data-theme="light"] .home-challenge-card h2,
+:root[data-theme="light"] .home-challenge-card p,
+:root[data-theme="light"] .home-challenge-copy,
+:root[data-theme="light"] .home-challenge-copy * { color: #fff !important; }
+:root[data-theme="light"] .home-challenge-label { color: #fff !important; background: rgba(255, 255, 255, 0.2) !important; border-color: rgba(255, 255, 255, 0.35) !important; }
+:root[data-theme="light"] .home-challenge-copy .suggestion-button { color: var(--sky-ink-blue) !important; background: #fff !important; }
+:root[data-theme="light"] .home-challenge-image-edit { color: #fff !important; background: rgba(255, 255, 255, 0.22) !important; border-color: rgba(255, 255, 255, 0.4) !important; }
+:root[data-theme="light"] .home-challenge-copy .suggestion-button { border-color: transparent !important; }
