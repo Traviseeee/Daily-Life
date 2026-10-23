@@ -7,7 +7,7 @@ The hand-written part lives in css/theme-sky-base.css and is copied on top."""
 import re, os, glob
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SKIP = {"theme-sky.css", "theme-sky-base.css", "home-v2.css"}
+SKIP = {"theme-sky.css", "theme-sky-base.css", "home-v2.css", "money-v2.css"}
 LIGHT = ':root[data-theme="light"]'
 
 STRONG_LIME = "c5ff60 d9ff7b d7ff8a a6e33f 9bef4f 9fd64a bce950 9ef06a b9f58c c8f56a b8ff5a".split()
@@ -58,6 +58,8 @@ def light_selector(sel):
     sel = sel.strip()
     if 'data-theme="dark"' in sel or "data-theme='dark'" in sel:
         return None
+    if ':not([data-theme="light"])' in sel or ":not([data-theme='light'])" in sel:
+        return None  # dark-only rule: never repaint it
     if 'data-theme="light"' in sel:
         return sel
     if sel.startswith(":root"):

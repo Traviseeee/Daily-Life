@@ -1,0 +1,128 @@
+/* MYLIFE Finance V2 (js/money-v2.js). Dark = green + lime (default), light = sky blue.
+   Not run through tools/build-theme-sky.py: both themes are set here with variables. */
+.fv2-page {
+  --fv-card: #122019; --fv-soft: #1a2e24; --fv-line: #1f3329;
+  --fv-ink: #eef6e8; --fv-ink2: #a3bcad; --fv-acc: #c5ff60; --fv-acc-ink: #d9ff7b; --fv-on: #142a04;
+  --fv-grad: linear-gradient(125deg, #d9ff7b, #a6e33f);
+  --fv-shadow: 0 6px 20px rgba(0, 0, 0, 0.32); --fv-glow: 0 14px 28px rgba(166, 227, 63, 0.2);
+  --fv-green: #7ee2a8; --fv-red: #ff8b9a; --fv-amber: #ffc76b; --fv-violet: #c7b6ff; --fv-blue: #9cc8ff;
+  --fv-green-bg: rgba(126, 226, 168, 0.14); --fv-red-bg: rgba(255, 139, 154, 0.14); --fv-amber-bg: rgba(255, 199, 107, 0.14); --fv-violet-bg: rgba(199, 182, 255, 0.14); --fv-blue-bg: rgba(156, 200, 255, 0.14);
+}
+:root[data-theme="light"] .fv2-page {
+  --fv-card: #ffffff; --fv-soft: #e6f0ff; --fv-line: #e3ecfa;
+  --fv-ink: #0f1b33; --fv-ink2: #5b6b85; --fv-acc: #3b82f6; --fv-acc-ink: #1d4ed8; --fv-on: #ffffff;
+  --fv-grad: linear-gradient(125deg, #5aa2ff, #2f7bf5);
+  --fv-shadow: 0 6px 20px rgba(37, 99, 235, 0.08); --fv-glow: 0 14px 28px rgba(47, 123, 245, 0.28);
+  --fv-green: #13804a; --fv-red: #d6334a; --fv-amber: #a35b00; --fv-violet: #5b3fd1; --fv-blue: #1d4ed8;
+  --fv-green-bg: #dcf5e5; --fv-red-bg: #ffe3e7; --fv-amber-bg: #fff1d6; --fv-violet-bg: #ece6ff; --fv-blue-bg: #e1ecff;
+}
+
+/* header: big title, round menu button, pill tabs */
+.fv2-page .financial-header { margin-bottom: 10px !important; padding: 0 !important; background: none !important; border: 0 !important; box-shadow: none !important; }
+.fv2-page .financial-header .page-title { font-size: 1.6rem !important; font-weight: 800 !important; color: var(--fv-ink) !important; }
+.fv2-page .financial-header .page-title-icon { display: none !important; }
+.fv2-page .financial-header .page-subtitle { display: none !important; }
+.fv2-page .financial-nav-toggle { width: 46px !important; height: 46px !important; border-radius: 50% !important; border: 0 !important; background: var(--fv-card) !important; box-shadow: var(--fv-shadow) !important; }
+.fv2-page .financial-shortcuts { display: flex !important; gap: 8px !important; margin: 0 0 12px !important; padding: 2px 2px 6px !important; overflow-x: auto !important; scrollbar-width: none; background: none !important; border: 0 !important; box-shadow: none !important; }
+.fv2-page .financial-shortcuts::-webkit-scrollbar { display: none; }
+.fv2-page .financial-shortcut { flex: 0 0 auto !important; display: inline-flex !important; align-items: center !important; gap: 6px !important; min-height: 40px !important; padding: 0 16px !important; border-radius: 999px !important; border: 0 !important; color: var(--fv-ink) !important; background: var(--fv-card) !important; box-shadow: var(--fv-shadow) !important; font-weight: 600 !important; }
+.fv2-page .financial-shortcut .financial-shortcut-icon { display: none !important; }
+.page.fv2-page .financial-shortcuts .financial-shortcut.active { color: var(--fv-on) !important; background: var(--fv-grad) !important; box-shadow: var(--fv-glow) !important; }
+.fv2-page .financial-shortcut.active * { color: var(--fv-on) !important; }
+
+/* body */
+.fv2 { display: grid; gap: 12px; color: var(--fv-ink); }
+.fv2 > * { min-width: 0; margin: 0 !important; }
+.fv2 a { color: inherit; text-decoration: none; }
+.fv2 button { font: inherit; }
+
+/* period: segmented control + ‹ month › */
+.fv2 .money-period { display: grid !important; grid-template-columns: minmax(0, 1fr) !important; justify-content: stretch !important; gap: 10px !important; padding: 0 !important; background: none !important; border: 0 !important; box-shadow: none !important; }
+.fv2 .money-period-kinds { display: grid !important; grid-template-columns: repeat(5, minmax(0, 1fr)) !important; gap: 4px !important; padding: 5px !important; border-radius: 999px !important; background: var(--fv-card) !important; box-shadow: var(--fv-shadow) !important; border: 0 !important; }
+.fv2 .money-period-kind { min-height: 36px !important; padding: 0 4px !important; border: 0 !important; border-radius: 999px !important; color: var(--fv-ink2) !important; background: transparent !important; box-shadow: none !important; font-weight: 600 !important; font-size: 0.86rem !important; }
+.fv2 .money-period-kinds .money-period-kind.active { color: var(--fv-acc-ink) !important; background: var(--fv-soft) !important; }
+.fv2 .money-period-nav { display: flex !important; align-items: center !important; gap: 8px !important; padding: 0 !important; background: none !important; border: 0 !important; box-shadow: none !important; }
+.fv2 .money-period-nav .icon-button { width: 38px !important; height: 38px !important; border-radius: 50% !important; border: 0 !important; color: var(--fv-ink2) !important; background: var(--fv-card) !important; box-shadow: var(--fv-shadow) !important; }
+.fv2 .money-period-nav .money-period-label { justify-content: center !important; background: none !important; border: 0 !important; box-shadow: none !important; color: var(--fv-ink) !important; }
+.fv2 .money-period-label svg { display: none; }
+.fv2 .money-period-label strong { font-size: 1.02rem; font-weight: 700; color: var(--fv-ink) !important; }
+.fv2 .money-period-today { border-radius: 999px !important; border: 0 !important; padding: 6px 12px !important; color: var(--fv-acc-ink) !important; background: var(--fv-soft) !important; }
+
+.fv2 .money-period > *, .fv2 .money-period-label { width: 100% !important; max-width: none !important; box-sizing: border-box; }
+.fv2 .money-period-nav .icon-button, .fv2 .money-period-today { width: auto; flex: 0 0 auto; }
+.fv2 .money-period-label { flex: 1 1 auto !important; width: auto !important; height: 38px; }
+
+/* hero */
+.fv2-hero { position: relative; display: grid; gap: 6px; overflow: hidden; padding: 18px 20px 16px; border-radius: 28px; color: var(--fv-on) !important; background: var(--fv-grad); box-shadow: var(--fv-glow); }
+.fv2-hero::after { content: ""; position: absolute; right: -60px; top: -70px; width: 220px; height: 220px; border-radius: 50%; background: rgba(255, 255, 255, 0.14); pointer-events: none; }
+.fv2-hero > * { position: relative; z-index: 1; }
+.fv2-hero small { font-size: 0.84rem; opacity: 0.9; }
+.fv2-hero-value { font-size: 2.35rem; font-weight: 800; line-height: 1.15; letter-spacing: -0.5px; }
+.fv2-hero-warn { font-size: 0.82rem; font-weight: 600; }
+.fv2-hero-bar { display: block; height: 8px; margin-top: 6px; border-radius: 99px; background: rgba(255, 255, 255, 0.3); overflow: hidden; }
+:root:not([data-theme="light"]) .fv2-hero-bar { background: rgba(20, 42, 4, 0.16); }
+.fv2-hero-bar i { display: block; height: 100%; border-radius: inherit; background: #ffffff; }
+:root:not([data-theme="light"]) .fv2-hero-bar i { background: #142a04; }
+.fv2-hero-foot { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: 0.84rem; }
+.fv2-hero.is-short { background: linear-gradient(125deg, #ff8a8a, #e5484d); color: #fff !important; }
+.fv2-hero.is-short .fv2-hero-bar i { background: #fff; }
+
+/* 4 mini cards */
+.fv2-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+@media (min-width: 820px) { .fv2-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.fv2-mini { display: grid; gap: 2px; align-content: start; padding: 14px; border-radius: 24px; background: var(--fv-card); box-shadow: var(--fv-shadow); min-width: 0; }
+.fv2-mini-icon { display: grid; place-items: center; width: 40px; height: 40px; margin-bottom: 8px; border-radius: 14px; }
+.fv2-mini-icon svg { width: 20px; height: 20px; }
+.fv2-mini small { font-size: 0.8rem; color: var(--fv-ink2); }
+.fv2-mini strong { overflow: hidden; font-size: 1.32rem; font-weight: 700; white-space: nowrap; text-overflow: ellipsis; color: var(--fv-ink); }
+.fv2-mini-sub { overflow: hidden; font-size: 0.76rem; white-space: nowrap; text-overflow: ellipsis; color: var(--fv-ink2); }
+.fv2-in .fv2-mini-icon { color: var(--fv-green); background: var(--fv-green-bg); }
+.fv2-out .fv2-mini-icon { color: var(--fv-red); background: var(--fv-red-bg); }
+.fv2-save .fv2-mini-icon { color: var(--fv-amber); background: var(--fv-amber-bg); }
+.fv2-loan .fv2-mini-icon { color: var(--fv-violet); background: var(--fv-violet-bg); }
+
+/* sections */
+.fv2-section { display: grid; gap: 8px; }
+.fv2-section-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 4px 4px 0; }
+.fv2-section-head h2 { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 1.02rem; font-weight: 700; color: var(--fv-ink); }
+.fv2-section-head a { font-size: 0.82rem; font-weight: 600; color: var(--fv-acc-ink) !important; }
+.fv2-badge { display: inline-grid; place-items: center; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 99px; font-size: 0.74rem; color: var(--fv-amber); background: var(--fv-amber-bg); }
+.fv2-card { display: grid; padding: 6px 16px; border-radius: 24px; background: var(--fv-card); box-shadow: var(--fv-shadow); min-width: 0; }
+.fv2-card > .glass-card, .fv2-card .xl-groups { background: none; box-shadow: none; }
+.fv2-card .xl-recent-note { margin: 10px 0 4px; }
+
+.fv2-item { display: flex; align-items: center; gap: 12px; padding: 11px 0; min-width: 0; }
+.fv2-item + .fv2-item, .fv2-cat + .fv2-cat { border-top: 1px solid var(--fv-line); }
+.fv2-ico { display: grid; place-items: center; width: 42px; height: 42px; flex: 0 0 auto; border-radius: 14px; color: var(--fv-blue); background: var(--fv-blue-bg); }
+.fv2-ico svg { width: 20px; height: 20px; }
+.fv2-ico-income { color: var(--fv-green); background: var(--fv-green-bg); }
+.fv2-ico-bill { color: var(--fv-amber); background: var(--fv-amber-bg); }
+.fv2-ico-loan { color: var(--fv-violet); background: var(--fv-violet-bg); }
+.fv2-item-text { display: grid; flex: 1; min-width: 0; gap: 1px; }
+.fv2-item-text b { overflow: hidden; font-size: 0.94rem; font-weight: 600; white-space: nowrap; text-overflow: ellipsis; color: var(--fv-ink); }
+.fv2-item-text small { overflow: hidden; font-size: 0.78rem; white-space: nowrap; text-overflow: ellipsis; color: var(--fv-ink2); }
+.fv2-item-num { display: grid; justify-items: end; flex: 0 0 auto; gap: 1px; }
+.fv2-item-num b { font-size: 0.94rem; font-weight: 700; color: var(--fv-ink); }
+.fv2-item-num small { font-size: 0.74rem; color: var(--fv-ink2); }
+.fv2-item-num .fv2-tag-ok { color: var(--fv-green); }
+.fv2-item-num .fv2-tag-warn { color: var(--fv-amber); }
+.fv2-item-num .fv2-tag-loan { color: var(--fv-red); }
+.fv2-item-num .fv2-tag-late, .fv2-item.is-late .fv2-item-text small { color: var(--fv-red); font-weight: 600; }
+.fv2-answer, .fv2-more { flex: 0 0 auto; min-height: 36px; padding: 0 16px; border: 0; border-radius: 999px; font-weight: 600; font-size: 0.84rem; color: var(--fv-on) !important; background: var(--fv-grad); box-shadow: var(--fv-glow); cursor: pointer; }
+.fv2-more { justify-self: center; margin: 4px 0 10px; color: var(--fv-acc-ink) !important; background: var(--fv-soft); box-shadow: none; }
+
+/* categories */
+.fv2-cat { display: flex; align-items: center; gap: 12px; padding: 11px 0; }
+.fv2-ico-cat { color: var(--c); background: color-mix(in srgb, var(--c) 16%, transparent); }
+.fv2-cat-main { display: grid; flex: 1; min-width: 0; gap: 7px; }
+.fv2-cat-main b { font-size: 0.92rem; font-weight: 600; color: var(--fv-ink); }
+.fv2-cat-track { display: block; height: 7px; border-radius: 99px; background: var(--fv-soft); overflow: hidden; }
+.fv2-cat-track i { display: block; width: var(--w); height: 100%; border-radius: inherit; background: var(--c); }
+.fv2-cat-num { display: grid; justify-items: end; flex: 0 0 auto; }
+.fv2-cat-num b { font-size: 0.94rem; font-weight: 700; color: var(--fv-ink); }
+.fv2-cat-num small { font-size: 0.74rem; color: var(--fv-ink2); }
+.fv2-empty { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 0; font-size: 0.86rem; color: var(--fv-ink2); }
+
+/* savings ring */
+.fv2-ring { --p: 0; display: grid; place-items: center; width: 50px; height: 50px; flex: 0 0 auto; border-radius: 50%; background: conic-gradient(var(--fv-acc) calc(var(--p) * 1%), var(--fv-soft) 0); }
+.fv2-ring span { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; font-size: 0.72rem; font-weight: 700; color: var(--fv-ink); background: var(--fv-card); }

@@ -141,7 +141,7 @@ function renderMoneyPeriodBar(range) {
 function renderMoney(tab = "overview") {
   const stats = Store.calculate();
   return `
-    <section class="page">
+    <section class="page${typeof MoneyV2 !== "undefined" ? " fv2-page" : ""}">
       <div class="page-header financial-header">
         <div class="financial-header-main">
           <div class="financial-header-copy">
@@ -406,6 +406,8 @@ function renderMoneyTab(tab, stats) {
   if (tab === "bills") return renderBills();
   if (tab === "budget") return renderBudget();
   if (tab === "reports") return renderReports(stats);
+  // Finance V2 (js/money-v2.js); the old overview below stays as a fallback
+  if (typeof MoneyV2 !== "undefined") return MoneyV2.overview(stats);
   const range = moneyPeriodRange();
   const periodExpenses = moneyExpensesIn(range).slice().sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")));
   return `

@@ -89,11 +89,7 @@
 /* from family-ui.css */
 :root[data-theme="light"] .fam-add { color: #ffffff !important; background: #3b82f6 !important; box-shadow: 0 6px 16px rgba(59, 130, 246, 0.28) !important; }
 :root[data-theme="light"] .fam-av-add .fam-av-face { color: #ffffff !important; background: #3b82f6 !important; }
-:root:not([data-theme="light"]) .fam-av-me .fam-av-face { color: #1d4ed8 !important; border-color: rgba(59, 130, 246, 0.5) !important; }
-:root:not([data-theme="light"]) .fam-hero-blob-b { background: rgba(59, 130, 246, 0.1) !important; }
 /* from focus-card.css */
-:root:not([data-theme="light"]) .home-overview .focus-card .focus-item input { accent-color: #3b82f6 !important; }
-:root:not([data-theme="light"]) .home-overview .focus-card .focus-count { color: #1d4ed8 !important; }
 :root[data-theme="light"] .home-overview .focus-card.all-done .focus-progress-text,
 :root[data-theme="light"] .home-overview .focus-card.all-done .focus-progress-text { color: #ffffff !important; border-color: #3b82f6 !important; background: #3b82f6 !important; }
 :root[data-theme="light"] .home-overview .focus-card.just-done::after { box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.55), 0 12px 32px rgba(143, 209, 79, 0.35) !important; }
@@ -102,7 +98,6 @@
 :root[data-theme="light"] .home-overview .focus-card .focus-item input[type="checkbox"] { border: 2px solid rgba(59, 130, 246, 0.7) !important; }
 :root[data-theme="light"] .home-overview .focus-card .focus-item input[type="checkbox"]:checked { border-color: #3b82f6 !important; background-color: #3b82f6 !important; }
 :root[data-theme="light"] .home-overview .focus-card .focus-item input[type="checkbox"]:focus-visible { outline: 2px solid #3b82f6 !important; }
-:root:not([data-theme="light"]) .home-overview .focus-card .focus-item.done { border-color: rgba(59, 130, 246, 0.32) !important; background: rgba(59, 130, 246, 0.1) !important; }
 :root[data-theme="light"] .home-overview .focus-card .focus-item.done .focus-text,
 :root[data-theme="light"] .home-overview .focus-card .focus-item.done span { text-decoration-color: rgba(59, 130, 246, 0.7) !important; }
 /* from global.css */
@@ -168,7 +163,6 @@
 :root[data-theme="light"] .nfc-ma-now b { color: #1d4ed8 !important; background: #1d4ed8 !important; }
 :root[data-theme="light"] .nfc-chip.is-on { color: #ffffff !important; background: #3b82f6 !important; }
 :root[data-theme="light"] .nfc-chip:has(input:focus-visible) { outline: 2px solid #3b82f6 !important; }
-:root:not([data-theme="light"]) .nfc-next-head b { color: #1d4ed8 !important; }
 :root[data-theme="light"] .nfc-tab.is-on { color: #ffffff !important; background: #3b82f6 !important; }
 /* from profile-modal.css */
 :root[data-theme="light"] .profile-account-avatar { border: 3px solid #3b82f6 !important; color: #1d4ed8 !important; background: #ffffff !important; }
@@ -194,15 +188,10 @@
 :root[data-theme="light"] .sc-page .button:not(.ghost-button) { color: #ffffff !important; background: #3b82f6 !important; box-shadow: 0 8px 20px rgba(59, 130, 246, 0.22) !important; }
 :root[data-theme="light"] .sc-page .button:not(.ghost-button)[disabled] { background: rgba(59, 130, 246, 0.45) !important; }
 :root[data-theme="light"] .sc-progress-ai span { background: linear-gradient(90deg, #3b82f6, #2f9e55) !important; }
-:root:not([data-theme="light"]) .sc-ai-badge { color: #1d4ed8 !important; background: rgba(59, 130, 246, 0.12) !important; }
 /* from theme-polish.css */
 :root[data-theme="light"] { --lm-lime: #3b82f6 !important; --lm-lime-soft: #dbeafe !important; --lm-lime-ink: #1d4ed8 !important; }
 :root[data-theme="light"] .app-main { background-image: radial-gradient(120% 70% at 0% 0%, rgba(59, 130, 246, 0.42), rgba(59, 130, 246, 0) 62%),
     linear-gradient(180deg, rgba(214, 247, 140, 0.32) 0, rgba(214, 247, 140, 0) 320px) !important; }
-:root:not([data-theme="light"]) .financial-shortcut.active { background: rgba(59, 130, 246, 0.45) !important; }
-:root:not([data-theme="light"]) .money-smart-tab > strong { color: #ffffff !important; background: #3b82f6 !important; }
-:root:not([data-theme="light"]) .reflection-card .reflection-textarea:focus { border-color: rgba(59, 130, 246, 0.55) !important; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.14) !important; }
-:root:not([data-theme="light"]) .between > .icon-badge.pink { color: #1d4ed8 !important; }
 :root[data-theme="light"] .agenda-badge { background: #3b82f6 !important; }
 :root[data-theme="light"] #modalRoot .modal.event-modal { --ev-lime: #3b82f6 !important; }
 :root[data-theme="light"] #modalRoot .event-modal .ev-chip.active { color: #1d4ed8 !important; border-color: #3b82f6 !important; }
@@ -214,8 +203,6 @@
 :root[data-theme="light"] .qx-bolt { background: linear-gradient(135deg, #dbeafe, #3b82f6) !important; }
 :root[data-theme="light"] .qx-currency { color: #ffffff !important; background: #3b82f6 !important; }
 :root[data-theme="light"] .pace-link { color: #2563eb !important; }
-:root:not([data-theme="light"]) .financial-savings-card .pace-link,
-:root:not([data-theme="light"]) .goal-profile-card .pace-link { color: #2563eb !important; }
 :root[data-theme="light"] .td-next-label { color: #ffffff !important; background: #3b82f6 !important; }
 :root[data-theme="light"] .td-up-days { color: #ffffff !important; background: #3b82f6 !important; }
 :root[data-theme="light"] #modalRoot .expense-modal .xp-currency { color: #ffffff !important; background: #3b82f6 !important; }
@@ -230,11 +217,6 @@
 :root[data-theme="light"] #modalRoot .su-modern .su-photo:hover { border-color: #3b82f6 !important; }
 :root[data-theme="light"] #modalRoot .su-modern .su-photo-img { box-shadow: 0 0 0 3px #3b82f6 !important; }
 :root[data-theme="light"] #modalRoot .su-modern .ev-submit { color: #1d4ed8 !important; background: linear-gradient(135deg, #dbeafe, var(--ev-lime)) !important; border: 1px solid #3b82f6 !important; }
-:root:not([data-theme="light"]) .financial-sidebar .financial-nav-icon,
-:root:not([data-theme="light"]) .goals-sidebar .financial-nav-icon,
-:root:not([data-theme="light"]) .settings-sidebar .financial-nav-icon { color: var(--financial-icon-color, #1d4ed8) !important; background: color-mix(in srgb, var(--financial-icon-color, #3b82f6) 18%, transparent) !important; }
-:root:not([data-theme="light"]) .financial-sidebar .financial-nav-item.active,
-:root:not([data-theme="light"]) .goals-sidebar .financial-nav-item.active { background: #3b82f6 !important; border-color: #3b82f6 !important; }
 :root[data-theme="light"] #modalRoot .modal.su-modern { --ev-lime: #3b82f6 !important; }
 :root[data-theme="light"] #modalRoot .memory-form-modal .mf-cover { background: radial-gradient(120% 100% at 0% 0%, rgba(59, 130, 246, 0.35), transparent 60%),
     radial-gradient(120% 100% at 100% 100%, rgba(90, 169, 255, 0.18), transparent 60%),
