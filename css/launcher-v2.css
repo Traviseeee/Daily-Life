@@ -1,0 +1,119 @@
+/* MYLIFE Launcher V2 (js/launcher-v2.js). Dark = green + lime (default), light = sky blue.
+   Not run through tools/build-theme-sky.py: both themes are set here with variables. */
+.lv2 {
+  --lv-card: #122019; --lv-soft: #1a2e24; --lv-line: #1f3329;
+  --lv-ink: #eef6e8; --lv-ink2: #9fb8a9; --lv-ink3: #5f7a6b; --lv-acc-ink: #d9ff7b; --lv-on: #142a04;
+  --lv-grad: linear-gradient(120deg, #d9ff7b, #a6e33f);
+  --lv-hero: radial-gradient(120% 80% at 90% 0, #24452f 0, transparent 60%), linear-gradient(180deg, #143024, #0f2119);
+  --lv-shadow: 0 6px 20px rgba(0, 0, 0, 0.35); --lv-glow: 0 10px 22px rgba(166, 227, 63, 0.2);
+  --t-blue: #1a2e24; --t-pink: #1a2e24; --t-green: #1a2e24; --t-violet: #1a2e24; --t-amber: #1a2e24; --t-cyan: #1a2e24; --t-grey: #1a2e24; --t-red: #1a2e24;
+  --c-blue: #9cc8ff; --c-pink: #ff9cc2; --c-green: #7ee2a8; --c-violet: #c7b6ff; --c-amber: #ffc76b; --c-cyan: #7fdcef; --c-grey: #b7c4bc; --c-red: #ff8b8b;
+  display: block !important; width: 100%; max-width: 660px; box-sizing: border-box; margin: 0 auto; padding: 0 0 120px !important; color: var(--lv-ink); min-height: 0 !important; gap: 0 !important;
+}
+:root[data-theme="light"] .lv2 {
+  --lv-card: #ffffff; --lv-soft: #e6f0ff; --lv-line: #edf2fb;
+  --lv-ink: #0f1b33; --lv-ink2: #5b6b85; --lv-ink3: #97a3b8; --lv-acc-ink: #1d4ed8; --lv-on: #ffffff;
+  --lv-grad: linear-gradient(120deg, #5aa2ff, #2f7bf5);
+  --lv-hero: radial-gradient(120% 80% at 90% 0, #9cc6ff 0, transparent 60%), linear-gradient(180deg, #cfe3ff, #eaf2ff);
+  --lv-shadow: 0 6px 20px rgba(37, 99, 235, 0.08); --lv-glow: 0 10px 22px rgba(47, 123, 245, 0.3);
+  --t-blue: #e6f0ff; --t-pink: #ffe8f0; --t-green: #dcf5e5; --t-violet: #ece6ff; --t-amber: #fff1d6; --t-cyan: #e0f7fa; --t-grey: #eef1f6; --t-red: #fee2e2;
+  --c-blue: #2f7bf5; --c-pink: #e0457b; --c-green: #13804a; --c-violet: #6d4fe0; --c-amber: #c27400; --c-cyan: #0e8aa8; --c-grey: #5b6b85; --c-red: #dc2626;
+}
+.lv2 * { box-sizing: border-box; }
+.lv2 a { color: inherit; text-decoration: none; }
+.lv2 button { font: inherit; color: inherit; }
+#app:has(.lv2) { padding-left: 0 !important; padding-right: 0 !important; padding-top: 0 !important; }
+
+/* top */
+.lv-hero { padding: calc(env(safe-area-inset-top, 0px) + 16px) 18px 16px; border-radius: 0 0 30px 30px; background: var(--lv-hero); }
+.lv-hi { display: flex; align-items: center; gap: 10px; }
+.lv-av { display: block; width: 48px; height: 48px; flex: 0 0 auto; padding: 3px; border-radius: 50%; background: var(--lv-grad); }
+.lv-face { display: grid; place-items: center; width: 100%; height: 100%; overflow: hidden; border: 3px solid var(--lv-card); border-radius: 50%; font-weight: 700; color: var(--lv-on); background: var(--lv-grad); }
+.lv-face img { width: 100%; height: 100%; object-fit: cover; }
+.lv-hi-tx { display: grid; flex: 1; min-width: 0; line-height: 1.35; }
+.lv-hi-tx small { overflow: hidden; font-size: 0.76rem; white-space: nowrap; text-overflow: ellipsis; color: var(--lv-ink2); }
+.lv-hi-tx b { overflow: hidden; font-size: 1.28rem; font-weight: 800; white-space: nowrap; text-overflow: ellipsis; }
+.lv-wx { display: inline-flex; align-items: center; gap: 4px; height: 36px; padding: 0 12px; flex: 0 0 auto; border-radius: 999px; font-size: 0.86rem; color: var(--lv-ink); background: var(--lv-card); box-shadow: var(--lv-shadow); }
+.lv-wx:empty { display: none; }
+.lv-wx svg { width: 20px; height: 20px; }
+.lv-search { display: flex; align-items: center; gap: 6px; margin-top: 14px; padding: 6px 6px 6px 14px; border-radius: 18px; background: var(--lv-card); box-shadow: var(--lv-shadow); }
+.lv-search-go { display: flex; flex: 1; align-items: center; gap: 10px; min-width: 0; height: 40px; padding: 0; border: 0; background: none; text-align: left; font-size: 0.86rem; color: var(--lv-ink3) !important; cursor: text; }
+.lv-search-go span { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.lv-search-btn { display: grid; place-items: center; width: 36px; height: 36px; flex: 0 0 auto; padding: 0; border: 0; border-radius: 11px; color: var(--lv-acc-ink) !important; background: var(--lv-soft); cursor: pointer; }
+.lv-search-btn svg { width: 18px; height: 18px; }
+
+.lv-body { display: grid; padding: 12px 14px 0; }
+.lv-body > * { min-width: 0; }
+
+/* Today / Money */
+.lv-sum { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.lv-sc { display: grid; gap: 2px; align-content: start; min-width: 0; padding: 12px 14px; border-radius: 22px; background: var(--lv-card); box-shadow: var(--lv-shadow); }
+.lv-sc small { font-size: 0.72rem; font-weight: 500; color: var(--lv-ink2); }
+.lv-sc b { overflow: hidden; font-size: 1.08rem; font-weight: 700; white-space: nowrap; text-overflow: ellipsis; }
+.lv-sc b.is-neg { color: #ef4444; }
+.lv-sc em { overflow: hidden; font-size: 0.72rem; font-style: normal; font-weight: 500; white-space: nowrap; text-overflow: ellipsis; color: var(--lv-acc-ink); }
+.lv-sc.is-main { color: var(--lv-on); background: var(--lv-grad); box-shadow: var(--lv-glow); }
+.lv-sc.is-main small, .lv-sc.is-main em { color: var(--lv-on); opacity: 0.9; }
+
+.lv-sec { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin: 2px 6px 8px; }
+.lv-sec b { font-size: 0.78rem; font-weight: 700; color: var(--lv-ink2); }
+.lv-sec a, .lv-link { padding: 2px 0; border: 0; background: none; font-size: 0.78rem; font-weight: 600; color: var(--lv-acc-ink) !important; cursor: pointer; }
+.lv-card { margin-bottom: 14px; padding: 4px 14px; border-radius: 24px; background: var(--lv-card); box-shadow: var(--lv-shadow); }
+
+/* app grid: one white card, soft icon tiles */
+.lv2 .lv-grid { display: grid !important; grid-template-columns: repeat(4, minmax(0, 1fr)) !important; gap: 14px 4px !important; margin: 0 0 14px !important; padding: 16px 8px 12px !important; border-radius: 26px; background: var(--lv-card); box-shadow: var(--lv-shadow); }
+.lv2 .app-icon { gap: 6px; }
+.lv2 .app-icon-tile { width: 54px !important; height: 54px !important; border-radius: 17px !important; color: var(--k) !important; background: var(--t) !important; box-shadow: none !important; }
+.lv2 .app-icon-tile svg { width: 25px !important; height: 25px !important; }
+.lv2 .app-icon-label { font-size: 0.72rem !important; font-weight: 600 !important; color: var(--lv-ink) !important; }
+.lv2 .app-badge { top: -5px; right: -5px; border: 2px solid var(--lv-card) !important; background: #ef4444 !important; color: #fff !important; }
+.lv2 .app-cell:has(a[href="#today"]) { --t: var(--t-blue); --k: var(--c-blue); }
+.lv2 .app-cell:has(a[href="#calendar"]) { --t: var(--t-pink); --k: var(--c-pink); }
+.lv2 .app-cell:has(a[href="#money"]) { --t: var(--t-green); --k: var(--c-green); }
+.lv2 .app-cell:has(a[href="#family"]) { --t: var(--t-violet); --k: var(--c-violet); }
+.lv2 .app-cell:has(a[href="#goals"]) { --t: var(--t-cyan); --k: var(--c-cyan); }
+.lv2 .app-cell:has(a[href="#memories"]) { --t: var(--t-pink); --k: var(--c-pink); }
+.lv2 .app-cell:has(a[href="#daily"]) { --t: var(--t-amber); --k: var(--c-amber); }
+.lv2 .app-cell:has(a[href="#summary"]) { --t: var(--t-blue); --k: var(--c-blue); }
+.lv2 .app-cell:has(a[href="#scan"]) { --t: var(--t-cyan); --k: var(--c-cyan); }
+.lv2 .app-cell:has(a[href="#notifications"]) { --t: var(--t-red); --k: var(--c-red); }
+.lv2 .app-cell:has(a[href="#tips"]) { --t: var(--t-amber); --k: var(--c-amber); }
+.lv2 .app-cell:has(a[href="#settings"]) { --t: var(--t-grey); --k: var(--c-grey); }
+.lv2 .app-pin { border-color: var(--lv-card) !important; }
+.lv2 .app-pin.active { color: var(--lv-on) !important; background: var(--lv-grad) !important; }
+.lv2 .footer-editor:not([hidden]) { margin-bottom: 14px; }
+
+/* coming up */
+.lv-up { display: flex; align-items: center; gap: 12px; padding: 9px 0; }
+.lv-up + .lv-up { border-top: 1px solid var(--lv-line); }
+.lv-dt { display: grid; place-items: center; width: 44px; height: 46px; flex: 0 0 auto; border-radius: 14px; text-align: center; line-height: 1.1; background: var(--lv-soft); }
+.lv-dt b { font-size: 1rem; font-weight: 700; }
+.lv-dt small { display: block; max-width: 42px; overflow: hidden; font-size: 0.64rem; white-space: nowrap; text-overflow: ellipsis; color: var(--lv-ink2); }
+.lv-up-tx { display: grid; flex: 1; min-width: 0; }
+.lv-up-tx b { overflow: hidden; font-size: 0.86rem; font-weight: 700; white-space: nowrap; text-overflow: ellipsis; }
+.lv-up-tx small { overflow: hidden; font-size: 0.72rem; white-space: nowrap; text-overflow: ellipsis; color: var(--lv-ink2); }
+.lv-tag { flex: 0 0 auto; padding: 4px 10px; border-radius: 999px; font-size: 0.68rem; font-weight: 700; color: var(--k); background: var(--t); }
+.lv-tag.is-amber { --t: var(--t-amber); --k: var(--c-amber); }
+.lv-tag.is-pink { --t: var(--t-pink); --k: var(--c-pink); }
+.lv-tag.is-green { --t: var(--t-green); --k: var(--c-green); }
+.lv-tag.is-blue { --t: var(--t-blue); --k: var(--c-blue); }
+:root:not([data-theme="light"]) .lv-tag { background: rgba(255, 255, 255, 0.06); }
+.lv-empty { margin: 8px 0; font-size: 0.84rem; color: var(--lv-ink2); }
+
+/* quick add */
+.lv-qa { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.lv-q { display: grid; justify-items: center; gap: 4px; min-width: 0; padding: 10px 4px; border: 0; border-radius: 18px; background: var(--lv-card); box-shadow: var(--lv-shadow); cursor: pointer; }
+.lv-q i { font-size: 1.25rem; font-style: normal; line-height: 1.2; }
+.lv-q span { max-width: 100%; overflow: hidden; font-size: 0.7rem; font-weight: 600; white-space: nowrap; text-overflow: ellipsis; }
+
+/* phone: own header; the app top bar hides (search in the hero brings it back) */
+@media (max-width: 900px) {
+  body:has(#app .lv2):not(.hv2-search-open) .app-main .topbar { display: none !important; }
+}
+@media (min-width: 901px) {
+  .lv2 { padding-top: 12px !important; }
+  .lv-hero { border-radius: 30px; }
+}
+:root:not([data-theme="light"]) body:has(#app .lv2) .quick-action-toggle { color: #142a04; border-color: rgba(217, 255, 123, 0.7); background: linear-gradient(135deg, #d9ff7b, #a6e33f); box-shadow: 0 12px 26px rgba(166, 227, 63, 0.3); }
+.lv2 .lv-sec .lv-link { font-size: 0.78rem; font-weight: 600; }
+.lv2 .lv-search-go { font-size: 0.86rem; }

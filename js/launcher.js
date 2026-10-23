@@ -69,6 +69,8 @@ function launcherBadge(routeId) {
 }
 
 function renderLauncher() {
+  // Launcher V2 (js/launcher-v2.js); the old layout below stays as a fallback
+  if (typeof LauncherV2 !== "undefined") return LauncherV2.render();
   const km = languageCode() === "km";
   const all = launcherAllRoutes();
   return `
