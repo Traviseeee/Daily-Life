@@ -357,9 +357,11 @@ function settingsAction(action, icon, title, description) {
 }
 
 function openProfileModal() {
+  const km = typeof languageCode === "function" && languageCode() === "km";
+  const L = (en, kh) => (km ? kh : en);
   Modal.open({
     title: t("editProfile"),
-    submitText: t("editProfile"),
+    submitText: t("save"),
     fields: [
       { name: "name", label: t("name"), value: appData.profile.name, required: true },
       { name: "photo", label: t("profilePhoto"), type: "file", value: appData.profile.photo },
@@ -372,43 +374,95 @@ function openProfileModal() {
     ],
     onSubmit(data) {
       Store.updateProfile(data);
-      Toast.show(t("profileSaved"));
+      Toast.show(t("profileSaved"), "success");
     }
   });
 
   const modalForm = document.getElementById("modalForm");
-  const footer = modalForm?.querySelector(".between");
-  if (!modalForm || !footer || footer.dataset.accountActionsInserted === "true") return;
+  if (!modalForm || modalForm.dataset.profileEnhanced === "true") return;
+  modalForm.dataset.profileEnhanced = "true";
+  modalForm.classList.add("profile-modal");
 
-  const accountRow = document.createElement("div");
-  accountRow.className = "account-action-row";
+  // account card under the title: who is signed in + connect / log out
+  // (before, this row replaced the title bar, so the sheet had no title and no ✕)
+  const header = modalForm.querySelector(".between");
+  const name = String(appData.profile.name || "").trim();
+  const initial = (name.match(/\S/u)?.[0] || "M").toUpperCase();
+  const card = document.createElement("section");
+  card.className = "profile-account-card";
+  card.innerHTML = `
+    <span class="profile-account-avatar">${appData.profile.photo ? `<img src="${escapeHtml(appData.profile.photo)}" alt="">` : escapeHtml(initial)}</span>
+    <span class="profile-account-copy">
+      <strong>${escapeHtml(name || L("Guest", "ភ្ញៀវ"))}</strong>
+      <small data-profile-email>${escapeHtml(L("Checking account…", "កំពុងពិនិត្យគណនី…"))}</small>
+    </span>
+    <span class="profile-account-badge" data-profile-badge hidden></span>
+    <div class="profile-account-actions">
+      <button type="button" class="button profile-connect-button" data-connect-account="true" hidden>${escapeHtml(L("Connect account", "ភ្ជាប់គណនី"))}</button>
+      <button type="button" class="button ghost-button profile-logout-button" data-logout-profile="true">${escapeHtml(t("logout"))}</button>
+    </div>`;
+  header?.after(card);
 
-  const connectButton = document.createElement("button");
-  connectButton.type = "button";
-  connectButton.className = "button ghost-button account-connect-button";
-  connectButton.dataset.connectAccount = "true";
-  connectButton.textContent = "Connect account";
+  const connectButton = card.querySelector("[data-connect-account]");
+  const logoutButton = card.querySelector("[data-logout-profile]");
   connectButton.addEventListener("click", () => {
     Modal.close();
     Login.open("login");
   });
-
-  const logoutButton = document.createElement("button");
-  logoutButton.type = "button";
-  logoutButton.className = "button ghost-button account-logout-button";
-  logoutButton.dataset.logoutProfile = "true";
-  logoutButton.textContent = "Log out";
-  logoutButton.addEventListener("click", async () => {
+  logoutButton.addEventListener("click", () => {
+    if (logoutButton.dataset.armed !== "1") {
+      // one more tap to confirm, so a slip of the thumb does not sign you out
+      logoutButton.dataset.armed = "1";
+      logoutButton.classList.add("is-armed");
+      logoutButton.textContent = L("Tap again to log out", "ចុចម្ដងទៀតដើម្បីចាកចេញ");
+      setTimeout(() => {
+        if (!logoutButton.isConnected) return;
+        logoutButton.dataset.armed = "";
+        logoutButton.classList.remove("is-armed");
+        logoutButton.textContent = t("logout");
+      }, 3500);
+      return;
+    }
     Modal.close();
-    await Login.logout();
-    App.render();
+    Promise.resolve(Login.logout()).finally(() => App.render());
   });
 
-  accountRow.appendChild(connectButton);
-  accountRow.appendChild(logoutButton);
-  footer.innerHTML = "";
-  footer.appendChild(accountRow);
-  footer.dataset.accountActionsInserted = "true";
+  const emailEl = card.querySelector("[data-profile-email]");
+  const badgeEl = card.querySelector("[data-profile-badge]");
+  const showGuest = () => {
+    emailEl.textContent = L("Not connected — data stays on this phone", "មិនទាន់ភ្ជាប់ — ទិន្នន័យនៅលើទូរសព្ទនេះប៉ុណ្ណោះ");
+    connectButton.hidden = false;
+    logoutButton.hidden = true;
+    card.classList.add("is-guest");
+  };
+  const api = window.MYLIFE_SUPABASE_API;
+  if (!window.MYLIFE_SUPABASE?.enabled || !api?.getSession) { showGuest(); }
+  else {
+    Promise.resolve(api.getSession()).then(result => {
+      const user = result?.data?.session?.user;
+      if (!user || !card.isConnected) return showGuest();
+      emailEl.textContent = user.email || L("Signed in", "បានចូលគណនី");
+      const providers = user.app_metadata?.providers || [user.app_metadata?.provider].filter(Boolean);
+      const google = providers.includes("google");
+      badgeEl.hidden = false;
+      badgeEl.textContent = google ? "Google" : "Email";
+      badgeEl.classList.toggle("is-google", google);
+      connectButton.hidden = true;
+    }).catch(showGuest);
+  }
+
+  // small section labels so the long form reads in groups
+  const group = (fieldName, label) => {
+    const control = modalForm.querySelector(`[name="${fieldName}"]`);
+    const wrap = control?.closest(".field, label, .form-field, .modern-field") || control?.parentElement;
+    if (!wrap || !wrap.parentElement) return;
+    const head = document.createElement("p");
+    head.className = "profile-group-label";
+    head.textContent = label;
+    wrap.parentElement.insertBefore(head, wrap);
+  };
+  group("currency", L("App settings", "ការកំណត់ App"));
+  group("soundEnabled", L("Sound & alerts", "សំឡេង និងការជូនដំណឹង"));
 }
 
 function firstRecord(collection) {

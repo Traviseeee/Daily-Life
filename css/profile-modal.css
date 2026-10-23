@@ -1,0 +1,91 @@
+/* Profile sheet (openProfileModal in js/settings.js). The form card is white in
+   both themes, so these colours are for a light surface. */
+#modalRoot .modal.profile-modal { display: grid; gap: 14px; }
+#modalRoot .modal.profile-modal > .between:first-child { margin-bottom: 0; }
+
+/* account card: who you are signed in as */
+.profile-account-card {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 4px 12px;
+  padding: 14px;
+  border: 1px solid #dcefc9;
+  border-radius: 18px;
+  color: #14201b;
+  background: linear-gradient(145deg, #f6fcef, #eef8e4);
+  animation: profileCardIn var(--dur-slow, 320ms) var(--ease-out-soft, ease-out) both;
+}
+@keyframes profileCardIn { from { opacity: 0; transform: translateY(6px); } }
+.profile-account-avatar {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  overflow: hidden;
+  border: 3px solid #c5ff60;
+  border-radius: 50%;
+  color: #d9ff7b;
+  background: #0f3326;
+  font-size: 1.3rem;
+  font-weight: 800;
+  box-shadow: 0 4px 12px rgba(15, 51, 38, 0.18);
+}
+.profile-account-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.profile-account-copy { display: grid; gap: 2px; min-width: 0; }
+.profile-account-copy strong { overflow: hidden; font-size: 1.02rem; font-weight: 800; white-space: nowrap; text-overflow: ellipsis; }
+.profile-account-copy small { overflow: hidden; color: #4d5a53; font-size: max(0.8rem, 12px); white-space: nowrap; text-overflow: ellipsis; }
+.profile-account-card.is-guest .profile-account-copy small { white-space: normal; }
+.profile-account-badge {
+  align-self: start;
+  padding: 3px 9px;
+  border: 1px solid #cfe5bd;
+  border-radius: 999px;
+  color: #2f6b1f;
+  background: #fff;
+  font-size: 12px;
+  font-weight: 800;
+}
+.profile-account-badge.is-google { border-color: #d2e3fc; color: #1a5fc8; }
+.profile-account-actions { display: flex; grid-column: 1 / -1; gap: 10px; margin-top: 10px; }
+.profile-account-actions .button { flex: 1; min-height: 44px; font-weight: 800; }
+/* the dark-mode form rules paint every secondary button grey with !important,
+   so these need the same weight */
+.profile-account-actions .button[hidden], .profile-account-badge[hidden] { display: none !important; }
+:root:not([data-no-theme]) #modalRoot .modal .profile-account-actions .button.profile-connect-button { border: 0 !important; color: #0f3326 !important; background: #c5ff60 !important; }
+:root:not([data-no-theme]) #modalRoot .modal .profile-account-actions .button.profile-logout-button {
+  border: 1px solid #f1cfd1 !important;
+  color: #b4232a !important;
+  background: #fff !important;
+  transition: background-color 160ms ease, color 160ms ease;
+}
+:root:not([data-no-theme]) #modalRoot .modal .profile-account-actions .button.profile-logout-button.is-armed { border-color: #c62a30 !important; color: #fff !important; background: #c62a30 !important; }
+:root #modalRoot .modal span.profile-account-avatar { color: #d9ff7b; }
+:root #modalRoot .modal .profile-account-copy small { color: #4d5a53; }
+:root #modalRoot .modal span.profile-account-badge { color: #2f6b1f; }
+:root #modalRoot .modal span.profile-account-badge.is-google { color: #1a5fc8; }
+
+/* section labels inside the long form */
+.profile-group-label {
+  margin: 6px 0 -2px;
+  padding-top: 12px;
+  border-top: 1px solid #eef0ec;
+  color: #4d5a53;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .02em;
+}
+.profile-modal .form-grid > .profile-group-label { grid-column: 1 / -1; }
+
+/* Save: the one clear main button */
+#modalRoot .modal.profile-modal button[type="submit"] {
+  min-height: 48px;
+  border: 0;
+  color: #0f3326 !important;
+  background: #c5ff60 !important;
+  font-size: max(0.98rem, 15px);
+  font-weight: 800;
+  box-shadow: 0 6px 16px rgba(143, 209, 79, 0.35);
+}
+
+@media (prefers-reduced-motion: reduce) { .profile-account-card { animation: none; } }
