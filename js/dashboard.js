@@ -1,4 +1,6 @@
 function renderHome() {
+  // Home V2 (js/home-v2.js); the old layout below stays as a fallback
+  if (typeof HomeV2 !== "undefined") return HomeV2.render();
   const stats = Store.calculate();
   const todayIso = localDashboardDate(new Date());
   const todayEvents = appData.calendarEvents.filter(event => event.date === todayIso);

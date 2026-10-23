@@ -9,13 +9,10 @@
 @font-face { font-family: "MyLife Khmer"; src: url("../assets/fonts/noto-sans-khmer-khmer-600-normal.woff2") format("woff2"); font-weight: 550 649; font-display: swap; unicode-range: U+1780-17FF, U+19E0-19FF, U+200C-200D, U+25CC; }
 @font-face { font-family: "MyLife Khmer"; src: url("../assets/fonts/noto-sans-khmer-khmer-700-normal.woff2") format("woff2"); font-weight: 650 749; font-display: swap; unicode-range: U+1780-17FF, U+19E0-19FF, U+200C-200D, U+25CC; }
 @font-face { font-family: "MyLife Khmer"; src: url("../assets/fonts/noto-sans-khmer-khmer-800-normal.woff2") format("woff2"); font-weight: 750 1000; font-display: swap; unicode-range: U+1780-17FF, U+19E0-19FF, U+200C-200D, U+25CC; }
-:root[data-theme="light"] { --font-display: "MyLife Latin", "MyLife Khmer", Inter, "Noto Sans Khmer", system-ui, sans-serif; }
-:root[data-theme="light"] body,
-:root[data-theme="light"] button,
-:root[data-theme="light"] input,
-:root[data-theme="light"] select,
-:root[data-theme="light"] textarea { font-family: "MyLife Latin", "MyLife Khmer", Inter, "Noto Sans Khmer", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
-:root[data-theme="light"] body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+:root { --font-display: "MyLife Latin", "MyLife Khmer", Inter, "Noto Sans Khmer", system-ui, sans-serif; }
+/* both themes use the same local fonts (thin like the draft) */
+body, button, input, select, textarea { font-family: "MyLife Latin", "MyLife Khmer", Inter, "Noto Sans Khmer", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
 /* money amounts: a little tighter, like the draft */
 :root[data-theme="light"] .mm-card strong,
 :root[data-theme="light"] .money-value,

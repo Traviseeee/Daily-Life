@@ -1,0 +1,161 @@
+/* MYLIFE Home V2 (js/home-v2.js). Dark = green + lime (default), light = sky blue.
+   Not run through tools/build-theme-sky.py: both themes are set here with variables. */
+.hv2 {
+  --hv-bg: #0b1712; --hv-card: #122019; --hv-soft: #1a2e24; --hv-line: #1f3329;
+  --hv-ink: #eef6e8; --hv-ink2: #a3bcad; --hv-acc: #c5ff60; --hv-acc-ink: #d9ff7b; --hv-on: #142a04;
+  --hv-grad: linear-gradient(120deg, #d9ff7b, #a6e33f);
+  --hv-shadow: 0 6px 20px rgba(0, 0, 0, 0.32); --hv-glow: 0 12px 24px rgba(166, 227, 63, 0.18);
+  --hv-blue: #9cc8ff; --hv-green: #7ee2a8; --hv-violet: #c7b6ff; --hv-amber: #ffc76b;
+  --hv-blue-bg: rgba(156, 200, 255, 0.14); --hv-green-bg: rgba(126, 226, 168, 0.14); --hv-violet-bg: rgba(199, 182, 255, 0.14); --hv-amber-bg: rgba(255, 199, 107, 0.14);
+  display: grid; gap: 0; width: 100%; max-width: 660px; box-sizing: border-box; margin: 0 auto; padding: 4px 16px 120px; color: var(--hv-ink);
+}
+.hv2 > *, .hv2-body > * { min-width: 0; }
+:root[data-theme="light"] .hv2 {
+  --hv-bg: #f4f8ff; --hv-card: #ffffff; --hv-soft: #e6f0ff; --hv-line: #e3ecfa;
+  --hv-ink: #0f1b33; --hv-ink2: #5b6b85; --hv-acc: #3b82f6; --hv-acc-ink: #1d4ed8; --hv-on: #ffffff;
+  --hv-grad: linear-gradient(120deg, #5aa2ff, #2f7bf5);
+  --hv-shadow: 0 6px 20px rgba(37, 99, 235, 0.08); --hv-glow: 0 12px 24px rgba(47, 123, 245, 0.28);
+  --hv-blue: #1d4ed8; --hv-green: #13804a; --hv-violet: #5b3fd1; --hv-amber: #a35b00;
+  --hv-blue-bg: #e1ecff; --hv-green-bg: #dcf5e5; --hv-violet-bg: #ece6ff; --hv-amber-bg: #fff1d6;
+}
+.hv2 a { color: inherit; text-decoration: none; }
+.hv2 button { font: inherit; color: inherit; }
+
+/* header: big title + avatar + week */
+.hv2-head { display: grid; gap: 14px; margin: 4px 0 16px; }
+.hv2-title-row { display: flex; align-items: flex-start; gap: 12px; }
+.hv2-title { flex: 1; min-width: 0; }
+.hv2-title h1 { margin: 0; font-size: 1.5rem; line-height: 1.4; font-weight: 800; color: var(--hv-ink); }
+.hv2-title h1 span { color: var(--hv-acc-ink); }
+.hv2-title p { margin: 4px 0 0; font-size: 0.82rem; color: var(--hv-ink2); }
+.hv2-avatar { position: relative; flex: 0 0 auto; cursor: pointer; }
+.hv2-avatar-face { display: grid; place-items: center; width: 46px; height: 46px; overflow: hidden; border-radius: 50%; border: 3px solid var(--hv-card); font-weight: 600; color: var(--hv-on); background: var(--hv-grad); box-shadow: var(--hv-shadow); }
+.hv2-avatar-face img { width: 100%; height: 100%; object-fit: cover; }
+.hv2-week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.hv2-day { display: grid; justify-items: center; gap: 1px; padding: 7px 0 6px; border-radius: 16px; background: var(--hv-card); box-shadow: var(--hv-shadow); }
+.hv2-day small { font-size: 0.72rem; color: var(--hv-ink2); }
+.hv2-day b { font-size: 0.98rem; font-weight: 600; }
+.hv2-day i { width: 5px; height: 5px; border-radius: 50%; }
+.hv2-day i.has { background: var(--hv-acc); }
+.hv2-day.is-today { color: var(--hv-on); background: var(--hv-grad); box-shadow: var(--hv-glow); }
+.hv2-day.is-today small { color: var(--hv-on); opacity: 0.85; }
+.hv2-day.is-today i.has { background: var(--hv-on); }
+
+.hv2-body { display: grid; gap: 12px; }
+
+/* next up */
+.hv2-next { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 22px; color: var(--hv-on) !important; background: var(--hv-grad); box-shadow: var(--hv-glow); }
+.hv2-next-time { display: grid; place-items: center; width: 52px; height: 52px; flex: 0 0 auto; border-radius: 16px; font-size: 0.86rem; font-weight: 600; line-height: 1.1; text-align: center; background: rgba(255, 255, 255, 0.22); }
+:root:not([data-theme="light"]) .hv2-next-time { background: rgba(20, 42, 4, 0.12); }
+.hv2-next-time small { display: block; font-size: 0.68rem; font-weight: 500; }
+.hv2-next-text { display: grid; flex: 1; min-width: 0; gap: 1px; }
+.hv2-next-text small { font-size: 0.76rem; opacity: 0.88; }
+.hv2-next-text b { overflow: hidden; font-size: 0.98rem; white-space: nowrap; text-overflow: ellipsis; }
+.hv2-next-go { display: grid; place-items: center; width: 34px; height: 34px; flex: 0 0 auto; border-radius: 50%; background: rgba(255, 255, 255, 0.25); }
+.hv2-next-go svg { width: 18px; height: 18px; }
+
+/* cards */
+.hv2-card { padding: 14px 16px; border-radius: 24px; background: var(--hv-card); box-shadow: var(--hv-shadow); }
+.hv2-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.hv2-label { font-size: 0.9rem; font-weight: 700; }
+.hv2-chip { padding: 4px 11px; border-radius: 999px; font-size: 0.76rem; font-weight: 700; color: var(--hv-blue) !important; background: var(--hv-blue-bg); }
+:root:not([data-theme="light"]) .hv2-chip { color: var(--hv-acc-ink) !important; background: var(--hv-soft); }
+.hv2-amount { margin: 6px 0 8px; font-size: 1.85rem; font-weight: 600; letter-spacing: -0.02em; }
+.hv2-amount.is-neg { color: #e0475f; }
+.hv2-bar { height: 8px; overflow: hidden; border-radius: 99px; background: var(--hv-soft); }
+.hv2-bar i { display: block; height: 100%; border-radius: 99px; background: var(--hv-grad); }
+.hv2-legend { display: flex; justify-content: space-between; gap: 6px; margin-top: 8px; font-size: 0.78rem; color: var(--hv-ink2); }
+.hv2-legend b { font-weight: 600; color: var(--hv-ink); }
+.hv2-wait { display: flex; align-items: center; gap: 10px; width: 100%; margin-top: 12px; padding: 8px 8px 8px 10px; text-align: left; border: 0; border-radius: 16px; background: var(--hv-soft); cursor: pointer; }
+.hv2-wait b { flex: 1; min-width: 0; overflow: hidden; font-size: 0.84rem; white-space: nowrap; text-overflow: ellipsis; }
+.hv2-count { display: grid; place-items: center; min-width: 26px; height: 26px; border-radius: 999px; font-size: 0.78rem; font-weight: 700; color: var(--hv-amber); background: var(--hv-amber-bg); }
+.hv2-pill { padding: 7px 16px; border-radius: 999px; font-size: 0.8rem; font-weight: 700; color: var(--hv-on); background: var(--hv-grad); }
+
+/* quick actions */
+.hv2-quick { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 2px 0; }
+.hv2-q { display: grid; justify-items: center; gap: 6px; padding: 0; border: 0; background: none; cursor: pointer; }
+.hv2-q i { display: grid; place-items: center; width: 58px; height: 58px; border-radius: 20px; background: var(--hv-card); box-shadow: var(--hv-shadow); }
+.hv2-q i svg { width: 24px; height: 24px; }
+.hv2-q span { font-size: 0.76rem; font-weight: 600; }
+.hv2-q-a { color: var(--hv-blue); } .hv2-q-b { color: var(--hv-green); } .hv2-q-c { color: var(--hv-violet); } .hv2-q-d { color: var(--hv-amber); }
+:root:not([data-theme="light"]) .hv2-q-a { color: var(--hv-acc-ink); }
+
+/* section titles */
+.hv2-sec { display: flex; align-items: baseline; justify-content: space-between; margin: 6px 2px -4px; }
+.hv2-sec b { font-size: 0.95rem; font-weight: 700; }
+.hv2-sec a, .hv2-link { padding: 0; border: 0; font-size: 0.8rem; color: var(--hv-acc-ink) !important; background: none; cursor: pointer; }
+
+/* schedule timeline */
+.hv2-tl { padding-top: 6px; padding-bottom: 6px; }
+.hv2-tl-row { display: flex; align-items: center; gap: 12px; padding: 9px 0; border-top: 1px solid var(--hv-line); }
+.hv2-tl-row:first-child { border-top: 0; }
+.hv2-tl-time { width: 58px; flex: 0 0 auto; font-size: 0.8rem; font-weight: 600; white-space: nowrap; color: var(--hv-ink2); }
+.hv2-dot { width: 10px; height: 10px; flex: 0 0 auto; border-radius: 50%; }
+.hv2-dot.is-blue { background: #3b82f6; } .hv2-dot.is-green { background: #22a565; } .hv2-dot.is-violet { background: #7c5ce0; } .hv2-dot.is-amber { background: #f59e0b; }
+.hv2-tl-text { display: grid; flex: 1; min-width: 0; }
+.hv2-tl-text b { overflow: hidden; font-size: 0.88rem; white-space: nowrap; text-overflow: ellipsis; }
+.hv2-tl-text small { font-size: 0.76rem; color: var(--hv-ink2); }
+.hv2-tag { flex: 0 0 auto; padding: 3px 9px; border-radius: 999px; font-size: 0.72rem; font-weight: 700; }
+.hv2-tag.is-blue { color: var(--hv-blue); background: var(--hv-blue-bg); } .hv2-tag.is-green { color: var(--hv-green); background: var(--hv-green-bg); }
+.hv2-tag.is-violet { color: var(--hv-violet); background: var(--hv-violet-bg); } .hv2-tag.is-amber { color: var(--hv-amber); background: var(--hv-amber-bg); }
+.hv2-empty { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 0; border: 0; font-size: 0.85rem; color: var(--hv-ink2); background: none; cursor: pointer; }
+.hv2-empty svg { width: 22px; height: 22px; color: var(--hv-acc-ink); }
+
+/* daily focus */
+.hv2-focus { display: flex; align-items: center; gap: 14px; }
+.hv2-ring { --p: 0; display: grid; place-items: center; width: 72px; height: 72px; flex: 0 0 auto; border-radius: 50%; background: conic-gradient(var(--hv-acc) calc(var(--p) * 360deg), var(--hv-soft) 0); transition: background 300ms ease; }
+.hv2-ring .focus-count { display: grid; place-items: center; width: 54px; height: 54px; border-radius: 50%; font-size: 0.95rem; font-weight: 600; background: var(--hv-card); }
+.hv2-checks { display: grid; flex: 1; gap: 6px; min-width: 0; margin: 0; padding: 0; list-style: none; }
+.hv2-checks label { display: flex; align-items: center; gap: 9px; min-height: 30px; font-size: 0.86rem; cursor: pointer; }
+.hv2-checks input { position: absolute; opacity: 0; pointer-events: none; }
+.hv2-box { display: grid; place-items: center; width: 21px; height: 21px; flex: 0 0 auto; border-radius: 7px; border: 2px solid var(--hv-line); }
+.hv2-checks input:checked + .hv2-box { border-color: transparent; background: var(--hv-grad); }
+.hv2-checks input:checked + .hv2-box::after { content: ""; width: 9px; height: 5px; margin-top: -2px; border-left: 2px solid var(--hv-on); border-bottom: 2px solid var(--hv-on); transform: rotate(-45deg); }
+.hv2-checks input:focus-visible + .hv2-box { outline: 2px solid var(--hv-acc); outline-offset: 2px; }
+.hv2-checks .done .focus-text { color: var(--hv-ink2); text-decoration: line-through; }
+
+/* mood */
+.hv2-mood { display: flex; justify-content: space-between; gap: 6px; }
+.hv2-mood-btn { display: grid; justify-items: center; gap: 3px; flex: 1; padding: 8px 0 6px; border: 0; border-radius: 18px; background: var(--hv-soft); cursor: pointer; transition: transform 160ms ease; }
+.hv2-mood-btn span { font-size: 1.5rem; line-height: 1; }
+.hv2-mood-btn small { font-size: 0.68rem; color: var(--hv-ink2); }
+.hv2-mood-btn.is-on { background: var(--hv-grad); box-shadow: var(--hv-glow); }
+.hv2-mood-btn.is-on small { color: var(--hv-on); }
+.hv2-mood-btn:active { transform: scale(0.94); }
+
+/* reflection */
+.hv2-reflect summary { display: flex; align-items: baseline; justify-content: space-between; list-style: none; cursor: pointer; }
+.hv2-reflect summary::-webkit-details-marker { display: none; }
+.hv2-reflect summary small { font-size: 0.78rem; color: var(--hv-ink2); }
+.hv2-reflect textarea { width: 100%; min-height: 96px; margin: 12px 0 10px; padding: 12px; border: 1px solid var(--hv-line); border-radius: 16px; font: inherit; font-size: 16px; color: var(--hv-ink); background: var(--hv-soft); resize: vertical; }
+
+/* smart summary */
+.hv2-summary { display: flex; align-items: center; gap: 12px; }
+.hv2-summary > span:nth-child(2) { display: grid; flex: 1; }
+.hv2-summary b { font-size: 0.9rem; }
+.hv2-summary small { font-size: 0.76rem; color: var(--hv-ink2); }
+.hv2-summary > svg { width: 18px; height: 18px; color: var(--hv-ink2); }
+.hv2-summary-icon { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 13px; color: var(--hv-acc-ink); background: var(--hv-soft); }
+.hv2-summary-icon svg { width: 20px; height: 20px; }
+
+/* the memories teaser keeps its own style, only the card colours follow the theme */
+.hv2 .mf-teaser { margin: 0; border-radius: 24px; background: var(--hv-card) !important; box-shadow: var(--hv-shadow) !important; }
+
+@media (min-width: 900px) {
+  .hv2 { max-width: 760px; margin: 0 auto; }
+  .hv2-title h1 { font-size: 1.8rem; }
+}
+@media (prefers-reduced-motion: reduce) { .hv2-mood-btn, .hv2-ring { transition: none; } }
+
+/* reuse focus-card / progress-fill / focus-item hooks (FocusEditor) without their old look */
+.hv2 .hv2-focus.focus-card { display: flex; gap: 14px; padding: 14px 16px !important; border: 0 !important; background: var(--hv-card) !important; box-shadow: var(--hv-shadow) !important; }
+.hv2 .hv2-ring.progress-fill { width: 72px !important; height: 72px !important; border-radius: 50% !important; background: conic-gradient(var(--hv-acc) calc(var(--p, 0) * 360deg), var(--hv-soft) 0) !important; animation: none !important; }
+.hv2 .focus-list { gap: 6px; }
+.hv2 .focus-item, .hv2 .focus-item.done { padding: 0 !important; border: 0 !important; background: none !important; color: var(--hv-ink) !important; box-shadow: none !important; }
+.hv2 .focus-item.done span { text-decoration: none; opacity: 1; }
+.hv2 .focus-item.done .focus-text { color: var(--hv-ink2); text-decoration: line-through; }
+.hv2 .focus-text { font-size: 0.86rem; font-weight: 500; }
+.hv2 .focus-item input { width: 1px !important; height: 1px !important; }
+.hv2 .mf-teaser-head strong { color: var(--hv-ink) !important; }
+.hv2 .mf-teaser-head span { color: var(--hv-acc-ink) !important; }
+.hv2 .mf-teaser .secondary { color: var(--hv-ink2) !important; }
