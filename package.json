@@ -8,6 +8,7 @@
     "start": "node tools/local-server.js",
     "serve": "node tools/local-server.js",
     "verify:sync": "node tools/verify-sync.js",
+    "bump": "node tools/bump-versions.js",
     "mobile:sync": "node tools/copy-web.js && npx cap sync",
     "mobile:add:android": "node tools/copy-web.js && npx cap add android",
     "mobile:add:ios": "node tools/copy-web.js && npx cap add ios",

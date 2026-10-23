@@ -16,6 +16,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci --no-audit --no-fund
+      - name: file versions (?v=) match the files
+        run: node tools/bump-versions.js --check
       - name: tools/verify-*.js
         run: |
           fail=0
