@@ -517,3 +517,31 @@ body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; 
 :root[data-theme="light"]:root .family-profile-stats > div,
 :root[data-theme="light"]:root .family-profile-stats > a { background: #fff !important; border-color: var(--sky-line) !important; }
 :root[data-theme="light"]:root .family-profile-stats strong { color: var(--sky-ink) !important; }
+
+/* ---- welcome / log in (light): sky blue instead of lime green ---- */
+:root[data-theme="light"] #loginModal.login-modal { background: linear-gradient(170deg, #cfe3ff 0%, #e8f1ff 55%, #f4f8ff 100%) !important; box-shadow: 0 30px 70px rgba(15, 27, 51, 0.3) !important; }
+:root[data-theme="light"] #loginModal .login-blob-a { background: #5aa2ff !important; opacity: 0.45 !important; }
+:root[data-theme="light"] #loginModal .login-blob-b { background: #c9dcff !important; opacity: 0.8 !important; }
+:root[data-theme="light"] #loginModal .login-blob-c { background: #a9cbff !important; opacity: 0.55 !important; }
+:root[data-theme="light"] #loginModal .login-brand strong em { color: #2f7bf5 !important; }
+:root[data-theme="light"] #loginModal .login-brand small,
+:root[data-theme="light"] #loginModal .login-header p,
+:root[data-theme="light"] #loginModal .login-footer p { color: #5b6b85 !important; }
+:root[data-theme="light"] #loginModal .login-glass { border-color: rgba(255, 255, 255, 0.95) !important; background: rgba(255, 255, 255, 0.8) !important; box-shadow: 0 10px 30px rgba(37, 99, 235, 0.1) !important; }
+:root[data-theme="light"] #loginModal .login-input-group label,
+:root[data-theme="light"] #loginModal .login-remember { color: #33425c !important; }
+:root[data-theme="light"] #loginModal .login-field-icon,
+:root[data-theme="light"] #loginModal .login-eye { color: #6b7c99 !important; }
+:root[data-theme="light"] #loginModal .login-field input { border-color: #dbe7fb !important; background: #ffffff !important; }
+:root[data-theme="light"] #loginModal .login-field input:focus { border-color: #5aa2ff !important; box-shadow: 0 0 0 3px rgba(90, 162, 255, 0.28) !important; }
+:root[data-theme="light"] #loginModal .login-eye.is-on { color: #1d4ed8 !important; background: #e6f0ff !important; }
+:root[data-theme="light"] #loginModal .login-remember input { background: #cfdcf0 !important; }
+:root[data-theme="light"] #loginModal .login-remember input:checked { background: #3b82f6 !important; }
+:root[data-theme="light"] #loginModal .login-remember input:checked::after { background: #ffffff !important; }
+:root[data-theme="light"] #loginModal .login-remember-row .login-reset-link { color: #1d4ed8 !important; }
+:root[data-theme="light"] #loginModal .login-button { color: #ffffff !important; background: linear-gradient(120deg, #5aa2ff, #2f7bf5) !important; box-shadow: 0 10px 22px rgba(47, 123, 245, 0.3) !important; }
+:root[data-theme="light"] #loginModal .login-button:hover { background: linear-gradient(120deg, #4b95f8, #2369e0) !important; }
+:root[data-theme="light"] #loginModal .login-google-button { border-color: #dbe7fb !important; background: #ffffff !important; color: #0f1b33 !important; }
+:root[data-theme="light"] #loginModal .login-guest-button { border-color: #cfdcf0 !important; background: rgba(255, 255, 255, 0.7) !important; }
+:root[data-theme="light"] #loginModal .login-or { color: #6b7c99 !important; }
+:root[data-theme="light"] #loginModal .login-or::before, :root[data-theme="light"] #loginModal .login-or::after { background: rgba(15, 27, 51, 0.12) !important; }
