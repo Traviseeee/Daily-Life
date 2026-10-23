@@ -28,6 +28,17 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Khmer:wght@400;500;600;700;800&display=swap" onload="this.onload=null;this.rel='stylesheet'">
   <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Khmer:wght@400;500;600;700;800&display=swap" rel="stylesheet"></noscript>
+  <script>
+    // light / dark before the first paint, so the opening screen already has the right colours
+    (function () {
+      var theme = "";
+      try {
+        theme = localStorage.getItem("mylife:theme") || "";
+        if (!theme) { var raw = localStorage.getItem("mylife:user-data:v1") || ""; theme = /"theme"\s*:\s*"dark"/.test(raw) ? "dark" : "light"; }
+      } catch (e) { theme = "light"; }
+      document.documentElement.dataset.theme = theme === "dark" ? "dark" : "light";
+    })();
+  </script>
   <style id="splashStyle">
     /* Opening screen: Day-ring logo draws itself, then fades into the app */
     html { background: #061812; }
@@ -41,6 +52,16 @@
     #mylifeSplash .sp-word b { color: #d9ff7b; font-weight: 800; }
     #mylifeSplash .sp-word span { font-weight: 500; }
     #mylifeSplash .sp-tag { font-size: 13px; letter-spacing: .08em; color: #a9c2b6; opacity: 0; animation: sp-up .5s ease .95s forwards; }
+    /* light mode: sky blue */
+    html[data-theme="light"] { background: #eaf2ff; }
+    html[data-theme="light"] #mylifeSplash { background: radial-gradient(circle 440px at 50% 50%, #ffffff 0, #dbe9ff 100%); color: #0f1b33; }
+    html[data-theme="light"] #mylifeSplash svg { filter: drop-shadow(0 18px 36px rgba(47, 123, 245, .25)); }
+    html[data-theme="light"] #mylifeSplash .sp-bg { fill: #ffffff; }
+    html[data-theme="light"] #mylifeSplash .sp-track { stroke: #dbeafe; }
+    html[data-theme="light"] #mylifeSplash .sp-ring { stroke: #3b82f6; }
+    html[data-theme="light"] #mylifeSplash .sp-dot { fill: #5aa2ff; }
+    html[data-theme="light"] #mylifeSplash .sp-word b { color: #2f7bf5; }
+    html[data-theme="light"] #mylifeSplash .sp-tag { color: #5b6b85; }
     @keyframes sp-draw { to { stroke-dashoffset: 0; } }
     @keyframes sp-pop { to { transform: scale(1); } }
     @keyframes sp-up { to { opacity: 1; transform: none; } }
@@ -132,8 +153,8 @@
 <body>
   <div id="mylifeSplash" role="status" aria-label="MYLIFE">
     <svg viewBox="0 0 240 240" aria-hidden="true">
-      <rect width="240" height="240" rx="56" fill="#0f3326"/>
-      <circle cx="120" cy="120" r="66" fill="none" stroke="#1f4a38" stroke-width="22"/>
+      <rect class="sp-bg" width="240" height="240" rx="56" fill="#0f3326"/>
+      <circle class="sp-track" cx="120" cy="120" r="66" fill="none" stroke="#1f4a38" stroke-width="22"/>
       <circle class="sp-ring" cx="120" cy="120" r="66" fill="none" stroke="#d9ff7b" stroke-width="22" stroke-linecap="round" transform="rotate(-90 120 120)"/>
       <circle class="sp-dot" cx="120" cy="120" r="20" fill="#9ef06a"/>
     </svg>
@@ -264,7 +285,7 @@
   <script src="js/setup-form-ux.js?v=a9b864aa" defer></script>
   <script src="js/notification-center.js?v=824acab1" defer></script>
   <script src="js/topbar-weather.js?v=309508d7" defer></script>
-  <script src="js/app.js?v=b1c5be9f" defer></script>
+  <script src="js/app.js?v=996d380f" defer></script>
   <script src="js/sound-hooks.js?v=8edca574" defer></script>
   <script src="js/smart-parse.js?v=270f2d40" defer></script>
   <script src="js/ai-assist.js?v=42e69657" defer></script>

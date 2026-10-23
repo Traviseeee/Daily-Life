@@ -713,6 +713,8 @@ const App = {
   renderTheme() {
     const theme = appData.profile.theme === "light" ? "light" : "dark";
     document.documentElement.dataset.theme = theme;
+    // small copy for the opening screen (index.html reads it before the app loads)
+    try { localStorage.setItem("mylife:theme", theme); } catch (error) { /* ignore */ }
   },
   renderSmartAssistant() {
     const button = document.getElementById("smartAssistantButton");
