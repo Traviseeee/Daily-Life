@@ -1,0 +1,93 @@
+/* Accessibility fixes from docs/ui-audit-2026-10-23.md (ui-ux-pro-max rules).
+   Loaded last. The phone layout does not move: tap areas grow with an invisible
+   ::after, colours and font sizes change only where the audit measured a problem. */
+
+/* ---------- 2. touch: every small control gets a 44×44 tap area ---------- */
+:where(.button, .icon-button, .money-period-kind, .tabs .tab, .nfc-tab, .tdx-tab, .mf-view, .mf-icon, .mf-act,
+  .family-missing-chip, .money-smart-bill-state, .qx-more, .suggestion-button, .home-agenda-view,
+  .td-link, a.pill, .financial-nav-toggle, .goals-nav-toggle, .ms-scan-link, .money-smart-row-copy) {
+  position: relative;
+}
+.button::after, .icon-button::after, .money-period-kind::after, .tabs .tab::after, .nfc-tab::after, .tdx-tab::after,
+.mf-view::after, .mf-icon::after, .mf-act::after, .family-missing-chip::after, .money-smart-bill-state::after,
+.qx-more::after, .suggestion-button::after, .home-agenda-view::after, .td-link::after, a.pill::after,
+.financial-nav-toggle::after, .goals-nav-toggle::after, .ms-scan-link::after, .money-smart-row-copy::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: max(100%, 44px);
+  height: max(100%, 44px);
+  transform: translate(-50%, -50%);
+}
+/* links / fields that are only a line of text tall */
+.settings-preference-row a { display: inline-block; padding: 12px 0; margin: -12px 0; }
+.mf-search { min-height: 44px; }
+.settings-preference-row input[type="range"] { min-height: 32px; }
+.settings-preference-row select { min-height: 44px; }
+
+/* ---------- 1. readable colours ---------- */
+/* "Up next" label: dark text on the lime pill (was near-white) */
+.td-next .td-next-label { color: #142a04 !important; }
+/* family avatar letters: dark ink on the bright person colours (was white, ~2.4:1) */
+.fam-av:not(.fam-av-me):not(.fam-av-add) .fam-av-face { color: #10201a; }
+/* light mode: grey helper text was too pale on the paper background */
+:root[data-theme="light"] { --lm-ink-3: #676a75; --text-muted: #676a75; }
+:root[data-theme="light"] .nc-root { --nc-text-3: #676a75; }
+:root[data-theme="light"] .eyebrow { color: #5d606c; }
+:root[data-theme="light"] .home-agenda-stat span { color: #5d606c; }
+:root[data-theme="light"] .calendar-grid .day.weekend strong { color: #c0264a; }
+:root[data-theme="light"] .nfc-sum { color: #1d7a3a; }
+/* person avatars with a white letter on a mid colour: darker ring colour behind the letter */
+.family-profile-avatar { background-color: #4a7a55; }
+:root[data-theme="light"] .home-agenda-item-copy small,
+:root[data-theme="light"] .home-agenda-item-date small,
+:root[data-theme="light"] .home-smart-list-row small,
+:root[data-theme="light"] .home-smart-list-row > a > small,
+:root[data-theme="light"] .home-smart-summary-link small { color: #5d606c; }
+:root[data-theme="light"] .calendar-weekday.weekend { color: #c0264a; }
+
+/* ---------- 1. keyboard focus stays visible ---------- */
+:where(input, select, textarea, button, a, [role="button"]):focus-visible {
+  outline: 2px solid #7cc04a;
+  outline-offset: 2px;
+}
+.mf-search:focus-within { box-shadow: 0 0 0 3px rgba(197, 255, 96, 0.45); }
+
+/* ---------- 6. no text smaller than 12px (Khmer needs the room) ---------- */
+.between > .button, .calendar-weekday strong, .cat-bar span, .cat-row small, .cat-stat span, .cde-time em,
+.fam-av small, .family-missing-chip, .family-profile-category, .family-profile-stats span, .family-profile-stats strong,
+.family-summary-label, .financial-category-chart-center span, .financial-shortcut span, .fpa-copy small,
+.goal-profile-stats span, .goal-profile-stats strong, .home-agenda-view, .home-agenda-eyebrow,
+.home-agenda-item-copy small, .home-agenda-item-copy .money-value, .home-agenda-item-date small, .home-agenda-item-date strong,
+.home-agenda-stat span, .home-challenge-copy p, .home-challenge-label, .home-smart-summary-link small,
+.home-week-day .week-label, .mf-person small, .mm-calc span, .mm-foot-label, .mm-foot .money-value,
+.money-smart-bill-state, .money-smart-row-amount .money-value, .money-smart-row-copy small, .nfc-next-head span,
+.nfc-ma-pill, .nfc-label, .settings-about-version, .settings-accordion-copy small, .settings-meta-item span,
+.settings-preference-row a, .settings-preference-row small, .settings-profile-header .button, .settings-stat-item span,
+.settings-summary-chips span, .td-copy small, .tdx-stat span, .welcome-poster-settings-preview span,
+.xl-group em, .xl-row-copy span, .tdx-tab i {
+  font-size: max(0.75rem, 12px) !important;
+}
+/* the mood dot under each weekday is a symbol, not text: keep it, but not below 12px */
+.home-week-day .week-mood:not(.has-mood) { font-size: 0.75rem !important; }
+
+/* ---------- follow-ups found on the second audit run ---------- */
+/* settings drop-downs: 44px tall, 12px text */
+.settings-accordion-body .settings-preference-row select,
+.settings-preference-row select { min-height: 44px; font-size: max(0.75rem, 12px); }
+/* family profile letter: white on a darker green (light mode) */
+:root[data-theme="light"] .family-profile-card .family-profile-avatar { background: #4a7a55; }
+/* light mode: expense red a little deeper so it reads on white and on pale cards */
+:root[data-theme="light"] :is(.xl-total b, .xl-group > summary b, .xl-row-amount, .xl-recent-note b) { color: #c62a30; }
+:root[data-theme="light"] .family-summary-label,
+:root[data-theme="light"] .fpa-copy small,
+:root[data-theme="light"] .home-hero-copy .eyebrow,
+:root[data-theme="light"] p.secondary { color: #4f525d; }
+/* money summary pills: a bit more ink (was ~4.2:1) */
+.financial-metric-grid .mm-card .mm-pill { color: color-mix(in srgb, var(--mm) 62%, #000000); }
+/* "See all" on the family memories card: lime text is invisible on white */
+:root[data-theme="light"] .mf-teaser-head span { color: #3d6b0d; }
+:root[data-theme="light"] .tdx-stat.is-bad b,
+:root[data-theme="light"] .tdx-stat.is-bad .money-value { color: #c62a30; }
+:root[data-theme="light"] .is-bad .money-value { color: #c62a30; }

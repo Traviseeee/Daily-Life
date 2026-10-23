@@ -59,7 +59,7 @@ function renderCalendar(view = "month") {
     const isSelected = iso === selectedCalendarDate;
     const todayIso = localDateInput();
     const dayState = iso ? `${iso === todayIso ? "is-today" : iso < todayIso ? "is-past" : ""} ${events.length ? "has-items" : "no-items"}` : "";
-    return `<button class="day ${iso ? "has-date" : "empty-day"} ${dayState} ${isWeekend ? "weekend" : ""} ${holiday ? "public-holiday" : ""} ${isSelected ? "selected-day" : ""}" type="button" ${iso ? `data-calendar-date="${iso}"` : "disabled"} aria-pressed="${isSelected}" aria-label="${iso ? formatDate(iso) : ""}"><strong>${iso ? Number(iso.slice(8)) : ""}</strong>${holiday ? `<span class="holiday-label" title="${escapeAttr(holiday.name)}">${languageCode() === "km" ? "ថ្ងៃឈប់សម្រាក" : "Holiday"}</span>` : ""}<span class="calendar-event-indicators">${calendarEventIndicators(events)}</span>${view === "month" ? calendarDots(events, holiday) : ""}</button>`;
+    return `<button class="day ${iso ? "has-date" : "empty-day"} ${dayState} ${isWeekend ? "weekend" : ""} ${holiday ? "public-holiday" : ""} ${isSelected ? "selected-day" : ""}" type="button" ${iso ? `data-calendar-date="${iso}"` : "disabled"} ${iso ? `aria-pressed="${isSelected}" aria-label="${escapeAttr(formatDate(iso))}"` : `aria-hidden="true" tabindex="-1"`}><strong>${iso ? Number(iso.slice(8)) : ""}</strong>${holiday ? `<span class="holiday-label" title="${escapeAttr(holiday.name)}">${languageCode() === "km" ? "ថ្ងៃឈប់សម្រាក" : "Holiday"}</span>` : ""}<span class="calendar-event-indicators">${calendarEventIndicators(events)}</span>${view === "month" ? calendarDots(events, holiday) : ""}</button>`;
   });
 
   const locale = languageCode() === "km" ? "km-KH" : "en-US";

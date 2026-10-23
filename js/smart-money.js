@@ -164,7 +164,7 @@ const SmartMoney = (() => {
             <button type="button" class="qx-currency" data-qx-currency="${currency}">${currency === "KHR" ? "៛" : "$"}</button>
             <input type="number" name="qxAmount" min="0" step="any" inputmode="decimal" placeholder="0" aria-label="${escapeAttr(t("amount"))}">
           </div>
-          <input class="qx-note" type="text" name="qxNote" maxlength="80" placeholder="${km() ? "កំណត់ចំណាំ (មិនចាំបាច់)" : "Note (optional)"}">
+          <input class="qx-note" type="text" name="qxNote" maxlength="80" placeholder="${km() ? "កំណត់ចំណាំ (មិនចាំបាច់)" : "Note (optional)"}" aria-label="${km() ? "កំណត់ចំណាំ" : "Note"}">
           <button class="button qx-add" type="submit">${Icons.plus()} ${km() ? "កត់" : "Add"}</button>
         </div>
       </form>

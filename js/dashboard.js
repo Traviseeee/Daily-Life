@@ -119,7 +119,7 @@ function renderHome() {
       '<article class="glass-card reflection-card">' +
         '<span class="eyebrow">' + t("dailyReflection") + '</span>' +
         '<h2 class="section-title section-title-with-icon"><span class="section-title-icon">' + Icons.quote() + '</span>' + t("dailyReflection") + '</h2>' +
-        '<textarea class="reflection-textarea" placeholder="' + t("reflectionPlaceholder") + '" data-reflection-textarea>' + escapeHtml(reflectionText) + '</textarea>' +
+        '<textarea class="reflection-textarea" placeholder="' + t("reflectionPlaceholder") + '" aria-label="' + t("reflectionPlaceholder") + '" data-reflection-textarea>' + escapeHtml(reflectionText) + '</textarea>' +
         '<div class="reflection-stats">' +
           '<span class="stat"><strong>' + reflectionText.trim().length + '</strong> ' + t("characters") + '</span>' +
           '<span class="stat"><strong>' + reflectionText.trim().split(/\s+/).filter(Boolean).length + '</strong> ' + t("words") + '</span>' +

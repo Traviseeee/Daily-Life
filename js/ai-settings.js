@@ -21,7 +21,7 @@ function renderAiSettingsSection() {
                 <div class="settings-preference-row ai-key-row">
                   <span><strong>Gemini API key</strong><small><a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> → Create API key</small></span>
                   <form class="ai-key-form" data-ai-key-form autocomplete="off">
-                    <input type="password" name="apiKey" data-ai-key placeholder="${hasKey ? escapeAttr(L("ដាក់ key ថ្មីដើម្បីប្ដូរ", "Paste a new key to replace")) : "AIza…"}" autocomplete="off" spellcheck="false" inputmode="text">
+                    <input type="password" name="apiKey" data-ai-key aria-label="Gemini API key" placeholder="${hasKey ? escapeAttr(L("ដាក់ key ថ្មីដើម្បីប្ដូរ", "Paste a new key to replace")) : "AIza…"}" autocomplete="off" spellcheck="false" inputmode="text">
                     <button class="button" type="submit">${L("រក្សាទុក", "Save")}</button>
                   </form>
                 </div>

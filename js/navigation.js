@@ -64,7 +64,7 @@ function footerRoutes() {
 }
 
 function navLink(route) {
-  return `<a class="nav-item" href="#${route.id}" data-route="${route.id}">${Icons[route.icon]()}<span>${t(route.labelKey || route.id)}</span></a>`;
+  return `<a class="nav-item" href="#${route.id}" data-route="${route.id}" aria-label="${escapeAttr(t(route.labelKey || route.id))}">${Icons[route.icon]()}<span>${t(route.labelKey || route.id)}</span></a>`;
 }
 
 function renderNavigation() {

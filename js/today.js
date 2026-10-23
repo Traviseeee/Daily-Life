@@ -82,9 +82,9 @@ function todayCountdown(time) {
 
 function todayRow(entry, { past = false, next = false } = {}) {
   const action = entry.action === "paid"
-    ? `<button class="td-act td-act-done" type="button" data-td-paid="${escapeAttr(entry.id)}">${Icons.check()}<span>${todayKm() ? "បង់រួច" : "Paid"}</span></button>`
+    ? `<button class="td-act td-act-done" type="button" data-td-paid="${escapeAttr(entry.id)}" aria-label="${todayKm() ? "បង់រួច" : "Paid"}">${Icons.check()}<span>${todayKm() ? "បង់រួច" : "Paid"}</span></button>`
     : entry.action === "done"
-      ? `<button class="td-act td-act-done" type="button" data-td-done="${escapeAttr(entry.id)}">${Icons.check()}<span>${todayKm() ? "រួច" : "Done"}</span></button>`
+      ? `<button class="td-act td-act-done" type="button" data-td-done="${escapeAttr(entry.id)}" aria-label="${todayKm() ? "រួច" : "Done"}">${Icons.check()}<span>${todayKm() ? "រួច" : "Done"}</span></button>`
       : entry.action === "edit"
         ? `<button class="icon-button td-act-icon" type="button" data-edit-event="${escapeAttr(entry.id)}" aria-label="${escapeAttr(t("editEvent"))}">${Icons.edit()}</button>`
         : entry.href ? `<a class="icon-button td-act-icon" href="${entry.href}" aria-label="${escapeAttr(t("view"))}">${Icons.chevron()}</a>` : "";
