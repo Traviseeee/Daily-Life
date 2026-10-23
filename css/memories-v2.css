@@ -1,0 +1,129 @@
+/* MYLIFE Memories V2 (draft 24 Oct 2026, js/memory-feed.js). Dark = green + lime
+ * (default), light = sky blue. Restyles the .mf-* parts inside .mf2 only; the
+ * composer / comments / reels viewer keep css/memory-feed.css.
+ * Not run through tools/build-theme-sky.py. */
+html body .page.mf-page.mf2 {
+  --m2-bg: #0b1712; --m2-card: #122019; --m2-soft: #1a2e24; --m2-line: #1f3329;
+  --m2-ink: #eef6e8; --m2-ink2: #9fb8a9; --m2-ink3: #5f7a6b; --m2-acc: #c5ff60; --m2-acc-ink: #d9ff7b; --m2-on: #142a04;
+  --m2-grad: linear-gradient(120deg, #d9ff7b, #a6e33f);
+  --m2-ring: linear-gradient(135deg, #d9ff7b, #5fd3a0);
+  --m2-hero: radial-gradient(120% 80% at 90% 0, #24452f 0, transparent 60%), linear-gradient(180deg, #143024, #0f2119);
+  --m2-shadow: 0 6px 20px rgba(0, 0, 0, 0.35); --m2-glow: 0 10px 22px rgba(166, 227, 63, 0.22);
+  --m2-like: #ff8fab; --m2-like-bg: rgba(255, 95, 135, 0.15);
+  --mf-card: var(--m2-card); --mf-card-2: var(--m2-soft); --mf-line: var(--m2-line); --mf-ink: var(--m2-ink); --mf-ink-2: var(--m2-ink2); --mf-lime: var(--m2-acc); --mf-lime-2: var(--m2-acc-ink);
+  display: block; width: 100%; max-width: 660px; box-sizing: border-box; margin: 0 auto !important; padding: 0 14px 120px; color: var(--m2-ink);
+}
+html:root[data-theme="light"] body .page.mf-page.mf2 {
+  --m2-bg: #f4f8ff; --m2-card: #ffffff; --m2-soft: #e6f0ff; --m2-line: #e8eef9;
+  --m2-ink: #0f1b33; --m2-ink2: #5b6b85; --m2-ink3: #97a3b8; --m2-acc: #3b82f6; --m2-acc-ink: #1d4ed8; --m2-on: #ffffff;
+  --m2-grad: linear-gradient(120deg, #5aa2ff, #2f7bf5);
+  --m2-ring: linear-gradient(135deg, #ffd36b, #ff7aa8, #7a8bff);
+  --m2-hero: radial-gradient(120% 80% at 90% 0, #9cc6ff 0, transparent 60%), linear-gradient(180deg, #cfe3ff, #eaf2ff);
+  --m2-shadow: 0 6px 20px rgba(37, 99, 235, 0.08); --m2-glow: 0 10px 22px rgba(47, 123, 245, 0.3);
+  --m2-like: #e0245e; --m2-like-bg: #ffe8ee;
+}
+.mf2 * { box-sizing: border-box; }
+.mf2 button, .mf2 a { font: inherit; }
+#app:has(.mf2) { padding-left: 0 !important; padding-right: 0 !important; padding-top: 0 !important; }
+@media (max-width: 900px) {
+  body:has(#app .mf2) .app-main .topbar { display: none !important; }
+}
+:root:not([data-theme="light"]) body:has(#app .mf2) .quick-action-toggle { color: #142a04; border-color: rgba(217, 255, 123, 0.7); background: linear-gradient(135deg, #d9ff7b, #a6e33f); box-shadow: 0 12px 26px rgba(166, 227, 63, 0.3); }
+
+/* ---------- hero: title, 🔍 + ＋, usage, people ---------- */
+.mf2-hero { margin: 0 -14px 14px; padding: calc(env(safe-area-inset-top, 0px) + 16px) 18px 14px; border-radius: 0 0 30px 30px; background: var(--m2-hero); }
+.mf2-top { display: flex; align-items: center; gap: 10px; }
+.mf2-title { flex: 1; min-width: 0; margin: 0; font-size: 1.62rem; font-weight: 800; line-height: 1.35; color: var(--m2-ink); }
+.mf2-ib { display: grid; place-items: center; width: 44px; height: 44px; flex: 0 0 auto; padding: 0; border: 0; border-radius: 50%; color: var(--m2-ink); background: var(--m2-card); box-shadow: var(--m2-shadow); cursor: pointer; }
+.mf2-ib svg { width: 20px; height: 20px; }
+.mf2-ib[aria-pressed="true"] { color: var(--m2-on); background: var(--m2-grad); }
+html body .page.mf2 .mf-add { width: 46px; height: 46px; flex: 0 0 46px; color: var(--m2-on) !important; background: var(--m2-grad) !important; box-shadow: var(--m2-glow) !important; }
+html body .page.mf2 .mf-usage { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 4px 0 0; font-size: 0.8rem; color: var(--m2-ink2); }
+.mf2-bar { width: 72px; height: 5px; overflow: hidden; border-radius: 9px; background: rgba(127, 140, 160, 0.22); }
+.mf2-bar i { display: block; height: 100%; border-radius: inherit; background: var(--m2-acc); }
+
+html body .page.mf2 .mf-people { gap: 12px; margin: 14px 0 0; padding: 4px 2px 2px; }
+html body .page.mf2 .mf-person { width: 66px; color: var(--m2-ink2); text-decoration: none; }
+html body .page.mf2 .mf-person .mf-face { width: 62px; height: 62px; padding: 3px; font-size: 1.05rem; color: var(--m2-ink); background: var(--m2-ring); box-shadow: none !important; }
+html body .page.mf2 .mf-person .mf-face img { border: 3px solid var(--m2-card); border-radius: 50%; }
+html body .page.mf2 .mf-person .mf-face:not(:has(img)) { background: var(--m2-ring); }
+html body .page.mf2 .mf-person .mf-face-all { color: var(--m2-acc-ink); background: var(--m2-ring); }
+html body .page.mf2 .mf-person .mf-face-all svg { box-sizing: content-box; width: 22px; height: 22px; padding: 14px; border: 3px solid var(--m2-card); border-radius: 50%; background: var(--m2-soft); }
+html body .page.mf2 .mf-person:not(.active) .mf-face { filter: saturate(0.85); }
+html body .page.mf2 .mf-person.active .mf-face { filter: none; box-shadow: 0 0 0 2px var(--m2-acc) !important; }
+html body .page.mf2 .mf-person .mf-face { box-shadow: none !important; }
+html body .page.mf2 .mf-share-old { border: 1px dashed var(--m2-acc) !important; }
+html body .page.mf2 .mf-person small { max-width: 66px; font-size: 0.72rem; font-weight: 600; line-height: 1.3; white-space: normal; text-align: center; color: var(--m2-ink2); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+html body .page.mf2 .mf-person.active small { color: var(--m2-ink); font-weight: 700; }
+html body .page.mf2 .mf2-add-person .mf-face { padding: 0; border: 2px dashed var(--m2-ink3); font-size: 1.4rem; font-weight: 400; color: var(--m2-ink2); background: transparent !important; }
+
+/* ---------- on this day ---------- */
+html body .page.mf2 .mf-otd { padding: 10px; border: 0 !important; border-radius: 22px; color: var(--m2-ink); background: var(--m2-card) !important; box-shadow: var(--m2-shadow); }
+html body .page.mf2 .mf-otd-thumb { width: 58px; height: 58px; border-radius: 16px; background: linear-gradient(135deg, #f6c99b, #c97d5a); }
+html body .page.mf2 .mf-otd-text { flex: 1; }
+html body .page.mf2 .mf-otd-text strong { font-size: 0.86rem; }
+html body .page.mf2 .mf-otd-text em { font-size: 0.76rem; color: var(--m2-ink2); }
+.mf2-go { flex: 0 0 auto; font-size: 0.8rem; font-weight: 600; color: var(--m2-acc-ink); }
+
+/* ---------- All / Mine / Family + Feed / Grid / Reels ---------- */
+html body .page.mf2 .mf-scope { border: 0; background: var(--m2-card); box-shadow: var(--m2-shadow); }
+html body .page.mf2 .mf-scope-btn { color: var(--m2-ink2); }
+html body .page.mf2 .mf-scope-btn.active { color: var(--m2-acc-ink) !important; background: var(--m2-soft) !important; box-shadow: none !important; }
+html body .page.mf2 .mf-bar { position: static; display: grid; gap: 10px; margin: 0 0 12px; padding: 0; border-radius: 0; background: transparent !important; -webkit-backdrop-filter: none; backdrop-filter: none; }
+html body .page.mf2 .mf-views { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 4px; background: var(--m2-card); box-shadow: var(--m2-shadow); }
+html body .page.mf2 .mf-view { min-height: 38px; padding: 0 6px; font-weight: 600; color: var(--m2-ink2); }
+html body .page.mf2 .mf-view.active { color: var(--m2-on) !important; background: var(--m2-grad) !important; }
+html body .page.mf2 .mf-search { min-height: 46px; border: 0; background: var(--m2-card); box-shadow: var(--m2-shadow); animation: mf2In 220ms ease both; }
+html body .page.mf2 .mf-search input { color: var(--m2-ink); }
+@keyframes mf2In { from { opacity: 0; transform: translateY(-6px); } }
+
+/* ---------- month line: label left, line right ---------- */
+html body .page.mf2 .mf-month { margin: 6px 4px 10px; font-size: 0.8rem; font-weight: 700; letter-spacing: 0; color: var(--m2-ink2); }
+html body .page.mf2 .mf-month::before { display: none; }
+html body .page.mf2 .mf-month::after { background: var(--m2-line); }
+html body .page.mf2 .mf-month em { font-style: normal; font-weight: 500; color: var(--m2-ink3); }
+
+/* ---------- post: photo inside a rounded card ---------- */
+html body .page.mf2 .mf-feed { gap: 0; }
+html body .page.mf2 .mf-post { margin-bottom: 14px; padding: 10px; border: 0; border-radius: 26px; background: var(--m2-card); box-shadow: var(--m2-shadow); }
+html body .page.mf2 .mf-post-head { padding: 2px 4px 10px; }
+html body .page.mf2 .mf-post-head .mf-face-sm { background: linear-gradient(135deg, #3f8f5b, #2c6e48); }
+html body .page.mf2 .mf-post-who strong { font-size: 0.9rem; font-weight: 700; color: var(--m2-ink); }
+html body .page.mf2 .mf-post-who span { color: var(--m2-ink2); }
+html body .page.mf2 .mf-icon { color: var(--m2-ink3); }
+html body .page.mf2 .mf-car, html body .page.mf2 .mf-textonly { overflow-x: auto; border-radius: 20px; background: var(--m2-soft); }
+html body .page.mf2 .mf-textonly { overflow: hidden; }
+html body .page.mf2 .mf-slide img, html body .page.mf2 .mf-slide video { background: var(--m2-soft); }
+.mf2-media { position: relative; }
+.mf2-count { position: absolute; top: 10px; right: 10px; z-index: 2; padding: 4px 9px; border-radius: 999px; font-size: 0.72rem; font-weight: 600; color: #fff; background: rgba(0, 0, 0, 0.42); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); pointer-events: none; }
+.mf2-loc { position: absolute; left: 10px; bottom: 10px; z-index: 2; max-width: 70%; overflow: hidden; padding: 5px 10px; border-radius: 999px; font-size: 0.74rem; font-weight: 600; white-space: nowrap; text-overflow: ellipsis; color: #0f1b33; background: rgba(255, 255, 255, 0.88); pointer-events: none; }
+html body .page.mf2 .mf-dots i { background: var(--m2-line); }
+html body .page.mf2 .mf-dots i.active { width: 16px; border-radius: 9px; background: var(--m2-acc); transform: none; }
+html body .page.mf2 .mf-actions { gap: 8px; padding: 10px 4px 4px; }
+html body .page.mf2 .mf-act { min-height: 34px; padding: 0 12px; font-size: 0.95rem; color: var(--m2-ink); background: var(--m2-soft); }
+html body .page.mf2 .mf-act b { font-size: 0.8rem; }
+html body .page.mf2 .mf-act.liked { color: var(--m2-like); background: var(--m2-like-bg); }
+html body .page.mf2 .mf-body { padding: 4px 6px 4px; }
+html body .page.mf2 .mf-title, html body .page.mf2 .mf-caption { color: var(--m2-ink); }
+html body .page.mf2 .mf-tags { color: var(--m2-ink2); }
+html body .page.mf2 .mf-tags span { color: var(--m2-acc-ink) !important; background: var(--m2-soft) !important; }
+html body .page.mf2 .mf-last-comment { color: var(--m2-ink2); }
+html body .page.mf2 .mf-last-comment em { color: var(--m2-acc-ink); }
+
+/* ---------- grid: reels row, month groups, newest big ---------- */
+.mf2-reels { display: flex; gap: 8px; margin: 0 -14px 14px; padding: 0 14px 4px; overflow-x: auto; scrollbar-width: none; }
+.mf2-reels::-webkit-scrollbar { display: none; }
+.mf2-reel { position: relative; flex: 0 0 96px; height: 156px; padding: 0; overflow: hidden; border: 0; border-radius: 18px; background: linear-gradient(170deg, #7aa7d4, #2d4a72); cursor: pointer; }
+.mf2-reel img, .mf2-reel video { width: 100%; height: 100%; object-fit: cover; }
+.mf2-reel b { position: absolute; left: 8px; bottom: 8px; display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; font-size: 0.7rem; color: #fff; background: rgba(0, 0, 0, 0.45); }
+html body .page.mf2 .mf-grid { gap: 6px; margin-bottom: 14px; overflow: visible; border-radius: 0; }
+html body .page.mf2 .mf-cell { border-radius: 16px; background: var(--m2-soft); }
+html body .page.mf2 .mf-cell.is-big { grid-column: span 2; grid-row: span 2; }
+html body .page.mf2 .mf-cell-badge { top: 6px; right: 6px; display: grid; place-items: center; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 999px; font-size: 0.68rem; font-weight: 700; text-shadow: none; background: rgba(0, 0, 0, 0.45); }
+
+/* ---------- empty + family share ---------- */
+html body .page.mf2 .mf-empty { border: 0; border-radius: 26px; background: var(--m2-card) !important; box-shadow: var(--m2-shadow); color: var(--m2-ink); }
+html body .page.mf2 .mf-empty .button { color: var(--m2-on) !important; background: var(--m2-grad) !important; }
+html body .page.mf2 .mf-share-old { border-color: var(--m2-acc); color: var(--m2-acc-ink); background: var(--m2-card); }
+
+@media (prefers-reduced-motion: reduce) { .mf2 .mf-search { animation: none; } }

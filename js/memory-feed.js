@@ -22,7 +22,7 @@ const MemoryFeed = (() => {
   const FREE_BYTES = 1024 * 1024 * 1024;
   const KM_MONTHS = ["មករា", "កុម្ភៈ", "មីនា", "មេសា", "ឧសភា", "មិថុនា", "កក្កដា", "សីហា", "កញ្ញា", "តុលា", "វិច្ឆិកា", "ធ្នូ"];
 
-  const state = { view: "feed", person: "", search: "", limit: PAGE, scope: "all" };
+  const state = { view: "feed", person: "", search: "", limit: PAGE, scope: "all", searchOpen: false };
   let familySig = "";
   const signed = new Map(); // path → { url, exp }
   let observer = null;
@@ -159,19 +159,20 @@ const MemoryFeed = (() => {
     const used = usedBytes();
     const videoCount = allPosts().filter(isVideoPost).length;
     return `
-      <section class="page mf-page">
-        <div class="page-header mf-head">
-          <div>
-            <h1 class="page-title page-title-with-icon"><span class="page-title-icon">${Icons.memory()}</span>${t("memories")}</h1>
-            <p class="page-subtitle mf-usage">📦 ${escapeHtml(mb(used))} / 1 GB · ${(appData.memories || []).length} ${L("អនុស្សាវរីយ៍", "memories")}</p>
+      <section class="page mf-page mf2">
+        <header class="mf2-hero">
+          <div class="mf2-top">
+            <h1 class="mf2-title">${t("memories")}</h1>
+            <button class="mf2-ib" type="button" data-mf2-search aria-pressed="${state.searchOpen || state.search ? "true" : "false"}" aria-label="${escapeAttr(L("ស្វែងរក", "Search"))}">${Icons.search()}</button>
+            <button class="mf-add" type="button" data-mf-new aria-label="${escapeAttr(L("Post ថ្មី", "New post"))}" title="${escapeAttr(L("Post ថ្មី", "New post"))}">${Icons.plus()}</button>
           </div>
-          <button class="mf-add" type="button" data-mf-new aria-label="${escapeAttr(L("Post ថ្មី", "New post"))}" title="${escapeAttr(L("Post ថ្មី", "New post"))}">${Icons.plus()}</button>
-        </div>
-
-        ${people.length ? `<div class="mf-people" role="list">
-          <button type="button" class="mf-person ${state.person ? "" : "active"}" data-mf-person=""><span class="mf-face mf-face-all">${Icons.family()}</span><small>${escapeHtml(L("ទាំងអស់", "All"))}</small></button>
-          ${people.map(member => `<button type="button" class="mf-person ${state.person === member.id ? "active" : ""}" data-mf-person="${escapeAttr(member.id)}">${avatar(member)}<small>${escapeHtml(member.name)}</small></button>`).join("")}
-        </div>` : ""}
+          <p class="mf-usage">📦 ${(appData.memories || []).length} ${L("អនុស្សាវរីយ៍", "memories")} · ${escapeHtml(mb(used))} / 1 GB <span class="mf2-bar"><i style="width:${Math.max(2, Math.min(100, used / (1024 * 1024 * 1024) * 100)).toFixed(1)}%"></i></span></p>
+          <div class="mf-people" role="list">
+            <button type="button" class="mf-person ${state.person ? "" : "active"}" data-mf-person=""><span class="mf-face mf-face-all">${Icons.family()}</span><small>${escapeHtml(L("ទាំងអស់", "All"))}</small></button>
+            ${people.map(member => `<button type="button" class="mf-person ${state.person === member.id ? "active" : ""}" data-mf-person="${escapeAttr(member.id)}">${avatar(member)}<small>${escapeHtml(member.name)}</small></button>`).join("")}
+            <a class="mf-person mf2-add-person" href="#family"><span class="mf-face">＋</span><small>${escapeHtml(L("បន្ថែម", "Add"))}</small></a>
+          </div>
+        </header>
 
         ${scopeHtml()}
 
@@ -181,7 +182,7 @@ const MemoryFeed = (() => {
           <div class="mf-views" role="tablist">
             ${[["feed", L("Feed", "Feed")], ["grid", L("Grid", "Grid")], ["reels", `Reels${videoCount ? ` · ${videoCount}` : ""}`]].map(([id, label]) => `<button type="button" role="tab" class="mf-view ${state.view === id ? "active" : ""}" data-mf-view="${id}" aria-selected="${state.view === id}">${escapeHtml(label)}</button>`).join("")}
           </div>
-          <label class="mf-search"><span aria-hidden="true">${Icons.search()}</span><input type="search" data-mf-search value="${escapeAttr(state.search)}" placeholder="${escapeAttr(L("ស្វែងរក…", "Search…"))}"></label>
+          ${state.searchOpen || state.search ? `<label class="mf-search"><span aria-hidden="true">${Icons.search()}</span><input type="search" data-mf-search value="${escapeAttr(state.search)}" placeholder="${escapeAttr(L("ស្វែងរក…", "Search…"))}"></label>` : ""}
         </div>
 
         ${posts.length ? (state.view === "grid" ? gridHtml(posts) : `<div class="mf-feed" data-mf-feed>${feedHtml(posts, 0, state.limit)}</div>${posts.length > state.limit ? `<div class="mf-more" data-mf-more>${L("កំពុងផ្ទុក…", "Loading…")}</div>` : ""}`) : emptyHtml()}
@@ -218,14 +219,20 @@ const MemoryFeed = (() => {
     return `<button type="button" class="mf-otd" data-mf-jump="${escapeAttr(first.id)}">
       <span class="mf-otd-thumb mf-media-box">${item ? mediaTag(item, { thumb: true }) : "📅"}</span>
       <span class="mf-otd-text"><strong>📅 ${escapeHtml(L(`${years} ឆ្នាំមុន ថ្ងៃនេះ`, `${years} year${years > 1 ? "s" : ""} ago today`))}</strong><em>${escapeHtml(first.title || first.description || first.location || formatDate(first.date))}${matches.length > 1 ? ` · +${matches.length - 1}` : ""}</em></span>
+      <span class="mf2-go">${escapeHtml(L("មើល ›", "View ›"))}</span>
     </button>`;
+  }
+
+  function monthCount(posts, key) {
+    const n = posts.filter(memory => String(memory.date || "").slice(0, 7) === key).length;
+    return `<em>· ${n} ${L("ប៉ុស្ត៍", n === 1 ? "post" : "posts")}</em>`;
   }
 
   function feedHtml(posts, from, to, previousMonth = "") {
     let month = previousMonth || (from > 0 ? String(posts[from - 1]?.date || "").slice(0, 7) : "");
     return posts.slice(from, to).map(memory => {
       const key = String(memory.date || "").slice(0, 7);
-      const divider = key !== month ? `<div class="mf-month"><span>${escapeHtml(monthLabel(memory.date))}</span></div>` : "";
+      const divider = key !== month ? `<div class="mf-month"><span>${escapeHtml(monthLabel(memory.date))} ${monthCount(posts, key)}</span></div>` : "";
       month = key;
       return divider + postHtml(memory);
     }).join("");
@@ -255,9 +262,13 @@ const MemoryFeed = (() => {
           <button class="mf-icon" type="button" data-mf-menu="${escapeAttr(memory.id)}" aria-label="${escapeAttr(L("ជម្រើស", "Options"))}">⋯</button>
         </header>
         ${media.length ? `
+          <div class="mf2-media">
           <div class="mf-car mf-media-box" data-mf-car>
             ${media.map(item => `<div class="mf-slide" data-mf-tap>${mediaTag(item)}</div>`).join("")}
             <span class="mf-heart" aria-hidden="true">❤️</span>
+          </div>
+            ${media.length > 1 ? `<span class="mf2-count" data-mf2-count>1/${media.length}</span>` : ""}
+            ${memory.location ? `<span class="mf2-loc">📍 ${escapeHtml(memory.location)}</span>` : ""}
           </div>
           ${media.length > 1 ? `<div class="mf-dots">${media.map((_, index) => `<i class="${index === 0 ? "active" : ""}"></i>`).join("")}</div>` : ""}
         ` : `<div class="mf-textonly" data-mf-tap style="background:${typeof memoryGradient === "function" ? memoryGradient(memory.id) : "#16241b"}"><span>${escapeHtml(memory.title || memory.description || "")}</span><span class="mf-heart" aria-hidden="true">❤️</span></div>`}
@@ -274,15 +285,31 @@ const MemoryFeed = (() => {
       </article>`;
   }
 
-  function gridHtml(posts) {
-    return `<div class="mf-grid">${posts.map(memory => {
-      const media = mediaOf(memory);
-      const item = media[0];
-      return `<button type="button" class="mf-cell mf-media-box" data-mf-jump="${escapeAttr(memory.id)}" aria-label="${escapeAttr(memory.title || memory.description || formatDate(memory.date))}">
+  function gridCell(memory, big) {
+    const media = mediaOf(memory);
+    const item = media[0];
+    return `<button type="button" class="mf-cell mf-media-box${big ? " is-big" : ""}" data-mf-jump="${escapeAttr(memory.id)}" aria-label="${escapeAttr(memory.title || memory.description || formatDate(memory.date))}">
         ${item ? mediaTag(item, { thumb: true }) : `<span class="mf-noimg">${escapeHtml(initials(memory.title || "★"))}</span>`}
-        ${isVideoPost(memory) ? `<span class="mf-cell-badge">▶</span>` : media.length > 1 ? `<span class="mf-cell-badge">⧉</span>` : ""}
+        ${isVideoPost(memory) ? `<span class="mf-cell-badge">▶</span>` : media.length > 1 ? `<span class="mf-cell-badge">${media.length}</span>` : ""}
       </button>`;
-    }).join("")}</div>`;
+  }
+
+  function gridHtml(posts) {
+    const videos = posts.filter(isVideoPost);
+    const reels = videos.length ? `<div class="mf-month"><span>Reels <em>· ${videos.length} ${L("វីដេអូ", videos.length === 1 ? "video" : "videos")}</em></span></div>
+      <div class="mf2-reels">${videos.slice(0, 12).map(memory => {
+        const item = mediaOf(memory)[0];
+        return `<button type="button" class="mf2-reel mf-media-box" data-mf2-reel="${escapeAttr(memory.id)}" aria-label="Reel">${item ? mediaTag(item, { thumb: true }) : ""}<b>▶</b></button>`;
+      }).join("")}</div>` : "";
+    const groups = [];
+    posts.forEach(memory => {
+      const key = String(memory.date || "").slice(0, 7);
+      const last = groups[groups.length - 1];
+      if (last && last.key === key) last.items.push(memory);
+      else groups.push({ key, date: memory.date, items: [memory] });
+    });
+    return reels + groups.map(group => `<div class="mf-month"><span>${escapeHtml(monthLabel(group.date))} <em>· ${group.items.length}</em></span></div>
+      <div class="mf-grid">${group.items.map((memory, index) => gridCell(memory, index === 0 && group.items.length >= 3)).join("")}</div>`).join("");
   }
 
   /* ---------- binding ---------- */
@@ -312,6 +339,13 @@ const MemoryFeed = (() => {
         if (input) { input.focus(); try { input.setSelectionRange(caret, caret); } catch (error) { /* ignore */ } }
       }, 250);
     });
+    page.querySelector("[data-mf2-search]")?.addEventListener("click", () => {
+      state.searchOpen = !(state.searchOpen || state.search);
+      if (!state.searchOpen) state.search = "";
+      rerender();
+      if (state.searchOpen) document.querySelector("[data-mf-search]")?.focus();
+    });
+    page.querySelectorAll("[data-mf2-reel]").forEach(button => button.addEventListener("click", () => openReels(button.dataset.mf2Reel)));
     page.querySelectorAll("[data-mf-jump]").forEach(button => button.addEventListener("click", () => jumpTo(button.dataset.mfJump)));
     page.querySelectorAll("[data-mf-scope]").forEach(button => button.addEventListener("click", () => {
       state.scope = button.dataset.mfScope;
@@ -335,6 +369,8 @@ const MemoryFeed = (() => {
         car.addEventListener("scroll", () => {
           const index = Math.round(car.scrollLeft / Math.max(1, car.clientWidth));
           dots.forEach((dot, i) => dot.classList.toggle("active", i === index));
+          const count = post.querySelector("[data-mf2-count]");
+          if (count) count.textContent = `${index + 1}/${dots.length}`;
           car.querySelectorAll("video").forEach((video, i) => { if (i !== index) video.pause(); });
         }, { passive: true });
       }
