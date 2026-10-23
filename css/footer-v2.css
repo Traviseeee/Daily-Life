@@ -1,101 +1,93 @@
-/* MYLIFE Footer V2 (draft A, 23 Oct 2026): white/dark floating dock, every tab
- * shows icon + label, the active tab gets a soft pill behind its icon.
- * Keeps the old motion: the pill springs open, the icon hops (navIconHop in
- * motion.css), the press scales down. Phone only (≤900px). Both themes.
- * The F prefix (html:root:root body #mobileNav.mobile-nav) beats the older
+/* MYLIFE Footer V2 — draft C (24 Oct 2026): liquid-glass floating capsule.
+ * Other tabs = icon only; the active tab grows into a coloured pill with its
+ * label (light = sky blue, dark = lime). On tap the pill glides to the new tab
+ * (flex-grow spring), the label slides open, the icon hops (navIconHop in
+ * motion.css). Phone only (≤900px).
+ * The prefix (html:root:root body #mobileNav.mobile-nav) beats the older
  * :root[data-theme]:root #mobileNav rules in theme-sky / responsive. */
 @media (max-width: 900px) {
   html:root:root body #mobileNav.mobile-nav {
-    --f2-card: #121a17;
-    --f2-line: rgba(197, 255, 96, 0.1);
-    --f2-soft: #1f3a2a;
-    --f2-ink: #eef6e8;
-    --f2-ink2: #7f978a;
-    --f2-acc: #c5ff60;
-    --f2-sh: 0 14px 34px rgba(0, 0, 0, 0.5);
+    --f2-glass: rgba(22, 34, 28, 0.58);
+    --f2-line: rgba(255, 255, 255, 0.12);
+    --f2-hi: rgba(255, 255, 255, 0.1);
+    --f2-ink2: #9fb8a9;
+    --f2-grad: linear-gradient(120deg, #d9ff7b, #a6e33f);
+    --f2-on: #142a04;
+    --f2-glow: 0 6px 16px rgba(166, 227, 63, 0.28);
+    --f2-sh: 0 14px 34px rgba(0, 0, 0, 0.45);
     left: calc(12px + env(safe-area-inset-left)) !important;
     right: calc(12px + env(safe-area-inset-right)) !important;
     bottom: calc(10px + env(safe-area-inset-bottom)) !important;
     width: auto !important;
-    max-width: 560px !important;
-    margin: 0 auto;
+    max-width: 520px !important;
+    height: 66px !important;
     min-height: 0 !important;
-    display: grid !important;
-    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+    margin: 0 auto;
+    display: flex !important;
     align-items: center;
-    gap: 0 !important;
-    padding: 7px 4px !important;
+    gap: 2px !important;
+    padding: 6px !important;
     border: 1px solid var(--f2-line) !important;
-    border-radius: 26px !important;
-    background: var(--f2-card) !important;
-    box-shadow: var(--f2-sh) !important;
-    -webkit-backdrop-filter: blur(20px) saturate(1.3);
-    backdrop-filter: blur(20px) saturate(1.3);
+    border-radius: 999px !important;
+    background: var(--f2-glass) !important;
+    box-shadow: var(--f2-sh), inset 0 1px 0 var(--f2-hi) !important;
+    -webkit-backdrop-filter: blur(22px) saturate(1.8) !important;
+    backdrop-filter: blur(22px) saturate(1.8) !important;
     transform: none !important;
     z-index: 40 !important;
   }
   html:root[data-theme="light"]:root body #mobileNav.mobile-nav {
-    --f2-card: #ffffff;
-    --f2-line: rgba(47, 123, 245, 0.08);
-    --f2-soft: #e3eeff;
-    --f2-ink: #0f1b33;
-    --f2-ink2: #7d8ba3;
-    --f2-acc: #2f7bf5;
-    --f2-sh: 0 12px 30px rgba(15, 27, 51, 0.13), 0 2px 6px rgba(15, 27, 51, 0.05);
+    --f2-glass: rgba(255, 255, 255, 0.66);
+    --f2-line: rgba(255, 255, 255, 0.85);
+    --f2-hi: rgba(255, 255, 255, 0.95);
+    --f2-ink2: #5b6b85;
+    --f2-grad: linear-gradient(120deg, #5aa2ff, #2f7bf5);
+    --f2-on: #ffffff;
+    --f2-glow: 0 6px 16px rgba(47, 123, 245, 0.35);
+    --f2-sh: 0 12px 30px rgba(15, 27, 51, 0.14), 0 2px 6px rgba(15, 27, 51, 0.05);
   }
 
   html:root:root body #mobileNav.mobile-nav .nav-item,
   html:root:root body #mobileNav.mobile-nav .nav-item.active {
     position: relative;
-    isolation: isolate;
     display: flex !important;
-    flex-direction: column !important;
+    flex: 1 1 0 !important;
+    flex-direction: row !important;
     align-items: center;
     justify-content: center !important;
-    gap: 3px !important;
+    gap: 0 !important;
     width: auto !important;
-    height: auto !important;
+    height: 54px !important;
     min-width: 0 !important;
-    min-height: 58px !important;
+    min-height: 0 !important;
     aspect-ratio: auto !important;
-    justify-self: stretch !important;
-    padding: 4px 0 3px !important;
+    padding: 0 8px !important;
     border: 0 !important;
-    border-radius: 18px !important;
+    border-radius: 999px !important;
     background: transparent !important;
     box-shadow: none !important;
     color: var(--f2-ink2) !important;
     transform: none;
-    transition: color 220ms var(--ease-out-soft, ease), transform 120ms var(--ease-out-soft, ease);
+    transition: flex-grow 380ms var(--ease-spring, ease), background-color 220ms ease, box-shadow 220ms ease, color 220ms ease, transform 120ms ease !important;
+  }
+  html:root:root body #mobileNav.mobile-nav .nav-item.active {
+    flex-grow: 2.4 !important;
+    gap: 6px !important;
+    color: var(--f2-on) !important;
+    background: var(--f2-grad) !important;
+    box-shadow: var(--f2-glow) !important;
   }
   html:root:root body #mobileNav.mobile-nav .nav-item:hover { background: transparent !important; }
+  html:root:root body #mobileNav.mobile-nav .nav-item.active:hover { background: var(--f2-grad) !important; }
   html:root:root body #mobileNav.mobile-nav .nav-item:active { transform: scale(0.94); }
-
-  /* the pill behind the icon: springs open on the new tab, fades on the old */
-  html:root:root body #mobileNav.mobile-nav .nav-item::before {
-    content: "";
-    position: absolute;
-    top: 3px;
-    left: 50%;
-    z-index: -1;
-    width: 54px;
-    height: 32px;
-    margin-left: -27px;
-    border-radius: 999px;
-    background: var(--f2-soft);
-    opacity: 0;
-    transform: scaleX(0.35);
-    transition: transform 380ms var(--ease-spring, ease), opacity 200ms var(--ease-out-soft, ease);
-    pointer-events: none;
-  }
-  html:root:root body #mobileNav.mobile-nav .nav-item.active::before { opacity: 1; transform: none; }
+  html:root:root body #mobileNav.mobile-nav .nav-item::before,
   html:root:root body #mobileNav.mobile-nav .nav-item::after { display: none !important; }
 
   html:root:root body #mobileNav.mobile-nav .nav-item svg,
   html:root:root body #mobileNav.mobile-nav .nav-item img {
     width: 23px !important;
     height: 23px !important;
-    margin: 7px 0 2px;
+    margin: 0;
     flex: none;
     opacity: 1;
     fill: none !important;
@@ -103,28 +95,29 @@
     stroke: currentColor !important;
   }
   html:root:root body #mobileNav.mobile-nav .nav-item svg * { color: inherit !important; }
-  html:root:root body #mobileNav.mobile-nav .nav-item.active svg { color: var(--f2-acc) !important; }
 
-  html:root:root body #mobileNav.mobile-nav .nav-item span,
-  html:root:root body #mobileNav.mobile-nav .nav-item.active span {
-    display: block !important;
-    max-width: 100% !important;
+  /* label: hidden on the other tabs, slides open on the active one */
+  html:root:root body #mobileNav.mobile-nav .nav-item span {
+    display: inline-block !important;
+    max-width: 0 !important;
     height: auto !important;
     overflow: hidden;
-    opacity: 1 !important;
+    opacity: 0 !important;
     color: inherit !important;
-    font-size: 11px !important;
-    font-weight: 600;
-    line-height: 1.35 !important;
-    text-overflow: ellipsis;
+    font-size: 12.5px !important;
+    font-weight: 700;
+    line-height: 1.3 !important;
     white-space: nowrap;
-    padding: 0 2px;
-    transition: color 220ms var(--ease-out-soft, ease);
+    transition: max-width 320ms ease, opacity 180ms ease !important;
   }
-  html:root:root body #mobileNav.mobile-nav .nav-item.active,
-  html:root:root body #mobileNav.mobile-nav .nav-item.active span { color: var(--f2-ink) !important; font-weight: 700; }
+  html:root:root body #mobileNav.mobile-nav .nav-item.active span {
+    max-width: 8em !important;
+    opacity: 1 !important;
+    transition: max-width 360ms ease 60ms, opacity 240ms ease 120ms !important;
+  }
 
   @media (prefers-reduced-motion: reduce) {
-    html:root:root body #mobileNav.mobile-nav .nav-item::before { transition: none; }
+    html:root:root body #mobileNav.mobile-nav .nav-item,
+    html:root:root body #mobileNav.mobile-nav .nav-item span { transition: none !important; }
   }
 }
