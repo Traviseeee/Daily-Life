@@ -120,30 +120,40 @@ const App = {
     const root = document.getElementById("modalRoot");
     const poster = this.getWelcomePoster();
     const todayItems = this.getTodayWelcomeItems();
+    const isKm = languageCode() === "km";
+    const now = new Date();
+    const hour = now.getHours();
+    const KM_D = ["អាទិត្យ", "ច័ន្ទ", "អង្គារ", "ពុធ", "ព្រហស្បតិ៍", "សុក្រ", "សៅរ៍"];
+    const KM_M = ["មករា", "កុម្ភៈ", "មីនា", "មេសា", "ឧសភា", "មិថុនា", "កក្កដា", "សីហា", "កញ្ញា", "តុលា", "វិច្ឆិកា", "ធ្នូ"];
+    const dateLine = `${isKm ? `${KM_D[now.getDay()]} ${now.getDate()} ${KM_M[now.getMonth()]}` : now.toLocaleDateString("en-US", { weekday: "short", day: "numeric", month: "short" })} · ${hour < 12 ? (isKm ? "អរុណសួស្តី ☀️" : "Good morning ☀️") : hour < 17 ? (isKm ? "ទិវាសួស្តី ☀️" : "Good afternoon ☀️") : (isKm ? "សាយណ្ហសួស្តី 🌙" : "Good evening 🌙")}`;
+    const firstName = String(appData.profile.name || "").trim().split(/\s+/)[0];
+    const dotColor = { event: "#7c83ff", reminder: "#3fd7a4", bill: "#ffad4a", loan: "#ff6b7a" };
+    const timeOf = item => (/^\d{1,2}:\d{2}/.test(item.detail || "") || /[AP]M$/i.test(item.detail || "") ? item.detail : (isKm ? "ថ្ងៃនេះ" : "Today"));
+    const subOf = item => (timeOf(item) === item.detail ? "" : item.detail || "");
+    // Welcome pop-up V2: big family photo with the greeting on it, today's list, countdown bar + enter button
     root.innerHTML = `
-      <section class="welcome-poster-card ${todayItems.length ? "has-agenda" : ""}" role="dialog" aria-modal="true" aria-labelledby="welcomePosterTitle">
-        <button class="welcome-poster-image-wrap" type="button" data-welcome-poster-choose aria-label="${escapeAttr(poster ? t("changePoster") : t("uploadPoster"))}">
-          ${this.welcomePosterImageContent(poster)}
-        </button>
-        <div class="welcome-poster-copy">
-          <span class="eyebrow">MYLIFE</span>
-          <h2 id="welcomePosterTitle">${t("welcomePosterTitle")}</h2>
-          <p>${t("welcomePosterMessage")}</p>
+      <section class="welcome-poster-card wp2 ${poster ? "has-photo" : "no-photo"} ${todayItems.length ? "has-agenda" : ""}" role="dialog" aria-modal="true" aria-labelledby="welcomePosterTitle">
+        <div class="wp2-photo">
+          ${poster ? `<img class="welcome-poster-image" data-welcome-poster-image src="${escapeAttr(poster)}" alt="${escapeAttr(t("familyPoster"))}">` : `<button class="wp2-add" type="button" data-welcome-poster-choose><span aria-hidden="true">♡</span><strong>${t("addPosterPrompt")}</strong></button>`}
+          <button class="wp2-x" type="button" data-wp2-close aria-label="${escapeAttr(t("close"))}">✕</button>
+          <button class="wp2-cam" type="button" data-welcome-poster-choose aria-label="${escapeAttr(poster ? t("changePoster") : t("uploadPoster"))}"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 7.5A1.5 1.5 0 0 1 5.5 6h3l1.25-2h4.5l1.25 2h3A1.5 1.5 0 0 1 20 7.5v10a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5v-10Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><circle cx="12" cy="12.5" r="3.25" stroke="currentColor" stroke-width="1.7"/></svg></button>
+          ${poster ? `<div class="wp2-on"><small>${escapeHtml(dateLine)}</small><h2 id="welcomePosterTitle">${escapeHtml(isKm ? `សួស្តី ${firstName} 👋` : `Hi ${firstName} 👋`)}</h2></div>` : `<h2 id="welcomePosterTitle" class="sr-only">${escapeHtml(isKm ? `សួស្តី ${firstName}` : `Hi ${firstName}`)}</h2>`}
         </div>
-        <section class="welcome-poster-agenda" aria-labelledby="welcomePosterAgendaTitle">
-          <h3 id="welcomePosterAgendaTitle">${t("todayAgenda")}</h3>
-          ${todayItems.length ? `<div class="welcome-poster-agenda-items">${todayItems.map(item => `
-            <a class="welcome-poster-agenda-item" href="${escapeAttr(item.href)}" data-welcome-agenda-route="${escapeAttr(item.href)}">
-              <span class="welcome-poster-agenda-kind">${escapeHtml(item.typeLabel)}</span>
-              <span class="welcome-poster-agenda-title">${escapeHtml(item.title)}</span>
-              ${item.detail ? `<small>${escapeHtml(item.detail)}</small>` : ""}
-              ${Icons.chevron()}
-            </a>
-          `).join("")}</div>` : `<p class="welcome-poster-agenda-empty">${t("todayAgendaEmpty")}</p>`}
-        </section>
-        <div class="welcome-poster-actions">
+        <div class="wp2-body">
+          <div class="wp2-lbl"><span>${t("todayAgenda")}</span>${todayItems.length ? `<b>${todayItems.length}</b>` : ""}</div>
+          ${todayItems.length ? `<div class="wp2-list">${todayItems.slice(0, 4).map(item => `
+            <a class="wp2-it" href="${escapeAttr(item.href)}" data-welcome-agenda-route="${escapeAttr(item.href)}">
+              <span class="wp2-tm">${escapeHtml(timeOf(item))}</span>
+              <i style="background:${dotColor[item.type] || "#5aa9ff"}"></i>
+              <span class="wp2-tx"><b>${escapeHtml(item.title)}</b>${subOf(item) ? `<small>${escapeHtml(subOf(item))}</small>` : ""}</span>
+              <em>${escapeHtml(({ event: isKm ? "ព្រឹត្តិការណ៍" : "Event", reminder: isKm ? "រំលឹក" : "Reminder", bill: isKm ? "វិក្កយបត្រ" : "Bill", loan: isKm ? "កម្ចី" : "Loan" })[item.type] || item.typeLabel)}</em>
+            </a>`).join("")}</div>` : `<p class="wp2-free">${isKm ? "ថ្ងៃនេះទំនេរ 🌿 សម្រាកបន្តិច" : "A free day 🌿 take it easy"}</p>`}
+          <div class="wp2-go">
+            <span class="wp2-bar" aria-hidden="true"><i></i></span>
+            <button class="wp2-btn" type="button" data-wp2-close>${isKm ? "ចូល MYLIFE ›" : "Open MYLIFE ›"}</button>
+          </div>
           <input class="sr-only" data-welcome-poster-input type="file" accept="image/*">
-          <span class="welcome-poster-auto-close" data-welcome-poster-countdown role="timer" aria-live="polite">${t("autoCloseInSeconds", { seconds: 4 })}</span>
+          <span class="sr-only" data-welcome-poster-countdown role="timer" aria-live="polite">${t("autoCloseInSeconds", { seconds: 4 })}</span>
         </div>
       </section>
     `;
@@ -165,6 +175,8 @@ const App = {
       stopAutoClose();
       const deadline = Date.now() + 4000;
       this.welcomePosterTimer = window.setInterval(() => {
+        const bar = root.querySelector(".wp2-bar i");
+        if (bar) bar.style.width = `${Math.max(0, Math.min(100, ((deadline - Date.now()) / 4000) * 100))}%`;
         const remaining = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
         if (remaining > 0) {
           countdown.textContent = t("autoCloseInSeconds", { seconds: remaining });
@@ -176,11 +188,13 @@ const App = {
     root.addEventListener("click", event => {
       if (root.classList.contains("welcome-poster-modal") && !event.target.closest(".welcome-poster-card")) close();
     });
-    root.querySelector("[data-welcome-poster-choose]")?.addEventListener("click", () => {
+    root.querySelectorAll("[data-welcome-poster-choose]").forEach(button => button.addEventListener("click", () => {
       stopAutoClose();
+      root.querySelector(".wp2")?.classList.add("is-paused");
       countdown.textContent = t("posterChooseHint");
       input?.click();
-    });
+    }));
+    root.querySelectorAll("[data-wp2-close]").forEach(button => button.addEventListener("click", close));
     root.querySelectorAll("[data-welcome-agenda-route]").forEach(link => link.addEventListener("click", event => {
       event.preventDefault();
       const route = link.dataset.welcomeAgendaRoute;
@@ -192,18 +206,22 @@ const App = {
       input.value = "";
       const image = await this.saveWelcomePoster(file);
       if (image) {
-        const imageWrap = root.querySelector("[data-welcome-poster-choose]");
-        if (imageWrap) {
-          imageWrap.setAttribute("aria-label", t("changePoster"));
-          imageWrap.innerHTML = this.welcomePosterImageContent(image);
+        // show the new photo in place (the greeting stays the same)
+        const photo = root.querySelector(".wp2-photo");
+        if (photo) {
+          photo.querySelector(".wp2-add")?.remove();
+          let img = photo.querySelector("img.welcome-poster-image");
+          if (!img) { img = document.createElement("img"); img.className = "welcome-poster-image"; img.alt = t("familyPoster"); photo.prepend(img); }
+          img.src = image;
+          root.querySelector(".wp2")?.classList.replace("no-photo", "has-photo");
         }
       }
       startAutoClose();
     });
 
-    input?.addEventListener("cancel", startAutoClose);
+    input?.addEventListener("cancel", () => { root.querySelector(".wp2")?.classList.remove("is-paused"); startAutoClose(); });
     startAutoClose();
-    root.querySelector("[data-welcome-poster-choose]")?.focus({ preventScroll: true });
+    root.querySelector(".wp2-btn")?.focus({ preventScroll: true });
   },
   async saveWelcomePoster(file) {
     if (!file) return "";
