@@ -154,7 +154,7 @@ const FamilyV2 = (() => {
   }
 
   function render() {
-    return `<section class="page family-page fv2">
+    return `<section class="page family-page fam2">
       ${hero()}
       <div class="fv-body">
         ${loveCard()}

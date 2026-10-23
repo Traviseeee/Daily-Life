@@ -1,6 +1,6 @@
 /* MYLIFE Family V2 (js/family-v2.js). Dark = green + lime (default), light = sky blue.
    Not run through tools/build-theme-sky.py: both themes are set here with variables. */
-.fv2 {
+.fam2 {
   --fv-card: #122019; --fv-soft: #1a2e24; --fv-line: #1f3329; --fv-page: #0b1712;
   --fv-ink: #eef6e8; --fv-ink2: #9fb8a9; --fv-acc-ink: #d9ff7b; --fv-on: #142a04;
   --fv-grad: linear-gradient(120deg, #d9ff7b, #a6e33f);
@@ -10,7 +10,7 @@
   --fv-amber-soft: rgba(255, 199, 107, 0.14); --fv-blue-soft: rgba(156, 200, 255, 0.14);
   display: block; width: 100%; max-width: 660px; box-sizing: border-box; margin: 0 auto; padding: 0 0 120px; color: var(--fv-ink);
 }
-:root[data-theme="light"] .fv2 {
+:root[data-theme="light"] .fam2 {
   --fv-card: #ffffff; --fv-soft: #e6f0ff; --fv-line: #e8eef9; --fv-page: #f4f8ff;
   --fv-ink: #0f1b33; --fv-ink2: #5b6b85; --fv-acc-ink: #1d4ed8; --fv-on: #ffffff;
   --fv-grad: linear-gradient(120deg, #5aa2ff, #2f7bf5);
@@ -19,10 +19,10 @@
   --fv-love: linear-gradient(130deg, #ff9cc2, #ff6f9f 55%, #ff8a6b); --fv-love-soft: #ffe8f0; --fv-love-ink: #d9346f;
   --fv-amber-soft: #fff1d6; --fv-blue-soft: #e6f0ff;
 }
-.fv2 * { box-sizing: border-box; }
-.fv2 a { color: inherit; text-decoration: none; }
-.fv2 button { font: inherit; color: inherit; }
-#app:has(.fv2) { padding-left: 0 !important; padding-right: 0 !important; padding-top: 0 !important; }
+.fam2 * { box-sizing: border-box; }
+.fam2 a { color: inherit; text-decoration: none; }
+.fam2 button { font: inherit; color: inherit; }
+#app:has(.fam2) { padding-left: 0 !important; padding-right: 0 !important; padding-top: 0 !important; }
 
 /* top: title, invite, round photos */
 .fv-hero { padding: calc(env(safe-area-inset-top, 0px) + 16px) 18px 16px; border-radius: 0 0 30px 30px; background: var(--fv-hero); }
@@ -81,9 +81,9 @@
 .fv-up-cd small { font-size: 0.68rem; color: var(--fv-ink2); }
 
 /* memories teaser in this page */
-.fv2 .mf-teaser { display: block; margin: 0 0 12px; padding: 14px; border: 0 !important; border-radius: 26px; background: var(--fv-card) !important; box-shadow: var(--fv-shadow) !important; }
-.fv2 .mf-teaser-head strong { color: var(--fv-ink) !important; }
-.fv2 .mf-teaser-head span { color: var(--fv-acc-ink) !important; }
+.fam2 .mf-teaser { display: block; margin: 0 0 12px; padding: 14px; border: 0 !important; border-radius: 26px; background: var(--fv-card) !important; box-shadow: var(--fv-shadow) !important; }
+.fam2 .mf-teaser-head strong { color: var(--fv-ink) !important; }
+.fam2 .mf-teaser-head span { color: var(--fv-acc-ink) !important; }
 
 /* member cards */
 .fv-member { margin-bottom: 12px; overflow: hidden; border-radius: 26px; background: var(--fv-card); box-shadow: var(--fv-shadow); }
@@ -114,26 +114,26 @@
 .fv-idea.is-open .fv-note { -webkit-line-clamp: unset; }
 
 /* family group card + photo cards inside this page */
-.fv2 .fv-group { margin-bottom: 12px; }
-.fv2 .fv-group .fg-card, .fv2 .family-media-card, .fv2 .family-photo-card { margin: 0 0 12px !important; border: 0 !important; border-radius: 26px !important; background: var(--fv-card) !important; box-shadow: var(--fv-shadow) !important; }
-.fv2 .fv-group .fg-card h2, .fv2 .family-media-card h2, .fv2 .family-photo-card h2 { color: var(--fv-ink) !important; }
-.fv2 .fv-group .fg-card small, .fv2 .fv-group .fg-note { color: var(--fv-ink2) !important; }
-.fv2 .fv-group .fg-primary { color: var(--fv-on) !important; background: var(--fv-grad) !important; border: 0 !important; box-shadow: var(--fv-glow) !important; }
-.fv2 .fv-group .fg-row { background: var(--fv-page) !important; border-color: var(--fv-line) !important; }
+.fam2 .fv-group { margin-bottom: 12px; }
+.fam2 .fv-group .fg-card, .fam2 .family-media-card, .fam2 .family-photo-card { margin: 0 0 12px !important; border: 0 !important; border-radius: 26px !important; background: var(--fv-card) !important; box-shadow: var(--fv-shadow) !important; }
+.fam2 .fv-group .fg-card h2, .fam2 .family-media-card h2, .fam2 .family-photo-card h2 { color: var(--fv-ink) !important; }
+.fam2 .fv-group .fg-card small, .fam2 .fv-group .fg-note { color: var(--fv-ink2) !important; }
+.fam2 .fv-group .fg-primary { color: var(--fv-on) !important; background: var(--fv-grad) !important; border: 0 !important; box-shadow: var(--fv-glow) !important; }
+.fam2 .fv-group .fg-row { background: var(--fv-page) !important; border-color: var(--fv-line) !important; }
 
 /* phone: the page has its own header, so the app top bar hides (like Home) */
 @media (max-width: 900px) {
-  body:has(#app .fv2) .app-main .topbar { display: none !important; }
+  body:has(#app .fam2) .app-main .topbar { display: none !important; }
 }
 @media (min-width: 901px) {
-  .fv2 { padding-top: 12px; }
+  .fam2 { padding-top: 12px; }
   .fv-hero { border-radius: 30px; }
 }
-:root:not([data-theme="light"]) body:has(#app .fv2) .quick-action-toggle { color: #142a04; border-color: rgba(217, 255, 123, 0.7); background: linear-gradient(135deg, #d9ff7b, #a6e33f); box-shadow: 0 12px 26px rgba(166, 227, 63, 0.3); }
-.fv2 .family-photo-card .icon-badge, .fv2 .family-media-card .family-media-add { color: var(--fv-acc-ink) !important; background: var(--fv-soft) !important; border-color: transparent !important; }
-.fv2 .family-photo-frame { background: var(--fv-page) !important; border-color: var(--fv-line) !important; }
-.fv2 .family-photo-frame > span { color: var(--fv-acc-ink) !important; }
-.fv2 .family-photo-card .eyebrow { color: var(--fv-ink2) !important; }
-.fv2 .family-photo-upload { color: var(--fv-on) !important; background: var(--fv-grad) !important; border: 0 !important; }
-.fv2 .mf-teaser-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
-.fv2 .mf-teaser-row { gap: 8px; }
+:root:not([data-theme="light"]) body:has(#app .fam2) .quick-action-toggle { color: #142a04; border-color: rgba(217, 255, 123, 0.7); background: linear-gradient(135deg, #d9ff7b, #a6e33f); box-shadow: 0 12px 26px rgba(166, 227, 63, 0.3); }
+.fam2 .family-photo-card .icon-badge, .fam2 .family-media-card .family-media-add { color: var(--fv-acc-ink) !important; background: var(--fv-soft) !important; border-color: transparent !important; }
+.fam2 .family-photo-frame { background: var(--fv-page) !important; border-color: var(--fv-line) !important; }
+.fam2 .family-photo-frame > span { color: var(--fv-acc-ink) !important; }
+.fam2 .family-photo-card .eyebrow { color: var(--fv-ink2) !important; }
+.fam2 .family-photo-upload { color: var(--fv-on) !important; background: var(--fv-grad) !important; border: 0 !important; }
+.fam2 .mf-teaser-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+.fam2 .mf-teaser-row { gap: 8px; }

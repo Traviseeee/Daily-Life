@@ -165,3 +165,7 @@
 :root[data-theme="light"] .fv2-page .qx-fav { border-color: #dbe7fb !important; background: #e6f0ff !important; color: #0f1b33 !important; }
 :root[data-theme="light"] .fv2-page .qx-form input:not([type="radio"]):not([type="checkbox"]) { border-color: #dbe7fb !important; background: #f4f8ff !important; color: #0f1b33 !important; }
 :root[data-theme="light"] .fv2-page .qx-more { border-color: #dbe7fb !important; background: #e6f0ff !important; color: #1d4ed8 !important; }
+/* phone: same 14px side space as the other new pages */
+@media (max-width: 900px) {
+  .fv2-page { padding-left: 6px !important; padding-right: 6px !important; padding-top: env(safe-area-inset-top, 0px) !important; }
+}
