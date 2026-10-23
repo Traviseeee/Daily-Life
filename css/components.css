@@ -8761,3 +8761,12 @@ body.money-hidden .money-value {
 .financial-report-saved > span svg { width: 16px; height: 16px; }
 .financial-report-saved strong { margin-left: auto; }
 .financial-report-saved small { opacity: 0.7; font-weight: 700; }
+
+/* Settings → About: what's new */
+.settings-release { display: grid; gap: 10px; margin-top: 14px; }
+.settings-release-item { padding: 12px 14px; border: 1px solid var(--border); border-radius: 16px; background: color-mix(in srgb, #c5ff60 8%, transparent); }
+.settings-release-item summary { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; cursor: pointer; list-style: none; color: var(--text-primary); }
+.settings-release-item summary::-webkit-details-marker { display: none; }
+.settings-release-item summary small { font-size: 0.76rem; color: var(--text-secondary); }
+.settings-release-item ul { display: grid; gap: 6px; margin: 10px 0 0; padding: 0; list-style: none; }
+.settings-release-item li { font-size: 0.86rem; line-height: 1.55; color: var(--text-secondary); }

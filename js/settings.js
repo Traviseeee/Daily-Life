@@ -178,7 +178,7 @@ function renderSettingsPage() {
               <section class="settings-about-story" aria-labelledby="settingsAboutTitle">
                 <div class="settings-about-story-heading">
                   <span class="settings-about-brand">MYLIFE</span>
-                  <span class="settings-about-version">Version 1.0.0 · ${escapeHtml(settingsAppBuild())}</span>
+                  <span class="settings-about-version">Version ${APP_VERSION}${settingsAppBuild() ? ` · ${escapeHtml(settingsAppBuild())}` : ""}</span>
                 </div>
                 <h3 id="settingsAboutTitle">${t("aboutMylifeTitle")}</h3>
                 <p class="settings-about-tagline">${t("aboutMylifeTagline")}</p>
@@ -190,6 +190,7 @@ function renderSettingsPage() {
                 <p class="settings-about-closing">${t("aboutMylifeClosing")}</p>
                 <p class="settings-about-storage">${t("localStorageNote")}</p>
               </section>
+              ${renderReleaseNotes()}
             </div>
           </details>
           </div>
@@ -243,6 +244,37 @@ function settingsNotifySummary() {
   const channels = [p.telegram ? "Telegram" : "", p.app ? "App" : ""].filter(Boolean).join(" + ") || (isKm ? "គ្មានកន្លែងផ្ញើ" : "No channel");
   const on = NotifyPrefs.TOOLS.filter(tool => p.tools[tool]).length;
   return `${channels} · ${on}/${NotifyPrefs.TOOLS.length} ${isKm ? "បើក" : "on"}`;
+}
+
+// shown in Settings → About; newest first
+const APP_VERSION = "2.0.1";
+const RELEASE_NOTES = [
+  {
+    version: "2.0.1",
+    date: "2026-10-23",
+    items: [
+      ["📸 Memories ថ្មី — post រូប/វីដេអូ, reels, ❤️, រក្សាទុកឯកជន", "New Memories — photo/video posts, reels, ❤️, private storage"],
+      ["💰 សួរលុយពេលដល់ថ្ងៃ — ប្រាក់ខែ វិក្កយបត្រ កម្ចី (app + Telegram) មិនកត់ស្ទួន", "Money check-in on the day — salary, bills, loans (app + Telegram), never saved twice"],
+      ["🏠 Card «រង់ចាំឆ្លើយ» លើ Home · ✏️ ចំនួនផ្សេងសម្រាប់វិក្កយបត្រ", "Home “waiting” card · ✏️ other amount for bills"],
+      ["🐷 ទទួលប្រាក់ខែ → សួរដាក់សន្សំ · រំលឹកសន្សំនៅថ្ងៃបើកប្រាក់ខែ", "Salary received → put savings in · saving reminder on salary day"],
+      ["🔔 Notification Center ថ្មី — tab ហិរញ្ញវត្ថុ / ថ្ងៃសំខាន់ / របាយការណ៍ · ការរំលឹកបន្ទាប់", "New Notification Center — Money / Dates / Reports tabs · coming up next"],
+      ["✈️ Telegram — ✏️ ចំនួនផ្សេង · សង្ខេបពេលព្រឹកបង្ហាញអ្វីដែលនៅរង់ចាំ", "Telegram — ✏️ other amount · morning digest lists what is still open"],
+      ["📊 របាយការណ៍ប្រើប្រាក់ខែពិតដែលទទួល + ដាក់សន្សំខែនេះ", "Reports use the salary really received + savings this month"],
+      ["👨‍👩‍👧 គ្រួសារ — បង្កើតគ្រួសារ អញ្ជើញតាម link/QR តួនាទី និងសិទ្ធិម្នាក់ៗ", "Family group — invite by link/QR, roles and per-member access"],
+      ["⚡ Update លឿនជាងមុន — ទូរស័ព្ទទាញតែឯកសារដែលប្តូរ", "Faster updates — phones only download what changed"],
+      ["⏳ មកដល់ឆាប់ៗ — Login ដោយ Google · Feed/Calendar គ្រួសាររួមគ្នា", "Coming soon — Google login · shared family feed & calendar"]
+    ]
+  }
+];
+
+function renderReleaseNotes() {
+  const isKm = languageCode() === "km";
+  return `<section class="settings-release" aria-label="${escapeAttr(isKm ? "អ្វីថ្មី" : "What's new")}">
+    ${RELEASE_NOTES.map((note, index) => `<details class="settings-release-item" ${index === 0 ? "open" : ""}>
+      <summary><strong>${escapeHtml(isKm ? "អ្វីថ្មី" : "What's new")} · V${escapeHtml(note.version)}</strong><small>${escapeHtml(formatDate(note.date))}</small></summary>
+      <ul>${note.items.map(([km, en]) => `<li>${escapeHtml(isKm ? km : en)}</li>`).join("")}</ul>
+    </details>`).join("")}
+  </section>`;
 }
 
 function settingsAppBuild() {
