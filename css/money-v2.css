@@ -133,7 +133,9 @@
 /* phone: the money page has its own header (title + sections button), so the app top bar hides */
 @media (max-width: 900px) {
   body:has(#app .fv2-page) .app-main .topbar { display: none !important; }
-  .fv2-page .financial-header { padding-top: env(safe-area-inset-top, 0px) !important; }
+  /* safe area is added once (on .fv2-page below), not twice: the title sat ~50px too low on iPhone */
+  .fv2-page .financial-header { padding-top: 0 !important; margin-top: 0 !important; }
+  #app:has(.fv2-page) { padding-top: 0 !important; }
 }
 .fv2-page .ms-scan-link { display: none !important; }
 .fv2-page .financial-header-main { align-items: center !important; }
@@ -167,5 +169,5 @@
 :root[data-theme="light"] .fv2-page .qx-more { border-color: #dbe7fb !important; background: #e6f0ff !important; color: #1d4ed8 !important; }
 /* phone: same 14px side space as the other new pages */
 @media (max-width: 900px) {
-  .fv2-page { padding-left: 6px !important; padding-right: 6px !important; padding-top: env(safe-area-inset-top, 0px) !important; }
+  .fv2-page { padding-left: 6px !important; padding-right: 6px !important; padding-top: calc(env(safe-area-inset-top, 0px) + 12px) !important; }
 }
