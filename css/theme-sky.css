@@ -629,3 +629,14 @@ body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; 
 :root[data-theme="light"] .quick-action-item { color: #0f1b33 !important; background: rgba(255, 255, 255, 0.96) !important; border: 1px solid #e3ecfa !important; box-shadow: 0 8px 22px rgba(15, 27, 51, 0.12) !important; -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
 :root[data-theme="light"] .quick-action-item span { color: #ffffff !important; background: linear-gradient(135deg, #5aa2ff, #2f7bf5) !important; }
 :root[data-theme="light"] .quick-action-item:hover { border-color: #9cc6ff !important; }
+
+/* ---- family member form (js/family-form.js) in light mode: sky blue, no lime left ---- */
+:root[data-theme="light"] #modalRoot .ff-photo-img { color: #1d4ed8 !important; background: linear-gradient(135deg, #e6f0ff, #cfe3ff) !important; border-color: #3b82f6 !important; box-shadow: 0 8px 18px rgba(47, 123, 245, 0.25) !important; }
+:root[data-theme="light"] #modalRoot .ff-photo-img img { border-color: #3b82f6 !important; }
+:root[data-theme="light"] #modalRoot .ff-photo-badge { color: #ffffff !important; background: #3b82f6 !important; }
+:root[data-theme="light"] #modalRoot .ff-pill { box-shadow: 0 6px 14px rgba(47, 123, 245, 0.25) !important; }
+:root[data-theme="light"] #modalRoot .ff-date-card { background: #f4f8ff !important; }
+:root[data-theme="light"] #modalRoot .ff-dc-badge { color: #1d4ed8 !important; background: #e1ecff !important; }
+:root[data-theme="light"] #modalRoot .ff-idea { border-color: #d6e5ff !important; background: #f4f8ff !important; }
+:root[data-theme="light"] #modalRoot .ff-idea i { color: #3b82f6 !important; }
+:root[data-theme="light"] #modalRoot .ff-idea p { color: #33425c !important; }
