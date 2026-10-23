@@ -337,3 +337,27 @@ body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; 
 :root[data-theme="light"] #modalRoot .ff-idea { border-color: #d6e5ff !important; background: #f4f8ff !important; }
 :root[data-theme="light"] #modalRoot .ff-idea i { color: #3b82f6 !important; }
 :root[data-theme="light"] #modalRoot .ff-idea p { color: #33425c !important; }
+
+/* ---- app lock (Face ID / PIN) in light mode: sky blue like the login ---- */
+:root[data-theme="light"] .app-lock { color: #0f1b33 !important; background: linear-gradient(170deg, #cfe3ff 0%, #e8f1ff 55%, #f4f8ff 100%) !important; }
+:root[data-theme="light"] .al-blob-a { background: #5aa2ff !important; opacity: 0.4 !important; }
+:root[data-theme="light"] .al-blob-b { background: #c9dcff !important; opacity: 0.8 !important; }
+:root[data-theme="light"] .al-box h2 { color: #0f1b33 !important; }
+:root[data-theme="light"] .al-hint { color: #5b6b85 !important; }
+:root[data-theme="light"] .al-dots i { border-color: #2f7bf5 !important; }
+:root[data-theme="light"] .al-dots i.on { background: #2f7bf5 !important; }
+:root[data-theme="light"] .al-key { color: #0f1b33 !important; background: rgba(255, 255, 255, 0.85) !important; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.1) !important; }
+:root[data-theme="light"] .al-key:active { background: #dbeafe !important; }
+:root[data-theme="light"] .al-key-text { color: #1d4ed8 !important; background: transparent !important; box-shadow: none !important; }
+:root[data-theme="light"] .al-key-text:active { background: rgba(90, 162, 255, 0.2) !important; }
+:root[data-theme="light"] .al-face-btn { color: #2f7bf5 !important; background: #ffffff !important; box-shadow: 0 16px 34px rgba(47, 123, 245, 0.25) !important; }
+:root[data-theme="light"] .al-face-label { color: #0f1b33 !important; }
+:root[data-theme="light"] .al-link { color: #1d4ed8 !important; background: rgba(255, 255, 255, 0.75) !important; }
+:root[data-theme="light"] .al-link-quiet { color: #5b6b85 !important; }
+:root[data-theme="light"] .al-done, :root[data-theme="light"] .al-reset-face { color: #ffffff !important; background: linear-gradient(120deg, #5aa2ff, #2f7bf5) !important; box-shadow: 0 10px 22px rgba(47, 123, 245, 0.3) !important; }
+:root[data-theme="light"] .al-or { color: #7d8ba3 !important; }
+:root[data-theme="light"] .al-or::before, :root[data-theme="light"] .al-or::after { background: rgba(15, 27, 51, 0.12) !important; }
+:root[data-theme="light"] .al-reset-email { color: #33425c !important; }
+:root[data-theme="light"] .al-reset-field input { border-color: #dbe7fb !important; }
+:root[data-theme="light"] .al-reset-field input:focus { border-color: #5aa2ff !important; box-shadow: 0 0 0 3px rgba(90, 162, 255, 0.25) !important; }
+:root[data-theme="light"] .al-ok .al-face-btn { color: #ffffff !important; background: #2f9e55 !important; }

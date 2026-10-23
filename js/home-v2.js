@@ -74,6 +74,7 @@ const HomeV2 = (() => {
         </div>
         <div class="hv2-hello"><small>${escapeHtml(hello)} 👋</small><b>${escapeHtml(String(appData.profile.name || L("ភ្ញៀវ", "Guest")).split(/\s+/)[0])}</b></div>
         <span class="hv2-wx" data-hv2-wx>${document.getElementById("topbarWeather")?.innerHTML || ""}</span>
+        <a class="hv2-bell hv2-menu" href="#launcher" aria-label="${escapeAttr(L("ម៉ឺនុយទាំងអស់", "All menus"))}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="4" y="4" width="6.5" height="6.5" rx="2"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="2"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="2"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="2"/></svg></a>
         <button type="button" class="hv2-bell" data-hv2-bell aria-label="${escapeAttr(L("ការជូនដំណឹង", "Notifications"))}">${document.getElementById("bellButton")?.innerHTML || Icons.bell()}</button>
       </div>
       <div class="hv2-title-row">
