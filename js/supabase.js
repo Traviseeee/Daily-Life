@@ -282,11 +282,24 @@ window.MYLIFE_SUPABASE_API = {
   // "Continue with Google": leaves the page, Google sends the user back here signed in
   async signInWithGoogle() {
     if (!window.supabaseClient) return { error: new Error("Supabase is not configured.") };
+    // ask Supabase first whether Google is turned on, so the user never lands on
+    // Supabase's raw "provider is not enabled" page
+    try {
+      const config = window.MYLIFE_SUPABASE || {};
+      const response = await fetch(`${config.url}/auth/v1/settings`, { headers: { apikey: config.anonKey } });
+      if (response.ok) {
+        const settings = await response.json();
+        if (settings?.external && !settings.external.google) return { error: new Error("provider is not enabled") };
+      }
+    } catch (error) { /* offline or blocked: let Supabase answer */ }
     try { sessionStorage.setItem("mylife:oauth-pending", "1"); } catch (error) { /* ignore */ }
-    return window.supabaseClient.auth.signInWithOAuth({
+    const { data, error } = await window.supabaseClient.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${getAppBaseUrl()}${window.location.pathname}`, queryParams: { prompt: "select_account" } }
+      options: { redirectTo: `${getAppBaseUrl()}${window.location.pathname}`, queryParams: { prompt: "select_account" }, skipBrowserRedirect: true }
     });
+    if (error || !data?.url) return { error: error || new Error("Google sign-in could not start") };
+    window.location.assign(data.url);
+    return { error: null };
   },
   async resetPassword(email) {
     if (!window.supabaseClient) {
