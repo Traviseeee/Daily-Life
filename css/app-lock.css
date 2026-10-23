@@ -76,3 +76,25 @@ body.app-lock-confirm .modal-root { z-index: 6000; }
 .al-link-quiet { color: #8a5a00; background: rgba(255, 255, 255, 0.4); }
 .app-lock .al-box { transition: transform 200ms ease; }
 .app-lock.al-instant { animation: none; }
+
+/* dark mode: dark green + lime like the rest of the app (light mode lives in theme-sky-base.css) */
+:root:not([data-theme="light"]) .app-lock { color: #eef6e8; background: radial-gradient(120% 70% at 85% 0, #24452f 0, transparent 60%), linear-gradient(180deg, #143024, #0b1712 60%); }
+:root:not([data-theme="light"]) .al-blob-a { background: #a6e33f; opacity: 0.16; }
+:root:not([data-theme="light"]) .al-blob-b { background: #3a6b4c; opacity: 0.35; }
+:root:not([data-theme="light"]) .al-box h2 { color: #eef6e8; }
+:root:not([data-theme="light"]) .al-hint { color: #9fb8a9; }
+:root:not([data-theme="light"]) .al-dots i { border-color: #c5ff60; }
+:root:not([data-theme="light"]) .al-dots i.on { background: #c5ff60; }
+:root:not([data-theme="light"]) .al-key { color: #eef6e8; border-color: rgba(255, 255, 255, 0.06); background: #18291f; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); }
+:root:not([data-theme="light"]) .al-key:active { color: #142a04; background: #c5ff60; }
+:root:not([data-theme="light"]) .al-key-text { color: #d9ff7b; background: transparent; box-shadow: none; }
+:root:not([data-theme="light"]) .al-face-btn { color: #142a04; background: linear-gradient(135deg, #d9ff7b, #a6e33f); box-shadow: 0 16px 34px rgba(166, 227, 63, 0.25); }
+:root:not([data-theme="light"]) .al-face-label { color: #eef6e8; }
+:root:not([data-theme="light"]) .al-link { color: #d9ff7b; background: rgba(255, 255, 255, 0.06); }
+:root:not([data-theme="light"]) .al-link-quiet { color: #9fb8a9; }
+:root:not([data-theme="light"]) .al-done, :root:not([data-theme="light"]) .al-reset-face { color: #142a04; background: linear-gradient(120deg, #d9ff7b, #a6e33f); }
+:root:not([data-theme="light"]) .al-or { color: #9fb8a9; }
+:root:not([data-theme="light"]) .al-or::before, :root:not([data-theme="light"]) .al-or::after { background: rgba(255, 255, 255, 0.1); }
+:root:not([data-theme="light"]) .al-reset-email { color: #eef6e8; background: rgba(255, 255, 255, 0.06); }
+:root:not([data-theme="light"]) .al-reset-field input { color: #eef6e8; border-color: #2a3d33; background: #122019; }
+:root:not([data-theme="light"]) .al-ok .al-face-btn { color: #fff; background: #2f9e55; }
