@@ -93,18 +93,7 @@
 :root[data-theme="light"] .is-bad .money-value { color: #c62a30; }
 
 /* ---------- Home weather card (light-mode audit, 23 Oct) ---------- */
-/* icons were drawn for the dark card: on white the clouds, moon, stars, rain and fog
-   almost vanished. Light mode only, same shapes, deeper colours + a thin outline. */
-:root[data-theme="light"] .tw-icon .tw-drift ellipse { fill: #d6e0e8; stroke: #8ea4b4; stroke-width: 2.5; }
-:root[data-theme="light"] .tw-icon .tw-drift2 ellipse { fill: #93a9b9; }
-:root[data-theme="light"] .tw-icon.tw-storm .tw-drift ellipse { fill: #b9c6d0; stroke: #6f8596; }
-:root[data-theme="light"] .tw-icon .tw-drift path { stroke: #8ea4b4; }
-:root[data-theme="light"] .tw-icon .tw-rays { stroke: #f2a100; }
-:root[data-theme="light"] .tw-icon circle.tw-core { fill: #ffbb12; stroke: #e39500; stroke-width: 2.5; }
-:root[data-theme="light"] .tw-icon path.tw-core { fill: #f4cd5c; stroke: #c9952a; stroke-width: 2.5; }
-:root[data-theme="light"] .tw-icon .tw-star { fill: #e0a82e; }
-:root[data-theme="light"] .tw-icon g[stroke="#5fd3f3"] { stroke: #1f9fd0; }
-:root[data-theme="light"] .tw-icon .tw-bolt { fill: #ffb800; stroke: #c27c00; stroke-width: 2.5; stroke-linejoin: round; }
+/* weather icons: pastel flat drawings in js/topbar-weather.js read on both themes */
 
 /* the card stands out from the light page a little more */
 :root[data-theme="light"] body.topbar-home .topbar-wx-card {
