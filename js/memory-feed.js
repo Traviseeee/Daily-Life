@@ -22,7 +22,8 @@ const MemoryFeed = (() => {
   const FREE_BYTES = 1024 * 1024 * 1024;
   const KM_MONTHS = ["មករា", "កុម្ភៈ", "មីនា", "មេសា", "ឧសភា", "មិថុនា", "កក្កដា", "សីហា", "កញ្ញា", "តុលា", "វិច្ឆិកា", "ធ្នូ"];
 
-  const state = { view: "feed", person: "", search: "", limit: PAGE };
+  const state = { view: "feed", person: "", search: "", limit: PAGE, scope: "all" };
+  let familySig = "";
   const signed = new Map(); // path → { url, exp }
   let observer = null;
   let reelObserver = null;
@@ -39,8 +40,15 @@ const MemoryFeed = (() => {
   const isVideoPost = memory => mediaOf(memory).some(item => item.type === "video");
   const sortKey = memory => `${memory.date || ""}|${memory.createdAt || ""}`;
 
+  // family (Part 2B): posts shared by other members come from FamilyPosts;
+  // my own shared posts stay my memories and get the family ❤️ / 💬 on top
+  const fam = () => (typeof FamilyPosts !== "undefined" && FamilyPosts.active() ? FamilyPosts : null);
+  const fpIdOf = memory => (memory.family ? memory.familyPostId : fam()?.postBySource(memory.id)?.id || "");
   function allPosts() {
-    return (appData.memories || []).slice().sort((a, b) => sortKey(b).localeCompare(sortKey(a)));
+    const mine = state.scope === "family" ? [] : (appData.memories || []);
+    const others = state.scope === "mine" ? [] : (fam()?.othersAsMemories() || []);
+    const list = state.scope === "family" ? [...(appData.memories || []).filter(memory => fpIdOf(memory)), ...others] : [...mine, ...others];
+    return list.sort((a, b) => sortKey(b).localeCompare(sortKey(a)));
   }
 
   function personMatch(memory, member) {
@@ -165,6 +173,8 @@ const MemoryFeed = (() => {
           ${people.map(member => `<button type="button" class="mf-person ${state.person === member.id ? "active" : ""}" data-mf-person="${escapeAttr(member.id)}">${avatar(member)}<small>${escapeHtml(member.name)}</small></button>`).join("")}
         </div>` : ""}
 
+        ${scopeHtml()}
+
         ${onThisDay()}
 
         <div class="mf-bar">
@@ -176,6 +186,16 @@ const MemoryFeed = (() => {
 
         ${posts.length ? (state.view === "grid" ? gridHtml(posts) : `<div class="mf-feed" data-mf-feed>${feedHtml(posts, 0, state.limit)}</div>${posts.length > state.limit ? `<div class="mf-more" data-mf-more>${L("កំពុងផ្ទុក…", "Loading…")}</div>` : ""}`) : emptyHtml()}
       </section>`;
+  }
+
+  function scopeHtml() {
+    const family = fam();
+    if (!family) return "";
+    const unshared = family.canPost() ? (appData.memories || []).filter(memory => family.shareable(memory) && !family.postBySource(memory.id)).length : 0;
+    return `<div class="mf-scope" role="tablist">
+        ${[["all", L("ទាំងអស់", "All")], ["mine", L("របស់ខ្ញុំ", "Mine")], ["family", `👨‍👩‍👧 ${L("គ្រួសារ", "Family")}`]].map(([id, label]) => `<button type="button" role="tab" class="mf-scope-btn ${state.scope === id ? "active" : ""}" data-mf-scope="${id}" aria-selected="${state.scope === id}">${escapeHtml(label)}</button>`).join("")}
+      </div>
+      ${state.scope === "family" && unshared ? `<button type="button" class="mf-share-old" data-mf-share-old>📤 ${escapeHtml(L(`ចែករំលែកអនុស្សាវរីយ៍ចាស់ៗរបស់ខ្ញុំ (${unshared})`, `Share my older memories (${unshared})`))}</button>` : ""}`;
   }
 
   function emptyHtml() {
@@ -219,15 +239,19 @@ const MemoryFeed = (() => {
 
   function postHtml(memory) {
     const media = mediaOf(memory);
-    const me = { name: appData.profile?.name || L("ខ្ញុំ", "Me"), photo: appData.profile?.photo };
+    const me = memory.family ? { name: memory.authorName } : { name: appData.profile?.name || L("ខ្ញុំ", "Me"), photo: appData.profile?.photo };
     const tags = taggedPeople(memory);
-    const comments = Array.isArray(memory.comments) ? memory.comments : [];
+    const fpId = fpIdOf(memory);
+    const comments = allComments(memory);
+    const liked = isLiked(memory);
+    const likeCount = fpId ? fam().likesOf(fpId).length : 0;
     const caption = memory.description || "";
+    const shared = !memory.family && fpId;
     return `
       <article class="mf-post" id="mf-post-${escapeAttr(memory.id)}" data-mf-post="${escapeAttr(memory.id)}">
         <header class="mf-post-head">
           ${avatar(me, "mf-face-sm")}
-          <div class="mf-post-who"><strong>${escapeHtml(me.name)}</strong><span>${escapeHtml(relative(memory.date))}${memory.location ? ` · 📍 ${escapeHtml(memory.location)}` : ""}</span></div>
+          <div class="mf-post-who"><strong>${escapeHtml(me.name)}${shared ? ` <em class="mf-shared" title="${escapeAttr(L("បានចែករំលែកជាមួយគ្រួសារ", "Shared with family"))}">👨‍👩‍👧</em>` : ""}</strong><span>${escapeHtml(relative(memory.date))}${memory.location ? ` · 📍 ${escapeHtml(memory.location)}` : ""}</span></div>
           <button class="mf-icon" type="button" data-mf-menu="${escapeAttr(memory.id)}" aria-label="${escapeAttr(L("ជម្រើស", "Options"))}">⋯</button>
         </header>
         ${media.length ? `
@@ -238,14 +262,14 @@ const MemoryFeed = (() => {
           ${media.length > 1 ? `<div class="mf-dots">${media.map((_, index) => `<i class="${index === 0 ? "active" : ""}"></i>`).join("")}</div>` : ""}
         ` : `<div class="mf-textonly" data-mf-tap style="background:${typeof memoryGradient === "function" ? memoryGradient(memory.id) : "#16241b"}"><span>${escapeHtml(memory.title || memory.description || "")}</span><span class="mf-heart" aria-hidden="true">❤️</span></div>`}
         <div class="mf-actions">
-          <button type="button" class="mf-act ${memory.liked ? "liked" : ""}" data-mf-like="${escapeAttr(memory.id)}" aria-pressed="${Boolean(memory.liked)}" aria-label="${escapeAttr(L("ចូលចិត្ត", "Like"))}">${memory.liked ? "❤️" : "🤍"}</button>
+          <button type="button" class="mf-act ${liked ? "liked" : ""}" data-mf-like="${escapeAttr(memory.id)}" aria-pressed="${liked}" aria-label="${escapeAttr(L("ចូលចិត្ត", "Like"))}">${liked ? "❤️" : "🤍"}${likeCount ? `<b data-mf-like-count>${likeCount}</b>` : ""}</button>
           <button type="button" class="mf-act" data-mf-comments="${escapeAttr(memory.id)}" aria-label="${escapeAttr(L("មតិ", "Comments"))}">💬${comments.length ? `<b>${comments.length}</b>` : ""}</button>
         </div>
         <div class="mf-body">
           ${memory.title ? `<p class="mf-title">${escapeHtml(memory.title)}</p>` : ""}
           ${caption ? `<p class="mf-caption">${escapeHtml(caption)}</p>` : ""}
           ${tags.length ? `<p class="mf-tags">👥 ${tags.map(name => `<span>${escapeHtml(name)}</span>`).join("")}</p>` : ""}
-          ${comments.length ? `<button type="button" class="mf-last-comment" data-mf-comments="${escapeAttr(memory.id)}">💬 ${escapeHtml(comments[comments.length - 1].text)}${comments.length > 1 ? ` <em>· ${escapeHtml(L(`មើលទាំង ${comments.length}`, `view all ${comments.length}`))}</em>` : ""}</button>` : ""}
+          ${comments.length ? `<button type="button" class="mf-last-comment" data-mf-comments="${escapeAttr(memory.id)}">💬 ${comments[comments.length - 1].who ? `<strong>${escapeHtml(comments[comments.length - 1].who)}</strong> ` : ""}${escapeHtml(comments[comments.length - 1].text)}${comments.length > 1 ? ` <em>· ${escapeHtml(L(`មើលទាំង ${comments.length}`, `view all ${comments.length}`))}</em>` : ""}</button>` : ""}
         </div>
       </article>`;
   }
@@ -289,6 +313,13 @@ const MemoryFeed = (() => {
       }, 250);
     });
     page.querySelectorAll("[data-mf-jump]").forEach(button => button.addEventListener("click", () => jumpTo(button.dataset.mfJump)));
+    page.querySelectorAll("[data-mf-scope]").forEach(button => button.addEventListener("click", () => {
+      state.scope = button.dataset.mfScope;
+      state.limit = PAGE;
+      rerender();
+    }));
+    page.querySelector("[data-mf-share-old]")?.addEventListener("click", shareOld);
+    loadFamily();
     bindPosts(page);
     setupMore(page);
     resolveAll(page);
@@ -339,6 +370,24 @@ const MemoryFeed = (() => {
     observer.observe(more);
   }
 
+  // fetch family posts in the background; redraw only when something changed
+  function familySignature() {
+    if (typeof FamilyPosts === "undefined") return "";
+    const fp = FamilyPosts.state;
+    return [fp.status, fp.role, FamilyPosts.active(), fp.posts.map(post => `${post.id}:${post.updated_at}`).join(","), fp.likes.length, fp.comments.length].join("|");
+  }
+  function loadFamily() {
+    if (typeof FamilyPosts === "undefined") return;
+    if (!familySig) familySig = familySignature();
+    FamilyPosts.load().then(() => {
+      const next = familySignature();
+      if (next === familySig) return;
+      familySig = next;
+      if (!fam() && state.scope !== "all") state.scope = "all";
+      if (document.querySelector(".mf-page")) rerender();
+    });
+  }
+
   function rerender() {
     const page = document.querySelector(".mf-page");
     if (!page) return App.render();
@@ -367,7 +416,26 @@ const MemoryFeed = (() => {
 
   /* ---------- like / comments (saved without re-rendering the page) ---------- */
   function record(id) {
-    return (appData.memories || []).find(memory => memory.id === id);
+    return (appData.memories || []).find(memory => memory.id === id) || (fam()?.othersAsMemories() || []).find(memory => memory.id === id);
+  }
+
+  function isLiked(memory) {
+    const fpId = fpIdOf(memory);
+    if (memory.family) return fam().iLike(fpId);
+    return Boolean(memory.liked) || Boolean(fpId && fam().iLike(fpId));
+  }
+
+  // my own comments (in my memory) + family comments (table), oldest first
+  function allComments(memory) {
+    const own = memory.family ? [] : (Array.isArray(memory.comments) ? memory.comments : []).map(comment => ({ id: comment.id, text: comment.text, at: comment.at, who: "", own: true }));
+    const fpId = fpIdOf(memory);
+    const family = fpId ? fam().commentsOf(fpId).map(comment => ({ id: comment.id, text: comment.text, at: comment.created_at, who: fam().nameOf(comment.user_id), family: true, raw: comment })) : [];
+    return [...own, ...family].sort((a, b) => String(a.at || "").localeCompare(String(b.at || "")));
+  }
+
+  function familyError(error) {
+    console.warn("MYLIFE family posts:", error);
+    Toast.show(error?.message === "not_shareable" ? L("Post នេះមិនមានរូបក្នុង cloud — ចែករំលែកមិនបាន", "This post has no cloud photos — can't share it") : L("មិនបានរក្សាទុកទៅគ្រួសារ — សាកម្ដងទៀត", "Couldn't save to the family — try again"), "warning");
   }
 
   function saveQuietly(memory) {
@@ -378,13 +446,16 @@ const MemoryFeed = (() => {
   function like(id, force, post) {
     const memory = record(id);
     if (!memory) return;
-    memory.liked = force === null ? !memory.liked : Boolean(force);
-    saveQuietly(memory);
+    const next = force === null ? !isLiked(memory) : Boolean(force);
+    const fpId = fpIdOf(memory);
+    if (!memory.family) { memory.liked = next; saveQuietly(memory); }
+    if (fpId) fam().setLike(fpId, next).catch(familyError);
     const button = post?.querySelector("[data-mf-like]");
     if (button) {
-      button.textContent = memory.liked ? "❤️" : "🤍";
-      button.classList.toggle("liked", memory.liked);
-      button.setAttribute("aria-pressed", String(memory.liked));
+      const count = fpId ? fam().likesOf(fpId).length : 0;
+      button.innerHTML = `${next ? "❤️" : "🤍"}${count ? `<b data-mf-like-count>${count}</b>` : ""}`;
+      button.classList.toggle("liked", next);
+      button.setAttribute("aria-pressed", String(next));
       button.classList.remove("mf-pop");
       void button.offsetWidth;
       button.classList.add("mf-pop");
@@ -413,10 +484,15 @@ const MemoryFeed = (() => {
   function openComments(id) {
     const memory = record(id);
     if (!memory) return;
-    const list = () => (memory.comments || []).map(comment => `<div class="mf-comment"><div><strong>${escapeHtml(appData.profile?.name || L("ខ្ញុំ", "Me"))}</strong> ${escapeHtml(comment.text)}<small>${escapeHtml(relative(String(comment.at || "").slice(0, 10)))}</small></div><button type="button" class="mf-icon" data-mf-del-comment="${escapeAttr(comment.id)}" aria-label="${escapeAttr(t("delete"))}">✕</button></div>`).join("") || `<p class="secondary mf-no-comments">${escapeHtml(L("មិនទាន់មានមតិ — សរសេរមួយ", "No comments yet — write one"))}</p>`;
+    const fpId = fpIdOf(memory);
+    const fpPost = fpId ? fam().postById(fpId) : null;
+    const canWrite = !memory.family || fam().canPost();
+    const canDelete = comment => comment.own || (comment.family && fam().canDeleteComment(comment.raw, fpPost));
+    const list = () => allComments(memory).map(comment => `<div class="mf-comment"><div><strong>${escapeHtml(comment.who || appData.profile?.name || L("ខ្ញុំ", "Me"))}</strong> ${escapeHtml(comment.text)}<small>${escapeHtml(relative(String(comment.at || "").slice(0, 10)))}</small></div>${canDelete(comment) ? `<button type="button" class="mf-icon" data-mf-del-comment="${escapeAttr(comment.id)}" data-mf-family-comment="${comment.family ? "1" : ""}" aria-label="${escapeAttr(t("delete"))}">✕</button>` : ""}</div>`).join("") || `<p class="secondary mf-no-comments">${escapeHtml(canWrite ? L("មិនទាន់មានមតិ — សរសេរមួយ", "No comments yet — write one") : L("មិនទាន់មានមតិ", "No comments yet"))}</p>`;
     const root = openSheet(`${sheetHead(L("មតិ", "Comments"), "💬")}
       <div class="mf-comments" data-mf-comment-list>${list()}</div>
-      <form class="mf-comment-form" data-mf-comment-form><input name="text" maxlength="500" autocomplete="off" placeholder="${escapeAttr(L("សរសេរមតិ…", "Write a comment…"))}"><button class="button ev-submit" type="submit">${escapeHtml(L("ផ្ញើ", "Send"))}</button></form>`);
+      ${canWrite ? "" : `<p class="secondary mf-viewer-note">👀 ${escapeHtml(L("អ្នកមើលអាច ❤️ បាន តែមិនអាចសរសេរមតិទេ", "Viewers can ❤️ but can't comment"))}</p>`}
+      ${canWrite ? `<form class="mf-comment-form" data-mf-comment-form><input name="text" maxlength="500" autocomplete="off" placeholder="${escapeAttr(L("សរសេរមតិ…", "Write a comment…"))}"><button class="button ev-submit" type="submit">${escapeHtml(L("ផ្ញើ", "Send"))}</button></form>` : ""}`);
     const refresh = () => {
       root.querySelector("[data-mf-comment-list]").innerHTML = list();
       bindDelete();
@@ -429,21 +505,30 @@ const MemoryFeed = (() => {
         if (feed) { bindPosts(feed); resolveAll(feed); }
       }
     };
-    const bindDelete = () => root.querySelectorAll("[data-mf-del-comment]").forEach(button => button.addEventListener("click", () => {
-      memory.comments = (memory.comments || []).filter(comment => comment.id !== button.dataset.mfDelComment);
-      saveQuietly(memory);
+    const bindDelete = () => root.querySelectorAll("[data-mf-del-comment]").forEach(button => button.addEventListener("click", async () => {
+      if (button.dataset.mfFamilyComment) {
+        try { await fam().deleteComment(button.dataset.mfDelComment); } catch (error) { familyError(error); return; }
+      } else {
+        memory.comments = (memory.comments || []).filter(comment => comment.id !== button.dataset.mfDelComment);
+        saveQuietly(memory);
+      }
       refresh();
     }));
     bindDelete();
-    root.querySelector("[data-mf-comment-form]").addEventListener("submit", event => {
+    root.querySelector("[data-mf-comment-form]")?.addEventListener("submit", event => {
       event.preventDefault();
       const input = event.currentTarget.elements.text;
       const text = input.value.trim();
       if (!text) return;
-      memory.comments = [...(memory.comments || []), { id: `c-${Date.now()}`, text, at: new Date().toISOString() }];
-      saveQuietly(memory);
       input.value = "";
-      refresh();
+      if (fpId && fam().canPost()) {
+        // shared post: the comment goes to the family so everyone sees it
+        fam().addComment(fpId, text).then(refresh).catch(error => { input.value = text; familyError(error); });
+      } else {
+        memory.comments = [...(memory.comments || []), { id: `c-${Date.now()}`, text, at: new Date().toISOString() }];
+        saveQuietly(memory);
+        refresh();
+      }
       input.focus();
     });
     setTimeout(() => root.querySelector("[data-mf-comment-form] input")?.focus(), 60);
@@ -452,11 +537,25 @@ const MemoryFeed = (() => {
   function openMenu(id) {
     const memory = record(id);
     if (!memory) return;
+    if (memory.family) return openFamilyMenu(memory);
+    const family = fam();
+    const shared = Boolean(fpIdOf(memory));
+    const canShare = family && family.canPost() && family.shareable(memory);
     const root = openSheet(`${sheetHead(L("ជម្រើស", "Options"), "⋯")}
       <div class="mf-menu">
+        ${canShare || shared ? `<button type="button" class="button ghost-button" data-mf-share>${shared ? `🔒 ${escapeHtml(L("ឈប់ចែករំលែកជាមួយគ្រួសារ", "Stop sharing with family"))}` : `👨‍👩‍👧 ${escapeHtml(L("ចែករំលែកជាមួយគ្រួសារ", "Share with family"))}`}</button>` : ""}
         <button type="button" class="button ghost-button" data-mf-edit>${Icons.edit()} ${escapeHtml(L("កែ caption / ថ្ងៃ / ទីកន្លែង", "Edit caption / date / place"))}</button>
         <button type="button" class="button danger-button" data-mf-delete>${Icons.trash()} ${escapeHtml(L("លុប post នេះ", "Delete this post"))}</button>
       </div>`, "mf-menu-sheet");
+    root.querySelector("[data-mf-share]")?.addEventListener("click", async event => {
+      event.currentTarget.disabled = true;
+      try {
+        if (shared) { await family.unshare(memory.id); Toast.show(L("ឈប់ចែករំលែកហើយ — post នៅតែមានក្នុងរបស់អ្នក", "No longer shared — the post stays in yours")); }
+        else { await family.share(memory, taggedPeople(memory)); Toast.show(L("បានចែករំលែកជាមួយគ្រួសារ 👨‍👩‍👧", "Shared with family 👨‍👩‍👧"), "success"); }
+        Modal.close();
+        rerender();
+      } catch (error) { familyError(error); event.currentTarget.disabled = false; }
+    });
     root.querySelector("[data-mf-edit]").addEventListener("click", () => {
       if (!Array.isArray(memory.media) && typeof MemoryForm !== "undefined") return MemoryForm.open(memory);
       openComposer(memory);
@@ -467,6 +566,10 @@ const MemoryFeed = (() => {
         message: L("Post នេះ និងរូប/វីដេអូរបស់វានឹងត្រូវលុប។ មិនអាចយកវិញបានទេ។", "This post and its photos/video will be deleted. This cannot be undone."),
         confirmText: t("delete"),
         onConfirm: async () => {
+          // shared? remove the family copy first, so nobody is left with broken photos
+          if (fpIdOf(memory)) {
+            try { await fam().unshare(memory.id); } catch (error) { familyError(error); return; }
+          }
           const paths = (memory.media || []).flatMap(item => [item.path, item.thumb]).filter(Boolean);
           if (paths.length && window.supabaseClient?.storage) {
             try { await window.supabaseClient.storage.from(BUCKET).remove(paths); } catch (error) { console.warn("MYLIFE memories: files not removed", error); }
@@ -475,6 +578,45 @@ const MemoryFeed = (() => {
           Toast.show(L("បានលុប post", "Post deleted"));
         }
       });
+    });
+  }
+
+  // a post shared by another member: only an admin can take it off the family feed
+  function openFamilyMenu(memory) {
+    const family = fam();
+    const root = openSheet(`${sheetHead(L("ជម្រើស", "Options"), "⋯")}
+      <div class="mf-menu">
+        <p class="secondary">👨‍👩‍👧 ${escapeHtml(L(`Post របស់ ${memory.authorName}`, `Shared by ${memory.authorName}`))}</p>
+        ${family.isAdmin() ? `<button type="button" class="button danger-button" data-mf-family-remove>${Icons.trash()} ${escapeHtml(L("ដកចេញពី feed គ្រួសារ", "Remove from family feed"))}</button>` : ""}
+      </div>`, "mf-menu-sheet");
+    root.querySelector("[data-mf-family-remove]")?.addEventListener("click", () => {
+      Modal.confirm({
+        title: L("ដកចេញពីគ្រួសារ?", "Remove from family?"),
+        message: L(`Post នេះនឹងលែងបង្ហាញក្នុងគ្រួសារ។ ${memory.authorName} នៅតែមាន post ក្នុងរបស់គាត់។`, `This post leaves the family feed. ${memory.authorName} still keeps it in their own memories.`),
+        confirmText: L("ដកចេញ", "Remove"),
+        onConfirm: async () => {
+          try { await family.remove(memory.familyPostId); Toast.show(L("បានដកចេញ", "Removed")); rerender(); } catch (error) { familyError(error); }
+        }
+      });
+    });
+  }
+
+  function shareOld() {
+    const family = fam();
+    const list = (appData.memories || []).filter(memory => family.shareable(memory) && !family.postBySource(memory.id));
+    if (!list.length) return;
+    Modal.confirm({
+      title: L("ចែករំលែកអនុស្សាវរីយ៍ចាស់ៗ?", "Share older memories?"),
+      message: L(`${list.length} post នឹងបង្ហាញឲ្យគ្រួសារមើល (ចម្លង មិនមែនផ្លាស់ទី — post នៅតែជារបស់អ្នក)។ អ្នកអាចឈប់ចែករំលែកម្ដងមួយៗពេលក្រោយ។`, `${list.length} posts will be visible to your family (a copy — they stay yours). You can stop sharing any of them later.`),
+      confirmText: L("ចែករំលែក", "Share"),
+      onConfirm: async () => {
+        let done = 0;
+        for (const memory of list) {
+          try { await family.share(memory, taggedPeople(memory)); done += 1; } catch (error) { console.warn("MYLIFE family posts: share failed", memory.id, error); }
+        }
+        Toast.show(L(`បានចែករំលែក ${done}/${list.length}`, `Shared ${done}/${list.length}`), done === list.length ? "success" : "warning");
+        rerender();
+      }
     });
   }
 
@@ -495,10 +637,10 @@ const MemoryFeed = (() => {
           ${mediaTag(video, { reel: true })}
           <span class="mf-reel-sound" data-mf-sound>${reelsMuted ? "🔇" : "🔊"}</span>
           <div class="mf-reel-info">
-            <strong>${escapeHtml(appData.profile?.name || "")}</strong> · ${escapeHtml(relative(memory.date))}${memory.location ? ` · 📍 ${escapeHtml(memory.location)}` : ""}
+            <strong>${escapeHtml(memory.family ? memory.authorName : appData.profile?.name || "")}</strong> · ${escapeHtml(relative(memory.date))}${memory.location ? ` · 📍 ${escapeHtml(memory.location)}` : ""}
             ${memory.description || memory.title ? `<p>${escapeHtml(memory.description || memory.title)}</p>` : ""}
           </div>
-          <button type="button" class="mf-reel-like ${memory.liked ? "liked" : ""}" data-mf-reel-like="${escapeAttr(memory.id)}">${memory.liked ? "❤️" : "🤍"}</button>
+          <button type="button" class="mf-reel-like ${isLiked(memory) ? "liked" : ""}" data-mf-reel-like="${escapeAttr(memory.id)}">${isLiked(memory) ? "❤️" : "🤍"}</button>
         </section>`;
       }).join("")}</div>`;
     document.body.appendChild(box);
@@ -519,10 +661,10 @@ const MemoryFeed = (() => {
       reel.querySelector("[data-mf-reel-like]").addEventListener("click", event => {
         const memory = record(reel.dataset.mfReel);
         if (!memory) return;
-        memory.liked = !memory.liked;
-        saveQuietly(memory);
-        event.currentTarget.textContent = memory.liked ? "❤️" : "🤍";
-        event.currentTarget.classList.toggle("liked", memory.liked);
+        const next = !isLiked(memory);
+        like(memory.id, next, null);
+        event.currentTarget.textContent = next ? "❤️" : "🤍";
+        event.currentTarget.classList.toggle("liked", next);
       });
     });
     reelObserver = new IntersectionObserver(entries => entries.forEach(entry => {
@@ -627,6 +769,7 @@ const MemoryFeed = (() => {
           <label><span>📍 ${escapeHtml(L("ទីកន្លែង", "Place"))}</span><input type="text" name="place" maxlength="80" value="${escapeAttr(editing ? memory.location || "" : "")}" placeholder="${escapeAttr(L("ឧ. កែប", "e.g. Kep"))}"></label>
         </div>
         ${people.length ? `<div class="mf-tag-pick"><span>👥 ${escapeHtml(L("មនុស្សក្នុងរូប", "People in it"))}</span><div>${people.map(member => `<button type="button" class="mf-tag-chip ${selected.has(member.id) ? "active" : ""}" data-mf-tag="${escapeAttr(member.id)}">${avatar(member, "mf-face-xs")}${escapeHtml(member.name)}</button>`).join("")}</div></div>` : ""}
+        ${!editing && fam()?.canPost() ? `<label class="mf-share-row"><span>👨‍👩‍👧 <strong>${escapeHtml(L("ចែករំលែកជាមួយគ្រួសារ", "Share with family"))}</strong><small>${escapeHtml(L("សមាជិកដែលមានសិទ្ធិ Memories នឹងឃើញ", "Members allowed to see Memories will see it"))}</small></span><input type="checkbox" name="share" checked></label>` : ""}
         <div class="mf-progress" data-mf-progress hidden><i></i><span></span></div>
         <div class="ev-foot">
           <button class="button ghost-button" type="button" data-close>${t("cancel")}</button>
@@ -685,10 +828,13 @@ const MemoryFeed = (() => {
       const familyMembers = tagIds.map(id => (appData.family || []).find(member => member.id === id)?.name).filter(Boolean).join(", ");
       if (editing) {
         Store.edit("memories", memory.id, { description: caption, date, location: place, tagIds, familyMembers });
+        // shared? keep the family copy the same
+        if (fpIdOf(memory)) fam().share(record(memory.id), familyMembers ? familyMembers.split(", ") : []).catch(familyError);
         Modal.close();
         Toast.show(L("បានរក្សាទុក", "Saved"));
         return;
       }
+      const shareIt = Boolean(form.elements.share?.checked);
       if (!files.length) return fileError(L("សូមជ្រើសរូប ឬវីដេអូ", "Choose photos or a video"));
       if (!window.supabaseClient?.storage) return fileError(L("ត្រូវ login ហើយ online ដើម្បី post", "Log in and go online to post"));
       const userId = await currentUserId();
@@ -732,9 +878,16 @@ const MemoryFeed = (() => {
         files.forEach(file => file._url && URL.revokeObjectURL(file._url));
         state.view = "feed";
         state.limit = PAGE;
-        Store.add("memories", { id: postId, kind: "post", title: "", description: caption, date, location: place, tagIds, familyMembers, tags: "", media, liked: false, comments: [] });
+        const newPost = { id: postId, kind: "post", title: "", description: caption, date, location: place, tagIds, familyMembers, tags: "", media, liked: false, comments: [] };
+        Store.add("memories", newPost);
         Modal.close();
-        Toast.show(L("បាន post អនុស្សាវរីយ៍ 📸", "Memory posted 📸"));
+        if (shareIt && fam()?.canPost()) {
+          fam().share(newPost, familyMembers ? familyMembers.split(", ") : [])
+            .then(() => { Toast.show(L("បាន post និងចែករំលែកជាមួយគ្រួសារ 👨‍👩‍👧", "Posted and shared with family 👨‍👩‍👧"), "success"); rerender(); })
+            .catch(error => { familyError(error); });
+        } else {
+          Toast.show(L("បាន post អនុស្សាវរីយ៍ 📸", "Memory posted 📸"));
+        }
       } catch (error) {
         console.warn("MYLIFE memories: post failed", error);
         // never leave half a post behind: remove only the files this attempt uploaded
