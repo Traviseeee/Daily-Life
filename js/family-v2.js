@@ -91,7 +91,7 @@ const FamilyV2 = (() => {
         const next = nextBirthdayDate(member.birthday);
         if (next) {
           const age = dateOf(next).getFullYear() - dateOf(member.birthday).getFullYear();
-          items.push({ date: next, icon: "🎂", tone: member.relationship === "Me" || PARTNER.includes(member.relationship) ? "love" : "amber", title: L(`ថ្ងៃកំណើត ${first(member.name)}`, `${first(member.name)}'s birthday`), sub: [dayMonth(next), age > 0 && age < 120 ? L(`អាយុ ${age}`, `turns ${age}`) : ""].filter(Boolean).join(" · "), attrs: `data-fam-jump="${escapeAttr(member.id)}"` });
+          items.push({ date: next, icon: "🎂", tone: member.relationship === "Me" || PARTNER.includes(member.relationship) ? "love" : "amber", title: L(`ថ្ងៃកំណើត ${member.name}`, `${member.name}'s birthday`), sub: [dayMonth(next), age > 0 && age < 120 ? L(`អាយុ ${age}`, `turns ${age}`) : ""].filter(Boolean).join(" · "), attrs: `data-fam-jump="${escapeAttr(member.id)}"` });
         }
       }
       if (member.anniversaryDate) {
