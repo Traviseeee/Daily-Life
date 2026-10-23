@@ -91,7 +91,22 @@
 .focus-editor .fe-remove { width: 44px; height: 44px; opacity: .6; }
 .focus-editor .fe-remove:hover, .focus-editor .fe-remove:focus-visible { opacity: 1; }
 .focus-editor .fe-remove svg { width: 16px; height: 16px; }
-.focus-editor .fe-add { justify-self: start; min-height: 44px; }
+.focus-editor .fe-tools { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.focus-editor .fe-add { min-height: 44px; }
+/* reset is rare: a quiet text button, not a big one next to Save */
+.focus-editor .fe-reset {
+  min-height: 44px;
+  padding: 0 6px;
+  border: 0;
+  color: #4d5a53;
+  background: transparent;
+  font: inherit;
+  font-size: max(0.84rem, 12px);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
 .focus-editor .fe-suggest { display: flex; flex-wrap: wrap; gap: 6px; }
 .focus-editor .fe-chip {
   min-height: 34px;
@@ -111,6 +126,17 @@
 .focus-editor .fe-error { min-height: 0; margin: 0; color: #c62a30; font-size: max(0.8rem, 12px); font-weight: 700; }
 .focus-editor .fe-error:empty { display: none; }
 .focus-editor .fe-actions { margin-top: 4px; }
+#modalRoot .modal.focus-editor .fe-save {
+  width: 100%;
+  min-height: 48px;
+  border: 0;
+  color: #0f3326;
+  background: #c5ff60;
+  font-size: max(0.98rem, 15px);
+  font-weight: 800;
+  box-shadow: 0 6px 16px rgba(143, 209, 79, 0.35);
+}
+#modalRoot .modal.focus-editor .fe-save:active { transform: scale(0.98); }
 .focus-editor .fe-new { animation: feIn 260ms var(--ease-out-soft, ease-out) both; }
 .focus-editor .fe-leaving { animation: feOut 140ms var(--ease-in-soft, ease-in) both; }
 @keyframes feIn { from { opacity: 0; transform: translateY(-6px); } }
@@ -135,3 +161,45 @@
   .home-overview .focus-card.just-done .focus-progress-text,
   .focus-editor .fe-new, .focus-editor .fe-leaving { animation: none; }
 }
+
+/* ---------- dark-mode audit (23 Oct): readable + easier to tap ---------- */
+/* the whole row is the tap area (was only the 22px-high label) */
+.home-overview .focus-card .focus-item { padding: 0; }
+.home-overview .focus-card .focus-item label { gap: 12px; min-height: 48px; padding: 10px 14px; }
+
+/* own checkbox: outline box that fills lime when ticked (was a glaring white square) */
+.home-overview .focus-card .focus-item input[type="checkbox"] {
+  -webkit-appearance: none;
+  appearance: none;
+  display: grid;
+  place-items: center;
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
+  border: 2px solid rgba(217, 255, 123, 0.7);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04) center / 15px no-repeat;
+  transition: background-color 180ms ease, border-color 180ms ease;
+}
+.home-overview .focus-card .focus-item input[type="checkbox"]:checked {
+  border-color: #c5ff60;
+  background-color: #c5ff60;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5 12.5l4.2 4.2L19 7' fill='none' stroke='%230f3326' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+.home-overview .focus-card .focus-item input[type="checkbox"]:focus-visible { outline: 2px solid #c5ff60; outline-offset: 2px; }
+:root[data-theme="light"] .home-overview .focus-card .focus-item input[type="checkbox"] { border-color: #8fbf6a; background-color: #fff; }
+:root[data-theme="light"] .home-overview .focus-card .focus-item input[type="checkbox"]:checked {
+  border-color: #4f9a3a;
+  background-color: #4f9a3a;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5 12.5l4.2 4.2L19 7' fill='none' stroke='%23fff' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+:root[data-theme="light"] .home-overview .focus-card .focus-item input[type="checkbox"]:focus-visible { outline-color: #4f9a3a; }
+
+/* done rows: clearly lime-tinted, text still readable (struck through, not faded out) */
+:root:not([data-theme="light"]) .home-overview .focus-card .focus-item.done { border-color: rgba(197, 255, 96, 0.32); background: rgba(197, 255, 96, 0.1); }
+.home-overview .focus-card .focus-item.done .focus-text,
+.home-overview .focus-card .focus-item.done span { opacity: 0.86; text-decoration-color: rgba(197, 255, 96, 0.7); }
+:root[data-theme="light"] .home-overview .focus-card .focus-item.done .focus-text,
+:root[data-theme="light"] .home-overview .focus-card .focus-item.done span { text-decoration-color: rgba(47, 107, 31, 0.6); }
+/* the empty bar track is visible on the dark card */
+:root:not([data-theme="light"]) .home-overview .focus-card .focus-progress .progress-track { background: rgba(255, 255, 255, 0.14); }

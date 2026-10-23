@@ -86,14 +86,16 @@ const FocusEditor = (() => {
         </div>
         <p class="fe-hint">${esc(L(`Pick 1–${MAX} small things for today. Your list stays for the next days.`, `ជ្រើសរើសកិច្ចការតូចៗ 1–${MAX} សម្រាប់ថ្ងៃនេះ។ បញ្ជីនេះនឹងនៅសម្រាប់ថ្ងៃបន្ទាប់ៗដែរ។`))}</p>
         <ol class="fe-list">${list.map(row).join("")}</ol>
-        <button class="button ghost-button fe-add" type="button">＋ ${esc(L("Add", "បន្ថែម"))}</button>
+        <div class="fe-tools">
+          <button class="button ghost-button fe-add" type="button">＋ ${esc(L("Add", "បន្ថែម"))}</button>
+          <button class="fe-reset" type="button">↺ ${esc(L("Reset", "កំណត់ដើមវិញ"))}</button>
+        </div>
         <div class="fe-suggest" aria-label="${esc(L("Ideas", "គំនិត"))}">
           ${suggestions.map(text => `<button class="fe-chip" type="button">${esc(text)}</button>`).join("")}
         </div>
         <p class="fe-error" role="alert"></p>
-        <div class="between fe-actions">
-          <button class="button ghost-button fe-reset" type="button">${esc(L("Reset", "កំណត់ដើមវិញ"))}</button>
-          <button class="button" type="submit">${esc(L("Save", "រក្សាទុក"))}</button>
+        <div class="fe-actions">
+          <button class="button fe-save" type="submit">${esc(L("Save", "រក្សាទុក"))}</button>
         </div>
       </form>`;
     root.classList.add("open");
