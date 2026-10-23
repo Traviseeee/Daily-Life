@@ -366,6 +366,7 @@ const FamilyGroup = (() => {
       closeSheet();
       if (joinError) { Toast.show(`⚠️ ${joinError.message}`); joinShown = false; return; }
       Toast.show(L("🎉 បានចូលរួមគ្រួសារ", "🎉 You joined the family"));
+      window.familyAlert?.("join");
       location.hash = "#family";
       refresh(true);
     });
@@ -373,9 +374,21 @@ const FamilyGroup = (() => {
 
   rememberJoin();
   if (typeof window !== "undefined") {
+    // a family member (not the owner) opened MYLIFE: let the owner know, at most every 6 hours
+    const LOGIN_KEY = "mylife:family-login-alert";
+    const loginAlert = async () => {
+      try {
+        if (Date.now() - Number(localStorage.getItem(LOGIN_KEY) || 0) < 6 * 3600 * 1000) return;
+        const group = await load();
+        if (group.status !== "ready" || !group.family || group.family.owner_id === group.me) return;
+        localStorage.setItem(LOGIN_KEY, String(Date.now()));
+        window.familyAlert?.("login");
+      } catch (error) { /* ignore */ }
+    };
     const start = () => {
       tryJoin();
-      try { client()?.auth?.onAuthStateChange?.(() => { setTimeout(tryJoin, 400); if (document.querySelector("[data-family-group]")) refresh(true); }); } catch (error) { /* ignore */ }
+      loginAlert();
+      try { client()?.auth?.onAuthStateChange?.(event => { setTimeout(tryJoin, 400); if (event === "SIGNED_IN") setTimeout(loginAlert, 1500); if (document.querySelector("[data-family-group]")) refresh(true); }); } catch (error) { /* ignore */ }
     };
     if (document.readyState === "complete") setTimeout(start, 1500); else window.addEventListener("load", () => setTimeout(start, 1500));
   }

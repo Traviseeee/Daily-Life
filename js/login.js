@@ -311,6 +311,25 @@ const Login = {
     App.render();
   },
 
+  // Google / Supabase sent the user back with an error (?error=…&error_description=…
+  // or the same in the #hash): read it once, clean the address bar, say it in Khmer
+  takeOAuthError() {
+    try {
+      const search = new URLSearchParams(location.search);
+      const hash = new URLSearchParams(location.hash.replace(/^#/, ""));
+      const raw = search.get("error_description") || hash.get("error_description") || search.get("error") || hash.get("error");
+      if (!raw) return "";
+      ["error", "error_code", "error_description"].forEach(key => search.delete(key));
+      history.replaceState(null, "", `${location.pathname}${search.toString() ? `?${search}` : ""}${hash.get("error") ? "" : location.hash}`);
+      try { sessionStorage.removeItem("mylife:oauth-pending"); } catch (error) { /* ignore */ }
+      const km = languageCode() === "km";
+      const text = raw.replace(/\+/g, " ");
+      if (/signups? not allowed|signup.*disabled/i.test(text)) return km ? "មិនអាចបង្កើតគណនីថ្មីបានទេ។ សូមសុំ invite link ពីម្ចាស់គ្រួសារ។" : "New accounts can't be created. Ask the family owner for an invite link.";
+      if (/access_denied|cancel/i.test(text)) return km ? "បានបោះបង់ការ login ដោយ Google។" : "Google sign-in was cancelled.";
+      return km ? `Login ដោយ Google មិនបានសម្រេច៖ ${text}` : `Google sign-in failed: ${text}`;
+    } catch (error) { return ""; }
+  },
+
   // a Google account that isn't part of MYLIFE (see OAuthGate in js/data.js)
   blockedGoogle(reason) {
     const km = languageCode() === "km";
@@ -415,9 +434,15 @@ const Login = {
 
     const modalRoot = document.getElementById("modalRoot");
     if (!modalRoot) return;
+    const oauthError = this.takeOAuthError();
     requestAnimationFrame(() => {
       if (!this.isOpen && !this.authenticated && !this.getRememberedSession()) {
         this.open();
+      }
+      if (oauthError) {
+        const show = () => { const box = document.getElementById("loginError"); if (box) box.textContent = oauthError; };
+        show();
+        setTimeout(show, 300);
       }
     });
   }

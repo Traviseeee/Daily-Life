@@ -145,10 +145,11 @@ const removeLegacyKeys = keys => {
   });
 };
 
-// Google sign-in creates an account for ANY Google user. MYLIFE is private, so a
-// Google-only account is let in only when it already has MYLIFE data (an existing
-// account), came with a family invite link, or is already in a family. Otherwise it
-// is signed out before anything is read from or written to this device.
+// Sign-ups are open in Supabase (so invited family can join), and Google creates an
+// account for ANY Google user. MYLIFE is private, so an account is let in only when
+// it already has MYLIFE data (an existing account), came with a family invite link,
+// or is already in a family. Otherwise it is signed out before anything is read
+// from or written to this device, and the owner gets a Telegram alert.
 const OAuthGate = {
   KEY: "mylife:oauth-ok",
   approved() { try { return JSON.parse(localStorage.getItem(this.KEY) || "[]"); } catch (error) { return []; } },
@@ -157,16 +158,25 @@ const OAuthGate = {
     const list = [...(user?.identities || []).map(item => item.provider), ...(user?.app_metadata?.providers || []), user?.app_metadata?.provider];
     return [...new Set(list.filter(Boolean))];
   },
-  // only accounts that have NO email/password login need the check
-  needsCheck(user) {
+  oauthOnly(user) {
     const providers = this.providers(user);
-    return providers.length > 0 && !providers.includes("email") && !this.approved().includes(user.id);
+    return providers.length > 0 && !providers.includes("email");
+  },
+  // every account is checked once per device, then remembered
+  needsCheck(user) {
+    return Boolean(user?.id) && !this.approved().includes(user.id);
   },
   invitePending() {
     try { return Boolean(sessionStorage.getItem("mylife:family-join") || localStorage.getItem("mylife:family-join")); } catch (error) { return false; }
   },
-  async allow(client, user, row) {
-    if (!user || !this.needsCheck(user)) return true;
+  // two syncs can start at the same moment: check each account only once at a time
+  allow(client, user, row) {
+    if (!user || !this.needsCheck(user)) return Promise.resolve(true);
+    this.running = this.running || {};
+    if (!this.running[user.id]) this.running[user.id] = this.check(client, user, row).finally(() => { delete this.running[user.id]; });
+    return this.running[user.id];
+  },
+  async check(client, user, row) {
     try {
       let payload = row === undefined ? undefined : toPayloadObject(row?.payload);
       if (payload === undefined) {
@@ -183,17 +193,34 @@ const OAuthGate = {
       await this.block(client, "not_linked");
       return false;
     } catch (error) {
-      console.warn("MYLIFE: could not check the Google account", error);
+      console.warn("MYLIFE: could not check the account", error);
+      // an email/password account is a normal MYLIFE login: let it in and check
+      // again next time; only a Google-only account is turned away when unsure
+      if (!this.oauthOnly(user)) return true;
       await this.block(client, "check_failed");
       return false;
     }
   },
   async block(client, reason) {
+    if (reason === "not_linked") await familyAlert("blocked");
     try { await client.auth.signOut(); } catch (error) { /* ignore */ }
     if (typeof window !== "undefined" && typeof CustomEvent === "function") window.dispatchEvent(new CustomEvent("mylife:oauth-blocked", { detail: { reason } }));
   }
 };
 if (typeof window !== "undefined") window.OAuthGate = OAuthGate;
+
+// tell the owner (Telegram) about family activity: "join" | "login" | "blocked".
+// The server checks who the caller really is; this only sends the event name.
+async function familyAlert(event) {
+  try {
+    const client = getSupabaseClient();
+    const { data } = await client.auth.getSession();
+    const token = data?.session?.access_token;
+    if (!token || typeof fetch !== "function") return;
+    await fetch("/api/family-alert", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ event }) });
+  } catch (error) { /* alerts are best effort */ }
+}
+if (typeof window !== "undefined") window.familyAlert = familyAlert;
 
 const isSupabaseReady = () => {
   const client = getSupabaseClient();
