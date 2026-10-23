@@ -135,3 +135,5 @@
 .fv2 .family-photo-frame > span { color: var(--fv-acc-ink) !important; }
 .fv2 .family-photo-card .eyebrow { color: var(--fv-ink2) !important; }
 .fv2 .family-photo-upload { color: var(--fv-on) !important; background: var(--fv-grad) !important; border: 0 !important; }
+.fv2 .mf-teaser-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+.fv2 .mf-teaser-row { gap: 8px; }

@@ -8,26 +8,25 @@
 const FamilyV2 = (() => {
   const km = () => languageCode() === "km";
   const L = (k, e) => (km() ? k : e);
-  const KM_DAY = ["អាទិត្យ", "ច័ន្ទ", "អង្គារ", "ពុធ", "ព្រហស្បតិ៍", "សុក្រ", "សៅរ៍"];
   const KM_M = ["មករា", "កុម្ភៈ", "មីនា", "មេសា", "ឧសភា", "មិថុនា", "កក្កដា", "សីហា", "កញ្ញា", "តុលា", "វិច្ឆិកា", "ធ្នូ"];
   const REL_KM = { Me: "ខ្ញុំ", Wife: "ប្រពន្ធ", Husband: "ប្តី", Girlfriend: "សង្សារ", Boyfriend: "សង្សារ", Mother: "ម្តាយ", Father: "ឪពុក", Daughter: "កូនស្រី", Son: "កូនប្រុស", Sister: "បងប្អូនស្រី", Brother: "បងប្អូនប្រុស", Grandmother: "យាយ", Grandfather: "តា", Friend: "មិត្តភក្តិ", Other: "ផ្សេងៗ" };
   const PARTNER = ["Wife", "Husband", "Girlfriend", "Boyfriend"];
   const COVERS = ["linear-gradient(135deg,#f6c7a7,#c98b6a)", "linear-gradient(135deg,#f2b8c6,#b57a8f)", "linear-gradient(135deg,#a9d1c3,#5d8e83)", "linear-gradient(135deg,#c7c2f2,#7e78c9)", "linear-gradient(135deg,#ffd59e,#e09a4c)", "linear-gradient(135deg,#9cc6ff,#4f86d9)"];
   const IDEA_KM = {
-    Wife: "ទុកពេលសួរសុខទុក្ខស្ងាត់ៗ ហើយធ្វើរឿងល្អតូចមួយសម្រាប់គាត់ថ្ងៃនេះ",
-    Husband: "សម្គាល់រឿងមួយដែលគាត់ធ្វើសម្រាប់គ្រួសារ ហើយអរគុណគាត់",
-    Girlfriend: "ផ្ញើសារល្អៗមួយ ឬរៀបចំពេលតូចមួយសម្រាប់គ្នាថ្ងៃនេះ",
-    Boyfriend: "លើកទឹកចិត្តគាត់បន្តិច ហើយទុកពេលនិយាយគ្នាសប្បាយៗ",
-    Mother: "សួរថាគាត់សុខសប្បាយទេ ហើយស្តាប់គាត់ដោយមិនប្រញាប់",
-    Father: "ទូរស័ព្ទសួរសុខទុក្ខ ឬឲ្យគាត់និទានរឿងថ្ងៃនេះ",
-    Daughter: "ឲ្យពេល ការលើកទឹកចិត្ត និងសេរីភាពឲ្យនាងជាខ្លួនឯង",
-    Son: "សួរពីអ្វីដែលគាត់កំពុងគិត ហើយអបអរជ័យជម្នះតូចៗជាមួយគ្នា",
-    Sister: "ផ្ញើសារកំប្លែងមួយ ឬជួយមុនពេលនាងសុំ",
-    Brother: "ភ្ជាប់គ្នាវិញតាមរឿងកំប្លែង អនុស្សាវរីយ៍ ឬគម្រោងសាមញ្ញ",
-    Grandmother: "ឲ្យពេល ការអត់ធ្មត់ និងស្តាប់រឿងដែលគាត់ចូលចិត្តនិទាន",
-    Grandfather: "សួរពីអនុស្សាវរីយ៍របស់គាត់ ហើយប្រាប់ថាគាត់សំខាន់",
-    Friend: "ផ្ញើសារពិតៗមួយ ហើយណាត់ជួបគ្នាបែបស្រួលៗ",
-    Me: "ធ្វើរឿងតូចមួយដែលធ្វើឲ្យខ្លួនឯងសប្បាយចិត្តថ្ងៃនេះ"
+    Wife: "សួរសុខទុក្ខ ហើយធ្វើរឿងល្អតូចមួយ",
+    Husband: "អរគុណគាត់សម្រាប់រឿងមួយដែលគាត់ធ្វើ",
+    Girlfriend: "ផ្ញើសារល្អៗ ឬណាត់ជួបគ្នាបន្តិច",
+    Boyfriend: "លើកទឹកចិត្ត ហើយនិយាយគ្នាសប្បាយៗ",
+    Mother: "សួរសុខទុក្ខ ហើយស្តាប់គាត់",
+    Father: "ទូរស័ព្ទសួរសុខទុក្ខគាត់",
+    Daughter: "ឲ្យពេល និងលើកទឹកចិត្តនាង",
+    Son: "សួរពីថ្ងៃរបស់គាត់ ហើយអបអរជាមួយ",
+    Sister: "ផ្ញើសារកំប្លែង ឬជួយនាងមួយរឿង",
+    Brother: "ណាត់ញ៉ាំ ឬលេងជាមួយគ្នា",
+    Grandmother: "ទៅលេង ហើយស្តាប់រឿងគាត់",
+    Grandfather: "សួរពីអនុស្សាវរីយ៍របស់គាត់",
+    Friend: "ផ្ញើសារសួរសុខទុក្ខ",
+    Me: "ធ្វើរឿងតូចមួយឲ្យខ្លួនឯងសប្បាយ"
   };
 
   const todayIso = () => localDateInput();
@@ -36,7 +35,6 @@ const FamilyV2 = (() => {
   const first = name => String(name || "").split(/\s+/)[0];
   const relLabel = member => (km() ? REL_KM[member.relationship] || member.relationship || "" : member.relationship || "");
   const dayMonth = iso => { const d = dateOf(iso); return km() ? `${d.getDate()} ${KM_M[d.getMonth()]}` : d.toLocaleDateString("en-US", { month: "short", day: "numeric" }); };
-  const longDate = iso => { const d = dateOf(iso); const thisYear = d.getFullYear() === new Date().getFullYear(); return km() ? `${KM_DAY[d.getDay()]} ${d.getDate()} ${KM_M[d.getMonth()]}${thisYear ? "" : ` ${d.getFullYear()}`}` : d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", ...(thisYear ? {} : { year: "numeric" }) }); };
   const coverOf = member => COVERS[Math.max(0, appData.family.indexOf(member)) % COVERS.length];
   const face = member => (member.photo ? `<img src="${escapeAttr(member.photo)}" alt="">` : `<span>${escapeHtml(initials(member.name || "?"))}</span>`);
   const groupState = () => (typeof FamilyGroup !== "undefined" ? FamilyGroup.state : null);
@@ -92,8 +90,8 @@ const FamilyV2 = (() => {
       if (member.birthday) {
         const next = nextBirthdayDate(member.birthday);
         if (next) {
-          const sign = member.zodiacSign || (typeof zodiacSignForDate === "function" ? zodiacSignForDate(member.birthday) : "");
-          items.push({ date: next, icon: "🎂", tone: member.relationship === "Me" || PARTNER.includes(member.relationship) ? "love" : "amber", title: L(`ថ្ងៃកំណើត ${member.name}`, `${member.name}'s birthday`), sub: [longDate(next), sign].filter(Boolean).join(" · "), attrs: `data-fam-jump="${escapeAttr(member.id)}"` });
+          const age = dateOf(next).getFullYear() - dateOf(member.birthday).getFullYear();
+          items.push({ date: next, icon: "🎂", tone: member.relationship === "Me" || PARTNER.includes(member.relationship) ? "love" : "amber", title: L(`ថ្ងៃកំណើត ${first(member.name)}`, `${first(member.name)}'s birthday`), sub: [dayMonth(next), age > 0 && age < 120 ? L(`អាយុ ${age}`, `turns ${age}`) : ""].filter(Boolean).join(" · "), attrs: `data-fam-jump="${escapeAttr(member.id)}"` });
         }
       }
       if (member.anniversaryDate) {
@@ -102,11 +100,11 @@ const FamilyV2 = (() => {
         seenPairs.add(pair);
         const next = nextAnnualDate(member.anniversaryDate);
         const years = dateOf(next).getFullYear() - dateOf(member.anniversaryDate).getFullYear();
-        items.push({ date: next, icon: "💞", tone: "love", title: L(`ខួប${years > 0 ? ` ${years} ឆ្នាំ` : ""}`, `Anniversary${years > 0 ? ` · ${years} yrs` : ""}`), sub: longDate(next), attrs: `data-fam-jump="${escapeAttr(member.id)}"` });
+        items.push({ date: next, icon: "💞", tone: "love", title: L(`ខួប${years > 0 ? ` ${years} ឆ្នាំ` : ""}`, `Anniversary${years > 0 ? ` · ${years} yrs` : ""}`), sub: dayMonth(next), attrs: `data-fam-jump="${escapeAttr(member.id)}"` });
       }
     });
     (appData.calendarEvents || []).filter(event => event.category === "Family" && event.date >= todayIso()).forEach(event => {
-      items.push({ date: event.date, icon: "📅", tone: "blue", title: event.title, sub: `${longDate(event.date)}${event.time ? ` · ${typeof todayClock === "function" ? todayClock(event.time) : event.time}` : ""}`, attrs: `data-edit-event="${escapeAttr(event.id)}"` });
+      items.push({ date: event.date, icon: "📅", tone: "blue", title: event.title, sub: `${dayMonth(event.date)}${event.time ? ` · ${typeof todayClock === "function" ? todayClock(event.time) : event.time}` : ""}`, attrs: `data-edit-event="${escapeAttr(event.id)}"` });
     });
     const list = items.filter(item => daysUntil(item.date) >= 0).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 4);
     const rows = list.map(item => {
@@ -122,7 +120,7 @@ const FamilyV2 = (() => {
   }
 
   function idea(member) {
-    if (km()) return IDEA_KM[member.relationship] || "ជ្រើសរឿងតូចមួយ ដើម្បីបង្ហាញថាគាត់សំខាន់សម្រាប់អ្នក";
+    if (km()) return IDEA_KM[member.relationship] || "បង្ហាញថាគាត់សំខាន់សម្រាប់អ្នក";
     return familyCareIdea({ ...member, favorite: "" }).replace(/^[^:]*:\s*/, "");
   }
 
@@ -137,7 +135,7 @@ const FamilyV2 = (() => {
     const missing = [];
     if (member.birthday) facts.push([L("ថ្ងៃកំណើត", "Birthday"), dayMonth(member.birthday)]); else missing.push(L("ថ្ងៃកំណើត", "Birthday"));
     if (member.anniversaryDate) facts.push([L("ខួប", "Anniversary"), dayMonth(member.anniversaryDate)]); else if (PARTNER.includes(member.relationship)) missing.push(L("ខួប", "Anniversary"));
-    if (member.phone) facts.push([L("ទូរស័ព្ទ", "Phone"), member.phone]); else missing.push(L("លេខទូរស័ព្ទ", "Phone"));
+    if (member.phone) facts.push([L("ទូរស័ព្ទ", "Phone"), String(member.phone).replace(/^(\d{3})(\d{3})(\d{3,4})$/, "$1 $2 $3")]); else missing.push(L("លេខទូរស័ព្ទ", "Phone"));
     const notes = [member.relationshipNote, member.notes].filter(Boolean);
     return `<article class="fv-member" id="family-member-${escapeAttr(member.id || "")}">
       <div class="fv-cover" style="background:${coverOf(member)}">${member.photo ? `<img src="${escapeAttr(member.photo)}" alt="">` : ""}
