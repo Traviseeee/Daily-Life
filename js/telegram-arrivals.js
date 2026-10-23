@@ -122,6 +122,23 @@ const TelegramArrivals = (() => {
     return `${sign}${amountText(record.amount, record.currency)} · ${label(record.category)}${name && ![String(record.category).toLowerCase(), String(optionLabel?.(record.category) || "").toLowerCase()].includes(String(name).trim().toLowerCase()) ? ` · ${safe(name)}` : ""}`;
   }
 
+  // the same item split for a list row: icon · title · small line · amount (bell panel)
+  function parts({ kind, record }) {
+    const catName = typeof optionLabel === "function" ? optionLabel(record.category || "Other") : (record.category || "");
+    if (kind === "invoice") return { icon: UTILITY_ICON(record), title: safe(record.name), sub: L("វិក្កយបត្រថ្មី", "New bill"), amount: Number(record.amount) > 0 ? amountText(record.amount, record.currency) : "", tone: "bill" };
+    if (kind === "billpaid") return { icon: "✅", title: safe(record.name), sub: L("បានបង់", "Paid"), amount: "", tone: "paid" };
+    if (kind === "event") return { icon: "📅", title: safe(record.title), sub: L("ព្រឹត្តិការណ៍", "Event"), amount: "", tone: "event" };
+    const name = String(record.description || record.name || "").trim();
+    const sameAsCat = !name || [String(record.category).toLowerCase(), String(catName).toLowerCase()].includes(name.toLowerCase());
+    return {
+      icon: ICON[record.category] || (kind === "income" ? "💰" : "📦"),
+      title: safe(sameAsCat ? catName : name),
+      sub: sameAsCat ? "" : safe(catName),
+      amount: `${kind === "income" ? "+" : "−"}${amountText(record.amount, record.currency)}`,
+      tone: kind === "income" ? "in" : "out"
+    };
+  }
+
   function check() {
     const items = fromTelegram();
     const ids = items.map(item => item.key);
@@ -295,5 +312,5 @@ const TelegramArrivals = (() => {
   });
   setTimeout(() => { try { check(); } catch (error) { /* ignore */ } }, 1500);
 
-  return { check, feed, unreadCount, markRead, clearFeed };
+  return { check, feed, unreadCount, markRead, clearFeed, parts };
 })();

@@ -152,7 +152,11 @@ const NotificationCenter = (() => {
     }
     if (entry.daysLeft === 0) return L("ថ្ងៃនេះ", "Today");
     if (entry.daysLeft === 1) return L("ស្អែក", "Tomorrow");
-    const weekday = new Date(`${entry.date}T00:00:00`).toLocaleDateString(isKm() ? "km-KH" : "en-US", { weekday: "short", day: "numeric", month: "short" });
+    // Khmer written by hand: many browsers have no km-KH dates and fall back to English
+    const day = new Date(`${entry.date}T00:00:00`);
+    const KM_D = ["អាទិត្យ", "ច័ន្ទ", "អង្គារ", "ពុធ", "ព្រហស្បតិ៍", "សុក្រ", "សៅរ៍"];
+    const KM_M = ["មករា", "កុម្ភៈ", "មីនា", "មេសា", "ឧសភា", "មិថុនា", "កក្កដា", "សីហា", "កញ្ញា", "តុលា", "វិច្ឆិកា", "ធ្នូ"];
+    const weekday = isKm() ? `${KM_D[day.getDay()]} ${day.getDate()} ${KM_M[day.getMonth()]}` : day.toLocaleDateString("en-US", { weekday: "short", day: "numeric", month: "short" });
     return L(`${weekday} · ក្នុង ${entry.daysLeft} ថ្ងៃ`, `${weekday} · in ${entry.daysLeft} days`);
   }
 
@@ -292,12 +296,18 @@ const NotificationCenter = (() => {
         <ul class="nc-list">${list.map(entry => `
           <li class="nc-item nc-kind-telegram ${entry.read ? "" : "is-new"}">
             <button class="nc-item-main" type="button" data-nc-tg-open="${escapeAttr(entry.url)}">
-              <span class="nc-icon nc-tg-icon">${entry.collection === "bills" ? "🧾" : entry.collection === "calendarEvents" ? "📅" : entry.collection === "income" ? "💰" : "💸"}</span>
+              ${(() => {
+                const part = typeof TelegramArrivals.parts === "function" ? TelegramArrivals.parts(entry.item) : null;
+                if (!part) return `<span class="nc-icon nc-tg-icon">${entry.collection === "bills" ? "🧾" : entry.collection === "calendarEvents" ? "📅" : entry.collection === "income" ? "💰" : "💸"}</span>
+              <span class="nc-copy"><strong>${entry.text}</strong><span class="nc-meta"><span class="nc-relative">${escapeHtml(agoLabel(entry.at))}</span>${entry.read ? "" : `<span class="nc-tg-new">${L("ថ្មី", "New")}</span>`}</span></span>
+              <span class="nc-chevron">${icon.chevron()}</span>`;
+                return `<span class="nc-icon nc-tg-icon nc-tg-${part.tone}">${part.icon}</span>
               <span class="nc-copy">
-                <strong>${entry.text}</strong>
-                <span class="nc-meta"><span class="nc-relative">${escapeHtml(agoLabel(entry.at))}</span>${entry.read ? "" : `<span class="nc-tg-new">${L("ថ្មី", "New")}</span>`}</span>
+                <strong class="nc-tg-title">${part.title}</strong>
+                <span class="nc-meta"><span class="nc-tg-cat">${part.sub}</span><span class="nc-relative">${escapeHtml(agoLabel(entry.at))}</span>${entry.read ? "" : `<span class="nc-tg-new">${L("ថ្មី", "New")}</span>`}</span>
               </span>
-              <span class="nc-chevron">${icon.chevron()}</span>
+              ${part.amount ? `<span class="nc-tg-amount is-${part.tone}">${part.amount}</span>` : `<span class="nc-chevron">${icon.chevron()}</span>`}`;
+              })()}
             </button>
           </li>`).join("")}
         </ul>

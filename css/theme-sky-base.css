@@ -242,3 +242,40 @@ body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; 
 :root[data-theme="light"] #loginModal .login-guest-button { border-color: #cfdcf0 !important; background: rgba(255, 255, 255, 0.7) !important; }
 :root[data-theme="light"] #loginModal .login-or { color: #6b7c99 !important; }
 :root[data-theme="light"] #loginModal .login-or::before, :root[data-theme="light"] #loginModal .login-or::after { background: rgba(15, 27, 51, 0.12) !important; }
+
+/* ---- notification center (bell) in light mode: sky blue, white cards on a soft blue panel ---- */
+:root[data-theme="light"] .nc-root {
+  --nc-surface: #ffffff; --nc-surface-2: #f4f8ff; --nc-line: #e3ecfa;
+  --nc-text: #0f1b33; --nc-text-2: #5b6b85; --nc-text-3: #7d8ba3;
+  --nc-accent: #2f7bf5 !important; --nc-accent-soft: #e6f0ff;
+  --nc-shadow: 0 24px 60px rgba(37, 99, 235, 0.18), 0 2px 8px rgba(15, 27, 51, 0.06);
+}
+:root[data-theme="light"] .nc-backdrop { background: rgba(15, 27, 51, 0.18); }
+:root[data-theme="light"] .nc-panel { background: #f4f8ff; border-color: #e3ecfa; }
+:root[data-theme="light"] .nc-header { background: #ffffff; }
+:root[data-theme="light"] .nc-eyebrow { color: #2f7bf5; }
+:root[data-theme="light"] .nc-close { border-color: #e3ecfa; background: #f4f8ff; color: #33425c; }
+:root[data-theme="light"] .nc-scroll { padding: 4px 12px 10px; border-top-color: #e3ecfa; }
+:root[data-theme="light"] .nc-group h3 { margin: 6px 4px 8px; font-size: 0.8rem; color: #33425c; }
+:root[data-theme="light"] .nc-group h3 span { padding: 1px 8px; color: #1d4ed8; background: #e1ecff; }
+:root[data-theme="light"] .nc-group .nc-tg-clear { color: #1d4ed8; background: #ffffff; border: 1px solid #dbe7fb; border-radius: 999px; padding: 3px 12px; }
+/* each group is one white card with thin lines between rows */
+:root[data-theme="light"] .nc-list { gap: 0; padding: 4px 6px; border-radius: 20px; background: #ffffff; box-shadow: 0 6px 20px rgba(37, 99, 235, 0.08); }
+:root[data-theme="light"] .nc-list > .nc-item + .nc-item::before { content: ""; position: absolute; top: 0; left: 64px; right: 10px; height: 1px; background: #edf2fb; }
+:root[data-theme="light"] .nc-item:hover, :root[data-theme="light"] .nc-item:focus-within { background: #f4f8ff; }
+:root[data-theme="light"] .nc-kind-event    { --k: #2f7bf5 !important; --k-bg: #e1ecff; }
+:root[data-theme="light"] .nc-kind-reminder { --k: #a35b00; --k-bg: #fff1d6; }
+:root[data-theme="light"] .nc-kind-bill     { --k: #b45309; --k-bg: #fff1d6; }
+:root[data-theme="light"] .nc-kind-family   { --k: #0f8a6a; --k-bg: #dcf5e9; }
+/* added from Telegram: icon by kind, amount on the right, "new" in blue */
+:root[data-theme="light"] .nc-item.nc-kind-telegram .nc-tg-icon { background: #e6f0ff; }
+:root[data-theme="light"] .nc-item.nc-kind-telegram .nc-tg-in { background: #dcf5e5; }
+:root[data-theme="light"] .nc-item.nc-kind-telegram .nc-tg-bill { background: #fff1d6; }
+:root[data-theme="light"] .nc-item.nc-kind-telegram .nc-tg-paid { background: #dcf5e5; }
+:root[data-theme="light"] .nc-item.nc-kind-telegram.is-new { box-shadow: none; }
+:root[data-theme="light"] .nc-tg-new { color: #ffffff; background: #3b82f6; }
+:root[data-theme="light"] .nc-tg-title { color: #0f1b33; font-weight: 600; }
+:root[data-theme="light"] .nc-tg-amount.is-out { color: #0f1b33; }
+:root[data-theme="light"] .nc-tg-amount.is-in { color: #13804a; }
+/* next-up card and filters in blue */
+:root[data-theme="light"] .nc-filter.active, :root[data-theme="light"] .nc-filter[aria-selected="true"] { color: #ffffff !important; background: linear-gradient(120deg, #5aa2ff, #2f7bf5) !important; border-color: transparent !important; }
