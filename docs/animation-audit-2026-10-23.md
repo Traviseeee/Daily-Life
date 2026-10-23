@@ -63,3 +63,18 @@
 3. **Progress bar `width` → `scaleX`**
 4. **Motion tokens** (ល្បឿន + easing) ហើយប្ដូរ `transition: all`
 5. (Optional) drag-to-dismiss, count-up, skeleton
+
+---
+
+## ✅ កែរួច (23 តុលា) — `css/motion.css`, `js/motion.js`, Modal, Toast
+**រក្សារូបរាងដដែល ហើយបន្ថែមចលនា**៖
+- Glow ប៊ូតុង nav និង ring ប៊ូតុង ＋ នៅតែរត់ ប៉ុន្តែឥឡូវប្រើតែ `opacity`/`transform` (GPU) ជំនួស `box-shadow`។ វាស់រួច៖ លែងមានចលនា ∞ ណាប្រើ `box-shadow` ទៀតហើយ
+- Modal/Toast មានចលនាពេលបិទ (140–160ms) ពីមុនបាត់ភ្លាមៗ។ បិទហើយបើកថ្មីភ្លាមៗក៏នៅដំណើរការត្រឹមត្រូវ
+- Modal ចូលដោយ spring ទន់ (320ms)
+- ✓ Toast ជោគជ័យ៖ icon លោតឡើង
+- **ចំនួនលុយរាប់ឡើង** ពី 0 ក្នុងរយៈពេល 650ms (Money cards, Today stats) តែពេលទើបបើកទំព័រប៉ុណ្ណោះ
+- ចុច avatar គ្រួសារ / Memories មានចលនាធ្លាក់ចូលតិចៗ
+- Motion tokens៖ `--dur-fast/base/slow`, `--ease-out-soft`, `--ease-in-soft`, `--ease-spring`
+- គោរព Reduce Motion ទាំងអស់
+
+នៅសល់ (មិនទាន់ធ្វើ)៖ progress bar `width` → `scaleX` (ត្រូវកែ JS 8 កន្លែង), shine កាត Home (`background-position`), skeleton, drag-to-dismiss

@@ -166,8 +166,21 @@ const Modal = {
       document.removeEventListener("keydown", this.escapeHandler);
       this.escapeHandler = null;
     }
-    root.classList.remove("open");
-    root.innerHTML = "";
+    // the window fades out (140ms) before it is removed; if something new opens
+    // in the meantime, the new content is left alone
+    const node = root.querySelector(".modal, .welcome-poster-card");
+    const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    if (!node || reduce) {
+      root.classList.remove("open");
+      root.innerHTML = "";
+      return;
+    }
+    node.classList.add("is-leaving");
+    setTimeout(() => {
+      if (!node.isConnected || !node.classList.contains("is-leaving")) return;
+      root.classList.remove("open");
+      root.innerHTML = "";
+    }, 140);
   },
   bindImageFileInputs(root) {
     root.querySelectorAll('input[type="file"][accept*="image"]').forEach(input => {

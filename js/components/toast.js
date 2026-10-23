@@ -161,6 +161,9 @@ const Toast = {
     stack.appendChild(node);
 
     Sound.play(options.sound || (tone === "danger" ? "error" : tone === "warning" ? "warning" : "success"));
-    setTimeout(() => node.remove(), duration);
+    setTimeout(() => {
+      node.classList.add("is-leaving");
+      setTimeout(() => node.remove(), 170);
+    }, duration);
   }
 };

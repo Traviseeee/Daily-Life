@@ -1,0 +1,78 @@
+/* Motion upgrade (docs/animation-audit-2026-10-23.md).
+   Same look as before, but the never-ending glows now only change opacity /
+   transform (the GPU does it, no repaint every frame), windows animate out as
+   well as in, and a few new touches: money count-up, success pop. */
+:root {
+  --dur-fast: 120ms;
+  --dur-base: 200ms;
+  --dur-slow: 320ms;
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-soft: cubic-bezier(0.4, 0, 1, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ---------- 1. active tab glow: breathes with opacity (was box-shadow every frame) ---------- */
+.nav-item.active { position: relative; isolation: isolate; animation: none; }
+.nav-item.active::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow: 0 16px 34px rgba(184, 255, 90, 0.16);
+  opacity: 0;
+  animation: navGlow 2200ms ease-in-out infinite;
+}
+@keyframes navGlow { 0%, 100% { opacity: 0; } 50% { opacity: 1; } }
+
+/* ---------- 1. orange ＋ button: the ring now grows out (transform), base shadow stays ---------- */
+.quick-action-toggle {
+  position: relative;
+  animation: quickActionPop 560ms cubic-bezier(0.22, 1.35, 0.36, 1) both;
+}
+.quick-action-toggle::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: 50%;
+  pointer-events: none;
+  box-shadow: 0 0 0 8px rgba(255, 134, 31, 0.2);
+  opacity: 0;
+  transform: scale(0.82);
+  animation: fabRing 3600ms ease-out 1200ms infinite;
+}
+@keyframes fabRing {
+  0%, 70% { opacity: 0; transform: scale(0.82); }
+  78% { opacity: 1; transform: scale(1); }
+  94%, 100% { opacity: 0; transform: scale(1.12); }
+}
+.quick-action-toggle:active { transform: scale(0.92); transition-duration: var(--dur-fast); }
+.quick-action-dock.is-open .quick-action-toggle::after { animation: none; opacity: 0; }
+
+/* ---------- 3. windows: softer spring in, quicker fade out ---------- */
+.modal, .welcome-poster-card { animation: modalIn var(--dur-slow) var(--ease-out-soft) both; }
+.modal.is-leaving, .welcome-poster-card.is-leaving {
+  pointer-events: none;
+  animation: modalOut 140ms var(--ease-in-soft) both;
+}
+@keyframes modalOut { to { opacity: 0; transform: translateY(10px) scale(0.97); } }
+
+/* ---------- 3. toasts: slide in with a little bounce, fade out ---------- */
+.toast { animation: toastIn var(--dur-slow) var(--ease-out-soft) both; }
+.toast.is-leaving { animation: toastOut 160ms var(--ease-in-soft) both; }
+@keyframes toastOut { to { opacity: 0; transform: translateY(6px) scale(0.96); } }
+/* ✓ success: the icon pops */
+.toast-success .toast-icon { animation: toastPop 420ms var(--ease-spring) 80ms both; }
+@keyframes toastPop { from { transform: scale(0.4) rotate(-20deg); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* ---------- 5. money count-up: numbers stay the same width while they roll ---------- */
+.mm-value .money-value, .tdx-stat .money-value, .tdx-stat b { font-variant-numeric: tabular-nums; }
+
+/* ---------- pressing feels physical everywhere ---------- */
+.fam-av:active .fam-av-face, .mf-person:active .mf-face { transform: scale(0.94); transition: transform var(--dur-fast) var(--ease-out-soft); }
+
+@media (prefers-reduced-motion: reduce) {
+  .nav-item.active::after, .quick-action-toggle::after { animation: none; opacity: 0; }
+  .modal.is-leaving, .toast.is-leaving { animation-duration: 1ms; }
+}
