@@ -1,7 +1,7 @@
 const Icons = (() => {
   const base = (paths, label = "") => `
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ${label ? `aria-label="${label}" role="img"` : 'aria-hidden="true"'}>
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ${label ? `aria-label="${label}" role="img"` : 'aria-hidden="true"'}>
       ${paths}
     </svg>`;
 
@@ -53,6 +53,7 @@ const Icons = (() => {
     check: () => base('<path d="m20 6-11 11-5-5"/>'),
     close: () => base('<path d="M18 6 6 18M6 6l12 12"/>'),
     chevron: () => base('<path d="m9 18 6-6-6-6"/>'),
-    menu: () => base('<path d="M4 7h16M4 12h16M4 17h16"/>')
+    menu: () => base('<path d="M4 7h16M4 12h16M4 17h16"/>'),
+    today: () => base('<rect x="4" y="4" width="16" height="17" rx="3"/><path d="M9 2.5h6v3H9z"/><path d="m8 11.5 1.6 1.6L12.5 10M8 16.5l1.6 1.6 2.9-3.1M14.5 12h2M14.5 17h2"/>')
   };
 })();

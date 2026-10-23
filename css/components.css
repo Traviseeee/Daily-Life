@@ -826,7 +826,7 @@
 .suggestion-badge svg {
   width: 18px;
   height: 18px;
-  stroke-width: 2.1;
+  stroke-width: 2;
 }
 
 .suggestion-copy {
@@ -1221,7 +1221,7 @@
 .stat-icon svg {
   width: 24px;
   height: 24px;
-  stroke-width: 2.1;
+  stroke-width: 2;
 }
 
 .mood-icon {
@@ -3439,7 +3439,7 @@
 .tool-launcher-icon svg {
   width: 34px;
   height: 34px;
-  stroke-width: 2.1;
+  stroke-width: 2;
 }
 
 .tool-launcher-item:hover {
@@ -4002,7 +4002,7 @@
   width: 20px;
   height: 20px;
   flex: 0 0 auto;
-  stroke-width: 2.1;
+  stroke-width: 2;
 }
 
 .icon-button svg { width: 19px; height: 19px; }

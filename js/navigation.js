@@ -1,6 +1,6 @@
 const routes = [
   { id: "home", label: "Home", icon: "home" },
-  { id: "today", labelKey: "today", icon: "sun" },
+  { id: "today", labelKey: "today", icon: "today" },
   { id: "summary", labelKey: "smartSummary", icon: "chart" },
   { id: "family", label: "Family", icon: "family" },
   { id: "goals", label: "Goals", icon: "goal" },

@@ -1,4 +1,4 @@
-const CACHE_NAME = "mylife-pwa-4c12127e";
+const CACHE_NAME = "mylife-pwa-4f6afb17";
 // red number on the Home Screen icon: the app saves its bell count here and a
 // push that arrives while the app is closed adds 1 to it
 const BADGE_CACHE = "mylife-badge";
@@ -35,6 +35,7 @@ const APP_SHELL = [
   "./css/profile-modal.css",
   "./css/focus-card.css",
   "./css/motion.css",
+  "./css/icons-fit.css",
   "./css/touch-fit.css",
   "./css/a11y-fit.css",
   "./css/theme-polish.css",
@@ -77,6 +78,7 @@ const APP_SHELL = [
   "./js/family-posts.js",
   "./js/motion.js",
   "./js/touch-fit.js",
+  "./js/emoji-icons.js",
   "./js/vendor/qrcode.js",
   "./js/hobby-form.js",
   "./js/goal-form.js",
@@ -164,7 +166,7 @@ self.addEventListener("push", event => {
     await self.registration.showNotification(data.title || "MYLIFE", {
       body: data.body || "You have a new reminder.",
       icon: "/assets/icons/mylife-icon-192.png",
-      badge: "/assets/icons/mylife-icon-192.png",
+      badge: "/assets/icons/mylife-icon-mono-512.png",
       data: { url: notificationUrl(data.url) }
     });
     await bumpBadge();

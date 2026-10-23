@@ -101,3 +101,26 @@ const TouchFit = (() => {
 })();
 
 if (typeof window !== "undefined") window.TouchFit = TouchFit;
+
+/* The orange ＋ steps aside while you scroll down (reading) and comes back as soon
+   as you scroll up or stop near the top/bottom. */
+(() => {
+  if (typeof window === "undefined") return;
+  let lastY = window.scrollY;
+  let ticking = false;
+  const update = () => {
+    ticking = false;
+    const y = window.scrollY;
+    const dy = y - lastY;
+    const nearTop = y < 80;
+    const nearBottom = window.innerHeight + y >= document.documentElement.scrollHeight - 40;
+    if (nearTop || dy < -6) document.body.classList.remove("fab-away");
+    else if (dy > 6 && !nearBottom) document.body.classList.add("fab-away");
+    if (nearBottom) document.body.classList.remove("fab-away");
+    if (Math.abs(dy) > 6) lastY = y;
+  };
+  window.addEventListener("scroll", () => {
+    if (!ticking) { ticking = true; requestAnimationFrame(update); }
+  }, { passive: true });
+  window.addEventListener("hashchange", () => { document.body.classList.remove("fab-away"); lastY = window.scrollY; });
+})();

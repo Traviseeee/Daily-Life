@@ -1,0 +1,43 @@
+/* Icon audit (23 Oct): drawn emoji, one stroke weight, clearer section button,
+   the orange ＋ steps aside while you scroll down. JS: js/emoji-icons.js. */
+
+/* drawn emoji sit in text like the emoji they replace */
+.emo {
+  display: inline-block;
+  flex: 0 0 auto;
+  width: 1.2em;
+  height: 1.2em;
+  vertical-align: -0.24em;
+  overflow: visible;
+}
+button > .emo:only-child, .mf-act > .emo { width: 1.45em; height: 1.45em; }
+.mf-act .emo, .mf-reel-like .emo { transition: transform 220ms var(--ease-spring, ease-out); }
+.mf-act.liked .emo, .mf-reel-like.liked .emo { animation: emoPop 360ms var(--ease-spring, ease-out); }
+@keyframes emoPop { 50% { transform: scale(1.3); } }
+.money-forecast-icon .emo, .cde-icon .emo, .mf-empty-icon .emo { width: 1em; height: 1em; vertical-align: -0.12em; }
+
+/* one line weight for every outline icon (was 1.8 here, 2.1 there) */
+svg[stroke="currentColor"][stroke-width="1.8"],
+.nav-item svg, .mobile-nav svg, .icon-button svg, .section-title-icon svg { stroke-width: 2; }
+
+/* section menu button on Money / Goals / Settings: sliders, not a ☰ */
+.financial-nav-toggle-lines, .goals-nav-toggle-lines { gap: 4px; }
+.financial-nav-toggle-lines i, .goals-nav-toggle-lines i { position: relative; width: 16px; }
+.financial-nav-toggle-lines i::after, .goals-nav-toggle-lines i::after {
+  content: "";
+  position: absolute;
+  top: -2px;
+  left: 3px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: inherit;
+}
+.financial-nav-toggle-lines i:nth-child(2)::after, .goals-nav-toggle-lines i:nth-child(2)::after { left: 9px; }
+.financial-nav-toggle-lines i:nth-child(3)::after, .goals-nav-toggle-lines i:nth-child(3)::after { left: 5px; }
+
+/* the orange ＋ slides away while you scroll down and comes back when you scroll up,
+   so it never sits on top of what you are reading */
+.quick-action-dock { transition: transform 260ms var(--ease-out-soft, ease-out), opacity 200ms ease; }
+body.fab-away .quick-action-dock:not(.is-open) { transform: translateY(calc(100% + 120px)); opacity: 0; pointer-events: none; }
+@media (prefers-reduced-motion: reduce) { .quick-action-dock { transition: opacity 120ms linear; } }
