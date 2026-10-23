@@ -111,3 +111,54 @@
 /* hidden labels take no space: icons stay centred like before */
 #mobileNav .nav-item { flex-direction: row; justify-content: center; }
 #mobileNav .nav-item:not(.active) span { height: 0; }
+
+/* ---------- Home weather card: comes alive when Home opens, hours cascade in ---------- */
+@media (max-width: 900px) {
+  /* entrance (class added once by js/topbar-weather.js, then removed) */
+  .topbar-wx-card.tw-enter .tw-card-icon { animation: twIconIn 680ms var(--ease-spring) both; }
+  .topbar-wx-card.tw-enter .tw-card-main > * { animation: twRise 420ms var(--ease-out-soft) both; }
+  .topbar-wx-card.tw-enter .tw-card-main > :nth-child(2) { animation-delay: 70ms; }
+  .topbar-wx-card.tw-enter .tw-card-main > .tw-card-tip { animation: twRise 420ms var(--ease-out-soft) 140ms both, twNudge 620ms ease-in-out 760ms; }
+  .topbar-wx-card.tw-enter .tw-card-time { animation: twRise 420ms var(--ease-out-soft) 110ms both; }
+  @keyframes twIconIn { from { opacity: 0; transform: scale(0.45) rotate(-28deg); } }
+  @keyframes twRise { from { opacity: 0; transform: translateY(8px); } }
+  @keyframes twNudge { 20% { transform: translateX(-2px); } 40% { transform: translateX(2px); } 60% { transform: translateX(-1px); } 80% { transform: translateX(1px); } }
+
+  /* opening the hourly strip: tiles drop in one after another, icons pop */
+  body.topbar-home .tw-hours { animation: none; }
+  .topbar-wx-card.tw-opening .tw-hours { animation: tw-drop-in 220ms var(--ease-out-soft); }
+  .tw-hour:nth-child(2) { --twd: 50ms; }
+  .tw-hour:nth-child(3) { --twd: 100ms; }
+  .tw-hour:nth-child(4) { --twd: 150ms; }
+  .tw-hour:nth-child(5) { --twd: 200ms; }
+  .topbar-wx-card.tw-opening .tw-hour { animation: twHourIn 420ms var(--ease-spring) var(--twd, 0ms) both; }
+  .topbar-wx-card.tw-opening .tw-hour > .tw-icon { animation: twIconIn 520ms var(--ease-spring) var(--twd, 0ms) both; }
+  .topbar-wx-card.tw-opening .tw-hour > small { animation: twRise 320ms var(--ease-out-soft) calc(var(--twd, 0ms) + 120ms) both; }
+  @keyframes twHourIn { from { opacity: 0; transform: translateY(-10px) scale(0.9); } }
+
+  /* "now" tile: a soft lime ring breathes (opacity only) */
+  .tw-hour.is-now { position: relative; isolation: isolate; }
+  .tw-hour.is-now::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    pointer-events: none;
+    box-shadow: inset 0 0 0 1px rgba(197, 255, 96, 0.45);
+    opacity: 0.25;
+    animation: twNowGlow 2400ms ease-in-out infinite;
+  }
+  :root[data-theme="light"] .tw-hour.is-now::after { box-shadow: inset 0 0 0 1px rgba(63, 125, 22, 0.4); }
+  @keyframes twNowGlow { 50% { opacity: 1; } }
+
+  /* chevron flips with a little spring; the card gives under your thumb */
+  body.topbar-home .tw-card-more { transition: transform 360ms var(--ease-spring), opacity var(--dur-base) ease; }
+  body.topbar-home .topbar-wx-card.is-open .tw-card-more { opacity: .8; }
+  body.topbar-home .topbar-wx-card.can-open { transition: transform var(--dur-fast) var(--ease-out-soft); }
+  body.topbar-home .topbar-wx-card.can-open:active { transform: scale(0.985); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .topbar-wx-card *, .tw-hour.is-now::after { animation: none !important; }
+  body.topbar-home .tw-card-more, body.topbar-home .topbar-wx-card.can-open { transition: none; }
+}

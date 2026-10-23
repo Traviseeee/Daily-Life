@@ -70,6 +70,7 @@ const TopbarWeather = (() => {
     if (loading || (!force && cached && Date.now() - cached.at < MAX_AGE)) return;
     if (typeof navigator !== "undefined" && navigator.onLine === false) return;
     loading = true;
+    const hadData = !!data;
     try {
       const url = `https://api.open-meteo.com/v1/forecast?latitude=${PLACE.lat}&longitude=${PLACE.lon}&current=temperature_2m,apparent_temperature,weather_code,is_day&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&hourly=temperature_2m,weather_code,precipitation_probability,is_day&timezone=auto&forecast_days=2`;
       const response = await fetch(url, { cache: "no-store" });
@@ -90,6 +91,7 @@ const TopbarWeather = (() => {
       };
       try { localStorage.setItem(CACHE_KEY, JSON.stringify(data)); } catch (error) { /* storage full / private */ }
       render();
+      if (!hadData) enter();
     } catch (error) {
       console.warn("MYLIFE weather unavailable.", error);
     } finally {
@@ -134,6 +136,36 @@ const TopbarWeather = (() => {
   function toggle(force) {
     open = typeof force === "boolean" ? force : !open;
     render();
+    if (open) play("tw-opening", 900);
+  }
+
+  // one-shot motion: a class on the card plays the CSS animation once, then goes away
+  // (so the minute-by-minute re-render never replays it)
+  const reduceMotion = () => window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+  function play(cls, ms) {
+    const card = document.getElementById("topbarWxCard");
+    if (!card || reduceMotion()) return;
+    card.classList.remove(cls);
+    void card.offsetWidth;
+    card.classList.add(cls);
+    clearTimeout(play[cls]);
+    play[cls] = setTimeout(() => card.classList.remove(cls), ms);
+  }
+
+  function enter() {
+    if (!document.body.classList.contains("topbar-home") || !data) return;
+    play("tw-enter", 1600);
+    const el = document.querySelector("#topbarWxCard .tw-card-temp strong");
+    const target = Number(data.temp);
+    if (!el || reduceMotion() || !Number.isFinite(target) || target === 0) return;
+    const start = performance.now();
+    const step = now => {
+      const t = Math.min(1, (now - start) / 600);
+      if (!el.isConnected) return;
+      el.textContent = num(Math.round(target * (1 - Math.pow(1 - t, 3))));
+      if (t < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
   }
 
   const isDayNow = () => { const h = new Date().getHours(); return h >= 6 && h < 18; };
@@ -212,6 +244,8 @@ const TopbarWeather = (() => {
     init.done = true;
     data = readCache();
     render();
+    setTimeout(enter, 80);
+    window.addEventListener("hashchange", () => setTimeout(enter, 80));
     load(false);
     setInterval(tick, 15000);
     setInterval(() => load(false), MAX_AGE);
