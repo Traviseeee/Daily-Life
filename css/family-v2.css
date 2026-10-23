@@ -1,0 +1,137 @@
+/* MYLIFE Family V2 (js/family-v2.js). Dark = green + lime (default), light = sky blue.
+   Not run through tools/build-theme-sky.py: both themes are set here with variables. */
+.fv2 {
+  --fv-card: #122019; --fv-soft: #1a2e24; --fv-line: #1f3329; --fv-page: #0b1712;
+  --fv-ink: #eef6e8; --fv-ink2: #9fb8a9; --fv-acc-ink: #d9ff7b; --fv-on: #142a04;
+  --fv-grad: linear-gradient(120deg, #d9ff7b, #a6e33f);
+  --fv-hero: radial-gradient(120% 80% at 90% 0, #24452f 0, transparent 60%), linear-gradient(180deg, #143024, #0f2119);
+  --fv-shadow: 0 6px 20px rgba(0, 0, 0, 0.35); --fv-glow: 0 10px 22px rgba(166, 227, 63, 0.2);
+  --fv-love: linear-gradient(130deg, #3a1e2c, #5a2440 60%, #4a2a22); --fv-love-soft: rgba(255, 111, 159, 0.14); --fv-love-ink: #ff9cc2;
+  --fv-amber-soft: rgba(255, 199, 107, 0.14); --fv-blue-soft: rgba(156, 200, 255, 0.14);
+  display: block; width: 100%; max-width: 660px; box-sizing: border-box; margin: 0 auto; padding: 0 0 120px; color: var(--fv-ink);
+}
+:root[data-theme="light"] .fv2 {
+  --fv-card: #ffffff; --fv-soft: #e6f0ff; --fv-line: #e8eef9; --fv-page: #f4f8ff;
+  --fv-ink: #0f1b33; --fv-ink2: #5b6b85; --fv-acc-ink: #1d4ed8; --fv-on: #ffffff;
+  --fv-grad: linear-gradient(120deg, #5aa2ff, #2f7bf5);
+  --fv-hero: radial-gradient(120% 80% at 90% 0, #9cc6ff 0, transparent 60%), linear-gradient(180deg, #cfe3ff, #eaf2ff);
+  --fv-shadow: 0 6px 20px rgba(37, 99, 235, 0.08); --fv-glow: 0 10px 22px rgba(47, 123, 245, 0.3);
+  --fv-love: linear-gradient(130deg, #ff9cc2, #ff6f9f 55%, #ff8a6b); --fv-love-soft: #ffe8f0; --fv-love-ink: #d9346f;
+  --fv-amber-soft: #fff1d6; --fv-blue-soft: #e6f0ff;
+}
+.fv2 * { box-sizing: border-box; }
+.fv2 a { color: inherit; text-decoration: none; }
+.fv2 button { font: inherit; color: inherit; }
+#app:has(.fv2) { padding-left: 0 !important; padding-right: 0 !important; padding-top: 0 !important; }
+
+/* top: title, invite, round photos */
+.fv-hero { padding: calc(env(safe-area-inset-top, 0px) + 16px) 18px 16px; border-radius: 0 0 30px 30px; background: var(--fv-hero); }
+.fv-title { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.fv-title h1 { margin: 0; font-size: 1.62rem; font-weight: 800; line-height: 1.35; color: var(--fv-ink); }
+.fv-title p { margin: 2px 0 0; font-size: 0.8rem; color: var(--fv-ink2); }
+.fv-invite { display: inline-flex; align-items: center; gap: 6px; height: 42px; padding: 0 16px; flex: 0 0 auto; border: 0; border-radius: 999px; font-size: 0.82rem; font-weight: 700; color: var(--fv-on) !important; background: var(--fv-grad); box-shadow: var(--fv-glow); cursor: pointer; }
+.fv-invite svg { width: 18px; height: 18px; }
+.fv-avs { display: flex; gap: 14px; margin-top: 16px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.fv-avs::-webkit-scrollbar { display: none; }
+.fv-av { display: grid; justify-items: center; gap: 1px; flex: 0 0 auto; width: 70px; padding: 0; border: 0; background: none; cursor: pointer; text-align: center; }
+.fv-ring { display: block; width: 64px; height: 64px; padding: 3px; border-radius: 50%; background: var(--fv-grad); }
+.fv-av.is-love .fv-ring { background: linear-gradient(130deg, #ff9cc2, #ff6f9f 55%, #ff8a6b); }
+.fv-av.is-party .fv-ring { background: conic-gradient(#ffd25e, #ff7eb3, #5aa9ff, #3fd7a4, #ffd25e); }
+.fv-face { display: grid; place-items: center; width: 100%; height: 100%; overflow: hidden; border: 3px solid var(--fv-card); border-radius: 50%; font-size: 1rem; font-weight: 700; color: #fff; }
+.fv-face img { width: 100%; height: 100%; object-fit: cover; }
+.fv-av.is-add .fv-ring { background: var(--fv-card); box-shadow: var(--fv-shadow); }
+.fv-av.is-add .fv-face { border: 2px dashed var(--fv-soft); color: var(--fv-acc-ink); }
+.fv-av.is-add .fv-face svg { width: 24px; height: 24px; }
+.fv-av b { max-width: 70px; overflow: hidden; margin-top: 5px; font-size: 0.76rem; font-weight: 600; white-space: nowrap; text-overflow: ellipsis; color: var(--fv-ink); }
+.fv-av small { max-width: 70px; overflow: hidden; font-size: 0.66rem; white-space: nowrap; text-overflow: ellipsis; color: var(--fv-ink2); }
+
+.fv-body { display: grid; padding: 12px 14px 0; }
+.fv-body > * { min-width: 0; }
+.fv-card { margin-bottom: 12px; padding: 14px; border-radius: 26px; background: var(--fv-card); box-shadow: var(--fv-shadow); }
+.fv-sec { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin: 6px 4px 8px; }
+.fv-sec b { font-size: 1rem; font-weight: 700; }
+.fv-link { padding: 4px 0; border: 0; background: none; font-size: 0.8rem; font-weight: 600; color: var(--fv-acc-ink) !important; cursor: pointer; }
+.fv-empty { margin: 4px 0; font-size: 0.84rem; color: var(--fv-ink2); }
+
+/* days together */
+.fv-love { position: relative; overflow: hidden; margin-bottom: 12px; padding: 16px; border-radius: 26px; color: #fff; background: var(--fv-love); box-shadow: 0 14px 28px rgba(255, 111, 159, 0.28); }
+:root:not([data-theme="light"]) .fv-love { box-shadow: 0 14px 28px rgba(0, 0, 0, 0.35); }
+.fv-love::after { content: "♥"; position: absolute; top: -26px; right: -6px; font-size: 120px; line-height: 1; opacity: 0.14; pointer-events: none; }
+.fv-love small { display: block; font-size: 0.78rem; opacity: 0.92; }
+.fv-love > b { display: block; margin: 2px 0 4px; font-size: 0.94rem; font-weight: 700; }
+.fv-love-n { font-size: 2.5rem; font-weight: 700; line-height: 1.1; letter-spacing: -1px; }
+.fv-love-n span { margin-left: 6px; font-size: 0.94rem; font-weight: 600; letter-spacing: 0; }
+.fv-love-bar { height: 8px; margin: 10px 0 6px; overflow: hidden; border-radius: 99px; background: rgba(255, 255, 255, 0.3); }
+.fv-love-bar i { display: block; height: 100%; border-radius: inherit; background: #fff; }
+.fv-love-foot { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: 0.75rem; opacity: 0.95; }
+
+/* important dates */
+.fv-ups { padding: 4px 14px; }
+.fv-up { display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 0; border: 0; background: none; text-align: left; cursor: pointer; }
+.fv-up + .fv-up { border-top: 1px solid var(--fv-line); }
+.fv-up-ic { display: grid; place-items: center; width: 44px; height: 44px; flex: 0 0 auto; border-radius: 14px; font-size: 1.3rem; }
+.fv-up-ic.is-love { background: var(--fv-love-soft); }
+.fv-up-ic.is-amber { background: var(--fv-amber-soft); }
+.fv-up-ic.is-blue { background: var(--fv-blue-soft); }
+.fv-up-tx { display: grid; flex: 1; min-width: 0; }
+.fv-up-tx b { overflow: hidden; font-size: 0.88rem; font-weight: 700; white-space: nowrap; text-overflow: ellipsis; color: var(--fv-ink); }
+.fv-up-tx small { overflow: hidden; font-size: 0.75rem; white-space: nowrap; text-overflow: ellipsis; color: var(--fv-ink2); }
+.fv-up-cd { display: grid; justify-items: end; flex: 0 0 auto; }
+.fv-up-cd b { font-size: 1.12rem; font-weight: 700; color: var(--fv-acc-ink); }
+.fv-up-cd small { font-size: 0.68rem; color: var(--fv-ink2); }
+
+/* memories teaser in this page */
+.fv2 .mf-teaser { display: block; margin: 0 0 12px; padding: 14px; border: 0 !important; border-radius: 26px; background: var(--fv-card) !important; box-shadow: var(--fv-shadow) !important; }
+.fv2 .mf-teaser-head strong { color: var(--fv-ink) !important; }
+.fv2 .mf-teaser-head span { color: var(--fv-acc-ink) !important; }
+
+/* member cards */
+.fv-member { margin-bottom: 12px; overflow: hidden; border-radius: 26px; background: var(--fv-card); box-shadow: var(--fv-shadow); }
+.fv-member.fam-flash { animation: fvFlash 1.2s ease; }
+@keyframes fvFlash { 0%, 100% { box-shadow: var(--fv-shadow); } 30% { box-shadow: 0 0 0 4px rgba(90, 162, 255, 0.45); } }
+.fv-cover { position: relative; height: 92px; overflow: hidden; }
+.fv-cover img { width: 100%; height: 100%; object-fit: cover; filter: blur(2px) saturate(1.1); transform: scale(1.08); opacity: 0.9; }
+.fv-tools { position: absolute; top: 10px; right: 10px; display: flex; gap: 6px; }
+.fv-tools button { display: grid; place-items: center; width: 34px; height: 34px; padding: 0; border: 0; border-radius: 50%; color: #fff; background: rgba(15, 27, 51, 0.35); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); cursor: pointer; }
+.fv-tools svg { width: 16px; height: 16px; }
+.fv-mrow { position: relative; display: flex; align-items: flex-end; gap: 12px; margin-top: -32px; padding: 0 14px; }
+.fv-mface { display: grid; place-items: center; width: 68px; height: 68px; flex: 0 0 auto; overflow: hidden; border: 4px solid var(--fv-card); border-radius: 50%; font-weight: 700; color: #fff; }
+.fv-mface img { width: 100%; height: 100%; object-fit: cover; }
+.fv-mname { display: grid; flex: 1; min-width: 0; padding-top: 36px; }
+.fv-mname b { overflow: hidden; font-size: 1.04rem; font-weight: 700; white-space: nowrap; text-overflow: ellipsis; }
+.fv-mname small { overflow: hidden; font-size: 0.75rem; white-space: nowrap; text-overflow: ellipsis; color: var(--fv-ink2); }
+.fv-call { display: grid; place-items: center; width: 42px; height: 42px; flex: 0 0 auto; margin-bottom: 2px; border-radius: 50%; font-size: 1.05rem; color: var(--fv-on) !important; background: var(--fv-grad); box-shadow: var(--fv-glow); }
+.fv-tags { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 14px 0; }
+.fv-tags span { padding: 4px 10px; border-radius: 999px; font-size: 0.72rem; font-weight: 600; color: var(--fv-ink2); background: var(--fv-soft); }
+.fv-facts { display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); gap: 8px; padding: 12px 14px 0; }
+.fv-facts div { min-width: 0; padding: 8px 10px; border-radius: 14px; background: var(--fv-page); }
+.fv-facts small { display: block; font-size: 0.68rem; color: var(--fv-ink2); }
+.fv-facts b { display: block; overflow: hidden; font-size: 0.82rem; font-weight: 700; white-space: nowrap; text-overflow: ellipsis; }
+.fv-missing { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 14px 0; }
+.fv-missing button { padding: 5px 12px; border: 1px dashed var(--fv-ink2); border-radius: 999px; background: none; font-size: 0.74rem; color: var(--fv-ink2); cursor: pointer; }
+.fv-idea { display: grid; gap: 6px; width: calc(100% - 28px); margin: 12px 14px 14px; padding: 10px 12px; border: 0; border-radius: 16px; text-align: left; font-size: 0.8rem; font-weight: 500; line-height: 1.5; color: var(--fv-love-ink); background: var(--fv-love-soft); cursor: pointer; }
+.fv-idea .fv-note { color: var(--fv-ink2); display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+.fv-idea.is-open .fv-note { -webkit-line-clamp: unset; }
+
+/* family group card + photo cards inside this page */
+.fv2 .fv-group { margin-bottom: 12px; }
+.fv2 .fv-group .fg-card, .fv2 .family-media-card, .fv2 .family-photo-card { margin: 0 0 12px !important; border: 0 !important; border-radius: 26px !important; background: var(--fv-card) !important; box-shadow: var(--fv-shadow) !important; }
+.fv2 .fv-group .fg-card h2, .fv2 .family-media-card h2, .fv2 .family-photo-card h2 { color: var(--fv-ink) !important; }
+.fv2 .fv-group .fg-card small, .fv2 .fv-group .fg-note { color: var(--fv-ink2) !important; }
+.fv2 .fv-group .fg-primary { color: var(--fv-on) !important; background: var(--fv-grad) !important; border: 0 !important; box-shadow: var(--fv-glow) !important; }
+.fv2 .fv-group .fg-row { background: var(--fv-page) !important; border-color: var(--fv-line) !important; }
+
+/* phone: the page has its own header, so the app top bar hides (like Home) */
+@media (max-width: 900px) {
+  body:has(#app .fv2) .app-main .topbar { display: none !important; }
+}
+@media (min-width: 901px) {
+  .fv2 { padding-top: 12px; }
+  .fv-hero { border-radius: 30px; }
+}
+:root:not([data-theme="light"]) body:has(#app .fv2) .quick-action-toggle { color: #142a04; border-color: rgba(217, 255, 123, 0.7); background: linear-gradient(135deg, #d9ff7b, #a6e33f); box-shadow: 0 12px 26px rgba(166, 227, 63, 0.3); }
+.fv2 .family-photo-card .icon-badge, .fv2 .family-media-card .family-media-add { color: var(--fv-acc-ink) !important; background: var(--fv-soft) !important; border-color: transparent !important; }
+.fv2 .family-photo-frame { background: var(--fv-page) !important; border-color: var(--fv-line) !important; }
+.fv2 .family-photo-frame > span { color: var(--fv-acc-ink) !important; }
+.fv2 .family-photo-card .eyebrow { color: var(--fv-ink2) !important; }
+.fv2 .family-photo-upload { color: var(--fv-on) !important; background: var(--fv-grad) !important; border: 0 !important; }

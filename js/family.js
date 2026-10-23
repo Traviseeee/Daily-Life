@@ -13,6 +13,9 @@ function renderFamily() {
     `;
   }
 
+  // Family V2 (js/family-v2.js); the old layout below stays as a fallback
+  if (typeof FamilyV2 !== "undefined") return FamilyV2.render();
+
   return `
     <section class="page family-page">
       <div class="page-header fam-head">
