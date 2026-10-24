@@ -66,27 +66,62 @@ const MoneyTabsV2 = (() => {
       ${items.length ? `<section class="mt-card mt-list">${rows}</section>` : empty(t("noIncomeYet"), t("noIncomeBody"), "add-income", t("addIncome"))}`;
   }
 
-  /* ---------- savings ---------- */
+  /* ---------- savings (draft 24 Oct): total card + one card per account ---------- */
+  const JARS = [["🐷", "#ff7aa8"], ["🏦", "#3b82f6"], ["🎯", "#f59e0b"], ["💰", "#22c55e"]];
   function savings() {
     const items = appData.savings || [];
     const month = getSavingsContributionMonth();
-    const cards = items.map(item => {
+    const mine = (value, currency) => (typeof toProfileCurrency === "function" ? toProfileCurrency(value, currency) : Number(value || 0));
+    const todayIso = today();
+    const total = items.reduce((sum, item) => sum + mine(item.currentAmount, item.currency), 0);
+    const target = items.reduce((sum, item) => sum + mine(item.targetAmount, item.currency), 0);
+    const planned = items.reduce((sum, item) => sum + mine(item.monthlyContribution, item.currency), 0);
+    const doneItems = items.filter(item => getSavingsContribution(item, month)?.paid);
+    const doneAmount = doneItems.reduce((sum, item) => sum + mine(getSavingsContribution(item, month).amount || item.monthlyContribution, item.currency), 0);
+    const head = items.length ? `<section class="sv-total">
+      <small>${escapeHtml(L(`សន្សំសរុប · ${items.length} គណនី`, `Saved in total · ${items.length} account${items.length === 1 ? "" : "s"}`))}</small>
+      <b class="sv-big">${money(total)}${target ? `<em> / ${money(target)}</em>` : ""}</b>
+      <div class="sv-tiles">
+        <div><small>${escapeHtml(L("ខែនេះត្រូវដាក់", "To save this month"))}</small><b>${money(planned)}</b></div>
+        <div><small>${escapeHtml(L("ដាក់រួច", "Saved"))}</small><b>${money(doneAmount)} · ${doneItems.length}/${items.length}</b></div>
+        <div><small>${escapeHtml(L("ខែក្រោយ", "Next month"))}</small><b>${money(planned)}</b></div>
+      </div>
+    </section>` : "";
+    const cards = items.map((item, index) => {
       const p = pct(item.currentAmount, item.targetAmount);
       const contribution = getSavingsContribution(item, month);
       const paid = Boolean(contribution && contribution.paid);
       const monthly = Number(item.monthlyContribution || 0);
-      const history = (Array.isArray(item.contributions) ? item.contributions : []).slice(0, 6);
-      return `<section class="mt-card mt-save" data-mt-row>
-        <div class="mt-head"><span class="mt-ic" style="--c:#f59e0b">🐷</span><b>${escapeHtml(item.name || t("savings"))}</b>${more("savings", item)}</div>
-        <div class="mt-hero">${ring(p)}<div><small>${escapeHtml(L("សន្សំបាន", "Saved"))}</small><span class="mt-big">${money(item.currentAmount, item.currency)}</span><em>/ ${money(item.targetAmount, item.currency)}</em></div></div>
-        ${typeof SmartMoney !== "undefined" ? SmartMoney.savingsPace(item) : ""}
-        <div class="mt-minis"><div><small>${escapeHtml(t("monthlyContribution"))}</small><b>${money(monthly, item.currency)}</b></div><div><small>${escapeHtml(t("deadline"))}</small><b>${item.deadline ? escapeHtml(dayLabel(item.deadline, true)) : "—"}</b></div></div>
-        <label class="mt-check${paid ? " is-on" : ""}"><input type="checkbox" data-savings-contribution="${escapeAttr(item.id)}" data-savings-month="${escapeAttr(month)}" ${paid ? "checked" : ""}><span class="mt-box">${Icons.check()}</span><span><b>${escapeHtml(L(`ដាក់សន្សំខែ${monthLabel(month)}`, `Saved for ${monthLabel(month)}`))}</b><small>${money(monthly, item.currency)} · ${escapeHtml(paid ? t("saved") : t("pending"))}</small></span></label>
-        ${history.length ? `<details class="mt-acc"><summary>📋 ${escapeHtml(L("ប្រវត្តិ", "History"))} · ${history.length}<span>›</span></summary><div class="mt-hist">${history.map(entry => `<div class="${entry.paid ? "is-paid" : ""}"><span>${escapeHtml(monthLabel(entry.month))}</span><b>${entry.paid ? "✓ " : ""}${money(Number(entry.amount || item.monthlyContribution || 0), item.currency)}</b></div>`).join("")}</div></details>` : ""}
+      const reached = Number(item.targetAmount || 0) > 0 && Number(item.currentAmount || 0) >= Number(item.targetAmount || 0);
+      const late = !reached && /^\d{4}-\d{2}-\d{2}$/.test(item.deadline || "") && item.deadline < todayIso;
+      const [jar, color] = JARS[index % JARS.length];
+      const history = (Array.isArray(item.contributions) ? item.contributions : []).slice(0, 12);
+      const status = reached ? ["is-ok", L("សម្រេចហើយ 🎉", "Reached 🎉")] : late ? ["is-late", L("ហួសថ្ងៃ", "Overdue")] : ["is-ok", L("ទាន់ពេល", "On track")];
+      return `<section class="mt-card sv-card${late ? " is-late" : ""}" data-mt-row>
+        <div class="mt-head"><span class="mt-ic" style="--c:${color}">${jar}</span><b>${escapeHtml(item.name || t("savings"))}</b><span class="sv-status ${status[0]}">${escapeHtml(status[1])}</span>${more("savings", item)}</div>
+        ${item.notes ? `<p class="sv-note">${escapeHtml(item.notes)}</p>` : ""}
+        <div class="sv-amt"><b>${money(item.currentAmount, item.currency)}</b>${Number(item.targetAmount || 0) ? `<span>/ ${money(item.targetAmount, item.currency)}</span><em>${p}%</em>` : ""}</div>
+        ${Number(item.targetAmount || 0) ? `<div class="sv-bar"><i style="width:${Math.max(p, 2)}%"></i></div>` : ""}
+        <div class="sv-chips"><span>📅 ${money(monthly, item.currency)}${escapeHtml(L("/ខែ", "/mo"))}</span>${item.deadline ? `<span>🏁 ${escapeHtml(dayLabel(item.deadline, true))}</span>` : ""}</div>
+        ${typeof SmartMoney !== "undefined" && !reached ? `<div class="sv-pace${late ? " is-late" : ""}">${SmartMoney.savingsPace(item)}</div>` : ""}
+        <div class="sv-actions">
+          <label class="sv-save${paid ? " is-done" : ""}"><input type="checkbox" data-savings-contribution="${escapeAttr(item.id)}" data-savings-month="${escapeAttr(month)}" ${paid ? "checked" : ""}><span>${paid ? `✓ ${escapeHtml(L(`ដាក់ខែ${monthLabel(month).split(" ")[0]}រួច`, `Saved for ${monthLabel(month)}`))}` : `＋ ${escapeHtml(L(`ដាក់ ${String(money(monthly, item.currency)).replace(/<[^>]*>/g, "")} ខែនេះ`, `Save ${String(money(monthly, item.currency)).replace(/<[^>]*>/g, "")} this month`))}`}</span></label>
+          <button type="button" class="sv-hist-btn" data-sv-hist aria-expanded="false" aria-label="${escapeAttr(L("ប្រវត្តិ", "History"))}">📋</button>
+        </div>
+        <div class="sv-hist" hidden>${history.length ? history.map(entry => `<div class="${entry.paid ? "is-paid" : ""}"><span>${escapeHtml(monthLabel(entry.month))}</span><b>${entry.paid ? "✓ " : ""}${money(Number(entry.amount || item.monthlyContribution || 0), item.currency)}</b></div>`).join("") : `<p>${escapeHtml(L("មិនទាន់មានប្រវត្តិ", "No history yet"))}</p>`}</div>
       </section>`;
     }).join("");
-    return `${sec(t("savings"), items.length, "add-savings")}${items.length ? cards : empty(t("noSavingsYet"), t("noSavingsBody"), "add-savings", t("addSavings"))}`;
+    return `${head}${sec(L("គណនីសន្សំ", "Savings accounts"), items.length, "add-savings")}${items.length ? cards : empty(t("noSavingsYet"), t("noSavingsBody"), "add-savings", t("addSavings"))}`;
   }
+  document.addEventListener("click", event => {
+    const button = event.target.closest("[data-sv-hist]");
+    if (!button) return;
+    const panel = button.closest(".sv-card")?.querySelector(".sv-hist");
+    if (!panel) return;
+    panel.hidden = !panel.hidden;
+    button.setAttribute("aria-expanded", String(!panel.hidden));
+    button.classList.toggle("on", !panel.hidden);
+  });
 
   /* ---------- loans ---------- */
   function loans() {
