@@ -194,3 +194,14 @@
 .hv2-top .hv2-menu { color: var(--hv-acc-ink) !important; }
 .hv2-top .hv2-bell { width: 42px; height: 42px; }
 @media (max-width: 360px) { .hv2-wx { display: none; } }
+
+/* avatar menu: open to the right of the avatar (it was anchored right:0 and ran off the left edge) */
+.hv2-avatar .home-profile-menu { left: 0 !important; right: auto !important; top: calc(100% + 8px); z-index: 60; width: max-content; min-width: 200px; max-width: calc(100vw - 32px); padding: 6px; border: 1px solid var(--hv-line, rgba(255, 255, 255, 0.08)); border-radius: 18px; background: var(--hv-card) !important; box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28); -webkit-backdrop-filter: none; backdrop-filter: none; }
+.hv2-avatar .home-profile-menu-item { min-height: 42px; padding: 9px 12px; border-radius: 12px; font-size: 0.86rem; font-weight: 600; white-space: nowrap; color: var(--hv-ink) !important; }
+.hv2-avatar .home-profile-menu-item:hover { background: var(--hv-soft, rgba(127, 140, 160, 0.12)); }
+.hv2-avatar .home-profile-menu-item-danger { color: #e5484d !important; }
+:root[data-theme="light"] .hv2-avatar .home-profile-menu { box-shadow: 0 18px 40px rgba(15, 27, 51, 0.16); }
+:root:not([data-theme="light"]) .hv2-avatar .home-profile-menu-login { color: #142a04 !important; background: #c5ff60 !important; }
+.hv2-head:has(.menu-open) { position: relative; z-index: 50; }
+.hv2-head:has(.menu-open) .hv2-top { position: relative; z-index: 50; }
+html:root[data-theme="light"]:root body .hv2-avatar .home-profile-menu .home-profile-menu-login { color: #ffffff !important; background: linear-gradient(120deg, #5aa2ff, #2f7bf5) !important; }
