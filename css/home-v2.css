@@ -216,3 +216,7 @@ html:root[data-theme="light"]:root body .hv2-avatar .home-profile-menu .home-pro
 .hv2-tag.is-rain { color: var(--hv-blue, #1d4ed8); background: var(--hv-blue-bg, #e1ecff); }
 @media (prefers-reduced-motion: no-preference) { .hv2-rain-ic { animation: hv2Rain 2.4s ease-in-out infinite; } }
 @keyframes hv2Rain { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(-10deg) translateY(-1px); } }
+/* mood faces: one drawn style (js/home-v2.js FACES) */
+.hv2-mood-btn span { display: grid; place-items: center; font-size: 0 !important; opacity: 1 !important; filter: none !important; }
+.hv2-face { width: 34px; height: 34px; filter: drop-shadow(0 3px 4px rgba(214, 140, 20, 0.25)); transition: transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1); }
+.hv2-mood-btn:hover .hv2-face, .hv2-mood-btn.is-on .hv2-face { transform: scale(1.12) rotate(-6deg); }

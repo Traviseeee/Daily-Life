@@ -166,8 +166,20 @@ const HomeV2 = (() => {
       </section>`;
   }
 
+  // one drawn style for all 5 moods (system emoji mixed styles / sizes on some phones)
+  const FACE_BASE = '<circle cx="20" cy="20" r="18" fill="#ffd35c"/><path d="M4.5 24a16 16 0 0 0 31 0 18 18 0 0 1-31 0z" fill="#f7b733" opacity=".55"/>';
+  const FACE_INK = 'fill="none" stroke="#6b3d12" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"';
+  const FACES = {
+    happy: `<path ${FACE_INK} d="M12.5 17.5q2.5-3 5 0M22.5 17.5q2.5-3 5 0"/><path d="M12.5 23.5q7.5 8 15 0z" fill="#6b3d12"/><circle cx="11" cy="23" r="2.4" fill="#ff8f8f" opacity=".55"/><circle cx="29" cy="23" r="2.4" fill="#ff8f8f" opacity=".55"/>`,
+    calm: `<path ${FACE_INK} d="M12.5 17q2.5 2.6 5 0M22.5 17q2.5 2.6 5 0M15.5 25.5q4.5 3 9 0"/><circle cx="11" cy="22.5" r="2.4" fill="#ff8f8f" opacity=".55"/><circle cx="29" cy="22.5" r="2.4" fill="#ff8f8f" opacity=".55"/>`,
+    tired: `<path ${FACE_INK} d="M12.5 18.5h5M22.5 18.5h5"/><ellipse cx="20" cy="26.5" rx="2.6" ry="2.2" fill="#6b3d12"/><path d="M28 6.5h5l-5 5h5" fill="none" stroke="#7c8cff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`,
+    stressed: `<path ${FACE_INK} d="M12 16.5l5-2.2M28 16.5l-5-2.2M14.5 28q5.5-4.5 11 0"/><circle cx="15" cy="20" r="2" fill="#6b3d12"/><circle cx="25" cy="20" r="2" fill="#6b3d12"/><path d="M31.5 11.5q2 3 0 4.6q-2-1.6 0-4.6z" fill="#7cc4ff"/>`,
+    excited: `<path d="M15 12.6l1.3 2.7 3 .4-2.2 2 .6 3-2.7-1.5-2.7 1.5.6-3-2.2-2 3-.4z" fill="#ff5a7a"/><path d="M25 12.6l1.3 2.7 3 .4-2.2 2 .6 3-2.7-1.5-2.7 1.5.6-3-2.2-2 3-.4z" fill="#ff5a7a"/><path d="M12 23.5q8 10 16 0z" fill="#6b3d12"/><path d="M15.5 27.4q4.5 2.6 9 0" fill="none" stroke="#ff8f8f" stroke-width="2.2" stroke-linecap="round"/>`
+  };
+  const face = key => `<svg class="hv2-face" viewBox="0 0 40 40" aria-hidden="true">${FACE_BASE}${FACES[key] || ""}</svg>`;
+
   function moodCard(d) {
-    const options = [["happy", "😊", t("moodHappy")], ["calm", "😌", t("moodCalm")], ["tired", "😴", t("moodTired")], ["stressed", "😟", t("moodStressed")], ["excited", "🤩", t("moodExcited")]];
+    const options = [["happy", face("happy"), t("moodHappy")], ["calm", face("calm"), t("moodCalm")], ["tired", face("tired"), t("moodTired")], ["stressed", face("stressed"), t("moodStressed")], ["excited", face("excited"), t("moodExcited")]];
     const current = appData.mood?.date === d.todayIso ? appData.mood.value : "";
     return `<div class="hv2-sec"><b>${escapeHtml(L("អារម្មណ៍ថ្ងៃនេះ", "Today's mood"))}</b></div>
       <section class="hv2-card hv2-mood">${options.map(([value, emoji, label]) => `<button type="button" class="hv2-mood-btn${current === value ? " is-on" : ""}" data-mood="${value}" aria-label="${escapeAttr(label)}" aria-pressed="${current === value}"><span>${emoji}</span><small>${escapeHtml(label)}</small></button>`).join("")}</section>`;
