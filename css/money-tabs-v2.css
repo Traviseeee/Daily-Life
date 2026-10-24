@@ -1,0 +1,151 @@
+/* MYLIFE Finance tabs V2 (js/money-tabs-v2.js) + restyle of Expenses / Budget / Reports.
+   Uses the --fv-* colours of css/money-v2.css (dark = green + lime, light = sky blue).
+   Not run through tools/build-theme-sky.py. */
+html body .page.fv2-page .financial-content { display: grid; gap: 12px; }
+.fv2-page .financial-income-layout { display: contents; }
+
+/* section line + small add pill */
+.mt-sec { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 4px 4px -2px; }
+.mt-sec b { font-size: 0.92rem; font-weight: 700; color: var(--fv-ink); }
+.mt-add, html body .fv2-page .financial-content .xl-head .button, html body .fv2-page .financial-content .financial-panel > .between > .button { display: inline-flex !important; align-items: center; gap: 4px; min-height: 36px !important; padding: 0 14px !important; border: 0 !important; border-radius: 999px !important; font-size: 0.8rem !important; font-weight: 700 !important; color: var(--fv-on) !important; background: var(--fv-grad) !important; box-shadow: var(--fv-glow) !important; cursor: pointer; }
+html body .fv2-page .financial-content .xl-head .button svg, html body .fv2-page .financial-content .financial-panel > .between > .button svg { width: 16px; height: 16px; }
+
+/* cards */
+.mt-card { padding: 14px; border-radius: 24px; background: var(--fv-card); box-shadow: var(--fv-shadow); color: var(--fv-ink); min-width: 0; }
+.mt-card small { color: var(--fv-ink2); }
+.mt-big { display: block; font-size: 1.75rem; font-weight: 800; line-height: 1.2; color: var(--fv-ink); }
+.mt-total > small { display: block; font-size: 0.78rem; }
+.mt-total .mt-big { margin: 2px 0 12px; font-size: 2rem; }
+.mt-stack { display: flex; gap: 3px; height: 12px; overflow: hidden; border-radius: 9px; }
+.mt-stack i { display: block; height: 100%; min-width: 6px; border-radius: 4px; animation: mtGrow 700ms ease both; transform-origin: left; }
+@keyframes mtGrow { from { transform: scaleX(0); } }
+.mt-legend { display: flex; flex-wrap: wrap; gap: 8px 14px; margin-top: 12px; }
+.mt-legend span { display: inline-flex; align-items: center; gap: 6px; font-size: 0.76rem; color: var(--fv-ink2); }
+.mt-legend span i { width: 9px; height: 9px; border-radius: 50%; }
+.mt-legend b { color: var(--fv-ink); }
+
+/* list rows */
+.mt-list { padding: 2px 14px; }
+.mt-row { display: flex; align-items: center; gap: 12px; padding: 11px 0; cursor: pointer; }
+.mt-row + .mt-row { border-top: 1px solid var(--fv-line); }
+.mt-ic { position: relative; display: grid; place-items: center; width: 42px; height: 42px; flex: 0 0 auto; border-radius: 14px; font-size: 1.15rem; isolation: isolate; }
+.mt-ic::before { content: ""; position: absolute; inset: 0; z-index: -1; border-radius: inherit; background: var(--c, #3b82f6); opacity: 0.16; }
+.mt-tx { display: grid; flex: 1; gap: 2px; min-width: 0; }
+.mt-tx > b { overflow: hidden; font-size: 0.9rem; font-weight: 700; white-space: nowrap; text-overflow: ellipsis; color: var(--fv-ink); }
+.mt-tx > small { font-size: 0.74rem; }
+.mt-chip { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 999px; font-size: 0.68rem; font-style: normal; font-weight: 600; color: var(--fv-acc-ink) !important; background: var(--fv-soft); }
+.mt-chip.is-new { color: var(--fv-amber) !important; background: var(--fv-amber-bg); }
+.mt-extra { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; }
+.mt-extra .mt-chip { margin-left: 0; }
+.mt-am { flex: 0 0 auto; text-align: right; }
+.mt-am b { display: block; font-size: 0.92rem; font-weight: 800; color: var(--fv-ink); }
+.mt-am small { font-size: 0.68rem; }
+.is-in { color: var(--fv-green) !important; }
+.is-out { color: var(--fv-red) !important; }
+
+/* ⋯ menu */
+.mt-more { position: relative; flex: 0 0 auto; }
+.mt-more > summary { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; font-size: 1.1rem; font-weight: 800; line-height: 1; color: var(--fv-ink2); list-style: none; cursor: pointer; }
+.mt-more > summary::-webkit-details-marker { display: none; }
+.mt-more[open] > summary { background: var(--fv-soft); }
+.mt-menu { position: absolute; top: calc(100% + 4px); right: 0; z-index: 20; display: grid; min-width: 150px; padding: 6px; border: 1px solid var(--fv-line); border-radius: 16px; background: var(--fv-card); box-shadow: 0 16px 34px rgba(0, 0, 0, 0.22); animation: mtPop 160ms ease both; }
+@keyframes mtPop { from { opacity: 0; transform: translateY(-4px) scale(0.97); } }
+.mt-menu button { display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 10px; border: 0; border-radius: 10px; font: inherit; font-size: 0.84rem; font-weight: 600; text-align: left; color: var(--fv-ink); background: transparent; cursor: pointer; }
+.mt-menu button:hover { background: var(--fv-soft); }
+.mt-menu button svg { width: 17px; height: 17px; }
+.mt-menu button.is-danger { color: var(--fv-red); }
+
+/* card header (savings / loans) */
+.mt-head { display: flex; align-items: center; gap: 10px; }
+.mt-head > b { flex: 1; min-width: 0; overflow: hidden; font-size: 1.02rem; font-weight: 800; white-space: nowrap; text-overflow: ellipsis; }
+.mt-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.mt-tags span { padding: 4px 10px; border-radius: 999px; font-size: 0.7rem; font-weight: 600; color: var(--fv-ink2); background: var(--fv-soft); }
+.mt-hero { display: flex; align-items: center; gap: 14px; margin-top: 14px; }
+.mt-hero > div { min-width: 0; }
+.mt-hero small { display: block; font-size: 0.74rem; }
+.mt-hero em { display: block; font-size: 0.74rem; font-style: normal; color: var(--fv-ink2); }
+.mt-ring { --p: 0; display: grid; place-items: center; flex: 0 0 auto; width: 86px; height: 86px; border-radius: 50%; background: conic-gradient(var(--fv-acc) calc(var(--p) * 1%), var(--fv-soft) 0); }
+.mt-ring > b { display: grid; place-items: center; align-content: center; width: 68px; height: 68px; border-radius: 50%; font-size: 1rem; font-weight: 800; line-height: 1.1; color: var(--fv-ink); background: var(--fv-card); }
+.mt-ring > b small { font-size: 0.6rem; font-weight: 500; }
+.mt-minis { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+.mt-minis.is-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.mt-minis > div { min-width: 0; padding: 9px 10px; border-radius: 16px; background: var(--fv-soft); }
+.mt-minis small { display: block; font-size: 0.66rem; }
+.mt-minis b { display: block; overflow: hidden; font-size: 0.84rem; white-space: nowrap; text-overflow: ellipsis; }
+.mt-next { display: flex; align-items: center; gap: 10px; margin-top: 12px; padding: 10px 12px; border: 1px dashed var(--fv-acc); border-radius: 16px; }
+.mt-next b { display: block; font-size: 0.84rem; }
+.mt-next small { font-size: 0.72rem; }
+.fv2-page .mt-card .pace { margin: 12px 0 0 !important; padding: 8px 11px !important; border: 0 !important; border-radius: 14px !important; font-size: 0.76rem !important; color: var(--fv-acc-ink) !important; background: var(--fv-soft) !important; }
+
+.mt-btn { display: grid; place-items: center; min-height: 46px; padding: 0 14px; border: 0; border-radius: 14px; font: inherit; font-size: 0.88rem; font-weight: 700; color: var(--fv-acc-ink); background: var(--fv-soft); cursor: pointer; }
+.mt-btn.is-main { color: var(--fv-on) !important; background: var(--fv-grad); box-shadow: var(--fv-glow); }
+.mt-btn.is-wide { width: 100%; margin-top: 12px; }
+.mt-btn:active, .mt-add:active, .mt-status:active { transform: scale(0.96); }
+
+/* accordion rows (loan info, schedule, history) */
+.mt-acc { margin-top: 10px; border-top: 1px solid var(--fv-line); }
+.mt-acc > summary { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 2px 2px; font-size: 0.84rem; font-weight: 600; color: var(--fv-ink2); list-style: none; cursor: pointer; }
+.mt-acc > summary::-webkit-details-marker { display: none; }
+.mt-acc > summary span { transition: transform 200ms ease; }
+.mt-acc[open] > summary span { transform: rotate(90deg); }
+.mt-kv { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding-top: 10px; }
+.mt-kv small { display: block; font-size: 0.68rem; }
+.mt-kv b { font-size: 0.82rem; }
+.mt-sched { display: grid; gap: 6px; max-height: 300px; overflow-y: auto; padding-top: 10px; }
+.mt-hist { display: grid; gap: 4px; padding-top: 8px; }
+.mt-hist > div { display: flex; justify-content: space-between; padding: 6px 2px; font-size: 0.8rem; color: var(--fv-ink2); }
+.mt-hist > div.is-paid b { color: var(--fv-green); }
+
+/* checkbox rows (savings this month, loan schedule) */
+.mt-check { display: flex; align-items: center; gap: 10px; margin-top: 12px; padding: 10px 12px; border-radius: 16px; background: var(--fv-soft); cursor: pointer; }
+.mt-check.is-sm { margin-top: 0; padding: 8px 10px; }
+.mt-check input { position: absolute; opacity: 0; pointer-events: none; }
+.mt-box { display: grid; place-items: center; width: 24px; height: 24px; flex: 0 0 auto; border: 2px solid var(--fv-ink2); border-radius: 8px; color: transparent; }
+.mt-box svg { width: 15px; height: 15px; }
+.mt-check.is-on .mt-box, .mt-check input:checked + .mt-box { border-color: transparent; color: var(--fv-on); background: var(--fv-grad); }
+.mt-check b { display: block; font-size: 0.84rem; color: var(--fv-ink); }
+.mt-check small { font-size: 0.72rem; }
+
+/* bills */
+.mt-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.mt-tiles > div { min-width: 0; padding: 11px 12px; border-radius: 18px; background: var(--fv-card); box-shadow: var(--fv-shadow); }
+.mt-tiles small { display: block; font-size: 0.68rem; color: var(--fv-ink2); }
+.mt-tiles b { display: block; overflow: hidden; font-size: 1.05rem; font-weight: 800; white-space: nowrap; text-overflow: ellipsis; color: var(--fv-ink); }
+.mt-status { flex: 0 0 auto; min-height: 30px; padding: 0 10px; border: 0; border-radius: 999px; font: inherit; font-size: 0.7rem; font-weight: 700; white-space: nowrap; cursor: pointer; }
+.mt-status.is-paid { color: var(--fv-on); background: var(--fv-grad); }
+.mt-status.is-late { color: var(--fv-red); background: var(--fv-red-bg); }
+.mt-status.is-soon { color: var(--fv-amber); background: var(--fv-amber-bg); }
+.mt-status.is-due { color: var(--fv-acc-ink); background: var(--fv-soft); }
+.mt-hint { margin: -4px 0 0; font-size: 0.72rem; text-align: center; color: var(--fv-ink2); }
+.mt-empty { display: grid; justify-items: center; gap: 6px; padding: 26px 18px; text-align: center; }
+.mt-empty > span { font-size: 2.2rem; }
+.mt-empty h3 { margin: 0; font-size: 1rem; }
+.mt-empty p { margin: 0 0 6px; font-size: 0.82rem; color: var(--fv-ink2); }
+.fv2-page .loan-check-card { padding: 14px; border: 1px dashed var(--fv-amber); border-radius: 20px; color: var(--fv-ink); background: var(--fv-amber-bg); }
+
+/* ---------- Expenses / Budget / Reports: same cards, calmer buttons ---------- */
+html body .fv2-page .financial-content > .glass-card.financial-panel { padding: 14px !important; border: 0 !important; border-radius: 24px !important; color: var(--fv-ink) !important; background: var(--fv-card) !important; box-shadow: var(--fv-shadow) !important; }
+html body .fv2-page .financial-content .section-title { font-size: 1rem !important; font-weight: 800 !important; color: var(--fv-ink) !important; }
+html body .fv2-page .financial-content .eyebrow { color: var(--fv-ink2) !important; }
+html body .fv2-page .financial-content .icon-badge { color: var(--fv-acc-ink) !important; background: var(--fv-soft) !important; border: 0 !important; }
+html body .fv2-page .financial-content .xl-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 10px 0; }
+html body .fv2-page .financial-content .xl-month select { min-height: 38px; padding: 0 12px; border: 0 !important; border-radius: 999px !important; font-weight: 600; color: var(--fv-ink) !important; background: var(--fv-soft) !important; }
+html body .fv2-page .financial-content .xl-total { font-size: 0.8rem; color: var(--fv-ink2); }
+html body .fv2-page .financial-content .xl-total b { color: var(--fv-red); }
+html body .fv2-page .financial-content .xl-group { margin: 0 0 8px; border: 0 !important; border-radius: 18px !important; background: var(--fv-soft) !important; overflow: hidden; }
+html body .fv2-page .financial-content .xl-group > summary { padding: 10px 12px !important; color: var(--fv-ink) !important; background: transparent !important; }
+html body .fv2-page .financial-content .xl-group > summary b { color: var(--fv-red) !important; }
+html body .fv2-page .financial-content .xl-rows { padding: 0 6px 6px; }
+html body .fv2-page .financial-content .xl-row { border-radius: 12px !important; color: var(--fv-ink) !important; background: var(--fv-card) !important; border: 0 !important; margin-top: 4px; }
+html body .fv2-page .financial-content .xl-row-amount { color: var(--fv-ink) !important; }
+html body .fv2-page .financial-content .xl-row .icon-button { width: 32px !important; height: 32px !important; min-height: 32px !important; border: 0 !important; background: transparent !important; color: var(--fv-ink2) !important; }
+html body .fv2-page .financial-content .bud-card, html body .fv2-page .financial-content .bud-summary { border: 0 !important; border-radius: 18px !important; background: var(--fv-soft) !important; color: var(--fv-ink) !important; box-shadow: none !important; }
+html body .fv2-page .financial-content .financial-report-toolbar { display: grid; gap: 10px; }
+html body .fv2-page .financial-content .financial-report-export-actions { display: grid !important; grid-template-columns: 1fr 1fr; gap: 8px; }
+html body .fv2-page .financial-content .financial-report-export-actions .button { min-height: 42px !important; justify-content: center; border: 0 !important; border-radius: 14px !important; font-size: 0.78rem !important; color: var(--fv-acc-ink) !important; background: var(--fv-soft) !important; box-shadow: none !important; }
+html body .fv2-page .financial-content .financial-report-export-actions .button:first-child, html body .fv2-page .financial-content .financial-report-export-actions .finance-report-telegram { color: var(--fv-on) !important; background: var(--fv-grad) !important; }
+html body .fv2-page .financial-content .financial-report-export-actions .finance-report-telegram { grid-column: 1 / -1; }
+html body .fv2-page .financial-content .financial-report-month input { min-height: 40px; border: 0 !important; border-radius: 12px !important; color: var(--fv-ink) !important; background: var(--fv-soft) !important; }
+html body .fv2-page .financial-content .financial-report-metadata > div, html body .fv2-page .financial-content .financial-report-metric { border: 0 !important; border-radius: 16px !important; color: var(--fv-ink) !important; background: var(--fv-soft) !important; box-shadow: none !important; }
+html body .fv2-page .financial-content .financial-report-table-wrap { border: 0 !important; border-radius: 16px !important; background: var(--fv-soft) !important; }
+@media (prefers-reduced-motion: reduce) { .mt-stack i, .mt-menu { animation: none; } }

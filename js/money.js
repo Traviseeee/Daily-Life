@@ -399,6 +399,7 @@ function summaryCard(label, title, value, trend, icon, tone, section) {
 }
 
 function renderMoneyTab(tab, stats) {
+  if (typeof MoneyTabsV2 !== "undefined") { const v2 = MoneyTabsV2.render(tab, stats); if (v2) return v2; }
   if (tab === "income") return renderIncome();
   if (tab === "expenses") return renderExpenses();
   if (tab === "savings") return renderSavings();
