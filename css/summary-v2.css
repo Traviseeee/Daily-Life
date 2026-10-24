@@ -1,0 +1,127 @@
+/* MYLIFE Summary V2 (js/summary-v2.js). Dark = green + lime (default), light = sky blue.
+   Restyles the smart lists (renderHomeSmartLists) only inside .smv.
+   Not run through tools/build-theme-sky.py. */
+html body .page.smv {
+  --s-card: #122019; --s-soft: #1a2e24; --s-line: #1f3329;
+  --s-ink: #eef6e8; --s-ink2: #9fb8a9; --s-ink3: #5f7a6b; --s-acc: #c5ff60; --s-acc-ink: #d9ff7b; --s-on: #142a04;
+  --s-grad: linear-gradient(120deg, #d9ff7b, #a6e33f);
+  --s-hero: radial-gradient(120% 80% at 90% 0, #24452f 0, transparent 60%), linear-gradient(180deg, #143024, #0f2119);
+  --s-shadow: 0 6px 20px rgba(0, 0, 0, 0.35); --s-glow: 0 10px 22px rgba(166, 227, 63, 0.22);
+  --t-blue: #1a2e24; --t-green: #1a2e24; --t-amber: #1a2e24; --t-violet: #1a2e24;
+  --c-red: #ff8b8b; --c-red-bg: rgba(255, 139, 139, 0.14); --c-amber: #ffc76b; --c-green: #5fd3a0; --c-blue: #7cb4ff;
+  display: block; width: 100%; max-width: 660px; box-sizing: border-box; margin: 0 auto !important; padding: 0 0 120px; color: var(--s-ink);
+}
+html:root[data-theme="light"] body .page.smv {
+  --s-card: #ffffff; --s-soft: #e6f0ff; --s-line: #e8eef9;
+  --s-ink: #0f1b33; --s-ink2: #5b6b85; --s-ink3: #97a3b8; --s-acc: #3b82f6; --s-acc-ink: #1d4ed8; --s-on: #ffffff;
+  --s-grad: linear-gradient(120deg, #5aa2ff, #2f7bf5);
+  --s-hero: radial-gradient(120% 80% at 90% 0, #9cc6ff 0, transparent 60%), linear-gradient(180deg, #cfe3ff, #eaf2ff);
+  --s-shadow: 0 6px 20px rgba(37, 99, 235, 0.08); --s-glow: 0 10px 22px rgba(47, 123, 245, 0.3);
+  --t-blue: #e6f0ff; --t-green: #dcf5e5; --t-amber: #fff1d6; --t-violet: #ece6ff;
+  --c-red: #e5484d; --c-red-bg: #ffe9ea; --c-amber: #f59e0b; --c-green: #22c55e; --c-blue: #3b82f6;
+}
+.smv * { box-sizing: border-box; }
+.smv a { color: inherit; text-decoration: none; }
+.smv button { font: inherit; color: inherit; }
+#app:has(.smv) { padding-left: 0 !important; padding-right: 0 !important; padding-top: 0 !important; }
+@media (max-width: 900px) { body:has(#app .smv) .app-main .topbar { display: none !important; } }
+:root:not([data-theme="light"]) body:has(#app .smv) .quick-action-toggle { color: #142a04; border-color: rgba(217, 255, 123, 0.7); background: linear-gradient(135deg, #d9ff7b, #a6e33f); box-shadow: 0 12px 26px rgba(166, 227, 63, 0.3); }
+
+/* hero + 4 tiles */
+.smv-hero { padding: calc(env(safe-area-inset-top, 0px) + 16px) 18px 16px; border-radius: 0 0 30px 30px; background: var(--s-hero); }
+.smv-top { display: flex; align-items: center; gap: 10px; }
+.smv-title { flex: 1; margin: 0; font-size: 1.62rem; font-weight: 800; line-height: 1.35; color: var(--s-ink); }
+.smv-ib { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; font-size: 1.15rem; color: var(--s-ink); background: var(--s-card); box-shadow: var(--s-shadow); cursor: pointer; }
+.smv-ib:active { transform: rotate(-90deg); transition: transform 200ms ease; }
+.smv-sub { margin: 2px 0 0; font-size: 0.8rem; color: var(--s-ink2); }
+html body .smv .home-smart-category-nav { display: grid !important; grid-template-columns: 1fr 1fr; gap: 10px; margin: 14px 0 0; padding: 0; border: 0; background: none; overflow: visible; }
+html body .smv .home-smart-category {
+  display: grid !important; grid-template-columns: 40px 1fr; grid-template-rows: auto auto; align-items: center; column-gap: 10px; min-height: 64px; padding: 11px 12px !important; border: 2px solid transparent !important; border-radius: 20px !important; text-align: left;
+  color: var(--s-ink) !important; background: var(--s-card) !important; box-shadow: var(--s-shadow) !important; cursor: pointer; transition: border-color 160ms ease, transform 120ms ease;
+}
+html body .smv .home-smart-category:active { transform: scale(0.97); }
+html body .smv .home-smart-category svg { grid-row: 1 / span 2; width: 40px !important; height: 40px !important; padding: 9px; border-radius: 13px; color: var(--s-acc-ink) !important; background: var(--t-blue); }
+html body .smv .home-smart-category[data-tone="green"] svg { color: #16a34a !important; background: var(--t-green); }
+html body .smv .home-smart-category[data-tone="amber"] svg { color: #d97706 !important; background: var(--t-amber); }
+html body .smv .home-smart-category[data-tone="violet"] svg { color: #7c3aed !important; background: var(--t-violet); }
+:root:not([data-theme="light"]) .smv .home-smart-category svg { color: var(--s-acc-ink) !important; }
+html body .smv .home-smart-category span { align-self: end; font-size: 0.74rem; font-weight: 500; line-height: 1.3; color: var(--s-ink2) !important; }
+html body .smv .home-smart-category strong { align-self: start; min-width: 0; padding: 0; font-size: 1.25rem; font-weight: 800; line-height: 1.2; color: var(--s-ink) !important; background: none !important; }
+html body .smv .home-smart-category.active { border-color: var(--s-acc) !important; }
+
+.smv-wrap { display: grid; gap: 12px; padding: 12px 14px 0; }
+
+/* smart lists: segment + one list */
+html body .smv .home-smart-lists { margin: 0; padding: 0 !important; border: 0 !important; border-radius: 0; background: none !important; box-shadow: none !important; }
+html body .smv .home-smart-list-grid { display: grid !important; grid-template-columns: 1fr !important; gap: 12px; }
+html body .smv .home-smart-list-grid[hidden] { display: none !important; }
+.smv-seg { display: grid; grid-template-columns: repeat(var(--n, 4), minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: 999px; background: var(--s-card); box-shadow: var(--s-shadow); }
+.smv-seg button { display: flex; align-items: center; justify-content: center; gap: 4px; min-width: 0; min-height: 38px; padding: 0 6px; border: 0; border-radius: 999px; font-size: 0.72rem; font-weight: 600; color: var(--s-ink2); background: transparent; cursor: pointer; }
+.smv-seg button span { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.smv-seg button em { flex: 0 0 auto; font-style: normal; opacity: 0.8; }
+.smv-seg button.on { color: var(--s-on); background: var(--s-grad); }
+.smv-seg[data-n="1"] { display: none; }
+html body .smv details.home-smart-list { display: none; margin: 0; padding: 4px 14px !important; border: 0 !important; border-radius: 24px !important; background: var(--s-card) !important; box-shadow: var(--s-shadow) !important; }
+html body .smv details.home-smart-list.smv-on { display: block; }
+html body .smv .smv-seg[data-n="1"] ~ details.home-smart-list { display: block; }
+html body .smv details.home-smart-list > summary { display: none; }
+html body .smv .smv-seg[data-n="1"] ~ details.home-smart-list > summary { display: flex; justify-content: space-between; padding: 10px 0 4px; font-weight: 700; list-style: none; }
+html body .smv .home-smart-list-content { padding: 0 !important; border: 0 !important; }
+html body .smv .home-smart-list-rows { display: grid; gap: 0; }
+html body .smv .home-smart-list-row { position: relative; display: grid !important; gap: 1px; padding: 11px 0 11px 18px !important; border: 0 !important; border-radius: 0 !important; background: none !important; box-shadow: none !important; }
+html body .smv .home-smart-list-row + .home-smart-list-row { border-top: 1px solid var(--s-line) !important; }
+html body .smv .home-smart-list-row::before { content: ""; position: absolute; left: 2px; top: 18px; width: 8px; height: 8px; border-radius: 50%; background: var(--c-blue); }
+html body .smv [data-smart-list="attention"] .home-smart-list-row::before, html body .smv [data-smart-list="unpaid"] .home-smart-list-row::before { background: var(--c-red); }
+html body .smv [data-smart-list="upcoming"] .home-smart-list-row::before, html body .smv [data-smart-list="due-soon"] .home-smart-list-row::before, html body .smv [data-smart-list="goals"] .home-smart-list-row::before { background: var(--c-amber); }
+html body .smv [data-smart-list="incomplete-today"] .home-smart-list-row::before, html body .smv [data-smart-list="spending"] .home-smart-list-row::before { background: var(--c-green); }
+html body .smv [data-smart-list="family"] .home-smart-list-row::before { background: #a78bfa; }
+html body .smv .home-smart-list-row span { font-size: 0.88rem; font-weight: 700; color: var(--s-ink) !important; }
+html body .smv .home-smart-list-row small { font-size: 0.74rem; color: var(--s-ink2) !important; }
+html body .smv [data-smart-list="attention"] .home-smart-list-row small { color: var(--c-red) !important; }
+html body .smv .home-smart-bill-row { grid-template-columns: 1fr auto; align-items: center; }
+html body .smv .home-smart-bill-row > a { display: grid; gap: 1px; }
+html body .smv .home-smart-bill-row button { min-height: 32px; padding: 0 12px; border: 0 !important; border-radius: 999px; font-size: 0.74rem; font-weight: 700; color: var(--c-red) !important; background: var(--c-red-bg) !important; }
+html body .smv .home-smart-bill-row button.is-paid { color: var(--s-on) !important; background: var(--s-grad) !important; }
+html body .smv .home-smart-bill-row button svg { width: 14px; height: 14px; }
+html body .smv .home-smart-list-empty { margin: 0; padding: 14px 0; font-size: 0.84rem; color: var(--s-ink2) !important; }
+html body .smv .home-smart-spending-total { display: flex; justify-content: space-between; padding: 12px 0 6px; font-size: 0.84rem; color: var(--s-ink2); }
+html body .smv .home-smart-spending-total strong { font-size: 1.05rem; color: var(--s-ink); }
+html body .smv .home-smart-category-list { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 4px 0 8px; }
+html body .smv .home-smart-category-list > div { display: flex; justify-content: space-between; gap: 6px; padding: 8px 10px; border-radius: 12px; font-size: 0.76rem; color: var(--s-ink2); background: var(--s-soft); }
+html body .smv .home-smart-category-list strong { color: var(--s-ink); }
+html body .smv .home-smart-list-link { display: block; padding: 10px 0; font-size: 0.8rem; font-weight: 600; text-align: right; color: var(--s-acc-ink) !important; }
+
+/* money tip */
+.smv-tip { display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: 22px; color: var(--s-on) !important; background: var(--s-grad); box-shadow: var(--s-glow); }
+.smv-tip.is-warn { color: #fff !important; background: linear-gradient(120deg, #ff8a80, #e5484d); box-shadow: 0 10px 22px rgba(229, 72, 77, 0.3); }
+.smv-tip i { font-size: 1.4rem; font-style: normal; }
+.smv-tip p { flex: 1; margin: 0; font-size: 0.86rem; font-weight: 700; }
+.smv-tip small { display: block; margin-top: 2px; font-size: 0.74rem; font-weight: 500; opacity: 0.92; }
+.smv-tip b { font-size: 1.2rem; opacity: 0.8; }
+
+/* life areas + this week */
+.smv-sec { display: flex; align-items: baseline; justify-content: space-between; margin: 4px 6px -4px; }
+.smv-sec b { font-size: 0.86rem; }
+.smv-sec small { font-size: 0.74rem; color: var(--s-ink3); }
+.smv-card { padding: 6px 14px; border-radius: 24px; background: var(--s-card); box-shadow: var(--s-shadow); }
+.smv-areas a { display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 8px 0; }
+.smv-areas i { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 12px; font-style: normal; background: var(--s-soft); }
+.smv-areas b { display: block; font-size: 0.84rem; }
+.smv-areas small { font-size: 0.74rem; font-weight: 600; color: var(--s-ink2); }
+.smv-bar { display: block; height: 6px; margin-top: 5px; overflow: hidden; border-radius: 9px; background: var(--s-soft); }
+.smv-bar em { display: block; height: 100%; border-radius: inherit; animation: smvGrow 700ms ease both; }
+.smv-bar.is-violet em { background: linear-gradient(90deg, #a78bfa, #7c3aed); }
+.smv-bar.is-green em { background: linear-gradient(90deg, #4ade80, #16a34a); }
+.smv-bar.is-blue em { background: linear-gradient(90deg, #60a5fa, #2563eb); }
+.smv-bar.is-amber em { background: linear-gradient(90deg, #fbbf24, #d97706); }
+.smv-bar.is-pink em { background: linear-gradient(90deg, #f472b6, #db2777); }
+@keyframes smvGrow { from { width: 0; } }
+.smv-week a { display: flex; align-items: center; gap: 12px; padding: 10px 0; }
+.smv-week a + a { border-top: 1px solid var(--s-line); }
+.smv-week i { width: 8px; height: 8px; flex: 0 0 auto; border-radius: 50%; }
+.smv-week i.is-blue { background: var(--c-blue); }
+.smv-week i.is-green { background: var(--c-green); }
+.smv-week i.is-amber { background: var(--c-amber); }
+.smv-week p { margin: 0; font-size: 0.88rem; font-weight: 700; }
+.smv-week small { display: block; font-size: 0.74rem; font-weight: 400; color: var(--s-ink2); }
+@media (prefers-reduced-motion: reduce) { .smv-bar em { animation: none; } }

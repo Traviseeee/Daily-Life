@@ -22,6 +22,7 @@ function renderGoals(goalId) {
   const selected = goalId ? appData.goals.find(goal => goal.id === goalId) : null;
   if (selected) return renderGoalDetail(selected);
   const selectedCategory = goalCategories.includes(goalId) ? goalId : "";
+  if (typeof GoalsV2 !== "undefined") return GoalsV2.renderList(selectedCategory);
   const visibleGoals = selectedCategory ? appData.goals.filter(goal => goal.category === selectedCategory) : appData.goals;
   return `
     <section class="page">
@@ -113,6 +114,7 @@ function goalCard(goal) {
 }
 
 function renderGoalDetail(goal) {
+  if (typeof GoalsV2 !== "undefined") return GoalsV2.renderDetail(goal);
   const progress = pct(goal.currentAmount, goal.targetAmount);
   const hasTarget = goalHasTarget(goal);
   return `

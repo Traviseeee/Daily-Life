@@ -8,6 +8,7 @@ function renderSummary() {
         { id: "focus-family", text: t("checkInWithFamily"), done: false }
       ];
   const agenda = homeAgenda(todayIso);
+  if (typeof SummaryV2 !== "undefined") return SummaryV2.render(todayIso, agenda, focusItems);
   const items = [
     { key: "family", label: t("family"), count: appData.family.length, color: "#8eea28", icon: Icons.family(), href: "#family" },
     { key: "goals", label: t("goals"), count: appData.goals.length, color: "#17d9b5", icon: Icons.goal(), href: "#goals" },
