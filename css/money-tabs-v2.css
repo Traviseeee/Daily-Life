@@ -149,3 +149,42 @@ html body .fv2-page .financial-content .financial-report-month input { min-heigh
 html body .fv2-page .financial-content .financial-report-metadata > div, html body .fv2-page .financial-content .financial-report-metric { border: 0 !important; border-radius: 16px !important; color: var(--fv-ink) !important; background: var(--fv-soft) !important; box-shadow: none !important; }
 html body .fv2-page .financial-content .financial-report-table-wrap { border: 0 !important; border-radius: 16px !important; background: var(--fv-soft) !important; }
 @media (prefers-reduced-motion: reduce) { .mt-stack i, .mt-menu { animation: none; } }
+
+/* ---------- savings (draft 24 Oct) ---------- */
+.sv-total { position: relative; overflow: hidden; padding: 16px; border-radius: 26px; color: var(--fv-on); background: var(--fv-grad); box-shadow: var(--fv-glow); }
+.sv-total::before { content: ""; position: absolute; right: -30px; top: -40px; width: 150px; height: 150px; border-radius: 50%; background: rgba(255, 255, 255, 0.14); pointer-events: none; }
+.sv-total > small { display: block; font-size: 0.78rem; opacity: 0.9; }
+.sv-big { display: block; margin: 2px 0; font-size: 1.9rem; font-weight: 800; line-height: 1.25; }
+.sv-big em { font-size: 0.9rem; font-style: normal; font-weight: 500; opacity: 0.85; }
+.sv-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
+.sv-tiles > div { min-width: 0; padding: 9px 10px; border-radius: 14px; background: rgba(255, 255, 255, 0.2); }
+.sv-tiles > div > small { display: block; overflow: hidden; font-size: 0.66rem; white-space: nowrap; text-overflow: ellipsis; opacity: 0.9; }
+.sv-tiles b { display: block; overflow: hidden; font-size: 0.86rem; white-space: nowrap; text-overflow: ellipsis; }
+.sv-card .mt-ic { font-size: 1.25rem; }
+.sv-status { flex: 0 0 auto; padding: 4px 10px; border-radius: 999px; font-size: 0.7rem; font-weight: 700; }
+.sv-status.is-ok { color: var(--fv-green); background: var(--fv-green-bg); }
+.sv-status.is-late { color: var(--fv-red); background: var(--fv-red-bg); }
+.sv-note { margin: 4px 0 0 52px; font-size: 0.74rem; color: var(--fv-ink2); }
+.sv-amt { display: flex; align-items: baseline; gap: 6px; margin-top: 12px; }
+.sv-amt b { font-size: 1.6rem; font-weight: 800; line-height: 1.2; color: var(--fv-ink); }
+.sv-amt > span { font-size: 0.82rem; color: var(--fv-ink2); }
+.sv-amt em { margin-left: auto; font-size: 0.9rem; font-style: normal; font-weight: 800; color: var(--fv-acc-ink); }
+.sv-bar { height: 10px; margin-top: 8px; overflow: hidden; border-radius: 9px; background: var(--fv-soft); }
+.sv-bar i { display: block; height: 100%; border-radius: inherit; background: var(--fv-grad); animation: mtGrow 700ms ease both; transform-origin: left; }
+.sv-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.sv-chips > span { padding: 5px 10px; border-radius: 999px; font-size: 0.72rem; font-weight: 600; color: var(--fv-ink2); background: var(--fv-soft); }
+.fv2-page .sv-pace .pace { margin: 10px 0 0 !important; padding: 8px 11px !important; border: 0 !important; border-radius: 12px !important; font-size: 0.74rem !important; font-weight: 600; color: var(--fv-acc-ink) !important; background: var(--fv-soft) !important; }
+.fv2-page .sv-pace.is-late .pace { color: var(--fv-red) !important; background: var(--fv-red-bg) !important; }
+.sv-actions { display: flex; gap: 8px; margin-top: 12px; }
+.sv-save { position: relative; display: grid; flex: 1; place-items: center; min-height: 46px; padding: 0 12px; border-radius: 14px; font-size: 0.86rem; font-weight: 700; text-align: center; color: var(--fv-on); background: var(--fv-grad); box-shadow: var(--fv-glow); cursor: pointer; transition: transform 120ms ease; }
+.sv-save input { position: absolute; opacity: 0; pointer-events: none; }
+.sv-save.is-done { color: var(--fv-green); background: var(--fv-green-bg); box-shadow: none; }
+.sv-save:active, .sv-hist-btn:active { transform: scale(0.96); }
+.sv-hist-btn { display: grid; flex: 0 0 46px; place-items: center; min-height: 46px; border: 0; border-radius: 14px; font-size: 1.05rem; background: var(--fv-soft); cursor: pointer; }
+.sv-hist-btn.on { box-shadow: inset 0 0 0 2px var(--fv-acc); }
+.sv-hist { display: grid; gap: 2px; margin-top: 10px; padding: 6px 12px; border-radius: 14px; background: var(--fv-soft); animation: mtPop 180ms ease both; }
+.sv-hist[hidden] { display: none; }
+.sv-hist > div { display: flex; justify-content: space-between; padding: 6px 0; font-size: 0.8rem; color: var(--fv-ink2); }
+.sv-hist > div + div { border-top: 1px solid var(--fv-line); }
+.sv-hist > div.is-paid b { color: var(--fv-green); }
+.sv-hist p { margin: 6px 0; font-size: 0.8rem; color: var(--fv-ink2); }
