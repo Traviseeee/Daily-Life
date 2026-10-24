@@ -171,3 +171,19 @@
 .wxp-stat, .wxp-tip, .wxp-hours, .wxp-x { border: 1px solid var(--wx-boxline); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
 @media (prefers-reduced-motion: reduce) { .wxp::before, .wxp::after { animation: none !important; } }
 :root:not([data-theme="light"]) .wxp::before, :root:not([data-theme="light"]) .wxp::after { opacity: 0.45; }
+
+/* weather pop-up: 5 day pills (tap a day to see it) */
+.wxp-days { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; width: 100%; margin-top: 12px; animation: wxpRise 380ms ease 260ms both; }
+.wxp-day { display: grid; justify-items: center; gap: 1px; padding: 7px 0 6px; border: 1px solid var(--wx-boxline, transparent); border-radius: 999px; font: inherit; color: var(--wx-ink); background: var(--wx-box); cursor: pointer; transition: transform 120ms ease, background 200ms ease; }
+.wxp-day:active { transform: scale(0.94); }
+.wxp-day .tw-icon { width: 22px; height: 22px; }
+.wxp-day b { font-size: 0.9rem; font-weight: 800; line-height: 1.1; }
+.wxp-day small { font-size: 0.62rem; color: var(--wx-sub); }
+.wxp-day.on { color: #fff; border-color: transparent; background: linear-gradient(120deg, #5aa2ff, #2f7bf5); box-shadow: 0 8px 18px rgba(47, 123, 245, 0.32); }
+.wxp-day.on small { color: rgba(255, 255, 255, 0.9); }
+:root:not([data-theme="light"]) .wxp-day.on { color: #142a04; background: linear-gradient(120deg, #d9ff7b, #a6e33f); box-shadow: 0 8px 18px rgba(166, 227, 63, 0.25); }
+:root:not([data-theme="light"]) .wxp-day.on small { color: rgba(20, 42, 4, 0.8); }
+.wxp-card.is-switch > * { animation: wxpRise 320ms ease both !important; }
+.wxp-card.is-switch .wxp-icon .tw-icon { animation: wxpIcon 560ms cubic-bezier(0.34, 1.56, 0.64, 1) both !important; }
+.wxp-card.is-switch .wxp-days { animation: none !important; }
+.wxp .wxp-stat small { white-space: nowrap; }

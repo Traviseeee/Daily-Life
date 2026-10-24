@@ -205,3 +205,14 @@
 .hv2-head:has(.menu-open) { position: relative; z-index: 50; }
 .hv2-head:has(.menu-open) .hv2-top { position: relative; z-index: 50; }
 html:root[data-theme="light"]:root body .hv2-avatar .home-profile-menu .home-profile-menu-login { color: #ffffff !important; background: linear-gradient(120deg, #5aa2ff, #2f7bf5) !important; }
+
+/* rain alert row in "Coming up" (js/topbar-weather.js rainRowHtml): only on days rain is likely */
+.hv2-rain { width: calc(100% + 28px); margin: 0 -14px; padding: 10px 14px; border: 0; border-radius: 0; font: inherit; text-align: left; color: inherit; background: linear-gradient(90deg, rgba(59, 130, 246, 0.12), transparent 80%); cursor: pointer; }
+:root:not([data-theme="light"]) .hv2-rain { background: linear-gradient(90deg, rgba(197, 255, 96, 0.1), transparent 80%); }
+.hv2-tl .hv2-rain:first-child { margin-top: -4px; border-radius: 22px 22px 0 0; }
+.hv2-rain + .hv2-tl-row { border-top: 1px solid var(--hv-line); }
+.hv2-rain-ic { display: grid; place-items: center; font-size: 1.35rem; }
+.hv2-rain small { color: var(--hv-acc-ink) !important; font-weight: 600; }
+.hv2-tag.is-rain { color: var(--hv-blue, #1d4ed8); background: var(--hv-blue-bg, #e1ecff); }
+@media (prefers-reduced-motion: no-preference) { .hv2-rain-ic { animation: hv2Rain 2.4s ease-in-out infinite; } }
+@keyframes hv2Rain { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(-10deg) translateY(-1px); } }

@@ -7,7 +7,7 @@
 // placeholder) is shown, nothing else in the app depends on it.
 const TopbarWeather = (() => {
   const PLACE = { name: "Phnom Penh", lat: 11.5564, lon: 104.9282 };
-  const CACHE_KEY = "mylife:weather:v2";
+  const CACHE_KEY = "mylife:weather:v3";
   const MAX_AGE = 30 * 60 * 1000;
   let data = null;
   let loading = false;
@@ -76,7 +76,7 @@ const TopbarWeather = (() => {
     loading = true;
     const hadData = !!data;
     try {
-      const url = `https://api.open-meteo.com/v1/forecast?latitude=${PLACE.lat}&longitude=${PLACE.lon}&current=temperature_2m,apparent_temperature,weather_code,is_day&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&hourly=temperature_2m,weather_code,precipitation_probability,is_day&timezone=auto&forecast_days=2`;
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${PLACE.lat}&longitude=${PLACE.lon}&current=temperature_2m,apparent_temperature,weather_code,is_day,relative_humidity_2m,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,wind_speed_10m_max,relative_humidity_2m_mean&hourly=temperature_2m,weather_code,precipitation_probability,is_day&timezone=auto&forecast_days=7`;
       const response = await fetch(url, { cache: "no-store" });
       if (!response.ok) throw new Error(`weather ${response.status}`);
       const json = await response.json();
@@ -91,11 +91,31 @@ const TopbarWeather = (() => {
         max: Math.round((d.temperature_2m_max || [])[0]),
         min: Math.round((d.temperature_2m_min || [])[0]),
         rain: Math.round((d.precipitation_probability_max || [])[0] || 0),
-        hours: nextHours(json)
+        humidity: Math.round(c.relative_humidity_2m),
+        wind: Math.round(c.wind_speed_10m),
+        hours: nextHours(json),
+        // 7 days + every hour (for the day pills and the rain alert on Home)
+        days: (d.time || []).map((date, i) => ({
+          date,
+          code: (d.weather_code || [])[i],
+          max: Math.round((d.temperature_2m_max || [])[i]),
+          min: Math.round((d.temperature_2m_min || [])[i]),
+          rain: Math.round((d.precipitation_probability_max || [])[i] || 0),
+          wind: Math.round((d.wind_speed_10m_max || [])[i]),
+          humidity: Math.round((d.relative_humidity_2m_mean || [])[i])
+        })),
+        hourly: ((json.hourly || {}).time || []).map((time, i) => ({
+          t: String(time).slice(0, 13),
+          temp: Math.round((json.hourly.temperature_2m || [])[i]),
+          code: (json.hourly.weather_code || [])[i],
+          day: (json.hourly.is_day || [])[i] !== 0,
+          pop: Math.round((json.hourly.precipitation_probability || [])[i] || 0)
+        }))
       };
       try { localStorage.setItem(CACHE_KEY, JSON.stringify(data)); } catch (error) { /* storage full / private */ }
       render();
       if (!hadData) enter();
+      showRainRow();
     } catch (error) {
       console.warn("MYLIFE weather unavailable.", error);
     } finally {
@@ -254,46 +274,138 @@ const TopbarWeather = (() => {
     setTimeout(() => node.remove(), reduceMotion() ? 0 : 200);
   }
   function popupEsc(event) { if (event.key === "Escape") closePopup(); }
+  const KM_DAY = ["អាទិ", "ចន្ទ", "អង្គ", "ពុធ", "ព្រហ", "សុក្រ", "សៅរ៍"];
+  const KM_MON = ["មករា", "កុម្ភៈ", "មីនា", "មេសា", "ឧសភា", "មិថុនា", "កក្កដា", "សីហា", "កញ្ញា", "តុលា", "វិច្ឆិកា", "ធ្នូ"];
+  const placeTime = () => new Date(Date.now() + 7 * 3600 * 1000).toISOString(); // Phnom Penh is UTC+7
+  const nowKey = () => placeTime().slice(0, 13);
+  const dayShort = iso => { const d = new Date(`${iso}T00:00:00`); return km() ? KM_DAY[d.getDay()] : d.toLocaleDateString("en-US", { weekday: "short" }); };
+  const dayLong = iso => { const d = new Date(`${iso}T00:00:00`); return km() ? `${KM_DAY[d.getDay()]} ${d.getDate()} ${KM_MON[d.getMonth()]}` : d.toLocaleDateString("en-US", { weekday: "short", day: "numeric", month: "short" }); };
+  let popDay = 0;
+
+  function hoursOf(index) {
+    if (index === 0) return (Array.isArray(data?.hours) ? data.hours : []).filter((x, i) => i % 2 === 0).slice(0, 6).map((x, i) => ({ ...x, now: i === 0 }));
+    const date = data?.days?.[index]?.date;
+    return (data?.hourly || []).filter(x => x.t.slice(0, 10) === date && [6, 9, 12, 15, 18, 21].includes(Number(x.t.slice(11, 13))))
+      .map(x => ({ h: Number(x.t.slice(11, 13)), temp: x.temp, code: x.code, day: x.day, pop: x.pop }));
+  }
+
+  function popupBody(index) {
+    const days = (data?.days || []).slice(0, 5);
+    const day = days[index];
+    const today = index === 0 || !day;
+    const scene = today ? sceneOf(data?.code, data ? data.isDay : isDayNow()) : sceneOf(day.code, true);
+    const tip = today ? rainTip(scene) : (day.rain >= 60 ? tx("umbrella") : "");
+    const temp = today ? data?.temp : day.max;
+    const stat = (label, value) => `<span class="wxp-stat"><small>${esc(label)}</small><b>${esc(value)}</b></span>`;
+    const rainPct = today ? (data?.rain || 0) : day.rain;
+    const wind = today ? data?.wind : day.wind;
+    const hum = today ? data?.humidity : day.humidity;
+    const slots = hoursOf(index);
+    return `<button type="button" class="wxp-x" data-wxp-close aria-label="Close">×</button>
+      <small class="wxp-place">📍 ${esc(PLACE.name)} · ${esc(today ? dateLabel() : dayLong(day.date))}</small>
+      <div class="wxp-icon">${icon(scene)}</div>
+      <strong class="wxp-temp" data-wxp-temp="${Number(temp)}">${num(temp)}</strong>
+      <span class="wxp-cond">${esc(data ? tx(scene) : tx("loading"))}${today ? "" : ` · ${num(day.max)} / ${num(day.min)}`}</span>
+      ${days.length > 1 ? `<div class="wxp-days" role="tablist">${days.map((d, i) => `<button type="button" role="tab" class="wxp-day${i === index ? " on" : ""}" data-wxp-day="${i}" aria-selected="${i === index}">${icon(sceneOf(d.code, true))}<b>${new Date(`${d.date}T00:00:00`).getDate()}</b><small>${esc(i === 0 ? (km() ? "ថ្ងៃនេះ" : "Today") : dayShort(d.date))}</small></button>`).join("")}</div>` : ""}
+      ${data ? `<div class="wxp-stats">${stat(`💧 ${tx("rainChance")}`, `${rainPct || 0}%`)}${Number.isFinite(wind) ? stat(`🌬 ${km() ? "ខ្យល់" : "Wind"}`, `${wind} km/h`) : stat(tx("feels"), num(data.feels))}${Number.isFinite(hum) ? stat(`💦 ${km() ? "សំណើម" : "Humidity"}`, `${hum}%`) : stat(km() ? "ខ្ពស់ / ទាប" : "High / Low", `${num(data.max)} / ${num(data.min)}`)}</div>` : ""}
+      ${slots.length ? `<div class="wxp-hours">${slots.map((x, i) => `<div class="wxp-hour${x.now ? " is-now" : ""}" style="--d:${320 + i * 60}ms"><b>${esc(x.now ? tx("now") : hourLabel(x.h))}</b>${icon(sceneOf(x.code, x.day))}<span>${num(x.temp)}</span><small>${x.pop >= 30 ? `💧${x.pop}%` : "&nbsp;"}</small></div>`).join("")}</div>` : ""}
+      ${tip ? `<div class="wxp-tip">☂ ${esc(tip)}</div>` : ""}`;
+  }
+
+  function countUp(node) {
+    const el = node.querySelector("[data-wxp-temp]");
+    const target = Number(el?.dataset.wxpTemp);
+    if (!el || reduceMotion() || !Number.isFinite(target) || target === 0) return;
+    const start = performance.now() + 120;
+    const step = now => {
+      const t = Math.max(0, Math.min(1, (now - start) / 600));
+      if (!el.isConnected) return;
+      el.textContent = num(Math.round(target * (1 - Math.pow(1 - t, 3))));
+      if (t < 1) requestAnimationFrame(step);
+    };
+    el.textContent = num(0);
+    requestAnimationFrame(step);
+  }
+
   function popup() {
     document.querySelector(".wxp")?.remove();
+    popDay = 0;
     const scene = sceneOf(data?.code, data ? data.isDay : isDayNow());
-    const hours = Array.isArray(data?.hours) ? data.hours : [];
-    const slots = [0, 2, 4, 6, 8, 10].map(i => hours[i]).filter(Boolean);
-    const tip = rainTip(scene);
-    const stat = (label, value) => `<span class="wxp-stat"><small>${esc(label)}</small><b>${esc(value)}</b></span>`;
     const node = document.createElement("div");
     node.className = "wxp";
     node.dataset.scene = scene;
     node.setAttribute("role", "dialog");
     node.setAttribute("aria-modal", "true");
     node.setAttribute("aria-label", tx(scene));
-    node.innerHTML = `<div class="wxp-card" data-scene="${esc(scene)}">
-      <button type="button" class="wxp-x" data-wxp-close aria-label="Close">×</button>
-      <small class="wxp-place">📍 ${esc(PLACE.name)} · ${esc(dateLabel())}</small>
-      <div class="wxp-icon">${icon(scene)}</div>
-      <strong class="wxp-temp">${num(data?.temp)}</strong>
-      <span class="wxp-cond">${esc(data ? tx(scene) : tx("loading"))}</span>
-      ${data ? `<div class="wxp-stats">${stat(tx("feels"), num(data.feels))}${stat(km() ? "ខ្ពស់ / ទាប" : "High / Low", `${num(data.max)} / ${num(data.min)}`)}${stat(tx("rainChance"), `${data.rain || 0}%`)}</div>` : ""}
-      ${tip ? `<div class="wxp-tip">☂ ${esc(tip)}</div>` : ""}
-      ${slots.length ? `<div class="wxp-hours">${slots.map((x, i) => `<div class="wxp-hour${i === 0 ? " is-now" : ""}" style="--d:${320 + i * 60}ms"><b>${esc(i === 0 ? tx("now") : hourLabel(x.h))}</b>${icon(sceneOf(x.code, x.day))}<span>${num(x.temp)}</span><small>${x.pop >= 30 ? `💧${x.pop}%` : "&nbsp;"}</small></div>`).join("")}</div>` : ""}
-    </div>`;
+    node.innerHTML = `<div class="wxp-card" data-scene="${esc(scene)}">${popupBody(0)}</div>`;
     document.body.appendChild(node);
     document.addEventListener("keydown", popupEsc);
-    node.addEventListener("click", event => { if (event.target === node || event.target.closest("[data-wxp-close]")) closePopup(); });
-    const el = node.querySelector(".wxp-temp");
-    const target = Number(data?.temp);
-    if (el && !reduceMotion() && Number.isFinite(target) && target !== 0) {
-      const start = performance.now() + 180;
-      const step = now => {
-        const t = Math.max(0, Math.min(1, (now - start) / 700));
-        if (!el.isConnected) return;
-        el.textContent = num(Math.round(target * (1 - Math.pow(1 - t, 3))));
-        if (t < 1) requestAnimationFrame(step);
+    node.addEventListener("click", event => {
+      if (event.target === node || event.target.closest("[data-wxp-close]")) return closePopup();
+      const pick = event.target.closest("[data-wxp-day]");
+      if (!pick || Number(pick.dataset.wxpDay) === popDay) return;
+      popDay = Number(pick.dataset.wxpDay);
+      const card = node.querySelector(".wxp-card");
+      const day = data?.days?.[popDay];
+      const sceneNow = popDay === 0 ? sceneOf(data?.code, data ? data.isDay : isDayNow()) : sceneOf(day?.code, true);
+      node.dataset.scene = sceneNow;
+      card.innerHTML = popupBody(popDay);
+      card.classList.remove("is-switch");
+      void card.offsetWidth;
+      card.classList.add("is-switch");
+      countUp(node);
+    });
+    countUp(node);
+    if (!data || !data.days) load(true).then(() => { if (node.isConnected && data) popup(); });
+  }
+
+  /* ---------- rain alert on Home ("Coming up" list): only when rain is likely ---------- */
+  function rainAlert() {
+    if (!data?.hourly?.length) return null;
+    const now = nowKey();
+    const today = now.slice(0, 10);
+    const wet = data.hourly.filter(x => x.t >= now && x.t.slice(0, 10) === today && x.pop >= 60);
+    // an event today / tomorrow that falls in a rainy hour
+    const tomorrow = new Date(Date.parse(`${today}T00:00:00Z`) + 86400000).toISOString().slice(0, 10);
+    const soonKeys = new Set(data.hourly.filter(x => x.t >= now && x.t.slice(0, 10) <= tomorrow && x.pop >= 60).map(x => x.t));
+    const events = (typeof appData !== "undefined" ? appData.calendarEvents || [] : [])
+      .filter(event => event.date && event.time && /^\d{1,2}:\d{2}/.test(event.time))
+      .map(event => ({ event, key: `${event.date}T${String(event.time).padStart(5, "0").slice(0, 2)}` }))
+      .filter(item => soonKeys.has(item.key))
+      .sort((a, b) => a.key.localeCompare(b.key));
+    if (events.length) {
+      const { event, key } = events[0];
+      const hour = data.hourly.find(x => x.t === key);
+      const when = key.slice(0, 10) === today ? "" : (km() ? "ស្អែក " : "Tomorrow ");
+      return {
+        title: `${event.title || (km() ? "ព្រឹត្តិការណ៍" : "Event")} · ${when}${hourLabel(Number(key.slice(11, 13)))}`,
+        detail: km() ? `ម៉ោងនោះអាចភ្លៀង ${hour.pop}% · យកឆ័ត្រ` : `${hour.pop}% chance of rain then · take an umbrella`
       };
-      el.textContent = num(0);
-      requestAnimationFrame(step);
     }
-    if (!data) load(true).then(() => { if (node.isConnected && data) popup(); });
+    if (!wet.length) return null;
+    const from = Number(wet[0].t.slice(11, 13));
+    const to = Number(wet[wet.length - 1].t.slice(11, 13)) + 1;
+    const top = Math.max(...wet.map(x => x.pop));
+    const range = to - from > 1 ? `${hourLabel(from)}–${hourLabel(to % 24)}` : hourLabel(from);
+    return {
+      title: km() ? "ថ្ងៃនេះអាចភ្លៀង" : "Rain likely today",
+      detail: km() ? `ប្រហែល ${range} · ${top}% · កុំភ្លេចឆ័ត្រ` : `Around ${range} · ${top}% · bring an umbrella`
+    };
+  }
+  function rainRowHtml() {
+    const alert = rainAlert();
+    if (!alert) return "";
+    return `<button type="button" class="hv2-tl-row hv2-rain" data-wx-open><span class="hv2-tl-time hv2-rain-ic" aria-hidden="true">☂</span><span class="hv2-tl-text"><b>${esc(alert.title)}</b><small>${esc(alert.detail)}</small></span><span class="hv2-tag is-rain">${esc(km() ? "ភ្លៀង" : "Rain")}</span></button>`;
+  }
+  // weather loaded after Home was drawn: add / drop the row without redrawing the page
+  function showRainRow() {
+    const list = document.querySelector(".hv2-tl");
+    if (!list) return;
+    const html = rainRowHtml();
+    const row = list.querySelector(".hv2-rain");
+    if (!html) { row?.remove(); return; }
+    if (row) row.outerHTML = html;
+    else { list.querySelector(".hv2-empty")?.remove(); list.insertAdjacentHTML("afterbegin", html); }
   }
 
   function init() {
@@ -310,7 +422,7 @@ const TopbarWeather = (() => {
     document.addEventListener("click", event => {
       const card = event.target.closest("#topbarWxCard.can-open");
       if (card) toggle();
-      if (event.target.closest("[data-hv2-wx]")) popup();
+      if (event.target.closest("[data-hv2-wx], [data-wx-open]")) popup();
     });
     document.addEventListener("keydown", event => {
       if ((event.key === "Enter" || event.key === " ") && event.target.matches?.("#topbarWxCard.can-open")) {
@@ -320,7 +432,7 @@ const TopbarWeather = (() => {
     });
   }
 
-  return { init, render, load, toggle, sceneOf, icon, popup };
+  return { init, render, load, toggle, sceneOf, icon, popup, rainRowHtml };
 })();
 
 if (typeof window !== "undefined") window.TopbarWeather = TopbarWeather;

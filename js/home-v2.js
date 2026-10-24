@@ -153,7 +153,7 @@ const HomeV2 = (() => {
       return `<a class="hv2-tl-row" href="${escapeAttr(item.href || "#calendar")}"><span class="hv2-tl-time">${escapeHtml(time)}</span><span class="hv2-dot is-${tone}"></span><span class="hv2-tl-text"><b>${escapeHtml(item.title || "")}</b>${sub ? `<small>${escapeHtml(sub)}</small>` : ""}</span><span class="hv2-tag is-${tone}">${escapeHtml(L(kmTag, enTag))}</span></a>`;
     }).join("");
     return `<div class="hv2-sec"><b>${escapeHtml(heading)}</b><a href="#calendar">${escapeHtml(L("ប្រតិទិន", "Calendar"))} ›</a></div>
-      <section class="hv2-card hv2-tl">${rows || `<button type="button" class="hv2-empty" data-action="add-event">${IC.cal()}<span>${escapeHtml(L("គ្មានអ្វីទេ — ចុចបន្ថែមព្រឹត្តិការណ៍", "Nothing planned — tap to add an event"))}</span></button>`}</section>`;
+      <section class="hv2-card hv2-tl">${typeof TopbarWeather !== "undefined" && TopbarWeather.rainRowHtml ? TopbarWeather.rainRowHtml() : ""}${rows || `<button type="button" class="hv2-empty" data-action="add-event">${IC.cal()}<span>${escapeHtml(L("គ្មានអ្វីទេ — ចុចបន្ថែមព្រឹត្តិការណ៍", "Nothing planned — tap to add an event"))}</span></button>`}</section>`;
   }
 
   function focusCard(d) {
