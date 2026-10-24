@@ -187,3 +187,34 @@
 .wxp-card.is-switch .wxp-icon .tw-icon { animation: wxpIcon 560ms cubic-bezier(0.34, 1.56, 0.64, 1) both !important; }
 .wxp-card.is-switch .wxp-days { animation: none !important; }
 .wxp .wxp-stat small { white-space: nowrap; }
+
+/* weather pop-up = draft 100% (24 Oct): solid card, no glass, no coloured lights */
+.wxp::before, .wxp::after { display: none !important; content: none !important; }
+.wxp { background: rgba(4, 12, 8, 0.6) !important; -webkit-backdrop-filter: blur(4px) !important; backdrop-filter: blur(4px) !important; }
+:root[data-theme="light"] .wxp { background: rgba(15, 27, 51, 0.35) !important; }
+.wxp {
+  --wx-card: linear-gradient(165deg, #1f3a2b 0%, #122019 100%);
+  --wx-line: rgba(255, 255, 255, 0.06);
+  --wx-box: rgba(255, 255, 255, 0.06);
+  --wx-boxline: transparent;
+  --wx-now: rgba(197, 255, 96, 0.18);
+  --wx-hi: transparent;
+}
+:root[data-theme="light"] .wxp {
+  --wx-card: linear-gradient(165deg, #ffffff 0%, #e6f0ff 100%);
+  --wx-line: transparent;
+  --wx-box: rgba(47, 123, 245, 0.08);
+  --wx-boxline: transparent;
+  --wx-now: rgba(47, 123, 245, 0.16);
+  --wx-hi: transparent;
+}
+.wxp-card, :root[data-theme="light"] .wxp-card { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; box-shadow: 0 30px 70px rgba(15, 27, 51, 0.3) !important; }
+:root:not([data-theme="light"]) .wxp-card { box-shadow: 0 30px 70px rgba(0, 0, 0, 0.5) !important; }
+.wxp-stat, .wxp-tip, .wxp-hours, .wxp-x, .wxp-day { border: 0 !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+.wxp-x { background: var(--wx-box) !important; }
+/* value on top, label below (like the draft) */
+.wxp-stat { display: flex !important; flex-direction: column-reverse; gap: 2px; padding: 9px 4px !important; }
+.wxp-stat b { font-size: 0.95rem !important; font-weight: 800; }
+.wxp-stat small { font-size: 0.66rem !important; }
+.wxp-day { border-radius: 999px !important; }
+.wxp-tip { text-align: center; }
