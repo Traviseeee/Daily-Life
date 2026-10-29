@@ -152,3 +152,6 @@ html body .page.mf2 .mf-ig-comment { color: var(--m2-ink, #0f1b33); }
 html body .page.mf2 .mf-ig-comment strong { font-weight: 800; }
 :root:not([data-theme="light"]) .page.mf2 .mf-ig .mf-act, :root:not([data-theme="light"]) .page.mf2 .mf-likes, :root:not([data-theme="light"]) .page.mf2 .mf-ig-body .mf-caption, :root:not([data-theme="light"]) .page.mf2 .mf-with b, :root:not([data-theme="light"]) .page.mf2 .mf-ig-comment { color: #eef6e8; }
 :root:not([data-theme="light"]) .page.mf2 .mf-with, :root:not([data-theme="light"]) .page.mf2 .mf-all-comments { color: #a3bcad; }
+/* people avatars: the photo fills a true circle (it was stretching taller than the ring) */
+html body .page.mf2 .mf-face { overflow: hidden; aspect-ratio: 1 / 1; flex: 0 0 auto; }
+html body .page.mf2 .mf-face img { display: block; width: 100% !important; height: 100% !important; aspect-ratio: 1 / 1; object-fit: cover; border-radius: 50%; }
