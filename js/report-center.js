@@ -38,7 +38,8 @@ const ReportCenter = (() => {
     const categories = Object.entries(cats).sort((a, b) => b[1] - a[1]);
     // mini chart: per day (week / month) or per category (day)
     let bars = [];
-    if (period.kind === "day") bars = categories.slice(0, 6).map(([, v]) => v);
+    // day: the 7 days ending that day (a single full bar looked like a blank square)
+    if (period.kind === "day") for (let d = addDays(period.key, -6); d <= period.key; d = addDays(d, 1)) bars.push(sumMoney((appData.expenses || []).filter(item => item.date === d), "amount"));
     else for (let d = period.from; d <= period.to; d = addDays(d, 1)) bars.push(sumMoney(expenses.filter(item => item.date === d), "amount"));
     return {
       expenses: expenses.slice().sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")) || toProfileCurrency(b.amount, b.currency) - toProfileCurrency(a.amount, a.currency)),
