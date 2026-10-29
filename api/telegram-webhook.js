@@ -2,6 +2,7 @@
 // ✅ Paid / Done / Saved update the user's app data, ⏰ buttons snooze,
 // 👍 just acknowledges. Only the configured chat can use the buttons.
 
+const { telegramSenderAllowed } = require("../lib/safe-auth");
 const { createClient } = require("@supabase/supabase-js");
 const { getRedis, sendToUser } = require("../lib/push");
 const crypto = require("crypto");
@@ -990,6 +991,7 @@ module.exports = async (req, res) => {
   if (update?.message) {
     const message = update.message;
     if (String(message.chat?.id) !== String(process.env.TELEGRAM_CHAT_ID)) return res.status(200).json({ ok: true });
+    if (!telegramSenderAllowed(message.from)) return res.status(200).json({ ok: true });
     try {
       await handleMessage(message, getRedis());
     } catch (error) {
@@ -1006,7 +1008,7 @@ module.exports = async (req, res) => {
   const chatId = query.message?.chat?.id;
 
   try {
-    if (String(chatId) !== String(process.env.TELEGRAM_CHAT_ID)) {
+    if (String(chatId) !== String(process.env.TELEGRAM_CHAT_ID) || !telegramSenderAllowed(query.from)) {
       await answer("⛔ មិនអនុញ្ញាត · Not allowed");
       return res.status(200).json({ ok: true });
     }

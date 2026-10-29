@@ -96,6 +96,56 @@ const SmartMoney = (() => {
     </article>`;
   }
 
+  /* ---------- budgets inside Expenses (the Budget tab was merged here) ---------- */
+  // one line under a category group: spent / budget bar, or "+ set budget"
+  function budgetLine(category, spent) {
+    const budget = Number(budgets()[category] || 0);
+    const input = `<label class="bud-input xb-input"><span>${km() ? "ថវិកា/ខែ" : "Budget / mo"}</span>
+        <input type="number" min="0" step="any" inputmode="decimal" placeholder="${km() ? "កំណត់" : "Set"}" value="${budget || ""}" data-budget-category="${escapeAttr(category)}">
+        <small>${escapeHtml(profileCurrency())}</small></label>`;
+    if (!budget) {
+      return `<details class="xb-line xb-none"><summary>＋ ${km() ? "កំណត់ថវិកា" : "Set a budget"}</summary>${input}</details>`;
+    }
+    const percent = Math.round((spent / budget) * 100);
+    const level = budgetLevel(percent);
+    const left = budget - spent;
+    return `<details class="xb-line xb-${level}">
+      <summary>
+        <span class="xb-text">${level !== "ok" ? "⚠️ " : ""}<b>${money(spent)}</b> / ${money(budget)} · ${left >= 0 ? `${km() ? "នៅសល់" : "left"} ${money(left)}` : `${km() ? "លើស" : "over"} ${money(-left)}`}</span>
+        <em>${percent}%</em><span class="xb-edit" aria-label="${km() ? "កែថវិកា" : "Edit budget"}">✎</span>
+        <span class="xb-track"><i style="width:${Math.min(100, percent)}%"></i></span>
+      </summary>${input}</details>`;
+  }
+
+  // summary card at the top of Expenses: this month's spend against all budgets
+  function renderExpenseBudget(spentByGroup = {}, { open = false } = {}) {
+    const list = expenseCategories.map(category => ({ category, budget: Number(budgets()[category] || 0), spent: Number(spentByGroup[category] || 0) }));
+    const withBudget = list.filter(row => row.budget);
+    const totalBudget = withBudget.reduce((sum, row) => sum + row.budget, 0);
+    const totalSpent = withBudget.reduce((sum, row) => sum + row.spent, 0);
+    const pct = totalBudget ? Math.round((totalSpent / totalBudget) * 100) : 0;
+    const warn = withBudget.filter(row => row.spent / row.budget >= 0.8).length;
+    const alertsOn = appData.profile.budgetAlerts !== false;
+    return `<article class="xb-card xb-${budgetLevel(pct)}" id="budget">
+      <div class="xb-top">
+        <div><span class="xb-label">${km() ? "ថវិកា" : "Budget"} · ${escapeHtml(monthLabel())}</span>
+          <strong>${totalBudget ? `${money(totalSpent)} <small>/ ${money(totalBudget)}</small>` : (km() ? "មិនទាន់កំណត់ថវិកា" : "No budget yet")}</strong></div>
+        <b class="xb-pct">${totalBudget ? `${pct}%` : "–"}</b>
+      </div>
+      <div class="xb-track"><i style="width:${Math.min(100, pct)}%"></i></div>
+      <p class="xb-note">${totalBudget ? (warn ? `⚠️ ${warn} ${km() ? "ប្រភេទជិតអស់ថវិកា" : "categories near the limit"}` : (km() ? "✓ ចាយក្នុងថវិកា" : "✓ Within budget")) : (km() ? "ចុច ＋ កំណត់ថវិកា ក្រោមប្រភេទនីមួយៗ" : "Tap ＋ Set a budget under a category")}</p>
+      <details class="xb-all" ${open ? "open" : ""}><summary>${km() ? "កែថវិកាទាំងអស់ · ការព្រមាន" : "All budgets · alerts"}</summary>
+        <label class="bud-alert-toggle"><input type="checkbox" data-budget-alerts ${alertsOn ? "checked" : ""}>
+          <span>📲 ${km() ? "ព្រមានតាម Telegram ពេលចាយដល់ 80% និង 100%" : "Telegram alert at 80% and 100%"}</span></label>
+        <div class="xb-all-list">${list.map(row => `<label class="xb-all-row" style="--cat:${expenseCategoryColors[row.category] || "#8a94a6"}">
+          <span class="xb-all-icon">${Icons[expenseCategoryIcons[row.category] || "expense"]()}</span>
+          <strong>${escapeHtml(optionLabel(row.category))}</strong>
+          <input type="number" min="0" step="any" inputmode="decimal" placeholder="${km() ? "កំណត់" : "Set"}" value="${row.budget || ""}" data-budget-category="${escapeAttr(row.category)}">
+          <small>${escapeHtml(profileCurrency())}</small></label>`).join("")}</div>
+      </details>
+    </article>`;
+  }
+
   function bindBudgetTab() {
     document.querySelectorAll("[data-budget-category]").forEach(input => {
       const save = () => {
@@ -107,6 +157,12 @@ const SmartMoney = (() => {
         next[input.dataset.budgetCategory] = value > 0 ? value : 0;
         Store.updateProfile({ categoryBudgets: next });
         Toast.show(km() ? "បានរក្សាទុកថវិកា" : "Budget saved");
+        // Expenses view: redraw the bars (keep "all budgets" open while editing there)
+        if (input.closest(".xb-card, .xb-line") && typeof App !== "undefined") {
+          if (typeof moneyBudgetOpen !== "undefined") moneyBudgetOpen = input.closest(".xb-all") ? "keep" : false;
+          const y = window.scrollY;
+          setTimeout(() => { App.render(); window.scrollTo(0, y); }, 0);
+        }
       };
       input.addEventListener("change", save);
       input.addEventListener("keydown", event => {
@@ -329,6 +385,8 @@ const SmartMoney = (() => {
     budgetStatus,
     renderBudgetTab,
     bindBudgetTab,
+    budgetLine,
+    renderExpenseBudget,
     renderQuickExpense,
     bindQuickExpense,
     savingsPace,

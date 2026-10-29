@@ -1,4 +1,5 @@
 
+const { bearerMatches } = require("../lib/safe-auth");
 const crypto = require("crypto");
 const { createClient } = require("@supabase/supabase-js");
 const {
@@ -844,7 +845,7 @@ module.exports = async (req, res) => {
     });
   }
 
-  if (req.headers.authorization !== `Bearer ${cronSecret}`) {
+  if (!bearerMatches(req.headers.authorization, cronSecret)) {
     console.warn("Rejected an unauthorized push dispatch request.");
 
     return res.status(401).json({

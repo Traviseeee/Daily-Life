@@ -1,3 +1,4 @@
+const { bearerMatches } = require("../lib/safe-auth");
 const { buildTelegramText } = require("../lib/telegram-message");
 
 // Sends one sample alert through Make → Telegram.
@@ -11,7 +12,7 @@ module.exports = async (req, res) => {
   }
 
   const cronSecret = process.env.CRON_SECRET;
-  if (!cronSecret || req.headers.authorization !== `Bearer ${cronSecret}`) {
+  if (!bearerMatches(req.headers.authorization, cronSecret)) {
     return res.status(401).json({ error: "unauthorized" });
   }
 

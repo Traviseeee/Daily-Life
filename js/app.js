@@ -333,7 +333,8 @@ const App = {
     document.body.classList.toggle("topbar-home", route === "home");
     if (typeof TopbarWeather !== "undefined") TopbarWeather.render();
 
-    if (route === "launcher") app.innerHTML = renderLauncher();
+    if (typeof FamilyAccess !== "undefined" && !FamilyAccess.allows(route, this.param)) app.innerHTML = FamilyAccess.lockedHtml(route);
+    else if (route === "launcher") app.innerHTML = renderLauncher();
     else if (route === "summary") app.innerHTML = renderSummary();
     else if (route === "family") app.innerHTML = renderFamily();
     else if (route === "goals") app.innerHTML = renderGoals(this.param);

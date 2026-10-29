@@ -56,6 +56,9 @@ module.exports = async (req, res) => {
   if (body?.test && !test) return res.status(400).json({ error: "bad_test" });
   const month = String(body?.month || "");
   if (!test && !/^\d{4}-\d{2}$/.test(month)) return res.status(400).json({ error: "bad_month" });
+  // optional single day / week report from the Report Center ("day:2026-10-29", "week:2026-10-26")
+  const period = String(body?.period || "");
+  if (period && (!/^(day|week):\d{4}-\d{2}-\d{2}$/.test(period) || body.auto)) return res.status(400).json({ error: "bad_period" });
 
   try {
     const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false, autoRefreshToken: false } });
@@ -79,7 +82,7 @@ module.exports = async (req, res) => {
       return res.status(200).json({ ok: true });
     }
 
-    const sentKey = `mylife:report-sent:${userId}:${month}`;
+    const sentKey = `mylife:report-sent:${userId}:${period || month}`;
     if (body.auto) {
       // automatic send: once per month, whichever device opens first
       const claimed = await redis.set(sentKey, "app", { nx: true, ex: 70 * 24 * 60 * 60 });
@@ -97,7 +100,7 @@ module.exports = async (req, res) => {
 
     const caption = String(body.caption || `📊 MYLIFE ${month}`).slice(0, 900);
     const keyboard = { inline_keyboard: [[{ text: "📱 បើករបាយការណ៍ · Open", url: appLink({ url: "/#money/reports" }) }]] };
-    if (jpg.length) await tgUpload("sendPhoto", "photo", jpg, `mylife-report-${month}.jpg`, "image/jpeg", { caption, parse_mode: "HTML", reply_markup: keyboard });
+    if (jpg.length) await tgUpload("sendPhoto", "photo", jpg, `mylife-report-${period ? period.replace(":", "-") : month}.jpg`, "image/jpeg", { caption, parse_mode: "HTML", reply_markup: keyboard });
     if (xlsx.length) await tgUpload("sendDocument", "document", xlsx, `mylife-report-${month}.xlsx`, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", { caption: `📑 Excel · ${month}` });
     return res.status(200).json({ ok: true });
   } catch (error) {

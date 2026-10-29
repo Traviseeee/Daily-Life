@@ -5,7 +5,6 @@ const moneyTabs = [
   ["savings", "savings", "savings"],
   ["loans", "loans", "loan"],
   ["bills", "bills", "bill"],
-  ["budget", "budget", "budget"],
   ["reports", "reports", "chart"]
 ];
 const incomeCategories = ["Salary", "Business", "Freelance", "Bonus", "Other"];
@@ -44,6 +43,7 @@ const expenseCategoryIcons = {
   Other: "chart"
 };
 let financeReportMonth = "";
+let moneyBudgetOpen = false;
 let financeReportCanvas = null;
 let financeReportCanvasMonth = "";
 
@@ -139,6 +139,9 @@ function renderMoneyPeriodBar(range) {
 }
 
 function renderMoney(tab = "overview") {
+  // Budget lives inside Expenses now; old #money/budget links land there with budgets open
+  moneyBudgetOpen = tab === "budget" || moneyBudgetOpen === "keep";
+  if (tab === "budget") tab = "expenses";
   const stats = Store.calculate();
   return `
     <section class="page${typeof MoneyV2 !== "undefined" ? " fv2-page" : ""}">
@@ -631,10 +634,13 @@ function renderExpenses() {
       ${months.map(key => `<option value="${key}" ${key === month ? "selected" : ""}>${escapeHtml(monthName(key))}</option>`).join("")}
       <option value="all" ${month === "all" ? "selected" : ""}>${km ? "ទាំងអស់" : "All time"}</option>
     </select></label>`;
-  return `${typeof SmartMoney !== "undefined" ? SmartMoney.renderQuickExpense() : ""}<article class="glass-card card-pad financial-panel">
+  const withBudget = month === current && typeof SmartMoney !== "undefined" && SmartMoney.renderExpenseBudget;
+  const spentByGroup = {};
+  if (withBudget) items.forEach(item => { const key = expenseGroupOf(item); spentByGroup[key] = (spentByGroup[key] || 0) + Number(item.amount || 0); });
+  return `${typeof SmartMoney !== "undefined" ? SmartMoney.renderQuickExpense() : ""}${withBudget ? SmartMoney.renderExpenseBudget(spentByGroup, { open: Boolean(moneyBudgetOpen) }) : ""}<article class="glass-card card-pad financial-panel">
     <div class="between xl-head"><h2 class="section-title">${t("expenses")}</h2><button class="button" data-action="add-expense">${Icons.plus()} ${t("addExpense")}</button></div>
     <div class="xl-toolbar">${filter}<span class="xl-total">${items.length} · <b>${money(sumMoney(items, "amount"))}</b></span></div>
-    ${items.length ? expenseGroups(items) : emptyState(t("noExpensesYet"), t("noExpensesBody"), t("addExpense"), "add-expense")}
+    ${items.length ? expenseGroups(items, { budget: Boolean(withBudget) }) : emptyState(t("noExpensesYet"), t("noExpensesBody"), t("addExpense"), "add-expense")}
   </article>`;
 }
 
@@ -657,7 +663,7 @@ function renderRecentExpenses() {
   return head + expenseGroups(items, { actions: false });
 }
 
-function expenseGroups(items, { actions = true } = {}) {
+function expenseGroups(items, { actions = true, budget = false } = {}) {
   const groups = new Map();
   items.forEach(item => {
     const key = expenseGroupOf(item);
@@ -669,7 +675,7 @@ function expenseGroups(items, { actions = true } = {}) {
     .sort((a, b) => b.total - a.total)
     .map(({ category, list, total }) => `<details class="xl-group" open style="--cat:${expenseCategoryColors[category] || "#8a94a6"}">
       <summary><span class="xl-group-icon">${Icons[expenseCategoryIcons[category] || "expense"]()}</span><strong>${escapeHtml(optionLabel(category))}</strong><em>${list.length}</em><b>-${money(total)}</b>${Icons.chevron()}</summary>
-      <div class="xl-rows">${list.map(item => expenseRow(item, { compact: true, actions })).join("")}</div>
+      ${budget ? SmartMoney.budgetLine(category, total) : ""}<div class="xl-rows">${list.map(item => expenseRow(item, { compact: true, actions })).join("")}</div>
     </details>`).join("")}</div>`;
 }
 
@@ -891,7 +897,7 @@ function renderBudget() {
 function renderReports() {
   const month = financeReportMonth || localDateInput().slice(0, 7);
   const report = buildMonthlyFinanceReport(month);
-  return `<article class="glass-card card-pad financial-panel financial-report-panel">
+  return `${typeof ReportCenter !== "undefined" ? ReportCenter.render() : ""}<article class="glass-card card-pad financial-panel financial-report-panel">
     <div class="financial-report-toolbar">
       <div class="financial-report-heading"><span class="icon-badge blue">${Icons.chart()}</span><div><span class="eyebrow">${t("reports")}</span><h2 class="section-title">${t("monthlyReport")}</h2></div></div>
       <label class="field financial-report-month"><span>${t("reportMonth")}</span><input type="month" value="${escapeAttr(month)}" data-finance-report-month></label>
