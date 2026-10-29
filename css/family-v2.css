@@ -137,3 +137,11 @@
 .fam2 .family-photo-upload { color: var(--fv-on) !important; background: var(--fv-grad) !important; border: 0 !important; }
 .fam2 .mf-teaser-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
 .fam2 .mf-teaser-row { gap: 8px; }
+/* family photos folded (29 Oct): page stays short, the uploads stay one tap away */
+.fv-media-fold { margin-top: 12px; }
+.fv-media-fold > summary { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-radius: 22px; list-style: none; cursor: pointer; background: var(--fv2-card, #fff); box-shadow: 0 6px 18px rgba(37, 99, 235, 0.07); }
+:root:not([data-theme="light"]) .fv-media-fold > summary { background: #122019; box-shadow: none; }
+.fv-media-fold > summary::-webkit-details-marker { display: none; }
+.fv-media-fold > summary span { font-size: 0.8rem; font-weight: 700; opacity: 0.75; }
+.fv-media-fold[open] > summary span { transform: rotate(90deg); }
+.fv-media-fold[open] > summary { margin-bottom: 12px; }

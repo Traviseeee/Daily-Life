@@ -126,8 +126,31 @@ const HomeV2 = (() => {
       <div class="hv2-amount${m.left < 0 ? " is-neg" : ""}">${escapeHtml(plainMoney(m.left))}</div>
       <div class="hv2-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${spentPct}" aria-label="${escapeAttr(L("ចាយបាន", "Spent"))}"><i style="width:${spentPct}%"></i></div>
       <div class="hv2-legend"><span>${escapeHtml(L("ចាយ", "Spent"))} <b>${escapeHtml(plainMoney(m.expenses))}</b></span><span>${escapeHtml(L("ចំណូល", "Income"))} <b>${escapeHtml(plainMoney(m.income))}</b></span><span>${escapeHtml(L("សន្សំ", "Saved"))} <b>${escapeHtml(plainMoney(m.saved))}</b></span></div>
+      <div class="hv2-today-money">${(() => {
+        const spentToday = (appData.expenses || []).filter(item => item.date === d.todayIso).reduce((t, item) => t + toProfileCurrency(item.amount, item.currency), 0);
+        const now = new Date();
+        const daysLeft = Math.max(1, new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate() - now.getDate() + 1);
+        return `<span>${escapeHtml(L("ចាយថ្ងៃនេះ", "Today"))} <b>${escapeHtml(plainMoney(spentToday))}</b></span><span>${escapeHtml(L("អាចចាយ/ថ្ងៃ", "Per day"))} <b>${escapeHtml(plainMoney(Math.max(0, m.left) / daysLeft))}</b></span>`;
+      })()}</div>
       ${due.length ? `<button type="button" class="hv2-wait" data-ma-home><span class="hv2-count">${due.length}</span><b>${escapeHtml(L(`${dueNames} រង់ចាំឆ្លើយ`, `${dueNames} waiting`))}</b><span class="hv2-pill">${escapeHtml(L("ឆ្លើយ", "Answer"))}</span></button>` : ""}
     </section>`;
+  }
+
+  // red / amber strip at the top: overdue bills and budgets at 80%+ (from the old Today page)
+  function alerts(d) {
+    const out = [];
+    const today = d.todayIso;
+    (appData.bills || []).filter(bill => bill.due && bill.due < today && bill.status !== "Paid" && !(typeof billPaidCurrentCycle === "function" && billPaidCurrentCycle(bill)))
+      .slice(0, 2).forEach(bill => {
+        const days = Math.round((new Date(`${today}T00:00:00`) - new Date(`${bill.due}T00:00:00`)) / 86400000);
+        out.push(`<a class="hv2-alert is-red" href="#money/bills"><span>⚠️ ${escapeHtml(bill.name || t("bill"))} ${escapeHtml(L(`ហួស ${days} ថ្ងៃ`, `${days} days overdue`))} · ${escapeHtml(plainMoney(toProfileCurrency(bill.amount, bill.currency)))}</span><b>${escapeHtml(L("បង់", "Pay"))} ›</b></a>`);
+      });
+    if (typeof SmartMoney !== "undefined" && SmartMoney.budgetStatus) {
+      expenseCategories.map(category => ({ category, ...SmartMoney.budgetStatus(category) }))
+        .filter(row => row.budget && row.percent >= 80).sort((a, b) => b.percent - a.percent).slice(0, 1)
+        .forEach(row => out.push(`<a class="hv2-alert ${row.percent >= 100 ? "is-red" : "is-amber"}" href="#money/expenses"><span>${row.percent >= 100 ? "🚨" : "⚠️"} ${escapeHtml(optionLabel(row.category))} ${escapeHtml(L(`ចាយ ${row.percent}% នៃថវិកា`, `at ${row.percent}% of budget`))}</span><b>${escapeHtml(L("មើល", "View"))} ›</b></a>`));
+    }
+    return out.length ? `<div class="hv2-alerts">${out.join("")}</div>` : "";
   }
 
   function quick() {
@@ -214,6 +237,7 @@ const HomeV2 = (() => {
     return `<section class="page home-featured-page hv2">
       ${header(d)}
       <div class="hv2-body">
+        ${alerts(d)}
         ${nextUp(d)}
         ${money(d)}
         ${quick()}
@@ -222,7 +246,6 @@ const HomeV2 = (() => {
         ${moodCard(d)}
         ${reflection(d)}
         ${typeof MemoryFeed !== "undefined" ? MemoryFeed.familyTeaser() : ""}
-        <a class="hv2-card hv2-summary" href="#summary"><span class="hv2-summary-icon">${Icons.chart()}</span><span><b>${escapeHtml(t("smartSummary"))}</b><small>${escapeHtml(t("smartSummarySubtitle"))}</small></span>${IC.chev()}</a>
       </div>
     </section>`;
   }

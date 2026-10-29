@@ -200,6 +200,21 @@ const ReportCenter = (() => {
     return drawPeriod(period);
   }
 
+  // 💡 insights under the image (month: the full monthly insights; day / week: quick facts)
+  function insightsHtml(period) {
+    let list = [];
+    if (period.kind === "month" && typeof ReportInsights !== "undefined") {
+      try { list = ReportInsights.build(period.key).insights.map(item => ({ text: item.text, tone: item.tone })); } catch (error) { list = []; }
+    } else {
+      const s = stats(period);
+      if (s.categories[0]) list.push({ text: L(`ចាយច្រើនជាងគេលើ ${optionLabel(s.categories[0][0])} · ${cash(s.categories[0][1])}`, `Most on ${optionLabel(s.categories[0][0])} · ${cash(s.categories[0][1])}`), tone: "info" });
+      if (s.change !== null) list.push({ text: s.change > 0 ? L(`ចាយច្រើនជាងមុន ${s.change}%`, `${s.change}% more than before`) : L(`ចាយតិចជាងមុន ${Math.abs(s.change)}% 👍`, `${Math.abs(s.change)}% less than before 👍`), tone: s.change > 0 ? "warn" : "good" });
+      if (!s.count) list.push({ text: L("មិនមានចំណាយទេ 🎉", "No spending 🎉"), tone: "good" });
+    }
+    if (!list.length) return "";
+    return `<div class="rc-v-ins"><b>💡 ${L("ការយល់ដឹង", "Insights")}</b><ul>${list.slice(0, 5).map(item => `<li class="is-${escapeAttr(item.tone || "info")}">${escapeHtml(item.text)}</li>`).join("")}</ul></div>`;
+  }
+
   /* ---------- viewer ---------- */
   let current = null;
   async function open(id) {
@@ -213,9 +228,10 @@ const ReportCenter = (() => {
     box.innerHTML = `<div class="rc-v-card">
       <div class="rc-v-head"><div><span>${period.kind === "day" ? L("របាយការណ៍ប្រចាំថ្ងៃ", "Daily report") : period.kind === "week" ? L("របាយការណ៍ប្រចាំសប្តាហ៍", "Weekly report") : L("របាយការណ៍ប្រចាំខែ", "Monthly report")}</span><strong>${escapeHtml(label(period, true))}</strong></div><button type="button" class="rc-v-x" data-rc-close aria-label="${L("បិទ", "Close")}">✕</button></div>
       <div class="rc-v-stage"><span class="rc-v-wait">${L("កំពុងបង្កើតរូប…", "Drawing…")}</span></div>
+      ${insightsHtml(period)}
       <div class="rc-v-actions">
         <button type="button" class="rc-v-btn" data-rc-jpg>⬇ JPG</button>
-        ${period.kind === "month" ? `<button type="button" class="rc-v-btn" data-rc-xlsx>📑 Excel</button>` : ""}
+        ${period.kind === "month" ? `<button type="button" class="rc-v-btn" data-rc-xlsx>📑 Excel</button><button type="button" class="rc-v-btn" data-rc-word>📝 Word</button>` : ""}
         <button type="button" class="rc-v-btn is-tg" data-rc-tg>✈️ Telegram</button>
       </div></div>`;
     document.body.appendChild(box);
@@ -223,6 +239,7 @@ const ReportCenter = (() => {
       if (event.target === box || event.target.closest("[data-rc-close]")) close();
       else if (event.target.closest("[data-rc-jpg]")) downloadJpg();
       else if (event.target.closest("[data-rc-xlsx]")) ReportXlsx?.download?.(period.key);
+      else if (event.target.closest("[data-rc-word]") && typeof exportMonthlyFinanceReport === "function") { financeReportMonth = period.key; exportMonthlyFinanceReport("word"); }
       else if (event.target.closest("[data-rc-tg]")) sendTelegram(event.target.closest("[data-rc-tg]"));
     });
     document.addEventListener("keydown", onKey);

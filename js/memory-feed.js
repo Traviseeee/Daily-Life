@@ -22,7 +22,9 @@ const MemoryFeed = (() => {
   const FREE_BYTES = 1024 * 1024 * 1024;
   const KM_MONTHS = ["មករា", "កុម្ភៈ", "មីនា", "មេសា", "ឧសភា", "មិថុនា", "កក្កដា", "សីហា", "កញ្ញា", "តុលា", "វិច្ឆិកា", "ធ្នូ"];
 
-  const state = { view: "feed", person: "", search: "", limit: PAGE, scope: "all", searchOpen: false };
+  // grid first (short page), 18 photos at a time; Feed / Reels one tap away
+  const GRID_PAGE = 18;
+  const state = { view: "grid", person: "", search: "", limit: PAGE, scope: "all", searchOpen: false, gridLimit: GRID_PAGE };
   let familySig = "";
   const signed = new Map(); // path → { url, exp }
   let observer = null;
@@ -185,7 +187,7 @@ const MemoryFeed = (() => {
           ${state.searchOpen || state.search ? `<label class="mf-search"><span aria-hidden="true">${Icons.search()}</span><input type="search" data-mf-search value="${escapeAttr(state.search)}" placeholder="${escapeAttr(L("ស្វែងរក…", "Search…"))}"></label>` : ""}
         </div>
 
-        ${posts.length ? (state.view === "grid" ? gridHtml(posts) : `<div class="mf-feed" data-mf-feed>${feedHtml(posts, 0, state.limit)}</div>${posts.length > state.limit ? `<div class="mf-more" data-mf-more>${L("កំពុងផ្ទុក…", "Loading…")}</div>` : ""}`) : emptyHtml()}
+        ${posts.length ? (state.view === "grid" ? gridHtml(posts.slice(0, state.gridLimit)) + (posts.length > state.gridLimit ? `<button type="button" class="mf-grid-more" data-mf-grid-more>${escapeHtml(L(`មើលបន្ថែម (${posts.length - state.gridLimit} ទៀត)`, `Show more (${posts.length - state.gridLimit})`))}</button>` : "") : `<div class="mf-feed" data-mf-feed>${feedHtml(posts, 0, state.limit)}</div>${posts.length > state.limit ? `<div class="mf-more" data-mf-more>${L("កំពុងផ្ទុក…", "Loading…")}</div>` : ""}`) : emptyHtml()}
       </section>`;
   }
 
@@ -311,6 +313,12 @@ const MemoryFeed = (() => {
     return reels + groups.map(group => `<div class="mf-month"><span>${escapeHtml(monthLabel(group.date))} <em>· ${group.items.length}</em></span></div>
       <div class="mf-grid">${group.items.map((memory, index) => gridCell(memory, index === 0 && group.items.length >= 3)).join("")}</div>`).join("");
   }
+
+  document.addEventListener("click", event => {
+    if (!event.target.closest("[data-mf-grid-more]")) return;
+    state.gridLimit += GRID_PAGE;
+    rerender();
+  });
 
   /* ---------- binding ---------- */
   function bind() {

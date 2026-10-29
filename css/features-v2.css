@@ -214,3 +214,13 @@ html body .ev-chip { display: inline-flex; flex: 0 0 auto; align-items: center; 
 html body .ev-chip svg { width: 14px; height: 14px; }
 html body .ev-chip.is-on { color: var(--ft-on); background: var(--ft-grad); }
 .ev-hint { margin: 0; font-size: 0.72rem; text-align: center; color: var(--ft-ink2); }
+/* viewer: insights + scroll when tall */
+.rc-v-card { grid-template-rows: auto minmax(0, 1fr) auto auto; overflow-y: auto; }
+.rc-v-ins { padding: 10px 12px; border-radius: 16px; font-size: 0.8rem; line-height: 1.55; background: var(--ft-soft); }
+.rc-v-ins b { display: block; margin-bottom: 4px; font-size: 0.82rem; }
+.rc-v-ins ul { display: grid; gap: 3px; margin: 0; padding-left: 18px; }
+.rc-v-ins li.is-warn, .rc-v-ins li.is-bad { color: var(--ft-amber); }
+.rc-v-ins li.is-good { color: var(--ft-green); }
+.rc-v-actions { flex-wrap: wrap; }
+html body .rc-v-btn { min-width: 30%; }
+html body .rc-list { max-height: none; }

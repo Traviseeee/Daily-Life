@@ -1,7 +1,5 @@
 const routes = [
   { id: "home", label: "Home", icon: "home" },
-  { id: "today", labelKey: "today", icon: "today" },
-  { id: "summary", labelKey: "smartSummary", icon: "chart" },
   { id: "family", label: "Family", icon: "family" },
   { id: "goals", label: "Goals", icon: "goal" },
   { id: "money", label: "Financial", icon: "money" },
@@ -44,11 +42,12 @@ function footerFromAccount() {
 
 function footerRoutes() {
   const allRoutes = [...routes, ...utilityRoutes];
-  const defaults = ["home", "today", "money", "calendar", "family"];
+  // Today and Summary were merged into Home (29 Oct 2026)
+  const defaults = ["home", "money", "calendar", "family", "memories"];
   try {
     let saved = footerFromAccount() || JSON.parse(localStorage.getItem(FOOTER_ROUTES_KEY) || "null");
     // one-time: put Today in the footer (it is the most useful page); Goals moves to ☰
-    if (Array.isArray(saved) && !saved.includes("today") && !localStorage.getItem("mylife:footer-today-v1")) {
+    if (false && Array.isArray(saved) && !saved.includes("today") && !localStorage.getItem("mylife:footer-today-v1")) {
       const at = saved.indexOf("goals");
       if (at >= 0) saved.splice(at, 1, "today");
       else saved.splice(1, 0, "today");
@@ -56,7 +55,9 @@ function footerRoutes() {
       localStorage.setItem(FOOTER_ROUTES_KEY, JSON.stringify(saved));
     }
     localStorage.setItem("mylife:footer-today-v1", "1");
-    const selected = Array.isArray(saved) ? saved.filter(id => allRoutes.some(route => route.id === id)) : defaults;
+    const selected = Array.isArray(saved) ? saved.filter(id => allRoutes.some(route => route.id === id)) : defaults.slice();
+    // a saved footer that had Today / Summary: fill the gap from the defaults
+    if (Array.isArray(saved) && selected.length && selected.length < 5) defaults.forEach(id => { if (selected.length < 5 && !selected.includes(id)) selected.push(id); });
     return (selected.length ? selected : defaults).slice(0, 5).map(id => allRoutes.find(route => route.id === id));
   } catch (error) {
     return defaults.map(id => allRoutes.find(route => route.id === id));

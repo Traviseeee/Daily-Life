@@ -164,8 +164,11 @@ const FamilyV2 = (() => {
         ${appData.family.map(memberCard).join("")}
         <div class="fv-sec"><b>${escapeHtml(L("ក្រុមគ្រួសារ", "Family group"))}</b></div>
         <div class="fv-group" data-family-group></div>
-        ${familyMediaCard()}
-        ${familyPhotoCard()}
+        <details class="fv-media-fold">
+          <summary><b>📷 ${escapeHtml(L("រូបភាព និងវីដេអូគ្រួសារ", "Family photos & videos"))}</b><span>${escapeHtml(L("បើក", "Open"))} ›</span></summary>
+          ${familyMediaCard()}
+          ${familyPhotoCard()}
+        </details>
       </div>
     </section>`;
   }

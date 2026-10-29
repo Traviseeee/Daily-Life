@@ -897,8 +897,10 @@ function renderBudget() {
 
 function renderReports() {
   const month = financeReportMonth || localDateInput().slice(0, 7);
+  // Report Center is the whole page now; insights, Word and Excel live in its viewer
+  if (typeof ReportCenter !== "undefined") return ReportCenter.render();
   const report = buildMonthlyFinanceReport(month);
-  return `${typeof ReportCenter !== "undefined" ? ReportCenter.render() : ""}<article class="glass-card card-pad financial-panel financial-report-panel">
+  return `<article class="glass-card card-pad financial-panel financial-report-panel">
     <div class="financial-report-toolbar">
       <div class="financial-report-heading"><span class="icon-badge blue">${Icons.chart()}</span><div><span class="eyebrow">${t("reports")}</span><h2 class="section-title">${t("monthlyReport")}</h2></div></div>
       <label class="field financial-report-month"><span>${t("reportMonth")}</span><input type="month" value="${escapeAttr(month)}" data-finance-report-month></label>

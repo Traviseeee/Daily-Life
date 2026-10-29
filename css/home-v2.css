@@ -249,3 +249,16 @@ html:root[data-theme="light"]:root body .hv2-avatar .home-profile-menu .home-pro
 .fx-tile.done .fx-ck::after { content: ""; width: 8px; height: 4px; margin-top: -2px; border-left: 2px solid var(--hv-on); border-bottom: 2px solid var(--hv-on); transform: rotate(-45deg); }
 .hv2-fx.all-done .fx-pct { color: var(--hv-on); background: var(--hv-grad); }
 @media (prefers-reduced-motion: reduce) { .fx-tile label, .fx-seg i { transition: none; } }
+
+/* ---- Home = Today (29 Oct): alert strip + today's money line ---- */
+.hv2-alerts { display: grid; gap: 8px; margin-bottom: 12px; }
+html body .hv2-alert { display: flex; align-items: center; gap: 10px; padding: 11px 14px; border-radius: 18px; font-size: 0.82rem; font-weight: 600; text-decoration: none; }
+.hv2-alert span { flex: 1; min-width: 0; }
+.hv2-alert b { flex: 0 0 auto; font-size: 0.78rem; }
+html body .hv2-alert.is-red { color: #b4233a; background: #ffe3e7; }
+html body .hv2-alert.is-amber { color: #8a4b00; background: #fff1d6; }
+:root:not([data-theme="light"]) .hv2-alert.is-red { color: #ffb3bd; background: rgba(255, 139, 154, 0.14); }
+:root:not([data-theme="light"]) .hv2-alert.is-amber { color: #ffd28a; background: rgba(255, 199, 107, 0.14); }
+.hv2-today-money { display: flex; gap: 8px; margin-top: 10px; }
+.hv2-today-money span { flex: 1; padding: 7px 10px; border-radius: 12px; font-size: 0.74rem; color: var(--hv-ink2); background: var(--hv-soft); }
+.hv2-today-money b { display: block; font-size: 0.95rem; color: var(--hv-ink); }

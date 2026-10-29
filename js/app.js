@@ -312,6 +312,8 @@ const App = {
   parseRoute() {
     const [route = "home", param = ""] = location.hash.replace("#", "").split("?")[0].split("/");
     this.route = route || "home";
+    // Today and Summary live inside Home now; old links and bookmarks land there
+    if (this.route === "today" || this.route === "summary") { this.route = "home"; history.replaceState(null, "", "#home"); }
     this.param = param;
   },
   render() {
