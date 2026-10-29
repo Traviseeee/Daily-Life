@@ -10,7 +10,8 @@ const PullRefresh = (() => {
     el = document.createElement("div");
     el.className = "ptr";
     el.setAttribute("aria-live", "polite");
-    el.innerHTML = '<span class="ptr-spin" aria-hidden="true"></span><span class="ptr-text"></span>';
+    // the MYLIFE Day-ring logo: the ring draws itself as you pull, the dot pops when ready
+    el.innerHTML = '<svg class="ptr-logo" viewBox="0 0 240 240" aria-hidden="true"><rect class="ptr-bg" width="240" height="240" rx="56"/><circle class="ptr-track" cx="120" cy="120" r="66"/><circle class="ptr-ring" cx="120" cy="120" r="66" transform="rotate(-90 120 120)"/><circle class="ptr-dot" cx="120" cy="120" r="20"/></svg><span class="ptr-text"></span>';
     document.body.appendChild(el);
     return el;
   }
@@ -32,13 +33,14 @@ const PullRefresh = (() => {
     box.classList.add("is-on");
     box.style.transform = `translate(-50%, ${Math.min(d, LIMIT + 24) - 56}px)`;
     box.style.opacity = String(Math.min(1, p * 1.4));
-    box.querySelector(".ptr-spin").style.transform = `rotate(${p * 300}deg)`;
+    box.querySelector(".ptr-ring").style.strokeDashoffset = String(415 * (1 - p));
     box.classList.toggle("is-ready", p >= 1);
     setText(p >= 1 ? (km() ? "លែងដៃដើម្បីធ្វើឱ្យថ្មី" : "Release to refresh") : (km() ? "ទាញចុះដើម្បីធ្វើឱ្យថ្មី" : "Pull to refresh"));
   }
   function hide() {
     if (!el) return;
     el.classList.remove("is-on", "is-ready", "is-busy");
+    el.querySelector(".ptr-ring").style.strokeDashoffset = "";
     el.style.transform = "";
     el.style.opacity = "";
   }

@@ -23,10 +23,25 @@ html:root[data-theme="light"]:root {
 .ptr { position: fixed; top: calc(env(safe-area-inset-top) + 8px); left: 50%; z-index: 9000; display: inline-flex; align-items: center; gap: 9px; padding: 9px 16px 9px 10px; border-radius: 999px; font-size: 0.8rem; font-weight: 700; color: var(--ft-ink); background: var(--ft-card); box-shadow: var(--ft-shadow); opacity: 0; transform: translate(-50%, -64px); pointer-events: none; transition: transform 220ms ease, opacity 200ms ease; }
 .ptr.is-on { transition: none; }
 .ptr.is-busy { transition: transform 220ms ease, opacity 200ms ease; }
-.ptr-spin { width: 24px; height: 24px; flex: 0 0 auto; border: 3px solid var(--ft-soft); border-top-color: var(--ft-acc); border-radius: 50%; }
-.ptr.is-ready .ptr-spin { border-color: var(--ft-acc); border-top-color: var(--ft-acc); }
-.ptr.is-busy .ptr-spin { border-color: var(--ft-soft); border-top-color: var(--ft-acc); animation: ptrSpin 700ms linear infinite; }
-@keyframes ptrSpin { to { transform: rotate(360deg); } }
+.ptr-logo { width: 30px; height: 30px; flex: 0 0 auto; overflow: visible; }
+.ptr-bg { fill: #0f3326; }
+.ptr-track { fill: none; stroke: #1f4a38; stroke-width: 22; }
+.ptr-ring { fill: none; stroke: #d9ff7b; stroke-width: 22; stroke-linecap: round; stroke-dasharray: 415; stroke-dashoffset: 415; }
+.ptr-dot { fill: #9ef06a; transform-origin: 120px 120px; transform: scale(0); transition: transform 320ms cubic-bezier(.2, 1.6, .4, 1); }
+html:root[data-theme="light"] .ptr-bg { fill: #ffffff; }
+html:root[data-theme="light"] .ptr-track { stroke: #dbeafe; }
+html:root[data-theme="light"] .ptr-ring { stroke: #3b82f6; }
+html:root[data-theme="light"] .ptr-dot { fill: #5aa2ff; }
+html:root[data-theme="light"] .ptr-logo { filter: drop-shadow(0 2px 4px rgba(47, 123, 245, .25)); }
+.ptr.is-ready .ptr-dot { transform: scale(1); }
+.ptr.is-ready .ptr-logo { animation: ptrBump 320ms ease; }
+.ptr.is-busy .ptr-logo { animation: none; }
+.ptr.is-busy .ptr-ring { stroke-dasharray: 110 305; stroke-dashoffset: 0; animation: ptrSpin 900ms linear infinite; transform-box: view-box; transform-origin: 120px 120px; }
+.ptr.is-busy .ptr-dot { transform: scale(1); animation: ptrPulse 900ms ease-in-out infinite; }
+@keyframes ptrSpin { from { transform: rotate(-90deg); } to { transform: rotate(270deg); } }
+@keyframes ptrPulse { 50% { transform: scale(.7); } }
+@keyframes ptrBump { 50% { transform: scale(1.15); } }
+@media (prefers-reduced-motion: reduce) { .ptr-logo, .ptr-ring, .ptr-dot { animation: none !important; } }
 
 /* ---------- budgets inside Expenses ---------- */
 html body .xb-card { display: grid; gap: 10px; padding: 16px; border-radius: 24px; color: var(--ft-ink); background: var(--ft-card); box-shadow: var(--ft-shadow); }
