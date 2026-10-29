@@ -4,6 +4,7 @@
  * data-ma-home (MoneyAsk.askNow), data-action="add-expense", SmartMoney quick
  * expense and renderRecentExpenses(). Old overview stays in money.js as fallback. */
 const MoneyV2 = (() => {
+  let periodOpen = false;
   const km = () => languageCode() === "km";
   const L = (k, e) => (km() ? k : e);
 
@@ -79,13 +80,20 @@ const MoneyV2 = (() => {
     }
     const pct = income ? Math.min(100, Math.round((spent / income) * 100)) : 0;
     const short = left < 0;
-    return `<a class="fv2-hero ${short ? "is-short" : ""}" href="#money/budget">
-      <small>${escapeHtml(label)}</small>
+    const third = perDay
+      ? `<span class="fv2-t3-item"><small>${escapeHtml(L("ក្នុងមួយថ្ងៃ", "Per day"))}</small><b>${money(left / Math.max(1, daysBetween(today, moneyPeriodRange({ kind: "month", anchor: range.anchor }).end) + 1))}</b></span>`
+      : `<span class="fv2-t3-item"><small>${escapeHtml(L("នៃចំណូល", "Of income"))}</small><b>${income ? `${Math.round((spent / income) * 100)}%` : "–"}</b></span>`;
+    return `<section class="fv2-hero ${short ? "is-short" : ""}">
+      <div class="fv2-hero-top"><small>${escapeHtml(label)}</small><button type="button" class="fv2-period-chip" data-fv2-period aria-expanded="${periodOpen}">${escapeHtml(range.label)} ▾</button></div>
       <strong class="fv2-hero-value">${short ? "−" : ""}${full(Math.abs(left))}</strong>
       ${short ? `<span class="fv2-hero-warn">⚠ ${escapeHtml(L("ចាយលើសចំណូល", "Spent more than income"))}</span>` : ""}
       <span class="fv2-hero-bar"><i style="width:${Math.max(3, pct)}%"></i></span>
-      <span class="fv2-hero-foot"><span>${escapeHtml(L("ចាយ", "Spent"))} <b>${money(spent)}</b> / ${money(income)}</span>${perDay ? `<b>${perDay}</b>` : ""}</span>
-    </a>`;
+      <div class="fv2-t3">
+        <a class="fv2-t3-item" href="#money/income"><small>${escapeHtml(L("ចំណូល", "Income"))}</small><b>${money(income)}</b></a>
+        <a class="fv2-t3-item" href="#money/expenses"><small>${escapeHtml(L("ចំណាយ", "Spent"))}</small><b>${money(spent)}</b></a>
+        ${third}
+      </div>
+    </section>`;
   }
 
   function mini({ tone, href, icon, label, value, sub }) {
@@ -114,11 +122,10 @@ const MoneyV2 = (() => {
     const loans = (appData.loans || []).filter(loan => loanRemaining(loan) > 0);
     const loanLeft = loans.reduce((t, loan) => t + toProfileCurrency(loanRemaining(loan), loan.currency), 0);
     const monthsLeft = loans.reduce((max, loan) => Math.max(max, loan.monthlyPayment ? Math.ceil(loanRemaining(loan) / Number(loan.monthlyPayment)) : 0), 0);
-    return `<div class="fv2-grid">
-      ${mini({ tone: "in", href: "#money/income", icon: ARROW_DOWN, label: L("ចំណូល", "Income"), value: money(income === null ? stats.totalIncome : income), sub: incomeSub })}
-      ${mini({ tone: "out", href: "#money/expenses", icon: ARROW_UP, label: L("ចំណាយ", "Spent"), value: money(spent), sub: spentSub })}
-      ${mini({ tone: "save", href: "#money/savings", icon: "🐷", label: L("សន្សំ", "Savings"), value: money(stats.totalSavings), sub: savedThisMonth > 0 ? `+${money(savedThisMonth)} ${escapeHtml(L("ខែនេះ", "this month"))}` : m.plannedSavings > 0 ? `${money(m.plannedSavings)} / ${escapeHtml(L("ខែ", "mo"))}` : escapeHtml(L("មិនទាន់មានគោលដៅ", "No goal yet")) })}
-      ${mini({ tone: "loan", href: "#money/loans", icon: "🏦", label: L("កម្ចី", "Loans"), value: money(loanLeft), sub: loans.length ? escapeHtml(L(`នៅសល់ ${monthsLeft} ខែ`, `${monthsLeft} months left`)) : `✓ ${escapeHtml(L("គ្មានកម្ចី", "No loans"))}` })}
+    const goalsCount = (appData.savings || []).filter(item => Number(item.targetAmount) > 0).length;
+    return `<div class="fv2-two">
+      <a class="fv2-two-card" href="#money/savings"><small>🐷 ${escapeHtml(L("សន្សំ", "Savings"))}</small><strong>${money(stats.totalSavings)}</strong><span>${savedThisMonth > 0 ? `+${money(savedThisMonth)} ${escapeHtml(L("ខែនេះ", "this month"))}` : m.plannedSavings > 0 ? `${money(m.plannedSavings)} / ${escapeHtml(L("ខែ", "mo"))}` : escapeHtml(L("មិនទាន់មានគោលដៅ", "No goal yet"))}${goalsCount ? ` · ${goalsCount} ${escapeHtml(L("គោលដៅ", goalsCount === 1 ? "goal" : "goals"))}` : ""}</span></a>
+      <a class="fv2-two-card" href="#money/loans"><small>🏦 ${escapeHtml(L("កម្ចី", "Loans"))}</small><strong>${money(loanLeft)}</strong><span>${loans.length ? escapeHtml(L(`នៅ ${monthsLeft} ខែ`, `${monthsLeft} months left`)) : `✓ ${escapeHtml(L("គ្មានកម្ចី", "No loans"))}`}</span></a>
     </div>`;
   }
 
@@ -142,6 +149,7 @@ const MoneyV2 = (() => {
     return section(L("រង់ចាំឆ្លើយ", "Waiting for you"), "", rows + more, ` <span class="fv2-badge">${waiting.length}</span>`);
   }
 
+  // where the money went: one stacked bar + the top 2 categories and "N more" (3 rows max)
   function categories(range) {
     const items = moneyExpensesIn(range);
     const loanPays = moneyLoanPaymentsIn(range);
@@ -150,17 +158,15 @@ const MoneyV2 = (() => {
       const amount = sumMoney(own, "amount") + (category === "Loan" ? loanPays.reduce((t, p) => t + p.amount, 0) : 0);
       return { category, amount, color: expenseCategoryColors[category] };
     }).filter(x => x.amount > 0).sort((a, b) => b.amount - a.amount);
+    if (!list.length) {
+      return section(L("ចាយលើអ្វីខ្លះ", "Where it went"), "#money/expenses", `<div class="fv2-empty"><span>${escapeHtml(L(`មិនទាន់មានចំណាយ · ${range.label}`, `No spending · ${range.label}`))}</span><button type="button" class="fv2-answer" data-action="add-expense">+ ${escapeHtml(L("ចំណាយ", "Expense"))}</button></div>`);
+    }
     const total = list.reduce((t, x) => t + x.amount, 0);
-    const body = list.length
-      ? list.slice(0, 5).map(x => {
-        const share = Math.round((x.amount / total) * 100);
-        return `<a class="fv2-cat" href="#money/expenses" style="--c:${x.color};--w:${Math.max(share, 2)}%">
-          <span class="fv2-ico fv2-icon fv2-ico-cat" aria-hidden="true">${CAT_EMOJI[x.category] || "📦"}</span>
-          <span class="fv2-cat-main"><b>${escapeHtml(optionLabel(x.category))}</b><span class="fv2-cat-track"><i></i></span></span>
-          <span class="fv2-cat-num"><b>${money(x.amount)}</b><small>${share}%</small></span>
-        </a>`;
-      }).join("")
-      : `<div class="fv2-empty"><span>${escapeHtml(L(`មិនទាន់មានចំណាយ · ${range.label}`, `No spending · ${range.label}`))}</span><button type="button" class="fv2-answer" data-action="add-expense">+ ${escapeHtml(L("ចំណាយ", "Expense"))}</button></div>`;
+    const rows = list.length > 3
+      ? [...list.slice(0, 2), { name: L(`ផ្សេងៗ ${list.length - 2} ប្រភេទ`, `${list.length - 2} more`), amount: list.slice(2).reduce((t, x) => t + x.amount, 0), color: "#94a3b8" }]
+      : list.map(x => ({ ...x, name: optionLabel(x.category) }));
+    const body = `<div class="fv2-stack">${list.map(x => `<i style="flex:${x.amount};background:${x.color}"></i>`).join("")}</div>`
+      + rows.map(x => `<a class="fv2-cat2" href="#money/expenses" style="--c:${x.color}"><span class="fv2-dot"></span><span class="fv2-cat2-name">${escapeHtml(x.name)}</span><b>${money(x.amount)}</b><small>${Math.round((x.amount / total) * 100)}%</small></a>`).join("");
     return section(L("ចាយលើអ្វីខ្លះ", "Where it went"), "#money/expenses", body);
   }
 
@@ -182,17 +188,22 @@ const MoneyV2 = (() => {
         tag: total ? `${paidCount}/${total}` : "", tagTone: "loan"
       };
     }).filter(Boolean);
-    const list = [...bills, ...loans].sort((a, b) => String(a.date).localeCompare(String(b.date))).slice(0, 4);
+    // savings goals with a monthly amount not put in yet this month
+    const saves = (appData.savings || []).filter(item => Number(item.monthlyContribution) > 0 && !getSavingsContribution(item)?.paid).map(item => ({
+      title: item.name || t("savings"), date: today, amount: full(item.monthlyContribution, item.currency), href: "#money/savings", icon: "🎯", kind: "save",
+      tag: L("មិនទាន់ដាក់", "Not yet"), tagTone: "warn", noDate: true
+    }));
+    const list = [...bills, ...loans].sort((a, b) => String(a.date).localeCompare(String(b.date))).concat(saves).slice(0, 3);
     if (!list.length) return "";
     const body = list.map(item => {
       const days = daysBetween(today, item.date);
       return `<a class="fv2-item ${days < 0 ? "is-late" : ""}" href="${item.href}">
         <span class="fv2-ico fv2-icon fv2-ico-${item.kind}" aria-hidden="true">${item.icon}</span>
-        <span class="fv2-item-text"><b>${escapeHtml(item.title)}</b><small>${escapeHtml(item.date.slice(0, 7) === today.slice(0, 7) || days < 0 ? `${dayText(item.date)} · ${inDaysText(days)}` : dayText(item.date, true))}</small></span>
+        <span class="fv2-item-text"><b>${escapeHtml(item.title)}</b><small>${escapeHtml(item.noDate ? L("សន្សំខែនេះ", "This month's saving") : item.date.slice(0, 7) === today.slice(0, 7) || days < 0 ? `${dayText(item.date)} · ${inDaysText(days)}` : dayText(item.date, true))}</small></span>
         <span class="fv2-item-num"><b>${item.amount}</b>${days < 0 ? `<small class="fv2-tag-late">${escapeHtml(L("ហួសកំណត់", "Overdue"))}</small>` : item.tag ? `<small class="fv2-tag-${item.tagTone}">${escapeHtml(item.tag)}</small>` : ""}</span>
       </a>`;
     }).join("");
-    return section(L("វិក្កយបត្រខាងមុខ", "Coming up"), "#money/bills", body);
+    return section(L("ខាងមុខ", "Coming up"), "#money/bills", body);
   }
 
   function goals() {
@@ -213,21 +224,60 @@ const MoneyV2 = (() => {
     return section(L("គោលដៅសន្សំ", "Savings goals"), "#money/savings", body);
   }
 
+  // last 3 days: one flat list (5 rows), riel shows ≈ $, tap = edit
+  function recent() {
+    const today = localDateInput();
+    const from = new Date(`${today}T00:00:00`);
+    from.setDate(from.getDate() - 2);
+    const fromIso = localDateInput(from);
+    const yesterday = new Date(`${today}T00:00:00`);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yIso = localDateInput(yesterday);
+    const items = (appData.expenses || []).filter(item => item.date && item.date >= fromIso && item.date <= today)
+      .sort((a, b) => String(b.date).localeCompare(String(a.date)) || String(b.updatedAt || b.createdAt || "").localeCompare(String(a.updatedAt || a.createdAt || "")));
+    const totalNow = items.reduce((t, item) => t + toProfileCurrency(item.amount, item.currency), 0);
+    const head = `<p class="fv2-recent-note">${escapeHtml(L("៣ ថ្ងៃចុងក្រោយ", "Last 3 days"))} · ${items.length} · -${money(totalNow)}</p>`;
+    if (!items.length) return section(t("recentTransactions"), "#money/expenses", `${head}<p class="fv2-recent-empty">${escapeHtml(L("មិនមានចំណាយក្នុង ៣ ថ្ងៃចុងក្រោយទេ", "No expenses in the last 3 days"))}</p>`);
+    const cur = appData.profile.currency || "USD";
+    const rows = items.slice(0, 5).map(item => {
+      const group = typeof expenseGroupOf === "function" ? expenseGroupOf(item) : (item.category || "Other");
+      const name = (typeof expenseName === "function" ? expenseName(item) : item.description) || optionLabel(group);
+      const when = item.date === today ? L("ថ្ងៃនេះ", "Today") : item.date === yIso ? L("ម្សិលមិញ", "Yesterday") : dayText(item.date);
+      const method = String(item.method || "").trim();
+      const other = item.currency && item.currency !== cur;
+      return `<button type="button" class="fv2-tx" data-edit-expense="${escapeAttr(item.id)}">
+        <span class="fv2-ico fv2-icon fv2-ico-cat" aria-hidden="true">${CAT_EMOJI[group] || "📦"}</span>
+        <span class="fv2-item-text"><b>${escapeHtml(name)}</b><small>${escapeHtml(when)}${method ? ` <span class="fv2-meth">${escapeHtml(method)}</span>` : ""}</small></span>
+        <span class="fv2-item-num"><b>-${money(item.amount, item.currency || cur)}</b>${other ? `<small>≈ ${money(toProfileCurrency(item.amount, item.currency))}</small>` : ""}</span>
+      </button>`;
+    }).join("");
+    const more = items.length > 5 ? `<a class="fv2-more" href="#money/expenses">+${items.length - 5} ${escapeHtml(L("ទៀត · មើលទាំងអស់", "more · see all"))} ›</a>` : "";
+    return section(L("ថ្មីៗ", "Recent"), "#money/expenses", head + rows + more);
+  }
+
   function overview(stats) {
     const range = moneyPeriodRange();
     const waiting = typeof MoneyAsk !== "undefined" ? MoneyAsk.items() : [];
-    return `<div class="fv2">
+    // the Day / Week / Month / Year bar opens from the chip on the hero (still the same controls)
+    return `<div class="fv2${periodOpen ? " show-period" : ""}">
       ${renderMoneyPeriodBar(range).replace("<strong>ខែ", "<strong>")}
       ${hero(stats, range)}
       ${miniGrid(stats, range, waiting)}
       ${waitingList(waiting)}
       ${categories(range)}
       ${upcoming()}
-      ${goals()}
-      ${typeof SmartMoney !== "undefined" ? SmartMoney.renderQuickExpense() : ""}
-      ${section(t("recentTransactions"), "#money/expenses", renderRecentExpenses())}
+      ${typeof SmartMoney !== "undefined" ? `<section class="fv2-section"><div class="fv2-section-head"><h2>${escapeHtml(L("កត់ចំណាយរហ័ស", "Quick expense"))}</h2></div>${SmartMoney.renderQuickExpense("qx-compact")}</section>` : ""}
+      ${recent()}
     </div>`;
   }
+
+  document.addEventListener("click", event => {
+    const chip = event.target.closest("[data-fv2-period]");
+    if (!chip) return;
+    periodOpen = !periodOpen;
+    chip.closest(".fv2")?.classList.toggle("show-period", periodOpen);
+    chip.setAttribute("aria-expanded", String(periodOpen));
+  });
 
   return { overview };
 })();

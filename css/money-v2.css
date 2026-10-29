@@ -171,3 +171,53 @@
 @media (max-width: 900px) {
   .fv2-page { padding-left: 6px !important; padding-right: 6px !important; padding-top: calc(env(safe-area-inset-top, 0px) + 12px) !important; }
 }
+
+/* ---- overview, compact draft (29 Oct): period behind the hero chip, 3 numbers in the hero,
+   savings | loans, 3-row categories, "Coming up", one-row quick expense, 5 recent rows ---- */
+html body .fv2:not(.show-period) > .money-period { display: none !important; }
+.fv2-hero-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+html body .fv2-period-chip { flex: 0 0 auto; padding: 5px 12px; border: 0; border-radius: 999px; font: inherit; font-size: 0.78rem; font-weight: 800; color: inherit; background: rgba(255, 255, 255, 0.22); cursor: pointer; }
+:root[data-theme="dark"] .fv2-period-chip, :root:not([data-theme="light"]) .fv2-period-chip { background: rgba(20, 42, 4, 0.14); }
+.fv2-t3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-top: 8px; }
+html body .fv2-t3-item { display: grid; gap: 1px; min-width: 0; padding: 7px 10px; border-radius: 14px; color: inherit !important; text-decoration: none; background: rgba(255, 255, 255, 0.16); }
+:root:not([data-theme="light"]) .fv2-t3-item { background: rgba(20, 42, 4, 0.1); }
+.fv2-t3-item small { font-size: 0.7rem !important; }
+.fv2-t3-item b { overflow: hidden; font-size: 0.98rem; font-weight: 800; white-space: nowrap; text-overflow: ellipsis; }
+.fv2-two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+html body .fv2-two-card { display: grid; gap: 2px; min-width: 0; padding: 12px 14px; border-radius: 22px; color: var(--fv-ink) !important; text-decoration: none; background: var(--fv-card); box-shadow: var(--fv-shadow); }
+.fv2-two-card small { font-size: 0.74rem; color: var(--fv-ink2); }
+.fv2-two-card strong { font-size: 1.2rem; font-weight: 800; }
+.fv2-two-card span { overflow: hidden; font-size: 0.7rem; white-space: nowrap; text-overflow: ellipsis; color: var(--fv-ink2); }
+.fv2-stack { display: flex; gap: 2px; height: 10px; margin: 2px 0 6px; overflow: hidden; border-radius: 9px; }
+.fv2-stack i { display: block; min-width: 3px; height: 100%; }
+html body .fv2-cat2 { display: flex; align-items: center; gap: 10px; padding: 9px 0; color: var(--fv-ink) !important; text-decoration: none; }
+.fv2-cat2 + .fv2-cat2 { border-top: 1px solid var(--fv-line); }
+.fv2-dot { width: 10px; height: 10px; flex: 0 0 auto; border-radius: 50%; background: var(--c); }
+.fv2-cat2-name { flex: 1; min-width: 0; font-size: 0.88rem; font-weight: 600; }
+.fv2-cat2 b { font-size: 0.9rem; font-weight: 800; }
+.fv2-cat2 small { width: 38px; font-size: 0.72rem; text-align: right; color: var(--fv-ink2); }
+.fv2-recent-note { margin: 0 0 4px; font-size: 0.76rem; color: var(--fv-ink2); }
+.fv2-recent-empty { margin: 6px 0; font-size: 0.82rem; color: var(--fv-ink2); }
+html body .fv2-tx { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 0; border: 0; font: inherit; text-align: left; color: var(--fv-ink); background: transparent; cursor: pointer; }
+.fv2-tx + .fv2-tx { border-top: 1px solid var(--fv-line); }
+.fv2-meth { margin-left: 4px; padding: 0 6px; border-radius: 999px; font-size: 0.66rem; color: var(--fv-ink2); background: var(--fv-soft); }
+/* one-row quick expense */
+html body .fv2 .qx-compact { padding: 8px !important; border: 0 !important; border-radius: 20px !important; background: var(--fv-card) !important; box-shadow: var(--fv-shadow) !important; }
+.qx-compact .qx-row { display: flex !important; align-items: center; gap: 8px; margin: 0 !important; }
+.qx-pick { position: relative; display: flex; flex: 0 0 auto; align-items: center; gap: 6px; height: 42px; padding: 0 10px; border-radius: 14px; background: var(--fv-soft); }
+.qx-pick i { display: grid; place-items: center; color: var(--cat); }
+.qx-pick i svg { width: 18px; height: 18px; }
+html body .qx-pick select { max-width: 92px; padding: 0 2px; border: 0; font: inherit; font-size: 0.84rem; font-weight: 700; color: var(--fv-ink); background: transparent; appearance: auto; }
+html body .qx-compact .qx-amount { display: flex; flex: 1; align-items: center; min-width: 0; height: 42px; border: 0 !important; border-radius: 14px; overflow: hidden; background: var(--fv-soft) !important; }
+html body .qx-compact .qx-currency { width: 34px; height: 42px; border: 0; font-weight: 800; color: var(--fv-acc-ink); background: transparent; }
+html body .qx-compact .qx-amount input { flex: 1; min-width: 0; height: 42px; padding: 0 8px 0 0; border: 0 !important; font: inherit; font-size: 1rem; font-weight: 700; color: var(--fv-ink); background: transparent !important; box-shadow: none !important; }
+html body .qx-compact .qx-add { display: grid; place-items: center; width: 42px; height: 42px; flex: 0 0 auto; padding: 0; border: 0; border-radius: 14px; color: var(--fv-on); background: var(--fv-grad); box-shadow: var(--fv-glow); cursor: pointer; }
+.qx-compact .qx-add svg { width: 20px; height: 20px; }
+.qx-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 6px 4px 0; }
+.qx-foot small { overflow: hidden; font-size: 0.72rem; white-space: nowrap; text-overflow: ellipsis; color: var(--fv-ink2); }
+html body .qx-compact .qx-more { flex: 0 0 auto; padding: 0; border: 0; font: inherit; font-size: 0.74rem; font-weight: 700; color: var(--fv-acc-ink); background: none; box-shadow: none; cursor: pointer; }
+html body .fv2 .qx-compact .qx-cats { display: none !important; }
+html body .fv2 .fv2-two-card strong { font-size: 1.25rem !important; font-weight: 800 !important; line-height: 1.25; color: var(--fv-ink) !important; }
+html body .fv2 .fv2-two-card small { font-size: 0.76rem !important; }
+html body .fv2 .qx-compact .qx-currency { width: 34px !important; min-width: 0 !important; height: 42px !important; padding: 0 !important; border: 0 !important; border-radius: 0 !important; color: var(--fv-acc-ink) !important; background: transparent !important; box-shadow: none !important; }
+html body .fv2 .fv2-two-card strong .money-value, html body .fv2 .fv2-t3-item b .money-value { font-size: inherit !important; font-weight: inherit !important; color: inherit !important; }

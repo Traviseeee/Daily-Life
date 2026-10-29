@@ -198,6 +198,25 @@ const SmartMoney = (() => {
     const categories = topCategories();
     const first = categories[0];
     const currency = profileCurrency();
+    // compact (Finance overview): one row — category ▾ · amount · ＋; note & more in "Details"
+    if (/\bqx-compact\b/.test(extraClass)) {
+      return `<article class="qx-card ${extraClass}">
+      <form class="qx-form" data-quick-expense novalidate>
+        <div class="qx-cats" hidden>${categories.map((category, index) => `<input type="radio" name="qxCategory" value="${escapeAttr(category)}" ${index === 0 ? "checked" : ""}>`).join("")}</div>
+        <div class="qx-row">
+          <label class="qx-pick" style="--cat:${expenseCategoryColors[first] || "#8a94a6"}"><i>${Icons[expenseCategoryIcons[first] || "expense"]()}</i>
+            <select data-qx-select aria-label="${escapeAttr(km() ? "ប្រភេទ" : "Category")}">${categories.map((category, index) => `<option value="${escapeAttr(category)}" ${index === 0 ? "selected" : ""}>${escapeHtml(optionLabel(category))}</option>`).join("")}</select></label>
+          <div class="qx-amount">
+            <button type="button" class="qx-currency" data-qx-currency="${currency}">${currency === "KHR" ? "៛" : "$"}</button>
+            <input type="number" name="qxAmount" min="0" step="any" inputmode="decimal" placeholder="0" aria-label="${escapeAttr(t("amount"))}">
+          </div>
+          <input type="hidden" name="qxNote" value="">
+          <button class="qx-add" type="submit" aria-label="${escapeAttr(km() ? "កត់" : "Add")}">${Icons.plus()}</button>
+        </div>
+        <p class="qx-foot"><small data-qx-hint></small><button class="qx-more" type="button" data-qx-details>${km() ? "លម្អិត ›" : "Details ›"}</button></p>
+      </form>
+    </article>`;
+    }
     return `<article class="glass-card card-pad qx-card ${extraClass}">
       <form class="qx-form" data-quick-expense novalidate>
         <div class="qx-head">
@@ -251,6 +270,17 @@ const SmartMoney = (() => {
           : `${optionLabel(category)} · ${km() ? "ថ្ងៃនេះ" : "today"}`;
         hint.dataset.level = status.budget ? status.level : "";
       };
+      // compact form: the select drives the hidden radios
+      const select = form.querySelector("[data-qx-select]");
+      select?.addEventListener("change", () => {
+        const radio = [...form.querySelectorAll('input[name="qxCategory"]')].find(input => input.value === select.value);
+        if (radio) { radio.checked = true; radio.dispatchEvent(new Event("change")); }
+        const pick = select.closest(".qx-pick");
+        if (pick) {
+          pick.style.setProperty("--cat", expenseCategoryColors[select.value] || "#8a94a6");
+          pick.querySelector("i").innerHTML = Icons[expenseCategoryIcons[select.value] || "expense"]();
+        }
+      });
       form.querySelectorAll('input[name="qxCategory"]').forEach(input => input.addEventListener("change", () => {
         update();
         form.elements.qxAmount.focus();
