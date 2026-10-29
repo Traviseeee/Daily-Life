@@ -46,6 +46,13 @@ const FocusEditor = (() => {
     if (text) text.textContent = `${pct}%`;
     const count = card.querySelector(".focus-count");
     if (count) count.textContent = `${doneCount}/${list.length}`;
+    // Home V2 focus card (chips): big number, "N to go", segment bar
+    const fxDone = card.querySelector("[data-fx-done]");
+    if (fxDone) fxDone.textContent = String(doneCount);
+    const fxLeft = card.querySelector("[data-fx-left]");
+    if (fxLeft && typeof HomeV2 !== "undefined" && HomeV2.focusLeft) fxLeft.textContent = HomeV2.focusLeft(doneCount, list.length);
+    card.querySelectorAll("[data-fx-seg] i").forEach((bar, index) => bar.classList.toggle("on", index < doneCount));
+    card.querySelector("[data-fx-seg]")?.setAttribute("aria-valuenow", String(pct));
     list.forEach(item => {
       const input = card.querySelector(`[data-focus-id="${CSS.escape(item.id)}"]`);
       input?.closest(".focus-item")?.classList.toggle("done", !!item.done);

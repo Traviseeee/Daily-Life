@@ -220,3 +220,32 @@ html:root[data-theme="light"]:root body .hv2-avatar .home-profile-menu .home-pro
 .hv2-mood-btn span { display: grid; place-items: center; font-size: 0 !important; opacity: 1 !important; filter: none !important; }
 .hv2-face { width: 34px; height: 34px; filter: drop-shadow(0 3px 4px rgba(214, 140, 20, 0.25)); transition: transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1); }
 .hv2-mood-btn:hover .hv2-face, .hv2-mood-btn.is-on .hv2-face { transform: scale(1.12) rotate(-6deg); }
+
+/* ---- daily focus, draft A (29 Oct): big count, segment bar, 2-column chip tiles ---- */
+.hv2 .hv2-fx.focus-card { display: grid; gap: 12px; padding: 16px !important; border: 0 !important; background: var(--hv-card) !important; box-shadow: var(--hv-shadow) !important; }
+.fx-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; }
+.fx-num { line-height: 1; }
+.fx-num b { font-size: 2.1rem; font-weight: 800; color: var(--hv-ink); }
+.fx-num small { font-size: 1.05rem; font-weight: 600; color: var(--hv-ink2); }
+.fx-left { display: block; margin-top: 6px; font-size: 0.78rem; color: var(--hv-ink2); }
+.hv2 .fx-pct { padding: 4px 12px; border-radius: 999px; font-size: 0.95rem; font-weight: 800; color: var(--hv-acc-ink); background: var(--hv-soft); }
+.fx-seg { display: flex; gap: 5px; }
+.fx-seg i { flex: 1; height: 8px; border-radius: 9px; background: var(--hv-soft); transition: background 260ms ease; }
+.fx-seg i.on { background: var(--hv-grad); }
+.hv2 .fx-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.hv2 .fx-grid.is-odd .fx-tile:last-child { grid-column: 1 / -1; }
+.hv2 .fx-tile.focus-item, .hv2 .fx-tile.focus-item.done { padding: 0 !important; border: 0 !important; background: none !important; box-shadow: none !important; }
+.fx-tile label { display: flex; align-items: center; gap: 8px; height: 100%; min-height: 50px; padding: 8px 10px; border-radius: 16px; color: var(--hv-ink); background: var(--hv-soft); cursor: pointer; transition: background 220ms ease, color 220ms ease, transform 120ms ease; -webkit-tap-highlight-color: transparent; }
+.fx-tile label:active { transform: scale(0.97); }
+.fx-tile input { position: absolute; width: 1px !important; height: 1px !important; opacity: 0; pointer-events: none; }
+.fx-em { display: grid; place-items: center; width: 30px; height: 30px; flex: 0 0 auto; border-radius: 10px; font-size: 1rem; background: var(--hv-card); }
+.hv2 .fx-tile .focus-text { display: -webkit-box; flex: 1; min-width: 0; overflow: hidden; font-size: 0.84rem; font-weight: 600; line-height: 1.35; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.fx-ck { display: grid; place-items: center; width: 20px; height: 20px; flex: 0 0 auto; border-radius: 50%; border: 2px solid var(--hv-line); }
+.fx-tile input:focus-visible ~ .fx-ck { outline: 2px solid var(--hv-acc); outline-offset: 2px; }
+.hv2 .fx-tile.done label { color: var(--hv-on); background: var(--hv-grad); box-shadow: var(--hv-glow); }
+.hv2 .fx-tile.done .focus-text { color: var(--hv-on) !important; text-decoration: none !important; }
+.fx-tile.done .fx-em { background: rgba(255, 255, 255, 0.25); }
+.fx-tile.done .fx-ck { border-color: transparent; background: rgba(255, 255, 255, 0.28); }
+.fx-tile.done .fx-ck::after { content: ""; width: 8px; height: 4px; margin-top: -2px; border-left: 2px solid var(--hv-on); border-bottom: 2px solid var(--hv-on); transform: rotate(-45deg); }
+.hv2-fx.all-done .fx-pct { color: var(--hv-on); background: var(--hv-grad); }
+@media (prefers-reduced-motion: reduce) { .fx-tile label, .fx-seg i { transition: none; } }

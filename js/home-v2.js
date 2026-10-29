@@ -156,13 +156,28 @@ const HomeV2 = (() => {
       <section class="hv2-card hv2-tl">${typeof TopbarWeather !== "undefined" && TopbarWeather.rainRowHtml ? TopbarWeather.rainRowHtml() : ""}${rows || `<button type="button" class="hv2-empty" data-action="add-event">${IC.cal()}<span>${escapeHtml(L("គ្មានអ្វីទេ — ចុចបន្ថែមព្រឹត្តិការណ៍", "Nothing planned — tap to add an event"))}</span></button>`}</section>`;
   }
 
+  // emoji for a focus line, guessed from its words (✨ when nothing fits)
+  const FOCUS_EMOJI = [
+    [/ទឹក|water|drink/i, "💧"], [/គ្រួសារ|family|mom|dad|ម្ដាយ|ម្តាយ|ឪពុក|call/i, "👨‍👩‍👧"], [/លុយ|ចាយ|money|spend|save|សន្សំ/i, "💸"],
+    [/រាងកាយ|ហាត់|ដើរ|រត់|walk|run|move|body|exercise|gym|yoga/i, "🏃"], [/ការងារ|work|task|finish|បញ្ចប់/i, "💼"],
+    [/អាន|សៀវភៅ|read|book|study|រៀន/i, "📚"], [/គេង|sleep|bed/i, "😴"], [/បាយ|ម្ហូប|eat|food|fruit|vegetable|ផ្លែ/i, "🥗"],
+    [/សមាធិ|meditat|pray|breath/i, "🧘"], [/ផ្ទះ|clean|home|house/i, "🏠"]
+  ];
+  const focusEmoji = text => (FOCUS_EMOJI.find(([re]) => re.test(text || "")) || [null, "✨"])[1];
+  const focusLeft = (done, total) => (total && done >= total ? L("ធ្វើរួចទាំងអស់ 🎉", "All done 🎉") : L(`នៅ ${total - done} ទៀត`, `${total - done} to go`));
+
   function focusCard(d) {
     const done = d.focus.filter(item => item.done).length;
-    const pct = d.focus.length ? Math.round((done / d.focus.length) * 100) : 0;
+    const total = d.focus.length;
+    const pct = total ? Math.round((done / total) * 100) : 0;
     return `<div class="hv2-sec"><b>${escapeHtml(t("dailyFocus"))}</b><button type="button" class="hv2-link" data-action="edit-focus">${escapeHtml(L("កែ", "Edit"))} ›</button></div>
-      <section class="hv2-card hv2-focus focus-card${pct === 100 ? " all-done" : ""}">
-        <div class="hv2-ring progress-fill" style="--p:${pct / 100}" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}" aria-label="${escapeAttr(t("dailyFocus"))}"><span class="focus-count">${done}/${d.focus.length}</span></div>
-        <ul class="hv2-checks focus-list">${d.focus.map(item => `<li class="focus-item${item.done ? " done" : ""}"><label><input type="checkbox" ${item.done ? "checked" : ""} data-focus-id="${escapeAttr(item.id)}"><span class="hv2-box" aria-hidden="true"></span><span class="focus-text">${escapeHtml(item.text)}</span></label></li>`).join("")}</ul>
+      <section class="hv2-card hv2-fx focus-card${pct === 100 ? " all-done" : ""}">
+        <div class="fx-head">
+          <div><div class="fx-num"><b data-fx-done>${done}</b><small>/${total}</small></div><span class="fx-left" data-fx-left>${escapeHtml(focusLeft(done, total))}</span></div>
+          <span class="fx-pct focus-progress-text">${pct}%</span>
+        </div>
+        <div class="fx-seg" data-fx-seg role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}" aria-label="${escapeAttr(t("dailyFocus"))}">${d.focus.map((_, i) => `<i class="${i < done ? "on" : ""}"></i>`).join("")}</div>
+        <ul class="fx-grid focus-list${total % 2 ? " is-odd" : ""}">${d.focus.map(item => `<li class="fx-tile focus-item${item.done ? " done" : ""}"><label><input type="checkbox" ${item.done ? "checked" : ""} data-focus-id="${escapeAttr(item.id)}"><span class="fx-em" aria-hidden="true">${focusEmoji(item.text)}</span><span class="focus-text">${escapeHtml(item.text)}</span><span class="fx-ck" aria-hidden="true"></span></label></li>`).join("")}</ul>
       </section>`;
   }
 
@@ -240,5 +255,5 @@ const HomeV2 = (() => {
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", () => { mirror("topbarWeather", "[data-hv2-wx]"); mirror("bellButton", "[data-hv2-bell]"); });
   else { mirror("topbarWeather", "[data-hv2-wx]"); mirror("bellButton", "[data-hv2-bell]"); }
 
-  return { render };
+  return { focusLeft, render };
 })();
