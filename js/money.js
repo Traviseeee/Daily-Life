@@ -618,6 +618,7 @@ function expenseMethodChip(method) {
 }
 
 function renderExpenses() {
+  if (typeof ExpensesV2 !== "undefined") return ExpensesV2.render();
   const km = languageCode() === "km";
   const all = appData.expenses || [];
   const months = [...new Set(all.map(item => String(item.date || "").slice(0, 7)).filter(Boolean))].sort().reverse();
