@@ -135,3 +135,20 @@ html body .page.mf2 .mf-car { align-items: flex-start; }
 html body .page.mf2 .mf-slide { position: relative; aspect-ratio: 1 / 1; height: auto !important; min-height: 0; max-height: none; overflow: hidden; }
 html body .page.mf2 .mf-slide > img, html body .page.mf2 .mf-slide > video { position: absolute; inset: 0; width: 100% !important; height: 100% !important; max-height: none !important; object-fit: cover; }
 html body .page.mf2 .mf-slide > video { object-fit: contain; }
+/* post footer like Instagram (29 Oct): icon row, likes line, "name caption", "with …", comments */
+html body .page.mf2 .mf-actions.mf-ig { display: flex; gap: 14px; padding: 10px 14px 2px; }
+html body .page.mf2 .mf-ig .mf-act { display: grid; place-items: center; width: auto; height: auto; min-height: 0; padding: 2px; border: 0; border-radius: 0; color: var(--m2-ink, #0f1b33); background: none !important; box-shadow: none !important; }
+html body .page.mf2 .mf-ig .mf-act svg { display: block; }
+html body .page.mf2 .mf-ig .mf-act.mf-pop svg { animation: mfIgPop 320ms ease; }
+@keyframes mfIgPop { 40% { transform: scale(1.25); } }
+html body .page.mf2 .mf-ig-body { display: grid; gap: 4px; padding: 4px 14px 14px; }
+html body .page.mf2 .mf-likes { margin: 0; font-size: 0.86rem; font-weight: 800; color: var(--m2-ink, #0f1b33); }
+html body .page.mf2 .mf-ig-body .mf-caption { margin: 0; font-size: 0.88rem; line-height: 1.5; color: var(--m2-ink, #0f1b33); }
+html body .page.mf2 .mf-ig-body .mf-caption strong, html body .page.mf2 .mf-ig-title { font-weight: 800; }
+html body .page.mf2 .mf-with { margin: 0; font-size: 0.82rem; color: var(--m2-ink2, #5b6b85); }
+html body .page.mf2 .mf-with b { font-weight: 700; color: var(--m2-ink, #0f1b33); }
+html body .page.mf2 .mf-all-comments, html body .page.mf2 .mf-ig-comment { display: block; width: 100%; margin: 0; padding: 0; border: 0; font: inherit; font-size: 0.84rem; text-align: left; color: var(--m2-ink2, #5b6b85); background: none !important; box-shadow: none !important; cursor: pointer; }
+html body .page.mf2 .mf-ig-comment { color: var(--m2-ink, #0f1b33); }
+html body .page.mf2 .mf-ig-comment strong { font-weight: 800; }
+:root:not([data-theme="light"]) .page.mf2 .mf-ig .mf-act, :root:not([data-theme="light"]) .page.mf2 .mf-likes, :root:not([data-theme="light"]) .page.mf2 .mf-ig-body .mf-caption, :root:not([data-theme="light"]) .page.mf2 .mf-with b, :root:not([data-theme="light"]) .page.mf2 .mf-ig-comment { color: #eef6e8; }
+:root:not([data-theme="light"]) .page.mf2 .mf-with, :root:not([data-theme="light"]) .page.mf2 .mf-all-comments { color: #a3bcad; }

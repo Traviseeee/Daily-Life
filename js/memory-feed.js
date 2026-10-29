@@ -274,18 +274,24 @@ const MemoryFeed = (() => {
           </div>
           ${media.length > 1 ? `<div class="mf-dots">${media.map((_, index) => `<i class="${index === 0 ? "active" : ""}"></i>`).join("")}</div>` : ""}
         ` : `<div class="mf-textonly" data-mf-tap style="background:${typeof memoryGradient === "function" ? memoryGradient(memory.id) : "#16241b"}"><span>${escapeHtml(memory.title || memory.description || "")}</span><span class="mf-heart" aria-hidden="true">❤️</span></div>`}
-        <div class="mf-actions">
-          <button type="button" class="mf-act ${liked ? "liked" : ""}" data-mf-like="${escapeAttr(memory.id)}" aria-pressed="${liked}" aria-label="${escapeAttr(L("ចូលចិត្ត", "Like"))}">${liked ? "❤️" : "🤍"}${likeCount ? `<b data-mf-like-count>${likeCount}</b>` : ""}</button>
-          <button type="button" class="mf-act" data-mf-comments="${escapeAttr(memory.id)}" aria-label="${escapeAttr(L("មតិ", "Comments"))}">💬${comments.length ? `<b>${comments.length}</b>` : ""}</button>
+        <div class="mf-actions mf-ig">
+          <button type="button" class="mf-act mf-ig-like ${liked ? "liked" : ""}" data-mf-like="${escapeAttr(memory.id)}" aria-pressed="${liked}" aria-label="${escapeAttr(L("ចូលចិត្ត", "Like"))}">${heartIcon(liked)}</button>
+          <button type="button" class="mf-act" data-mf-comments="${escapeAttr(memory.id)}" aria-label="${escapeAttr(L("មតិ", "Comments"))}">${COMMENT_ICON}</button>
         </div>
-        <div class="mf-body">
-          ${memory.title ? `<p class="mf-title">${escapeHtml(memory.title)}</p>` : ""}
-          ${caption ? `<p class="mf-caption">${escapeHtml(caption)}</p>` : ""}
-          ${tags.length ? `<p class="mf-tags">👥 ${tags.map(name => `<span>${escapeHtml(name)}</span>`).join("")}</p>` : ""}
-          ${comments.length ? `<button type="button" class="mf-last-comment" data-mf-comments="${escapeAttr(memory.id)}">💬 ${comments[comments.length - 1].who ? `<strong>${escapeHtml(comments[comments.length - 1].who)}</strong> ` : ""}${escapeHtml(comments[comments.length - 1].text)}${comments.length > 1 ? ` <em>· ${escapeHtml(L(`មើលទាំង ${comments.length}`, `view all ${comments.length}`))}</em>` : ""}</button>` : ""}
+        <div class="mf-body mf-ig-body">
+          <p class="mf-likes" data-mf-likes ${likeCount ? "" : "hidden"}>${likeText(likeCount)}</p>
+          ${memory.title || caption ? `<p class="mf-caption"><strong>${escapeHtml(me.name)}</strong> ${memory.title ? `<b class="mf-ig-title">${escapeHtml(memory.title)}</b>${caption ? " · " : ""}` : ""}${escapeHtml(caption)}</p>` : ""}
+          ${tags.length ? `<p class="mf-with">${escapeHtml(L("ជាមួយ", "with"))} ${tags.map(name => `<b>${escapeHtml(name)}</b>`).join(tags.length === 2 ? ` ${escapeHtml(L("និង", "and"))} ` : ", ")}</p>` : ""}
+          ${comments.length > 1 ? `<button type="button" class="mf-all-comments" data-mf-comments="${escapeAttr(memory.id)}">${escapeHtml(L(`មើលមតិទាំង ${comments.length}`, `View all ${comments.length} comments`))}</button>` : ""}
+          ${comments.length ? `<button type="button" class="mf-last-comment mf-ig-comment" data-mf-comments="${escapeAttr(memory.id)}">${comments[comments.length - 1].who ? `<strong>${escapeHtml(comments[comments.length - 1].who)}</strong> ` : ""}${escapeHtml(comments[comments.length - 1].text)}</button>` : `<button type="button" class="mf-all-comments" data-mf-comments="${escapeAttr(memory.id)}">${escapeHtml(L("សរសេរមតិ…", "Add a comment…"))}</button>`}
         </div>
       </article>`;
   }
+
+  // Instagram-style action icons (outline heart / red filled heart, speech bubble)
+  const heartIcon = on => `<svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.5-4.4-9.4-9.1C1.3 8.1 3.4 4.5 6.9 4.5c2.1 0 3.6 1.2 5.1 3 1.5-1.8 3-3 5.1-3 3.5 0 5.6 3.6 4.3 6.9-1.9 4.7-9.4 9.1-9.4 9.1z" fill="${on ? "#ff3b5c" : "none"}" stroke="${on ? "#ff3b5c" : "currentColor"}" stroke-width="1.9" stroke-linejoin="round"/></svg>`;
+  const COMMENT_ICON = '<svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 11.6a8.4 8.4 0 0 1-12.3 7.4L3.5 20.5l1.5-4.5a8.4 8.4 0 1 1 15.5-4.4z"/></svg>';
+  const likeText = count => (count ? L(`${count} នាក់ចូលចិត្ត`, `${count} ${count === 1 ? "like" : "likes"}`) : "");
 
   function gridCell(memory, big) {
     const media = mediaOf(memory);
@@ -497,7 +503,9 @@ const MemoryFeed = (() => {
     const button = post?.querySelector("[data-mf-like]");
     if (button) {
       const count = fpId ? fam().likesOf(fpId).length : 0;
-      button.innerHTML = `${next ? "❤️" : "🤍"}${count ? `<b data-mf-like-count>${count}</b>` : ""}`;
+      button.innerHTML = button.closest(".mf-ig") ? heartIcon(next) : `${next ? "❤️" : "🤍"}${count ? `<b data-mf-like-count>${count}</b>` : ""}`;
+      const likesLine = post.querySelector("[data-mf-likes]");
+      if (likesLine) { likesLine.textContent = likeText(count); likesLine.hidden = !count; }
       button.classList.toggle("liked", next);
       button.setAttribute("aria-pressed", String(next));
       button.classList.remove("mf-pop");
