@@ -323,6 +323,15 @@ const mergeAppData = (base, update) => {
       return;
     }
 
+    // Daily focus is one list the user edits as a whole: never union the two copies
+    // (removed items came back after a refresh). The copy saved last wins.
+    if (key === "dailyFocus" && nextValue && typeof nextValue === "object" && currentValue && typeof currentValue === "object") {
+      const currentStamp = String(currentValue.updatedAt || "");
+      const nextStamp = String(nextValue.updatedAt || "");
+      merged[key] = structuredClone(currentStamp > nextStamp ? currentValue : nextValue);
+      return;
+    }
+
     if (Array.isArray(nextValue)) {
       merged[key] = Array.isArray(currentValue) ? mergeLists(currentValue, nextValue) : structuredClone(nextValue);
       return;
@@ -902,6 +911,7 @@ const Store = {
     const custom = "custom" in options ? !!options.custom : !!appData.dailyFocus?.custom;
     appData.dailyFocus = {
       date: today,
+      updatedAt: new Date().toISOString(),
       ...(custom ? { custom: true } : {}),
       items: Array.isArray(items) ? items.map((item, index) => ({
         id: item.id || `focus-${today}-${index}`,
