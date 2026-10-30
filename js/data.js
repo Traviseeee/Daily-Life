@@ -534,9 +534,24 @@ const Store = {
         appData.profile = { ...emptyData.profile };
         SyncState.clearPending();
       }
-      SyncState.setAccountId(user.id);
-
       const remotePayload = toPayloadObject(data?.payload);
+
+      // A brand-new account (empty cloud) on a device whose cached data has no known owner:
+      // if that data was synced to some account before, or this sign-in came from a family
+      // invite link, it belongs to someone else, so the new account starts empty instead of
+      // inheriting it. The old data stays in its own account's cloud and in a local backup. (31 Oct)
+      if (!SyncState.getAccountId() && isEmptyPayload(remotePayload) && hasMeaningfulAppData(appData)) {
+        let joining = false;
+        try { joining = Boolean(sessionStorage.getItem("mylife:family-join") || localStorage.getItem("mylife:family-join")); } catch (error) { joining = false; }
+        if (joining || lastCloudSyncAt()) {
+          saveDataBackup("new-account-fresh-start");
+          Object.assign(appData, structuredClone(emptyData));
+          appData.profile = { ...emptyData.profile };
+          SyncState.clearPending();
+          saveLocalSnapshot(appData);
+        }
+      }
+      SyncState.setAccountId(user.id);
 
       // Nothing stored in the cloud yet: the local copy is the only one, so publish
       // it instead of pulling an empty payload over the top of it.

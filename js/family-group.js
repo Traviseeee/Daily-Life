@@ -229,10 +229,23 @@ const FamilyGroup = (() => {
     });
     // remove / leave: second tap confirms (no browser dialogs)
     const confirmTwice = (button, label, action) => button?.addEventListener("click", async () => {
-      if (button.dataset.armed !== "1") { button.dataset.armed = "1"; button.textContent = label; setTimeout(() => { button.dataset.armed = ""; }, 4000); return; }
+      if (!button.dataset.label) button.dataset.label = button.textContent;
+      if (button.dataset.armed !== "1") {
+        button.dataset.armed = "1"; button.textContent = label;
+        clearTimeout(button._t);
+        button._t = setTimeout(() => { button.dataset.armed = ""; button.textContent = button.dataset.label; }, 5000); // label goes back too (31 Oct)
+        return;
+      }
+      clearTimeout(button._t);
       button.disabled = true;
-      const { error } = await client().from("family_members").delete().eq("family_id", member.family_id).eq("user_id", member.user_id);
-      if (error) { saved(`⚠️ ${error.message}`); button.disabled = false; return; }
+      button.textContent = L("កំពុងដំណើរការ…", "Working…");
+      // .select() returns the deleted rows: 0 rows means nothing was removed (no error from RLS)
+      const { data: gone, error } = await client().from("family_members").delete().eq("family_id", member.family_id).eq("user_id", member.user_id).select("user_id");
+      if (error || !gone?.length) {
+        saved(`⚠️ ${error?.message || L("មិនបានដកចេញទេ — សូមព្យាយាមម្តងទៀត", "Nothing was removed — try again")}`);
+        button.disabled = false; button.dataset.armed = ""; button.textContent = button.dataset.label;
+        return;
+      }
       Toast.show(action);
       closeSheet();
       refresh(true);
