@@ -65,8 +65,17 @@
   html:root[data-theme="light"] :is(.hv2-wx, .hv2-bell, .hv2-top .hv2-menu) { background: #fff !important; box-shadow: 0 4px 12px rgba(40,100,200,.12) !important; }
   html:root[data-theme="light"] .hv2-day { background: #fff !important; box-shadow: 0 4px 10px rgba(40,100,200,.08) !important; }
   html:root[data-theme="light"] .hv2-title p, html:root[data-theme="light"] .hv2-why span { background: #fff !important; }
-  html:root[data-theme="light"] body :is(.hv2-card, .hv2-quick, .wc-io > *, .fv-card, .cv2-card, .gv-card, .gv-goal, .fv-member, .sv-prof, .nfc-group, .lv-grid, .mf-views, .glass-card, .fv2-card, .fv2-hero, .qx-card, .mt-card, .ev .ev-card) { border: 0 !important; background: #fff !important; box-shadow: 0 8px 24px -12px rgba(40,100,200,.22) !important; }
+  html:root[data-theme="light"] body :is(.hv2-card, .hv2-quick, .wc-io > *, .fv-card, .cv2-card, .gv-card, .gv-goal, .fv-member, .sv-prof, .nfc-group, .lv-grid, .mf-views, .glass-card, .fv2-card, .qx-card, .mt-card, .ev .ev-card) { border: 0 !important; background: #fff !important; box-shadow: 0 8px 24px -12px rgba(40,100,200,.22) !important; }
   html:root[data-theme="light"] .hv2-next { border: 0 !important; color: #fff !important; background: linear-gradient(120deg, #6aa8ff, #2f7bf5) !important; box-shadow: 0 12px 26px -12px rgba(31,111,232,.55) !important; }
   html:root[data-theme="light"] .hv2-next * { color: #fff !important; }
   html:root[data-theme="light"] .hv2-next-go { background: rgba(255,255,255,.25) !important; }
+  /* Money hero: blue card like the "Next" card in the first draft (was all white) */
+  html:root[data-theme="light"] body .page .fv2-hero:not(.is-short) { color: #fff !important; background: radial-gradient(120% 90% at 100% 0, rgba(255,255,255,.18) 0, transparent 55%), linear-gradient(135deg, #5fa2ff, #2f7bf5 55%, #1f6fe8) !important; box-shadow: 0 14px 30px -14px rgba(31,111,232,.6) !important; }
+  html:root[data-theme="light"] body .page .fv2-hero:not(.is-short)::before, html:root[data-theme="light"] body .page .fv2-hero:not(.is-short)::after { background: rgba(255,255,255,.08) !important; }
+  html:root[data-theme="light"] body .page .fv2-hero:not(.is-short) :is(.fv2-hero-top small, .fv2-hero-value, .fv2-hero-value *, .fv2-t3-item small, .fv2-t3-item b, .fv2-t3-item b *) { color: #fff !important; -webkit-text-fill-color: #fff !important; background-image: none !important; }
+  html:root[data-theme="light"] body .page .fv2-hero:not(.is-short) .fv2-hero-top small, html:root[data-theme="light"] body .page .fv2-hero:not(.is-short) .fv2-t3-item small { opacity: .85; }
+  html:root[data-theme="light"] body .page .fv2-hero:not(.is-short) .fv2-period-chip { color: #fff !important; background: rgba(255,255,255,.2) !important; border: 0 !important; }
+  html:root[data-theme="light"] body .page .fv2-hero:not(.is-short) .fv2-hero-bar { background: rgba(255,255,255,.28) !important; }
+  html:root[data-theme="light"] body .page .fv2-hero:not(.is-short) .fv2-hero-bar i { background: #fff !important; }
+  html:root[data-theme="light"] body .page .fv2-hero:not(.is-short) .fv2-t3-item { background: rgba(255,255,255,.16) !important; border: 0 !important; box-shadow: none !important; }
 }
