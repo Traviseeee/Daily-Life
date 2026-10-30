@@ -49,7 +49,9 @@ const WalletCard = (() => {
   ];
   const dark = () => document.documentElement.dataset.theme !== "light";
   const conf = () => {
-    const c = appData.profile?.walletCard || {};
+    // colour can differ per theme: walletCard.light / walletCard.dark = { skin, c1, c2, dir } (31 Oct)
+    const raw = appData.profile?.walletCard || {};
+    const c = { ...raw, ...(raw[dark() ? "dark" : "light"] || {}) };
     const name = String(appData.profile?.name || "MYLIFE").split(/\s+/)[0].toUpperCase();
     return {
       skin: c.skin === "custom" || SKINS.some(s => s.id === c.skin) ? c.skin : (dark() ? "green" : "blue"),
@@ -151,7 +153,7 @@ const WalletCard = (() => {
         <div class="wc-tabbar" role="tablist">${TABS.map(([id, icon, label]) => `<button type="button" role="tab" data-wc-tab="${id}"><span aria-hidden="true">${icon}</span>${escapeHtml(label)}</button>`).join("")}</div>
         <div class="wc-panels">
           <section data-wc-panel="color">
-            <p class="wc-lbl"><span>${escapeHtml(L("ពណ៌កាត", "Card colour"))}</span></p>
+            <p class="wc-lbl"><span>${escapeHtml(L("ពណ៌កាត", "Card colour"))}</span><small>${escapeHtml(dark() ? L("សម្រាប់ 🌙 Dark", "for 🌙 Dark") : L("សម្រាប់ ☀️ Light", "for ☀️ Light"))}</small></p>
             <div class="wc-sws">${SKINS.map(k => swatch(k.id, k.bg)).join("")}</div>
             <div class="wc-recent" data-wc-recent></div>
             <p class="wc-lbl"><span>${escapeHtml(L("ពណ៌ខ្លួនឯង", "Your own colours"))}</span></p>
@@ -301,7 +303,10 @@ const WalletCard = (() => {
     });
     form.addEventListener("submit", event => {
       event.preventDefault();
-      const next = { skin: draft.skin, c1: draft.c1, c2: draft.c2, dir: draft.dir, amount: draft.amount, frame: draft.frame, name: draft.name, last4: draft.last4, photo: draft.photo || "", px: draft.px, py: draft.py, zoom: draft.zoom, tint: draft.tint, hide: !!draft.hide, shine: !!draft.shine, upper: !!draft.upper, title: draft.titleSet !== undefined ? draft.titleSet : (appData.profile?.walletCard?.title || ""), caps: !!draft.caps, recent: (draft.recent || []).filter(r => !sameLook(r, draft)).slice(0, 4) };
+      // the colour is saved for the current theme only; the other theme keeps its own (or the old shared one)
+      const raw = appData.profile.walletCard || {};
+      const themeKey = dark() ? "dark" : "light";
+      const next = { skin: raw.skin, c1: raw.c1, c2: raw.c2, dir: raw.dir, light: raw.light, dark: raw.dark, [themeKey]: { skin: draft.skin, c1: draft.c1, c2: draft.c2, dir: draft.dir }, amount: draft.amount, frame: draft.frame, name: draft.name, last4: draft.last4, photo: draft.photo || "", px: draft.px, py: draft.py, zoom: draft.zoom, tint: draft.tint, hide: !!draft.hide, shine: !!draft.shine, upper: !!draft.upper, title: draft.titleSet !== undefined ? draft.titleSet : (appData.profile?.walletCard?.title || ""), caps: !!draft.caps, recent: (draft.recent || []).filter(r => !sameLook(r, draft)).slice(0, 4) };
       Modal.close();
       Store.updateProfile({ walletCard: next });
       Toast.show(L("បានរក្សាទុកកាត", "Card saved"), "success");
