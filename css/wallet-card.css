@@ -3,14 +3,13 @@
 .wc-wrap { display: grid; gap: 10px; }
 .wc-card {
   position: relative; display: grid; min-height: 200px; overflow: hidden; padding: 16px 18px 14px; border-radius: 26px; color: #fff;
-  box-shadow: 0 18px 34px rgba(30, 60, 180, 0.32);
+  box-shadow: none;
 }
 .wc-card::before { content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none; background: repeating-linear-gradient(115deg, rgba(255,255,255,.05) 0 2px, transparent 2px 14px); }
 .wc-card::after { content: ""; position: absolute; left: -30%; top: -60%; z-index: 0; width: 60%; height: 220%; pointer-events: none; background: linear-gradient(90deg, transparent, rgba(255,255,255,.16), transparent); transform: rotate(18deg); animation: wcShine 5s ease-in-out 1.2s 1 both; }
 @keyframes wcShine { from { left: -60%; } to { left: 130%; } }
 .wc-card > * { position: relative; z-index: 1; }
 .wc-card { background: var(--wc-bg, linear-gradient(135deg, #1b2b6b, #2e4bdc 60%, #1e8fff)); }
-:root[data-theme="dark"] .wc-card, :root:not([data-theme]) .wc-card { box-shadow: 0 18px 34px rgba(0, 0, 0, 0.45); }
 
 .wc-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .wc-left, .wc-right { display: flex; align-items: center; gap: 8px; min-width: 0; }
@@ -25,10 +24,10 @@
 .wc-amount { justify-self: start; font-size: 2.15rem; font-weight: 500; line-height: 1.15; letter-spacing: .3px; color: #fff !important; text-decoration: none; }
 .wc-amount.is-neg { color: #ffd0d0 !important; }
 /* main amount only: gold / silver emboss; every other number stays plain white */
-.wc-amt-gold .wc-amount:not(.is-neg), .wc-amt-silver .wc-amount:not(.is-neg) { -webkit-background-clip: text; background-clip: text; color: transparent !important; -webkit-text-fill-color: transparent; filter: drop-shadow(0 1px 0 rgba(255,255,255,.35)) drop-shadow(0 -1px 0 rgba(0,0,0,.35)) drop-shadow(0 3px 4px rgba(0,0,0,.35)); }
+.wc-amt-gold .wc-amount:not(.is-neg), .wc-amt-silver .wc-amount:not(.is-neg) { -webkit-background-clip: text; background-clip: text; color: transparent !important; -webkit-text-fill-color: transparent; filter: drop-shadow(0 1px 0 rgba(255,255,255,.35)) drop-shadow(0 -1px 0 rgba(0,0,0,.35)); }
 .wc-amt-gold .wc-amount:not(.is-neg) { background-image: linear-gradient(180deg, #fff6cf 0%, #f3d27a 35%, #c9952a 55%, #f7e19a 80%, #b8862a 100%); }
 .wc-amt-silver .wc-amount:not(.is-neg) { background-image: linear-gradient(180deg, #ffffff 0%, #e3e8ee 35%, #9aa5b1 55%, #f2f5f8 80%, #8a96a3 100%); }
-.wc-amt-white .wc-amount { text-shadow: 0 2px 6px rgba(0,0,0,.25); }
+.wc-amt-white .wc-amount { text-shadow: none; }
 body.money-hidden .wc-amount.money-value, .wc-amount.is-hidden { -webkit-text-fill-color: #fff; color: #fff !important; background-image: none !important; }
 .wc-foot { display: flex; gap: 26px; margin-top: 6px; font-size: 0.72rem; opacity: .92; }
 .wc-foot b { display: block; font-size: 0.92rem; font-weight: 500; }
