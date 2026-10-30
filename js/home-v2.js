@@ -13,10 +13,11 @@ const HomeV2 = (() => {
   const KM_MONTHS = ["មករា", "កុម្ភៈ", "មីនា", "មេសា", "ឧសភា", "មិថុនា", "កក្កដា", "សីហា", "កញ្ញា", "តុលា", "វិច្ឆិកា", "ធ្នូ"];
   const svg = p => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
   const IC = {
-    plus: () => svg('<path d="M12 5v14M5 12h14"/>'),
-    scan: () => svg('<path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3M7 12h10"/>'),
-    cal: () => svg('<rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/>'),
-    photo: () => svg('<rect x="3" y="5" width="18" height="15" rx="3"/><circle cx="9" cy="11" r="2"/><path d="m21 17-5-5-8 8"/>'),
+    // duotone: a soft filled shape + a solid detail (Home quick dock, 30 Oct 2026)
+    plus: () => '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="6" fill="currentColor" opacity=".22"/><path d="M12 8v8M8 12h8" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>',
+    scan: () => '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="5" width="14" height="14" rx="3" fill="currentColor" opacity=".22"/><path d="M3 8V6a3 3 0 0 1 3-3h2M16 3h2a3 3 0 0 1 3 3v2M21 16v2a3 3 0 0 1-3 3h-2M8 21H6a3 3 0 0 1-3-3v-2M8 12h8" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg>',
+    cal: () => '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="4" fill="currentColor" opacity=".22"/><path d="M3 9a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v1H3Z" fill="currentColor"/><rect x="7" y="2.5" width="2.2" height="5" rx="1.1" fill="currentColor"/><rect x="14.8" y="2.5" width="2.2" height="5" rx="1.1" fill="currentColor"/><circle cx="12" cy="15" r="2" fill="currentColor"/></svg>',
+    photo: () => '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="4" fill="currentColor" opacity=".22"/><path d="M3 16.5 8.5 11l4.5 4.5 2.5-2.5L21 18.5A3.5 3.5 0 0 1 17.5 20h-11A3.5 3.5 0 0 1 3 16.5Z" fill="currentColor"/><circle cx="16" cy="9" r="2" fill="currentColor"/></svg>',
     chev: () => svg('<path d="m9 6 6 6-6 6"/>')
   };
 
@@ -121,6 +122,10 @@ const HomeV2 = (() => {
     const monthName = km() ? KM_MONTHS[new Date().getMonth()] : new Date().toLocaleDateString("en-US", { month: "long" });
     const due = d.due;
     const dueNames = due.slice(0, 2).map(item => item.title).join(" · ");
+    if (typeof WalletCard !== "undefined") {
+      const dueHtml = due.length ? `<button type="button" class="hv2-wait" data-ma-home><span class="hv2-count">${due.length}</span><b>${escapeHtml(L(`${dueNames} រង់ចាំឆ្លើយ`, `${dueNames} waiting`))}</b><span class="hv2-pill">${escapeHtml(L("ឆ្លើយ", "Answer"))}</span></button>` : "";
+      return WalletCard.render(m, d.todayIso, dueHtml);
+    }
     return `<section class="hv2-card hv2-money">
       <div class="hv2-row"><span class="hv2-label">${escapeHtml(L(`នៅសល់ខែ${monthName}`, `Left in ${monthName}`))}</span><a class="hv2-chip" href="#money">${escapeHtml(L("មើល", "View"))} ›</a></div>
       <div class="hv2-amount${m.left < 0 ? " is-neg" : ""}">${escapeHtml(plainMoney(m.left))}</div>
