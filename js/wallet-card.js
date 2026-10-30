@@ -63,7 +63,10 @@ const WalletCard = (() => {
       name: String(c.name || `${name} · MYLIFE`).slice(0, 22),
       last4: /^\d{4}$/.test(c.last4 || "") ? c.last4 : String(new Date().getFullYear()),
       photo: c.photo || "",
-      hide: !!c.hide
+      hide: !!c.hide,
+      // ticket card (31 Oct): title = name shown big (default first name), caps = all capitals
+      title: String(c.title || String(appData.profile?.name || "MYLIFE").split(/\s+/)[0]).slice(0, 22),
+      caps: c.caps === true
     };
   };
   const photoOf = c => c.photo || appData.profile?.photo || "";
@@ -96,11 +99,11 @@ const WalletCard = (() => {
     const hideCls = c.hide ? " is-hidden" : "";
     const spentPct = m.income > 0 ? Math.round((m.expenses / m.income) * 100) : 0;
     return `<section class="hv2-money wc-wrap">
-      <article class="wc-card wc-tk${c.frame === "none" ? " no-photo" : ""}" style="--wc-bg:${escapeAttr(bgOf(c))};--wc-tint:${c.tint / 100}" aria-label="${escapeAttr(L(`នៅសល់ខែ${monthName}`, `Left in ${monthName}`))}">
+      <article class="wc-card wc-tk${c.frame === "none" ? " no-photo" : ""}${c.caps ? " is-caps" : ""}${c.shine ? "" : " no-shine"}" style="--wc-bg:${escapeAttr(bgOf(c))};--wc-tint:${c.tint / 100}" aria-label="${escapeAttr(L(`នៅសល់ខែ${monthName}`, `Left in ${monthName}`))}">
         <div class="wc-tk-top">
           <div class="wc-tk-head">
-            ${frameHtml(c, "wc-tk-pf")}
-            <span class="wc-tk-who"><b>${escapeHtml(String(appData.profile?.name || "MYLIFE").split(/\s+/)[0])}</b><small>${escapeHtml(L(`នៅសល់ខែ${monthName} · ${daysLeft} ថ្ងៃទៀត`, `${monthName} · ${daysLeft} days left`))}</small></span>
+            ${frameHtml(c.frame === "none" ? c : { ...c, frame: "ring" }, "wc-tk-pf")}
+            <span class="wc-tk-who"><b>${escapeHtml(c.title)}</b><small>${escapeHtml(L(`នៅសល់ខែ${monthName} · ${daysLeft} ថ្ងៃទៀត`, `${monthName} · ${daysLeft} days left`))}</small></span>
             <button type="button" class="wc-edit wc-tk-edit" data-wc-edit aria-label="${escapeAttr(L("រចនាកាត", "Design card"))}">${ICON.pen}<span>${escapeHtml(L("កែ", "Edit"))}</span></button>
           </div>
           <div class="wc-tk-amt">
@@ -124,9 +127,8 @@ const WalletCard = (() => {
     </section>`;
   }
 
-  /* ---------- "Design my card" sheet: card stays on top, 4 tabs, save bar at the bottom ---------- */
-  const SOLID_IDS = SOLIDS.map(([id]) => id);
-  const DIRS = [["solid", "ពណ៌តែមួយ", "One colour"], ["diag", "↘ ទ្រេត", "↘ Diagonal"], ["down", "↓ ចុះ", "↓ Down"], ["radial", "◎ រង្វង់", "◎ Radial"]];
+  /* ---------- "Design my card" sheet (31 Oct): card on top, 3 tabs (colour · photo · more), save bar ---------- */
+    const DIRS = [["solid", "ពណ៌តែមួយ", "One colour"], ["diag", "↘ ទ្រេត", "↘ Diagonal"], ["down", "↓ ចុះ", "↓ Down"], ["radial", "◎ រង្វង់", "◎ Radial"]];
   const look = d => ({ skin: d.skin, c1: d.c1, c2: d.c2, dir: d.dir });
   const sameLook = (a, b) => a.skin === b.skin && (a.skin !== "custom" || (a.c1 === b.c1 && a.c2 === b.c2 && a.dir === b.dir));
 
@@ -137,58 +139,43 @@ const WalletCard = (() => {
     const c = conf();
     const start = { ...c, recent: Array.isArray(appData.profile?.walletCard?.recent) ? appData.profile.walletCard.recent.slice(0, 4) : [] };
     let draft = { ...start };
-    let tab = "photo";
-    let colorSet = c.skin === "custom" ? "custom" : SOLID_IDS.includes(c.skin) ? "solid" : "grad";
+    let tab = "color";
     const left = typeof moneyMonthNumbers === "function" ? moneyMonthNumbers().left : 0;
     const swatch = (id, bg) => `<button type="button" class="wc-sw" data-wc-skin="${id}" style="background:${escapeAttr(bg)}" aria-label="${id}"></button>`;
-    const TABS = [["photo", "📷", L("រូប", "Photo")], ["color", "🎨", L("ពណ៌", "Colour")], ["amount", "💲", L("លេខលុយ", "Amount")], ["text", "✏️", L("អក្សរ", "Text")]];
+    const TABS = [["color", "🎨", L("ពណ៌", "Colour")], ["photo", "📷", L("រូប", "Photo")], ["more", "⚙️", L("ផ្សេងៗ", "More")]];
     root.innerHTML = `
       <form class="modal glass-card wc-sheet" id="modalForm" novalidate>
         <div class="wc-sh-head"><h2 class="section-title">🎨 ${escapeHtml(L("រចនាកាតរបស់ខ្ញុំ", "Design my card"))}</h2>
           <button class="icon-button" type="button" data-close aria-label="${escapeAttr(t("close"))}">${Icons.close()}</button></div>
-        <div class="wc-stage"><div class="wc-preview" data-wc-preview></div>
-          <span class="wc-hint" data-wc-hint>✋ ${escapeHtml(L("អូសរូបដើម្បីផ្លាស់ទី · ចាប់ពីរម្រាមដើម្បីពង្រីក", "Drag the photo to move · pinch to zoom"))}</span></div>
+        <div class="wc-stage"><div class="wc-preview" data-wc-preview></div></div>
         <div class="wc-tabbar" role="tablist">${TABS.map(([id, icon, label]) => `<button type="button" role="tab" data-wc-tab="${id}"><span aria-hidden="true">${icon}</span>${escapeHtml(label)}</button>`).join("")}</div>
         <div class="wc-panels">
-          <section data-wc-panel="photo">
-            <p class="wc-lbl"><span>${escapeHtml(L("ស៊ុមរូប", "Frame"))}</span><small>${escapeHtml(L("⇠ អូសមើលបន្ថែម", "⇠ swipe for more"))}</small></p>
-            <div class="wc-frames">${FRAMES.map(f => `<button type="button" class="wc-fr" data-wc-frame="${f.id}"><span class="wc-fr-box">${f.id === "none" ? '<span class="wc-fr-none">∅</span>' : frameHtml({ ...c, px: 50, py: 50, zoom: 100, frame: f.id }, "is-mini")}</span><span>${escapeHtml(km() ? f.km : f.en)}</span></button>`).join("")}</div>
-            <div data-wc-adjust>
-              <p class="wc-lbl"><span>${escapeHtml(L("កែរូប", "Adjust photo"))}</span></p>
-              <label class="wc-sl"><span aria-hidden="true">🔍</span><input type="range" name="wcZoom" min="100" max="300" step="5" value="${c.zoom}" aria-label="${escapeAttr(L("ពង្រីក", "Zoom"))}"><b data-wc-zoom-val>${c.zoom}%</b></label>
-              <label class="wc-sl" data-wc-tint-row><span aria-hidden="true">🌗</span><input type="range" name="wcTint" min="0" max="90" step="5" value="${c.tint}" aria-label="${escapeAttr(L("ពណ៌លើរូប", "Colour on photo"))}"><b data-wc-tint-val>${c.tint}%</b></label>
+          <section data-wc-panel="color">
+            <p class="wc-lbl"><span>${escapeHtml(L("ពណ៌កាត", "Card colour"))}</span></p>
+            <div class="wc-sws">${SKINS.map(k => swatch(k.id, k.bg)).join("")}</div>
+            <div class="wc-recent" data-wc-recent></div>
+            <p class="wc-lbl"><span>${escapeHtml(L("ពណ៌ខ្លួនឯង", "Your own colours"))}</span></p>
+            <div class="wc-pick2">
+              <label class="wc-pk"><input type="color" name="wcC1" value="${escapeAttr(c.c1)}"><span>${escapeHtml(L("ពណ៌ 1", "Colour 1"))}<b data-wc-hex1>${escapeHtml(c.c1.toUpperCase())}</b></span></label>
+              <span aria-hidden="true">→</span>
+              <label class="wc-pk" data-wc-c2-row><input type="color" name="wcC2" value="${escapeAttr(c.c2 || "#00c6a7")}"><span>${escapeHtml(L("ពណ៌ 2", "Colour 2"))}<b data-wc-hex2>${escapeHtml((c.c2 || "#00c6a7").toUpperCase())}</b></span></label>
             </div>
+            <div class="wc-dirs">${DIRS.map(([id, k, e]) => `<button type="button" data-wc-dir="${id}">${escapeHtml(km() ? k : e)}</button>`).join("")}</div>
+          </section>
+          <section data-wc-panel="photo">
+            <div class="wc-crop" data-wc-crop></div>
+            <label class="wc-sl" data-wc-adjust><span aria-hidden="true">🔍</span><input type="range" name="wcZoom" min="100" max="300" step="5" value="${c.zoom}" aria-label="${escapeAttr(L("ពង្រីក", "Zoom"))}"><b data-wc-zoom-val>${c.zoom}%</b></label>
             <div class="wc-btns">
               <label class="wc-bt"><span aria-hidden="true">🖼️</span>${escapeHtml(L("ជ្រើសរូបថ្មី", "New photo"))}<input type="file" accept="image/*" name="wcPhoto" hidden></label>
               <button type="button" class="wc-bt" data-wc-use-profile><span aria-hidden="true">👤</span>${escapeHtml(L("រូបគណនី", "Account photo"))}</button>
-              <button type="button" class="wc-bt" data-wc-center><span aria-hidden="true">🎯</span>${escapeHtml(L("ដាក់កណ្តាល", "Re-centre"))}</button>
+              <button type="button" class="wc-bt" data-wc-no-photo><span aria-hidden="true">🚫</span>${escapeHtml(L("គ្មានរូប", "No photo"))}</button>
             </div>
           </section>
-          <section data-wc-panel="color">
-            <div class="wc-seg">${[["grad", L("ចម្រុះ", "Gradient")], ["solid", L("ដិត", "Solid")], ["custom", L("ខ្លួនឯង", "Custom")]].map(([id, label]) => `<button type="button" data-wc-set-btn="${id}">${escapeHtml(label)}</button>`).join("")}</div>
-            <div class="wc-sws" data-wc-set="grad">${GRADS.map(([id, bg]) => swatch(id, bg)).join("")}<button type="button" class="wc-sw wc-sw-plus" data-wc-set-btn="custom" aria-label="${escapeAttr(L("ពណ៌ខ្លួនឯង", "Custom colour"))}">+</button></div>
-            <div class="wc-sws" data-wc-set="solid">${SOLIDS.map(([id, bg]) => swatch(id, bg)).join("")}</div>
-            <div data-wc-set="custom">
-              <div class="wc-pick2">
-                <label class="wc-pk"><input type="color" name="wcC1" value="${escapeAttr(c.c1)}"><span>${escapeHtml(L("ពណ៌ 1", "Colour 1"))}<b data-wc-hex1>${escapeHtml(c.c1.toUpperCase())}</b></span></label>
-                <span aria-hidden="true">→</span>
-                <label class="wc-pk" data-wc-c2-row><input type="color" name="wcC2" value="${escapeAttr(c.c2 || "#00c6a7")}"><span>${escapeHtml(L("ពណ៌ 2", "Colour 2"))}<b data-wc-hex2>${escapeHtml((c.c2 || "#00c6a7").toUpperCase())}</b></span></label>
-              </div>
-              <div class="wc-dirs">${DIRS.map(([id, k, e]) => `<button type="button" data-wc-dir="${id}">${escapeHtml(km() ? k : e)}</button>`).join("")}</div>
-            </div>
-            <div class="wc-recent" data-wc-recent></div>
-          </section>
-          <section data-wc-panel="amount">
-            <p class="wc-lbl"><span>${escapeHtml(L("ពណ៌លេខលុយធំ", "Main amount colour"))}</span><small>${escapeHtml(L("លេខផ្សេងនៅពណ៌ស", "Other numbers stay white"))}</small></p>
-            <div class="wc-amts" data-wc-amts>${[["gold", L("មាស", "Gold")], ["silver", L("ប្រាក់", "Silver")], ["white", L("ស", "White")]].map(([id, label]) => `<button type="button" class="wc-am wc-amt-${id}" data-wc-amt="${id}"><b class="wc-amount">$${Math.round(Math.abs(left))}</b><span>${escapeHtml(label)}</span></button>`).join("")}</div>
-            <p class="wc-lbl"><span>${escapeHtml(L("ភាពឯកជន និងចលនា", "Privacy & motion"))}</span></p>
+          <section data-wc-panel="more">
+            <label class="wc-fd"><span>${escapeHtml(L("ឈ្មោះលើកាត", "Name on card"))}</span><span class="wc-in"><input type="text" maxlength="22" name="wcName" value="${escapeAttr(c.title)}"><small data-wc-count>${c.title.length}/22</small></span></label>
             <label class="wc-tg"><span>🙈 ${escapeHtml(L("លាក់ចំនួនលុយលើកាត", "Hide amounts on the card"))}</span><input type="checkbox" name="wcHide" ${c.hide ? "checked" : ""}></label>
+            <label class="wc-tg"><span>🔠 ${escapeHtml(L("ឈ្មោះអក្សរធំ", "Name in capitals"))}</span><input type="checkbox" name="wcUpper" ${c.caps ? "checked" : ""}></label>
             <label class="wc-tg"><span>✨ ${escapeHtml(L("ពន្លឺរត់លើកាត", "Shine on the card"))}</span><input type="checkbox" name="wcShine" ${c.shine ? "checked" : ""}></label>
-          </section>
-          <section data-wc-panel="text">
-            <label class="wc-fd"><span>${escapeHtml(L("ឈ្មោះលើកាត", "Name on card"))}</span><span class="wc-in"><input type="text" maxlength="22" name="wcName" value="${escapeAttr(c.name)}"><small data-wc-count>${c.name.length}/22</small></span></label>
-            <label class="wc-fd"><span>${escapeHtml(L("លេខ 4 ខ្ទង់", "4 digits"))} <small>${escapeHtml(L("តុបតែងប៉ុណ្ណោះ មិនមែនលេខកាតពិត", "decoration only, not a real card number"))}</small></span><span class="wc-in"><em aria-hidden="true">••••</em><input type="text" inputmode="numeric" maxlength="4" name="wcLast4" value="${escapeAttr(c.last4)}"></span></label>
-            <label class="wc-tg"><span>🔤 ${escapeHtml(L("អក្សរធំទាំងអស់", "All capitals"))}</span><input type="checkbox" name="wcUpper" ${c.upper ? "checked" : ""}></label>
           </section>
         </div>
         <div class="wc-foot-bar"><button type="button" class="wc-rs" data-wc-reset>↺ ${escapeHtml(L("ដើមវិញ", "Reset"))}</button><button class="wc-save" type="submit">${escapeHtml(L("រក្សាទុក", "Save"))}</button></div>
@@ -209,25 +196,24 @@ const WalletCard = (() => {
       host.innerHTML = render({ left, income: 0, expenses: 0 }, localDateInput()).replace(/<div class="wc-mini">[\s\S]*?<\/div>\s*<\/section>/, "</section>");
       appData.profile.walletCard = saved;
     };
+    const cropPaint = () => {
+      const src = photoOf(draft);
+      $("[data-wc-crop]").innerHTML = hasPhoto() ? `<img src="${escapeAttr(src)}" alt="" draggable="false"><em>✋ ${escapeHtml(L("អូសដើម្បីផ្លាស់ទី", "Drag to move"))}</em>` : `<span>${draft.frame === "none" ? "🚫" : initial()}</span>`;
+    };
     const paint = () => {
       paintCard();
+      cropPaint();
       form.querySelectorAll("[data-wc-tab]").forEach(b => { const on = b.dataset.wcTab === tab; b.classList.toggle("on", on); b.setAttribute("aria-selected", on); });
       form.querySelectorAll("[data-wc-panel]").forEach(p => { p.hidden = p.dataset.wcPanel !== tab; });
-      form.querySelectorAll("[data-wc-frame]").forEach(b => b.classList.toggle("on", b.dataset.wcFrame === draft.frame));
       form.querySelectorAll("[data-wc-skin]").forEach(b => b.classList.toggle("on", b.dataset.wcSkin === draft.skin));
-      form.querySelectorAll(".wc-seg [data-wc-set-btn]").forEach(b => b.classList.toggle("on", b.dataset.wcSetBtn === colorSet));
-      form.querySelectorAll("[data-wc-set]").forEach(el => { el.hidden = el.dataset.wcSet !== colorSet; });
-      form.querySelectorAll("[data-wc-dir]").forEach(b => b.classList.toggle("on", b.dataset.wcDir === draft.dir));
+      form.querySelectorAll("[data-wc-dir]").forEach(b => b.classList.toggle("on", draft.skin === "custom" && b.dataset.wcDir === draft.dir));
       $("[data-wc-c2-row]").classList.toggle("is-off", draft.dir === "solid");
-      form.querySelectorAll("[data-wc-amt]").forEach(b => b.classList.toggle("on", b.dataset.wcAmt === draft.amount));
-      $("[data-wc-amts]").style.setProperty("--wc-bg", bgOf(draft));
       $("[data-wc-adjust]").hidden = !hasPhoto();
-      $("[data-wc-tint-row]").hidden = draft.frame !== "full";
-      form.querySelector("[data-wc-center]").disabled = !hasPhoto();
-      $("[data-wc-hint]").hidden = !(tab === "photo" && hasPhoto());
+      form.querySelector("[data-wc-no-photo]").classList.toggle("on", draft.frame === "none");
       const recent = (draft.recent || []).filter(r => !sameLook(r, draft)).slice(0, 4);
       $("[data-wc-recent]").innerHTML = recent.length ? `<span>${escapeHtml(L("ប្រើថ្មីៗ", "Recent"))}</span>${recent.map((r, i) => `<button type="button" data-wc-recent-i="${i}" style="background:${escapeAttr(bgOf({ ...c, ...r }))}" aria-label="recent ${i + 1}"></button>`).join("")}` : "";
       $("[data-wc-recent]")._list = recent;
+      place();
     };
     const setLook = next => { // remember the look we leave, for "Recent"
       if (!sameLook(next, draft)) draft.recent = [look(draft), ...(draft.recent || []).filter(r => !sameLook(r, draft))].slice(0, 5);
@@ -238,15 +224,15 @@ const WalletCard = (() => {
 
     // photo: live position / zoom without re-rendering
     const place = () => {
-      const img = host.querySelector(".wc-face img");
-      if (img) { img.style.objectPosition = `${draft.px}% ${draft.py}%`; img.style.transformOrigin = `${draft.px}% ${draft.py}%`; img.style.transform = `scale(${draft.zoom / 100})`; }
+      form.querySelectorAll(".wc-preview .wc-face img, [data-wc-crop] img").forEach(img => { img.style.objectPosition = `${draft.px}% ${draft.py}%`; img.style.transformOrigin = `${draft.px}% ${draft.py}%`; img.style.transform = `scale(${draft.zoom / 100})`; });
       form.elements.wcZoom.value = draft.zoom;
       $("[data-wc-zoom-val]").textContent = `${draft.zoom}%`;
     };
     const pts = new Map();
     let drag = null, pinch = null;
-    const faceOf = target => target.closest(".wc-face") || target.closest(".wc-card.has-full")?.querySelector(".wc-f-full .wc-face");
-    host.addEventListener("pointerdown", event => {
+    const crop = form.querySelector("[data-wc-crop]");
+    const faceOf = target => target.closest("[data-wc-crop]");
+    crop.addEventListener("pointerdown", event => {
       const face = faceOf(event.target);
       if (!face || !face.querySelector("img")) return;
       event.preventDefault();
@@ -255,9 +241,9 @@ const WalletCard = (() => {
       const box = face.getBoundingClientRect();
       if (pts.size === 1) drag = { x: event.clientX, y: event.clientY, px: draft.px, py: draft.py, w: box.width, h: box.height };
       if (pts.size === 2) { const [a, b] = [...pts.values()]; pinch = { d: Math.hypot(a.x - b.x, a.y - b.y) || 1, z: draft.zoom }; drag = null; }
-      host.classList.add("is-drag");
+      crop.classList.add("is-drag");
     });
-    host.addEventListener("pointermove", event => {
+    crop.addEventListener("pointermove", event => {
       if (!pts.has(event.pointerId)) return;
       pts.set(event.pointerId, { x: event.clientX, y: event.clientY });
       if (pinch && pts.size >= 2) {
@@ -270,59 +256,52 @@ const WalletCard = (() => {
       }
       place();
     });
-    const up = event => { pts.delete(event.pointerId); if (pts.size < 2) pinch = null; if (!pts.size) { drag = null; host.classList.remove("is-drag"); } };
-    host.addEventListener("pointerup", up);
-    host.addEventListener("pointercancel", up);
+    const up = event => { pts.delete(event.pointerId); if (pts.size < 2) pinch = null; if (!pts.size) { drag = null; crop.classList.remove("is-drag"); } };
+    crop.addEventListener("pointerup", up);
+    crop.addEventListener("pointercancel", up);
 
     form.querySelectorAll("[data-close]").forEach(b => b.addEventListener("click", () => Modal.close()));
     form.addEventListener("click", event => {
       const el = event.target.closest("button");
       if (!el || el.type === "submit") return;
       if (el.dataset.wcTab) { tab = el.dataset.wcTab; paint(); $(".wc-panels").scrollTop = 0; }
-      else if (el.dataset.wcFrame) { draft.frame = el.dataset.wcFrame; paint(); }
       else if (el.dataset.wcSkin) setLook({ skin: el.dataset.wcSkin });
-      else if (el.dataset.wcSetBtn) { colorSet = el.dataset.wcSetBtn; if (colorSet === "custom") setCustom(); else paint(); }
       else if (el.dataset.wcDir) { draft.dir = el.dataset.wcDir; setCustom(); }
-      else if (el.dataset.wcRecentI !== undefined) { const r = $("[data-wc-recent]")._list[Number(el.dataset.wcRecentI)]; if (r) { colorSet = r.skin === "custom" ? "custom" : SOLID_IDS.includes(r.skin) ? "solid" : "grad"; if (r.c1) form.elements.wcC1.value = r.c1; if (r.c2) form.elements.wcC2.value = r.c2; setLook({ ...r }); } }
-      else if (el.dataset.wcAmt) { draft.amount = el.dataset.wcAmt; paint(); }
-      else if (el.hasAttribute("data-wc-use-profile")) { draft.photo = ""; draft.px = 50; draft.py = 50; draft.zoom = 100; paint(); place(); }
-      else if (el.hasAttribute("data-wc-center")) { draft.px = 50; draft.py = 50; draft.zoom = 100; place(); }
+      else if (el.dataset.wcRecentI !== undefined) { const r = $("[data-wc-recent]")._list[Number(el.dataset.wcRecentI)]; if (r) { if (r.c1) form.elements.wcC1.value = r.c1; if (r.c2) form.elements.wcC2.value = r.c2; setLook({ ...r }); } }
+      else if (el.hasAttribute("data-wc-use-profile")) { draft.photo = ""; draft.px = 50; draft.py = 50; draft.zoom = 100; if (draft.frame === "none") draft.frame = "ring"; paint(); }
+      else if (el.hasAttribute("data-wc-no-photo")) { draft.frame = "none"; paint(); }
       else if (el.hasAttribute("data-wc-reset")) {
         const saved = appData.profile.walletCard;
         appData.profile.walletCard = { photo: draft.photo, recent: draft.recent };
         const base = conf();
         appData.profile.walletCard = saved;
         draft = { ...base, recent: draft.recent };
-        colorSet = SOLID_IDS.includes(draft.skin) ? "solid" : "grad";
-        form.elements.wcName.value = draft.name; form.elements.wcLast4.value = draft.last4;
-        form.elements.wcHide.checked = draft.hide; form.elements.wcShine.checked = draft.shine; form.elements.wcUpper.checked = draft.upper;
-        form.elements.wcTint.value = draft.tint; $("[data-wc-tint-val]").textContent = `${draft.tint}%`;
-        $("[data-wc-count]").textContent = `${draft.name.length}/22`;
-        paint(); place();
+        form.elements.wcName.value = draft.title;
+        form.elements.wcHide.checked = draft.hide; form.elements.wcShine.checked = draft.shine; form.elements.wcUpper.checked = draft.caps;
+        $("[data-wc-count]").textContent = `${draft.title.length}/22`;
+        paint();
       }
     });
     const hex = (input, sel) => { $(sel).textContent = input.value.toUpperCase(); };
     form.elements.wcC1.addEventListener("input", e => { hex(e.target, "[data-wc-hex1]"); setCustom(); });
     form.elements.wcC2.addEventListener("input", e => { hex(e.target, "[data-wc-hex2]"); if (draft.dir === "solid") draft.dir = "diag"; setCustom(); });
     form.elements.wcZoom.addEventListener("input", e => { draft.zoom = Number(e.target.value); place(); });
-    form.elements.wcTint.addEventListener("input", e => { draft.tint = Number(e.target.value); $("[data-wc-tint-val]").textContent = `${draft.tint}%`; host.querySelector(".wc-card")?.style.setProperty("--wc-tint", draft.tint / 100); });
-    form.elements.wcName.addEventListener("input", e => { draft.name = e.target.value.trim() || c.name; $("[data-wc-count]").textContent = `${e.target.value.length}/22`; paint(); });
-    form.elements.wcLast4.addEventListener("input", e => { e.target.value = e.target.value.replace(/\D/g, "").slice(0, 4); if (e.target.value.length === 4) { draft.last4 = e.target.value; paint(); } });
+    form.elements.wcName.addEventListener("input", e => { draft.titleSet = e.target.value.trim(); draft.title = draft.titleSet || String(appData.profile?.name || "MYLIFE").split(/\s+/)[0]; $("[data-wc-count]").textContent = `${e.target.value.length}/22`; paintCard(); place(); });
     form.elements.wcHide.addEventListener("change", e => { draft.hide = e.target.checked; paint(); });
     form.elements.wcShine.addEventListener("change", e => { draft.shine = e.target.checked; paint(); });
-    form.elements.wcUpper.addEventListener("change", e => { draft.upper = e.target.checked; paint(); });
+    form.elements.wcUpper.addEventListener("change", e => { draft.caps = e.target.checked; paint(); });
     form.elements.wcPhoto.addEventListener("change", async e => {
       const file = e.target.files?.[0];
       if (!file) return;
       try {
         draft.photo = await readFile(file); draft.px = 50; draft.py = 50; draft.zoom = 100;
         if (draft.frame === "none") draft.frame = "ring";
-        paint(); place();
+        paint();
       } catch (error) { Toast.show(L("មិនអាចបើករូបបានទេ", "Could not open that photo"), "warning"); }
     });
     form.addEventListener("submit", event => {
       event.preventDefault();
-      const next = { skin: draft.skin, c1: draft.c1, c2: draft.c2, dir: draft.dir, amount: draft.amount, frame: draft.frame, name: draft.name, last4: draft.last4, photo: draft.photo || "", px: draft.px, py: draft.py, zoom: draft.zoom, tint: draft.tint, hide: !!draft.hide, shine: !!draft.shine, upper: !!draft.upper, recent: (draft.recent || []).filter(r => !sameLook(r, draft)).slice(0, 4) };
+      const next = { skin: draft.skin, c1: draft.c1, c2: draft.c2, dir: draft.dir, amount: draft.amount, frame: draft.frame, name: draft.name, last4: draft.last4, photo: draft.photo || "", px: draft.px, py: draft.py, zoom: draft.zoom, tint: draft.tint, hide: !!draft.hide, shine: !!draft.shine, upper: !!draft.upper, title: draft.titleSet !== undefined ? draft.titleSet : (appData.profile?.walletCard?.title || ""), caps: !!draft.caps, recent: (draft.recent || []).filter(r => !sameLook(r, draft)).slice(0, 4) };
       Modal.close();
       Store.updateProfile({ walletCard: next });
       Toast.show(L("បានរក្សាទុកកាត", "Card saved"), "success");

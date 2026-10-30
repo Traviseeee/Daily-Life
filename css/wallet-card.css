@@ -246,3 +246,20 @@ html:root #modalRoot .modal.wc-sheet .wc-in input[type="text"] { -webkit-text-fi
 :root:not([data-theme="light"]) .wc-tk-bot i.is-today { background: rgba(47,123,245,.2); }
 :root:not([data-theme="light"]) .wc-tk-bot i.is-ok { background: rgba(31,157,90,.2); }
 .wc-tk.is-upper .wc-tk-who b { text-transform: uppercase; }
+
+/* Design sheet (31 Oct): 3 tabs, big crop circle, ticket shine + caps */
+.wc-sheet .wc-tabbar { grid-template-columns: repeat(3, 1fr); }
+.wc-sheet .wc-sws { grid-template-columns: repeat(6, 1fr); gap: 10px; margin-bottom: 6px; }
+.wc-sheet .wc-sw.on { box-shadow: 0 0 0 3px var(--sh-bg, #fff), 0 0 0 5px #1f8bff; }
+.wc-sheet .wc-recent { margin-bottom: 4px; }
+.wc-crop { position: relative; display: grid; place-items: center; width: 180px; height: 180px; margin: 6px auto 16px; overflow: hidden; border-radius: 50%; background: var(--sh-box); box-shadow: 0 0 0 4px var(--sh-bg, #fff), 0 0 0 6px #1f8bff; touch-action: none; cursor: grab; }
+.wc-crop.is-drag { cursor: grabbing; }
+.wc-crop img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; user-select: none; }
+.wc-crop > span { font-size: 3rem; font-weight: 700; color: var(--sh-mute); }
+.wc-crop em { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); padding: 3px 10px; border-radius: 99px; background: rgba(0,0,0,.55); color: #fff; font-size: .68rem; font-style: normal; white-space: nowrap; pointer-events: none; }
+.wc-sheet .wc-sl[data-wc-adjust] { margin-bottom: 10px; }
+.wc-sheet .wc-bt.on { box-shadow: inset 0 0 0 2px #1f8bff; }
+.wc-tk.is-caps .wc-tk-who b { text-transform: uppercase; letter-spacing: 1px; }
+.wc-tk-top::before { content: ""; position: absolute; left: -40%; top: -60%; z-index: 0; width: 40%; height: 220%; pointer-events: none; background: linear-gradient(90deg, transparent, rgba(255,255,255,.18), transparent); transform: rotate(18deg); animation: wcShine 5s ease-in-out 1.2s 1 both; }
+.wc-tk.no-shine .wc-tk-top::before { display: none; }
+.wc-preview .wc-tk-edit { visibility: hidden; }
