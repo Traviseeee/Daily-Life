@@ -52,7 +52,12 @@
 @media (max-width: 900px) {
   html:root:not([data-theme="light"]) .ambient { display: none !important; }
   html:root:not([data-theme="light"]) .app-main {
-    background: linear-gradient(rgba(217,255,123,.09) 1.5px, transparent 1.5px) 0 0 / 46px 46px, linear-gradient(90deg, rgba(217,255,123,.09) 1.5px, transparent 1.5px) 0 0 / 46px 46px,
+    /* faint grid (5%) only near the top: a cover layer fades it into the dark green by ~460px */
+    background:
+      linear-gradient(180deg, rgba(18,39,29,0) 0, rgba(18,39,29,0) 140px, #12271d 460px, #0b1712 700px) top / 100% 760px no-repeat,
+      linear-gradient(#0b1712, #0b1712) 0 760px / 100% 100% no-repeat,
+      linear-gradient(rgba(217,255,123,.05) 1.5px, transparent 1.5px) 0 0 / 46px 46px,
+      linear-gradient(90deg, rgba(217,255,123,.05) 1.5px, transparent 1.5px) 0 0 / 46px 46px,
       linear-gradient(180deg, #1f3d2c 0, #183526 220px, #12271d 460px, #0b1712 700px) top / 100% 760px no-repeat #0b1712 !important;
   }
   html:root:not([data-theme="light"]) :is(.hv2-head, .cv2-hero, .fv-hero, .mf2-hero, .gv-hero, .sv-hero, .lv-hero) { background: transparent !important; box-shadow: none !important; }
