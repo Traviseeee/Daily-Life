@@ -51,12 +51,16 @@ const HomeV2 = (() => {
   function header(d) {
     const today = new Date();
     const todayItems = (d.agenda.allItems || d.agenda.items || []).filter(item => !item.overdue && item.date === d.todayIso);
-    const things = d.agenda.today + d.due.length + d.focus.filter(item => !item.done).length;
+    // real things only (focus has its own card): today's events + bills due today / tomorrow + money to answer
+    const tomorrowIso = (() => { const x = new Date(); x.setDate(x.getDate() + 1); return iso(x); })();
+    const billsSoon = (d.agenda.allItems || d.agenda.items || []).filter(item => item.kind === "bill" && !item.overdue && (item.date === d.todayIso || item.date === tomorrowIso));
+    const things = d.agenda.today + billsSoon.filter(item => item.date === tomorrowIso).length + d.due.length;
+    const focusDone = d.focus.filter(item => item.done).length;
     const name = appData.profile.name || L("អ្នក", "you");
     const photo = appData.profile.photo ? `<img src="${escapeAttr(appData.profile.photo)}" alt="">` : escapeHtml(initials(appData.profile.name || "ML"));
     const dates = new Set((d.agenda.allItems || []).map(item => item.date));
     (appData.calendarEvents || []).forEach(event => event.date && dates.add(event.date));
-    const week = Array.from({ length: 7 }, (_, index) => { const date = new Date(); date.setHours(0, 0, 0, 0); date.setDate(date.getDate() - 6 + index); return date; });
+    const week = Array.from({ length: 7 }, (_, index) => { const date = new Date(); date.setHours(0, 0, 0, 0); date.setDate(date.getDate() - 3 + index); return date; });
     const parts = [L(`${d.agenda.today} ព្រឹត្តិការណ៍`, `${d.agenda.today} event${d.agenda.today === 1 ? "" : "s"}`)];
     if (d.due.length) parts.push(L(`${d.due.length} លុយត្រូវឆ្លើយ`, `${d.due.length} money to confirm`));
     const hour = today.getHours();
@@ -81,7 +85,13 @@ const HomeV2 = (() => {
       <div class="hv2-title-row">
         <div class="hv2-title">
           <h1>${things ? L(`ថ្ងៃនេះមាន <span>${things} រឿង</span> ត្រូវធ្វើ`, `<span>${things} thing${things === 1 ? "" : "s"}</span> to do today`) : L(`ថ្ងៃនេះ <span>ទំនេរ</span> 🌿`, `Today is <span>free</span> 🌿`)}</h1>
-          <p>${escapeHtml(longDate(today))} · ${escapeHtml(parts.join(" · "))}</p>
+          <p>${escapeHtml(longDate(today))}</p>
+          <div class="hv2-why">
+            <span>📅 ${escapeHtml(L(`${d.agenda.today} ព្រឹត្តិការណ៍`, `${d.agenda.today} event${d.agenda.today === 1 ? "" : "s"}`))}</span>
+            ${billsSoon[0] ? `<span>🧾 ${escapeHtml(billsSoon[0].date === d.todayIso ? L("ថ្ងៃនេះ", "Today") : L("ស្អែក", "Tomorrow"))} ${escapeHtml(billsSoon[0].title || "")}</span>` : ""}
+            ${d.due.length ? `<span>⏳ ${escapeHtml(L(`${d.due.length} លុយត្រូវឆ្លើយ`, `${d.due.length} to confirm`))}</span>` : ""}
+            <span>🎯 ${escapeHtml(L("ការផ្តោត", "Focus"))} ${focusDone}/${d.focus.length}</span>
+          </div>
         </div>
       </div>
       <nav class="hv2-week" aria-label="${escapeAttr(L("សប្តាហ៍នេះ", "This week"))}">${week.map(date => {
@@ -98,6 +108,8 @@ const HomeV2 = (() => {
     const list = (d.agenda.items || []).filter(item => !item.overdue);
     const next = list.find(item => item.date === d.todayIso && clock(item.time) >= nowClock) || list.find(item => item.date === d.todayIso) || list[0];
     if (!next) return "";
+    // "Coming up" lists bills and later days already; Next only shows today's / tomorrow's events
+    if (next.kind === "bill" || !(next.date === d.todayIso || next.daysLeft === 1)) return "";
     const isToday = next.date === d.todayIso;
     const t0 = clock(next.time);
     let when;
@@ -201,8 +213,8 @@ const HomeV2 = (() => {
     return `<div class="hv2-sec"><b>${escapeHtml(t("dailyFocus"))}</b><button type="button" class="hv2-link" data-action="edit-focus">${escapeHtml(L("កែ", "Edit"))} ›</button></div>
       <section class="hv2-card hv2-fx focus-card${pct === 100 ? " all-done" : ""}">
         <div class="fx-head">
-          <div><div class="fx-num"><b data-fx-done>${done}</b><small>/${total}</small></div><span class="fx-left" data-fx-left>${escapeHtml(focusLeft(done, total))}</span></div>
-          <span class="fx-pct focus-progress-text">${pct}%</span>
+          <b class="fx-left fx-left-big" data-fx-left>${escapeHtml(focusLeft(done, total))}</b>
+          <span class="fx-count"><b data-fx-done>${done}</b>/${total}</span>
         </div>
         <div class="fx-seg" data-fx-seg role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}" aria-label="${escapeAttr(t("dailyFocus"))}">${d.focus.map((_, i) => `<i class="${i < done ? "on" : ""}"></i>`).join("")}</div>
         <ul class="fx-grid focus-list${total % 2 ? " is-odd" : ""}">${d.focus.map(item => `<li class="fx-tile focus-item${item.done ? " done" : ""}"><label><input type="checkbox" ${item.done ? "checked" : ""} data-focus-id="${escapeAttr(item.id)}"><span class="fx-em" aria-hidden="true">${focusEmoji(item.text)}</span><span class="focus-text">${escapeHtml(item.text)}</span><span class="fx-ck" aria-hidden="true"></span></label></li>`).join("")}</ul>
@@ -221,16 +233,26 @@ const HomeV2 = (() => {
   };
   const face = key => `<svg class="hv2-face" viewBox="0 0 40 40" aria-hidden="true">${FACE_BASE}${FACES[key] || ""}</svg>`;
 
+  // a short friendly line after picking a mood
+  const MOOD_NOTE = {
+    happy: ["រីករាយ 😊 · ថ្ងៃល្អ ចែករំលែកវាជាមួយគ្រួសារផង", "Happy 😊 · a good day, share it with family"],
+    calm: ["ស្ងប់ស្ងាត់ 😌 · រក្សាល្បឿនស្រួលៗនេះទុក", "Calm 😌 · keep this easy pace"],
+    tired: ["ហត់ 😴 · សម្រាកបន្តិច ផឹកទឹក ហើយគេងឱ្យបានឆាប់", "Tired 😴 · rest a bit, drink water, sleep early"],
+    stressed: ["តានតឹង 😣 · ដកដង្ហើមវែងៗ ធ្វើម្តងមួយរឿង", "Stressed 😣 · breathe slowly, one thing at a time"],
+    excited: ["រំភើប 🤩 · ថាមពលល្អ! ប្រើវាលើការផ្តោតថ្ងៃនេះ", "Excited 🤩 · great energy, use it on today's focus"]
+  };
+
   function moodCard(d) {
     const options = [["happy", face("happy"), t("moodHappy")], ["calm", face("calm"), t("moodCalm")], ["tired", face("tired"), t("moodTired")], ["stressed", face("stressed"), t("moodStressed")], ["excited", face("excited"), t("moodExcited")]];
     const current = appData.mood?.date === d.todayIso ? appData.mood.value : "";
     return `<div class="hv2-sec"><b>${escapeHtml(L("អារម្មណ៍ថ្ងៃនេះ", "Today's mood"))}</b></div>
-      <section class="hv2-card hv2-mood">${options.map(([value, emoji, label]) => `<button type="button" class="hv2-mood-btn${current === value ? " is-on" : ""}" data-mood="${value}" aria-label="${escapeAttr(label)}" aria-pressed="${current === value}"><span>${emoji}</span><small>${escapeHtml(label)}</small></button>`).join("")}</section>`;
+      <section class="hv2-card hv2-mood-wrap"><div class="hv2-mood">${options.map(([value, emoji, label]) => `<button type="button" class="hv2-mood-btn${current === value ? " is-on" : ""}" data-mood="${value}" aria-label="${escapeAttr(label)}" aria-pressed="${current === value}"><span>${emoji}</span><small>${escapeHtml(label)}</small></button>`).join("")}</div>${current && MOOD_NOTE[current] ? `<p class="hv2-mood-note">${escapeHtml(L(...MOOD_NOTE[current]))}</p>` : ""}</section>`;
   }
 
   function reflection(d) {
     const text = appData.dailyReflection?.date === d.todayIso ? (appData.dailyReflection.text || "") : "";
-    return `<details class="hv2-card hv2-reflect"${text ? " open" : ""}>
+    return `<div class="hv2-sec"><b>${escapeHtml(t("dailyReflection"))}</b></div>
+    <details class="hv2-card hv2-reflect"${text ? " open" : ""}>
       <summary><b>${escapeHtml(t("dailyReflection"))}</b><small>${escapeHtml(text ? L("បានសរសេរ ✓", "Written ✓") : L("ចុចដើម្បីសរសេរ", "Tap to write"))}</small></summary>
       <textarea class="reflection-textarea" data-reflection-textarea placeholder="${escapeAttr(t("reflectionPlaceholder"))}" aria-label="${escapeAttr(t("reflectionPlaceholder"))}">${escapeHtml(text)}</textarea>
       <button class="button" type="button" data-action="save-reflection">${escapeHtml(t("saveReflection"))}</button>
@@ -250,7 +272,7 @@ const HomeV2 = (() => {
         ${focusCard(d)}
         ${moodCard(d)}
         ${reflection(d)}
-        ${typeof MemoryFeed !== "undefined" ? MemoryFeed.familyTeaser() : ""}
+        ${typeof MemoryFeed !== "undefined" ? `<div class="hv2-sec"><b>${escapeHtml(L("អនុស្សាវរីយ៍គ្រួសារ", "Family memories"))}</b><a class="hv2-link" href="#memories">${escapeHtml(L("ទាំងអស់", "All"))} ›</a></div>${MemoryFeed.familyTeaser()}` : ""}
       </div>
     </section>`;
   }

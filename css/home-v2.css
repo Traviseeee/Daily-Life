@@ -300,3 +300,21 @@ html body .hv2-alert.is-amber { color: #8a4b00; background: #fff1d6; }
 /* "Next" date box: full Khmer month (it was cut to 3 letters, e.g. វិច), box grows to fit */
 .hv2-next-time { width: auto; min-width: 52px; height: auto; min-height: 52px; padding: 6px 8px; gap: 1px; }
 .hv2-next-time small { font-size: 0.66rem; font-weight: 600; line-height: 1.3; white-space: nowrap; }
+
+/* ---- Home audit 30 Oct: why-chips, 3+today+3 week, focus head, mood note, headings outside, no FAB ---- */
+.hv2-why { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.hv2-why span { padding: 4px 10px; border-radius: 999px; font-size: 0.74rem; font-weight: 600; color: var(--hv-ink); background: var(--hv-soft); }
+:root[data-theme="light"] .hv2-why span { color: #0b1a33; background: rgba(255, 255, 255, 0.78); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.9); }
+body.topbar-home #quickActionToggle, body.topbar-home #quickActionMenu { display: none !important; }
+.hv2 .fx-head { align-items: center; }
+.hv2 .fx-left-big { margin: 0; font-size: 1.05rem; font-weight: 800; color: var(--hv-ink); }
+.hv2 .fx-count { padding: 3px 10px; border-radius: 999px; font-size: 0.82rem; font-weight: 700; color: var(--hv-ink2); background: var(--hv-soft); }
+.hv2 .fx-count b { color: var(--hv-ink); }
+.hv2 .fx-tile label { min-height: 46px; }
+.hv2 .fx-tile .focus-text { -webkit-line-clamp: 1; white-space: nowrap; text-overflow: ellipsis; display: block; overflow: hidden; }
+.hv2 .hv2-mood-wrap { display: grid; gap: 10px; }
+.hv2 .hv2-mood-wrap .hv2-mood { padding: 0 !important; background: none !important; box-shadow: none !important; }
+.hv2-mood-note { margin: 0; padding: 8px 12px; border-radius: 12px; font-size: 0.8rem; font-weight: 600; color: var(--hv-acc-ink); background: var(--hv-soft); }
+.hv2 .hv2-reflect > summary > b { display: none; }
+.hv2 .hv2-reflect > summary { justify-content: flex-start; }
+.hv2 .mf-teaser .mf-teaser-head { display: none; }
