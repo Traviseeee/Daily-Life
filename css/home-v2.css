@@ -271,7 +271,6 @@ html body .hv2-alert.is-amber { color: #8a4b00; background: #fff1d6; }
   :root[data-theme="light"] body.topbar-home{background:#fff!important}
   :root[data-theme="light"] .hv2{--hv-head:transparent;--hv-shadow:0 8px 24px rgba(30,120,255,.10);--hv-line:#e8f0fb}
   :root[data-theme="light"] .hv2-hello small{color:rgba(255,255,255,.85)}
-  :root[data-theme="light"] .hv2-title p{color:#0b1a33;font-weight:600}
   :root[data-theme="light"] .hv2-hello b{color:#fff}
   :root[data-theme="light"] .hv2-title h1{color:#fff}
   :root[data-theme="light"] .hv2-title h1 span{display:inline-block;padding:0 9px;border-radius:12px;color:#0b1a33;background:#fff;box-shadow:0 4px 12px rgba(0,60,160,.18);line-height:1.35}
@@ -287,4 +286,14 @@ html body .hv2-alert.is-amber { color: #8a4b00; background: #fff1d6; }
   :root[data-theme="light"] .hv2-next-time{background:#e6f2ff;color:#1e7cf0}
   :root[data-theme="light"] .hv2-next-go{background:#1e8fff;color:#fff}
   :root[data-theme="light"] .hv2-next-text small{color:#5b6b85!important;opacity:1}
+}
+/* Home light header polish (30 Oct): date in a white pill like the count, avatar ring, today lifted, cards float */
+@media (max-width:900px){
+:root[data-theme="light"] .hv2-title p{display:inline-flex;align-items:center;gap:6px;margin-top:8px;padding:4px 12px;border-radius:999px;font-size:.8rem;font-weight:600;color:#0b1a33;background:rgba(255,255,255,.78);box-shadow:inset 0 0 0 1px rgba(255,255,255,.9)}
+:root[data-theme="light"] .hv2-title p::before{content:"";width:7px;height:7px;border-radius:50%;background:#1e8fff}
+:root[data-theme="light"] .hv2-avatar-face{box-shadow:0 0 0 3px rgba(255,255,255,.55),0 6px 16px rgba(0,60,160,.25)}
+:root[data-theme="light"] .hv2-day.is-today{transform:translateY(-3px)}
+:root[data-theme="light"] .hv2-week{padding-bottom:4px}
+:root[data-theme="light"] .hv2-next{border:1px solid rgba(255,255,255,.9)}
+:root[data-theme="light"] .hv2-card{box-shadow:0 10px 28px rgba(30,120,255,.10)}
 }
