@@ -106,7 +106,7 @@ const HomeV2 = (() => {
       when = mins > 0 ? (mins >= 60 ? L(`ក្នុង ${Math.round(mins / 60)} ម៉ោង`, `in ${Math.round(mins / 60)} h`) : L(`ក្នុង ${mins} នាទី`, `in ${mins} min`)) : L("ឥឡូវនេះ", "now");
     } else if (isToday) when = L("ថ្ងៃនេះ", "today");
     else when = next.daysLeft === 1 ? L("ស្អែក", "tomorrow") : L(`ក្នុង ${next.daysLeft} ថ្ងៃ`, `in ${next.daysLeft} days`);
-    const box = isToday && t0 ? t0 : (() => { const date = new Date(`${next.date}T00:00:00`); return `${date.getDate()}<small>${escapeHtml(km() ? KM_MONTHS[date.getMonth()].slice(0, 3) : date.toLocaleDateString("en-US", { month: "short" }))}</small>`; })();
+    const box = isToday && t0 ? t0 : (() => { const date = new Date(`${next.date}T00:00:00`); return `${date.getDate()}<small>${escapeHtml(km() ? KM_MONTHS[date.getMonth()] : date.toLocaleDateString("en-US", { month: "short" }))}</small>`; })();
     return `<a class="hv2-next" href="${escapeAttr(next.href || "#calendar")}">
       <span class="hv2-next-time">${box}</span>
       <span class="hv2-next-text"><small>${escapeHtml(L("បន្ទាប់", "Next"))} · ${escapeHtml(when)}</small><b>${escapeHtml(next.title || "")}</b></span>
@@ -171,7 +171,7 @@ const HomeV2 = (() => {
     const rows = list.map(item => {
       const kind = kindOf(item);
       const [kmTag, enTag, tone] = TAG[kind];
-      const time = item.date === d.todayIso ? (clock(item.time) || L("ពេញថ្ងៃ", "All day")) : (() => { const date = new Date(`${item.date}T00:00:00`); return `${date.getDate()} ${km() ? KM_MONTHS[date.getMonth()].slice(0, 3) : date.toLocaleDateString("en-US", { month: "short" })}`; })();
+      const time = item.date === d.todayIso ? (clock(item.time) || L("ពេញថ្ងៃ", "All day")) : (() => { const date = new Date(`${item.date}T00:00:00`); return `${date.getDate()} ${km() ? KM_MONTHS[date.getMonth()] : date.toLocaleDateString("en-US", { month: "short" })}`; })();
       const sub = item.amount ? plainMoney(item.amount, item.currency) : (item.categoryLabel || "");
       return `<a class="hv2-tl-row" href="${escapeAttr(item.href || "#calendar")}"><span class="hv2-tl-time">${escapeHtml(time)}</span><span class="hv2-dot is-${tone}"></span><span class="hv2-tl-text"><b>${escapeHtml(item.title || "")}</b>${sub ? `<small>${escapeHtml(sub)}</small>` : ""}</span><span class="hv2-tag is-${tone}">${escapeHtml(L(kmTag, enTag))}</span></a>`;
     }).join("");
