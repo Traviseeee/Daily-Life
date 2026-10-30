@@ -1,0 +1,22 @@
+/* Light mode, phone: every page gets the same blue → white sky as Home (30 Oct 2026).
+   #1e8fff behind the page header (white title), white before the black text starts.
+   Dark mode is not touched. */
+@media (max-width: 900px) {
+  html:root[data-theme="light"] body { background: #fff !important; }
+  html:root[data-theme="light"] .ambient { display: none !important; }
+  html:root[data-theme="light"] .app-main { background: #fff linear-gradient(180deg,#1e8fff 0,#1e8fff 110px,#4fa6ff 240px,#9dccff 380px,#dcecff 500px,#f5f9ff 580px,#ffffff 640px) no-repeat top/100% 700px !important; }
+  html:root[data-theme="light"] .app-main .topbar { background: transparent !important; box-shadow: none !important; border-color: transparent !important; }
+  html:root[data-theme="light"] :is(.cv2-hero, .fv-hero, .mf2-hero, .gv-hero, .sv-hero, .lv-hero) { background: transparent !important; box-shadow: none !important; }
+  html:root[data-theme="light"] :is(.cv2-hero h1, .fv-title h1, .mf2-title, .gv-title, .sv-hero h1, .page-header .page-title, .lv-hi-tx b, .fv-av b, .mf-person small, .lv-sec b) { color: #fff !important; }
+  html:root[data-theme="light"] :is(.cv2-hero p, .fv-title p, .gv-sub, .page-header .page-subtitle, .lv-hi-tx small, .fv-av small, .mf-usage) { color: rgba(255,255,255,.88) !important; }
+  html:root[data-theme="light"] .page-header .page-title-icon, html:root[data-theme="light"] .page-header .section-title-icon { color: #fff !important; background: rgba(255,255,255,.22) !important; border-color: rgba(255,255,255,.35) !important; }
+  html:root[data-theme="light"] :is(.fv-av.is-add .fv-ring, .lv-wx) { background: rgba(255,255,255,.22) !important; box-shadow: inset 0 0 0 1px rgba(255,255,255,.4) !important; color: #fff !important; }
+  html:root[data-theme="light"] .fv-av.is-add .fv-face { border-color: rgba(255,255,255,.7) !important; color: #fff !important; }
+  html:root[data-theme="light"] .lv-wx strong { color: #fff !important; }
+}
+@media (max-width: 900px) {
+  html:root[data-theme="light"] .gv-chip { color: #fff !important; background: rgba(255,255,255,.22) !important; box-shadow: inset 0 0 0 1px rgba(255,255,255,.4) !important; }
+  html:root[data-theme="light"] .gv-chip.on { color: #1e7cf0 !important; background: #fff !important; box-shadow: 0 6px 14px rgba(0,60,160,.18) !important; }
+  html:root[data-theme="light"] .sv-chip { background: #fff !important; color: #33415c !important; box-shadow: 0 4px 10px rgba(0,60,160,.12); }
+  html:root[data-theme="light"] .tp-couple small { color: rgba(255,255,255,.9) !important; }
+}
