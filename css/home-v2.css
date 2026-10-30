@@ -271,10 +271,10 @@ html body .hv2-alert.is-amber { color: #8a4b00; background: #fff1d6; }
   :root[data-theme="light"] body.topbar-home{background:#fff!important}
   :root[data-theme="light"] .hv2{--hv-head:transparent;--hv-shadow:0 8px 24px rgba(30,120,255,.10);--hv-line:#e8f0fb}
   :root[data-theme="light"] .hv2-hello small{color:rgba(255,255,255,.85)}
-  :root[data-theme="light"] .hv2-title p{color:#0f2a55}
+  :root[data-theme="light"] .hv2-title p{color:rgba(255,255,255,.85)}
   :root[data-theme="light"] .hv2-hello b{color:#fff}
-  :root[data-theme="light"] .hv2-title h1{color:#0b1a33}
-  :root[data-theme="light"] .hv2-title h1 span{color:#0b1a33;background:linear-gradient(transparent 58%,rgba(255,255,255,.55) 58%);padding:0 2px}
+  :root[data-theme="light"] .hv2-title h1{color:#fff}
+  :root[data-theme="light"] .hv2-title h1 span{display:inline-block;padding:0 9px;border-radius:12px;color:#0b1a33;background:#fff;box-shadow:0 4px 12px rgba(0,60,160,.18);line-height:1.35}
   :root[data-theme="light"] .hv2-wx,:root[data-theme="light"] .hv2-bell,:root[data-theme="light"] .hv2-top .hv2-menu{color:#fff!important;background:rgba(255,255,255,.22);box-shadow:inset 0 0 0 1px rgba(255,255,255,.35);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
   :root[data-theme="light"] .hv2-avatar-face{border-color:rgba(255,255,255,.85);background:#fff;color:#1e8fff}
   :root[data-theme="light"] .hv2-day{background:rgba(255,255,255,.2);box-shadow:inset 0 0 0 1px rgba(255,255,255,.3);color:#fff}
