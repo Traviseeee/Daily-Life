@@ -1,0 +1,55 @@
+/* Light mode, phone: soft sky + new card look (31 Oct draft "ខៀវមេឃស្រាល + card ថ្មី").
+   Loaded last so it sits on top of sky-light.css and the Home light rules.
+   Sky #BCDCFF → white with faint blue dots and a white glow; dark text #0E1D36 everywhere;
+   blue #1F6FE8 only as the accent; white glass cards with a hairline and a soft falling blue shadow.
+   The wallet card (Design my card) is not touched. Dark mode is not touched. */
+@media (max-width: 900px) {
+  html:root[data-theme="light"] body .app-main,
+  html:root[data-theme="light"] body.topbar-home .app-main {
+    background:
+      radial-gradient(circle, rgba(70,130,220,.10) 1px, transparent 1.5px) 0 0 / 16px 16px,
+      radial-gradient(70% 260px at 80% 0, rgba(255,255,255,.9) 0, rgba(255,255,255,0) 70%) top / 100% 400px no-repeat,
+      linear-gradient(180deg, #bcdcff 0, #d6eaff 210px, #ecf5ff 420px, #f6faff 560px, #f8fbff 700px) top / 100% 720px no-repeat
+      #f8fbff !important;
+  }
+  html:root[data-theme="light"] body, html:root[data-theme="light"] body.topbar-home { background: #f8fbff !important; }
+
+  /* text on the sky: dark instead of white */
+  html:root[data-theme="light"] :is(.cv2-hero h1, .fv-title h1, .mf2-title, .gv-title, .sv-hero h1, .page-header .page-title, .lv-hi-tx b, .fv-av b, .mf-person small, .lv-sec b, .hv2-hello b, .hv2-title h1) { color: #0e1d36 !important; }
+  html:root[data-theme="light"] :is(.cv2-hero p, .fv-title p, .gv-sub, .page-header .page-subtitle, .lv-hi-tx small, .fv-av small, .mf-usage, .hv2-hello small, .tp-couple small) { color: #4c6386 !important; }
+  html:root[data-theme="light"] .hv2-title h1 span { color: #fff !important; background: linear-gradient(135deg, #3d8bff, #1f6fe8) !important; box-shadow: 0 6px 14px rgba(31,111,232,.28) !important; }
+
+  /* glass buttons / chips on the sky: white glass, dark icons */
+  html:root[data-theme="light"] :is(.hv2-wx, .hv2-bell, .hv2-top .hv2-menu, .lv-wx, .fv-av.is-add .fv-ring, .page-header .page-title-icon, .page-header .section-title-icon) { color: #0e1d36 !important; background: rgba(255,255,255,.75) !important; box-shadow: inset 0 0 0 1px #fff, 0 4px 12px rgba(40,100,200,.08) !important; }
+  html:root[data-theme="light"] .lv-wx strong, html:root[data-theme="light"] .fv-av.is-add .fv-face { color: #0e1d36 !important; border-color: rgba(31,111,232,.35) !important; }
+  html:root[data-theme="light"] .gv-chip { color: #1d3a66 !important; background: rgba(255,255,255,.75) !important; box-shadow: inset 0 0 0 1px #fff !important; }
+  html:root[data-theme="light"] .gv-chip.on { color: #fff !important; background: linear-gradient(135deg, #3d8bff, #1f6fe8) !important; box-shadow: 0 6px 14px rgba(31,111,232,.28) !important; }
+  html:root[data-theme="light"] .hv2-title p, html:root[data-theme="light"] .hv2-why span { color: #1d3a66 !important; background: rgba(255,255,255,.85) !important; box-shadow: inset 0 0 0 1px #fff !important; }
+  html:root[data-theme="light"] .hv2-title p::before { background: #1f6fe8 !important; }
+
+  /* week strip: white glass days, today in blue */
+  html:root[data-theme="light"] .hv2-day { color: #0e1d36 !important; background: rgba(255,255,255,.55) !important; box-shadow: inset 0 0 0 1px rgba(255,255,255,.9) !important; }
+  html:root[data-theme="light"] .hv2-day small { color: #4c6386 !important; }
+  html:root[data-theme="light"] .hv2-day i.has { background: #f59e0b !important; }
+  html:root[data-theme="light"] .hv2-day.is-today { color: #fff !important; background: linear-gradient(160deg, #3d8bff, #1f6fe8) !important; box-shadow: 0 8px 18px rgba(31,111,232,.3) !important; }
+  html:root[data-theme="light"] .hv2-day.is-today small { color: #dbe9ff !important; }
+  html:root[data-theme="light"] .hv2-day.is-today i.has { background: #fff !important; }
+  html:root[data-theme="light"] .hv2-avatar-face { border-color: #fff !important; box-shadow: 0 4px 12px rgba(40,100,200,.18) !important; }
+
+  /* new card look: white glass, hairline, bigger radius, soft falling blue shadow */
+  html:root[data-theme="light"] :is(.hv2-card, .hv2-next, .hv2-quick, .wc-io > *, .fv-card, .cv2-card, .gv-card, .gv-goal, .fv-member, .sv-prof, .nfc-group, .lv-grid, .mf-views, .lv-sc:not(.is-main), .glass-card, .fv2-two-card, .fv2-card, .mt-card, .ev .ev-card, .rc-panel) {
+    border: 1px solid rgba(255,255,255,.95) !important;
+    border-radius: 24px !important;
+    background: linear-gradient(180deg, rgba(255,255,255,.97), rgba(255,255,255,.88)) !important;
+    box-shadow: 0 0 0 1px rgba(60,120,220,.07), 0 12px 28px -10px rgba(40,100,200,.22) !important;
+  }
+  html:root[data-theme="light"] .hv2-next { color: #0e1d36 !important; }
+  html:root[data-theme="light"] .hv2-next-go { background: #1f6fe8 !important; }
+
+  /* "Coming up": day in a small box, dashed separators */
+  html:root[data-theme="light"] .hv2-tl-row { border-top-style: dashed !important; border-top-color: #e3ecf8 !important; }
+  html:root[data-theme="light"] .hv2-tl-time { padding: 5px 0; border-radius: 12px; text-align: center; color: #0e1d36 !important; background: #f0f6ff; }
+
+  /* section links in a white pill */
+  html:root[data-theme="light"] :is(.hv2-sec a, .hv2-link, .fv2-section-head a) { padding: 3px 10px !important; border-radius: 999px !important; color: #1f6fe8 !important; background: rgba(255,255,255,.85) !important; box-shadow: inset 0 0 0 1px #fff; }
+}
