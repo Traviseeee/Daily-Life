@@ -20,3 +20,18 @@
   html:root[data-theme="light"] .sv-chip { background: #fff !important; color: #33415c !important; box-shadow: 0 4px 10px rgba(0,60,160,.12); }
   html:root[data-theme="light"] .tp-couple small { color: rgba(255,255,255,.9) !important; }
 }
+
+/* white frames + no blue-on-blue (30 Oct): coloured hero cards get a white frame; the blue ones turn navy */
+@media (max-width: 900px) {
+  /* coloured hero cards on the blue sky: a white frame so they stand apart */
+  html:root[data-theme="light"] :is(.fv2-hero, .fv-love, .lv-sc.is-main, .tp-hero, .hv2-next) { border: 2px solid rgba(255,255,255,.85) !important; box-shadow: 0 14px 30px rgba(0,50,140,.22) !important; }
+  /* the blue cards were the same blue as the sky: deep navy-indigo instead */
+  html:root[data-theme="light"] .fv2-hero:not(.is-short), html:root[data-theme="light"] .lv-sc.is-main { background: linear-gradient(125deg, #2e4bdc, #1a2f9c) !important; }
+  /* white cards: a thin white rim + soft blue shadow */
+  html:root[data-theme="light"] :is(.hv2-card, .fv-card, .cv2-card, .gv-card, .gv-goal, .fv-member, .sv-prof, .nfc-group, .lv-grid, .mf-views, .lv-sc:not(.is-main), .glass-card) { border: 1.5px solid rgba(255,255,255,.95) !important; box-shadow: 0 10px 26px rgba(30,110,240,.10) !important; }
+}
+@media (max-width: 900px) {
+  /* active blue pills on the blue sky: same navy as the hero cards */
+  html:root[data-theme="light"] .page .financial-shortcuts .financial-shortcut.active { color: #fff !important; background: linear-gradient(125deg, #2e4bdc, #1a2f9c) !important; border: 2px solid rgba(255,255,255,.85) !important; }
+  html:root[data-theme="light"] .page .financial-shortcuts .financial-shortcut.active * { color: #fff !important; }
+}
