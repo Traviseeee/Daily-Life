@@ -43,7 +43,7 @@
   html:root[data-theme="light"] :is(.hv2-card, .fv-card, .cv2-card, .gv-card, .gv-goal, .fv-member, .sv-prof, .nfc-group, .lv-grid, .mf-views, .lv-sc:not(.is-main), .glass-card) { border: 1.5px solid rgba(255,255,255,.95) !important; box-shadow: 0 10px 26px rgba(30,110,240,.10) !important; }
 }
 @media (max-width: 900px) {
-  /* active blue pills on the blue sky: same navy as the hero cards */
-  html:root[data-theme="light"] .page .financial-shortcuts .financial-shortcut.active { color: #fff !important; background: linear-gradient(125deg, #2e4bdc, #1a2f9c) !important; border: 2px solid rgba(255,255,255,.85) !important; }
-  html:root[data-theme="light"] .page .financial-shortcuts .financial-shortcut.active * { color: #fff !important; }
+  /* active money tab: white with a blue ring and blue text */
+  html:root[data-theme="light"] .page .financial-shortcuts .financial-shortcut.active { color: #1e7cf0 !important; background: #fff !important; border: 0 !important; box-shadow: inset 0 0 0 2px #1e8fff, 0 6px 14px rgba(0,60,160,.18) !important; }
+  html:root[data-theme="light"] .page .financial-shortcuts .financial-shortcut.active * { color: #1e7cf0 !important; font-weight: 800; }
 }
