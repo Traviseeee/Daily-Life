@@ -87,4 +87,7 @@
   /* Focus tiles when done: lighter blue (was too dark) */
   html:root[data-theme="light"] body .hv2 .fx-tile.done label { background: linear-gradient(135deg, #8ec2ff, #5ea2fb) !important; box-shadow: 0 8px 18px -10px rgba(47,123,245,.45) !important; }
   html:root[data-theme="light"] body .hv2 .fx-seg i.on { background: linear-gradient(90deg, #8ec2ff, #5ea2fb) !important; }
+  html:root[data-theme="light"] body .hv2 .fx-tile.done .fx-em { background: #fff !important; box-shadow: 0 2px 6px rgba(31,90,200,.18); }
+  html:root[data-theme="light"] body .hv2 .fx-tile.done .fx-ck { background: #fff !important; }
+  html:root[data-theme="light"] body .hv2 .fx-tile.done .fx-ck::after { border-color: #2f7bf5 !important; }
 }
