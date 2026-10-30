@@ -262,3 +262,27 @@ html body .hv2-alert.is-amber { color: #8a4b00; background: #fff1d6; }
 .hv2-today-money { display: flex; gap: 8px; margin-top: 10px; }
 .hv2-today-money span { flex: 1; padding: 7px 10px; border-radius: 12px; font-size: 0.74rem; color: var(--hv-ink2); background: var(--hv-soft); }
 .hv2-today-money b { display: block; font-size: 0.95rem; color: var(--hv-ink); }
+
+/* ---- light mode, phone: blue → white sky behind Home (draft 5, 30 Oct 2026).
+   Deep blue #1e8fff only behind the header (white text), white before the black text starts. ---- */
+@media (max-width: 900px) {
+  :root[data-theme="light"] body.topbar-home .ambient{display:none!important}
+  :root[data-theme="light"] body.topbar-home .app-main{background:#fff linear-gradient(180deg,#1e8fff 0,#1e8fff 110px,#4fa6ff 240px,#9dccff 380px,#dcecff 500px,#f5f9ff 580px,#ffffff 640px) no-repeat top/100% 700px!important}
+  :root[data-theme="light"] body.topbar-home{background:#fff!important}
+  :root[data-theme="light"] .hv2{--hv-head:transparent;--hv-shadow:0 8px 24px rgba(30,120,255,.10);--hv-line:#e8f0fb}
+  :root[data-theme="light"] .hv2-hello small,:root[data-theme="light"] .hv2-title p{color:rgba(255,255,255,.85)}
+  :root[data-theme="light"] .hv2-hello b,:root[data-theme="light"] .hv2-title h1{color:#fff}
+  :root[data-theme="light"] .hv2-title h1 span{color:#fff;background:linear-gradient(transparent 62%,rgba(255,255,255,.35) 62%);padding:0 2px}
+  :root[data-theme="light"] .hv2-wx,:root[data-theme="light"] .hv2-bell,:root[data-theme="light"] .hv2-top .hv2-menu{color:#fff!important;background:rgba(255,255,255,.22);box-shadow:inset 0 0 0 1px rgba(255,255,255,.35);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+  :root[data-theme="light"] .hv2-avatar-face{border-color:rgba(255,255,255,.85);background:#fff;color:#1e8fff}
+  :root[data-theme="light"] .hv2-day{background:rgba(255,255,255,.2);box-shadow:inset 0 0 0 1px rgba(255,255,255,.3);color:#fff}
+  :root[data-theme="light"] .hv2-day small{color:rgba(255,255,255,.85)}
+  :root[data-theme="light"] .hv2-day i.has{background:#fff}
+  :root[data-theme="light"] .hv2-day.is-today{background:#fff;color:#1e7cf0;box-shadow:0 8px 18px rgba(0,60,160,.18)}
+  :root[data-theme="light"] .hv2-day.is-today small{color:#1e7cf0}
+  :root[data-theme="light"] .hv2-day.is-today i.has{background:#1e7cf0}
+  :root[data-theme="light"] .hv2-next{color:#0f1b33!important;background:rgba(255,255,255,.92);box-shadow:0 12px 28px rgba(0,70,180,.16)}
+  :root[data-theme="light"] .hv2-next-time{background:#e6f2ff;color:#1e7cf0}
+  :root[data-theme="light"] .hv2-next-go{background:#1e8fff;color:#fff}
+  :root[data-theme="light"] .hv2-next-text small{color:#5b6b85!important;opacity:1}
+}
