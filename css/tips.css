@@ -131,3 +131,7 @@
 @media (prefers-reduced-motion: reduce) {
   .tp-sheet, .tp-btn, .tp-tip { transition: none; }
 }
+
+/* Dark mode (31 Oct): --glass-strong is white in both themes, so the cards were light grey with pale text */
+:root:not([data-theme="light"]) .tp-page { --tp-card: rgba(255, 255, 255, .06); --tp-line: rgba(255, 255, 255, .1); }
+:root:not([data-theme="light"]) .tp-page :is(.tp-week, .tp-card, .tp-chip, .tp-tip) { box-shadow: none; }
