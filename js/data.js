@@ -183,11 +183,18 @@ const OAuthGate = {
     try {
       // private app (31 Oct): only people in the family (the owner is its admin) or someone
       // opening an invite link may use MYLIFE; having old data is no longer enough
-      let ok = this.invitePending();
-      if (!ok) {
-        const member = await client.from("family_members").select("family_id").eq("user_id", user.id).limit(1);
-        if (member.error) throw member.error;
-        ok = (member.data || []).length > 0;
+      const member = await client.from("family_members").select("family_id").eq("user_id", user.id).limit(1);
+      if (member.error) throw member.error;
+      let ok = (member.data || []).length > 0;
+      // an invite link counts only while it is still unused and not expired: an old
+      // (already used) link kept in the URL / storage must not let a removed member back in
+      if (!ok && this.invitePending()) {
+        let token = "";
+        try { token = sessionStorage.getItem("mylife:family-join") || localStorage.getItem("mylife:family-join") || ""; } catch (error) { token = ""; }
+        const preview = await client.rpc("family_invite_preview", { p_token: token });
+        const info = Array.isArray(preview.data) ? preview.data[0] : preview.data;
+        ok = !preview.error && info?.status === "ok";
+        if (!ok) { try { sessionStorage.removeItem("mylife:family-join"); localStorage.removeItem("mylife:family-join"); } catch (error) { /* ignore */ } }
       }
       if (ok) { this.checked.set(user.id, Date.now()); this.approve(user.id); return true; }
       await this.block(client, "not_linked");
