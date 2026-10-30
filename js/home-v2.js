@@ -85,8 +85,8 @@ const HomeV2 = (() => {
       <div class="hv2-title-row">
         <div class="hv2-title">
           <h1>${things ? L(`ថ្ងៃនេះមាន <span>${things} រឿង</span> ត្រូវធ្វើ`, `<span>${things} thing${things === 1 ? "" : "s"}</span> to do today`) : L(`ថ្ងៃនេះ <span>ទំនេរ</span> 🌿`, `Today is <span>free</span> 🌿`)}</h1>
-          <p>${escapeHtml(longDate(today))}</p>
           <div class="hv2-why">
+            <p>${escapeHtml(longDate(today))}</p>
             <span>📅 ${escapeHtml(L(`${d.agenda.today} ព្រឹត្តិការណ៍`, `${d.agenda.today} event${d.agenda.today === 1 ? "" : "s"}`))}</span>
             ${billsSoon[0] ? `<span>🧾 ${escapeHtml(billsSoon[0].date === d.todayIso ? L("ថ្ងៃនេះ", "Today") : L("ស្អែក", "Tomorrow"))} ${escapeHtml(billsSoon[0].title || "")}</span>` : ""}
             ${d.due.length ? `<span>⏳ ${escapeHtml(L(`${d.due.length} លុយត្រូវឆ្លើយ`, `${d.due.length} to confirm`))}</span>` : ""}

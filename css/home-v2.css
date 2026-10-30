@@ -318,3 +318,8 @@ body.topbar-home #quickActionToggle, body.topbar-home #quickActionMenu { display
 .hv2 .hv2-reflect > summary > b { display: none; }
 .hv2 .hv2-reflect > summary { justify-content: flex-start; }
 .hv2 .mf-teaser .mf-teaser-head { display: none; }
+/* date + chips on one line (scrolls sideways if long) */
+.hv2-why { flex-wrap: nowrap; align-items: center; overflow-x: auto; scrollbar-width: none; margin-top: 8px; }
+.hv2-why::-webkit-scrollbar { display: none; }
+.hv2-why > * { flex: 0 0 auto; white-space: nowrap; }
+html body .hv2 .hv2-title .hv2-why p { margin: 0 !important; }
