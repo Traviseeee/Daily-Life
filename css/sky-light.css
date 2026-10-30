@@ -26,7 +26,19 @@
   /* coloured hero cards on the blue sky: a white frame so they stand apart */
   html:root[data-theme="light"] :is(.fv2-hero, .fv-love, .lv-sc.is-main, .tp-hero, .hv2-next) { border: 2px solid rgba(255,255,255,.85) !important; box-shadow: 0 14px 30px rgba(0,50,140,.22) !important; }
   /* the blue cards were the same blue as the sky: deep navy-indigo instead */
-  html:root[data-theme="light"] .fv2-hero:not(.is-short), html:root[data-theme="light"] .lv-sc.is-main { background: linear-gradient(125deg, #2e4bdc, #1a2f9c) !important; }
+  /* white card with dark text and blue accents (was blue, same as the sky) */
+  html:root[data-theme="light"] .page .fv2-hero:not(.is-short), html:root[data-theme="light"] .lv-sc.is-main { color: #0f1b33 !important; background: #fff !important; }
+  html:root[data-theme="light"] .page .fv2-hero:not(.is-short)::after { background: rgba(30,143,255,.08); }
+  html:root[data-theme="light"] .fv2-hero:not(.is-short) .fv2-hero-value { color: #1e7cf0 !important; }
+  html:root[data-theme="light"] .fv2-hero:not(.is-short) small, html:root[data-theme="light"] .fv2-hero:not(.is-short) .fv2-hero-warn { color: #5b6b85 !important; opacity: 1; }
+  html:root[data-theme="light"] .fv2-hero:not(.is-short) .fv2-hero-bar { background: #e3eefc; }
+  html:root[data-theme="light"] .fv2-hero:not(.is-short) .fv2-hero-bar i { background: linear-gradient(90deg, #5aa2ff, #1e7cf0); }
+  html:root[data-theme="light"] .fv2-hero:not(.is-short) .fv2-period-chip { color: #1e7cf0; background: #e6f0ff; }
+  html:root[data-theme="light"] .fv2-hero:not(.is-short) .fv2-t3-item { background: #eef5ff; }
+  html:root[data-theme="light"] .fv2-hero:not(.is-short) .fv2-t3-item b, html:root[data-theme="light"] .fv2-hero:not(.is-short) .fv2-t3-item .money-value { color: #0f1b33 !important; }
+  html:root[data-theme="light"] .lv-sc.is-main small { color: #5b6b85 !important; opacity: 1; }
+  html:root[data-theme="light"] .lv-sc.is-main b { color: #1e7cf0 !important; }
+  html:root[data-theme="light"] .lv-sc.is-main em { color: #5b6b85 !important; opacity: 1; }
   /* white cards: a thin white rim + soft blue shadow */
   html:root[data-theme="light"] :is(.hv2-card, .fv-card, .cv2-card, .gv-card, .gv-goal, .fv-member, .sv-prof, .nfc-group, .lv-grid, .mf-views, .lv-sc:not(.is-main), .glass-card) { border: 1.5px solid rgba(255,255,255,.95) !important; box-shadow: 0 10px 26px rgba(30,110,240,.10) !important; }
 }
