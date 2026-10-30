@@ -1,4 +1,6 @@
-/* Home money card as a bank-style wallet card (draft A, 30 Oct 2026).
+/* Home money card. Layout: "Ticket" (31 Oct 2026): blue top (card colour) with name, money left,
+ * % spent + bar; dashed tear line; white stub with spent / today / per day. Older note:
+ * Home money card as a bank-style wallet card (draft A, 30 Oct 2026).
  * One card: chip, contactless mark, card name, •••• last 4 (decoration only),
  * money left this month, today / per day, and the profile photo in a frame.
  * The ✏️ opens "Design my card": frame (ring / ID / polaroid / stamp / hex / full),
@@ -92,20 +94,27 @@ const WalletCard = (() => {
     const daysLeft = Math.max(1, new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate() - now.getDate() + 1);
     const perDay = Math.max(0, m.left) / daysLeft;
     const hideCls = c.hide ? " is-hidden" : "";
+    const spentPct = m.income > 0 ? Math.round((m.expenses / m.income) * 100) : 0;
     return `<section class="hv2-money wc-wrap">
-      <article class="wc-card wc-amt-${c.amount}${c.shine ? "" : " no-shine"}${c.upper ? " is-upper" : ""}${c.frame === "full" ? " has-full" : ""}${c.frame === "none" ? " no-photo" : ""}" style="--wc-bg:${escapeAttr(bgOf(c))};--wc-tint:${c.tint / 100}" aria-label="${escapeAttr(L(`នៅសល់ខែ${monthName}`, `Left in ${monthName}`))}">
-        ${frameHtml(c)}
-        <div class="wc-top">
-          <span class="wc-left"><span class="wc-chip" aria-hidden="true"></span>${ICON.nfc}<span class="wc-num" aria-hidden="true">•••• ${escapeHtml(c.last4)}</span></span>
-          <span class="wc-right"><b class="wc-name">${escapeHtml(c.name)}</b><button type="button" class="wc-edit" data-wc-edit aria-label="${escapeAttr(L("រចនាកាត", "Design card"))}">${ICON.pen}</button></span>
+      <article class="wc-card wc-tk${c.frame === "none" ? " no-photo" : ""}" style="--wc-bg:${escapeAttr(bgOf(c))};--wc-tint:${c.tint / 100}" aria-label="${escapeAttr(L(`នៅសល់ខែ${monthName}`, `Left in ${monthName}`))}">
+        <div class="wc-tk-top">
+          <div class="wc-tk-head">
+            ${frameHtml(c, "wc-tk-pf")}
+            <span class="wc-tk-who"><b>${escapeHtml(String(appData.profile?.name || "MYLIFE").split(/\s+/)[0])}</b><small>${escapeHtml(L(`នៅសល់ខែ${monthName} · ${daysLeft} ថ្ងៃទៀត`, `${monthName} · ${daysLeft} days left`))}</small></span>
+            <button type="button" class="wc-edit wc-tk-edit" data-wc-edit aria-label="${escapeAttr(L("រចនាកាត", "Design card"))}">${ICON.pen}<span>${escapeHtml(L("កែ", "Edit"))}</span></button>
+          </div>
+          <div class="wc-tk-amt">
+            <div><small class="wc-label">${escapeHtml(L("នៅសល់សម្រាប់ចាយ", "Left to spend"))}</small><a class="wc-amount money-value${m.left < 0 ? " is-neg" : ""}${hideCls}" href="#money">${escapeHtml(money(m.left))}</a></div>
+            <span class="wc-tk-pct">${escapeHtml(L("ចាយរួច", "Spent"))}<b>${spentPct}%</b></span>
+          </div>
+          <div class="wc-tk-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${spentPct}"><i style="width:${Math.min(100, spentPct)}%"></i></div>
+          <div class="wc-tk-scale"><span>${escapeHtml(L("ចាយ", "Spent"))} <b class="money-value${hideCls}">${escapeHtml(money(m.expenses))}</b></span><span>${escapeHtml(L("ថវិកា", "Budget"))} <b class="money-value${hideCls}">${escapeHtml(money(m.income))}</b></span></div>
         </div>
-        <small class="wc-label">${escapeHtml(L(`នៅសល់សម្រាប់ចាយ · ${monthName}`, `Left to spend · ${monthName}`))}</small>
-        <a class="wc-amount money-value${m.left < 0 ? " is-neg" : ""}${hideCls}" href="#money">${escapeHtml(money(m.left))}</a>
-        <div class="wc-foot">
-          <span>${escapeHtml(L("ថ្ងៃនេះ", "Today"))}<b class="money-value${hideCls}">${escapeHtml(money(spentToday))}</b></span>
-          <span>${escapeHtml(L("ចាយបាន/ថ្ងៃ", "Per day"))}<b class="money-value${hideCls}">${escapeHtml(money(perDay))}</b></span>
+        <div class="wc-tk-bot">
+          <span><i class="is-out">↑</i>${escapeHtml(L("ចាយ", "Spent"))}<b class="money-value${hideCls}">${escapeHtml(money(m.expenses))}</b></span>
+          <span><i class="is-today">●</i>${escapeHtml(L("ថ្ងៃនេះ", "Today"))}<b class="money-value${hideCls}">${escapeHtml(money(spentToday))}</b></span>
+          <span><i class="is-ok">✓</i>${escapeHtml(L("ចាយបាន/ថ្ងៃ", "Per day"))}<b class="money-value${hideCls}">${escapeHtml(money(perDay))}</b></span>
         </div>
-        <span class="wc-logo" aria-hidden="true"><i></i><i></i></span>
       </article>
       <div class="wc-mini">
         <a href="#money/income" class="wc-io is-in"><i>${ICON.down}</i><span><small>${escapeHtml(L("ចំណូល", "Income"))}</small><b class="money-value${hideCls}">${escapeHtml(money(m.income))}</b></span></a>
