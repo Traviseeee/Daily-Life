@@ -232,7 +232,7 @@ html:root[data-theme="light"]:root body .hv2-avatar .home-profile-menu .home-pro
 .fx-seg { display: flex; gap: 5px; }
 .fx-seg i { flex: 1; height: 8px; border-radius: 9px; background: var(--hv-soft); transition: background 260ms ease; }
 .fx-seg i.on { background: var(--hv-grad); }
-.hv2 .fx-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.hv2 .fx-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 0; padding: 0; list-style: none; }
 .hv2 .fx-grid.is-odd .fx-tile:last-child { grid-column: 1 / -1; }
 .hv2 .fx-tile.focus-item, .hv2 .fx-tile.focus-item.done { padding: 0 !important; border: 0 !important; background: none !important; box-shadow: none !important; }
 .fx-tile label { display: flex; align-items: center; gap: 8px; height: 100%; min-height: 50px; padding: 8px 10px; border-radius: 16px; color: var(--hv-ink); background: var(--hv-soft); cursor: pointer; transition: background 220ms ease, color 220ms ease, transform 120ms ease; -webkit-tap-highlight-color: transparent; }
@@ -323,3 +323,5 @@ body.topbar-home #quickActionToggle, body.topbar-home #quickActionMenu { display
 .hv2-why::-webkit-scrollbar { display: none; }
 .hv2-why > * { flex: 0 0 auto; white-space: nowrap; }
 html body .hv2 .hv2-title .hv2-why p { margin: 0 !important; }
+.hv2 .fx-tile, .hv2 .fx-tile label { min-width: 0; } /* long focus names must not widen the card (31 Oct) */
+.hv2 .fx-tile .focus-text { text-overflow: ellipsis; }

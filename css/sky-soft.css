@@ -60,6 +60,7 @@
   html:root[data-theme="light"] body.topbar-home .app-main { background: #f3f7ff !important; }
   html:root[data-theme="light"] body, html:root[data-theme="light"] body.topbar-home { background: #f3f7ff !important; }
   html:root[data-theme="light"] .hv2-head { position: relative; isolation: isolate; }
+  html:root[data-theme="light"] body .app-main { overflow-x: clip !important; } /* the header panel bleeds 16px each side: never make the page scroll sideways */
   html:root[data-theme="light"] .hv2-head::before { content: ""; position: absolute; z-index: -1; left: -16px; right: -16px; top: -80px; bottom: -14px; border-radius: 0 0 34px 34px; background: linear-gradient(180deg, #a9cdff 0, #c9defe 45%, #e4eeff 80%, #eef4ff 100%); box-shadow: 0 10px 24px -14px rgba(40,100,200,.25); }
   html:root[data-theme="light"] .hv2-title h1 span { color: #1f6fe8 !important; background: none !important; box-shadow: none !important; padding: 0 !important; }
   html:root[data-theme="light"] :is(.hv2-wx, .hv2-bell, .hv2-top .hv2-menu) { background: #fff !important; box-shadow: 0 4px 12px rgba(40,100,200,.12) !important; }
