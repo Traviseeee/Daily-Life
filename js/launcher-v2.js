@@ -10,7 +10,7 @@ const LauncherV2 = (() => {
   const KM_DAY_S = ["អាទិ", "ចន្ទ", "អង្គ", "ពុធ", "ព្រហ", "សុក្រ", "សៅរ៍"];
   const KM_M = ["មករា", "កុម្ភៈ", "មីនា", "មេសា", "ឧសភា", "មិថុនា", "កក្កដា", "សីហា", "កញ្ញា", "តុលា", "វិច្ឆិកា", "ធ្នូ"];
   // help sits inside Tips, so the grid is 12 (4 × 3)
-  const ORDER = ["today", "calendar", "money", "family", "goals", "memories", "daily", "summary", "scan", "notifications", "tips", "settings"];
+  const ORDER = ["today", "calendar", "money", "family", "goals", "memories", "summary", "scan", "notifications", "tips", "settings"];
 
   function hero() {
     const p = appData.profile;
@@ -69,7 +69,7 @@ const LauncherV2 = (() => {
   }
 
   function quickAdd() {
-    const actions = [["add-event", "📅", L("ព្រឹត្តិការណ៍", "Event")], ["add-expense", "💸", L("ចំណាយ", "Expense")], ["add-hobby", "🎨", L("ចំណូលចិត្ត", "Hobby")], ["add-memory", "📸", L("អនុស្សាវរីយ៍", "Memory")]];
+    const actions = [["add-event", "📅", L("ព្រឹត្តិការណ៍", "Event")], ["add-expense", "💸", L("ចំណាយ", "Expense")], ["add-memory", "📸", L("អនុស្សាវរីយ៍", "Memory")], ["add-bill", "🧾", L("វិក្កយបត្រ", "Bill")]];
     return `<div class="lv-sec"><b>${escapeHtml(L("បន្ថែមរហ័ស", "Quick add"))}</b><button type="button" class="lv-link" data-footer-edit aria-pressed="false">${escapeHtml(L("រៀបចំ footer ›", "Arrange footer ›"))}</button></div>
       <div class="lv-qa">${actions.map(([id, icon, label]) => `<button type="button" class="lv-q" data-launcher-quick="${id}"><i>${icon}</i><span>${escapeHtml(label)}</span></button>`).join("")}</div>`;
   }

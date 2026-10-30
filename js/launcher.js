@@ -1,13 +1,13 @@
 // Launcher (☰): tools in 4 groups, each with a live "smart" badge, and a footer editor.
 // Home is not a tile — the 🏠 button (top-left) and the footer already go there.
 const LAUNCHER_GROUPS = [
-  { id: "daily", km: "ប្រចាំថ្ងៃ", en: "Every day", routes: ["today", "calendar", "daily"] },
+  { id: "daily", km: "ប្រចាំថ្ងៃ", en: "Every day", routes: ["today", "calendar"] },
   { id: "life", km: "ជីវិត", en: "Life", routes: ["family", "goals", "memories"] },
   { id: "money", km: "លុយ", en: "Money", routes: ["money", "scan", "summary"] },
   { id: "more", km: "ផ្សេងៗ", en: "More", routes: ["notifications", "settings", "tips", "help"] }
 ];
 const LAUNCHER_ICON = { tips: "heart", help: "help" };
-const LAUNCHER_ORDER = ["today", "calendar", "money", "family", "goals", "memories", "daily", "summary", "scan", "notifications", "settings", "tips", "help"];
+const LAUNCHER_ORDER = ["today", "calendar", "money", "family", "goals", "memories", "summary", "scan", "notifications", "settings", "tips", "help"];
 const LAUNCHER_COLORS = {
   today: ["#ffd25e", "#ff9f2e"], calendar: ["#ff7a9c", "#e8436b"], money: ["#ffb35c", "#f07a1a"], family: ["#b28cff", "#7c4dff"],
   goals: ["#62c3ff", "#2f7ff0"], memories: ["#4fe0c8", "#13a89e"], daily: ["#9ef06a", "#3fb84a"], summary: ["#7ee6a8", "#1fa767"],
@@ -365,7 +365,6 @@ function renderLauncherQuickAdd() {
   const actions = [
     ["add-event", Icons.calendar(), km ? "Event" : "Event", "#ff7a9c"],
     ["add-expense", Icons.expense(), km ? "ចំណាយ" : "Expense", "#ffb35c"],
-    ["add-hobby", Icons.spark(), km ? "ចំណង់ចំណូលចិត្ត" : "Hobby", "#9ef06a"],
     ["add-memory", Icons.memory(), km ? "អនុស្សាវរីយ៍" : "Memory", "#4fe0c8"]
   ];
   return `<section class="app-quick">

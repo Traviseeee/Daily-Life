@@ -992,7 +992,6 @@ function renderHelp() {
     { icon: Icons.family(), title: t("family"), description: t("helpFamily"), tone: "family" },
     { icon: Icons.goal(), title: t("goals"), description: t("helpGoals"), tone: "goals" },
     { icon: Icons.money(), title: t("money"), description: t("helpMoney"), tone: "money" },
-    { icon: Icons.spark(), title: t("daily"), description: t("helpDaily"), tone: "daily" },
     { icon: Icons.heart(), title: t("memories"), description: t("helpMemories"), tone: "memories" },
     { icon: Icons.database(), title: t("backupAndRestore"), description: t("helpBackup"), tone: "backup" }
   ];

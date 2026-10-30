@@ -4,7 +4,6 @@ const routes = [
   { id: "goals", label: "Goals", icon: "goal" },
   { id: "money", label: "Financial", icon: "money" },
   { id: "calendar", label: "Calendar", icon: "calendar" },
-  { id: "daily", label: "Daily life", icon: "spark" },
   { id: "memories", label: "Memories", icon: "memory" }
 ];
 

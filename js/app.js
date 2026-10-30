@@ -313,7 +313,8 @@ const App = {
     const [route = "home", param = ""] = location.hash.replace("#", "").split("?")[0].split("/");
     this.route = route || "home";
     // Today and Summary live inside Home now; old links and bookmarks land there
-    if (this.route === "today" || this.route === "summary") { this.route = "home"; history.replaceState(null, "", "#home"); }
+    // Daily life page removed (30 Oct 2026): reminders show on Home, old links land there too
+    if (this.route === "today" || this.route === "summary" || this.route === "daily") { this.route = "home"; history.replaceState(null, "", "#home"); }
     this.param = param;
   },
   render() {
@@ -342,7 +343,6 @@ const App = {
     else if (route === "goals") app.innerHTML = renderGoals(this.param);
     else if (route === "money") app.innerHTML = renderMoney(this.param || "overview");
     else if (route === "calendar") app.innerHTML = renderCalendar(this.param || "month");
-    else if (route === "daily") app.innerHTML = renderDaily();
     else if (route === "today" && typeof renderToday === "function") app.innerHTML = renderToday();
     else if (route === "memories") app.innerHTML = renderMemories();
     else if (route === "tips") {
@@ -501,7 +501,7 @@ const App = {
     return {
       title: item.title || "MYLIFE alert",
       body: item.body || item.notes || item.category || "It is time.",
-      url: item.url || "/#daily"
+      url: item.url || "/#home"
     };
   },
   async showDueReminder(item) {
@@ -542,7 +542,7 @@ const App = {
         body: reminder.notes || reminder.category || "Reminder time",
         date: reminder.date,
         time: reminder.time || "09:00",
-        url: "/#daily"
+        url: "/#home"
       });
     });
 
@@ -752,7 +752,8 @@ const App = {
     const actions = quickActionList();
     const saved = Array.isArray(appData.profile.quickActions) ? appData.profile.quickActions : [];
     const oldDefault = saved.length === 3 && ["smart-assistant", "add-event", "add-goal"].every(id => saved.includes(id));
-    const selected = saved.length && !oldDefault ? saved : QUICK_ACTION_DEFAULTS;
+    // hobby logging went away with the Daily life page; a saved list keeps the rest
+    const selected = (saved.length && !oldDefault ? saved : QUICK_ACTION_DEFAULTS).filter(id => id !== "add-hobby");
 
     toggle.innerHTML = Icons.plus();
     menu.innerHTML = actions
@@ -784,7 +785,6 @@ const App = {
     if (route === "goals" && typeof bindGoals === "function") bindGoals(this.param);
     if (route === "money" && typeof bindMoney === "function") bindMoney();
     if (route === "calendar" && typeof bindCalendar === "function") bindCalendar();
-    if (route === "daily" && typeof bindDaily === "function") bindDaily();
     if (route === "today" && typeof bindToday === "function") bindToday();
     if (route === "memories" && typeof bindMemories === "function") bindMemories();
     if (route === "tips") {
@@ -1271,12 +1271,11 @@ function prepareWelcomePoster(file) {
 document.addEventListener("DOMContentLoaded", () => Promise.resolve(window.__cssReady).then(() => App.init()));
 
 // The one "+" menu for the whole app (Settings chooses which buttons show).
-const QUICK_ACTION_DEFAULTS = ["add-event", "add-expense", "add-hobby", "add-memory", "add-goal"];
+const QUICK_ACTION_DEFAULTS = ["add-event", "add-expense", "add-memory", "add-goal", "add-bill"];
 function quickActionList() {
   return [
     ["add-event", Icons.calendar(), t("addEvent")],
     ["add-expense", Icons.expense(), t("addExpense")],
-    ["add-hobby", Icons.spark(), t("recordHobby")],
     ["add-memory", Icons.memory(), t("addMemory")],
     ["add-goal", Icons.goal(), t("createGoal")],
     ["add-bill", Icons.bill(), t("addBill")],
