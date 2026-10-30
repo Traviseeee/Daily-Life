@@ -96,10 +96,9 @@ const WalletCard = (() => {
       <article class="wc-card wc-amt-${c.amount}${c.shine ? "" : " no-shine"}${c.upper ? " is-upper" : ""}${c.frame === "full" ? " has-full" : ""}${c.frame === "none" ? " no-photo" : ""}" style="--wc-bg:${escapeAttr(bgOf(c))};--wc-tint:${c.tint / 100}" aria-label="${escapeAttr(L(`នៅសល់ខែ${monthName}`, `Left in ${monthName}`))}">
         ${frameHtml(c)}
         <div class="wc-top">
-          <span class="wc-left"><span class="wc-chip" aria-hidden="true"></span>${ICON.nfc}</span>
+          <span class="wc-left"><span class="wc-chip" aria-hidden="true"></span>${ICON.nfc}<span class="wc-num" aria-hidden="true">•••• ${escapeHtml(c.last4)}</span></span>
           <span class="wc-right"><b class="wc-name">${escapeHtml(c.name)}</b><button type="button" class="wc-edit" data-wc-edit aria-label="${escapeAttr(L("រចនាកាត", "Design card"))}">${ICON.pen}</button></span>
         </div>
-        <div class="wc-num" aria-hidden="true">•••• ${escapeHtml(c.last4)}</div>
         <small class="wc-label">${escapeHtml(L(`នៅសល់សម្រាប់ចាយ · ${monthName}`, `Left to spend · ${monthName}`))}</small>
         <a class="wc-amount money-value${m.left < 0 ? " is-neg" : ""}${hideCls}" href="#money">${escapeHtml(money(m.left))}</a>
         <div class="wc-foot">

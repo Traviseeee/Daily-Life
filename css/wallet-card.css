@@ -192,3 +192,11 @@ html:root #modalRoot .modal.wc-sheet .wc-in input[type="text"] { -webkit-text-fi
 /* card text: light weights only (30 Oct) */
 .wc-card, .wc-card .wc-label, .wc-card .wc-foot { font-weight: 400; }
 .wc-am .wc-amount { font-weight: 500; }
+
+/* layout (30 Oct): •••• digits sit in the chip row, bigger thin amount, wider bottom row, right side free for the photo */
+.wc-left .wc-num { margin: 0 0 0 4px; font-size: 0.74rem; font-weight: 400; letter-spacing: 3px; white-space: nowrap; opacity: .8; }
+.wc-card .wc-label { margin-top: 16px; }
+.wc-card .wc-amount { font-size: 2.6rem; font-weight: 400; line-height: 1.12; }
+.wc-card .wc-foot { gap: 34px; margin-top: auto; padding-top: 10px; }
+.wc-card .wc-foot b { font-weight: 400; }
+@media (max-width: 360px) { .wc-left .wc-num { display: none; } .wc-card .wc-amount { font-size: 2.2rem; } }
