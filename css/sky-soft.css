@@ -84,4 +84,7 @@
   html:root[data-theme="light"] body .page .financial-shortcuts .financial-shortcut.active { color: #fff !important; background: linear-gradient(135deg, #3d8bff, #1f6fe8) !important; border-color: transparent !important; box-shadow: 0 6px 14px rgba(31,111,232,.3) !important; }
   html:root[data-theme="light"] body .page .financial-shortcuts .financial-shortcut :is(span, svg) { color: inherit !important; }
   html:root[data-theme="light"] body .page .financial-shortcuts .financial-shortcut.active * { color: #fff !important; }
+  /* Focus tiles when done: lighter blue (was too dark) */
+  html:root[data-theme="light"] body .hv2 .fx-tile.done label { background: linear-gradient(135deg, #8ec2ff, #5ea2fb) !important; box-shadow: 0 8px 18px -10px rgba(47,123,245,.45) !important; }
+  html:root[data-theme="light"] body .hv2 .fx-seg i.on { background: linear-gradient(90deg, #8ec2ff, #5ea2fb) !important; }
 }
