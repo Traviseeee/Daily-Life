@@ -164,9 +164,10 @@ const OAuthGate = {
   },
   // checked every time the app opens (31 Oct): someone removed from the family is
   // turned away next time, even on a device that let them in before
-  checked: new Set(),
+  // also again every 2 minutes while it stays open (the cloud pull runs every minute)
+  checked: new Map(),
   needsCheck(user) {
-    return Boolean(user?.id) && !this.checked.has(user.id);
+    return Boolean(user?.id) && !(Date.now() - (this.checked.get(user.id) || 0) < 120000);
   },
   invitePending() {
     try { return Boolean(sessionStorage.getItem("mylife:family-join") || localStorage.getItem("mylife:family-join")); } catch (error) { return false; }
@@ -188,7 +189,7 @@ const OAuthGate = {
         if (member.error) throw member.error;
         ok = (member.data || []).length > 0;
       }
-      if (ok) { this.checked.add(user.id); this.approve(user.id); return true; }
+      if (ok) { this.checked.set(user.id, Date.now()); this.approve(user.id); return true; }
       await this.block(client, "not_linked");
       return false;
     } catch (error) {
