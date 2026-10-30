@@ -147,8 +147,8 @@ const removeLegacyKeys = keys => {
 
 // Sign-ups are open in Supabase (so invited family can join), and Google creates an
 // account for ANY Google user. MYLIFE is private, so an account is let in only when
-// it already has MYLIFE data (an existing account), came with a family invite link,
-// or is already in a family. Otherwise it is signed out before anything is read
+// it is in the family (owner = admin member) or came with a family invite link;
+// it is checked every time the app opens. Otherwise it is signed out before anything is read
 // from or written to this device, and the owner gets a Telegram alert.
 const OAuthGate = {
   KEY: "mylife:oauth-ok",
@@ -162,9 +162,11 @@ const OAuthGate = {
     const providers = this.providers(user);
     return providers.length > 0 && !providers.includes("email");
   },
-  // every account is checked once per device, then remembered
+  // checked every time the app opens (31 Oct): someone removed from the family is
+  // turned away next time, even on a device that let them in before
+  checked: new Set(),
   needsCheck(user) {
-    return Boolean(user?.id) && !this.approved().includes(user.id);
+    return Boolean(user?.id) && !this.checked.has(user.id);
   },
   invitePending() {
     try { return Boolean(sessionStorage.getItem("mylife:family-join") || localStorage.getItem("mylife:family-join")); } catch (error) { return false; }
@@ -178,25 +180,22 @@ const OAuthGate = {
   },
   async check(client, user, row) {
     try {
-      let payload = row === undefined ? undefined : toPayloadObject(row?.payload);
-      if (payload === undefined) {
-        const { data, error } = await client.from(SUPABASE_TABLE).select("payload").eq("user_id", user.id).maybeSingle();
-        if (error) throw error;
-        payload = toPayloadObject(data?.payload);
-      }
-      let ok = Boolean(payload && !isEmptyPayload(payload)) || this.invitePending();
+      // private app (31 Oct): only people in the family (the owner is its admin) or someone
+      // opening an invite link may use MYLIFE; having old data is no longer enough
+      let ok = this.invitePending();
       if (!ok) {
         const member = await client.from("family_members").select("family_id").eq("user_id", user.id).limit(1);
-        ok = !member.error && (member.data || []).length > 0;
+        if (member.error) throw member.error;
+        ok = (member.data || []).length > 0;
       }
-      if (ok) { this.approve(user.id); return true; }
+      if (ok) { this.checked.add(user.id); this.approve(user.id); return true; }
       await this.block(client, "not_linked");
       return false;
     } catch (error) {
       console.warn("MYLIFE: could not check the account", error);
-      // an email/password account is a normal MYLIFE login: let it in and check
-      // again next time; only a Google-only account is turned away when unsure
-      if (!this.oauthOnly(user)) return true;
+      // offline / server busy: an account this device already knew, or an email login,
+      // is let in and checked again next time; an unknown Google-only account is turned away
+      if (this.approved().includes(user.id) || !this.oauthOnly(user)) return true;
       await this.block(client, "check_failed");
       return false;
     }

@@ -338,7 +338,7 @@ const Login = {
     try { sessionStorage.removeItem("mylife:oauth-pending"); } catch (error) { /* ignore */ }
     const text = reason === "check_failed"
       ? (km ? "មិនអាចពិនិត្យគណនី Google បានទេ។ សូមពិនិត្យ internet ហើយសាកម្ដងទៀត។" : "Couldn't check this Google account. Check your internet and try again.")
-      : (km ? "គណនី Google នេះមិនទាន់ភ្ជាប់ជាមួយ MYLIFE ទេ។ សូម login ដោយ email និងពាក្យសម្ងាត់ ឬសុំ invite link ពីម្ចាស់គ្រួសារ។" : "This Google account isn't part of MYLIFE yet. Log in with your email and password, or ask the family owner for an invite link.");
+      : (km ? "គណនីនេះមិនមែនជាសមាជិកគ្រួសារ MYLIFE ទេ (ឬត្រូវបានដកចេញ)។ សូមសុំ link អញ្ជើញថ្មីពីម្ចាស់គ្រួសារ។" : "This account isn't in the MYLIFE family (or was removed). Ask the family owner for a new invite link.");
     if (!this.isOpen) this.open();
     const show = () => { const box = document.getElementById("loginError"); if (box) box.textContent = text; };
     show();
