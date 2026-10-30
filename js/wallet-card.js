@@ -313,7 +313,9 @@ const WalletCard = (() => {
     if (event.target.closest(".wc-card [data-wc-edit]")) { event.preventDefault(); open(); }
   });
 
-  return { render, open };
+  // card colour for other places (Money hero uses the same colour as the Home card)
+  const bg = () => bgOf(conf());
+  return { render, open, bg };
 })();
 
 if (typeof window !== "undefined") window.WalletCard = WalletCard;

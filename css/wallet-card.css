@@ -263,3 +263,18 @@ html:root #modalRoot .modal.wc-sheet .wc-in input[type="text"] { -webkit-text-fi
 .wc-tk-top::before { content: ""; position: absolute; left: -40%; top: -60%; z-index: 0; width: 40%; height: 220%; pointer-events: none; background: linear-gradient(90deg, transparent, rgba(255,255,255,.18), transparent); transform: rotate(18deg); animation: wcShine 5s ease-in-out 1.2s 1 both; }
 .wc-tk.no-shine .wc-tk-top::before { display: none; }
 .wc-preview .wc-tk-edit { visibility: hidden; }
+
+/* 31 Oct: ticket stub follows the card colour (darker shade), both themes */
+html:root body .wc-tk .wc-tk-bot { border-top: 2px dashed rgba(255,255,255,.35); color: rgba(255,255,255,.82); background: linear-gradient(rgba(0,0,0,.26), rgba(0,0,0,.26)), var(--wc-bg, linear-gradient(135deg, #1b2b6b, #2e4bdc 60%, #1e8fff)); }
+html:root body .wc-tk .wc-tk-bot > span + span { border-left-color: rgba(255,255,255,.16); }
+html:root body .wc-tk .wc-tk-bot b { color: #fff; }
+html:root body .wc-tk .wc-tk-bot i.is-out { color: #ffb4b4 !important; background: rgba(255,255,255,.16); }
+html:root body .wc-tk .wc-tk-bot i.is-today { color: #cfe2ff; background: rgba(255,255,255,.16); }
+html:root body .wc-tk .wc-tk-bot i.is-ok { color: #b9f5cf; background: rgba(255,255,255,.16); }
+/* Money hero in dark mode uses the Home card colour too */
+html:root:not([data-theme="light"]) body .page .fv2-hero.has-card-bg:not(.is-short) { color: #fff !important; background: var(--wc-bg) !important; }
+html:root:not([data-theme="light"]) body .page .fv2-hero.has-card-bg:not(.is-short) :is(small, .fv2-hero-value, .fv2-t3-item b, .fv2-t3-item small) { color: #fff !important; -webkit-text-fill-color: #fff !important; }
+html:root:not([data-theme="light"]) body .page .fv2-hero.has-card-bg:not(.is-short) .fv2-hero-bar { background: rgba(255,255,255,.28); }
+html:root:not([data-theme="light"]) body .page .fv2-hero.has-card-bg:not(.is-short) .fv2-hero-bar i { background: #fff; }
+html:root:not([data-theme="light"]) body .page .fv2-hero.has-card-bg:not(.is-short) .fv2-t3-item { background: rgba(255,255,255,.14) !important; }
+html:root:not([data-theme="light"]) body .page .fv2-hero.has-card-bg:not(.is-short) .fv2-period-chip { color: #fff !important; background: rgba(255,255,255,.2) !important; }

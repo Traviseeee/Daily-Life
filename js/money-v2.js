@@ -83,7 +83,8 @@ const MoneyV2 = (() => {
     const third = perDay
       ? `<span class="fv2-t3-item"><small>${escapeHtml(L("ក្នុងមួយថ្ងៃ", "Per day"))}</small><b>${money(left / Math.max(1, daysBetween(today, moneyPeriodRange({ kind: "month", anchor: range.anchor }).end) + 1))}</b></span>`
       : `<span class="fv2-t3-item"><small>${escapeHtml(L("នៃចំណូល", "Of income"))}</small><b>${income ? `${Math.round((spent / income) * 100)}%` : "–"}</b></span>`;
-    return `<section class="fv2-hero ${short ? "is-short" : ""}">
+    const cardBg = typeof WalletCard !== "undefined" && WalletCard.bg ? WalletCard.bg() : "";
+    return `<section class="fv2-hero ${short ? "is-short" : ""}${cardBg ? " has-card-bg" : ""}"${cardBg ? ` style="--wc-bg:${escapeAttr(cardBg)}"` : ""}>
       <div class="fv2-hero-top"><small>${escapeHtml(label)}</small><button type="button" class="fv2-period-chip" data-fv2-period aria-expanded="${periodOpen}">${escapeHtml(range.label)} ▾</button></div>
       <strong class="fv2-hero-value">${short ? "−" : ""}${full(Math.abs(left))}</strong>
       ${short ? `<span class="fv2-hero-warn">⚠ ${escapeHtml(L("ចាយលើសចំណូល", "Spent more than income"))}</span>` : ""}
