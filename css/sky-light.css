@@ -47,3 +47,15 @@
   html:root[data-theme="light"] .page .financial-shortcuts .financial-shortcut.active { color: #1e7cf0 !important; background: #fff !important; border: 0 !important; box-shadow: inset 0 0 0 2px #1e8fff, 0 6px 14px rgba(0,60,160,.18) !important; }
   html:root[data-theme="light"] .page .financial-shortcuts .financial-shortcut.active * { color: #1e7cf0 !important; font-weight: 800; }
 }
+
+/* dark mode, phone: the same faint grid in lime over the dark green (30 Oct) */
+@media (max-width: 900px) {
+  html:root:not([data-theme="light"]) .ambient { display: none !important; }
+  html:root:not([data-theme="light"]) .app-main {
+    background: linear-gradient(rgba(217,255,123,.09) 1.5px, transparent 1.5px) 0 0 / 46px 46px, linear-gradient(90deg, rgba(217,255,123,.09) 1.5px, transparent 1.5px) 0 0 / 46px 46px,
+      linear-gradient(180deg, #1f3d2c 0, #183526 220px, #12271d 460px, #0b1712 700px) top / 100% 760px no-repeat #0b1712 !important;
+  }
+  html:root:not([data-theme="light"]) :is(.hv2-head, .cv2-hero, .fv-hero, .mf2-hero, .gv-hero, .sv-hero, .lv-hero) { background: transparent !important; box-shadow: none !important; }
+  html:root:not([data-theme="light"]) #app, html:root:not([data-theme="light"]) #app > .page { background: transparent !important; }
+  html:root:not([data-theme="light"]) .app-main .topbar { background: transparent !important; box-shadow: none !important; border-color: transparent !important; }
+}
