@@ -267,7 +267,7 @@ html body .hv2-alert.is-amber { color: #8a4b00; background: #fff1d6; }
    Deep blue #1e8fff only behind the header (white text), white before the black text starts. ---- */
 @media (max-width: 900px) {
   :root[data-theme="light"] body.topbar-home .ambient{display:none!important}
-  :root[data-theme="light"] body.topbar-home .app-main{background:#fff linear-gradient(180deg,#1e8fff 0,#1e8fff 110px,#4fa6ff 240px,#9dccff 380px,#dcecff 500px,#f5f9ff 580px,#ffffff 640px) no-repeat top/100% 700px!important}
+  :root[data-theme="light"] body.topbar-home .app-main{background:linear-gradient(rgba(255,255,255,.2) 1.5px, transparent 1.5px) 0 0 / 46px 46px, linear-gradient(90deg, rgba(255,255,255,.2) 1.5px, transparent 1.5px) 0 0 / 46px 46px, linear-gradient(180deg,#1e8fff 0,#1e8fff 110px,#4fa6ff 240px,#9dccff 380px,#dcecff 500px,#f5f9ff 580px,#ffffff 640px) top / 100% 700px no-repeat #fff!important}
   :root[data-theme="light"] body.topbar-home{background:#fff!important}
   :root[data-theme="light"] .hv2{--hv-head:transparent;--hv-shadow:0 8px 24px rgba(30,120,255,.10);--hv-line:#e8f0fb}
   :root[data-theme="light"] .hv2-hello small{color:rgba(255,255,255,.85)}

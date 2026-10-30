@@ -4,7 +4,7 @@
 @media (max-width: 900px) {
   html:root[data-theme="light"] body { background: #fff !important; }
   html:root[data-theme="light"] .ambient { display: none !important; }
-  html:root[data-theme="light"] .app-main { background: #fff linear-gradient(180deg,#1e8fff 0,#1e8fff 110px,#4fa6ff 240px,#9dccff 380px,#dcecff 500px,#f5f9ff 580px,#ffffff 640px) no-repeat top/100% 700px !important; }
+  html:root[data-theme="light"] .app-main { background: linear-gradient(rgba(255,255,255,.2) 1.5px, transparent 1.5px) 0 0 / 46px 46px, linear-gradient(90deg, rgba(255,255,255,.2) 1.5px, transparent 1.5px) 0 0 / 46px 46px, linear-gradient(180deg,#1e8fff 0,#1e8fff 110px,#4fa6ff 240px,#9dccff 380px,#dcecff 500px,#f5f9ff 580px,#ffffff 640px) top / 100% 700px no-repeat #fff !important; }
   html:root[data-theme="light"] .app-main .topbar { background: transparent !important; box-shadow: none !important; border-color: transparent !important; }
   html:root[data-theme="light"] :is(.cv2-hero, .fv-hero, .mf2-hero, .gv-hero, .sv-hero, .lv-hero) { background: transparent !important; box-shadow: none !important; }
   html:root[data-theme="light"] :is(.cv2-hero h1, .fv-title h1, .mf2-title, .gv-title, .sv-hero h1, .page-header .page-title, .lv-hi-tx b, .fv-av b, .mf-person small, .lv-sec b) { color: #fff !important; }
