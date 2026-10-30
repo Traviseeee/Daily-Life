@@ -78,6 +78,14 @@ const MoneyV2 = (() => {
         label += ` · ${monthRange.label}`;
       }
     }
+    // current month: same ticket card as Home (31 Oct); other periods keep the summary hero below
+    if (range.kind === "month" && moneyPeriodRange({ kind: "month", anchor: range.anchor }).isCurrent && typeof WalletCard !== "undefined") {
+      const chip = `<button type="button" class="fv2-period-chip wc-tk-period" data-fv2-period aria-expanded="${periodOpen}">${escapeHtml(range.label)} ▾</button>`;
+      return WalletCard.render({ ...m, left, income, expenses: spent }, today)
+        .replace(/<div class="wc-mini">[\s\S]*?<\/div>\s*<\/section>/, "</section>")
+        .replace('<section class="hv2-money wc-wrap">', '<section class="hv2-money wc-wrap fv2-ticket">')
+        .replace('<button type="button" class="wc-edit wc-tk-edit"', `${chip}<button type="button" class="wc-edit wc-tk-edit"`);
+    }
     const pct = income ? Math.min(100, Math.round((spent / income) * 100)) : 0;
     const short = left < 0;
     const third = perDay
