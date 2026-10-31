@@ -324,10 +324,12 @@ const WalletCard = (() => {
     ["sky", "#eef5ff", "#cfe2ff", "Sky", "Sky"], ["rose", "#fff0f4", "#ffd0de", "Rose", "Rose"],
     ["lemon", "#fffbe8", "#fff0b3", "Lemon", "Lemon"], ["mauve", "#f7eff4", "#e6cbdc", "Mauve", "Mauve"]
   ];
+  // Nomi sticker on the card: "auto" follows today's spending, or pin one mood (31 Oct)
+  const MOODS = [["auto", "ស្វ័យប្រវត្តិ", "Auto"], ["happy", "សប្បាយ", "Happy"], ["cheer", "រំភើប", "Cheer"], ["love", "ស្រលាញ់", "Love"], ["wink", "ព្រិចភ្នែក", "Wink"], ["proud", "មោទនភាព", "Proud"], ["calm", "ស្ងប់", "Calm"], ["sleepy", "ងងុយ", "Sleepy"], ["worry", "បារម្ភ", "Worry"]];
   const softConf = () => {
     const raw = appData.profile?.walletCard || {};
     const s = raw.soft || {};
-    return { tint: TINTS.some(t => t[0] === s.tint) ? s.tint : "white", nomi: s.nomi !== false, talk: s.talk !== false, track: s.track !== false, hide: !!raw.hide };
+    return { tint: TINTS.some(t => t[0] === s.tint) ? s.tint : "white", mood: MOODS.some(x => x[0] === s.mood) ? s.mood : "auto", nomi: s.nomi !== false, talk: s.talk !== false, track: s.track !== false, hide: !!raw.hide };
   };
   const tintOf = id => TINTS.find(t => t[0] === id) || TINTS[0];
   function openSoft() {
@@ -352,6 +354,8 @@ const WalletCard = (() => {
           </section>
           <section data-wc-panel="nomi">
             ${tg("wcNomi", "🐾", "បង្ហាញ Nomi លើកាត", "Show Nomi on the card")}
+            <p class="wc-lbl" data-wc-moods-lbl><span>${escapeHtml(L("ស្ទីគ័រ Nomi លើកាត", "Nomi sticker on the card"))}</span></p>
+            <div class="wc-moods" data-wc-moods>${MOODS.map(([id, k, e]) => `<button type="button" class="wc-mood" data-wc-mood="${id}">${id === "auto" ? `<i class="wc-mood-auto">✨</i>` : `<i>${HomeV2.buddy(id)}</i>`}<span>${escapeHtml(L(k, e))}</span></button>`).join("")}</div>
             ${tg("wcTalk", "💬", "Nomi និយាយពីការចាយ", "Nomi talks about spending")}
           </section>
           <section data-wc-panel="more">
@@ -371,12 +375,14 @@ const WalletCard = (() => {
     const el = form.elements;
     const paint = () => {
       const saved = appData.profile.walletCard;
-      appData.profile.walletCard = { ...(saved || {}), hide: draft.hide, soft: { tint: draft.tint, nomi: draft.nomi, talk: draft.talk, track: draft.track } }; // preview only
+      appData.profile.walletCard = { ...(saved || {}), hide: draft.hide, soft: { tint: draft.tint, mood: draft.mood, nomi: draft.nomi, talk: draft.talk, track: draft.track } }; // preview only
       host.innerHTML = HomeV2.softArticle(localDateInput(), m);
       appData.profile.walletCard = saved;
       form.querySelectorAll("[data-wc-tab]").forEach(b => { const on = b.dataset.wcTab === tab; b.classList.toggle("on", on); b.setAttribute("aria-selected", on); });
       form.querySelectorAll("[data-wc-panel]").forEach(p => { p.hidden = p.dataset.wcPanel !== tab; });
       form.querySelectorAll("[data-wc-tint]").forEach(b => b.classList.toggle("on", b.dataset.wcTint === draft.tint));
+      form.querySelectorAll("[data-wc-mood]").forEach(b => b.classList.toggle("on", b.dataset.wcMood === draft.mood));
+      form.querySelector("[data-wc-moods]").classList.toggle("is-off", !draft.nomi);
       el.wcNomi.checked = draft.nomi; el.wcTalk.checked = draft.talk; el.wcTalk.disabled = !draft.nomi;
       el.wcTrack.checked = draft.track; el.wcHide.checked = draft.hide;
     };
@@ -386,14 +392,15 @@ const WalletCard = (() => {
       if (!b || b.type === "submit") return;
       if (b.dataset.wcTab) { tab = b.dataset.wcTab; paint(); }
       else if (b.dataset.wcTint) { draft.tint = b.dataset.wcTint; paint(); }
-      else if (b.hasAttribute("data-wc-reset")) { draft = { tint: "white", nomi: true, talk: true, track: true, hide: false }; paint(); }
+      else if (b.dataset.wcMood) { draft.mood = b.dataset.wcMood; paint(); }
+      else if (b.hasAttribute("data-wc-reset")) { draft = { tint: "white", mood: "auto", nomi: true, talk: true, track: true, hide: false }; paint(); }
     });
     [["wcNomi", "nomi"], ["wcTalk", "talk"], ["wcTrack", "track"], ["wcHide", "hide"]].forEach(([n, k]) => el[n].addEventListener("change", e => { draft[k] = e.target.checked; paint(); }));
     form.addEventListener("submit", event => {
       event.preventDefault();
       const raw = appData.profile.walletCard || {};
       Modal.close();
-      Store.updateProfile({ walletCard: { ...raw, hide: !!draft.hide, soft: { tint: draft.tint, nomi: draft.nomi, talk: draft.talk, track: draft.track } } });
+      Store.updateProfile({ walletCard: { ...raw, hide: !!draft.hide, soft: { tint: draft.tint, mood: draft.mood, nomi: draft.nomi, talk: draft.talk, track: draft.track } } });
       Toast.show(L("បានរក្សាទុកកាត", "Card saved"), "success");
     });
     paint();

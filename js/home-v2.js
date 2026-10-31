@@ -307,7 +307,7 @@ const HomeV2 = (() => {
     // card settings from "Design my card" (walletCard.soft): tint + glow, Nomi, talk, month line
     const sc = typeof WalletCard !== "undefined" && WalletCard.softConf ? WalletCard.softConf() : { tint: "white", nomi: true, talk: true, track: true };
     const tint = typeof WalletCard !== "undefined" && WalletCard.tintOf ? WalletCard.tintOf(sc.tint) : ["white", "#ffffff", "#ffe1d2"];
-    const mood = moneyMood(m, spentToday, perDay);
+    const mood = sc.mood && sc.mood !== "auto" ? sc.mood : moneyMood(m, spentToday, perDay);
     return `<article class="wc-card hv2-soft${m.left < 0 ? " is-short" : ""}${sc.nomi ? "" : " no-nomi"}" style="--sc-bg:${tint[1]};--sc-glow:${tint[2]}">
         <span class="hv2-soft-glow" aria-hidden="true"></span>${top}
         ${sc.nomi ? `<span class="hv2-soft-buddy" data-nomi data-mood="${mood}" role="button" tabindex="0" aria-label="Nomi">${MASCOT_FN(mood)}${sc.talk ? `<span class="hv2-say" data-nomi-say>${escapeHtml(L(...(MONEY_SAY[mood] || MONEY_SAY.happy)))}</span>` : ""}</span>` : ""}
