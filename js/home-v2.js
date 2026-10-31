@@ -315,8 +315,14 @@ const HomeV2 = (() => {
         <a class="hv2-soft-amt money-value${hide}" href="#money">${escapeHtml(plainMoney(m.left))}</a>
         <span class="hv2-soft-pill">${escapeHtml(L(`ចាយរួច ${pct}% · ${daysLeft} ថ្ងៃទៀត`, `${pct}% spent · ${daysLeft} days left`))}</span>
         ${sc.track ? track : ""}
-        <p class="hv2-soft-foot">${escapeHtml(L("ចាយ", "Spent"))} <b class="money-value${hide}">${escapeHtml(plainMoney(m.expenses))}</b> / ${escapeHtml(L("ថវិកា", "Budget"))} <b class="money-value${hide}">${escapeHtml(plainMoney(m.income))}</b> · <button type="button" class="hv2-soft-edit" data-wc-edit>✎ ${escapeHtml(L("កែកាត", "Edit card"))}</button></p>
-        <div class="hv2-soft-t3"><span>↑ ${escapeHtml(L("ចាយ", "Spent"))}<b class="money-value${hide}">${escapeHtml(plainMoney(m.expenses))}</b></span><span>● ${escapeHtml(L("ថ្ងៃនេះ", "Today"))}<b class="money-value${hide}">${escapeHtml(plainMoney(spentToday))}</b></span><span>✓ ${escapeHtml(L("ចាយបាន/ថ្ងៃ", "Per day"))}<b class="money-value${hide}">${escapeHtml(plainMoney(perDay))}</b></span></div>
+        <div class="hv2-soft-b">
+          <div class="hv2-soft-bud"><span>${escapeHtml(L("ថវិកាខែនេះ", "Budget this month"))} <b class="money-value${hide}">${escapeHtml(plainMoney(m.income))}</b></span><button type="button" class="hv2-soft-edit" data-wc-edit>✎ ${escapeHtml(L("កែកាត", "Edit card"))}</button></div>
+          <div class="hv2-soft-a3">
+            <div class="hv2-soft-t is-spent"><em aria-hidden="true">↑</em><small>${escapeHtml(L("ចាយរួច", "Spent"))}</small><b class="money-value${hide}">${escapeHtml(plainMoney(m.expenses))}</b><span>${escapeHtml(L(`${pct}% នៃថវិកា`, `${pct}% of budget`))}</span></div>
+            <div class="hv2-soft-t is-today"><em aria-hidden="true">☀️</em><small>${escapeHtml(L("ថ្ងៃនេះ", "Today"))}</small><b class="money-value${hide}">${escapeHtml(plainMoney(spentToday))}</b><span>${escapeHtml(spentToday === 0 ? L("មិនទាន់ចាយ 👍", "Nothing yet 👍") : spentToday > perDay ? L("លើសកម្រិតហើយ", "Over the daily limit") : L("ក្នុងកម្រិត", "Within the limit"))}</span></div>
+            <div class="hv2-soft-t is-day"><em aria-hidden="true">✓</em><small>${escapeHtml(L("ចាយបាន/ថ្ងៃ", "Per day"))}</small><b class="money-value${hide}">${escapeHtml(plainMoney(perDay))}</b><span>${escapeHtml(L(`${daysLeft} ថ្ងៃទៀត`, `${daysLeft} days left`))}</span></div>
+          </div>
+        </div>
       </article>`;
   }
 
@@ -344,13 +350,7 @@ const HomeV2 = (() => {
     const over = perDay > 0 ? spentToday > perDay : spentToday > 0;
     return `<section class="hv2-money wc-wrap hv2-soft-wrap">
       ${softArticle(d.todayIso, m)}
-      <a class="hv2-row-today" href="#money/expenses">
-        <span class="hv2-row-e" aria-hidden="true">💰</span>
-        <span class="hv2-row-mid"><b>${escapeHtml(L("ចាយថ្ងៃនេះ", "Spent today"))}</b><em class="${over ? "is-over" : ""}">${escapeHtml(over ? L("លើសហើយ", "Over") : L("ល្អ", "Good"))}</em>
-          <span class="hv2-row-seg">${Array.from({ length: segs }, (_, i) => `<i class="${i < filled ? (over ? "on over" : "on") : ""}"></i>`).join("")}</span></span>
-        <span class="hv2-row-badge${over ? " is-over" : ""}"><span class="money-value${hide}">$${Math.round(spentToday).toLocaleString("en-US")}</span>/$${Math.round(perDay).toLocaleString("en-US")}</span>
-      </a>
-      ${mini}${dueHtml}
+      ${dueHtml}
     </section>`;
   }
 
@@ -518,21 +518,38 @@ const HomeV2 = (() => {
     </details>`;
   }
 
+  // Home v3 (31 Oct): no repeats, grouped by urgency, one header style.
+  // alerts → money card + quick add → coming up → focus (one card, folds when all done) → me (mood + reflection) → memories
+  const icHead = (html, ic) => html.replace('<div class="hv2-sec">', `<div class="hv2-sec" data-ic="${ic}">`);
+  const noHead = html => html.replace(/^\s*<div class="hv2-sec">[\s\S]*?<\/div>\s*/, "");
+  function homeV3(d) {
+    const fm = progMood(d);
+    const focus = icHead(focusCard(d), "🎯").replace('<div class="fx-head">', `<div class="fx-head" data-fx-toggle><span class="fx-nomi" data-nomi data-mood="${fm}" role="button" tabindex="0" aria-label="Nomi">${buddy(fm)}</span>`);
+    return `<div class="hv2-body hv2-v3">
+        ${alerts(d)}
+        ${money(d)}
+        ${quick()}
+        ${icHead(schedule(d), "📅")}
+        ${focus}
+        <div class="hv2-sec" data-ic="💜"><b>${escapeHtml(L("ខ្ញុំថ្ងៃនេះ", "Me today"))}</b></div>
+        <section class="hv2-me">${noHead(moodCard(d))}${noHead(reflection(d))}</section>`;
+  }
+
   function render() {
     const d = data();
     MOOD_NOW = buddyMood(d);
     return `<section class="page home-featured-page hv2">
       ${header(d)}
-      <div class="hv2-body">
+      ${lav() ? homeV3(d) : `<div class="hv2-body">
         ${alerts(d)}
-        ${lav() ? progress(d) : nextUp(d)}
+        ${nextUp(d)}
         ${money(d)}
         ${quick()}
         ${schedule(d)}
         ${focusCard(d)}
         ${moodCard(d)}
-        ${reflection(d)}
-        ${typeof MemoryFeed !== "undefined" ? `<div class="hv2-sec"><b>${escapeHtml(L("អនុស្សាវរីយ៍គ្រួសារ", "Family memories"))}</b><a class="hv2-link" href="#memories">${escapeHtml(L("ទាំងអស់", "All"))} ›</a></div>${MemoryFeed.familyTeaser()}` : ""}
+        ${reflection(d)}`}
+        ${typeof MemoryFeed !== "undefined" ? `<div class="hv2-sec"${lav() ? ' data-ic="📸"' : ""}><b>${escapeHtml(L("អនុស្សាវរីយ៍គ្រួសារ", "Family memories"))}</b><a class="hv2-link" href="#memories">${escapeHtml(L("ទាំងអស់", "All"))} ›</a></div>${MemoryFeed.familyTeaser()}` : ""}
       </div>
     </section>`;
   }
@@ -553,6 +570,8 @@ const HomeV2 = (() => {
   document.addEventListener("click", event => {
     const go = event.target.closest("[data-hv2-go]");
     if (go) { location.hash = go.dataset.hv2Go; return; }
+    const fxHead = event.target.closest("[data-fx-toggle]");
+    if (fxHead && !event.target.closest("[data-nomi]")) { fxHead.closest(".hv2-fx")?.classList.toggle("is-open"); return; }
     const nomi = event.target.closest("[data-nomi]");
     if (nomi) {
       try { localStorage.setItem("mylife:nomi-hi", "1"); } catch (error) { /* ignore */ }
