@@ -351,3 +351,29 @@
   .fam2.is-lav .fv-tg-bar { margin-top: 2px; }
   .fv-member.is-lav .fv-mname { margin: 0 !important; padding: 0 !important; }
 }
+
+/* Family closer to the draft (31 Oct): hero covers the avatars, compact side-by-side days-together card */
+@media all {
+  html:root[data-theme="light"] body:not(.topbar-home) #app > .page.fam2.is-lav::before { height: 360px !important; }
+  .fam2.is-lav .fv-talk { margin: 4px 0 6px; }
+  .fam2.is-lav .fv-nomi { width: 70px; height: 64px; }
+  .fam2.is-lav .fv-avs { margin-top: 6px; gap: 10px; }
+  .fam2.is-lav .fv-av { width: 60px; }
+  .fam2.is-lav .fv-ring { width: 54px; height: 54px; background: rgba(255,255,255,.7); }
+  .fam2.is-lav .fv-av.is-love .fv-ring { background: linear-gradient(130deg, #ffd0de, #ff8fb0); }
+  .fam2.is-lav .fv-av.is-add .fv-ring { background: rgba(255,255,255,.25); box-shadow: none; }
+  html:root[data-theme="light"] .fam2.is-lav .fv-av.is-add .fv-face { color: #fff; background: transparent; border: 2px dashed rgba(255,255,255,.8); }
+  html:root[data-theme="light"] .fam2.is-lav .fv-av b { color: #fff !important; font-size: .72rem; }
+  html:root[data-theme="light"] .fam2.is-lav .fv-av small { color: rgba(255,255,255,.85) !important; font-size: .64rem; }
+  .fam2.is-lav .fv-hero { padding-bottom: 6px; }
+
+  html:root[data-theme="light"] .fam2.is-lav .fv-tg { grid-template-columns: 96px minmax(0, 1fr); grid-template-areas: "nomi top" "nomi lbl" "nomi n" "nomi ymd" "bar bar" "foot foot"; justify-items: start; align-items: center; column-gap: 10px; padding: 14px 16px; text-align: left; background: radial-gradient(40% 70% at 12% 40%, #ffe4ee, transparent 70%), #fff; }
+  .fam2.is-lav .fv-tg-nomi { grid-area: nomi; width: 96px; height: 90px; margin: 0; }
+  .fam2.is-lav .fv-tg > .fv-tg-top { grid-area: top; justify-content: flex-start; }
+  .fam2.is-lav .fv-tg-lbl { grid-area: lbl; margin-top: 2px; }
+  .fam2.is-lav .fv-tg-n { grid-area: n; font-size: 2.5rem; }
+  .fam2.is-lav .fv-tg-ymd { grid-area: ymd; margin: 2px 0 0; }
+  .fam2.is-lav .fv-tg > .fv-tg-bar { grid-area: bar; margin-top: 14px; }
+  .fam2.is-lav .fv-tg > .fv-tg-foot { grid-area: foot; }
+  .fam2.is-lav .fv-tg-face { width: 24px; height: 24px; }
+}
