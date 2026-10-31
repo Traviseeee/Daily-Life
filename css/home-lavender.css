@@ -4,15 +4,19 @@
    week strip in one white bar, "today's progress" card, white list cards, white pill footer.
    Markup: js/home-v2.js (lav() → .hv2-head.is-lav, .hv2-stats, .hv2-prog). Dark mode is not touched. */
 @media (max-width: 900px) {
-  html:root[data-theme="light"] body.topbar-home .app-main { background: #F3F1F4 !important; }
+  /* the purple is not a cut block: it fades from the top into the page (like the reference) */
+  html:root[data-theme="light"] body.topbar-home .app-main { background:
+      radial-gradient(45% 260px at 88% 150px, rgba(255, 214, 190, .55) 0, transparent 70%),
+      radial-gradient(60% 220px at 0 260px, rgba(203, 172, 193, .45) 0, transparent 70%),
+      linear-gradient(180deg, #5a4fc4 0, #6f64d2 90px, #8f84df 190px, #b9aeec 280px, #ddd6f4 360px, #F3F1F4 440px) top / 100% 460px no-repeat,
+      #F3F1F4 !important; }
   html:root[data-theme="light"] body.topbar-home { background: #F3F1F4 !important; }
   html:root[data-theme="light"] .hv2 { --lv-a: #504AB9; --lv-b: #282694; --lv-m: #CBACC1; --lv-p: #E6986B; --lv-ink: #1A2347; --lv-sub: #7a7698; --lv-card: #fff; --lv-sh: none; --lv-line: #ebe8f4; }
 
   /* hero */
   html:root[data-theme="light"] .hv2-head.is-lav { gap: 0; margin: 0 0 14px; padding: 0; background: none !important; border-radius: 0; box-shadow: none !important; }
   html:root[data-theme="light"] .hv2-head.is-lav::before { display: none !important; }
-  html:root[data-theme="light"] .hv2-hero { position: relative; display: grid; gap: 14px; margin: -4px -16px 0; padding: calc(env(safe-area-inset-top, 0px) + 14px) 16px 86px; border-radius: 0 0 34px 34px; color: #fff;
-    background: radial-gradient(120% 80% at 90% 0, rgba(255,255,255,.22) 0, transparent 55%), linear-gradient(170deg, #504AB9 0, #7f74d6 55%, #CBACC1 100%); }
+  html:root[data-theme="light"] .hv2-hero { position: relative; display: grid; gap: 14px; margin: -4px -16px 0; padding: calc(env(safe-area-inset-top, 0px) + 14px) 16px 86px; border-radius: 0; color: #fff; background: none; }
   html:root[data-theme="light"] .hv2-hero :is(.hv2-hello b, .hv2-title h1, .hv2-hello small) { color: #fff !important; -webkit-text-fill-color: #fff; }
   html:root[data-theme="light"] .hv2-hero .hv2-hello small { opacity: .88; }
   html:root[data-theme="light"] .hv2-hero .hv2-title h1 { font-size: 1.12rem !important; font-weight: 600; }
