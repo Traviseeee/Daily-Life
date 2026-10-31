@@ -382,3 +382,18 @@
   html:root[data-theme="light"] .fam2.is-lav .fv-av:is(.is-love, .is-party, :not(.is-add)) .fv-ring { background: rgba(255,255,255,.75) !important; box-shadow: 0 0 0 1px rgba(255,255,255,.4); }
   html:root[data-theme="light"] .fam2.is-lav .fv-av .fv-face { border-color: #fff !important; }
 }
+@media all {
+  html:root[data-theme="light"] body:not(.topbar-home) #app > .page.cv2::before { height: 330px; }
+  html:root[data-theme="light"] .cv2 .cv2-seg { background: rgba(255,255,255,.35) !important; border: 0 !important; box-shadow: none !important; }
+  html:root[data-theme="light"] .cv2 .cv2-seg a { color: #fff !important; }
+  html:root[data-theme="light"] .cv2 .cv2-seg a.on { color: #504AB9 !important; background: #fff !important; box-shadow: none !important; }
+  html:root[data-theme="light"] .cv2 .cv2-c.is-today { color: #fff !important; background: linear-gradient(135deg, #7B68EE, #504AB9) !important; box-shadow: none !important; }
+  html:root[data-theme="light"] .cv2 .cv2-c.is-weekend:not(.is-past):not(.is-today) { color: #d9799a; }
+  html:root[data-theme="light"] .cv2 .cv2-c.is-selected { box-shadow: inset 0 0 0 2px #7B68EE !important; }
+  html:root[data-theme="light"] .cv2 .cv2-free-add { color: #fff; background: linear-gradient(135deg, #7B68EE, #504AB9); }
+  html:root[data-theme="light"] .cv2 .cv2-dt { color: #504AB9; background: #f1eeff; }
+}
+@media all {
+  html:root[data-theme="light"] .cv2 .cv2-seg { background: rgba(255,255,255,.7) !important; }
+  html:root[data-theme="light"] .cv2 .cv2-seg a:not(.on) { color: #6c5ce7 !important; }
+}

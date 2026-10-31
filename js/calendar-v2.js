@@ -55,6 +55,14 @@ const CalendarV2 = (() => {
         <div><h1>${escapeHtml(t("calendar"))}</h1><p>${escapeHtml(L(`ថ្ងៃនេះ ${todayCount} · ខាងមុខ ${soon.length - todayCount} ក្នុង 7 ថ្ងៃ`, `${todayCount} today · ${soon.length - todayCount} in the next 7 days`))}</p></div>
         <button class="cv2-add" type="button" data-action="add-calendar" aria-label="${escapeAttr(t("addEvent"))}">${Icons.plus()}</button>
       </div>
+      ${(() => {
+        // Nomi (31 Oct, both themes): today's count + the next thing coming
+        const next = soon.find(item => item.date > today);
+        const nextTx = next ? (() => { const d = daysBetween(today, next.date); const when = d === 1 ? L("ស្អែក", "Tomorrow") : L(`${d} ថ្ងៃទៀត`, `In ${d} days`); return `${when}: ${cleanTitle(next)}${next.amount ? ` ${full(next.amount, next.currency).replace(/<[^>]*>/g, "")}` : ""}`; })() : "";
+        const say = todayCount ? L(`ថ្ងៃនេះមាន ${todayCount} រឿង កុំភ្លេចណា! 📌`, `${todayCount} things today — don't forget! 📌`) + (nextTx ? ` ${nextTx}` : "") : `${L("ថ្ងៃនេះទំនេរ 🌿", "Free today 🌿")}${nextTx ? ` ${nextTx}` : ""}`;
+        const mood = todayCount ? "cheer" : "happy";
+        return `<div class="cv2-talk"><span class="cv2-nomi" data-nomi data-mood="${mood}" role="button" tabindex="0" aria-label="Nomi">${HomeV2.buddy(mood)}</span><span class="cv2-say" data-nomi-say>${escapeHtml(say)}</span></div>`;
+      })()}
       <nav class="cv2-seg">${seg.map(([id, label]) => `<a class="${ctx.view === id ? "on" : ""}" href="#calendar/${id}/${id === "month" ? ctx.visibleMonth : ctx.selectedLinkDate}"${ctx.view === id ? ' aria-current="page"' : ""}>${escapeHtml(label)}</a>`).join("")}</nav>
     </header>`;
   }
@@ -132,7 +140,7 @@ const CalendarV2 = (() => {
     const rows = allDay.map(event => row(event, iso < today)).join("") + timedRows + endNow + spentRows;
     const count = events.length;
     return `<div class="cv2-sec"><b>${escapeHtml(longDay(iso))}</b><small>${escapeHtml(L(`${count} រឿង`, `${count} items`))}</small></div>
-      <section class="cv2-card cv2-day">${rows || `<button class="cv2-empty" type="button" data-action="add-calendar" data-calendar-date="${iso}">${Icons.plus()}<span>${escapeHtml(L("គ្មានអ្វីទេ — ចុចបន្ថែមព្រឹត្តិការណ៍", "Nothing planned — tap to add"))}</span></button>`}</section>`;
+      <section class="cv2-card cv2-day">${rows || `<div class="cv2-free"><span class="cv2-free-nomi">${HomeV2.buddy(iso < today ? "calm" : "sleepy")}</span><span class="cv2-free-tx"><b>${escapeHtml(L("គ្មានអ្វីត្រូវធ្វើ", "Nothing planned"))}</b><small>${escapeHtml(iso < today ? L("ថ្ងៃនេះកន្លងហើយ", "This day has passed") : L("សម្រាក ឬបន្ថែមផែនការ", "Rest, or add a plan"))}</small></span><button class="cv2-free-add" type="button" data-action="add-calendar" data-calendar-date="${iso}">${Icons.plus()}<span>${escapeHtml(L("បន្ថែម", "Add"))}</span></button></div>`}</section>`;
   }
 
   function upcoming() {
@@ -149,7 +157,7 @@ const CalendarV2 = (() => {
       const when = event.time ? clock(event.time) : event.dateEnd ? `${d.getDate()}–${dateOf(event.dateEnd).getDate()} ${monthName(dateOf(event.dateEnd))}` : "";
       const sub = [event.amount ? full(event.amount, event.currency) : "", when || (event.source === "holiday" ? L("ពេញមួយថ្ងៃ", "All day") : ""), days <= 14 ? (days === 1 ? L("ស្អែក", "tomorrow") : L(`ក្នុង ${days} ថ្ងៃ`, `in ${days} days`)) : ""].filter(Boolean).join(" · ");
       return wrap(event, "cv2-ag", `
-        <span class="cv2-dt"><b>${d.getDate()}</b><small>${escapeHtml(event.date.slice(0, 7) === thisMonth ? shortDay(d) : monthName(d))}</small></span>
+        <span class="cv2-dt"><b>${d.getDate()}</b><small>${escapeHtml(km() ? KM_M[d.getMonth()] : d.toLocaleDateString("en-US", { month: "short" }))}</small></span>
         <span class="cv2-tx"><b>${escapeHtml(cleanTitle(event))}</b>${sub ? `<small>${sub}</small>` : ""}</span>
         <span class="cv2-tag" style="--k:${color(event)}">${escapeHtml(toneLabel(event))}</span>`);
     }).join("");

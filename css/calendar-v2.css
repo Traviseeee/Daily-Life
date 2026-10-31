@@ -106,3 +106,21 @@
 }
 /* dark: the + button is lime like the draft */
 :root:not([data-theme="light"]) body:has(#app .cv2) .quick-action-toggle { color: #142a04; border-color: rgba(217, 255, 123, 0.7); background: linear-gradient(135deg, #d9ff7b, #a6e33f); box-shadow: 0 12px 26px rgba(166, 227, 63, 0.3); }
+
+/* Calendar with Nomi (31 Oct, both themes): Nomi in the hero, today readable, free-day card, full month names */
+.cv2-talk { display: flex; align-items: center; gap: 8px; margin: 8px 0 12px; }
+.cv2-nomi { flex: 0 0 auto; width: 70px; height: 64px; cursor: pointer; animation: hv2Bob 3.2s ease-in-out infinite; }
+.cv2-nomi .hv2-buddy, .cv2-free-nomi .hv2-buddy { width: 100%; height: 100%; }
+.cv2-say { padding: 9px 13px; border-radius: 16px 16px 16px 4px; font-size: .8rem; font-weight: 600; line-height: 1.45; color: #142a04; background: #d9ff7b; }
+:root[data-theme="light"] .cv2-say { color: #1A2347; background: #fff; }
+.cv2-c.is-today.is-today { color: var(--cv-on) !important; }
+.cv2-free { display: flex; align-items: center; gap: 10px; padding: 10px 12px; }
+.cv2-free-nomi { flex: 0 0 auto; width: 54px; height: 50px; }
+.cv2-free-tx { flex: 1; min-width: 0; }
+.cv2-free-tx b { display: block; font-size: .86rem; }
+.cv2-free-tx small { font-size: .72rem; color: var(--cv-ink2); }
+.cv2-free-add { display: inline-flex; align-items: center; gap: 4px; flex: 0 0 auto; padding: 9px 13px; border: 0; border-radius: 14px; color: var(--cv-on); background: var(--cv-grad); font: inherit; font-size: .76rem; font-weight: 800; cursor: pointer; }
+.cv2-free-add svg { width: 15px; height: 15px; }
+.cv2-dt small { max-width: 50px; }
+.cv2-dt { width: 52px; }
+@media (prefers-reduced-motion: reduce) { .cv2-nomi { animation: none; } }
