@@ -3,7 +3,7 @@
    Purple hero with MYLIFE's own buddy (SVG in js/home-v2.js), 3 stat tiles overlapping the hero,
    week strip in one white bar, "today's progress" card, white list cards, white pill footer.
    Markup: js/home-v2.js (lav() → .hv2-head.is-lav, .hv2-stats, .hv2-prog). Dark mode is not touched. */
-@media (max-width: 900px) {
+@media all {
   /* hero C "soft crop" (31 Oct): bright lavender panel, round bottom that fades into the page */
   html:root[data-theme="light"] body.topbar-home .app-main { background: #F3F1F4 !important; }
   html:root[data-theme="light"] body.topbar-home { background: #F3F1F4 !important; }
@@ -210,7 +210,7 @@
 
 
 /* daily focus by category (draft D, 31 Oct) — phone, light */
-@media (max-width: 900px) {
+@media all {
   html:root[data-theme="light"] .hv2 .hv2-cats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
   html:root[data-theme="light"] .hv2 .hv2-cat { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 10px; border: 1px solid var(--lv-line); border-radius: 20px; font: inherit; text-align: left; color: var(--lv-ink); background: #fff; cursor: pointer; transition: border-color .2s, background .2s; }
   html:root[data-theme="light"] .hv2 .hv2-cat.on { border-color: #b9b0f0; background: #f6f4ff; }
@@ -229,7 +229,7 @@
 
 
 /* Money overview in the Home style (31 Oct) — phone, light */
-@media (max-width: 900px) {
+@media all {
   html:root[data-theme="light"] body:has(.fv2-page) .app-main { background: #F3F1F4 !important; }
   html:root[data-theme="light"] .page.fv2-page { position: relative; isolation: isolate; }
   html:root[data-theme="light"] .page.fv2-page::before { content: ""; position: absolute; z-index: -1; left: -16px; right: -16px; top: -80px; height: 300px; border-radius: 0 0 40px 40px; pointer-events: none;
@@ -276,13 +276,12 @@
   html:root[data-theme="light"] .fv2-page .fv2-mini-icon { width: 40px !important; height: 40px !important; margin-bottom: 4px; }
 }
 
-/* safety: if the lavender markup is ever drawn on a wide screen, keep the buddies small */
+/* wide screens (31 Oct): the lavender Home also runs on desktop — Nomi keeps phone sizes */
 @media (min-width: 901px) {
-  .hv2 :is(.hv2-hero-buddy, .hv2-prog-buddy, .hv2-soft-buddy) { display: none; }
-  .hv2 .hv2-buddy { width: 64px; height: 64px; }
+  html:root[data-theme="light"] .hv2 .hv2-hero-buddy { width: 96px; height: 96px; }
 }
 /* money card: Nomi talks to the right of itself (31 Oct) */
-@media (max-width: 900px) {
+@media all {
   html:root[data-theme="light"] .hv2-soft-buddy { z-index: 2; }
   html:root[data-theme="light"] .hv2-soft-buddy .hv2-say { left: calc(100% + 4px); right: auto; top: 6px; max-width: 128px; border-radius: 16px 16px 16px 4px; box-shadow: 0 0 0 1px #ebe8f4; animation-delay: .6s; opacity: 0; }
   html:root[data-theme="light"] .hv2-soft-buddy .hv2-say.is-pop { animation-delay: 0s; }
@@ -290,7 +289,7 @@
 }
 
 /* "Design my card" for the soft card (light phone, 31 Oct): preview + tints + lavender rings */
-@media (max-width: 900px) {
+@media all {
   html:root[data-theme="light"] #modalRoot .wc-sheet-soft .wc-stage.hv2 { display: block; max-width: none; margin: 0; padding: 8px 16px 14px; }
   html:root[data-theme="light"] #modalRoot .wc-sheet-soft .wc-soft-prev { pointer-events: none; }
   html:root[data-theme="light"] .wc-sheet-soft .wc-soft-prev .hv2-soft-buddy { width: 70px; height: 70px; }

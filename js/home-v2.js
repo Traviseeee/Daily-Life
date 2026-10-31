@@ -23,8 +23,8 @@ const HomeV2 = (() => {
 
   // light mode = "Lavender buddy" layout (31 Oct 2026): purple hero + mascot, 3 stat tiles,
   // week strip under them, today's progress card. Dark mode keeps the old layout.
-  // phone only (≤900px): the desktop Home keeps its own layout
-  const lav = () => typeof document !== "undefined" && document.documentElement.dataset.theme === "light" && !!window.matchMedia?.("(max-width: 900px)").matches;
+  // light theme, every width (31 Oct: desktop uses the lavender look too)
+  const lav = () => typeof document !== "undefined" && document.documentElement.dataset.theme === "light";
   // MYLIFE's own mascot: a round lavender buddy with a sprout (drawn here, no outside character)
   // MYLIFE buddy "Nomi" (31 Oct, picked from the mascot draft): a little lavender bean-cat drawn here.
   // mood: happy (normal) · cheer (focus all done) · sleepy (late night) · worry (spent too much)

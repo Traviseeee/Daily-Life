@@ -2,7 +2,7 @@
    Step 1: footer + floating + button on every page. Step 2: pop-ups / sheets. Step 3: Settings.
    Palette: indigo #504AB9, lavender #7B68EE → #9F8CFF, mauve #CBACC1, peach #E6986B, page #F3F1F4, ink #1A2347.
    No drop shadows: white blocks get a hairline #EBE8F4. Dark mode and desktop are not touched. */
-@media (max-width: 900px) {
+@media all {
   /* 1 · footer: white pill everywhere, active tab soft lavender */
   html:root[data-theme="light"]:root body #mobileNav.mobile-nav { --f2-glass: rgba(255,255,255,.94); --f2-grad: #ece8ff; --f2-on: #3f37a8; --f2-glow: none; --f2-ink2: #8f8bad; --f2-line: #ebe8f4; --f2-sh: 0 10px 28px -16px rgba(80, 74, 185, .35); }
   html:root[data-theme="light"]:root body #mobileNav.mobile-nav .nav-item.active,
@@ -120,7 +120,7 @@
 }
 
 /* Launcher in the Home look (light phone, 31 Oct): Nomi talks in the hero, money ring card, SVG quick add */
-@media (max-width: 900px) {
+@media all {
   html:root[data-theme="light"] body:not(.topbar-home) #app > .page.lv2.is-lav::before { height: 330px; }
   html:root[data-theme="light"] .lv2.is-lav .lv-hero { background: transparent !important; padding-bottom: 8px; }
   html:root[data-theme="light"] .lv2.is-lav .lv-talk { display: flex; align-items: flex-end; gap: 6px; margin: 10px 0 10px; }
@@ -149,4 +149,15 @@
   html:root[data-theme="light"] .lv2.is-lav .lv-q { border: 1px solid #ebe8f4; box-shadow: none !important; }
   .lv2.is-lav .lv-qa { margin-bottom: 14px; }
   .lv2.is-lav .lv-nomi .hv2-buddy { transform: scale(1.15); }
+}
+
+/* wide screens (31 Oct): the lavender look runs on desktop too. Page headers become a rounded
+   lavender panel inside the content (no bleed under the top bar); top bar pills in lavender. */
+@media (min-width: 901px) {
+  html:root[data-theme="light"] body:not(.topbar-home) #app > .page:not(.fv2-page):not(.sv2):not(.hv2)::before,
+  html:root[data-theme="light"] .page.fv2-page::before { left: -16px; right: -16px; top: -12px; height: 290px; border-radius: 32px; }
+  html:root[data-theme="light"] body:not(.topbar-home) #app > .page.lv2.is-lav::before { height: 320px; }
+  html:root[data-theme="light"] :is(.fv2-page, #app > .page:not(.hv2):not(.sv2)) > :first-child { padding-top: 14px; }
+  html:root[data-theme="light"] .app-main .topbar :is(.topbar-time, .topbar-clock, [class*="time"]) { color: #504AB9 !important; background: #f1eeff !important; border-color: #ebe8f4 !important; }
+  html:root[data-theme="light"] .sidebar .brand :is(b, span, strong):last-child, html:root[data-theme="light"] .sidebar .brand-name em { color: #6c5ce7 !important; }
 }
