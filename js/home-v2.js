@@ -26,7 +26,39 @@ const HomeV2 = (() => {
   // phone only (≤900px): the desktop Home keeps its own layout
   const lav = () => typeof document !== "undefined" && document.documentElement.dataset.theme === "light" && !!window.matchMedia?.("(max-width: 900px)").matches;
   // MYLIFE's own mascot: a round lavender buddy with a sprout (drawn here, no outside character)
-  const MASCOT = '<svg class="hv2-buddy" viewBox="0 0 100 100" aria-hidden="true"><ellipse cx="50" cy="95" rx="26" ry="4.5" fill="rgba(40,30,120,.22)"/><path d="M50 23c-4-10-14-14-22-11 4 8 12 12 22 11z" fill="#7bd88f"/><path d="M50 23c3-9 12-13 20-10-3 8-11 11-20 10z" fill="#5cc477"/><circle cx="50" cy="58" r="34" fill="url(#hv2BuddyG)"/><defs><radialGradient id="hv2BuddyG" cx=".35" cy=".3"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#d9d3ff"/></radialGradient></defs><circle cx="38" cy="55" r="4.5" fill="#282694"/><circle cx="62" cy="55" r="4.5" fill="#282694"/><circle cx="39.5" cy="53.5" r="1.4" fill="#fff"/><circle cx="63.5" cy="53.5" r="1.4" fill="#fff"/><path d="M42 66q8 8 16 0" fill="#E6986B" stroke="#282694" stroke-width="2.5" stroke-linecap="round"/><ellipse cx="30" cy="66" rx="5" ry="3" fill="#ffc2c2"/><ellipse cx="70" cy="66" rx="5" ry="3" fill="#ffc2c2"/></svg>';
+  // MYLIFE buddy "Nomi" (31 Oct, picked from the mascot draft): a little lavender bean-cat drawn here.
+  // mood: happy (normal) · cheer (focus all done) · sleepy (late night) · worry (spent too much)
+  const BUDDY_INK = "#282694";
+  function buddyFace(m, cx, cy, s) {
+    const e = (x, y) => `<circle cx="${x}" cy="${y}" r="${4.4 * s}" fill="${BUDDY_INK}"/><circle cx="${x + 1.4 * s}" cy="${y - 1.6 * s}" r="${1.4 * s}" fill="#fff"/>`;
+    const dx = 11 * s, ey = cy - 3 * s, my = cy + 8 * s;
+    const blush = c => `<ellipse cx="${cx - 19 * s}" cy="${cy + 6 * s}" rx="${5 * s}" ry="${3 * s}" fill="${c}" opacity=".8"/><ellipse cx="${cx + 19 * s}" cy="${cy + 6 * s}" rx="${5 * s}" ry="${3 * s}" fill="${c}" opacity=".8"/>`;
+    const st = `stroke="${BUDDY_INK}" stroke-width="${2.6 * s}" stroke-linecap="round" fill="none"`;
+    if (m === "cheer") return blush("#ffb9c4") + `<path d="M${cx - dx - 4 * s} ${ey}q4 -5 8 0M${cx + dx - 4 * s} ${ey}q4 -5 8 0" ${st}/><path d="M${cx - 9 * s} ${my - 3 * s}q9 13 18 0z" fill="#E6986B" stroke="${BUDDY_INK}" stroke-width="${2.4 * s}" stroke-linejoin="round"/>`;
+    if (m === "sleepy") return blush("#ffb9c4") + `<path d="M${cx - dx - 4 * s} ${ey}q4 3 8 0M${cx + dx - 4 * s} ${ey}q4 3 8 0" ${st}/><ellipse cx="${cx}" cy="${my}" rx="${3.2 * s}" ry="${2.6 * s}" fill="${BUDDY_INK}"/><text x="${cx + 22 * s}" y="${cy - 18 * s}" font-size="${11 * s}" font-weight="800" fill="#9F8CFF" font-family="sans-serif">z</text>`;
+    if (m === "worry") return blush("#c9d4ff") + e(cx - dx, ey + s) + e(cx + dx, ey + s) + `<path d="M${cx - dx - 5 * s} ${ey - 9 * s}l7 3M${cx + dx + 5 * s} ${ey - 9 * s}l-7 3" ${st}/><path d="M${cx - 6 * s} ${my + 3 * s}q6 -6 12 0" ${st}/><path d="M${cx + 27 * s} ${cy - 14 * s}q3 5 0 7q-3 -2 0 -7z" fill="#8fc9ff"/>`;
+    return blush("#ffb9c4") + e(cx - dx, ey) + e(cx + dx, ey) + `<path d="M${cx - 8 * s} ${my - 2 * s}q8 9 16 0" fill="#E6986B" stroke="${BUDDY_INK}" stroke-width="${2.5 * s}" stroke-linecap="round" stroke-linejoin="round"/>`;
+  }
+  const buddy = (m = "happy") => `<svg class="hv2-buddy is-${m}" viewBox="0 0 100 100" aria-hidden="true"><ellipse cx="50" cy="95" rx="24" ry="4" fill="rgba(40,38,148,.18)"/>`
+    + `<path d="M74 80c14 2 18-12 10-18" stroke="#b9adf5" stroke-width="6" fill="none" stroke-linecap="round"/><path d="M84 58c-3-4-9-1-6 4l6 6 6-6c3-5-3-8-6-4z" fill="#ff8fab"/>`
+    + `<path d="M28 34l4-16 14 10zM72 34l-4-16-14 10z" fill="#b3a6f7"/><path d="M31 30l2-7 6 5zM69 30l-2-7-6 5z" fill="#ffc2d1"/>`
+    + `<ellipse cx="50" cy="60" rx="31" ry="30" fill="#c9bdff"/><ellipse cx="50" cy="72" rx="18" ry="14" fill="#f4f0ff"/>`
+    + (m === "cheer" ? '<ellipse cx="22" cy="46" rx="6" ry="8" fill="#c9bdff" transform="rotate(-30 22 46)"/><ellipse cx="78" cy="46" rx="6" ry="8" fill="#c9bdff" transform="rotate(30 78 46)"/>' : "")
+    + buddyFace(m, 50, 56, 0.9) + "</svg>";
+  // which mood fits right now
+  function buddyMood(d) {
+    const h = new Date().getHours();
+    const m = d && d.month;
+    const now = new Date();
+    const daysLeft = Math.max(1, new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate() - now.getDate() + 1);
+    const spentToday = d ? (appData.expenses || []).filter(item => item.date === d.todayIso).reduce((t, item) => t + toProfileCurrency(item.amount, item.currency), 0) : 0;
+    if (m && (m.left < 0 || (spentToday > 0 && spentToday > Math.max(0, m.left + spentToday) / daysLeft))) return "worry";
+    if (d && d.focus.length && d.focus.every(item => item.done)) return "cheer";
+    if (h >= 22 || h < 5) return "sleepy";
+    return "happy";
+  }
+  let MOOD_NOW = "happy";
+  const MASCOT_FN = () => buddy(MOOD_NOW);
 
   const plainMoney = (value, currency) => {
     try { if (typeof formatPlainMoney === "function") return formatPlainMoney(Number(value) || 0, currency || appData.profile.currency || "USD"); } catch (error) { /* below */ }
@@ -103,7 +135,7 @@ const HomeV2 = (() => {
           </div>
         </div>
       </div>
-      ${lav() ? `<span class="hv2-hero-buddy">${MASCOT}</span></div>${stats(d, focusDone)}` : ""}
+      ${lav() ? `<span class="hv2-hero-buddy">${MASCOT_FN()}</span></div>${stats(d, focusDone)}` : ""}
       <nav class="hv2-week" aria-label="${escapeAttr(L("សប្តាហ៍នេះ", "This week"))}">${week.map(date => {
         const key = iso(date);
         const on = key === d.todayIso;
@@ -134,7 +166,7 @@ const HomeV2 = (() => {
     const next = list.find(item => clock(item.time) >= nowClock) || list[0];
     const nextTag = next ? `<span>${escapeHtml(L("បន្ទាប់", "Next"))}: ${escapeHtml(next.title || "")}${clock(next.time) ? ` ${escapeHtml(clock(next.time))}` : ""}</span>` : "";
     return `<a class="hv2-prog" href="${next ? escapeAttr(next.href || "#calendar") : "#home"}" ${next ? "" : 'data-hv2-scroll=".hv2-fx"'}>
-      <span class="hv2-prog-cloud" aria-hidden="true"></span><span class="hv2-prog-buddy">${MASCOT}</span>
+      <span class="hv2-prog-cloud" aria-hidden="true"></span><span class="hv2-prog-buddy">${MASCOT_FN()}</span>
       <b>${escapeHtml(L("វឌ្ឍនភាពថ្ងៃនេះ", "Today's progress"))}</b>
       <span class="hv2-prog-seg">${d.focus.map((_, i) => `<i class="${i < done ? "on" : ""}"></i>`).join("")}<em>${done}/${total}</em></span>
       <span class="hv2-prog-tags"><span>${escapeHtml(total && done >= total ? L("ធ្វើរួចទាំងអស់ 🎉", "All done 🎉") : L(`នៅសល់ ${total - done}`, `${total - done} left`))}</span>${nextTag}</span>
@@ -211,7 +243,7 @@ const HomeV2 = (() => {
       <div class="hv2-mt-bar"><i style="width:${at(day)}"></i>${marks.filter(n => n < day).map(n => `<b style="left:${at(n)}">✓</b>`).join("")}<b class="is-now" style="left:${at(day)}">✓</b></div></div>`;
     return `<article class="wc-card hv2-soft${m.left < 0 ? " is-short" : ""}">
         <span class="hv2-soft-glow" aria-hidden="true"></span>${top}
-        <span class="hv2-soft-buddy">${MASCOT}</span>
+        <span class="hv2-soft-buddy">${MASCOT_FN()}</span>
         <small>${escapeHtml(L(`នៅសល់សម្រាប់ចាយ · ខែ${monthName}`, `Left to spend · ${monthName}`))}</small>
         <a class="hv2-soft-amt money-value${hide}" href="#money">${escapeHtml(plainMoney(m.left))}</a>
         <span class="hv2-soft-pill">${escapeHtml(L(`ចាយរួច ${pct}% · ${daysLeft} ថ្ងៃទៀត`, `${pct}% spent · ${daysLeft} days left`))}</span>
@@ -420,6 +452,7 @@ const HomeV2 = (() => {
 
   function render() {
     const d = data();
+    MOOD_NOW = buddyMood(d);
     return `<section class="page home-featured-page hv2">
       ${header(d)}
       <div class="hv2-body">
@@ -476,5 +509,5 @@ const HomeV2 = (() => {
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", () => { mirror("topbarWeather", "[data-hv2-wx]"); mirror("bellButton", "[data-hv2-bell]"); });
   else { mirror("topbarWeather", "[data-hv2-wx]"); mirror("bellButton", "[data-hv2-bell]"); }
 
-  return { focusLeft, render, softArticle, lav };
+  return { focusLeft, render, softArticle, lav, buddy };
 })();
