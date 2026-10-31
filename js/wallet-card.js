@@ -14,6 +14,7 @@ const WalletCard = (() => {
   const KM_MONTHS = ["មករា", "កុម្ភៈ", "មីនា", "មេសា", "ឧសភា", "មិថុនា", "កក្កដា", "សីហា", "កញ្ញា", "តុលា", "វិច្ឆិកា", "ធ្នូ"];
   // gradients and solid colours; "custom" uses walletCard.c1 / c2 (solid when c2 is empty)
   const GRADS = [
+    ["lavender", "radial-gradient(120% 90% at 100% 0,rgba(203,172,193,.55) 0,transparent 55%),linear-gradient(135deg,#282694,#504AB9 60%,#7f74d6)"],
     ["blue", "radial-gradient(120% 90% at 100% 0,#6d5dfc 0,transparent 55%),linear-gradient(135deg,#1b2b6b,#2e4bdc 60%,#1e8fff)"],
     ["green", "radial-gradient(110% 80% at 100% 0,rgba(197,255,96,.85) 0,transparent 50%),linear-gradient(135deg,#0f3326,#15513a 60%,#2a7a4a)"],
     ["pink", "radial-gradient(110% 80% at 0 0,#ffd0e0 0,transparent 55%),linear-gradient(135deg,#ff7a9c,#ff9d6b)"],
@@ -54,7 +55,7 @@ const WalletCard = (() => {
     const c = { ...raw, ...(raw[dark() ? "dark" : "light"] || {}) };
     const name = String(appData.profile?.name || "MYLIFE").split(/\s+/)[0].toUpperCase();
     return {
-      skin: c.skin === "custom" || SKINS.some(s => s.id === c.skin) ? c.skin : (dark() ? "green" : "blue"),
+      skin: c.skin === "custom" || SKINS.some(s => s.id === c.skin) ? c.skin : (dark() ? "green" : "lavender"),
       c1: c.c1 || "#6d5dfc", c2: c.c2 || "#00c6a7",
       dir: ["solid", "diag", "down", "radial"].includes(c.dir) ? c.dir : (c.c2 === "" ? "solid" : "diag"),
       shine: c.shine !== false, upper: c.upper !== false,

@@ -71,4 +71,10 @@
   html:root[data-theme="light"]:root body.topbar-home #mobileNav.mobile-nav .nav-item.active,
   html:root[data-theme="light"]:root body.topbar-home #mobileNav.mobile-nav .nav-item.active :is(span, svg) { color: #3f37a8 !important; }
   html:root[data-theme="light"]:root body.topbar-home #mobileNav.mobile-nav .nav-item.active { background: #ece8ff !important; box-shadow: none !important; }
+
+  /* money ticket on Home: same soft style as the progress card (peach bar, rounder, indigo glow) */
+  html:root[data-theme="light"] .hv2 .wc-card.wc-tk { border-radius: 28px; box-shadow: 0 16px 30px -18px rgba(40, 38, 148, .7); }
+  html:root[data-theme="light"] .hv2 .wc-tk-bar { height: 9px; background: rgba(255,255,255,.25); }
+  html:root[data-theme="light"] .hv2 .wc-tk-bar i { background: linear-gradient(90deg, #f2bb92, #E6986B); }
+  html:root[data-theme="light"] .hv2 .wc-tk .wc-tk-edit { background: rgba(255,255,255,.2) !important; }
 }
