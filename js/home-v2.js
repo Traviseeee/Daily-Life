@@ -21,6 +21,12 @@ const HomeV2 = (() => {
     chev: () => svg('<path d="m9 6 6 6-6 6"/>')
   };
 
+  // light mode = "Lavender buddy" layout (31 Oct 2026): purple hero + mascot, 3 stat tiles,
+  // week strip under them, today's progress card. Dark mode keeps the old layout.
+  const lav = () => typeof document !== "undefined" && document.documentElement.dataset.theme === "light";
+  // MYLIFE's own mascot: a round lavender buddy with a sprout (drawn here, no outside character)
+  const MASCOT = '<svg class="hv2-buddy" viewBox="0 0 100 100" aria-hidden="true"><ellipse cx="50" cy="95" rx="26" ry="4.5" fill="rgba(40,30,120,.22)"/><path d="M50 23c-4-10-14-14-22-11 4 8 12 12 22 11z" fill="#7bd88f"/><path d="M50 23c3-9 12-13 20-10-3 8-11 11-20 10z" fill="#5cc477"/><circle cx="50" cy="58" r="34" fill="url(#hv2BuddyG)"/><defs><radialGradient id="hv2BuddyG" cx=".35" cy=".3"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#d9d3ff"/></radialGradient></defs><circle cx="38" cy="55" r="4.5" fill="#282694"/><circle cx="62" cy="55" r="4.5" fill="#282694"/><circle cx="39.5" cy="53.5" r="1.4" fill="#fff"/><circle cx="63.5" cy="53.5" r="1.4" fill="#fff"/><path d="M42 66q8 8 16 0" fill="#E6986B" stroke="#282694" stroke-width="2.5" stroke-linecap="round"/><ellipse cx="30" cy="66" rx="5" ry="3" fill="#ffc2c2"/><ellipse cx="70" cy="66" rx="5" ry="3" fill="#ffc2c2"/></svg>';
+
   const plainMoney = (value, currency) => {
     try { if (typeof formatPlainMoney === "function") return formatPlainMoney(Number(value) || 0, currency || appData.profile.currency || "USD"); } catch (error) { /* below */ }
     return `$${(Number(value) || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -66,7 +72,7 @@ const HomeV2 = (() => {
     const hour = today.getHours();
     const hello = hour < 12 ? L("សួស្តីពេលព្រឹក", "Good morning") : hour < 17 ? L("សួស្តីពេលថ្ងៃ", "Good afternoon") : L("សួស្តីពេលល្ងាច", "Good evening");
     const loggedOut = typeof Login !== "undefined" && (Login.guestMode || !Login.authenticated);
-    return `<header class="hv2-head">
+    return `<header class="hv2-head${lav() ? " is-lav" : ""}">${lav() ? '<div class="hv2-hero">' : ""}
       <div class="hv2-top">
         <div class="home-profile-side home-profile-trigger hv2-avatar" role="button" tabindex="0" aria-label="${escapeAttr(t("editProfile"))}" title="${escapeAttr(name)}">
           <span class="hv2-avatar-face">${photo}</span>
@@ -94,6 +100,7 @@ const HomeV2 = (() => {
           </div>
         </div>
       </div>
+      ${lav() ? `<span class="hv2-hero-buddy">${MASCOT}</span></div>${stats(d, focusDone)}` : ""}
       <nav class="hv2-week" aria-label="${escapeAttr(L("សប្តាហ៍នេះ", "This week"))}">${week.map(date => {
         const key = iso(date);
         const on = key === d.todayIso;
@@ -101,6 +108,34 @@ const HomeV2 = (() => {
       }).join("")}</nav>
       ${todayItems.length ? "" : ""}
     </header>`;
+  }
+
+  // light: 3 stat tiles under the hero (money left · today's events · focus)
+  function stats(d, focusDone) {
+    const left = d.month ? d.month.left : 0;
+    const tile = (href, attrs, emoji, label, value, sub) => `<a class="hv2-st" ${href ? `href="${href}"` : 'href="#home"'} ${attrs}><i aria-hidden="true">${emoji}</i><small>${escapeHtml(label)}</small><b>${escapeHtml(value)}</b><em>${escapeHtml(sub)}</em></a>`;
+    const short = Math.abs(left) >= 1000 ? `${left < 0 ? "−" : ""}$${(Math.abs(left) / 1000).toFixed(1)}k` : `${left < 0 ? "−" : ""}$${Math.round(Math.abs(left))}`;
+    return `<div class="hv2-stats">
+      ${tile("#money", "", "💰", L("នៅសល់", "Left"), short, L("ខែនេះ", "this month"))}
+      ${tile("#calendar", "", "📅", L("ព្រឹត្តិការណ៍", "Events"), String(d.agenda.today), L("ថ្ងៃនេះ", "today"))}
+      ${tile("", 'data-hv2-scroll=".hv2-fx"', "🎯", L("ការផ្តោត", "Focus"), `${focusDone}/${d.focus.length}`, L("បានធ្វើ", "done"))}
+    </div>`;
+  }
+
+  // light: "today's progress" card (focus steps + what is next) with the buddy
+  function progress(d) {
+    const done = d.focus.filter(item => item.done).length;
+    const total = d.focus.length;
+    const nowClock = new Date().toTimeString().slice(0, 5);
+    const list = (d.agenda.items || []).filter(item => !item.overdue && item.date === d.todayIso);
+    const next = list.find(item => clock(item.time) >= nowClock) || list[0];
+    const nextTag = next ? `<span>${escapeHtml(L("បន្ទាប់", "Next"))}: ${escapeHtml(next.title || "")}${clock(next.time) ? ` ${escapeHtml(clock(next.time))}` : ""}</span>` : "";
+    return `<a class="hv2-prog" href="${next ? escapeAttr(next.href || "#calendar") : "#home"}" ${next ? "" : 'data-hv2-scroll=".hv2-fx"'}>
+      <span class="hv2-prog-cloud" aria-hidden="true"></span><span class="hv2-prog-buddy">${MASCOT}</span>
+      <b>${escapeHtml(L("វឌ្ឍនភាពថ្ងៃនេះ", "Today's progress"))}</b>
+      <span class="hv2-prog-seg">${d.focus.map((_, i) => `<i class="${i < done ? "on" : ""}"></i>`).join("")}<em>${done}/${total}</em></span>
+      <span class="hv2-prog-tags"><span>${escapeHtml(total && done >= total ? L("ធ្វើរួចទាំងអស់ 🎉", "All done 🎉") : L(`នៅសល់ ${total - done}`, `${total - done} left`))}</span>${nextTag}</span>
+    </a>`;
   }
 
   function nextUp(d) {
@@ -265,7 +300,7 @@ const HomeV2 = (() => {
       ${header(d)}
       <div class="hv2-body">
         ${alerts(d)}
-        ${nextUp(d)}
+        ${lav() ? progress(d) : nextUp(d)}
         ${money(d)}
         ${quick()}
         ${schedule(d)}
@@ -281,6 +316,8 @@ const HomeV2 = (() => {
   document.addEventListener("click", event => {
     const go = event.target.closest("[data-hv2-go]");
     if (go) { location.hash = go.dataset.hv2Go; return; }
+    const jump = event.target.closest("[data-hv2-scroll]");
+    if (jump) { event.preventDefault(); document.querySelector(jump.dataset.hv2Scroll)?.scrollIntoView({ behavior: "smooth", block: "center" }); return; }
     const quickAction = event.target.closest("[data-hv2-quick]");
     if (quickAction && typeof runQuickAction === "function") runQuickAction(quickAction.dataset.hv2Quick);
     if (event.target.closest("[data-hv2-bell]")) document.getElementById("bellButton")?.click();

@@ -1,0 +1,74 @@
+/* Home "Lavender buddy" (31 Oct 2026) — light mode, phone only. Loaded last.
+   Palette: indigo #504AB9 / #282694, mauve #CBACC1, peach #E6986B, page #F3F1F4, ink #1A2347.
+   Purple hero with MYLIFE's own buddy (SVG in js/home-v2.js), 3 stat tiles overlapping the hero,
+   week strip in one white bar, "today's progress" card, white list cards, white pill footer.
+   Markup: js/home-v2.js (lav() → .hv2-head.is-lav, .hv2-stats, .hv2-prog). Dark mode is not touched. */
+@media (max-width: 900px) {
+  html:root[data-theme="light"] body.topbar-home .app-main { background: #F3F1F4 !important; }
+  html:root[data-theme="light"] body.topbar-home { background: #F3F1F4 !important; }
+  html:root[data-theme="light"] .hv2 { --lv-a: #504AB9; --lv-b: #282694; --lv-m: #CBACC1; --lv-p: #E6986B; --lv-ink: #1A2347; --lv-sub: #7a7698; --lv-card: #fff; --lv-sh: 0 10px 24px -14px rgba(80, 74, 185, .45); }
+
+  /* hero */
+  html:root[data-theme="light"] .hv2-head.is-lav { gap: 0; margin: 0 0 14px; padding: 0; background: none !important; border-radius: 0; box-shadow: none !important; }
+  html:root[data-theme="light"] .hv2-head.is-lav::before { display: none !important; }
+  html:root[data-theme="light"] .hv2-hero { position: relative; display: grid; gap: 14px; margin: -4px -16px 0; padding: calc(env(safe-area-inset-top, 0px) + 14px) 16px 86px; border-radius: 0 0 34px 34px; color: #fff;
+    background: radial-gradient(120% 80% at 90% 0, rgba(255,255,255,.22) 0, transparent 55%), linear-gradient(170deg, #504AB9 0, #7f74d6 55%, #CBACC1 100%); }
+  html:root[data-theme="light"] .hv2-hero :is(.hv2-hello b, .hv2-title h1, .hv2-hello small) { color: #fff !important; -webkit-text-fill-color: #fff; }
+  html:root[data-theme="light"] .hv2-hero .hv2-hello small { opacity: .88; }
+  html:root[data-theme="light"] .hv2-hero .hv2-title h1 { font-size: 1.12rem !important; font-weight: 600; }
+  html:root[data-theme="light"] .hv2-hero .hv2-title h1 span { padding: 0 !important; color: #ffe2cf !important; background: none !important; box-shadow: none !important; -webkit-text-fill-color: #ffe2cf; }
+  html:root[data-theme="light"] .hv2-hero .hv2-why { display: none; }
+  html:root[data-theme="light"] .hv2-hero .hv2-title-row { padding-right: 84px; }
+  html:root[data-theme="light"] .hv2-hero :is(.hv2-wx, .hv2-bell, .hv2-top .hv2-menu) { color: #fff !important; background: rgba(255,255,255,.2) !important; border: 1px solid rgba(255,255,255,.28) !important; box-shadow: none !important; }
+  html:root[data-theme="light"] .hv2-hero .hv2-wx * { color: #fff !important; }
+  html:root[data-theme="light"] .hv2-hero .hv2-avatar-face { border-color: #fff !important; }
+  html:root[data-theme="light"] .hv2-hero-buddy { position: absolute; right: 16px; bottom: 64px; width: 64px; height: 64px; pointer-events: none; animation: hv2Bob 3.2s ease-in-out infinite; }
+  html:root[data-theme="light"] .hv2-buddy { display: block; width: 100%; height: 100%; filter: drop-shadow(0 8px 10px rgba(40, 38, 148, .25)); }
+  @keyframes hv2Bob { 50% { transform: translateY(-4px); } }
+
+  /* 3 stat tiles over the hero */
+  html:root[data-theme="light"] .hv2-stats { position: relative; z-index: 2; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: -58px 0 14px; }
+  html:root[data-theme="light"] .hv2-st { display: grid; justify-items: center; gap: 1px; padding: 12px 4px 10px; border-radius: 22px; text-align: center; text-decoration: none; color: var(--lv-ink); background: #fff; box-shadow: var(--lv-sh); }
+  html:root[data-theme="light"] .hv2-st i { font-style: normal; font-size: 1.6rem; line-height: 1.2; }
+  html:root[data-theme="light"] .hv2-st small { font-size: .72rem; color: var(--lv-sub); }
+  html:root[data-theme="light"] .hv2-st b { font-size: 1.15rem; font-weight: 700; color: var(--lv-ink); }
+  html:root[data-theme="light"] .hv2-st em { font-style: normal; font-size: .66rem; color: #a7a3c2; }
+  html:root[data-theme="light"] .hv2-st:active { transform: scale(.97); }
+
+  /* week strip: one white bar, today in indigo */
+  html:root[data-theme="light"] .hv2-head.is-lav .hv2-week { gap: 2px; padding: 6px; border-radius: 22px; background: #fff; box-shadow: var(--lv-sh); }
+  html:root[data-theme="light"] .hv2-head.is-lav .hv2-day { color: var(--lv-ink) !important; background: transparent !important; box-shadow: none !important; }
+  html:root[data-theme="light"] .hv2-head.is-lav .hv2-day small { color: #9a97b8 !important; }
+  html:root[data-theme="light"] .hv2-head.is-lav .hv2-day.is-today { color: #fff !important; background: linear-gradient(160deg, #504AB9, #7f74d6) !important; box-shadow: 0 8px 16px -8px #504AB9 !important; }
+  html:root[data-theme="light"] .hv2-head.is-lav .hv2-day.is-today small { color: #e4defc !important; }
+  html:root[data-theme="light"] .hv2-head.is-lav .hv2-day i.has { background: var(--lv-p) !important; }
+  html:root[data-theme="light"] .hv2-head.is-lav .hv2-day.is-today i.has { background: #fff !important; }
+
+  /* today's progress */
+  html:root[data-theme="light"] .hv2-prog { position: relative; display: grid; gap: 8px; min-height: 116px; margin: 0 0 14px; padding: 16px 16px 14px 108px; overflow: hidden; border-radius: 26px; color: #fff; text-decoration: none;
+    background: radial-gradient(90% 120% at 100% 0, rgba(255,255,255,.14) 0, transparent 55%), linear-gradient(120deg, #282694, #504AB9); box-shadow: 0 16px 30px -18px rgba(40, 38, 148, .8); }
+  html:root[data-theme="light"] .hv2-prog > b { font-size: .98rem; font-weight: 700; }
+  html:root[data-theme="light"] .hv2-prog-cloud { position: absolute; left: -14px; bottom: -26px; width: 128px; height: 50px; border-radius: 30px; background: #f1eeff; }
+  html:root[data-theme="light"] .hv2-prog-buddy { position: absolute; left: 10px; bottom: 2px; width: 86px; height: 86px; }
+  html:root[data-theme="light"] .hv2-prog-seg { display: flex; align-items: center; gap: 5px; }
+  html:root[data-theme="light"] .hv2-prog-seg i { flex: 1; height: 9px; border-radius: 9px; background: rgba(255,255,255,.25); }
+  html:root[data-theme="light"] .hv2-prog-seg i.on { background: linear-gradient(90deg, #f2bb92, #E6986B); }
+  html:root[data-theme="light"] .hv2-prog-seg em { margin-left: 4px; font-style: normal; font-size: .8rem; font-weight: 700; }
+  html:root[data-theme="light"] .hv2-prog-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+  html:root[data-theme="light"] .hv2-prog-tags span { max-width: 100%; overflow: hidden; padding: 4px 10px; border-radius: 99px; background: rgba(255,255,255,.16); font-size: .72rem; white-space: nowrap; text-overflow: ellipsis; }
+
+  /* cards, lists, links: white + soft indigo shadow */
+  html:root[data-theme="light"] body .hv2 :is(.hv2-card, .hv2-quick, .wc-io > *) { border: 0 !important; background: #fff !important; box-shadow: var(--lv-sh) !important; }
+  html:root[data-theme="light"] .hv2 .hv2-sec b { color: var(--lv-ink) !important; }
+  html:root[data-theme="light"] .hv2 :is(.hv2-sec a, .hv2-link) { color: var(--lv-a) !important; background: #ece8ff !important; box-shadow: none !important; }
+  html:root[data-theme="light"] .hv2 .hv2-tl-time { color: var(--lv-a) !important; background: #f1eeff !important; }
+  html:root[data-theme="light"] body .hv2 .fx-tile.done label { background: linear-gradient(135deg, #8d84e6, #6c63d0) !important; box-shadow: 0 8px 18px -10px rgba(80,74,185,.6) !important; }
+  html:root[data-theme="light"] body .hv2 .fx-seg i.on { background: linear-gradient(90deg, #f2bb92, #E6986B) !important; }
+  html:root[data-theme="light"] body .hv2 .fx-count { color: var(--lv-a) !important; background: #ece8ff !important; }
+
+  /* footer on Home: white pill, active tab soft lavender */
+  html:root[data-theme="light"]:root body.topbar-home #mobileNav.mobile-nav { --f2-glass: rgba(255,255,255,.92); --f2-grad: #ece8ff; --f2-on: #3f37a8; --f2-glow: none; --f2-ink2: #8f8bad; }
+  html:root[data-theme="light"]:root body.topbar-home #mobileNav.mobile-nav .nav-item.active,
+  html:root[data-theme="light"]:root body.topbar-home #mobileNav.mobile-nav .nav-item.active :is(span, svg) { color: #3f37a8 !important; }
+  html:root[data-theme="light"]:root body.topbar-home #mobileNav.mobile-nav .nav-item.active { background: #ece8ff !important; box-shadow: none !important; }
+}
