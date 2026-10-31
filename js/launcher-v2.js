@@ -32,7 +32,7 @@ const LauncherV2 = (() => {
       ${lav() ? `<div class="lv-talk"><span class="lv-nomi" data-nomi data-mood="happy" role="button" tabindex="0" aria-label="Nomi">${HomeV2.buddy("happy")}</span><span class="hv2-say lv-say" data-nomi-say>${escapeHtml(L(...NOMI_SAY[0]))}</span></div>` : ""}
       <div class="lv-search">
         <button type="button" class="lv-search-go" data-lv-search>${lav() ? Icons.search() : "🔍"} <span>${escapeHtml(L("ស្វែងរកក្នុង MYLIFE…", "Search MYLIFE…"))}</span></button>
-        ${lav() ? `<a class="lv-scan-pill" href="#scan">${Icons.scan()}<span>${escapeHtml(L("ស្កេន", "Scan"))}</span></a>` : `<a class="lv-search-btn" href="#scan" aria-label="${escapeAttr(L("ស្កេន", "Scan"))}">${Icons.scan()}</a>
+        ${lav() ? `<a class="lv-scan-pill" href="#scan">${Icons.scan()}<span>${escapeHtml(L("ស្កេន", "Scan"))}</span></a><button type="button" class="lv-search-btn lv-ai-btn" data-lv-ai aria-label="AI">${Icons.spark()}</button>` : `<a class="lv-search-btn" href="#scan" aria-label="${escapeAttr(L("ស្កេន", "Scan"))}">${Icons.scan()}</a>
         <button type="button" class="lv-search-btn" data-lv-ai aria-label="AI">${Icons.spark()}</button>`}
       </div>
     </header>`;

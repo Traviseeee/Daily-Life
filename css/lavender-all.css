@@ -185,4 +185,5 @@
   .lv2.is-lav .lv-grid .app-cell:nth-child(5n) .app-icon-tile { --t: #ecfaf3; --k: #2e9d6a; }
   html:root[data-theme="light"] .lv2.is-lav .lv-grid .app-icon-label { font-weight: 700; color: #1A2347; }
   .lv2.is-lav .lv-search-go svg { width: 20px; height: 20px; color: #7a7698; }
+  html:root[data-theme="light"] .lv2.is-lav .lv-ai-btn { width: 40px; height: 40px; border-radius: 14px; color: #504AB9 !important; background: #f1eeff; }
 }
