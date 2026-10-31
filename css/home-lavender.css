@@ -160,7 +160,7 @@
   html:root[data-theme="light"] .hv2 .hv2-tl-text { flex: 1; min-width: 0; }
   html:root[data-theme="light"] .hv2 .hv2-tl-row:not(.hv2-rain) .hv2-tl-time { order: 3; flex: 0 0 auto; min-width: 54px; padding: 6px 8px !important; border-radius: 12px; font-size: .74rem; font-weight: 700; text-align: center; color: var(--lv-a) !important; background: #ece8ff !important; }
   html:root[data-theme="light"] .hv2 .hv2-tl-row:not(.hv2-rain) .hv2-tag { display: none; }
-  html:root[data-theme="light"] .hv2 .hv2-tl-row.hv2-rain { background: linear-gradient(120deg, #e8f1ff, #fff); }
+  html:root[data-theme="light"] .hv2 .hv2-tl-row.hv2-rain { width: 100%; margin: 0 !important; border-radius: 22px !important; background: linear-gradient(120deg, #e8f1ff, #fff); }
   html:root[data-theme="light"] .hv2 .hv2-rain .hv2-tl-time { display: grid; place-items: center; width: 44px; height: 44px; flex: 0 0 auto; padding: 0 !important; border-radius: 15px; background: #dbe9ff !important; }
   html:root[data-theme="light"] .hv2 .hv2-tl .hv2-empty { padding: 14px; border: 1px solid var(--lv-line); border-radius: 22px; background: #fff; }
 
