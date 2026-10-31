@@ -55,9 +55,10 @@ const Login = {
         <span class="login-blob login-blob-b" aria-hidden="true"></span>
         <span class="login-blob login-blob-c" aria-hidden="true"></span>
         <div class="login-brand">
-          ${LOGO}
+          ${typeof HomeV2 !== "undefined" && HomeV2.buddy ? `<span class="login-nomi" data-nomi data-mood="wink" role="button" tabindex="0" aria-label="Nomi">${HomeV2.buddy("wink")}</span>` : LOGO}
           <div><strong>MY <em>LIFE</em></strong><small>${L("លុយ · គ្រួសារ · ប្រតិទិន · AI", "Money · family · calendar · AI")}</small></div>
         </div>
+        ${typeof HomeV2 !== "undefined" && HomeV2.buddy ? `<div class="login-say" data-nomi-say>${L("សួស្តី! ខ្ញុំ Nomi 🐾 ចូលមកវិញណា ខ្ញុំរង់ចាំអ្នក", "Hi! I'm Nomi 🐾 Welcome back, I've been waiting")}</div>` : ""}
         <div class="login-glass">
         <div class="login-header">
           <h2>${isReset ? L("ប្ដូរពាក្យសម្ងាត់", "Reset password") : hasAccount ? t("unlockMylife") : isLegacy ? t("secureAccount") : supabaseConfigured ? (isSignup ? L("បង្កើតគណនី", "Create account") : L("ចូលគណនី", "Log in")) : t("createAccount")}</h2>

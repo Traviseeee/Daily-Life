@@ -790,15 +790,22 @@ function bindSettings() {
     }});
   });
   bindSettingsAction("logout", async () => {
+    const km = typeof languageCode === "function" && languageCode() === "km";
     Modal.confirm({
-      title: "Log out",
-      message: "Log out of your Supabase account and return to the login screen?",
-      confirmText: "Log out",
+      title: km ? "ចាកចេញ" : "Log out",
+      message: km ? "ចាកចេញពីគណនី ហើយត្រឡប់ទៅទំព័រចូលវិញ?" : "Log out of your account and return to the login screen?",
+      confirmText: km ? "ចាកចេញ" : "Log out",
       onConfirm: async () => {
         await Login.logout();
-        Toast.show("Logged out");
+        Toast.show(km ? "បានចាកចេញ" : "Logged out");
       }
     });
+    // Nomi says goodbye (31 Oct)
+    const form = document.querySelector("#modalRoot #modalForm");
+    if (form && typeof HomeV2 !== "undefined" && HomeV2.buddy) {
+      form.classList.add("lo-sheet");
+      form.insertAdjacentHTML("afterbegin", `<div class="lo-nomi"><span class="lo-nomi-pic">${HomeV2.buddy("sleepy")}</span><span class="lo-say">${km ? "ទៅហើយមែន? ខ្ញុំនឹងនឹកអ្នក 🥺 ត្រឡប់មកវិញឆាប់ៗណា!" : "Leaving already? I'll miss you 🥺 Come back soon!"}</span></div>`);
+    }
   });
   bindSettingsAction("clear-data", () => {
     Modal.confirm({ title: t("clearData"), message: t("clearDataMessage"), confirmText: t("clearData"), onConfirm: () => {
