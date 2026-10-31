@@ -758,3 +758,20 @@ html:root:not([data-theme="light"]) body, html:root:not([data-theme="light"]) .a
   html:root:not([data-theme="light"]) { --bg-main: #1b1834; --bg-secondary: #211d3d; --accent: #B6A8FF; }
   html:root:not([data-theme="light"]) .welcome-poster-card.wp2 { --wp-card: #2e2956; --wp-soft: #3a3468; --wp-line: rgba(182,168,255,.16); --wp-ink: #F4F2FF; --wp-ink2: #bdb7e6; --wp-acc-ink: #B6A8FF; --wp-on: #1A1640; --wp-grad: linear-gradient(120deg, #B6A8FF, #7B68EE); --wp-empty: linear-gradient(160deg, #3a3468, #2a2550); }
 }
+@media all {
+  /* D1 readability fixes (31 Oct) */
+  html:root:not([data-theme="light"]) .hv2-head.is-lav .hv2-day.is-ok { color: #F4F2FF !important; background: rgba(182,168,255,.2) !important; }
+  html:root:not([data-theme="light"]) .hv2-head.is-lav .hv2-day.is-ok small { color: #cfc9f0 !important; }
+  html:root:not([data-theme="light"]) .hv2-head.is-lav .hv2-day.is-ok i { background: #9F8CFF !important; }
+  html:root:not([data-theme="light"]) .hv2 .hv2-tl-row.hv2-rain { color: #F4F2FF !important; background: linear-gradient(120deg, rgba(169,205,245,.18), rgba(182,168,255,.14)) !important; border: 1px solid rgba(182,168,255,.18) !important; }
+  html:root:not([data-theme="light"]) .hv2 .hv2-rain :is(b, strong, .hv2-tl-title) { color: #F4F2FF !important; }
+  html:root:not([data-theme="light"]) .hv2 .hv2-rain small { color: #a9cdf5 !important; }
+  html:root:not([data-theme="light"]) .hv2 .hv2-rain .hv2-tl-time { background: rgba(169,205,245,.18) !important; }
+  html:root:not([data-theme="light"]) .hv2 .hv2-tag.is-rain { color: #a9cdf5 !important; background: rgba(169,205,245,.16) !important; }
+  html:root:not([data-theme="light"]) :is(.hv2, .fv2-page) :is(.hv2-sec a, .hv2-link, .fv2-section-head a) { color: #C9BDFF !important; background: rgba(182,168,255,.14) !important; padding: 3px 10px !important; border-radius: 999px !important; box-shadow: none !important; }
+}
+@media all {
+  html:root:not([data-theme="light"]) .hv2-head.is-lav .hv2-day.is-today small { color: rgba(255,255,255,.85) !important; }
+  html:root:not([data-theme="light"]) .hv2 :is(textarea, input[type="text"]) { color: #F4F2FF !important; background: #2e2956 !important; border-color: rgba(182,168,255,.3) !important; }
+  html:root:not([data-theme="light"]) .hv2 :is(textarea, input[type="text"])::placeholder { color: #9993c4 !important; }
+}
