@@ -281,3 +281,10 @@
   .hv2 :is(.hv2-hero-buddy, .hv2-prog-buddy, .hv2-soft-buddy) { display: none; }
   .hv2 .hv2-buddy { width: 64px; height: 64px; }
 }
+/* money card: Nomi talks to the right of itself (31 Oct) */
+@media (max-width: 900px) {
+  html:root[data-theme="light"] .hv2-soft-buddy { z-index: 2; }
+  html:root[data-theme="light"] .hv2-soft-buddy .hv2-say { left: calc(100% + 4px); right: auto; top: 6px; max-width: 128px; border-radius: 16px 16px 16px 4px; box-shadow: 0 0 0 1px #ebe8f4; animation-delay: .6s; opacity: 0; }
+  html:root[data-theme="light"] .hv2-soft-buddy .hv2-say.is-pop { animation-delay: 0s; }
+  html:root[data-theme="light"] :is(.hv2-prog-buddy, .hv2-soft-buddy).is-hop .hv2-buddy { animation: nbHop .55s ease; }
+}

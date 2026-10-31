@@ -30,22 +30,23 @@ const HomeV2 = (() => {
   // mood: happy (normal) · cheer (focus all done) · sleepy (late night) · worry (spent too much)
   const BUDDY_INK = "#282694";
   function buddyFace(m, cx, cy, s) {
-    const e = (x, y) => `<circle cx="${x}" cy="${y}" r="${4.4 * s}" fill="${BUDDY_INK}"/><circle cx="${x + 1.4 * s}" cy="${y - 1.6 * s}" r="${1.4 * s}" fill="#fff"/>`;
+    const e = (x, y) => `<g class="nb-eye"><circle cx="${x}" cy="${y}" r="${4.4 * s}" fill="${BUDDY_INK}"/><circle cx="${x + 1.4 * s}" cy="${y - 1.6 * s}" r="${1.4 * s}" fill="#fff"/></g>`;
     const dx = 11 * s, ey = cy - 3 * s, my = cy + 8 * s;
     const blush = c => `<ellipse cx="${cx - 19 * s}" cy="${cy + 6 * s}" rx="${5 * s}" ry="${3 * s}" fill="${c}" opacity=".8"/><ellipse cx="${cx + 19 * s}" cy="${cy + 6 * s}" rx="${5 * s}" ry="${3 * s}" fill="${c}" opacity=".8"/>`;
     const st = `stroke="${BUDDY_INK}" stroke-width="${2.6 * s}" stroke-linecap="round" fill="none"`;
     if (m === "cheer") return blush("#ffb9c4") + `<path d="M${cx - dx - 4 * s} ${ey}q4 -5 8 0M${cx + dx - 4 * s} ${ey}q4 -5 8 0" ${st}/><path d="M${cx - 9 * s} ${my - 3 * s}q9 13 18 0z" fill="#E6986B" stroke="${BUDDY_INK}" stroke-width="${2.4 * s}" stroke-linejoin="round"/>`;
     if (m === "calm") return blush("#ffb9c4") + `<path d="M${cx - dx - 4 * s} ${ey}q4 3 8 0M${cx + dx - 4 * s} ${ey}q4 3 8 0" ${st}/><path d="M${cx - 6 * s} ${my - 1 * s}q6 5 12 0" ${st}/>`;
-    if (m === "sleepy") return blush("#ffb9c4") + `<path d="M${cx - dx - 4 * s} ${ey}q4 3 8 0M${cx + dx - 4 * s} ${ey}q4 3 8 0" ${st}/><ellipse cx="${cx}" cy="${my}" rx="${3.2 * s}" ry="${2.6 * s}" fill="${BUDDY_INK}"/><text x="${cx + 22 * s}" y="${cy - 18 * s}" font-size="${11 * s}" font-weight="800" fill="#9F8CFF" font-family="sans-serif">z</text>`;
-    if (m === "worry") return blush("#c9d4ff") + e(cx - dx, ey + s) + e(cx + dx, ey + s) + `<path d="M${cx - dx - 5 * s} ${ey - 9 * s}l7 3M${cx + dx + 5 * s} ${ey - 9 * s}l-7 3" ${st}/><path d="M${cx - 6 * s} ${my + 3 * s}q6 -6 12 0" ${st}/><path d="M${cx + 27 * s} ${cy - 14 * s}q3 5 0 7q-3 -2 0 -7z" fill="#8fc9ff"/>`;
+    if (m === "sleepy") return blush("#ffb9c4") + `<path d="M${cx - dx - 4 * s} ${ey}q4 3 8 0M${cx + dx - 4 * s} ${ey}q4 3 8 0" ${st}/><ellipse cx="${cx}" cy="${my}" rx="${3.2 * s}" ry="${2.6 * s}" fill="${BUDDY_INK}"/><text x="${cx + 22 * s}" y="${cy - 18 * s}" font-size="${11 * s}" font-weight="800" fill="#9F8CFF" font-family="sans-serif" class="nb-z">z</text>`;
+    if (m === "worry") return blush("#c9d4ff") + e(cx - dx, ey + s) + e(cx + dx, ey + s) + `<path d="M${cx - dx - 5 * s} ${ey - 9 * s}l7 3M${cx + dx + 5 * s} ${ey - 9 * s}l-7 3" ${st}/><path d="M${cx - 6 * s} ${my + 3 * s}q6 -6 12 0" ${st}/><path class="nb-drop" d="M${cx + 27 * s} ${cy - 14 * s}q3 5 0 7q-3 -2 0 -7z" fill="#8fc9ff"/>`;
     return blush("#ffb9c4") + e(cx - dx, ey) + e(cx + dx, ey) + `<path d="M${cx - 8 * s} ${my - 2 * s}q8 9 16 0" fill="#E6986B" stroke="${BUDDY_INK}" stroke-width="${2.5 * s}" stroke-linecap="round" stroke-linejoin="round"/>`;
   }
-  const buddy = (m = "happy") => `<svg class="hv2-buddy is-${m}" viewBox="0 0 100 100" aria-hidden="true"><ellipse cx="50" cy="95" rx="24" ry="4" fill="rgba(40,38,148,.18)"/>`
-    + `<path d="M74 80c14 2 18-12 10-18" stroke="#b9adf5" stroke-width="6" fill="none" stroke-linecap="round"/><path d="M84 58c-3-4-9-1-6 4l6 6 6-6c3-5-3-8-6-4z" fill="#ff8fab"/>`
-    + `<path d="M28 34l4-16 14 10zM72 34l-4-16-14 10z" fill="#b3a6f7"/><path d="M31 30l2-7 6 5zM69 30l-2-7-6 5z" fill="#ffc2d1"/>`
+  // parts are grouped so css/home-v2.css can move them: breathe, blink, ears, tail, heart, arms (31 Oct)
+  const buddy = (m = "happy") => `<svg class="hv2-buddy is-${m}" viewBox="0 0 100 100" aria-hidden="true"><ellipse class="nb-shadow" cx="50" cy="95" rx="24" ry="4" fill="rgba(40,38,148,.18)"/>`
+    + `<g class="nb-tail"><path d="M74 80c14 2 18-12 10-18" stroke="#b9adf5" stroke-width="6" fill="none" stroke-linecap="round"/><path class="nb-heart" d="M84 58c-3-4-9-1-6 4l6 6 6-6c3-5-3-8-6-4z" fill="#ff8fab"/></g>`
+    + `<g class="nb-bodyg"><g class="nb-ear-l"><path d="M28 34l4-16 14 10z" fill="#b3a6f7"/><path d="M31 30l2-7 6 5z" fill="#ffc2d1"/></g><g class="nb-ear-r"><path d="M72 34l-4-16-14 10z" fill="#b3a6f7"/><path d="M69 30l-2-7-6 5z" fill="#ffc2d1"/></g>`
     + `<ellipse cx="50" cy="60" rx="31" ry="30" fill="#c9bdff"/><ellipse cx="50" cy="72" rx="18" ry="14" fill="#f4f0ff"/>`
-    + (m === "cheer" ? '<ellipse cx="22" cy="46" rx="6" ry="8" fill="#c9bdff" transform="rotate(-30 22 46)"/><ellipse cx="78" cy="46" rx="6" ry="8" fill="#c9bdff" transform="rotate(30 78 46)"/>' : "")
-    + buddyFace(m, 50, 56, 0.9) + "</svg>";
+    + (m === "cheer" ? '<ellipse class="nb-arm-l" cx="22" cy="46" rx="6" ry="8" fill="#c9bdff" transform="rotate(-30 22 46)"/><ellipse class="nb-arm-r" cx="78" cy="46" rx="6" ry="8" fill="#c9bdff" transform="rotate(30 78 46)"/>' : "")
+    + `<g class="nb-face">${buddyFace(m, 50, 56, 0.9)}</g></g></svg>`;
   // which mood fits right now
   function buddyMood(d) {
     const h = new Date().getHours();
@@ -82,6 +83,13 @@ const HomeV2 = (() => {
     sleepy: [["យប់ហើយ… សម្រាកឱ្យបានល្អណា 😴", "It's late… rest well 😴"], ["ស្អែកយើងបន្តទៀត 🌙", "We'll keep going tomorrow 🌙"]],
     worry: [["ថ្ងៃនេះចាយច្រើនបន្តិច ប្រយ័ត្នណា 💸", "A bit much spent today, careful 💸"], ["យើងសន្សំបន្តិចទៀតស្អែក 🐷", "Let's save a little tomorrow 🐷"]],
     calm: [["យឺតៗ មិនអីទេ ☁️", "Slow is fine ☁️"], ["ផឹកទឹកមួយកែវសិន 💧", "Have a glass of water first 💧"]]
+  };
+  // what Nomi says on the money card (the line follows today's spending)
+  const MONEY_SAY = {
+    cheer: ["ថ្ងៃនេះមិនទាន់ចាយទេ ល្អណាស់! 🐷", "No spending yet today, nice! 🐷"],
+    happy: ["ចាយបានល្អ នៅក្រោមកំណត់ ✨", "Spending looks good, under the limit ✨"],
+    calm: ["ជិតដល់កំណត់ថ្ងៃនេះហើយ ☁️", "Close to today's limit ☁️"],
+    worry: ["ចាយលើសហើយ ប្រយ័ត្នបន្តិចណា 💸", "Over the limit, go easy 💸"]
   };
   let nomiStep = 0;
   function nomiLine(mood) {
@@ -211,7 +219,7 @@ const HomeV2 = (() => {
     const next = list.find(item => clock(item.time) >= nowClock) || list[0];
     const nextTag = next ? `<span>${escapeHtml(L("បន្ទាប់", "Next"))}: ${escapeHtml(next.title || "")}${clock(next.time) ? ` ${escapeHtml(clock(next.time))}` : ""}</span>` : "";
     return `<a class="hv2-prog" href="${next ? escapeAttr(next.href || "#calendar") : "#home"}" ${next ? "" : 'data-hv2-scroll=".hv2-fx"'}>
-      <span class="hv2-prog-cloud" aria-hidden="true"></span><span class="hv2-prog-buddy">${MASCOT_FN(progMood(d))}</span>
+      <span class="hv2-prog-cloud" aria-hidden="true"></span><span class="hv2-prog-buddy" data-nomi data-mood="${progMood(d)}" role="button" tabindex="0" aria-label="Nomi">${MASCOT_FN(progMood(d))}</span>
       <b>${escapeHtml(L("វឌ្ឍនភាពថ្ងៃនេះ", "Today's progress"))}</b>
       <span class="hv2-prog-seg">${d.focus.map((_, i) => `<i class="${i < done ? "on" : ""}"></i>`).join("")}<em>${done}/${total}</em></span>
       <span class="hv2-prog-tags"><span>${escapeHtml(total && done >= total ? L("ធ្វើរួចទាំងអស់ 🎉", "All done 🎉") : L(`នៅសល់ ${total - done}`, `${total - done} left`))}</span>${nextTag}</span>
@@ -288,7 +296,7 @@ const HomeV2 = (() => {
       <div class="hv2-mt-bar"><i style="width:${at(day)}"></i>${marks.filter(n => n < day).map(n => `<b style="left:${at(n)}">✓</b>`).join("")}<b class="is-now" style="left:${at(day)}">✓</b></div></div>`;
     return `<article class="wc-card hv2-soft${m.left < 0 ? " is-short" : ""}">
         <span class="hv2-soft-glow" aria-hidden="true"></span>${top}
-        <span class="hv2-soft-buddy">${MASCOT_FN(moneyMood(m, spentToday, perDay))}</span>
+        <span class="hv2-soft-buddy" data-nomi data-mood="${moneyMood(m, spentToday, perDay)}" role="button" tabindex="0" aria-label="Nomi">${MASCOT_FN(moneyMood(m, spentToday, perDay))}<span class="hv2-say" data-nomi-say>${escapeHtml(L(...(MONEY_SAY[moneyMood(m, spentToday, perDay)] || MONEY_SAY.happy)))}</span></span>
         <small>${escapeHtml(L(`នៅសល់សម្រាប់ចាយ · ខែ${monthName}`, `Left to spend · ${monthName}`))}</small>
         <a class="hv2-soft-amt money-value${hide}" href="#money">${escapeHtml(plainMoney(m.left))}</a>
         <span class="hv2-soft-pill">${escapeHtml(L(`ចាយរួច ${pct}% · ${daysLeft} ថ្ងៃទៀត`, `${pct}% spent · ${daysLeft} days left`))}</span>
@@ -524,7 +532,7 @@ const HomeV2 = (() => {
       try { localStorage.setItem("mylife:nomi-hi", "1"); } catch (error) { /* ignore */ }
       nomiStep += 1;
       const say = nomi.querySelector("[data-nomi-say]");
-      if (say) { say.textContent = nomiLine(MOOD_NOW); say.classList.remove("is-pop"); void say.offsetWidth; say.classList.add("is-pop"); }
+      if (say) { say.textContent = nomi.classList.contains("hv2-soft-buddy") && nomiStep % 2 ? L(...(MONEY_SAY[nomi.dataset.mood] || MONEY_SAY.happy)) : nomiLine(nomi.dataset.mood || MOOD_NOW); say.classList.remove("is-pop"); void say.offsetWidth; say.classList.add("is-pop"); }
       nomi.classList.remove("is-hop"); void nomi.offsetWidth; nomi.classList.add("is-hop");
       return;
     }

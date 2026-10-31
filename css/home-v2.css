@@ -340,3 +340,47 @@ html body .hv2 .hv2-title .hv2-why p { margin: 0 !important; }
 @keyframes hv2NomiHop { 30% { transform: translateY(-10px) rotate(-6deg); } 60% { transform: translateY(0) rotate(4deg); } }
 @keyframes hv2NomiSay { 0% { opacity: 0; transform: translateY(6px) scale(.9); } 8%, 85% { opacity: 1; transform: none; } 100% { opacity: 0; transform: translateY(-4px); } }
 @media (prefers-reduced-motion: reduce) { .hv2-nomi-dark { animation: none; } }
+
+/* Nomi comes alive (31 Oct): breathes, blinks, twitches an ear, wags the tail, the heart beats.
+   Each mood moves its own way: cheer jumps and waves, worry shivers with a sweat drop,
+   sleepy sways slowly with a floating z, calm breathes slow. Tap = hop (any Nomi). */
+.hv2-buddy { overflow: visible; }
+.hv2-buddy :is(.nb-bodyg, .nb-tail, .nb-heart, .nb-eye, .nb-ear-l, .nb-ear-r, .nb-arm-l, .nb-arm-r, .nb-z, .nb-drop, .nb-shadow) { transform-box: view-box; }
+.hv2-buddy .nb-bodyg { transform-origin: 50px 90px; animation: nbBreath 2.6s ease-in-out infinite; }
+.hv2-buddy .nb-shadow { transform-origin: 50px 95px; animation: nbShadow 2.6s ease-in-out infinite; }
+.hv2-buddy .nb-tail { transform-origin: 74px 80px; animation: nbWag 1.4s ease-in-out infinite; }
+.hv2-buddy .nb-heart { transform-origin: 84px 62px; animation: nbBeat 1.4s ease-in-out infinite; }
+.hv2-buddy .nb-eye { transform-box: fill-box; transform-origin: center; animation: nbBlink 4.2s infinite; }
+.hv2-buddy .nb-ear-l { transform-origin: 36px 30px; animation: nbEarL 5.5s ease-in-out infinite; }
+.hv2-buddy .nb-ear-r { transform-origin: 64px 30px; animation: nbEarR 6.5s ease-in-out 1.2s infinite; }
+.hv2-buddy.is-cheer .nb-bodyg { animation: nbJump 1.1s cubic-bezier(.3, .7, .4, 1) infinite; }
+.hv2-buddy.is-cheer .nb-shadow { animation: nbShadowJump 1.1s cubic-bezier(.3, .7, .4, 1) infinite; }
+.hv2-buddy.is-cheer .nb-arm-l { transform-origin: 26px 52px; animation: nbWaveL .55s ease-in-out infinite alternate; }
+.hv2-buddy.is-cheer .nb-arm-r { transform-origin: 74px 52px; animation: nbWaveR .55s ease-in-out infinite alternate; }
+.hv2-buddy.is-cheer .nb-tail { animation-duration: .6s; }
+.hv2-buddy.is-worry .nb-bodyg { animation: nbShiver .35s linear infinite; }
+.hv2-buddy.is-worry .nb-tail { animation: none; transform: rotate(18deg); }
+.hv2-buddy.is-worry .nb-drop { transform-origin: 76px 45px; animation: nbDrop 1.6s ease-in infinite; }
+.hv2-buddy.is-sleepy .nb-bodyg { animation: nbSway 4.5s ease-in-out infinite; }
+.hv2-buddy.is-sleepy .nb-tail { animation-duration: 4s; }
+.hv2-buddy.is-sleepy .nb-z { transform-origin: 72px 38px; animation: nbZ 2.4s ease-out infinite; }
+.hv2-buddy.is-calm .nb-bodyg { animation-duration: 4s; }
+[data-nomi] { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+[data-nomi].is-hop .hv2-buddy { animation: nbHop .55s ease; }
+@keyframes nbBreath { 50% { transform: scale(1.03, .97); } }
+@keyframes nbShadow { 50% { transform: scaleX(1.06); } }
+@keyframes nbWag { 0%, 100% { transform: rotate(-8deg); } 50% { transform: rotate(10deg); } }
+@keyframes nbBeat { 0%, 40%, 100% { transform: scale(1); } 20% { transform: scale(1.3); } }
+@keyframes nbBlink { 0%, 90%, 100% { transform: scaleY(1); } 94% { transform: scaleY(.1); } }
+@keyframes nbEarL { 0%, 80%, 100% { transform: rotate(0); } 85% { transform: rotate(-14deg); } 90% { transform: rotate(4deg); } }
+@keyframes nbEarR { 0%, 84%, 100% { transform: rotate(0); } 89% { transform: rotate(14deg); } 94% { transform: rotate(-4deg); } }
+@keyframes nbJump { 0%, 100% { transform: translateY(0) scale(1.04, .94); } 40% { transform: translateY(-12px) scale(.97, 1.04); } 70% { transform: translateY(0) scale(1.05, .93); } }
+@keyframes nbShadowJump { 40% { transform: scaleX(.7); opacity: .5; } }
+@keyframes nbWaveL { from { transform: rotate(0); } to { transform: rotate(-35deg); } }
+@keyframes nbWaveR { from { transform: rotate(0); } to { transform: rotate(35deg); } }
+@keyframes nbShiver { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-1.2px); } 75% { transform: translateX(1.2px); } }
+@keyframes nbDrop { 0% { transform: translateY(0); opacity: 1; } 80% { transform: translateY(10px); opacity: 0; } 100% { opacity: 0; } }
+@keyframes nbSway { 0%, 100% { transform: rotate(-5deg); } 50% { transform: rotate(5deg) translateY(1px); } }
+@keyframes nbZ { 0% { transform: translate(0, 0) scale(.6); opacity: 0; } 30% { opacity: 1; } 100% { transform: translate(6px, -14px) scale(1.2); opacity: 0; } }
+@keyframes nbHop { 30% { transform: translateY(-12px) rotate(-8deg); } 60% { transform: translateY(0) rotate(5deg); } 80% { transform: rotate(-2deg); } }
+@media (prefers-reduced-motion: reduce) { .hv2-buddy *, [data-nomi].is-hop .hv2-buddy { animation: none !important; } }
