@@ -1,0 +1,67 @@
+/* Lavender skin for the whole app (31 Oct 2026) — light mode, phone only. Loaded last.
+   Step 1: footer + floating + button on every page. Step 2: pop-ups / sheets. Step 3: Settings.
+   Palette: indigo #504AB9, lavender #7B68EE → #9F8CFF, mauve #CBACC1, peach #E6986B, page #F3F1F4, ink #1A2347.
+   No drop shadows: white blocks get a hairline #EBE8F4. Dark mode and desktop are not touched. */
+@media (max-width: 900px) {
+  /* 1 · footer: white pill everywhere, active tab soft lavender */
+  html:root[data-theme="light"]:root body #mobileNav.mobile-nav { --f2-glass: rgba(255,255,255,.94); --f2-grad: #ece8ff; --f2-on: #3f37a8; --f2-glow: none; --f2-ink2: #8f8bad; --f2-line: #ebe8f4; --f2-sh: 0 10px 28px -16px rgba(80, 74, 185, .35); }
+  html:root[data-theme="light"]:root body #mobileNav.mobile-nav .nav-item.active,
+  html:root[data-theme="light"]:root body #mobileNav.mobile-nav .nav-item.active :is(span, svg) { color: #3f37a8 !important; }
+  html:root[data-theme="light"]:root body #mobileNav.mobile-nav .nav-item.active { background: #ece8ff !important; box-shadow: none !important; }
+
+  /* 1 · floating + button: lavender, no glow */
+  html:root[data-theme="light"] body .quick-action-toggle { color: #fff !important; border: 0 !important; background: linear-gradient(140deg, #9F8CFF, #6c5ce7) !important; box-shadow: 0 10px 22px -12px rgba(80, 74, 185, .7) !important; }
+  html:root[data-theme="light"] body .quick-action-toggle svg { color: #fff !important; }
+  html:root[data-theme="light"] body .quick-action-menu :is(button, a) { border: 1px solid #ebe8f4 !important; background: #fff !important; box-shadow: none !important; color: #1A2347 !important; }
+
+  /* 2 · pop-ups and sheets */
+  html:root[data-theme="light"] #modalRoot#modalRoot .modal { border: 1px solid #ebe8f4 !important; background: #fff !important; box-shadow: 0 -10px 40px -20px rgba(80, 74, 185, .35) !important; }
+  html:root[data-theme="light"] #modalRoot#modalRoot .modal :is(h2, .section-title) { color: #1A2347 !important; }
+  html:root[data-theme="light"] #modalRoot#modalRoot .modal .button:not(.ghost-button):not(.danger-button),
+  html:root[data-theme="light"] #modalRoot#modalRoot .modal button[type="submit"]:not(.ghost-button):not(.danger-button) { color: #fff !important; border: 0 !important; border-radius: 16px !important; background: linear-gradient(135deg, #7B68EE, #504AB9) !important; box-shadow: none !important; }
+  html:root[data-theme="light"] #modalRoot#modalRoot .modal .button.ghost-button { color: #504AB9 !important; border: 1px solid #e3def6 !important; border-radius: 16px !important; background: #f4f2fd !important; box-shadow: none !important; }
+  html:root[data-theme="light"] #modalRoot#modalRoot .modal :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]), select, textarea) { border-color: #e3def6 !important; background-color: #faf9fe !important; box-shadow: none !important; }
+  html:root[data-theme="light"] #modalRoot#modalRoot .modal :is(input, select, textarea):focus { border-color: #9F8CFF !important; outline: 2px solid rgba(159, 140, 255, .25) !important; outline-offset: 0; }
+  html:root[data-theme="light"] #modalRoot#modalRoot .modal :is(.is-active, .active, [aria-pressed="true"], [aria-selected="true"]):is(button, label, a):not(.ghost-button) { color: #fff !important; border-color: transparent !important; background: linear-gradient(135deg, #7B68EE, #504AB9) !important; box-shadow: none !important; }
+  html:root[data-theme="light"] #modalRoot#modalRoot .modal input[type="range"] { accent-color: #6c5ce7; }
+  html:root[data-theme="light"] #modalRoot#modalRoot .modal input[type="checkbox"]:checked { accent-color: #6c5ce7; }
+  /* Design my card + family sheets use their own variables */
+  html:root[data-theme="light"] #modalRoot#modalRoot .modal.wc-sheet { --sh-bg: #F3F1F4; --sh-box: #fff; --sh-line: #ebe8f4; --sh-text: #1A2347; --sh-mute: #7a7698; --sh-acc: #6c5ce7; --sh-acc-text: #fff; --sh-on: #504AB9; --sh-on-text: #fff; }
+  html:root[data-theme="light"] #modalRoot#modalRoot .modal.wc-sheet .wc-save { background: linear-gradient(135deg, #7B68EE, #504AB9) !important; }
+  html:root[data-theme="light"] #modalRoot#modalRoot .modal.wc-sheet .wc-tg input:checked { background: #6c5ce7 !important; }
+  html:root[data-theme="light"] .fg-sheet :is(.fg-primary, .fg-pill.is-on) { color: #fff !important; border-color: transparent !important; background: linear-gradient(135deg, #7B68EE, #504AB9) !important; box-shadow: none !important; }
+
+  /* 3 · Settings: soft-crop lavender header, white groups with hairlines, lavender switches */
+  html:root[data-theme="light"] body:has(.sv2) .app-main { background: #F3F1F4 !important; }
+  html:root[data-theme="light"] .sv2 {
+    --sv-soft: #f1eeff; --sv-line: #ebe8f4; --sv-page: #F3F1F4; --sv-ink: #1A2347; --sv-ink2: #7a7698; --sv-ink3: #a7a3c2;
+    --sv-acc-ink: #504AB9; --sv-grad: linear-gradient(135deg, #7B68EE, #504AB9); --sv-shadow: none; --sv-glow: none; --sv-off: #dcd8ea;
+    --sv-hero: radial-gradient(45% 140px at 88% 40%, rgba(255, 214, 190, .6), transparent 70%), linear-gradient(170deg, #7B68EE, #9F8CFF 55%, #c9bdff);
+  }
+  html:root[data-theme="light"] body .sv2 .sv-hero { background: var(--sv-hero) !important; padding-bottom: 46px; border-radius: 0 0 40px 40px; -webkit-mask: linear-gradient(#000 78%, rgba(0,0,0,.0)); mask: linear-gradient(#000 78%, rgba(0,0,0,0)); }
+  html:root[data-theme="light"] body .sv2 .sv-hero h1 { color: #fff !important; -webkit-text-fill-color: #fff; }
+  html:root[data-theme="light"] .sv2 .sv-hero + * { margin-top: -30px; position: relative; }
+  html:root[data-theme="light"] .sv2 :is(.sv-prof, .sv-grp, .sv-quick > *) { border: 1px solid #ebe8f4; box-shadow: none !important; }
+  html:root[data-theme="light"] .sv2 .sv-hero .sv-chip { color: #fff !important; background: rgba(255,255,255,.22) !important; border: 1px solid rgba(255,255,255,.35); }
+  html:root[data-theme="light"] .sv2 .sv-hero .sv-chip :is(span, i, svg) { color: #fff !important; }
+  html:root[data-theme="light"] .sv2 .sv-edit { color: #504AB9 !important; background: #ece8ff !important; }
+  html:root[data-theme="light"] .sv2 .sv-ic.is-blue { background: #e8f1ff; }
+  html:root[data-theme="light"] .sv2 .sv-ic.is-violet { background: #ece8ff; }
+  html:root[data-theme="light"] .sv2 .sv-subhead :is(h1, button, a) { color: #fff !important; }
+
+  /* event / expense sheets: their accent variable + the parts that hard-code blue */
+  html:root[data-theme="light"] body #modalRoot#modalRoot .modal.modal.modal { --ev-lime: #7B68EE !important; }
+  html:root[data-theme="light"] body #modalRoot#modalRoot .modal.modal .ev-head-icon { color: #fff !important; background: linear-gradient(135deg, #9F8CFF, #6c5ce7) !important; box-shadow: none !important; }
+  html:root[data-theme="light"] body #modalRoot#modalRoot .modal.modal input.ev-switch:checked { background: #6c5ce7 !important; }
+  html:root[data-theme="light"] body #modalRoot#modalRoot .modal.modal .ev-submit { color: #fff !important; border: 0 !important; background: linear-gradient(135deg, #7B68EE, #504AB9) !important; box-shadow: none !important; }
+  html:root[data-theme="light"] body #modalRoot#modalRoot .modal.modal .ev-submit svg { color: #fff !important; }
+
+  /* sheets read the app's sky variables: point them at lavender inside the pop-up layer only */
+  html:root[data-theme="light"] body #modalRoot, html:root[data-theme="light"] body .fg-sheet {
+    --sky-soft: #f1eeff; --sky-line: #e3def6; --sky-blue: #6c5ce7; --sky-blue-2: #504AB9; --sky-ink-blue: #504AB9;
+    --sky-grad: linear-gradient(120deg, #7B68EE, #504AB9); --sky-shadow: none;
+    --lm-line: rgba(80, 74, 185, .12); --lm-lime: #6c5ce7; --lm-lime-soft: #f1eeff; --lm-lime-ink: #504AB9;
+    --border: rgba(80, 74, 185, .12); --border-light: rgba(80, 74, 185, .2); --accent: #6c5ce7; --accent-soft: #f1eeff;
+  }
+  html:root[data-theme="light"] body #modalRoot#modalRoot .expense-modal .xp-currency { background: linear-gradient(135deg, #9F8CFF, #6c5ce7) !important; }
+}
