@@ -35,6 +35,7 @@ const HomeV2 = (() => {
     const blush = c => `<ellipse cx="${cx - 19 * s}" cy="${cy + 6 * s}" rx="${5 * s}" ry="${3 * s}" fill="${c}" opacity=".8"/><ellipse cx="${cx + 19 * s}" cy="${cy + 6 * s}" rx="${5 * s}" ry="${3 * s}" fill="${c}" opacity=".8"/>`;
     const st = `stroke="${BUDDY_INK}" stroke-width="${2.6 * s}" stroke-linecap="round" fill="none"`;
     if (m === "cheer") return blush("#ffb9c4") + `<path d="M${cx - dx - 4 * s} ${ey}q4 -5 8 0M${cx + dx - 4 * s} ${ey}q4 -5 8 0" ${st}/><path d="M${cx - 9 * s} ${my - 3 * s}q9 13 18 0z" fill="#E6986B" stroke="${BUDDY_INK}" stroke-width="${2.4 * s}" stroke-linejoin="round"/>`;
+    if (m === "calm") return blush("#ffb9c4") + `<path d="M${cx - dx - 4 * s} ${ey}q4 3 8 0M${cx + dx - 4 * s} ${ey}q4 3 8 0" ${st}/><path d="M${cx - 6 * s} ${my - 1 * s}q6 5 12 0" ${st}/>`;
     if (m === "sleepy") return blush("#ffb9c4") + `<path d="M${cx - dx - 4 * s} ${ey}q4 3 8 0M${cx + dx - 4 * s} ${ey}q4 3 8 0" ${st}/><ellipse cx="${cx}" cy="${my}" rx="${3.2 * s}" ry="${2.6 * s}" fill="${BUDDY_INK}"/><text x="${cx + 22 * s}" y="${cy - 18 * s}" font-size="${11 * s}" font-weight="800" fill="#9F8CFF" font-family="sans-serif">z</text>`;
     if (m === "worry") return blush("#c9d4ff") + e(cx - dx, ey + s) + e(cx + dx, ey + s) + `<path d="M${cx - dx - 5 * s} ${ey - 9 * s}l7 3M${cx + dx + 5 * s} ${ey - 9 * s}l-7 3" ${st}/><path d="M${cx - 6 * s} ${my + 3 * s}q6 -6 12 0" ${st}/><path d="M${cx + 27 * s} ${cy - 14 * s}q3 5 0 7q-3 -2 0 -7z" fill="#8fc9ff"/>`;
     return blush("#ffb9c4") + e(cx - dx, ey) + e(cx + dx, ey) + `<path d="M${cx - 8 * s} ${my - 2 * s}q8 9 16 0" fill="#E6986B" stroke="${BUDDY_INK}" stroke-width="${2.5 * s}" stroke-linecap="round" stroke-linejoin="round"/>`;
@@ -416,7 +417,8 @@ const HomeV2 = (() => {
     stressed: `<path ${FACE_INK} d="M12 16.5l5-2.2M28 16.5l-5-2.2M14.5 28q5.5-4.5 11 0"/><circle cx="15" cy="20" r="2" fill="#6b3d12"/><circle cx="25" cy="20" r="2" fill="#6b3d12"/><path d="M31.5 11.5q2 3 0 4.6q-2-1.6 0-4.6z" fill="#7cc4ff"/>`,
     excited: `<path d="M15 12.6l1.3 2.7 3 .4-2.2 2 .6 3-2.7-1.5-2.7 1.5.6-3-2.2-2 3-.4z" fill="#ff5a7a"/><path d="M25 12.6l1.3 2.7 3 .4-2.2 2 .6 3-2.7-1.5-2.7 1.5.6-3-2.2-2 3-.4z" fill="#ff5a7a"/><path d="M12 23.5q8 10 16 0z" fill="#6b3d12"/><path d="M15.5 27.4q4.5 2.6 9 0" fill="none" stroke="#ff8f8f" stroke-width="2.2" stroke-linecap="round"/>`
   };
-  const face = key => `<svg class="hv2-face" viewBox="0 0 40 40" aria-hidden="true">${FACE_BASE}${FACES[key] || ""}</svg>`;
+  // mood buttons draw Nomi (31 Oct): happy · calm · tired → sleepy · stressed → worry · excited → cheer
+  const face = key => buddy({ happy: "happy", calm: "calm", tired: "sleepy", stressed: "worry", excited: "cheer" }[key] || "happy").replace('class="hv2-buddy', 'class="hv2-face hv2-buddy-face');
 
   // a short friendly line after picking a mood
   const MOOD_NOTE = {

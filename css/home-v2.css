@@ -325,3 +325,4 @@ body.topbar-home #quickActionToggle, body.topbar-home #quickActionMenu { display
 html body .hv2 .hv2-title .hv2-why p { margin: 0 !important; }
 .hv2 .fx-tile, .hv2 .fx-tile label { min-width: 0; } /* long focus names must not widen the card (31 Oct) */
 .hv2 .fx-tile .focus-text { text-overflow: ellipsis; }
+.hv2-face.hv2-buddy-face { width: 44px; height: 44px; filter: none; } /* Nomi mood faces (31 Oct) */
