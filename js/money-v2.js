@@ -81,6 +81,10 @@ const MoneyV2 = (() => {
     // current month: same ticket card as Home (31 Oct); other periods keep the summary hero below
     if (range.kind === "month" && moneyPeriodRange({ kind: "month", anchor: range.anchor }).isCurrent && typeof WalletCard !== "undefined") {
       const chip = `<button type="button" class="fv2-period-chip wc-tk-period" data-fv2-period aria-expanded="${periodOpen}">${escapeHtml(range.label)} ▾</button>`;
+      // light phone (31 Oct): the same white card as Home, period chip on top
+      if (typeof HomeV2 !== "undefined" && HomeV2.softArticle && HomeV2.lav && HomeV2.lav()) {
+        return `<section class="hv2-money wc-wrap fv2-soft">${HomeV2.softArticle(today, { ...m, left, income, expenses: spent }, `<div class="hv2-soft-top">${chip}</div>`)}</section>`;
+      }
       return WalletCard.render({ ...m, left, income, expenses: spent }, today)
         .replace(/<div class="wc-mini">[\s\S]*?<\/div>\s*<\/section>/, "</section>")
         .replace('<section class="hv2-money wc-wrap">', '<section class="hv2-money wc-wrap fv2-ticket">')
@@ -172,8 +176,17 @@ const MoneyV2 = (() => {
     }
     const total = list.reduce((t, x) => t + x.amount, 0);
     const rows = list.length > 3
-      ? [...list.slice(0, 2), { name: L(`ផ្សេងៗ ${list.length - 2} ប្រភេទ`, `${list.length - 2} more`), amount: list.slice(2).reduce((t, x) => t + x.amount, 0), color: "#94a3b8" }]
+      ? [...list.slice(0, 2).map(x => ({ ...x, name: optionLabel(x.category) })), { other: true, name: L(`ផ្សេងៗ ${list.length - 2} ប្រភេទ`, `${list.length - 2} more`), amount: list.slice(2).reduce((t, x) => t + x.amount, 0), color: "#94a3b8" }]
       : list.map(x => ({ ...x, name: optionLabel(x.category) }));
+    const EMOJI = { Food: "🍜", Home: "🏠", Family: "👨‍👩‍👧", Transport: "🚗", Shopping: "🛍️", Bills: "🧾", Loan: "🏦", Education: "🎓", Health: "💊", Entertainment: "🎬", Other: "✨" };
+    if (typeof HomeV2 !== "undefined" && HomeV2.lav && HomeV2.lav()) {
+      const lavRows = rows.map(x => {
+        const pct = Math.round((x.amount / total) * 100);
+        const on = Math.max(1, Math.round(pct / 10));
+        return `<a class="fv2-cat3" href="#money/expenses" style="--c:${x.color}"><span class="fv2-cat3-ic" aria-hidden="true">${x.other ? "✨" : (EMOJI[x.category] || "✨")}</span><span class="fv2-cat3-m"><b>${escapeHtml(x.name)}</b><em>${money(x.amount)}</em><span class="fv2-cat3-seg">${Array.from({ length: 10 }, (_, i) => `<i class="${i < on ? "on" : ""}"></i>`).join("")}</span></span><small>${pct}%</small></a>`;
+      }).join("");
+      return section(L("ចាយលើអ្វីខ្លះ", "Where it went"), "#money/expenses", lavRows);
+    }
     const body = `<div class="fv2-stack">${list.map(x => `<i style="flex:${x.amount};background:${x.color}"></i>`).join("")}</div>`
       + rows.map(x => `<a class="fv2-cat2" href="#money/expenses" style="--c:${x.color}"><span class="fv2-dot"></span><span class="fv2-cat2-name">${escapeHtml(x.name)}</span><b>${money(x.amount)}</b><small>${Math.round((x.amount / total) * 100)}%</small></a>`).join("");
     return section(L("ចាយលើអ្វីខ្លះ", "Where it went"), "#money/expenses", body);
