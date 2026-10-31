@@ -65,6 +65,8 @@ const HomeV2 = (() => {
     const name = appData.profile.name || L("អ្នក", "you");
     const photo = appData.profile.photo ? `<img src="${escapeAttr(appData.profile.photo)}" alt="">` : escapeHtml(initials(appData.profile.name || "ML"));
     const dates = new Set((d.agenda.allItems || []).map(item => item.date));
+    // light: a past day gets ✓ when you checked in (picked a mood or logged an expense)
+    const checked = new Set([...(appData.moodHistory || []).map(entry => entry.date), ...(appData.expenses || []).map(item => item.date)]);
     (appData.calendarEvents || []).forEach(event => event.date && dates.add(event.date));
     const week = Array.from({ length: 7 }, (_, index) => { const date = new Date(); date.setHours(0, 0, 0, 0); date.setDate(date.getDate() - 3 + index); return date; });
     const parts = [L(`${d.agenda.today} ព្រឹត្តិការណ៍`, `${d.agenda.today} event${d.agenda.today === 1 ? "" : "s"}`)];
@@ -104,7 +106,7 @@ const HomeV2 = (() => {
       <nav class="hv2-week" aria-label="${escapeAttr(L("សប្តាហ៍នេះ", "This week"))}">${week.map(date => {
         const key = iso(date);
         const on = key === d.todayIso;
-        return `<a class="hv2-day${on ? " is-today" : ""}" href="#calendar"${on ? ' aria-current="date"' : ""}><small>${escapeHtml(dayLabel(date))}</small><b>${date.getDate()}</b><i class="${dates.has(key) ? "has" : ""}"></i></a>`;
+        return `<a class="hv2-day${on ? " is-today" : ""}${lav() && key < d.todayIso && checked.has(key) ? " is-ok" : ""}" href="#calendar"${on ? ' aria-current="date"' : ""}><small>${escapeHtml(dayLabel(date))}</small><b>${date.getDate()}</b><i class="${dates.has(key) ? "has" : ""}"></i></a>`;
       }).join("")}</nav>
       ${todayItems.length ? "" : ""}
     </header>`;
@@ -169,6 +171,7 @@ const HomeV2 = (() => {
     const monthName = km() ? KM_MONTHS[new Date().getMonth()] : new Date().toLocaleDateString("en-US", { month: "long" });
     const due = d.due;
     const dueNames = due.slice(0, 2).map(item => item.title).join(" · ");
+    if (lav()) return softMoney(d, m, due, dueNames);
     if (typeof WalletCard !== "undefined") {
       const dueHtml = due.length ? `<button type="button" class="hv2-wait" data-ma-home><span class="hv2-count">${due.length}</span><b>${escapeHtml(L(`${dueNames} រង់ចាំឆ្លើយ`, `${dueNames} waiting`))}</b><span class="hv2-pill">${escapeHtml(L("ឆ្លើយ", "Answer"))}</span></button>` : "";
       return WalletCard.render(m, d.todayIso, dueHtml);
@@ -189,6 +192,49 @@ const HomeV2 = (() => {
   }
 
   // red / amber strip at the top: overdue bills and budgets at 80%+ (from the old Today page)
+  // light (Lavender, 31 Oct): white money card like the "streak" card — buddy, big amount,
+  // a month track (week marks ✓, today ringed), spent / today / per day; then a "spent today" row
+  function softMoney(d, m, due, dueNames) {
+    const conf = appData.profile?.walletCard || {};
+    const hide = conf.hide ? " is-hidden" : "";
+    const now = new Date();
+    const dim = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    const day = now.getDate();
+    const daysLeft = Math.max(1, dim - day + 1);
+    const monthName = km() ? KM_MONTHS[now.getMonth()] : now.toLocaleDateString("en-US", { month: "long" });
+    const spentToday = (appData.expenses || []).filter(item => item.date === d.todayIso).reduce((t, item) => t + toProfileCurrency(item.amount, item.currency), 0);
+    const perDay = Math.max(0, m.left) / daysLeft;
+    const pct = m.income > 0 ? Math.round((m.expenses / m.income) * 100) : 0;
+    const marks = [1, 8, 15, 22, dim];
+    const at = n => `${((n - 1) / Math.max(1, dim - 1)) * 100}%`;
+    const track = `<div class="hv2-mt"><div class="hv2-mt-lab">${marks.filter(n => Math.abs(n - day) > 3).map(n => `<span style="left:${at(n)}">${n}</span>`).join("")}<span class="is-now" style="left:${at(day)}">${escapeHtml(L("ថ្ងៃនេះ", "Today"))}</span></div>
+      <div class="hv2-mt-bar"><i style="width:${at(day)}"></i>${marks.filter(n => n < day).map(n => `<b style="left:${at(n)}">✓</b>`).join("")}<b class="is-now" style="left:${at(day)}">✓</b></div></div>`;
+    const mini = typeof WalletCard !== "undefined" ? ((WalletCard.render(m, d.todayIso).match(/<div class="wc-mini">[\s\S]*?<\/div>\s*(?=<\/section>)/) || [""])[0]) : "";
+    const dueHtml = due.length ? `<button type="button" class="hv2-wait" data-ma-home><span class="hv2-count">${due.length}</span><b>${escapeHtml(L(`${dueNames} រង់ចាំឆ្លើយ`, `${dueNames} waiting`))}</b><span class="hv2-pill">${escapeHtml(L("ឆ្លើយ", "Answer"))}</span></button>` : "";
+    const segs = 8;
+    const filled = perDay > 0 ? Math.min(segs, Math.ceil((spentToday / perDay) * segs)) : (spentToday > 0 ? segs : 0);
+    const over = perDay > 0 ? spentToday > perDay : spentToday > 0;
+    return `<section class="hv2-money wc-wrap hv2-soft-wrap">
+      <article class="wc-card hv2-soft${m.left < 0 ? " is-short" : ""}">
+        <span class="hv2-soft-glow" aria-hidden="true"></span>
+        <span class="hv2-soft-buddy">${MASCOT}</span>
+        <small>${escapeHtml(L(`នៅសល់សម្រាប់ចាយ · ខែ${monthName}`, `Left to spend · ${monthName}`))}</small>
+        <a class="hv2-soft-amt money-value${hide}" href="#money">${escapeHtml(plainMoney(m.left))}</a>
+        <span class="hv2-soft-pill">${escapeHtml(L(`ចាយរួច ${pct}% · ${daysLeft} ថ្ងៃទៀត`, `${pct}% spent · ${daysLeft} days left`))}</span>
+        ${track}
+        <p class="hv2-soft-foot">${escapeHtml(L("ចាយ", "Spent"))} <b class="money-value${hide}">${escapeHtml(plainMoney(m.expenses))}</b> / ${escapeHtml(L("ថវិកា", "Budget"))} <b class="money-value${hide}">${escapeHtml(plainMoney(m.income))}</b> · <button type="button" class="hv2-soft-edit" data-wc-edit>✎ ${escapeHtml(L("កែកាត", "Edit card"))}</button></p>
+        <div class="hv2-soft-t3"><span>↑ ${escapeHtml(L("ចាយ", "Spent"))}<b class="money-value${hide}">${escapeHtml(plainMoney(m.expenses))}</b></span><span>● ${escapeHtml(L("ថ្ងៃនេះ", "Today"))}<b class="money-value${hide}">${escapeHtml(plainMoney(spentToday))}</b></span><span>✓ ${escapeHtml(L("ចាយបាន/ថ្ងៃ", "Per day"))}<b class="money-value${hide}">${escapeHtml(plainMoney(perDay))}</b></span></div>
+      </article>
+      <a class="hv2-row-today" href="#money/expenses">
+        <span class="hv2-row-e" aria-hidden="true">💰</span>
+        <span class="hv2-row-mid"><b>${escapeHtml(L("ចាយថ្ងៃនេះ", "Spent today"))}</b><em class="${over ? "is-over" : ""}">${escapeHtml(over ? L("លើសហើយ", "Over") : L("ល្អ", "Good"))}</em>
+          <span class="hv2-row-seg">${Array.from({ length: segs }, (_, i) => `<i class="${i < filled ? (over ? "on over" : "on") : ""}"></i>`).join("")}</span></span>
+        <span class="hv2-row-badge${over ? " is-over" : ""}"><span class="money-value${hide}">$${Math.round(spentToday).toLocaleString("en-US")}</span>/$${Math.round(perDay).toLocaleString("en-US")}</span>
+      </a>
+      ${mini}${dueHtml}
+    </section>`;
+  }
+
   function alerts(d) {
     const out = [];
     const today = d.todayIso;

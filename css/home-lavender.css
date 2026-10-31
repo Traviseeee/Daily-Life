@@ -77,4 +77,51 @@
   html:root[data-theme="light"] .hv2 .wc-tk-bar { height: 9px; background: rgba(255,255,255,.25); }
   html:root[data-theme="light"] .hv2 .wc-tk-bar i { background: linear-gradient(90deg, #f2bb92, #E6986B); }
   html:root[data-theme="light"] .hv2 .wc-tk .wc-tk-edit { background: rgba(255,255,255,.2) !important; }
+
+  /* A · white money card (like the streak card) */
+  html:root[data-theme="light"] .hv2 .wc-card.hv2-soft { position: relative; display: grid; justify-items: center; gap: 2px; min-height: 0; padding: 16px 18px 0; overflow: hidden; border-radius: 30px; color: var(--lv-ink); text-align: center; background: #fff !important; box-shadow: 0 16px 34px -20px rgba(80, 74, 185, .55) !important; }
+  html:root[data-theme="light"] .hv2 .wc-card.hv2-soft::before, html:root[data-theme="light"] .hv2 .wc-card.hv2-soft::after { display: none; }
+  html:root[data-theme="light"] .hv2-soft-glow { position: absolute; left: 50%; top: 4px; width: 170px; height: 120px; transform: translateX(-50%); background: radial-gradient(closest-side, #ffe1d2, transparent); pointer-events: none; }
+  html:root[data-theme="light"] .hv2-soft-buddy { position: relative; width: 84px; height: 84px; animation: hv2Bob 3.2s ease-in-out infinite; }
+  html:root[data-theme="light"] .hv2-soft > small { position: relative; font-size: .76rem; color: var(--lv-sub); }
+  html:root[data-theme="light"] .hv2-soft-amt { position: relative; font-size: 2.1rem; font-weight: 700; line-height: 1.15; color: var(--lv-ink) !important; text-decoration: none; }
+  html:root[data-theme="light"] .hv2-soft.is-short .hv2-soft-amt { color: #e5484d !important; }
+  html:root[data-theme="light"] .hv2-soft-pill { position: relative; padding: 3px 12px; border-radius: 99px; font-size: .72rem; font-weight: 600; color: var(--lv-a); background: #ece8ff; }
+  html:root[data-theme="light"] .hv2-mt { position: relative; width: 100%; margin-top: 12px; }
+  html:root[data-theme="light"] .hv2-mt-lab { position: relative; height: 18px; margin: 0 14px; font-size: .68rem; color: #a7a3c2; }
+  html:root[data-theme="light"] .hv2-mt-lab span { position: absolute; top: 0; transform: translateX(-50%); white-space: nowrap; }
+  html:root[data-theme="light"] .hv2-mt-lab span.is-now { top: 0; font-weight: 700; color: #e5576d; }
+  html:root[data-theme="light"] .hv2-mt-bar { position: relative; height: 32px; margin-top: 4px; border-radius: 99px; background: #fbe9ec; }
+  html:root[data-theme="light"] .hv2-mt-bar > i { position: absolute; left: 0; top: 0; bottom: 0; min-width: 32px; border-radius: 99px; background: linear-gradient(90deg, #ffd0d8, #ffb3c0); }
+  html:root[data-theme="light"] .hv2-mt-bar > b { position: absolute; top: 7px; display: grid; place-items: center; width: 18px; height: 18px; margin-left: 5px; border-radius: 50%; font-size: 10px; color: #fff; background: #f06a7f; }
+  html:root[data-theme="light"] .hv2-mt-bar > b.is-now { top: 3px; width: 26px; height: 26px; margin-left: 1px; color: #f06a7f; background: #fff; border: 3px solid #f06a7f; box-shadow: 0 0 0 5px rgba(240, 106, 127, .2); }
+  html:root[data-theme="light"] .hv2-mt-bar > i, html:root[data-theme="light"] .hv2-mt-bar > b { transform: none; }
+  html:root[data-theme="light"] .hv2-mt-bar { margin-left: 4px; margin-right: 20px; }
+  html:root[data-theme="light"] .hv2-soft-foot { position: relative; margin: 8px 0 0; font-size: .74rem; color: var(--lv-sub); }
+  html:root[data-theme="light"] .hv2-soft-foot b { color: var(--lv-ink); font-weight: 600; }
+  html:root[data-theme="light"] .hv2-soft-edit { padding: 0; border: 0; font: inherit; font-weight: 700; color: var(--lv-a); background: none; cursor: pointer; }
+  html:root[data-theme="light"] .hv2-soft-t3 { position: relative; display: grid; grid-template-columns: repeat(3, 1fr); width: calc(100% + 36px); margin: 12px -18px 0; padding: 12px 0 14px; border-top: 1px dashed #e6e2f3; }
+  html:root[data-theme="light"] .hv2-soft-t3 span { font-size: .7rem; color: var(--lv-sub); }
+  html:root[data-theme="light"] .hv2-soft-t3 b { display: block; font-size: .95rem; font-weight: 700; color: var(--lv-ink); }
+  html:root[data-theme="light"] .hv2-soft .money-value.is-hidden { filter: blur(7px); }
+
+  /* C · "spent today" row (like Drink Water) */
+  html:root[data-theme="light"] .hv2-row-today { display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: 24px; color: var(--lv-ink); text-decoration: none; background: #fff; box-shadow: var(--lv-sh); }
+  html:root[data-theme="light"] .hv2-row-e { display: grid; place-items: center; width: 46px; height: 46px; flex: 0 0 auto; border-radius: 16px; font-size: 1.4rem; background: #f4f2fa; }
+  html:root[data-theme="light"] .hv2-row-mid { display: grid; grid-template-columns: 1fr auto; flex: 1; min-width: 0; gap: 0 8px; }
+  html:root[data-theme="light"] .hv2-row-mid b { font-size: .9rem; font-weight: 700; }
+  html:root[data-theme="light"] .hv2-row-mid em { font-style: normal; font-size: .72rem; color: #22a776; }
+  html:root[data-theme="light"] .hv2-row-mid em.is-over { color: #e5484d; }
+  html:root[data-theme="light"] .hv2-row-seg { grid-column: 1 / -1; display: flex; gap: 4px; margin-top: 8px; }
+  html:root[data-theme="light"] .hv2-row-seg i { flex: 1; height: 9px; border-radius: 9px; background: #efedf6; }
+  html:root[data-theme="light"] .hv2-row-seg i.on { background: linear-gradient(90deg, #f2bb92, #E6986B); }
+  html:root[data-theme="light"] .hv2-row-seg i.on.over { background: #f06a7f; }
+  html:root[data-theme="light"] .hv2-row-badge { flex: 0 0 auto; padding: 9px 10px; border-radius: 14px; font-size: .8rem; font-weight: 700; color: #d9824f; background: #fff0e3; }
+  html:root[data-theme="light"] .hv2-row-badge.is-over { color: #e5484d; background: #ffe9ec; }
+
+  /* C · week: past days you checked in get a ✓ badge */
+  html:root[data-theme="light"] .hv2-head.is-lav .hv2-day.is-ok { position: relative; color: #fff !important; background: #cfc9f3 !important; }
+  html:root[data-theme="light"] .hv2-head.is-lav .hv2-day.is-ok small { color: #f4f2ff !important; }
+  html:root[data-theme="light"] .hv2-head.is-lav .hv2-day.is-ok i { display: grid; place-items: center; width: 14px; height: 14px; margin-top: 1px; border-radius: 50%; background: #504AB9 !important; }
+  html:root[data-theme="light"] .hv2-head.is-lav .hv2-day.is-ok i::after { content: "✓"; font-size: 8px; font-weight: 700; font-style: normal; color: #fff; }
 }
