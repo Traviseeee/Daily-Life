@@ -459,7 +459,7 @@ const MyLifeChat = (() => {
     const actions = (msg.actions || []).map(a => a.href
       ? `<a class="mlc-btn" href="${escapeAttr(a.href)}" data-mlc-link>${escapeHtml(a.label)}</a>`
       : `<button class="mlc-btn" type="button" data-mlc-action="${escapeAttr(a.action)}">${escapeHtml(a.label)}</button>`).join("");
-    return `<div class="mlc-msg mlc-${msg.from}"><div class="mlc-bubble">${msg.html}${actions ? `<div class="mlc-actions">${actions}</div>` : ""}</div></div>`;
+    return `<div class="mlc-msg mlc-${msg.from}">${msg.from === "bot" && lavOn() ? `<span class="mlc-mini">${HomeV2.buddy("happy")}</span>` : ""}<div class="mlc-bubble">${msg.html}${actions ? `<div class="mlc-actions">${actions}</div>` : ""}</div></div>`;
   }
 
   function renderMessages() {
@@ -498,21 +498,22 @@ const MyLifeChat = (() => {
     }, 280);
   }
 
+  const lavOn = () => typeof HomeV2 !== "undefined" && HomeV2.lav && HomeV2.lav();
   function open() {
     if (root) return;
     loadHistory();
     pending = {};
     if (!history.length) {
       const name = String(appData.profile.name || "").split(/\s+/)[0];
-      history.push({ from: "bot", html: L(`សួស្តី${name ? ` ${escapeHtml(name)}` : ""} 👋 ខ្ញុំជា MYLIFE Chat។ សួរខ្ញុំពីថ្ងៃនេះ លុយ វិក្កយបត្រ គោលដៅ ឬគ្រួសារ — ឬវាយ <code>ចាយ Grab 15k</code> ដើម្បីកត់ភ្លាម។`, `Hi${name ? ` ${escapeHtml(name)}` : ""} 👋 I'm MYLIFE Chat. Ask me about today, money, bills, goals or family — or type <code>spent Grab 15k</code> to log it.`) });
+      history.push({ from: "bot", html: L(`សួស្តី${name ? ` ${escapeHtml(name)}` : ""} 👋 ខ្ញុំជា ${lavOn() ? "Nomi" : "MYLIFE Chat"}។ សួរខ្ញុំពីថ្ងៃនេះ លុយ វិក្កយបត្រ គោលដៅ ឬគ្រួសារ — ឬវាយ <code>ចាយ Grab 15k</code> ដើម្បីកត់ភ្លាម។`, `Hi${name ? ` ${escapeHtml(name)}` : ""} 👋 I'm ${lavOn() ? "Nomi" : "MYLIFE Chat"}. Ask me about today, money, bills, goals or family — or type <code>spent Grab 15k</code> to log it.`) });
     }
     root = document.createElement("div");
     root.className = "mlc-overlay";
     root.innerHTML = `
-      <section class="mlc-panel" role="dialog" aria-modal="true" aria-label="MYLIFE Chat">
+      <section class="mlc-panel${lavOn() ? " is-lav" : ""}" role="dialog" aria-modal="true" aria-label="MYLIFE Chat">
         <header class="mlc-head">
-          <span class="mlc-avatar">${Icons.spark()}</span>
-          <div><strong>MYLIFE Chat</strong><small>${aiReady() ? L("ឆ្លើយពីទិន្នន័យរបស់អ្នក · 🤖 Gemini AI បើក", "Answers from your data · 🤖 Gemini AI on") : L("ឆ្លើយពីទិន្នន័យរបស់អ្នក · ឯកជន", "Answers from your data · private")}</small></div>
+          ${lavOn() ? `<span class="mlc-nomi" data-nomi data-mood="happy" role="button" tabindex="0" aria-label="Nomi">${HomeV2.buddy("happy")}</span>` : `<span class="mlc-avatar">${Icons.spark()}</span>`}
+          <div><strong>${lavOn() ? "Nomi Chat" : "MYLIFE Chat"}</strong><small>${aiReady() ? L("ឆ្លើយពីទិន្នន័យរបស់អ្នក · 🤖 Gemini AI បើក", "Answers from your data · 🤖 Gemini AI on") : L("ឆ្លើយពីទិន្នន័យរបស់អ្នក · ឯកជន", "Answers from your data · private")}</small></div>
           <button class="icon-button" type="button" data-mlc-clear title="${L("សម្អាត", "Clear")}" aria-label="${L("សម្អាត", "Clear")}">${Icons.trash()}</button>
           <button class="icon-button" type="button" data-mlc-close aria-label="${L("បិទ", "Close")}">${Icons.close()}</button>
         </header>

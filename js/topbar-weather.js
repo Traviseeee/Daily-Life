@@ -301,15 +301,20 @@ const TopbarWeather = (() => {
     const wind = today ? data?.wind : day.wind;
     const hum = today ? data?.humidity : day.humidity;
     const slots = hoursOf(index);
-    return `<button type="button" class="wxp-x" data-wxp-close aria-label="Close">×</button>
-      <small class="wxp-place">📍 ${esc(PLACE.name)} · ${esc(today ? dateLabel() : dayLong(day.date))}</small>
+    // lavender (light, 31 Oct): the top sits in a lavender hero, the animated icon stays, Nomi gives the tip
+    const lav = typeof HomeV2 !== "undefined" && HomeV2.lav && HomeV2.lav();
+    const wet = /rain|storm|drizzle|thunder/i.test(scene);
+    const nomiSay = tip || (wet ? tx("umbrella") : km() ? "អាកាសធាតុល្អ ចេញក្រៅបាន 🌤" : "Nice weather — go out and enjoy 🌤");
+    const top = `<small class="wxp-place">📍 ${esc(PLACE.name)} · ${esc(today ? dateLabel() : dayLong(day.date))}</small>
       <div class="wxp-icon">${icon(scene)}</div>
       <strong class="wxp-temp" data-wxp-temp="${Number(temp)}">${num(temp)}</strong>
-      <span class="wxp-cond">${esc(data ? tx(scene) : tx("loading"))}${today ? "" : ` · ${num(day.max)} / ${num(day.min)}`}</span>
+      <span class="wxp-cond">${esc(data ? tx(scene) : tx("loading"))}${today ? "" : ` · ${num(day.max)} / ${num(day.min)}`}</span>`;
+    return `<button type="button" class="wxp-x" data-wxp-close aria-label="Close">×</button>
+      ${lav ? `<div class="wxp-hero">${top}<span class="wxp-nomi" data-nomi data-mood="${wet ? "worry" : "happy"}" role="button" tabindex="0" aria-label="Nomi">${HomeV2.buddy(wet ? "worry" : "happy")}</span><span class="wxp-say" data-nomi-say>${esc(nomiSay)}</span></div>` : top}
       ${days.length > 1 ? `<div class="wxp-days" role="tablist">${days.map((d, i) => `<button type="button" role="tab" class="wxp-day${i === index ? " on" : ""}" data-wxp-day="${i}" aria-selected="${i === index}">${icon(sceneOf(d.code, true))}<b>${new Date(`${d.date}T00:00:00`).getDate()}</b><small>${esc(i === 0 ? (km() ? "ថ្ងៃនេះ" : "Today") : dayShort(d.date))}</small></button>`).join("")}</div>` : ""}
       ${data ? `<div class="wxp-stats">${stat(`💧 ${tx("rainChance")}`, `${rainPct || 0}%`)}${Number.isFinite(wind) ? stat(`🌬 ${km() ? "ខ្យល់" : "Wind"}`, `${wind} km/h`) : stat(tx("feels"), num(data.feels))}${Number.isFinite(hum) ? stat(`💦 ${km() ? "សំណើម" : "Humidity"}`, `${hum}%`) : stat(km() ? "ខ្ពស់ / ទាប" : "High / Low", `${num(data.max)} / ${num(data.min)}`)}</div>` : ""}
       ${slots.length ? `<div class="wxp-hours">${slots.map((x, i) => `<div class="wxp-hour${x.now ? " is-now" : ""}" style="--d:${320 + i * 60}ms"><b>${esc(x.now ? tx("now") : hourLabel(x.h))}</b>${icon(sceneOf(x.code, x.day))}<span>${num(x.temp)}</span><small>${x.pop >= 30 ? `💧${x.pop}%` : "&nbsp;"}</small></div>`).join("")}</div>` : ""}
-      ${tip ? `<div class="wxp-tip">☂ ${esc(tip)}</div>` : ""}`;
+      ${tip && !lav ? `<div class="wxp-tip">☂ ${esc(tip)}</div>` : ""}`;
   }
 
   function countUp(node) {
