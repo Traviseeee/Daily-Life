@@ -118,3 +118,35 @@
   html:root[data-theme="light"] body :is(.login-logo, .al-logo, .home-nudge-svg) circle:nth-of-type(2) { stroke: #6c5ce7; }
   html:root[data-theme="light"] body :is(.login-logo, .al-logo, .home-nudge-svg) circle:nth-of-type(3) { fill: #9F8CFF; }
 }
+
+/* Launcher in the Home look (light phone, 31 Oct): Nomi talks in the hero, money ring card, SVG quick add */
+@media (max-width: 900px) {
+  html:root[data-theme="light"] body:not(.topbar-home) #app > .page.lv2.is-lav::before { height: 330px; }
+  html:root[data-theme="light"] .lv2.is-lav .lv-hero { background: transparent !important; padding-bottom: 8px; }
+  html:root[data-theme="light"] .lv2.is-lav .lv-talk { display: flex; align-items: flex-end; gap: 6px; margin: 10px 0 10px; }
+  html:root[data-theme="light"] .lv2.is-lav .lv-nomi { flex: 0 0 auto; width: 76px; height: 70px; cursor: pointer; animation: hv2Bob 3.2s ease-in-out infinite; }
+  html:root[data-theme="light"] .lv2.is-lav .lv-nomi .hv2-buddy { width: 100%; height: 100%; }
+  html:root[data-theme="light"] .lv2.is-lav .lv-say { position: static; transform: none; opacity: 1; visibility: visible; max-width: none; margin-bottom: 20px; padding: 9px 13px; border-radius: 18px 18px 18px 4px; background: #fff; color: #1A2347; font-size: .8rem; font-weight: 600; line-height: 1.4; box-shadow: none; }
+  html:root[data-theme="light"] .lv2.is-lav .lv-say::after { display: none; }
+  html:root[data-theme="light"] .lv2.is-lav .lv-search { border: 1px solid #ebe8f4; box-shadow: none !important; }
+  html:root[data-theme="light"] .lv2.is-lav .lv-money { display: flex; align-items: center; gap: 14px; padding: 14px; border-radius: 24px; background: #fff; border: 1px solid #ebe8f4; color: #1A2347; text-decoration: none; }
+  .lv2.is-lav .lv-ring { flex: 0 0 auto; display: grid; place-items: center; width: 64px; height: 64px; border-radius: 50%; background: conic-gradient(#7B68EE 0 var(--p), #ece9f6 0); }
+  .lv2.is-lav .lv-ring i { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 50%; background: #fff; color: #504AB9; font-style: normal; font-weight: 800; font-size: .8rem; }
+  .lv2.is-lav .lv-money-tx { min-width: 0; }
+  .lv2.is-lav .lv-money-tx small { display: block; font-size: .74rem; color: #7a7698; }
+  .lv2.is-lav .lv-money-tx > b { display: block; font-size: 1.45rem; font-weight: 800; color: #504AB9; }
+  .lv2.is-lav .lv-money-tx > b.is-neg { color: #d0455b; }
+  .lv2.is-lav .lv-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 4px; }
+  .lv2.is-lav .lv-chips em { padding: 3px 9px; border-radius: 99px; background: #f1eeff; color: #504AB9; font-style: normal; font-size: .68rem; font-weight: 700; }
+  .lv2.is-lav .lv-chips em.is-day { background: #ecfaf3; color: #2e8a5e; }
+  .lv2.is-lav .lv-chips em.is-warn { background: #fff1e8; color: #c0623a; }
+  .lv2.is-lav .lv-qi { display: grid !important; place-items: center; width: 40px; height: 40px; margin: 0 auto 4px; border-radius: 14px; }
+  .lv2.is-lav .lv-qi svg { width: 20px; height: 20px; }
+  .lv2.is-lav .lv-qi.is-c1 { background: #f1eeff; color: #6c5ce7; }
+  .lv2.is-lav .lv-qi.is-c2 { background: #fff1e8; color: #e0804e; }
+  .lv2.is-lav .lv-qi.is-c3 { background: #f7eff4; color: #b26f9a; }
+  .lv2.is-lav .lv-qi.is-c4 { background: #eaf6ff; color: #4a8fd8; }
+  html:root[data-theme="light"] .lv2.is-lav .lv-q { border: 1px solid #ebe8f4; box-shadow: none !important; }
+  .lv2.is-lav .lv-qa { margin-bottom: 14px; }
+  .lv2.is-lav .lv-nomi .hv2-buddy { transform: scale(1.15); }
+}
