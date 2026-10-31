@@ -88,8 +88,21 @@ const HomeV2 = (() => {
     let seen = false;
     try { seen = localStorage.getItem("mylife:nomi-hi") === "1"; } catch (error) { seen = true; }
     if (!seen && nomiStep === 0) { try { localStorage.setItem("mylife:nomi-hi", "1"); } catch (error) { /* ignore */ } return L(...NOMI_LINES.intro); }
+    // tapping walks through who Nomi is and what Nomi does, then the mood lines
+    if (nomiStep > 0) {
+      const feel = { happy: ["រីករាយ 😊", "happy 😊"], cheer: ["សប្បាយខ្លាំង 🎉", "so happy 🎉"], sleepy: ["ងងុយ 😴", "sleepy 😴"], worry: ["បារម្ភបន្តិច 😟", "a bit worried 😟"], calm: ["ស្ងប់ ☁️", "calm ☁️"] }[mood] || ["រីករាយ", "happy"];
+      const about = [
+        ["សួស្តី! ខ្ញុំឈ្មោះ Nomi 🐾 មិត្តតូចរបស់ MYLIFE", "Hi! I'm Nomi 🐾 your little MYLIFE buddy"],
+        ["ខ្ញុំមើលលុយ ហើយប្រាប់ពេលអ្នកចាយលើស 💸", "I watch your money and tell you when you overspend 💸"],
+        ["ខ្ញុំរំលឹកព្រឹត្តិការណ៍ និងវិក្កយបត្រ 📅", "I remind you of events and bills 📅"],
+        ["ខ្ញុំអបអរពេលអ្នកធ្វើការផ្តោតរួច 🎉", "I cheer when your focus is done 🎉"],
+        [`មុខខ្ញុំប្តូរតាមថ្ងៃរបស់អ្នក · ឥឡូវខ្ញុំ${feel[0]}`, `My face follows your day · now I'm ${feel[1]}`]
+      ];
+      const list = [...about, ...(NOMI_LINES[mood] || NOMI_LINES.happy)];
+      return L(...list[(nomiStep - 1) % list.length]);
+    }
     const list = NOMI_LINES[mood] || NOMI_LINES.happy;
-    return L(...list[nomiStep % list.length]);
+    return L(...list[0]);
   }
 
   const plainMoney = (value, currency) => {
