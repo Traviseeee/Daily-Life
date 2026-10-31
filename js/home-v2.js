@@ -35,6 +35,9 @@ const HomeV2 = (() => {
     const blush = c => `<ellipse cx="${cx - 19 * s}" cy="${cy + 6 * s}" rx="${5 * s}" ry="${3 * s}" fill="${c}" opacity=".8"/><ellipse cx="${cx + 19 * s}" cy="${cy + 6 * s}" rx="${5 * s}" ry="${3 * s}" fill="${c}" opacity=".8"/>`;
     const st = `stroke="${BUDDY_INK}" stroke-width="${2.6 * s}" stroke-linecap="round" fill="none"`;
     if (m === "cheer") return blush("#ffb9c4") + `<path d="M${cx - dx - 4 * s} ${ey}q4 -5 8 0M${cx + dx - 4 * s} ${ey}q4 -5 8 0" ${st}/><path d="M${cx - 9 * s} ${my - 3 * s}q9 13 18 0z" fill="#E6986B" stroke="${BUDDY_INK}" stroke-width="${2.4 * s}" stroke-linejoin="round"/>`;
+    if (m === "love") return blush("#ff9fb3") + [cx - dx, cx + dx].map(x => `<path class="nb-eye" d="M${x} ${ey + 4 * s}l${-5 * s} ${-5 * s}a${3 * s} ${3 * s} 0 0 1 ${5 * s} ${-3 * s}a${3 * s} ${3 * s} 0 0 1 ${5 * s} ${3 * s}z" fill="#ff6f91"/>`).join("") + `<path d="M${cx - 8 * s} ${my - 2 * s}q8 9 16 0" fill="#E6986B" stroke="${BUDDY_INK}" stroke-width="${2.5 * s}" stroke-linecap="round" stroke-linejoin="round"/>`;
+    if (m === "wink") return blush("#ffb9c4") + e(cx - dx, ey) + `<path d="M${cx + dx - 4 * s} ${ey}q4 -4 8 0" ${st}/><path d="M${cx - 7 * s} ${my - 2 * s}q7 7 14 0" ${st}/>`;
+    if (m === "proud") return blush("#ffb9c4") + [cx - dx, cx + dx].map(x => `<path class="nb-eye" d="M${x} ${ey - 5 * s}l${1.6 * s} ${3.4 * s} ${3.6 * s} ${.5 * s}-${2.6 * s} ${2.5 * s}.6 ${3.6 * s}-${3.2 * s}-${1.7 * s}-${3.2 * s} ${1.7 * s}.6-${3.6 * s}-${2.6 * s}-${2.5 * s} ${3.6 * s}-${.5 * s}z" fill="#ffc94d" stroke="${BUDDY_INK}" stroke-width="${1.2 * s}" stroke-linejoin="round"/>`).join("") + `<path d="M${cx - 9 * s} ${my - 3 * s}q9 12 18 0z" fill="#E6986B" stroke="${BUDDY_INK}" stroke-width="${2.4 * s}" stroke-linejoin="round"/>`;
     if (m === "calm") return blush("#ffb9c4") + `<path d="M${cx - dx - 4 * s} ${ey}q4 3 8 0M${cx + dx - 4 * s} ${ey}q4 3 8 0" ${st}/><path d="M${cx - 6 * s} ${my - 1 * s}q6 5 12 0" ${st}/>`;
     if (m === "sleepy") return blush("#ffb9c4") + `<path d="M${cx - dx - 4 * s} ${ey}q4 3 8 0M${cx + dx - 4 * s} ${ey}q4 3 8 0" ${st}/><ellipse cx="${cx}" cy="${my}" rx="${3.2 * s}" ry="${2.6 * s}" fill="${BUDDY_INK}"/><text x="${cx + 22 * s}" y="${cy - 18 * s}" font-size="${11 * s}" font-weight="800" fill="#9F8CFF" font-family="sans-serif" class="nb-z">z</text>`;
     if (m === "worry") return blush("#c9d4ff") + e(cx - dx, ey + s) + e(cx + dx, ey + s) + `<path d="M${cx - dx - 5 * s} ${ey - 9 * s}l7 3M${cx + dx + 5 * s} ${ey - 9 * s}l-7 3" ${st}/><path d="M${cx - 6 * s} ${my + 3 * s}q6 -6 12 0" ${st}/><path class="nb-drop" d="M${cx + 27 * s} ${cy - 14 * s}q3 5 0 7q-3 -2 0 -7z" fill="#8fc9ff"/>`;
@@ -45,6 +48,7 @@ const HomeV2 = (() => {
     + `<g class="nb-tail"><path d="M74 80c14 2 18-12 10-18" stroke="#b9adf5" stroke-width="6" fill="none" stroke-linecap="round"/><path class="nb-heart" d="M84 58c-3-4-9-1-6 4l6 6 6-6c3-5-3-8-6-4z" fill="#ff8fab"/></g>`
     + `<g class="nb-bodyg"><g class="nb-ear-l"><path d="M28 34l4-16 14 10z" fill="#b3a6f7"/><path d="M31 30l2-7 6 5z" fill="#ffc2d1"/></g><g class="nb-ear-r"><path d="M72 34l-4-16-14 10z" fill="#b3a6f7"/><path d="M69 30l-2-7-6 5z" fill="#ffc2d1"/></g>`
     + `<ellipse cx="50" cy="60" rx="31" ry="30" fill="#c9bdff"/><ellipse cx="50" cy="72" rx="18" ry="14" fill="#f4f0ff"/>`
+    + (m === "wink" ? '<ellipse class="nb-arm-r" cx="78" cy="46" rx="6" ry="8" fill="#c9bdff" transform="rotate(30 78 46)"/>' : "")
     + (m === "cheer" ? '<ellipse class="nb-arm-l" cx="22" cy="46" rx="6" ry="8" fill="#c9bdff" transform="rotate(-30 22 46)"/><ellipse class="nb-arm-r" cx="78" cy="46" rx="6" ry="8" fill="#c9bdff" transform="rotate(30 78 46)"/>' : "")
     + `<g class="nb-face">${buddyFace(m, 50, 56, 0.9)}</g></g></svg>`;
   // which mood fits right now
@@ -55,8 +59,10 @@ const HomeV2 = (() => {
     const daysLeft = Math.max(1, new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate() - now.getDate() + 1);
     const spentToday = d ? (appData.expenses || []).filter(item => item.date === d.todayIso).reduce((t, item) => t + toProfileCurrency(item.amount, item.currency), 0) : 0;
     if (m && (m.left < 0 || (spentToday > 0 && spentToday > Math.max(0, m.left + spentToday) / daysLeft))) return "worry";
-    if (d && d.focus.length && d.focus.every(item => item.done)) return "cheer";
+    if (d && d.focus.length && d.focus.every(item => item.done)) return "love";
     if (h >= 22 || h < 5) return "sleepy";
+    if (h < 11) return "wink";
+    if (h >= 18) return "calm";
     return "happy";
   }
   let MOOD_NOW = "happy";
@@ -71,7 +77,7 @@ const HomeV2 = (() => {
   }
   function moneyMood(m, spentToday, perDay) {
     if (m.left < 0 || (perDay > 0 && spentToday > perDay)) return "worry";
-    if (spentToday === 0) return "cheer";
+    if (spentToday === 0) return "proud";
     if (perDay > 0 && spentToday <= perDay / 2) return "happy";
     return "calm";
   }
@@ -82,11 +88,15 @@ const HomeV2 = (() => {
     cheer: [["អស្ចារ្យ! ធ្វើការផ្តោតរួចហើយ 🎉", "Amazing! Focus all done 🎉"], ["អ្នកពូកែណាស់ថ្ងៃនេះ ✨", "You did great today ✨"]],
     sleepy: [["យប់ហើយ… សម្រាកឱ្យបានល្អណា 😴", "It's late… rest well 😴"], ["ស្អែកយើងបន្តទៀត 🌙", "We'll keep going tomorrow 🌙"]],
     worry: [["ថ្ងៃនេះចាយច្រើនបន្តិច ប្រយ័ត្នណា 💸", "A bit much spent today, careful 💸"], ["យើងសន្សំបន្តិចទៀតស្អែក 🐷", "Let's save a little tomorrow 🐷"]],
+    love: [["ធ្វើរួចទាំងអស់! ខ្ញុំស្រលាញ់ថ្ងៃនេះ 💜", "All done! I love today 💜"], ["អ្នកអស្ចារ្យណាស់ 🥰", "You're amazing 🥰"]],
+    wink: [["អរុណសួស្តី! ☀️ ថ្ងៃថ្មីចាប់ផ្តើមហើយ", "Good morning! ☀️ A new day"], ["ញ៉ាំអាហារពេលព្រឹកហើយឬនៅ? 🍳", "Had breakfast yet? 🍳"]],
+    proud: [["ខ្ញុំមោទនភាពនឹងអ្នក ⭐", "I'm proud of you ⭐"], ["សន្សំបានល្អ ⭐", "Saving well ⭐"]],
     calm: [["យឺតៗ មិនអីទេ ☁️", "Slow is fine ☁️"], ["ផឹកទឹកមួយកែវសិន 💧", "Have a glass of water first 💧"]]
   };
   // what Nomi says on the money card (the line follows today's spending)
   const MONEY_SAY = {
     cheer: ["ថ្ងៃនេះមិនទាន់ចាយទេ ល្អណាស់! 🐷", "No spending yet today, nice! 🐷"],
+    proud: ["ថ្ងៃនេះមិនទាន់ចាយទេ ល្អណាស់! 🐷", "No spending yet today, nice! 🐷"],
     happy: ["ចាយបានល្អ នៅក្រោមកំណត់ ✨", "Spending looks good, under the limit ✨"],
     calm: ["ជិតដល់កំណត់ថ្ងៃនេះហើយ ☁️", "Close to today's limit ☁️"],
     worry: ["ចាយលើសហើយ ប្រយ័ត្នបន្តិចណា 💸", "Over the limit, go easy 💸"]
@@ -522,6 +532,18 @@ const HomeV2 = (() => {
       </div>
     </section>`;
   }
+
+  // Nomi does a little something every few seconds: looks around, tilts, spins, jumps, waves, peeks (31 Oct)
+  const NOMI_ACTS = ["look", "tilt", "spin", "jump", "wiggle", "peek"];
+  setInterval(() => {
+    if (document.hidden) return;
+    const all = [...document.querySelectorAll("[data-nomi] .hv2-buddy, .hv2-face .hv2-buddy")].filter(el => el.getBoundingClientRect().width > 0 && !el.className.baseVal.includes(" act-"));
+    if (!all.length) return;
+    const el = all[Math.floor(Math.random() * all.length)];
+    const act = NOMI_ACTS[Math.floor(Math.random() * NOMI_ACTS.length)];
+    el.classList.add(`act-${act}`);
+    setTimeout(() => el.classList.remove(`act-${act}`), 1600);
+  }, 2600);
 
   // extra buttons that are not bound elsewhere
   document.addEventListener("click", event => {

@@ -383,4 +383,26 @@ html body .hv2 .hv2-title .hv2-why p { margin: 0 !important; }
 @keyframes nbSway { 0%, 100% { transform: rotate(-5deg); } 50% { transform: rotate(5deg) translateY(1px); } }
 @keyframes nbZ { 0% { transform: translate(0, 0) scale(.6); opacity: 0; } 30% { opacity: 1; } 100% { transform: translate(6px, -14px) scale(1.2); opacity: 0; } }
 @keyframes nbHop { 30% { transform: translateY(-12px) rotate(-8deg); } 60% { transform: translateY(0) rotate(5deg); } 80% { transform: rotate(-2deg); } }
-@media (prefers-reduced-motion: reduce) { .hv2-buddy *, [data-nomi].is-hop .hv2-buddy { animation: none !important; } }
+/* new moods (31 Oct): love = heart eyes beat, wink = waves hello, proud = star eyes twinkle */
+.hv2-buddy.is-love .nb-eye { transform-box: fill-box; transform-origin: center; animation: nbBeat 1s ease-in-out infinite; }
+.hv2-buddy.is-love .nb-bodyg { animation: nbSway 2.4s ease-in-out infinite; }
+.hv2-buddy.is-wink .nb-arm-r { transform-origin: 74px 52px; animation: nbWaveR .45s ease-in-out infinite alternate; }
+.hv2-buddy.is-proud .nb-eye { transform-box: fill-box; transform-origin: center; animation: nbTwinkle 1.8s ease-in-out infinite; }
+.hv2-buddy.is-proud .nb-bodyg { animation: nbProud 2.2s ease-in-out infinite; }
+@keyframes nbTwinkle { 0%, 100% { transform: scale(1) rotate(0); } 50% { transform: scale(1.25) rotate(20deg); } }
+@keyframes nbProud { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-3px) scale(1.04); } }
+/* idle actions, one Nomi at a time (added by js/home-v2.js) */
+.hv2-buddy.act-look .nb-face { transform-box: view-box; animation: nbLook 1.6s ease-in-out; }
+.hv2-buddy.act-tilt .nb-bodyg { animation: nbTilt 1.6s ease-in-out; }
+.hv2-buddy.act-spin { transform-origin: 50% 60%; animation: nbSpin 1s cubic-bezier(.5, 0, .3, 1); }
+.hv2-buddy.act-jump .nb-bodyg { animation: nbBigJump 1s cubic-bezier(.3, .7, .4, 1); }
+.hv2-buddy.act-wiggle .nb-bodyg { animation: nbWiggle .8s ease-in-out 2; }
+.hv2-buddy.act-peek .nb-bodyg { animation: nbPeek 1.6s ease-in-out; }
+@keyframes nbLook { 0%, 100% { transform: translateX(0); } 25%, 40% { transform: translateX(-4px); } 60%, 80% { transform: translateX(4px); } }
+@keyframes nbTilt { 0%, 100% { transform: rotate(0); } 30%, 70% { transform: rotate(-14deg); } }
+@keyframes nbSpin { from { transform: rotateY(0); } to { transform: rotateY(360deg); } }
+@keyframes nbBigJump { 0%, 100% { transform: translateY(0) scale(1); } 15% { transform: scale(1.08, .9); } 45% { transform: translateY(-18px) rotate(-6deg) scale(.95, 1.06); } 75% { transform: translateY(0) scale(1.08, .92); } }
+@keyframes nbWiggle { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-8deg); } 75% { transform: rotate(8deg); } }
+@keyframes nbPeek { 0%, 100% { transform: translateY(0); } 30%, 60% { transform: translateY(14px) scale(1, .9); } }
+/* Windows "animation effects off" turns on reduced motion; Nomi still moves, just gentler */
+@media (prefers-reduced-motion: reduce) { .hv2-buddy .nb-bodyg, .hv2-buddy.act-spin { animation-duration: 3s; } }
