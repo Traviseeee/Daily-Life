@@ -284,3 +284,70 @@
   html:root[data-theme="light"] .nc-header:has(.nc-nomi) .nc-close:focus:not(:focus-visible) { outline: none; box-shadow: none !important; }
   html:root[data-theme="light"] .nc-panel:has(.nc-nomi) .nc-empty-icon { color: #6c5ce7 !important; background: #f1eeff !important; }
 }
+@media all { html:root[data-theme="light"] .nc-header:has(.nc-nomi) .nc-eyebrow { display: none; } html:root[data-theme="light"] .nc-header:has(.nc-nomi) h2 { margin: 0; } }
+
+/* Family in the Home look (light, 31 Oct): Nomi hero, big "days together" counter, small date cards, compact members */
+@media all {
+  html:root[data-theme="light"] body:not(.topbar-home) #app > .page.fam2.is-lav::before { height: 330px; }
+  .fam2.is-lav .fv-talk { display: flex; align-items: center; gap: 8px; margin: 8px 0 12px; }
+  .fam2.is-lav .fv-nomi { flex: 0 0 auto; width: 82px; height: 76px; cursor: pointer; animation: hv2Bob 3.2s ease-in-out infinite; }
+  .fam2.is-lav :is(.fv-nomi, .fv-tg-nomi, .fv-tip-nomi) .hv2-buddy { width: 100%; height: 100%; }
+  html:root[data-theme="light"] .fam2.is-lav .fv-say { padding: 9px 13px; border-radius: 16px 16px 16px 4px; background: #fff; color: #1A2347; font-size: .8rem; font-weight: 600; line-height: 1.45; }
+
+  /* days together */
+  html:root[data-theme="light"] .fam2.is-lav .fv-tg { position: relative; display: grid; justify-items: center; margin: 0 0 6px; padding: 14px 16px 14px; border: 1px solid #ebe8f4; border-radius: 28px; text-align: center; color: #1A2347; background: radial-gradient(60% 50% at 50% 30%, #ffe4ee, transparent 70%), #fff; cursor: pointer; overflow: hidden; }
+  .fv-tg-top { display: flex; align-items: center; gap: 8px; align-self: stretch; justify-content: space-between; }
+  .fv-tg-top small { font-size: .74rem; font-weight: 700; color: #7a7698; }
+  .fv-tg-pair { display: flex; align-items: center; }
+  .fv-tg-pair i { margin: 0 -2px; z-index: 1; color: #ff6f91; font-style: normal; font-size: .8rem; }
+  .fv-tg-face { display: grid; place-items: center; width: 30px; height: 30px; overflow: hidden; border: 2px solid #fff; border-radius: 50%; color: #fff; font-size: .62rem; font-weight: 800; }
+  .fv-tg-face img { width: 100%; height: 100%; object-fit: cover; }
+  .fv-tg-nomi { width: 92px; height: 86px; margin-top: -6px; cursor: pointer; animation: hv2Bob 3.2s ease-in-out infinite; }
+  .fv-tg-lbl { font-size: .76rem; font-weight: 700; color: #7a7698; }
+  .fv-tg-n { font-size: 3rem; font-weight: 800; line-height: 1.05; letter-spacing: -.02em; color: #504AB9; font-variant-numeric: tabular-nums; }
+  .fv-tg-n span { margin-left: 6px; font-size: .95rem; font-weight: 700; letter-spacing: 0; color: #7a7698; }
+  .fv-tg-ymd { display: flex; gap: 6px; margin: 6px 0 12px; }
+  .fv-tg-ymd span { padding: 4px 10px; border-radius: 99px; background: #f1eeff; color: #504AB9; font-size: .72rem; font-weight: 600; }
+  .fv-tg-ymd b { margin-right: 3px; font-weight: 800; }
+  .fv-tg-bar { position: relative; align-self: stretch; height: 8px; border-radius: 99px; background: #f6e3ea; }
+  .fv-tg-bar i { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, #ffb3c7, #ff6f91); }
+  .fv-tg-bar em { position: absolute; top: 50%; transform: translate(-50%, -50%); color: #ff6f91; font-style: normal; font-size: 1rem; text-shadow: 0 0 0 #fff; animation: nbBeat 1.2s ease-in-out infinite; }
+  .fv-tg-foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px; align-self: stretch; margin-top: 10px; font-size: .7rem; font-weight: 700; }
+  .fv-tg-foot span { padding: 4px 10px; border-radius: 99px; background: #fff1e8; color: #c0623a; }
+  .fv-tg-foot .is-ann { background: #fff0f4; color: #d9466f; }
+
+  /* important dates: small cards that scroll sideways */
+  .fv-dts { display: flex; gap: 8px; margin: 0 -16px 6px; padding: 0 16px 4px; overflow-x: auto; scrollbar-width: none; }
+  .fv-dts::-webkit-scrollbar { display: none; }
+  html:root[data-theme="light"] .fv-dt { flex: 0 0 112px; display: grid; justify-items: start; gap: 1px; padding: 10px; border: 1px solid #ebe8f4; border-radius: 20px; background: #fff; color: #1A2347; text-align: left; font: inherit; cursor: pointer; }
+  .fv-dt em { display: grid; place-items: center; width: 34px; height: 34px; margin-bottom: 4px; border-radius: 12px; font-style: normal; background: #f1eeff; }
+  .fv-dt.is-love em { background: #fff0f4; } .fv-dt.is-amber em { background: #fff1e8; }
+  .fv-dt b { max-width: 100%; overflow: hidden; font-size: .76rem; white-space: nowrap; text-overflow: ellipsis; }
+  .fv-dt small { font-size: .66rem; color: #7a7698; }
+  .fv-dt strong { margin-top: 3px; font-size: 1.05rem; color: #504AB9; }
+  .fv-dt strong span { margin-left: 3px; font-size: .62rem; font-weight: 600; color: #7a7698; }
+
+  /* compact member cards */
+  html:root[data-theme="light"] .fam2 .fv-member.is-lav { padding: 12px; border: 1px solid #ebe8f4 !important; border-radius: 24px; background: #fff; box-shadow: none !important; }
+  .fv-member.is-lav .fv-mrow { display: flex; align-items: center; gap: 10px; margin: 0; padding: 0; }
+  .fv-member.is-lav .fv-mface { position: static; width: 48px; height: 48px; margin: 0; border: 0; flex: 0 0 auto; }
+  .fv-member.is-lav .fv-mname { min-width: 0; flex: 1; }
+  .fv-member.is-lav .fv-mname small { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  html:root[data-theme="light"] .fv-member.is-lav .fv-call { width: 36px; height: 36px; background: #f1eeff !important; box-shadow: none !important; }
+  html:root[data-theme="light"] .fv-member.is-lav .fv-mbtn { display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 50%; color: #8a86a6; background: #f7f5fc; cursor: pointer; }
+  .fv-member.is-lav .fv-mbtn svg { width: 15px; height: 15px; }
+  .fv-member.is-lav .fv-tags { margin: 9px 0 0; padding: 0; }
+  .fv-member.is-lav .fv-missing { margin: 8px 0 0; padding: 0; }
+  html:root[data-theme="light"] .fv-member.is-lav .fv-tip { width: 100%; margin: 9px 0 0; padding: 7px 10px; color: #1A2347; background: #f8f6ff; }
+  .fv-tip-row { display: flex; align-items: center; gap: 8px; }
+  .fv-tip-nomi { flex: 0 0 auto; width: 30px; height: 28px; }
+  .fv-tip-tx { flex: 1; min-width: 0; font-size: .76rem; }
+  .fv-tip-more { flex: 0 0 auto; font-size: .68rem; font-weight: 700; color: #7B68EE; }
+  .fv-member.is-lav .fv-tip .fv-note { display: none; }
+  .fv-member.is-lav .fv-tip.is-open .fv-note { display: block; -webkit-line-clamp: unset; }
+}
+@media all {
+  .fam2.is-lav .fv-tg > :is(.fv-tg-top, .fv-tg-bar, .fv-tg-foot) { justify-self: stretch; width: 100%; }
+  .fam2.is-lav .fv-tg-bar { margin-top: 2px; }
+  .fv-member.is-lav .fv-mname { margin: 0 !important; padding: 0 !important; }
+}

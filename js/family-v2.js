@@ -40,6 +40,45 @@ const FamilyV2 = (() => {
   const groupState = () => (typeof FamilyGroup !== "undefined" ? FamilyGroup.state : null);
   const isGroupAdmin = () => { const s = groupState(); return Boolean(s?.family && s.members?.some(m => m.user_id === s.me && m.role === "admin")); };
 
+  // Lavender (light, 31 Oct): Nomi in the hero, a big "days together" counter card, small date cards, compact members
+  const lav = () => typeof HomeV2 !== "undefined" && HomeV2.lav && HomeV2.lav();
+  const nomi = (mood, cls) => `<span class="${cls}" data-nomi data-mood="${mood}" role="button" tabindex="0" aria-label="Nomi">${HomeV2.buddy(mood)}</span>`;
+  function dateItems() {
+    const items = [];
+    const seenPairs = new Set();
+    appData.family.forEach(member => {
+      if (member.birthday) {
+        const next = nextBirthdayDate(member.birthday);
+        if (next) {
+          const age = dateOf(next).getFullYear() - dateOf(member.birthday).getFullYear();
+          items.push({ date: next, icon: "🎂", kind: "bday", name: first(member.name), tone: member.relationship === "Me" || PARTNER.includes(member.relationship) ? "love" : "amber", title: L(`ថ្ងៃកំណើត ${member.name}`, `${member.name}'s birthday`), short: L(`ខួប ${first(member.name)}`, `${first(member.name)}'s bday`), sub: [dayMonth(next), age > 0 && age < 120 ? L(`អាយុ ${age}`, `turns ${age}`) : ""].filter(Boolean).join(" · "), attrs: `data-fam-jump="${escapeAttr(member.id)}"` });
+        }
+      }
+      if (member.anniversaryDate) {
+        const pair = member.relatedMemberId ? [member.id, member.relatedMemberId].sort().join(":") : member.id;
+        if (seenPairs.has(pair) || seenPairs.has(`d:${member.anniversaryDate}`)) return;
+        seenPairs.add(pair);
+        seenPairs.add(`d:${member.anniversaryDate}`);
+        const next = nextAnnualDate(member.anniversaryDate);
+        const years = dateOf(next).getFullYear() - dateOf(member.anniversaryDate).getFullYear();
+        items.push({ date: next, icon: "💞", kind: "anniv", tone: "love", title: L(`ខួប${years > 0 ? ` ${years} ឆ្នាំ` : ""}`, `Anniversary${years > 0 ? ` · ${years} yrs` : ""}`), short: L("ខួបអាពាហ៍", "Anniversary"), sub: dayMonth(next), attrs: `data-fam-jump="${escapeAttr(member.id)}"` });
+      }
+    });
+    (appData.calendarEvents || []).filter(event => event.category === "Family" && event.date >= todayIso()).forEach(event => {
+      items.push({ date: event.date, icon: "📅", kind: "event", tone: "blue", title: event.title, short: event.title, sub: `${dayMonth(event.date)}${event.time ? ` · ${typeof todayClock === "function" ? todayClock(event.time) : event.time}` : ""}`, attrs: `data-edit-event="${escapeAttr(event.id)}"` });
+    });
+    return items.filter(item => daysUntil(item.date) >= 0).sort((a, b) => a.date.localeCompare(b.date));
+  }
+  function nomiLine() {
+    const next = dateItems()[0];
+    if (!next) return [L("បន្ថែមថ្ងៃកំណើត ឬខួប ខ្ញុំនឹងរំលឹកមុន 🐾", "Add birthdays or anniversaries — I'll remind you 🐾"), "happy"];
+    const d = daysUntil(next.date);
+    const what = next.kind === "anniv" ? L("ខួបអាពាហ៍ពិពាហ៍ 💞", "your anniversary 💞") : next.kind === "bday" ? L(`ថ្ងៃកំណើត ${next.name} 🎂`, `${next.name}'s birthday 🎂`) : next.title;
+    if (d === 0) return [L(`ថ្ងៃនេះ ${what}! អបអរណា 🎉`, `Today is ${what}! Celebrate 🎉`), "cheer"];
+    if (d === 1) return [L(`ស្អែក ${what} — ត្រៀមខ្លួនផង!`, `Tomorrow: ${what} — get ready!`), "cheer"];
+    return [L(`នៅ ${d} ថ្ងៃទៀត ដល់${what}`, `${d} days to ${what}`), next.kind === "anniv" ? "love" : "happy"];
+  }
+
   function hero() {
     const me = appData.family.find(member => member.relationship === "Me");
     const others = appData.family.filter(member => member !== me);
@@ -56,6 +95,7 @@ const FamilyV2 = (() => {
         <div><h1>${escapeHtml(t("family"))}</h1><p>${escapeHtml([groupName || L("គ្រួសារខ្ញុំ", "My family"), L(`${appData.family.length} នាក់`, `${appData.family.length} people`), isGroupAdmin() ? L("អ្នកគ្រប់គ្រង", "Admin") : ""].filter(Boolean).join(" · "))}</p></div>
         <button class="fv-invite" type="button" data-fv-invite>${Icons.plus()}<span>${escapeHtml(L("អញ្ជើញ", "Invite"))}</span></button>
       </div>
+      ${lav() ? (() => { const [say, mood] = nomiLine(); return `<div class="fv-talk">${nomi(mood, "fv-nomi")}<span class="fv-say" data-nomi-say>${escapeHtml(say)}</span></div>`; })() : ""}
       <nav class="fv-avs" aria-label="${escapeAttr(t("family"))}">
         ${me ? av(me, L("ខ្ញុំ", "Me"), first(me.name)) : `<button class="fv-av is-add" type="button" data-action="add-self"><span class="fv-ring"><span class="fv-face">${Icons.plus()}</span></span><b>${escapeHtml(L("ខ្ញុំ", "Me"))}</b><small>${escapeHtml(L("បន្ថែម", "Add"))}</small></button>`}
         ${others.map(member => av(member, first(member.name) || relLabel(member), relLabel(member))).join("")}
@@ -73,6 +113,27 @@ const FamilyV2 = (() => {
     const next = Math.ceil(Math.max(days, 1) / 1000) * 1000 === days ? days + 1000 : Math.ceil(Math.max(days, 1) / 1000) * 1000;
     const progress = Math.min(100, Math.max(2, ((days - (next - 1000)) / 1000) * 100));
     const left = next - days;
+    if (lav()) {
+      const start = dateOf(member.anniversaryDate);
+      const now = dateOf(todayIso());
+      let y = now.getFullYear() - start.getFullYear();
+      let mo = now.getMonth() - start.getMonth();
+      let dd = now.getDate() - start.getDate();
+      if (dd < 0) { mo -= 1; dd += new Date(now.getFullYear(), now.getMonth(), 0).getDate(); }
+      if (mo < 0) { y -= 1; mo += 12; }
+      const annIso = nextAnnualDate(member.anniversaryDate);
+      const annIn = daysUntil(annIso);
+      const pf = m => `<span class="fv-tg-face" style="background:${coverOf(m)}">${face(m)}</span>`;
+      return `<section class="fv-tg" data-fam-jump="${escapeAttr(member.id)}">
+        <div class="fv-tg-top"><span class="fv-tg-pair">${pf(member)}<i>♥</i>${pf(other)}</span><small>${escapeHtml(first(member.name))} ♥ ${escapeHtml(first(other.name))}</small></div>
+        ${nomi("love", "fv-tg-nomi")}
+        <small class="fv-tg-lbl">${escapeHtml(L("បាននៅជាមួយគ្នា", "Together for"))}</small>
+        <div class="fv-tg-n" data-fv-count="${days}">${days.toLocaleString("en-US")}<span>${escapeHtml(L("ថ្ងៃ", "days"))}</span></div>
+        <div class="fv-tg-ymd">${[[y, L("ឆ្នាំ", "yrs")], [mo, L("ខែ", "mo")], [dd, L("ថ្ងៃ", "d")]].map(([n, u]) => `<span><b>${n}</b>${escapeHtml(u)}</span>`).join("")}</div>
+        <div class="fv-tg-bar"><i style="width:${progress}%"></i><em style="left:${progress}%">♥</em></div>
+        <div class="fv-tg-foot"><span>🎉 ${escapeHtml(L(`${left} ថ្ងៃទៀតដល់ ${next.toLocaleString("en-US")}`, `${left} days to ${next.toLocaleString("en-US")}`))}</span><span class="is-ann">💞 ${escapeHtml(annIn === 0 ? L("ខួបថ្ងៃនេះ!", "Anniversary today!") : L(`ខួប ${dayMonth(annIso)} · ${annIn} ថ្ងៃ`, `Anniv. ${dayMonth(annIso)} · ${annIn}d`))}</span></div>
+      </section>`;
+    }
     return `<section class="fv-love">
       <small>${escapeHtml(member.name)} ♥ ${escapeHtml(other.name)}</small>
       <b>${escapeHtml(L("បាននៅជាមួយគ្នា", "Together for"))}</b>
@@ -84,6 +145,11 @@ const FamilyV2 = (() => {
 
   // birthdays, anniversaries (one per couple) and family events, nearest first
   function importantDates() {
+    if (lav()) {
+      const list = dateItems().slice(0, 6);
+      return `<div class="fv-sec"><b>${escapeHtml(L("ថ្ងៃសំខាន់", "Important dates"))}</b><button class="fv-link" type="button" data-action="add-event">+ ${escapeHtml(L("ព្រឹត្តិការណ៍", "Event"))}</button></div>
+        ${list.length ? `<div class="fv-dts">${list.map(item => { const d = daysUntil(item.date); return `<button class="fv-dt is-${item.tone}" type="button" ${item.attrs}><em>${item.icon}</em><b>${escapeHtml(item.short)}</b><small>${escapeHtml(dayMonth(item.date))}</small><strong>${d === 0 ? "🎉" : d}<span>${escapeHtml(d === 0 ? L("ថ្ងៃនេះ", "today") : d === 1 ? L("ស្អែក", "tmrw") : L("ថ្ងៃ", "days"))}</span></strong></button>`; }).join("")}</div>` : `<section class="fv-card fv-ups"><p class="fv-empty">${escapeHtml(L("បន្ថែមថ្ងៃកំណើត ឬខួប ដើម្បីរំលឹកមុន", "Add birthdays or anniversaries to be reminded"))}</p></section>`}`;
+    }
     const items = [];
     const seenPairs = new Set();
     appData.family.forEach(member => {
@@ -137,6 +203,21 @@ const FamilyV2 = (() => {
     if (member.anniversaryDate) facts.push([L("ខួប", "Anniversary"), dayMonth(member.anniversaryDate)]); else if (PARTNER.includes(member.relationship)) missing.push(L("ខួប", "Anniversary"));
     if (member.phone) facts.push([L("ទូរស័ព្ទ", "Phone"), String(member.phone).replace(/^(\d{3})(\d{3})(\d{3,4})$/, "$1 $2 $3")]); else missing.push(L("លេខទូរស័ព្ទ", "Phone"));
     const notes = [member.relationshipNote, member.notes].filter(Boolean);
+    if (lav()) {
+      const sub = [relLabel(member), related ? related.name : "", member.birthday ? L(`ខួប ${dayMonth(member.birthday)}`, `Bday ${dayMonth(member.birthday)}`) : ""].filter(Boolean).join(" · ");
+      return `<article class="fv-member is-lav" id="family-member-${escapeAttr(member.id || "")}">
+        <div class="fv-mrow">
+          <span class="fv-mface" style="background:${coverOf(member)}">${face(member)}</span>
+          <div class="fv-mname"><b>${escapeHtml(member.name || "")}</b><small>${escapeHtml(sub)}</small></div>
+          ${tel ? `<a class="fv-call" href="tel:${escapeAttr(tel)}" aria-label="${escapeAttr(L(`ហៅទៅ ${member.name}`, `Call ${member.name}`))}">📞</a>` : ""}
+          <button class="fv-mbtn" type="button" data-edit-family="${escapeAttr(member.id)}" aria-label="${escapeAttr(L(`កែ ${member.name}`, `Edit ${member.name}`))}">${Icons.edit()}</button>
+          <button class="fv-mbtn" type="button" data-delete-family="${escapeAttr(member.id)}" aria-label="${escapeAttr(L(`លុប ${member.name}`, `Delete ${member.name}`))}">${Icons.trash()}</button>
+        </div>
+        ${tags.length ? `<div class="fv-tags">${tags.map(tag => `<span>${escapeHtml(tag)}</span>`).join("")}</div>` : ""}
+        ${missing.length ? `<div class="fv-missing">${missing.map(label => `<button type="button" data-edit-family="${escapeAttr(member.id)}">+ ${escapeHtml(label)}</button>`).join("")}</div>` : ""}
+        <button class="fv-idea fv-tip" type="button" data-family-about aria-expanded="false"><span class="fv-tip-row"><span class="fv-tip-nomi">${HomeV2.buddy("happy")}</span><span class="fv-tip-tx">${escapeHtml(idea(member))}</span>${notes.length ? `<span class="fv-tip-more">${escapeHtml(L(`ចំណាំ ${notes.length}`, `${notes.length} notes`))} ›</span>` : ""}</span>${notes.map(note => `<span class="fv-note">📝 ${escapeHtml(note)}</span>`).join("")}</button>
+      </article>`;
+    }
     return `<article class="fv-member" id="family-member-${escapeAttr(member.id || "")}">
       <div class="fv-cover" style="background:${coverOf(member)}">${member.photo ? `<img src="${escapeAttr(member.photo)}" alt="">` : ""}
         <span class="fv-tools"><button type="button" data-edit-family="${escapeAttr(member.id)}" aria-label="${escapeAttr(L(`កែ ${member.name}`, `Edit ${member.name}`))}">${Icons.edit()}</button><button type="button" data-delete-family="${escapeAttr(member.id)}" aria-label="${escapeAttr(L(`លុប ${member.name}`, `Delete ${member.name}`))}">${Icons.trash()}</button></span>
@@ -153,8 +234,26 @@ const FamilyV2 = (() => {
     </article>`;
   }
 
+  // the days-together number counts up when the page opens
+  function countUp() {
+    const el = document.querySelector(".fv-tg-n[data-fv-count]");
+    if (!el || el.dataset.done) return;
+    el.dataset.done = "1";
+    const end = Number(el.dataset.fvCount) || 0;
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches || end < 10) return;
+    const unit = el.querySelector("span")?.outerHTML || "";
+    const t0 = performance.now();
+    const step = now => {
+      const k = Math.min(1, (now - t0) / 1200);
+      el.innerHTML = Math.round(end * (1 - Math.pow(1 - k, 3))).toLocaleString("en-US") + unit;
+      if (k < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
+
   function render() {
-    return `<section class="page family-page fam2">
+    if (lav()) requestAnimationFrame(countUp);
+    return `<section class="page family-page fam2${lav() ? " is-lav" : ""}">
       ${hero()}
       <div class="fv-body">
         ${loveCard()}
