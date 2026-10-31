@@ -59,7 +59,38 @@ const HomeV2 = (() => {
     return "happy";
   }
   let MOOD_NOW = "happy";
-  const MASCOT_FN = () => buddy(MOOD_NOW);
+  const MASCOT_FN = (m = MOOD_NOW) => buddy(m);
+  // each place shows Nomi in its own mood (31 Oct)
+  function progMood(d) {
+    const done = d.focus.filter(item => item.done).length;
+    if (d.focus.length && done >= d.focus.length) return "cheer";
+    if (done > 0) return "happy";
+    const h = new Date().getHours();
+    return h >= 21 || h < 5 ? "sleepy" : "calm";
+  }
+  function moneyMood(m, spentToday, perDay) {
+    if (m.left < 0 || (perDay > 0 && spentToday > perDay)) return "worry";
+    if (spentToday === 0) return "cheer";
+    if (perDay > 0 && spentToday <= perDay / 2) return "happy";
+    return "calm";
+  }
+  // Nomi talks: an intro the first time, then one friendly line for the mood (tap Nomi for the next one)
+  const NOMI_LINES = {
+    intro: ["សួស្តី! ខ្ញុំឈ្មោះ Nomi 🐾 ខ្ញុំនឹងជួយមើលលុយ និងថ្ងៃរបស់អ្នក", "Hi! I'm Nomi 🐾 I'll keep an eye on your money and your day"],
+    happy: [["ថ្ងៃនេះល្អណាស់! ចាប់ផ្តើមតូចៗ 🌱", "Nice day! Start small 🌱"], ["ខ្ញុំនៅទីនេះជាមួយអ្នក 💜", "I'm right here with you 💜"]],
+    cheer: [["អស្ចារ្យ! ធ្វើការផ្តោតរួចហើយ 🎉", "Amazing! Focus all done 🎉"], ["អ្នកពូកែណាស់ថ្ងៃនេះ ✨", "You did great today ✨"]],
+    sleepy: [["យប់ហើយ… សម្រាកឱ្យបានល្អណា 😴", "It's late… rest well 😴"], ["ស្អែកយើងបន្តទៀត 🌙", "We'll keep going tomorrow 🌙"]],
+    worry: [["ថ្ងៃនេះចាយច្រើនបន្តិច ប្រយ័ត្នណា 💸", "A bit much spent today, careful 💸"], ["យើងសន្សំបន្តិចទៀតស្អែក 🐷", "Let's save a little tomorrow 🐷"]],
+    calm: [["យឺតៗ មិនអីទេ ☁️", "Slow is fine ☁️"], ["ផឹកទឹកមួយកែវសិន 💧", "Have a glass of water first 💧"]]
+  };
+  let nomiStep = 0;
+  function nomiLine(mood) {
+    let seen = false;
+    try { seen = localStorage.getItem("mylife:nomi-hi") === "1"; } catch (error) { seen = true; }
+    if (!seen && nomiStep === 0) { try { localStorage.setItem("mylife:nomi-hi", "1"); } catch (error) { /* ignore */ } return L(...NOMI_LINES.intro); }
+    const list = NOMI_LINES[mood] || NOMI_LINES.happy;
+    return L(...list[nomiStep % list.length]);
+  }
 
   const plainMoney = (value, currency) => {
     try { if (typeof formatPlainMoney === "function") return formatPlainMoney(Number(value) || 0, currency || appData.profile.currency || "USD"); } catch (error) { /* below */ }
@@ -136,7 +167,7 @@ const HomeV2 = (() => {
           </div>
         </div>
       </div>
-      ${lav() ? `<span class="hv2-hero-buddy">${MASCOT_FN()}</span></div>${stats(d, focusDone)}` : ""}
+      ${lav() ? `<button type="button" class="hv2-hero-buddy" data-nomi aria-label="Nomi">${MASCOT_FN()}<span class="hv2-say" data-nomi-say>${escapeHtml(nomiLine(MOOD_NOW))}</span></button></div>${stats(d, focusDone)}` : ""}
       <nav class="hv2-week" aria-label="${escapeAttr(L("សប្តាហ៍នេះ", "This week"))}">${week.map(date => {
         const key = iso(date);
         const on = key === d.todayIso;
@@ -167,7 +198,7 @@ const HomeV2 = (() => {
     const next = list.find(item => clock(item.time) >= nowClock) || list[0];
     const nextTag = next ? `<span>${escapeHtml(L("បន្ទាប់", "Next"))}: ${escapeHtml(next.title || "")}${clock(next.time) ? ` ${escapeHtml(clock(next.time))}` : ""}</span>` : "";
     return `<a class="hv2-prog" href="${next ? escapeAttr(next.href || "#calendar") : "#home"}" ${next ? "" : 'data-hv2-scroll=".hv2-fx"'}>
-      <span class="hv2-prog-cloud" aria-hidden="true"></span><span class="hv2-prog-buddy">${MASCOT_FN()}</span>
+      <span class="hv2-prog-cloud" aria-hidden="true"></span><span class="hv2-prog-buddy">${MASCOT_FN(progMood(d))}</span>
       <b>${escapeHtml(L("វឌ្ឍនភាពថ្ងៃនេះ", "Today's progress"))}</b>
       <span class="hv2-prog-seg">${d.focus.map((_, i) => `<i class="${i < done ? "on" : ""}"></i>`).join("")}<em>${done}/${total}</em></span>
       <span class="hv2-prog-tags"><span>${escapeHtml(total && done >= total ? L("ធ្វើរួចទាំងអស់ 🎉", "All done 🎉") : L(`នៅសល់ ${total - done}`, `${total - done} left`))}</span>${nextTag}</span>
@@ -244,7 +275,7 @@ const HomeV2 = (() => {
       <div class="hv2-mt-bar"><i style="width:${at(day)}"></i>${marks.filter(n => n < day).map(n => `<b style="left:${at(n)}">✓</b>`).join("")}<b class="is-now" style="left:${at(day)}">✓</b></div></div>`;
     return `<article class="wc-card hv2-soft${m.left < 0 ? " is-short" : ""}">
         <span class="hv2-soft-glow" aria-hidden="true"></span>${top}
-        <span class="hv2-soft-buddy">${MASCOT_FN()}</span>
+        <span class="hv2-soft-buddy">${MASCOT_FN(moneyMood(m, spentToday, perDay))}</span>
         <small>${escapeHtml(L(`នៅសល់សម្រាប់ចាយ · ខែ${monthName}`, `Left to spend · ${monthName}`))}</small>
         <a class="hv2-soft-amt money-value${hide}" href="#money">${escapeHtml(plainMoney(m.left))}</a>
         <span class="hv2-soft-pill">${escapeHtml(L(`ចាយរួច ${pct}% · ${daysLeft} ថ្ងៃទៀត`, `${pct}% spent · ${daysLeft} days left`))}</span>
@@ -475,6 +506,15 @@ const HomeV2 = (() => {
   document.addEventListener("click", event => {
     const go = event.target.closest("[data-hv2-go]");
     if (go) { location.hash = go.dataset.hv2Go; return; }
+    const nomi = event.target.closest("[data-nomi]");
+    if (nomi) {
+      try { localStorage.setItem("mylife:nomi-hi", "1"); } catch (error) { /* ignore */ }
+      nomiStep += 1;
+      const say = nomi.querySelector("[data-nomi-say]");
+      if (say) { say.textContent = nomiLine(MOOD_NOW); say.classList.remove("is-pop"); void say.offsetWidth; say.classList.add("is-pop"); }
+      nomi.classList.remove("is-hop"); void nomi.offsetWidth; nomi.classList.add("is-hop");
+      return;
+    }
     const cat = event.target.closest("[data-fx-cat]");
     if (cat) { const card = cat.closest(".hv2-fx-cats"); if (card) fxOpen(card, cat.dataset.fxCat); return; }
     const jump = event.target.closest("[data-hv2-scroll]");

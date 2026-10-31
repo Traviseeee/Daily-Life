@@ -25,7 +25,13 @@
   html:root[data-theme="light"] .hv2-hero :is(.hv2-wx, .hv2-bell, .hv2-top .hv2-menu) { color: #fff !important; background: rgba(255,255,255,.2) !important; border: 1px solid rgba(255,255,255,.28) !important; box-shadow: none !important; }
   html:root[data-theme="light"] .hv2-hero .hv2-wx * { color: #fff !important; }
   html:root[data-theme="light"] .hv2-hero .hv2-avatar-face { border-color: #fff !important; }
-  html:root[data-theme="light"] .hv2-hero-buddy { position: absolute; right: 16px; bottom: 64px; width: 64px; height: 64px; pointer-events: none; animation: hv2Bob 3.2s ease-in-out infinite; }
+  html:root[data-theme="light"] .hv2-hero-buddy { position: absolute; right: 16px; bottom: 64px; z-index: 3; width: 64px; height: 64px; padding: 0; border: 0; background: none; cursor: pointer; animation: hv2Bob 3.2s ease-in-out infinite; -webkit-tap-highlight-color: transparent; }
+  html:root[data-theme="light"] .hv2-hero-buddy.is-hop .hv2-buddy { animation: hv2Hop .5s ease; }
+  @keyframes hv2Hop { 30% { transform: translateY(-10px) rotate(-6deg); } 60% { transform: translateY(0) rotate(4deg); } }
+  /* Nomi's speech bubble: shows for a few seconds, again on every tap */
+  html:root[data-theme="light"] .hv2-say { position: absolute; right: calc(100% + 6px); top: 2px; width: max-content; max-width: 200px; padding: 8px 12px; border-radius: 16px 16px 4px 16px; font-size: .72rem; font-weight: 600; line-height: 1.4; text-align: left; white-space: normal; color: #3f37a8; background: #fff; pointer-events: none; animation: hv2Say 6s ease forwards; }
+  html:root[data-theme="light"] .hv2-say.is-pop { animation: hv2Say 5s ease forwards; }
+  @keyframes hv2Say { 0% { opacity: 0; transform: translateY(6px) scale(.9); } 8%, 85% { opacity: 1; transform: none; } 100% { opacity: 0; transform: translateY(-4px); } }
   html:root[data-theme="light"] .hv2-buddy { display: block; width: 100%; height: 100%;  }
   @keyframes hv2Bob { 50% { transform: translateY(-4px); } }
 
