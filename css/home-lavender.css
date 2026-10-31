@@ -142,12 +142,12 @@
   html:root[data-theme="light"] .hv2 .wc-io.is-out i { background: #ffe9ec !important; }
 
   /* quick actions: white chips in one row that scrolls sideways */
-  html:root[data-theme="light"] body .hv2 .hv2-quick { display: flex; gap: 8px; margin: 12px -16px 0; padding: 2px 16px 4px; overflow-x: auto; border: 0 !important; border-radius: 0; background: none !important; scrollbar-width: none; }
+  html:root[data-theme="light"] body .hv2 .hv2-quick { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 12px 0 0; padding: 0; overflow: visible; border: 0 !important; border-radius: 0; background: none !important; }
   html:root[data-theme="light"] .hv2 .hv2-quick::-webkit-scrollbar { display: none; }
-  html:root[data-theme="light"] .hv2 .hv2-q { display: flex !important; flex: 0 0 auto; flex-direction: row !important; align-items: center; gap: 8px; min-height: 0; padding: 7px 14px 7px 7px !important; border: 1px solid var(--lv-line) !important; border-radius: 18px !important; background: #fff !important; box-shadow: none !important; }
+  html:root[data-theme="light"] .hv2 .hv2-q { display: flex !important; flex: 1 1 auto; min-width: 0; flex-direction: row !important; align-items: center; gap: 8px; min-height: 0; padding: 7px 14px 7px 7px !important; border: 1px solid var(--lv-line) !important; border-radius: 18px !important; background: #fff !important; box-shadow: none !important; }
   html:root[data-theme="light"] .hv2 .hv2-q i { width: 32px !important; height: 32px !important; border-radius: 11px !important; }
   html:root[data-theme="light"] .hv2 .hv2-q i svg { width: 18px; height: 18px; }
-  html:root[data-theme="light"] .hv2 .hv2-q span { font-size: .8rem; font-weight: 600; color: var(--lv-ink); white-space: nowrap; }
+  html:root[data-theme="light"] .hv2 .hv2-q span { overflow: hidden; font-size: .8rem; font-weight: 600; color: var(--lv-ink); white-space: nowrap; text-overflow: ellipsis; }
 
   /* coming up: every row its own card, icon left, date box right */
   html:root[data-theme="light"] body .hv2 .hv2-card.hv2-tl { display: grid; gap: 8px; padding: 0 !important; border: 0 !important; background: none !important; }
@@ -201,4 +201,10 @@
   html:root[data-theme="light"] body .hv2 .wc-io.is-in > i { background: #e5f7ef !important; }
   html:root[data-theme="light"] body .hv2 .wc-io.is-out > i { background: #ffe9ec !important; }
   html:root[data-theme="light"] body .hv2 .fx-tile .focus-text, html:root[data-theme="light"] body .hv2 .fx-tile.done .focus-text { color: var(--lv-ink) !important; }
+}
+
+/* safety: if the lavender markup is ever drawn on a wide screen, keep the buddies small */
+@media (min-width: 901px) {
+  .hv2 :is(.hv2-hero-buddy, .hv2-prog-buddy, .hv2-soft-buddy) { display: none; }
+  .hv2 .hv2-buddy { width: 64px; height: 64px; }
 }

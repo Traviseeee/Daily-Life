@@ -23,7 +23,8 @@ const HomeV2 = (() => {
 
   // light mode = "Lavender buddy" layout (31 Oct 2026): purple hero + mascot, 3 stat tiles,
   // week strip under them, today's progress card. Dark mode keeps the old layout.
-  const lav = () => typeof document !== "undefined" && document.documentElement.dataset.theme === "light";
+  // phone only (≤900px): the desktop Home keeps its own layout
+  const lav = () => typeof document !== "undefined" && document.documentElement.dataset.theme === "light" && !!window.matchMedia?.("(max-width: 900px)").matches;
   // MYLIFE's own mascot: a round lavender buddy with a sprout (drawn here, no outside character)
   const MASCOT = '<svg class="hv2-buddy" viewBox="0 0 100 100" aria-hidden="true"><ellipse cx="50" cy="95" rx="26" ry="4.5" fill="rgba(40,30,120,.22)"/><path d="M50 23c-4-10-14-14-22-11 4 8 12 12 22 11z" fill="#7bd88f"/><path d="M50 23c3-9 12-13 20-10-3 8-11 11-20 10z" fill="#5cc477"/><circle cx="50" cy="58" r="34" fill="url(#hv2BuddyG)"/><defs><radialGradient id="hv2BuddyG" cx=".35" cy=".3"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#d9d3ff"/></radialGradient></defs><circle cx="38" cy="55" r="4.5" fill="#282694"/><circle cx="62" cy="55" r="4.5" fill="#282694"/><circle cx="39.5" cy="53.5" r="1.4" fill="#fff"/><circle cx="63.5" cy="53.5" r="1.4" fill="#fff"/><path d="M42 66q8 8 16 0" fill="#E6986B" stroke="#282694" stroke-width="2.5" stroke-linecap="round"/><ellipse cx="30" cy="66" rx="5" ry="3" fill="#ffc2c2"/><ellipse cx="70" cy="66" rx="5" ry="3" fill="#ffc2c2"/></svg>';
 
@@ -382,6 +383,8 @@ const HomeV2 = (() => {
     }
   });
   window.addEventListener("hashchange", () => document.body.classList.remove("hv2-search-open"));
+  // phone ↔ desktop width: the lavender layout is phone only, so draw Home again when crossing 900px
+  try { window.matchMedia("(max-width: 900px)").addEventListener("change", () => { if (location.hash.replace("#", "").split("/")[0] === "home" && typeof App !== "undefined") App.render(); }); } catch (error) { /* old browsers */ }
 
   // the Home header copies the app's weather chip and bell (with its badge); keep them in step
   function mirror(sourceId, selector) {
