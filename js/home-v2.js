@@ -304,13 +304,17 @@ const HomeV2 = (() => {
     const at = n => `${((n - 1) / Math.max(1, dim - 1)) * 100}%`;
     const track = `<div class="hv2-mt"><div class="hv2-mt-lab">${marks.filter(n => Math.abs(n - day) > 3).map(n => `<span style="left:${at(n)}">${n}</span>`).join("")}<span class="is-now" style="left:${at(day)}">${escapeHtml(L("ថ្ងៃនេះ", "Today"))}</span></div>
       <div class="hv2-mt-bar"><i style="width:${at(day)}"></i>${marks.filter(n => n < day).map(n => `<b style="left:${at(n)}">✓</b>`).join("")}<b class="is-now" style="left:${at(day)}">✓</b></div></div>`;
-    return `<article class="wc-card hv2-soft${m.left < 0 ? " is-short" : ""}">
+    // card settings from "Design my card" (walletCard.soft): tint + glow, Nomi, talk, month line
+    const sc = typeof WalletCard !== "undefined" && WalletCard.softConf ? WalletCard.softConf() : { tint: "white", nomi: true, talk: true, track: true };
+    const tint = typeof WalletCard !== "undefined" && WalletCard.tintOf ? WalletCard.tintOf(sc.tint) : ["white", "#ffffff", "#ffe1d2"];
+    const mood = moneyMood(m, spentToday, perDay);
+    return `<article class="wc-card hv2-soft${m.left < 0 ? " is-short" : ""}${sc.nomi ? "" : " no-nomi"}" style="--sc-bg:${tint[1]};--sc-glow:${tint[2]}">
         <span class="hv2-soft-glow" aria-hidden="true"></span>${top}
-        <span class="hv2-soft-buddy" data-nomi data-mood="${moneyMood(m, spentToday, perDay)}" role="button" tabindex="0" aria-label="Nomi">${MASCOT_FN(moneyMood(m, spentToday, perDay))}<span class="hv2-say" data-nomi-say>${escapeHtml(L(...(MONEY_SAY[moneyMood(m, spentToday, perDay)] || MONEY_SAY.happy)))}</span></span>
+        ${sc.nomi ? `<span class="hv2-soft-buddy" data-nomi data-mood="${mood}" role="button" tabindex="0" aria-label="Nomi">${MASCOT_FN(mood)}${sc.talk ? `<span class="hv2-say" data-nomi-say>${escapeHtml(L(...(MONEY_SAY[mood] || MONEY_SAY.happy)))}</span>` : ""}</span>` : ""}
         <small>${escapeHtml(L(`នៅសល់សម្រាប់ចាយ · ខែ${monthName}`, `Left to spend · ${monthName}`))}</small>
         <a class="hv2-soft-amt money-value${hide}" href="#money">${escapeHtml(plainMoney(m.left))}</a>
         <span class="hv2-soft-pill">${escapeHtml(L(`ចាយរួច ${pct}% · ${daysLeft} ថ្ងៃទៀត`, `${pct}% spent · ${daysLeft} days left`))}</span>
-        ${track}
+        ${sc.track ? track : ""}
         <p class="hv2-soft-foot">${escapeHtml(L("ចាយ", "Spent"))} <b class="money-value${hide}">${escapeHtml(plainMoney(m.expenses))}</b> / ${escapeHtml(L("ថវិកា", "Budget"))} <b class="money-value${hide}">${escapeHtml(plainMoney(m.income))}</b> · <button type="button" class="hv2-soft-edit" data-wc-edit>✎ ${escapeHtml(L("កែកាត", "Edit card"))}</button></p>
         <div class="hv2-soft-t3"><span>↑ ${escapeHtml(L("ចាយ", "Spent"))}<b class="money-value${hide}">${escapeHtml(plainMoney(m.expenses))}</b></span><span>● ${escapeHtml(L("ថ្ងៃនេះ", "Today"))}<b class="money-value${hide}">${escapeHtml(plainMoney(spentToday))}</b></span><span>✓ ${escapeHtml(L("ចាយបាន/ថ្ងៃ", "Per day"))}<b class="money-value${hide}">${escapeHtml(plainMoney(perDay))}</b></span></div>
       </article>`;

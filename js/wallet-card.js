@@ -315,13 +315,97 @@ const WalletCard = (() => {
     paint();
   }
 
+  // Lavender (light phone, 31 Oct): the Home / Money card is the white "soft" card, so the sheet
+  // edits that card instead: background tint (+ matching glow), Nomi on / talking, month line, hide.
+  // Saved in walletCard.soft = { tint, nomi, talk, track }; hide stays shared with the ticket card.
+  const TINTS = [
+    ["white", "#ffffff", "#ffe1d2", "ស", "White"], ["lavender", "#f1eeff", "#d9d0ff", "Lavender", "Lavender"],
+    ["peach", "#fff2ea", "#ffd3bd", "Peach", "Peach"], ["mint", "#ecfaf3", "#c8f0dc", "Mint", "Mint"],
+    ["sky", "#eef5ff", "#cfe2ff", "Sky", "Sky"], ["rose", "#fff0f4", "#ffd0de", "Rose", "Rose"],
+    ["lemon", "#fffbe8", "#fff0b3", "Lemon", "Lemon"], ["mauve", "#f7eff4", "#e6cbdc", "Mauve", "Mauve"]
+  ];
+  const softConf = () => {
+    const raw = appData.profile?.walletCard || {};
+    const s = raw.soft || {};
+    return { tint: TINTS.some(t => t[0] === s.tint) ? s.tint : "white", nomi: s.nomi !== false, talk: s.talk !== false, track: s.track !== false, hide: !!raw.hide };
+  };
+  const tintOf = id => TINTS.find(t => t[0] === id) || TINTS[0];
+  function openSoft() {
+    const root = document.querySelector("#modalRoot");
+    if (!root) return;
+    if (typeof Modal !== "undefined" && Modal.escapeHandler) document.removeEventListener("keydown", Modal.escapeHandler);
+    let draft = softConf();
+    let tab = "color";
+    const m = typeof moneyMonthNumbers === "function" ? moneyMonthNumbers() : { left: 0, income: 0, expenses: 0 };
+    const TABS = [["color", "🎨", L("ពណ៌", "Colour")], ["nomi", "🐾", "Nomi"], ["more", "⚙️", L("ផ្សេងៗ", "More")]];
+    const tg = (name, icon, k, e) => `<label class="wc-tg"><span>${icon} ${escapeHtml(L(k, e))}</span><input type="checkbox" name="${name}"></label>`;
+    root.innerHTML = `
+      <form class="modal glass-card wc-sheet wc-sheet-soft" id="modalForm" novalidate>
+        <div class="wc-sh-head"><h2 class="section-title">🎨 ${escapeHtml(L("រចនាកាតរបស់ខ្ញុំ", "Design my card"))}</h2>
+          <button class="icon-button" type="button" data-close aria-label="${escapeAttr(t("close"))}">${Icons.close()}</button></div>
+        <div class="wc-stage hv2"><div class="wc-preview wc-soft-prev" data-wc-preview></div></div>
+        <div class="wc-tabbar" role="tablist">${TABS.map(([id, icon, label]) => `<button type="button" role="tab" data-wc-tab="${id}"><span aria-hidden="true">${icon}</span>${escapeHtml(label)}</button>`).join("")}</div>
+        <div class="wc-panels">
+          <section data-wc-panel="color">
+            <p class="wc-lbl"><span>${escapeHtml(L("ពណ៌ផ្ទៃកាត", "Card background"))}</span><small>${escapeHtml(L("សម្រាប់ ☀️ Light", "for ☀️ Light"))}</small></p>
+            <div class="wc-tints">${TINTS.map(([id, bg, glow, k, e]) => `<button type="button" class="wc-tint" data-wc-tint="${id}"><i style="background:linear-gradient(160deg,${bg},${glow})"></i>${escapeHtml(L(k, e))}</button>`).join("")}</div>
+          </section>
+          <section data-wc-panel="nomi">
+            ${tg("wcNomi", "🐾", "បង្ហាញ Nomi លើកាត", "Show Nomi on the card")}
+            ${tg("wcTalk", "💬", "Nomi និយាយពីការចាយ", "Nomi talks about spending")}
+          </section>
+          <section data-wc-panel="more">
+            ${tg("wcTrack", "📅", "បន្ទាត់ថ្ងៃក្នុងខែ", "Days-of-month line")}
+            ${tg("wcHide", "🙈", "លាក់ចំនួនលុយលើកាត", "Hide amounts on the card")}
+          </section>
+        </div>
+        <div class="wc-foot-bar"><button type="button" class="wc-rs" data-wc-reset>↺ ${escapeHtml(L("ដើមវិញ", "Reset"))}</button><button class="wc-save" type="submit">${escapeHtml(L("រក្សាទុក", "Save"))}</button></div>
+      </form>`;
+    root.classList.add("open");
+    if (typeof Modal !== "undefined") {
+      Modal.escapeHandler = event => { if (event.key === "Escape") Modal.close(); };
+      document.addEventListener("keydown", Modal.escapeHandler);
+    }
+    const form = root.querySelector("#modalForm");
+    const host = form.querySelector("[data-wc-preview]");
+    const el = form.elements;
+    const paint = () => {
+      const saved = appData.profile.walletCard;
+      appData.profile.walletCard = { ...(saved || {}), hide: draft.hide, soft: { tint: draft.tint, nomi: draft.nomi, talk: draft.talk, track: draft.track } }; // preview only
+      host.innerHTML = HomeV2.softArticle(localDateInput(), m);
+      appData.profile.walletCard = saved;
+      form.querySelectorAll("[data-wc-tab]").forEach(b => { const on = b.dataset.wcTab === tab; b.classList.toggle("on", on); b.setAttribute("aria-selected", on); });
+      form.querySelectorAll("[data-wc-panel]").forEach(p => { p.hidden = p.dataset.wcPanel !== tab; });
+      form.querySelectorAll("[data-wc-tint]").forEach(b => b.classList.toggle("on", b.dataset.wcTint === draft.tint));
+      el.wcNomi.checked = draft.nomi; el.wcTalk.checked = draft.talk; el.wcTalk.disabled = !draft.nomi;
+      el.wcTrack.checked = draft.track; el.wcHide.checked = draft.hide;
+    };
+    form.querySelectorAll("[data-close]").forEach(b => b.addEventListener("click", () => Modal.close()));
+    form.addEventListener("click", event => {
+      const b = event.target.closest("button");
+      if (!b || b.type === "submit") return;
+      if (b.dataset.wcTab) { tab = b.dataset.wcTab; paint(); }
+      else if (b.dataset.wcTint) { draft.tint = b.dataset.wcTint; paint(); }
+      else if (b.hasAttribute("data-wc-reset")) { draft = { tint: "white", nomi: true, talk: true, track: true, hide: false }; paint(); }
+    });
+    [["wcNomi", "nomi"], ["wcTalk", "talk"], ["wcTrack", "track"], ["wcHide", "hide"]].forEach(([n, k]) => el[n].addEventListener("change", e => { draft[k] = e.target.checked; paint(); }));
+    form.addEventListener("submit", event => {
+      event.preventDefault();
+      const raw = appData.profile.walletCard || {};
+      Modal.close();
+      Store.updateProfile({ walletCard: { ...raw, hide: !!draft.hide, soft: { tint: draft.tint, nomi: draft.nomi, talk: draft.talk, track: draft.track } } });
+      Toast.show(L("បានរក្សាទុកកាត", "Card saved"), "success");
+    });
+    paint();
+  }
+
   document.addEventListener("click", event => {
-    if (event.target.closest(".wc-card [data-wc-edit]")) { event.preventDefault(); open(); }
+    if (event.target.closest(".wc-card [data-wc-edit]")) { event.preventDefault(); if (typeof HomeV2 !== "undefined" && HomeV2.lav && HomeV2.lav()) openSoft(); else open(); }
   });
 
   // card colour for other places (Money hero uses the same colour as the Home card)
   const bg = () => bgOf(conf());
-  return { render, open, bg };
+  return { render, open, bg, softConf, tintOf };
 })();
 
 if (typeof window !== "undefined") window.WalletCard = WalletCard;

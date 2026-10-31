@@ -88,9 +88,9 @@
   html:root[data-theme="light"] .hv2 .wc-tk .wc-tk-edit { background: rgba(255,255,255,.2) !important; }
 
   /* A · white money card (like the streak card) */
-  html:root[data-theme="light"] :is(.hv2, .fv2-page) .wc-card.hv2-soft { position: relative; display: grid; justify-items: center; gap: 2px; min-height: 0; padding: 16px 18px 0; overflow: hidden; border-radius: 30px; color: var(--lv-ink); text-align: center; background: #fff !important; box-shadow: none !important; border: 1px solid var(--lv-line) !important; }
+  html:root[data-theme="light"] :is(.hv2, .fv2-page) .wc-card.hv2-soft { position: relative; display: grid; justify-items: center; gap: 2px; min-height: 0; padding: 16px 18px 0; overflow: hidden; border-radius: 30px; color: var(--lv-ink); text-align: center; background: var(--sc-bg, #fff) !important; box-shadow: none !important; border: 1px solid var(--lv-line) !important; }
   html:root[data-theme="light"] :is(.hv2, .fv2-page) .wc-card.hv2-soft::before, html:root[data-theme="light"] :is(.hv2, .fv2-page) .wc-card.hv2-soft::after { display: none; }
-  html:root[data-theme="light"] .hv2-soft-glow { position: absolute; left: 50%; top: 4px; width: 170px; height: 120px; transform: translateX(-50%); background: radial-gradient(closest-side, #ffe1d2, transparent); pointer-events: none; }
+  html:root[data-theme="light"] .hv2-soft-glow { position: absolute; left: 50%; top: 4px; width: 170px; height: 120px; transform: translateX(-50%); background: radial-gradient(closest-side, var(--sc-glow, #ffe1d2), transparent); pointer-events: none; }
   html:root[data-theme="light"] .hv2-soft-buddy { position: relative; width: 84px; height: 84px; animation: hv2Bob 3.2s ease-in-out infinite; }
   html:root[data-theme="light"] .hv2-soft > small { position: relative; font-size: .76rem; color: var(--lv-sub); }
   html:root[data-theme="light"] .hv2-soft-amt { position: relative; font-size: 2.1rem; font-weight: 700; line-height: 1.15; color: var(--lv-ink) !important; text-decoration: none; }
@@ -287,4 +287,22 @@
   html:root[data-theme="light"] .hv2-soft-buddy .hv2-say { left: calc(100% + 4px); right: auto; top: 6px; max-width: 128px; border-radius: 16px 16px 16px 4px; box-shadow: 0 0 0 1px #ebe8f4; animation-delay: .6s; opacity: 0; }
   html:root[data-theme="light"] .hv2-soft-buddy .hv2-say.is-pop { animation-delay: 0s; }
   html:root[data-theme="light"] :is(.hv2-prog-buddy, .hv2-soft-buddy).is-hop .hv2-buddy { animation: nbHop .55s ease; }
+}
+
+/* "Design my card" for the soft card (light phone, 31 Oct): preview + tints + lavender rings */
+@media (max-width: 900px) {
+  html:root[data-theme="light"] #modalRoot .wc-sheet-soft .wc-stage.hv2 { display: block; max-width: none; margin: 0; padding: 8px 16px 14px; }
+  html:root[data-theme="light"] #modalRoot .wc-sheet-soft .wc-soft-prev { pointer-events: none; }
+  html:root[data-theme="light"] .wc-sheet-soft .wc-soft-prev .hv2-soft-buddy { width: 70px; height: 70px; }
+  html:root[data-theme="light"] .wc-sheet-soft .wc-soft-prev .hv2-soft-edit { visibility: hidden; }
+  html:root[data-theme="light"] .hv2-soft.no-nomi { padding-top: 22px; }
+  .wc-tints { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  html:root[data-theme="light"] #modalRoot .wc-tint { padding: 8px 4px 7px; border: 1px solid #ebe8f4; border-radius: 16px; background: #fff; color: #7a7698; font: inherit; font-size: .7rem; font-weight: 600; cursor: pointer; }
+  .wc-tint i { display: block; height: 36px; margin-bottom: 5px; border-radius: 11px; border: 1px solid rgba(0,0,0,.05); }
+  html:root[data-theme="light"] #modalRoot .wc-tint.on { border-color: #7B68EE; box-shadow: 0 0 0 2px #7B68EE; color: #504AB9; font-weight: 800; }
+  .wc-sheet-soft [data-wc-panel] .wc-tg { margin-bottom: 8px; }
+  .wc-sheet-soft .wc-tg:has(input:disabled) { opacity: .45; }
+  html:root[data-theme="light"] .wc-sheet .wc-sw.on { box-shadow: 0 0 0 3px var(--sh-bg, #fff), 0 0 0 5px #7B68EE; }
+  html:root[data-theme="light"] .wc-sheet .wc-lbl small { color: #7B68EE; }
+  html:root[data-theme="light"] #modalRoot .modal.wc-sheet .wc-save { box-shadow: none; }
 }
