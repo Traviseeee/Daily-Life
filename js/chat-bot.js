@@ -498,7 +498,7 @@ const MyLifeChat = (() => {
     }, 280);
   }
 
-  const lavOn = () => typeof HomeV2 !== "undefined" && HomeV2.lav && HomeV2.lav();
+  const lavOn = () => typeof HomeV2 !== "undefined" && !!HomeV2.buddy;
   function open() {
     if (root) return;
     loadHistory();

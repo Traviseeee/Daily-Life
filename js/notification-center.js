@@ -341,7 +341,7 @@ const NotificationCenter = (() => {
               ? L(`ថ្ងៃនេះ ${todayCount} · 7 ថ្ងៃខាងមុខ ${active.length}`, `${todayCount} today · ${active.length} in the next 7 days`)
               : L("គ្មានអ្វីត្រូវធ្វើទេ សម្រាកបាន", "You're all caught up")}</p>
           </div>
-          ${typeof HomeV2 !== "undefined" && HomeV2.lav && HomeV2.lav() ? (() => {
+          ${typeof HomeV2 !== "undefined" && !!HomeV2.buddy ? (() => {
             const tg = typeof TelegramArrivals !== "undefined" ? TelegramArrivals.feed().slice(0, 8).length : 0;
             const mood = !enabled ? "sleepy" : todayCount ? "worry" : "happy";
             const say = !enabled ? L("ការជូនដំណឹងបិទ… ខ្ញុំដេកសិន 💤", "Alerts are off… nap time 💤") : tg ? L(`Telegram បានបន្ថែម ${tg} ចំណាយថ្មី 📲`, `Telegram added ${tg} new expenses 📲`) : todayCount ? L(`ថ្ងៃនេះមាន ${todayCount} រឿង កុំភ្លេចណា!`, `${todayCount} things today — don't forget!`) : L("ស្ងាត់ល្អ សម្រាកបាន 🐾", "All quiet — relax 🐾");

@@ -13,7 +13,7 @@ const LauncherV2 = (() => {
   const ORDER = ["today", "calendar", "money", "family", "goals", "memories", "summary", "scan", "notifications", "tips", "settings"];
 
   // Lavender (light phone, 31 Oct): Home look — Nomi talks in the hero, money ring card, SVG quick add
-  const lav = () => typeof HomeV2 !== "undefined" && HomeV2.lav && HomeV2.lav();
+  const lav = () => typeof HomeV2 !== "undefined" && !!HomeV2.buddy;
   const NOMI_SAY = [["ចង់ទៅណា? ស្វែងរក ឬជ្រើសកម្មវិធីខាងក្រោម 🐾", "Where to? Search or pick an app below 🐾"]];
 
   function hero() {

@@ -41,7 +41,7 @@ const FamilyV2 = (() => {
   const isGroupAdmin = () => { const s = groupState(); return Boolean(s?.family && s.members?.some(m => m.user_id === s.me && m.role === "admin")); };
 
   // Lavender (light, 31 Oct): Nomi in the hero, a big "days together" counter card, small date cards, compact members
-  const lav = () => typeof HomeV2 !== "undefined" && HomeV2.lav && HomeV2.lav();
+  const lav = () => typeof HomeV2 !== "undefined" && !!HomeV2.buddy;
   const nomi = (mood, cls) => `<span class="${cls}" data-nomi data-mood="${mood}" role="button" tabindex="0" aria-label="Nomi">${HomeV2.buddy(mood)}</span>`;
   function dateItems() {
     const items = [];

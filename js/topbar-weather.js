@@ -302,7 +302,7 @@ const TopbarWeather = (() => {
     const hum = today ? data?.humidity : day.humidity;
     const slots = hoursOf(index);
     // lavender (light, 31 Oct): the top sits in a lavender hero, the animated icon stays, Nomi gives the tip
-    const lav = typeof HomeV2 !== "undefined" && HomeV2.lav && HomeV2.lav();
+    const lav = typeof HomeV2 !== "undefined" && !!HomeV2.buddy;
     const wet = /rain|storm|drizzle|thunder/i.test(scene);
     const nomiSay = tip || (wet ? tx("umbrella") : km() ? "អាកាសធាតុល្អ ចេញក្រៅបាន 🌤" : "Nice weather — go out and enjoy 🌤");
     const top = `<small class="wxp-place">📍 ${esc(PLACE.name)} · ${esc(today ? dateLabel() : dayLong(day.date))}</small>
