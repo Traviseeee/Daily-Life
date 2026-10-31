@@ -145,11 +145,15 @@ const NotifyCenter = (() => {
     const onCount = entry => entry.tools.filter(tool => p.tools[tool]).length;
     return `
       <section class="page nfc-page">
-        <div class="page-header">
+        ${typeof HomeV2 !== "undefined" && HomeV2.lav && HomeV2.lav() ? `<header class="nfc-lav-hero">
+          <span class="nfc-lav-tx"><small>MYLIFE</small><h1>${L("ការជូនដំណឹង", "Notifications")}</h1></span>
+          <span class="nfc-lav-nomi" data-nomi data-mood="${off ? "sleepy" : "happy"}" role="button" tabindex="0" aria-label="Nomi">${HomeV2.buddy(off ? "sleepy" : "happy")}</span>
+          <span class="nfc-lav-say" data-nomi-say>${escapeHtml(off ? L("ការជូនដំណឹងបិទហើយ… ខ្ញុំដេកសិន 💤", "Alerts are off… nap time 💤") : next.length ? L(`ខ្ញុំនឹងរំលឹកអ្នក ${next.length} រឿង ក្នុង 7 ថ្ងៃ 🔔`, `I'll remind you of ${next.length} things this week 🔔`) : L("សប្តាហ៍នេះស្ងាត់ ខ្ញុំចាំមើលឲ្យ 🐾", "Quiet week — I'm watching 🐾"))}</span>
+        </header>` : `<div class="page-header">
           <div>
             <h1 class="page-title page-title-with-icon"><span class="page-title-icon">${ICON.bell()}</span>${L("ការជូនដំណឹង", "Notifications")}</h1>
           </div>
-        </div>
+        </div>`}
 
         <div class="nfc-stack">
           <div class="nfc-group nfc-top">

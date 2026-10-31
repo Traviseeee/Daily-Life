@@ -187,3 +187,39 @@
   .lv2.is-lav .lv-search-go svg { width: 20px; height: 20px; color: #7a7698; }
   html:root[data-theme="light"] .lv2.is-lav .lv-ai-btn { width: 40px; height: 40px; border-radius: 14px; color: #504AB9 !important; background: #f1eeff; }
 }
+
+/* Notifications in the Home look (light, 31 Oct): no top bar on phone, Nomi hero, lavender chips / tabs / tiles */
+@media (max-width: 900px) {
+  html:root[data-theme="light"] body.notify-page-open:not(.hv2-search-open) .app-main .topbar { display: none !important; }
+  html:root[data-theme="light"] body.notify-page-open #app > .page.nfc-page { padding-top: env(safe-area-inset-top, 0px); }
+}
+@media all {
+  html:root[data-theme="light"] .nfc-lav-hero { position: relative; display: grid; grid-template-columns: 1fr auto; grid-template-areas: "tx nomi" "say nomi"; align-items: center; gap: 4px 8px; margin: 6px 2px 16px; color: #fff; }
+  .nfc-lav-tx { grid-area: tx; }
+  .nfc-lav-tx small { font-size: .74rem; font-weight: 700; opacity: .85; letter-spacing: .04em; }
+  .nfc-lav-tx h1 { margin: 0; font-size: 1.6rem; font-weight: 800; color: #fff; }
+  .nfc-lav-nomi { grid-area: nomi; width: 96px; height: 90px; cursor: pointer; animation: hv2Bob 3.2s ease-in-out infinite; }
+  .nfc-lav-nomi .hv2-buddy { width: 100%; height: 100%; }
+  html:root[data-theme="light"] .nfc-lav-say { grid-area: say; justify-self: start; max-width: 100%; padding: 9px 13px; border-radius: 16px 16px 4px 16px; background: #fff; color: #1A2347; font-size: .8rem; font-weight: 600; line-height: 1.4; }
+  html:root[data-theme="light"] body .nfc-page .nfc-chip.is-on { color: #fff !important; background: linear-gradient(135deg, #7B68EE, #504AB9) !important; }
+  html:root[data-theme="light"] body .nfc-page .nfc-chip { background: #f1eeff; color: #504AB9; }
+  html:root[data-theme="light"] body .nfc-page .nfc-tab.is-on { color: #fff !important; background: linear-gradient(135deg, #7B68EE, #504AB9) !important; }
+  html:root[data-theme="light"] body .nfc-page .nfc-tabs { background: #ebe8f4 !important; }
+  html:root[data-theme="light"] body .nfc-page .nfc-next-head b { color: #504AB9; }
+  html:root[data-theme="light"] body .nfc-page :is(.nfc-group, .nfc-next-card) { border: 1px solid #ebe8f4 !important; box-shadow: none !important; }
+  html:root[data-theme="light"] .nfc-page .nfc-tone-amber { --nfc-tone: linear-gradient(145deg, #ffcfae, #E6986B); }
+  html:root[data-theme="light"] .nfc-page .nfc-tone-rose { --nfc-tone: linear-gradient(145deg, #f3b6c8, #d9799a); }
+  html:root[data-theme="light"] .nfc-page .nfc-tone-blue { --nfc-tone: linear-gradient(145deg, #a9cdf5, #6a9fe0); }
+  html:root[data-theme="light"] .nfc-page .nfc-tone-green { --nfc-tone: linear-gradient(145deg, #9F8CFF, #7B68EE); }
+  html:root[data-theme="light"] .nfc-page .nfc-tone-violet { --nfc-tone: linear-gradient(145deg, #9F8CFF, #504AB9); }
+  html:root[data-theme="light"] .nfc-page .nfc-tone-pink { --nfc-tone: linear-gradient(145deg, #e6c3d8, #CBACC1); }
+  html:root[data-theme="light"] .nfc-page .nfc-tone-teal { --nfc-tone: linear-gradient(145deg, #a7e3d3, #5cb79d); }
+}
+@media all {
+  html:root[data-theme="light"] body .nfc-page .nfc-sum.is-on { color: #504AB9; }
+  html:root[data-theme="light"] body .nfc-page .nfc-ma-now { color: #fff !important; background: linear-gradient(135deg, #7B68EE, #504AB9) !important; }
+  html:root[data-theme="light"] body .nfc-page .nfc-ma-head .nfc-tile, html:root[data-theme="light"] body .nfc-page .nfc-row .nfc-tile.nfc-tone-blue:not(.nfc-tile-sm) { --nfc-tone: linear-gradient(145deg, #9F8CFF, #7B68EE); }
+  html:root[data-theme="light"] body .nfc-page .nfc-ma-icon.is-income { color: #6c5ce7; background: #f1eeff; }
+  html:root[data-theme="light"] body .nfc-page .nfc-ma-icon.is-loan { color: #4a8fd8; background: #eaf6ff; }
+  html:root[data-theme="light"] body .nfc-page .nfc-ma-icon.is-bill { color: #e0804e; background: #fff1e8; }
+}
