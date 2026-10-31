@@ -799,3 +799,4 @@ html:root:not([data-theme="light"]) body, html:root:not([data-theme="light"]) .a
   html:root:not([data-theme="light"]) .sv2 .sv-ic.is-grey { background: rgba(255,255,255,.12) !important; }
   html:root:not([data-theme="light"]) .sv2 .sv-chip { color: #F4F2FF !important; background: rgba(182,168,255,.18) !important; border-color: rgba(182,168,255,.25) !important; }
 }
+@media all { html:root:not([data-theme="light"]) .cv2 .cv2-c.cv2-c, html:root:not([data-theme="light"]) .cv2 .cv2-c.cv2-c b { color: #fff !important; opacity: 1 !important; } }
