@@ -326,3 +326,17 @@ html body .hv2 .hv2-title .hv2-why p { margin: 0 !important; }
 .hv2 .fx-tile, .hv2 .fx-tile label { min-width: 0; } /* long focus names must not widen the card (31 Oct) */
 .hv2 .fx-tile .focus-text { text-overflow: ellipsis; }
 .hv2-face.hv2-buddy-face { width: 44px; height: 44px; filter: none; } /* Nomi mood faces (31 Oct) */
+
+/* Nomi in dark mode (and desktop): sits at the right of the title, talks on tap (31 Oct) */
+.hv2-title-row { position: relative; }
+.hv2-nomi-dark { position: absolute; right: 0; top: 50%; z-index: 3; width: 62px; height: 62px; margin-top: -31px; padding: 0; border: 0; background: none; cursor: pointer; animation: hv2NomiBob 3.2s ease-in-out infinite; -webkit-tap-highlight-color: transparent; }
+.hv2-nomi-dark .hv2-buddy { display: block; width: 100%; height: 100%; }
+.hv2-nomi-dark.is-hop .hv2-buddy { animation: hv2NomiHop .5s ease; }
+.hv2-title-row:has(.hv2-nomi-dark) .hv2-title { padding-right: 70px; }
+.hv2-nomi-dark .hv2-say { position: absolute; right: calc(100% + 6px); top: 0; width: max-content; max-width: 200px; padding: 8px 12px; border-radius: 16px 16px 4px 16px; font-size: .72rem; font-weight: 600; line-height: 1.4; text-align: left; white-space: normal; color: #142a04; background: #d9ff7b; pointer-events: none; animation: hv2NomiSay 6s ease forwards; }
+:root[data-theme="light"] .hv2-nomi-dark .hv2-say { color: #3f37a8; background: #fff; box-shadow: 0 6px 16px rgba(40, 38, 148, .15); }
+.hv2-nomi-dark .hv2-say.is-pop { animation: hv2NomiSay 5s ease forwards; }
+@keyframes hv2NomiBob { 50% { transform: translateY(-4px); } }
+@keyframes hv2NomiHop { 30% { transform: translateY(-10px) rotate(-6deg); } 60% { transform: translateY(0) rotate(4deg); } }
+@keyframes hv2NomiSay { 0% { opacity: 0; transform: translateY(6px) scale(.9); } 8%, 85% { opacity: 1; transform: none; } 100% { opacity: 0; transform: translateY(-4px); } }
+@media (prefers-reduced-motion: reduce) { .hv2-nomi-dark { animation: none; } }

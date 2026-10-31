@@ -168,7 +168,7 @@ const HomeV2 = (() => {
         <a class="hv2-bell hv2-menu" href="#launcher" aria-label="${escapeAttr(L("ម៉ឺនុយទាំងអស់", "All menus"))}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="4" y="4" width="6.5" height="6.5" rx="2"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="2"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="2"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="2"/></svg></a>
         <button type="button" class="hv2-bell" data-hv2-bell aria-label="${escapeAttr(L("ការជូនដំណឹង", "Notifications"))}">${document.getElementById("bellButton")?.innerHTML || Icons.bell()}</button>
       </div>
-      <div class="hv2-title-row">
+      <div class="hv2-title-row">${lav() ? "" : `<button type="button" class="hv2-nomi-dark" data-nomi aria-label="Nomi">${MASCOT_FN()}<span class="hv2-say" data-nomi-say>${escapeHtml(nomiLine(MOOD_NOW))}</span></button>`}
         <div class="hv2-title">
           <h1>${things ? L(`ថ្ងៃនេះមាន <span>${things} រឿង</span> ត្រូវធ្វើ`, `<span>${things} thing${things === 1 ? "" : "s"}</span> to do today`) : L(`ថ្ងៃនេះ <span>ទំនេរ</span> 🌿`, `Today is <span>free</span> 🌿`)}</h1>
           <div class="hv2-why">
