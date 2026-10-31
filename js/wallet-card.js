@@ -349,7 +349,7 @@ const WalletCard = (() => {
         <div class="wc-tabbar" role="tablist">${TABS.map(([id, icon, label]) => `<button type="button" role="tab" data-wc-tab="${id}"><span aria-hidden="true">${icon}</span>${escapeHtml(label)}</button>`).join("")}</div>
         <div class="wc-panels">
           <section data-wc-panel="color">
-            <p class="wc-lbl"><span>${escapeHtml(L("ពណ៌ផ្ទៃកាត", "Card background"))}</span><small>${escapeHtml(L("សម្រាប់ ☀️ Light", "for ☀️ Light"))}</small></p>
+            <p class="wc-lbl"><span>${escapeHtml(L("ពណ៌ផ្ទៃកាត", "Card background"))}</span><small>${escapeHtml(dark() ? L("សម្រាប់ ☀️ Light (Dark ប្រើកាតងងឹត)", "for ☀️ Light (dark uses a dark card)") : L("សម្រាប់ ☀️ Light", "for ☀️ Light"))}</small></p>
             <div class="wc-tints">${TINTS.map(([id, bg, glow, k, e]) => `<button type="button" class="wc-tint" data-wc-tint="${id}"><i style="background:linear-gradient(160deg,${bg},${glow})"></i>${escapeHtml(L(k, e))}</button>`).join("")}</div>
           </section>
           <section data-wc-panel="nomi">

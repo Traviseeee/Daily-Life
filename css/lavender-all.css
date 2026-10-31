@@ -428,7 +428,6 @@
   html:root:not([data-theme="light"]) .lv2.is-lav .lv-q { border: 1px solid rgba(255,255,255,.08); box-shadow: none !important; }
   html:root:not([data-theme="light"]) .lv2.is-lav .lv-qa { margin-bottom: 14px; }
   html:root:not([data-theme="light"]) .lv2.is-lav .lv-nomi .hv2-buddy { transform: scale(1.15); }
-  html:root:not([data-theme="light"]) :is(.fv2-page, html:root:not([data-theme="light"]) #app > .page:not(.hv2):not(.sv2)) > :first-child { padding-top: 14px; }
   html:root:not([data-theme="light"]) .lv2.is-lav .lv-say { animation: none !important; opacity: 1 !important; font-size: .86rem; padding: 12px 15px; }
   html:root:not([data-theme="light"]) .lv2.is-lav .lv-talk { align-items: center; gap: 10px; margin: 14px 0 16px; }
   html:root:not([data-theme="light"]) .lv2.is-lav .lv-nomi { width: 104px; height: 96px; }
@@ -439,7 +438,7 @@
   html:root:not([data-theme="light"]) .lv2.is-lav .lv-scan-pill { display: inline-flex; align-items: center; gap: 6px; flex: 0 0 auto; padding: 10px 14px; border-radius: 15px; color: #142a04 !important; background: linear-gradient(135deg, #d9ff7b, #a6e33f); font-size: .82rem; font-weight: 800; text-decoration: none; }
   html:root:not([data-theme="light"]) .lv2.is-lav .lv-scan-pill svg { width: 18px; height: 18px; }
   html:root:not([data-theme="light"]) .lv2.is-lav .lv-sec b { font-size: 1rem; font-weight: 800; color: #eef6e8; }
-  html:root:not([data-theme="light"]) .lv2.is-lav .lv-sec :is(a, html:root:not([data-theme="light"]) .lv-link) { font-size: .82rem; font-weight: 700; color: #d9ff7b !important; }
+  html:root:not([data-theme="light"]) .lv2.is-lav .lv-sec :is(a, .lv-link) { font-size: .82rem; font-weight: 700; color: #d9ff7b !important; }
   html:root:not([data-theme="light"]) .lv2.is-lav .lv-q span { font-weight: 800; color: #eef6e8; }
   html:root:not([data-theme="light"]) .lv2.is-lav .lv-ring { width: 72px; height: 72px; background: conic-gradient(#d9ff7b 0 var(--p), rgba(255,255,255,.07) 0); }
   html:root:not([data-theme="light"]) .lv2.is-lav .lv-ring i { width: 52px; height: 52px; font-size: .9rem; }
@@ -463,14 +462,14 @@
   html:root:not([data-theme="light"]) body .nfc-page .nfc-tab.is-on { color: #142a04 !important; background: linear-gradient(135deg, #d9ff7b, #a6e33f) !important; }
   html:root:not([data-theme="light"]) body .nfc-page .nfc-tabs { background: rgba(255,255,255,.08) !important; }
   html:root:not([data-theme="light"]) body .nfc-page .nfc-next-head b { color: #d9ff7b; }
-  html:root:not([data-theme="light"]) body .nfc-page :is(.nfc-group, html:root:not([data-theme="light"]) .nfc-next-card) { border: 1px solid rgba(255,255,255,.08) !important; box-shadow: none !important; }
+  html:root:not([data-theme="light"]) body .nfc-page :is(.nfc-group, .nfc-next-card) { border: 1px solid rgba(255,255,255,.08) !important; box-shadow: none !important; }
   html:root:not([data-theme="light"]) body .nfc-page .nfc-sum.is-on { color: #d9ff7b; }
   html:root:not([data-theme="light"]) body .nfc-page .nfc-ma-now { color: #142a04 !important; background: linear-gradient(135deg, #d9ff7b, #a6e33f) !important; }
   html:root:not([data-theme="light"]) body .nfc-page .nfc-ma-icon.is-income { color: #d9ff7b; background: rgba(255,255,255,.07); }
   html:root:not([data-theme="light"]) body .nfc-page .nfc-ma-icon.is-loan { color: #4a8fd8; background: rgba(255,255,255,.07); }
   html:root:not([data-theme="light"]) body .nfc-page .nfc-ma-icon.is-bill { color: #e0804e; background: rgba(255,255,255,.07); }
   html:root:not([data-theme="light"]) .mlc-panel.is-lav { background: #0b1712 !important; border-color: rgba(255,255,255,.08) !important; }
-  html:root:not([data-theme="light"]) .mlc-panel.is-lav .mlc-head { position: relative; grid-template-columns: 74px minmax(0, 1fr) auto auto; padding: 14px 14px 22px; color: #fff; background: radial-gradient(70% 90% at 90% 20%, rgba(197,255,96,.10), transparent 70%), linear-gradient(170deg, #1f3d2c, #142519) !important; border: 0 !important; }
+  html:root:not([data-theme="light"]) .mlc-panel.is-lav .mlc-head { position: relative; grid-template-columns: 74px minmax(0, 1fr) auto auto; padding: 14px 14px 22px; color: #fff; background: radial-gradient(70% 90% at 90% 20%, rgba(197,255,96,.12), transparent 70%), linear-gradient(170deg, #24452f, #142519 60%, #0f1f17) !important; border: 0 !important; }
   html:root:not([data-theme="light"]) .mlc-panel.is-lav .mlc-head strong { color: #fff; font-size: 1.15rem; }
   html:root:not([data-theme="light"]) .mlc-panel.is-lav .mlc-head small { color: rgba(255,255,255,.9); }
   html:root:not([data-theme="light"]) .mlc-panel.is-lav .mlc-head .icon-button { color: #fff !important; background: rgba(255,255,255,.25) !important; border: 0 !important; box-shadow: none !important; }
@@ -483,13 +482,13 @@
   html:root:not([data-theme="light"]) .mlc-panel.is-lav .mlc-me .mlc-bubble { color: #142a04 !important; background: linear-gradient(135deg, #d9ff7b, #a6e33f) !important; border-radius: 18px 18px 4px 18px; }
   html:root:not([data-theme="light"]) .mlc-panel.is-lav .mlc-bubble code { color: #d9ff7b !important; background: rgba(255,255,255,.07) !important; }
   html:root:not([data-theme="light"]) .mlc-panel.is-lav .mlc-list li b { color: #d9ff7b !important; }
-  html:root:not([data-theme="light"]) .mlc-panel.is-lav :is(.mlc-btn, html:root:not([data-theme="light"]) .mlc-suggest button) { color: #d9ff7b !important; background: #18291f !important; border: 1px solid rgba(255,255,255,.08) !important; }
+  html:root:not([data-theme="light"]) .mlc-panel.is-lav :is(.mlc-btn, .mlc-suggest button) { color: #d9ff7b !important; background: #18291f !important; border: 1px solid rgba(255,255,255,.08) !important; }
   html:root:not([data-theme="light"]) .mlc-panel.is-lav .mlc-input input { background: #18291f !important; border-color: rgba(255,255,255,.08) !important; }
   html:root:not([data-theme="light"]) .mlc-panel.is-lav .mlc-input input:focus { border-color: #d9ff7b !important; }
   html:root:not([data-theme="light"]) .mlc-panel.is-lav .mlc-send { color: #142a04 !important; background: linear-gradient(135deg, #d9ff7b, #a6e33f) !important; box-shadow: none !important; }
   html:root:not([data-theme="light"]) .wxp-card:has(.wxp-hero) { padding-top: 0; background: #0b1712 !important; border-color: rgba(255,255,255,.08) !important; }
-  html:root:not([data-theme="light"]) .wxp-hero { position: relative; display: grid; justify-items: center; gap: 2px; width: calc(100% + 36px); margin: 0 -18px 8px; padding: 22px 18px 16px; color: #fff; background: radial-gradient(70% 70% at 90% 15%, rgba(197,255,96,.10), transparent 70%), linear-gradient(170deg, #1f3d2c, #142519); border-radius: 0 0 32px 32px; }
-  html:root:not([data-theme="light"]) .wxp-hero :is(.wxp-place, html:root:not([data-theme="light"]) .wxp-cond) { color: rgba(255,255,255,.92) !important; }
+  html:root:not([data-theme="light"]) .wxp-hero { position: relative; display: grid; justify-items: center; gap: 2px; width: calc(100% + 36px); margin: 0 -18px 8px; padding: 22px 18px 16px; color: #fff; background: radial-gradient(70% 70% at 90% 15%, rgba(197,255,96,.12), transparent 70%), linear-gradient(170deg, #24452f, #142519 60%, #0f1f17); border-radius: 0 0 32px 32px; }
+  html:root:not([data-theme="light"]) .wxp-hero :is(.wxp-place, .wxp-cond) { color: rgba(255,255,255,.92) !important; }
   html:root:not([data-theme="light"]) .wxp-hero .wxp-temp { color: #fff !important; -webkit-text-fill-color: #fff; background: none !important; }
   html:root:not([data-theme="light"]) .wxp-card:has(.wxp-hero) .wxp-x { z-index: 3; color: #fff; background: rgba(255,255,255,.25) !important; }
   html:root:not([data-theme="light"]) .wxp-nomi { position: absolute; right: 12px; bottom: 50px; width: 74px; height: 68px; cursor: pointer; animation: hv2Bob 3.2s ease-in-out infinite; }
@@ -497,21 +496,21 @@
   html:root:not([data-theme="light"]) .wxp-say { margin-top: 8px; padding: 8px 12px; border-radius: 16px; background: #18291f; color: #eef6e8; font-size: .78rem; font-weight: 600; text-align: center; }
   html:root:not([data-theme="light"]) .wxp-card:has(.wxp-hero) .wxp-day { background: #18291f !important; border-color: rgba(255,255,255,.08) !important; box-shadow: none !important; }
   html:root:not([data-theme="light"]) .wxp-card:has(.wxp-hero) .wxp-day.on { color: #142a04; background: linear-gradient(135deg, #d9ff7b, #a6e33f) !important; }
-  html:root:not([data-theme="light"]) .wxp-card:has(.wxp-hero) :is(.wxp-stat, html:root:not([data-theme="light"]) .wxp-hours) { background: #18291f !important; border: 1px solid rgba(255,255,255,.08) !important; box-shadow: none !important; }
+  html:root:not([data-theme="light"]) .wxp-card:has(.wxp-hero) :is(.wxp-stat, .wxp-hours) { background: #18291f !important; border: 1px solid rgba(255,255,255,.08) !important; box-shadow: none !important; }
   html:root:not([data-theme="light"]) .wxp-card:has(.wxp-hero) .wxp-stat b { color: #d9ff7b; }
   html:root:not([data-theme="light"]) .wxp-card:has(.wxp-hero) .wxp-hour.is-now { background: rgba(255,255,255,.07) !important; }
   html:root:not([data-theme="light"]) .nc-panel:has(.nc-nomi) { background: #0b1712 !important; border-color: rgba(255,255,255,.08) !important; }
-  html:root:not([data-theme="light"]) .nc-panel .nc-header:has(.nc-nomi) { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto auto; grid-template-areas: "tx nomi x" "say say say"; align-items: center; gap: 6px 8px; color: #fff; background: radial-gradient(70% 90% at 85% 20%, rgba(197,255,96,.10), transparent 70%), linear-gradient(170deg, #1f3d2c, #142519) !important; border: 0 !important; }
+  html:root:not([data-theme="light"]) .nc-panel .nc-header:has(.nc-nomi) { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto auto; grid-template-areas: "tx nomi x" "say say say"; align-items: center; gap: 6px 8px; color: #fff; background: radial-gradient(70% 90% at 85% 20%, rgba(197,255,96,.12), transparent 70%), linear-gradient(170deg, #24452f, #142519 60%, #0f1f17) !important; border: 0 !important; }
   html:root:not([data-theme="light"]) .nc-header:has(.nc-nomi) > div { grid-area: tx; }
-  html:root:not([data-theme="light"]) .nc-header:has(.nc-nomi) :is(h2, html:root:not([data-theme="light"]) .nc-eyebrow, html:root:not([data-theme="light"]) .nc-summary) { color: #fff !important; }
+  html:root:not([data-theme="light"]) .nc-header:has(.nc-nomi) :is(h2, .nc-eyebrow, .nc-summary) { color: #fff !important; }
   html:root:not([data-theme="light"]) .nc-header:has(.nc-nomi) .nc-summary { display: inline-block; margin-top: 6px; padding: 4px 10px; border-radius: 99px; background: rgba(255,255,255,.25); font-size: .72rem; font-weight: 700; }
   html:root:not([data-theme="light"]) .nc-nomi { grid-area: nomi; width: 76px; height: 70px; cursor: pointer; animation: hv2Bob 3.2s ease-in-out infinite; }
   html:root:not([data-theme="light"]) .nc-nomi .hv2-buddy { width: 100%; height: 100%; }
   html:root:not([data-theme="light"]) .nc-say { grid-area: say; justify-self: start; padding: 8px 12px; border-radius: 16px 16px 16px 4px; background: #18291f; color: #eef6e8; font-size: .78rem; font-weight: 600; }
   html:root:not([data-theme="light"]) .nc-header:has(.nc-nomi) .nc-close { grid-area: x; align-self: start; color: #fff !important; background: rgba(255,255,255,.25) !important; border: 0 !important; box-shadow: none !important; }
   html:root:not([data-theme="light"]) .nc-header:has(.nc-nomi) .nc-close svg { stroke: #fff !important; color: #fff !important; }
-  html:root:not([data-theme="light"]) .nc-panel:has(.nc-nomi) :is(.nc-list, html:root:not([data-theme="light"]) .nc-next) { background: #18291f !important; border: 1px solid rgba(255,255,255,.08) !important; box-shadow: none !important; }
-  html:root:not([data-theme="light"]) .nc-panel:has(.nc-nomi) :is(.nc-tg-icon, html:root:not([data-theme="light"]) .nc-icon) { background: rgba(255,255,255,.07) !important; }
+  html:root:not([data-theme="light"]) .nc-panel:has(.nc-nomi) :is(.nc-list, .nc-next) { background: #18291f !important; border: 1px solid rgba(255,255,255,.08) !important; box-shadow: none !important; }
+  html:root:not([data-theme="light"]) .nc-panel:has(.nc-nomi) :is(.nc-tg-icon, .nc-icon) { background: rgba(255,255,255,.07) !important; }
   html:root:not([data-theme="light"]) .nc-panel:has(.nc-nomi) .nc-tg-amount { color: #d9ff7b !important; }
   html:root:not([data-theme="light"]) .nc-panel:has(.nc-nomi) h3 span { color: #d9ff7b !important; background: rgba(255,255,255,.07) !important; }
   html:root:not([data-theme="light"]) .nc-panel:has(.nc-nomi) .nc-link { color: #d9ff7b !important; border-color: rgba(255,255,255,.08) !important; background: #18291f !important; }
@@ -523,7 +522,7 @@
   html:root:not([data-theme="light"]) .nc-header:has(.nc-nomi) h2 { margin: 0; }
   html:root:not([data-theme="light"]) .fam2.is-lav .fv-talk { display: flex; align-items: center; gap: 8px; margin: 8px 0 12px; }
   html:root:not([data-theme="light"]) .fam2.is-lav .fv-nomi { flex: 0 0 auto; width: 82px; height: 76px; cursor: pointer; animation: hv2Bob 3.2s ease-in-out infinite; }
-  html:root:not([data-theme="light"]) .fam2.is-lav :is(.fv-nomi, html:root:not([data-theme="light"]) .fv-tg-nomi, html:root:not([data-theme="light"]) .fv-tip-nomi) .hv2-buddy { width: 100%; height: 100%; }
+  html:root:not([data-theme="light"]) .fam2.is-lav :is(.fv-nomi, .fv-tg-nomi, .fv-tip-nomi) .hv2-buddy { width: 100%; height: 100%; }
   html:root:not([data-theme="light"]) .fam2.is-lav .fv-say { padding: 9px 13px; border-radius: 16px 16px 16px 4px; background: #18291f; color: #eef6e8; font-size: .8rem; font-weight: 600; line-height: 1.45; }
   html:root:not([data-theme="light"]) .fam2.is-lav .fv-tg { position: relative; display: grid; justify-items: center; margin: 0 0 6px; padding: 14px 16px 14px; border: 1px solid rgba(255,255,255,.08); border-radius: 28px; text-align: center; color: #eef6e8; background: radial-gradient(60% 50% at 50% 30%, rgba(255,111,145,.14), transparent 70%), #fff; cursor: pointer; overflow: hidden; }
   html:root:not([data-theme="light"]) .fv-tg-top { display: flex; align-items: center; gap: 8px; align-self: stretch; justify-content: space-between; }
@@ -572,7 +571,7 @@
   html:root:not([data-theme="light"]) .fv-tip-more { flex: 0 0 auto; font-size: .68rem; font-weight: 700; color: #d9ff7b; }
   html:root:not([data-theme="light"]) .fv-member.is-lav .fv-tip .fv-note { display: none; }
   html:root:not([data-theme="light"]) .fv-member.is-lav .fv-tip.is-open .fv-note { display: block; -webkit-line-clamp: unset; }
-  html:root:not([data-theme="light"]) .fam2.is-lav .fv-tg > :is(.fv-tg-top, html:root:not([data-theme="light"]) .fv-tg-bar, html:root:not([data-theme="light"]) .fv-tg-foot) { justify-self: stretch; width: 100%; }
+  html:root:not([data-theme="light"]) .fam2.is-lav .fv-tg > :is(.fv-tg-top, .fv-tg-bar, .fv-tg-foot) { justify-self: stretch; width: 100%; }
   html:root:not([data-theme="light"]) .fam2.is-lav .fv-tg-bar { margin-top: 2px; }
   html:root:not([data-theme="light"]) .fv-member.is-lav .fv-mname { margin: 0 !important; padding: 0 !important; }
   html:root:not([data-theme="light"]) .fam2.is-lav .fv-talk { margin: 4px 0 6px; }
@@ -595,8 +594,13 @@
   html:root:not([data-theme="light"]) .fam2.is-lav .fv-tg > .fv-tg-bar { grid-area: bar; margin-top: 14px; }
   html:root:not([data-theme="light"]) .fam2.is-lav .fv-tg > .fv-tg-foot { grid-area: foot; }
   html:root:not([data-theme="light"]) .fam2.is-lav .fv-tg-face { width: 24px; height: 24px; }
-  html:root:not([data-theme="light"]) .fam2.is-lav .fv-av:is(.is-love, html:root:not([data-theme="light"]) .is-party, html:root:not([data-theme="light"]) :not(.is-add)) .fv-ring { background: rgba(255,255,255,.75) !important; box-shadow: 0 0 0 1px rgba(255,255,255,.4); }
+  html:root:not([data-theme="light"]) .fam2.is-lav .fv-av:is(.is-love, .is-party, :not(.is-add)) .fv-ring { background: rgba(255,255,255,.75) !important; box-shadow: 0 0 0 1px rgba(255,255,255,.4); }
   html:root:not([data-theme="light"]) .fam2.is-lav .fv-av .fv-face { border-color: #fff !important; }
+}
+@media (min-width: 901px) {
+  html:root:not([data-theme="light"]) :is(.fv2-page, #app > .page:not(.hv2):not(.sv2)) > :first-child { padding-top: 14px; }
+}
+@media all {
   /* Nomi speech bubbles are lime in dark, like Home */
   html:root:not([data-theme="light"]) :is(.lv-say, .fv-say, .nfc-lav-say, .nc-say, .wxp-say, .cv2-say) { color: #142a04 !important; background: #d9ff7b !important; }
   html:root:not([data-theme="light"]) .mlc-panel.is-lav .mlc-head, html:root:not([data-theme="light"]) .nc-panel .nc-header:has(.nc-nomi) { background: linear-gradient(170deg, #1f3d2c, #142519) !important; }
