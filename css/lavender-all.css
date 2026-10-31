@@ -161,3 +161,28 @@
   html:root[data-theme="light"] .app-main .topbar :is(.topbar-time, .topbar-clock, [class*="time"]) { color: #504AB9 !important; background: #f1eeff !important; border-color: #ebe8f4 !important; }
   html:root[data-theme="light"] .sidebar .brand :is(b, span, strong):last-child, html:root[data-theme="light"] .sidebar .brand-name em { color: #6c5ce7 !important; }
 }
+
+/* Launcher closer to the draft (31 Oct): bubble stays, bigger Nomi, bell, scan pill, bolder titles, soft app tiles */
+@media all {
+  html:root[data-theme="light"] .lv2.is-lav .lv-say { animation: none !important; opacity: 1 !important; font-size: .86rem; padding: 12px 15px; }
+  html:root[data-theme="light"] .lv2.is-lav .lv-talk { align-items: center; gap: 10px; margin: 14px 0 16px; }
+  html:root[data-theme="light"] .lv2.is-lav .lv-nomi { width: 104px; height: 96px; }
+  html:root[data-theme="light"] .lv2.is-lav .lv-say { margin-bottom: 0; flex: 1; }
+  .lv2.is-lav .lv-nomi .hv2-buddy { transform: none !important; }
+  .lv2.is-lav .lv-bell { display: grid; place-items: center; width: 44px; height: 44px; margin-left: auto; border-radius: 50%; color: #fff; background: rgba(255,255,255,.25); }
+  .lv2.is-lav .lv-bell svg { width: 22px; height: 22px; }
+  html:root[data-theme="light"] .lv2.is-lav .lv-scan-pill { display: inline-flex; align-items: center; gap: 6px; flex: 0 0 auto; padding: 10px 14px; border-radius: 15px; color: #fff !important; background: linear-gradient(135deg, #7B68EE, #504AB9); font-size: .82rem; font-weight: 800; text-decoration: none; }
+  .lv2.is-lav .lv-scan-pill svg { width: 18px; height: 18px; }
+  html:root[data-theme="light"] .lv2.is-lav .lv-sec b { font-size: 1rem; font-weight: 800; color: #1A2347; }
+  html:root[data-theme="light"] .lv2.is-lav .lv-sec :is(a, .lv-link) { font-size: .82rem; font-weight: 700; color: #7B68EE !important; }
+  html:root[data-theme="light"] .lv2.is-lav .lv-q span { font-weight: 800; color: #1A2347; }
+  html:root[data-theme="light"] .lv2.is-lav .lv-ring { width: 72px; height: 72px; background: conic-gradient(#7B68EE 0 var(--p), #ece9f6 0); }
+  html:root[data-theme="light"] .lv2.is-lav .lv-ring i { width: 52px; height: 52px; font-size: .9rem; }
+  .lv2.is-lav .lv-grid .app-cell:nth-child(5n+1) .app-icon-tile { --t: #f1eeff; --k: #6c5ce7; }
+  .lv2.is-lav .lv-grid .app-cell:nth-child(5n+2) .app-icon-tile { --t: #fff1e8; --k: #e0804e; }
+  .lv2.is-lav .lv-grid .app-cell:nth-child(5n+3) .app-icon-tile { --t: #eaf6ff; --k: #4a8fd8; }
+  .lv2.is-lav .lv-grid .app-cell:nth-child(5n+4) .app-icon-tile { --t: #f7eff4; --k: #b26f9a; }
+  .lv2.is-lav .lv-grid .app-cell:nth-child(5n) .app-icon-tile { --t: #ecfaf3; --k: #2e9d6a; }
+  html:root[data-theme="light"] .lv2.is-lav .lv-grid .app-icon-label { font-weight: 700; color: #1A2347; }
+  .lv2.is-lav .lv-search-go svg { width: 20px; height: 20px; color: #7a7698; }
+}
