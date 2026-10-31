@@ -242,7 +242,7 @@ const TelegramArrivals = (() => {
     node.className = "tga-overlay";
     node.innerHTML = `
       <section class="tga-card" role="dialog" aria-modal="true" aria-labelledby="tgaTitle">
-        <div class="tga-check" aria-hidden="true"><svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="24"/><path d="M15 27l7 7 15-16"/></svg></div>
+        ${typeof HomeV2 !== "undefined" && HomeV2.buddy ? `<div class="tga-nomi" aria-hidden="true">${HomeV2.buddy(onlyPaid ? "proud" : "cheer")}<span class="tga-nomi-ok">✓</span></div>` : `<div class="tga-check" aria-hidden="true"><svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="24"/><path d="M15 27l7 7 15-16"/></svg></div>`}
         <h3 id="tgaTitle">${onlyInvoices ? L("មានវិក្កយបត្រថ្មី!", "New bill arrived!") : onlyPaid ? L("បានបង់រួចរាល់!", "Bill paid!") : L("បានបន្ថែមដោយជោគជ័យ!", "Added successfully!")}</h3>
         <p class="tga-sub">📲 ${fresh.length > 1
           ? L(`${fresh.length} ពី Telegram · រក្សាទុកក្នុង app រួចហើយ`, `${fresh.length} from Telegram · saved in the app`)

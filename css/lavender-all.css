@@ -840,3 +840,25 @@ html:root:not([data-theme="light"]) body, html:root:not([data-theme="light"]) .a
   html:root:not([data-theme="light"]) #loginModal input[type="checkbox"]::before, html:root:not([data-theme="light"]) #loginModal input[type="checkbox"]::after { background: #fff !important; }
   html:root:not([data-theme="light"]) #loginModal .login-brand strong em { color: #7B68EE !important; -webkit-text-fill-color: #7B68EE; }
 }
+@media all {
+  /* Telegram "added" pop-up with a cheering Nomi, lavender (31 Oct) */
+  .tga-card .tga-nomi { position: relative; width: 104px; height: 96px; margin: -6px auto 2px; animation: hv2Bob 3s ease-in-out infinite; }
+  .tga-card .tga-nomi .hv2-buddy { width: 100%; height: 100%; }
+  .tga-card .tga-nomi-ok { position: absolute; right: 2px; top: 8px; display: grid; place-items: center; width: 28px; height: 28px; border: 3px solid #fff; border-radius: 50%; color: #fff; background: linear-gradient(135deg, #9F8CFF, #7B68EE); font-size: .8rem; font-weight: 900; }
+  html:root .tga-card { box-shadow: none !important; }
+  html:root .tga-card .tga-ok { color: #fff !important; background: linear-gradient(135deg, #7B68EE, #504AB9) !important; }
+  html:root .tga-card .tga-btn:not(.tga-ok) { color: #504AB9 !important; background: #f1eeff !important; }
+  html:root .tga-card .tga-timer span { background: #7B68EE !important; }
+  html:root .tga-card .tga-row { background: #f8f6ff !important; border: 1px solid #ebe8f4; }
+  html:root .tga-card .tga-row-icon { background: #fff !important; }
+  html:root[data-theme="light"] .tga-card { background: #fff !important; }
+  html:root:not([data-theme="light"]) .tga-card { color: #F4F2FF; background: #2e2956 !important; border: 1px solid rgba(182,168,255,.2); }
+  html:root:not([data-theme="light"]) .tga-card :is(h3, .tga-row-copy strong) { color: #F4F2FF !important; }
+  html:root:not([data-theme="light"]) .tga-card :is(.tga-sub, .tga-row-copy small) { color: #bdb7e6 !important; }
+  html:root:not([data-theme="light"]) .tga-card .tga-row { background: rgba(182,168,255,.1) !important; border-color: rgba(182,168,255,.16); }
+  html:root:not([data-theme="light"]) .tga-card .tga-row-icon { background: rgba(255,255,255,.1) !important; }
+  html:root:not([data-theme="light"]) .tga-card .tga-amount { color: #ffb0c8 !important; }
+  html:root:not([data-theme="light"]) .tga-card .tga-btn:not(.tga-ok) { color: #e6e2ff !important; background: rgba(182,168,255,.16) !important; }
+  html:root:not([data-theme="light"]) .tga-card .tga-nomi-ok { border-color: #2e2956; }
+  html:root:not([data-theme="light"]) .tga-card .tga-timer { background: rgba(255,255,255,.1); }
+}
