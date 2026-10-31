@@ -775,3 +775,27 @@ html:root:not([data-theme="light"]) body, html:root:not([data-theme="light"]) .a
   html:root:not([data-theme="light"]) .hv2 :is(textarea, input[type="text"]) { color: #F4F2FF !important; background: #2e2956 !important; border-color: rgba(182,168,255,.3) !important; }
   html:root:not([data-theme="light"]) .hv2 :is(textarea, input[type="text"])::placeholder { color: #9993c4 !important; }
 }
+@media all {
+  /* D1 contrast pass 2 (31 Oct) */
+  html:root:not([data-theme="light"]) .hv2 .hv2-cat-n { color: #cfc9f0 !important; background: rgba(182,168,255,.16) !important; }
+  html:root:not([data-theme="light"]) .hv2 .hv2-cat-n.is-ok { color: #fff !important; background: linear-gradient(135deg, #9F8CFF, #7B68EE) !important; }
+  html:root:not([data-theme="light"]) .cv2 { --cv-ink: #F4F2FF; --cv-ink2: #cfc9f0; --cv-ink3: #8f89c0; }
+  html:root:not([data-theme="light"]) .cv2 .cv2-c:not(.is-today):not(.is-holiday):not(.is-weekend) { color: #e6e2ff; }
+  html:root:not([data-theme="light"]) .cv2 .cv2-c.is-past:not(.is-holiday):not(.is-today) { color: #8f89c0 !important; }
+  html:root:not([data-theme="light"]) .cv2 .cv2-c.is-holiday { color: #ffb0c8 !important; background: rgba(255,111,145,.16) !important; }
+  html:root:not([data-theme="light"]) .cv2 :is(.cv2-wd, .cv2-dow, .cv2-head span) { color: #bdb7e6; }
+  /* settings: darker page, lighter cards, coloured icon tiles, lavender section labels */
+  html:root:not([data-theme="light"]) body:has(.sv2) .app-main, html:root:not([data-theme="light"]) .sv2 { background-color: #1b1834 !important; }
+  html:root:not([data-theme="light"]) .sv2 :is(.sv-grp, .sv-q, .sv-prof) { background: #2e2956 !important; border: 1px solid rgba(182,168,255,.2) !important; }
+  html:root:not([data-theme="light"]) .sv2 .sv-row + .sv-row { border-top-color: rgba(182,168,255,.14) !important; }
+  html:root:not([data-theme="light"]) .sv2 .sv-lbl { color: #C9BDFF !important; font-weight: 800; }
+  html:root:not([data-theme="light"]) .sv2 .sv-tx small { color: #bdb7e6 !important; }
+  html:root:not([data-theme="light"]) .sv2 .sv-ic.is-blue { background: rgba(110,170,255,.22) !important; }
+  html:root:not([data-theme="light"]) .sv2 .sv-ic.is-violet { background: rgba(159,140,255,.28) !important; }
+  html:root:not([data-theme="light"]) .sv2 .sv-ic.is-amber { background: rgba(255,190,90,.22) !important; }
+  html:root:not([data-theme="light"]) .sv2 .sv-ic.is-green { background: rgba(110,220,160,.22) !important; }
+  html:root:not([data-theme="light"]) .sv2 .sv-ic.is-cyan { background: rgba(90,210,230,.22) !important; }
+  html:root:not([data-theme="light"]) .sv2 .sv-ic.is-pink { background: rgba(255,140,180,.22) !important; }
+  html:root:not([data-theme="light"]) .sv2 .sv-ic.is-grey { background: rgba(255,255,255,.12) !important; }
+  html:root:not([data-theme="light"]) .sv2 .sv-chip { color: #F4F2FF !important; background: rgba(182,168,255,.18) !important; border-color: rgba(182,168,255,.25) !important; }
+}
