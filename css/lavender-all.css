@@ -800,3 +800,19 @@ html:root:not([data-theme="light"]) body, html:root:not([data-theme="light"]) .a
   html:root:not([data-theme="light"]) .sv2 .sv-chip { color: #F4F2FF !important; background: rgba(182,168,255,.18) !important; border-color: rgba(182,168,255,.25) !important; }
 }
 @media all { html:root:not([data-theme="light"]) .cv2 .cv2-c.cv2-c, html:root:not([data-theme="light"]) .cv2 .cv2-c.cv2-c b { color: #fff !important; opacity: 1 !important; } }
+@media all {
+  /* Settings hero with Nomi, no drop shadows (31 Oct, both themes) */
+  .sv2 .sv-head-row { display: flex; align-items: center; justify-content: space-between; }
+  .sv2 .sv-nomi { flex: 0 0 auto; width: 72px; height: 66px; margin: -6px 0 -10px; cursor: pointer; animation: hv2Bob 3.2s ease-in-out infinite; }
+  .sv2 .sv-nomi .hv2-buddy { width: 100%; height: 100%; }
+  .sv2 .sv-say { display: inline-block; justify-self: start; align-self: flex-start; margin: 0 0 4px; padding: 8px 12px; border-radius: 16px 16px 16px 4px; background: #fff; color: #1A2347; font-size: .78rem; font-weight: 600; line-height: 1.4; }
+  html:root .sv2 :is(.sv-prof, .sv-chip, .sv-edit, .sv-grp, .sv-q, .sv-av, .sv-face, .sv-seg, .sv-row) { box-shadow: none !important; }
+  html:root .sv2 .sv-chip { border: 1px solid rgba(255,255,255,.35) !important; }
+  html:root[data-theme="light"] .sv2 .sv-prof { border: 1px solid #ebe8f4 !important; }
+}
+@media all {
+  html:root:not([data-theme="light"]) body .sv2 .sv-hero.sv-hero { background: radial-gradient(45% 140px at 88% 40%, rgba(255,214,190,.55), transparent 70%), linear-gradient(170deg, #7B68EE, #9F8CFF 55%, #c9bdff) !important; padding-bottom: 46px; border-radius: 0 0 40px 40px; -webkit-mask: linear-gradient(#000 78%, transparent); mask: linear-gradient(#000 78%, transparent); }
+  html:root:not([data-theme="light"]) body .sv2 .sv-hero h1 { color: #fff !important; -webkit-text-fill-color: #fff; }
+  html:root:not([data-theme="light"]) .sv2 .sv-hero + * { margin-top: -30px; position: relative; }
+}
+@media all { html:root:not([data-theme="light"]) body .sv2 .sv-hero.sv-hero { -webkit-mask: linear-gradient(#000 92%, transparent); mask: linear-gradient(#000 92%, transparent); } }

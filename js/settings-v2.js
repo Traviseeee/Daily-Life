@@ -31,8 +31,12 @@ const SettingsV2 = (() => {
     const admin = fg?.family && fg.members?.some(m => m.user_id === fg.me && m.role === "admin");
     const who = guest ? L("ភ្ញៀវ · មិនទាន់ចូលគណនី", "Guest · not signed in") : [L("គណនី", "Account"), admin ? L("អ្នកគ្រប់គ្រងគ្រួសារ", "Family admin") : ""].filter(Boolean).join(" · ");
     const photo = p.photo ? `<img src="${escapeAttr(p.photo)}" alt="">` : `<span>${escapeHtml(initials(p.name || "ML"))}</span>`;
+    // Nomi (31 Oct): a tip about the most useful thing to check here
+    const say = pending ? L("មានទិន្នន័យរង់ចាំ Sync — ចុច ☁️ ផង", "Some data waits to sync — tap ☁️") : days === null || days > 7 ? L("យូរហើយមិនបាន backup — ទៅ 💾 ផង", "No recent backup — tap 💾") : L("អ្វីៗរៀបរយហើយ! ខ្ញុំមើលឲ្យ ⚙️", "All set! I'm keeping an eye on it ⚙️");
+    const nomiMood = pending || days === null || days > 7 ? "wink" : "happy";
     return `<header class="sv-hero">
-      <h1>${escapeHtml(t("settings"))}</h1>
+      <div class="sv-head-row"><h1>${escapeHtml(t("settings"))}</h1>${typeof HomeV2 !== "undefined" && HomeV2.buddy ? `<span class="sv-nomi" data-nomi data-mood="${nomiMood}" role="button" tabindex="0" aria-label="Nomi">${HomeV2.buddy(nomiMood)}</span>` : ""}</div>
+      ${typeof HomeV2 !== "undefined" && HomeV2.buddy ? `<span class="sv-say" data-nomi-say>${escapeHtml(say)}</span>` : ""}
       <div class="sv-prof">
         <span class="sv-av"><span class="sv-face">${photo}</span></span>
         <span class="sv-prof-tx"><b>${escapeHtml(p.name || L("មិនទាន់ដាក់ឈ្មោះ", "No name yet"))}</b><small>${escapeHtml(who)}</small></span>
