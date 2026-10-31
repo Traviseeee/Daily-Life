@@ -271,7 +271,8 @@ const HomeV2 = (() => {
       const [kmTag, enTag, tone] = TAG[kind];
       const time = item.date === d.todayIso ? (clock(item.time) || L("ពេញថ្ងៃ", "All day")) : (() => { const date = new Date(`${item.date}T00:00:00`); return `${date.getDate()} ${km() ? KM_MONTHS[date.getMonth()] : date.toLocaleDateString("en-US", { month: "short" })}`; })();
       const sub = item.amount ? plainMoney(item.amount, item.currency) : (item.categoryLabel || "");
-      return `<a class="hv2-tl-row" href="${escapeAttr(item.href || "#calendar")}"><span class="hv2-tl-time">${escapeHtml(time)}</span><span class="hv2-dot is-${tone}"></span><span class="hv2-tl-text"><b>${escapeHtml(item.title || "")}</b>${sub ? `<small>${escapeHtml(sub)}</small>` : ""}</span><span class="hv2-tag is-${tone}">${escapeHtml(L(kmTag, enTag))}</span></a>`;
+      const ic = { bill: "🧾", family: "👨‍👩‍👧", reminder: "🔔", holiday: "🎉", event: "📅" }[kind] || "📅";
+      return `<a class="hv2-tl-row" href="${escapeAttr(item.href || "#calendar")}">${lav() ? `<span class="hv2-tl-ic is-${tone}" aria-hidden="true">${ic}</span>` : ""}<span class="hv2-tl-time">${escapeHtml(time)}</span><span class="hv2-dot is-${tone}"></span><span class="hv2-tl-text"><b>${escapeHtml(item.title || "")}</b>${sub ? `<small>${escapeHtml(sub)}</small>` : ""}</span><span class="hv2-tag is-${tone}">${escapeHtml(L(kmTag, enTag))}</span></a>`;
     }).join("");
     return `<div class="hv2-sec"><b>${escapeHtml(heading)}</b><a href="#calendar">${escapeHtml(L("ប្រតិទិន", "Calendar"))} ›</a></div>
       <section class="hv2-card hv2-tl">${typeof TopbarWeather !== "undefined" && TopbarWeather.rainRowHtml ? TopbarWeather.rainRowHtml() : ""}${rows || `<button type="button" class="hv2-empty" data-action="add-event">${IC.cal()}<span>${escapeHtml(L("គ្មានអ្វីទេ — ចុចបន្ថែមព្រឹត្តិការណ៍", "Nothing planned — tap to add an event"))}</span></button>`}</section>`;
@@ -332,6 +333,12 @@ const HomeV2 = (() => {
 
   function reflection(d) {
     const text = appData.dailyReflection?.date === d.todayIso ? (appData.dailyReflection.text || "") : "";
+    // light: an always-open "ask anything" style box with a round send button
+    if (lav()) return `<div class="hv2-sec"><b>${escapeHtml(t("dailyReflection"))}</b>${text ? `<small class="hv2-ask-done">${escapeHtml(L("បានសរសេរ ✓", "Written ✓"))}</small>` : ""}</div>
+    <section class="hv2-ask">
+      <textarea class="reflection-textarea" data-reflection-textarea placeholder="${escapeAttr(L("ថ្ងៃនេះមានរឿងអ្វីល្អ? សរសេរបន្តិច…", "What went well today? Write a little…"))}" aria-label="${escapeAttr(t("reflectionPlaceholder"))}">${escapeHtml(text)}</textarea>
+      <div class="hv2-ask-bar"><button type="button" class="hv2-ask-go" data-action="save-reflection" aria-label="${escapeAttr(t("saveReflection"))}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg></button></div>
+    </section>`;
     return `<div class="hv2-sec"><b>${escapeHtml(t("dailyReflection"))}</b></div>
     <details class="hv2-card hv2-reflect"${text ? " open" : ""}>
       <summary><b>${escapeHtml(t("dailyReflection"))}</b><small>${escapeHtml(text ? L("បានសរសេរ ✓", "Written ✓") : L("ចុចដើម្បីសរសេរ", "Tap to write"))}</small></summary>
