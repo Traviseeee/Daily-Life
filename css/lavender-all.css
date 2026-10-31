@@ -377,3 +377,8 @@
   .fam2.is-lav .fv-tg > .fv-tg-foot { grid-area: foot; }
   .fam2.is-lav .fv-tg-face { width: 24px; height: 24px; }
 }
+@media all {
+  /* avatar frames: one soft white ring for everyone (no red / pink contrast) */
+  html:root[data-theme="light"] .fam2.is-lav .fv-av:is(.is-love, .is-party, :not(.is-add)) .fv-ring { background: rgba(255,255,255,.75) !important; box-shadow: 0 0 0 1px rgba(255,255,255,.4); }
+  html:root[data-theme="light"] .fam2.is-lav .fv-av .fv-face { border-color: #fff !important; }
+}
