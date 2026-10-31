@@ -289,10 +289,61 @@ const HomeV2 = (() => {
   const focusEmoji = text => (FOCUS_EMOJI.find(([re]) => re.test(text || "")) || [null, "✨"])[1];
   const focusLeft = (done, total) => (total && done >= total ? L("ធ្វើរួចទាំងអស់ 🎉", "All done 🎉") : L(`នៅ ${total - done} ទៀត`, `${total - done} to go`));
 
+  // light (31 Oct, draft D): focus grouped by category — tap a group to open its list
+  const FX_CATS = [
+    ["money", "💰", "លុយ", "Money", /លុយ|ចាយ|money|spend|save|សន្សំ/i, "#e5f7ef"],
+    ["family", "👨‍👩‍👧", "គ្រួសារ", "Family", /គ្រួសារ|family|mom|dad|ម្ដាយ|ម្តាយ|ឪពុក|call/i, "#fdeef6"],
+    ["health", "💪", "សុខភាព", "Health", /ទឹក|water|drink|រាងកាយ|ហាត់|ដើរ|រត់|walk|run|move|body|exercise|gym|yoga|គេង|sleep|bed|បាយ|ម្ហូប|eat|food|fruit|vegetable|ផ្លែ|សមាធិ|meditat|pray|breath/i, "#e6f4ff"],
+    ["work", "💼", "ការងារ", "Work", /ការងារ|work|task|finish|បញ្ចប់|អាន|សៀវភៅ|read|book|study|រៀន|ផ្ទះ|clean|home|house/i, "#fff3dc"]
+  ];
+  const fxCatOf = text => (FX_CATS.find(cat => cat[4].test(text || "")) || ["other"])[0];
+  const fxCatInfo = id => FX_CATS.find(cat => cat[0] === id) || ["other", "✨", "ផ្សេងៗ", "Other", null, "#f4f2fa"];
+  function fxCatTiles(card) {
+    const items = [...card.querySelectorAll(".focus-item")];
+    card.querySelectorAll("[data-fx-cat]").forEach(tile => {
+      const mine = items.filter(li => li.dataset.cat === tile.dataset.fxCat);
+      const done = mine.filter(li => li.classList.contains("done")).length;
+      const badge = tile.querySelector(".hv2-cat-n");
+      if (badge) { badge.textContent = done >= mine.length ? "✓" : `${done}/${mine.length}`; badge.classList.toggle("is-ok", done >= mine.length); }
+    });
+  }
+  function fxOpen(card, id) {
+    card.dataset.open = id;
+    card.querySelectorAll("[data-fx-cat]").forEach(tile => { const on = tile.dataset.fxCat === id; tile.classList.toggle("on", on); tile.setAttribute("aria-expanded", on); });
+    card.querySelectorAll(".focus-item").forEach(li => { li.hidden = li.dataset.cat !== id; });
+    const info = fxCatInfo(id);
+    const title = card.querySelector("[data-fx-cat-title]");
+    if (title) title.textContent = `${info[1]} ${L(info[2], info[3])}`;
+  }
+
   function focusCard(d) {
     const done = d.focus.filter(item => item.done).length;
     const total = d.focus.length;
     const pct = total ? Math.round((done / total) * 100) : 0;
+    if (lav()) {
+      const groups = [];
+      d.focus.forEach(item => { const id = fxCatOf(item.text); let g = groups.find(x => x.id === id); if (!g) groups.push(g = { id, items: [] }); g.items.push(item); });
+      const order = [...FX_CATS.map(cat => cat[0]), "other"];
+      groups.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
+      const open = (groups.find(g => g.items.some(item => !item.done)) || groups[0] || { id: "other" }).id;
+      const openInfo = fxCatInfo(open);
+      return `<div class="hv2-sec"><b>${escapeHtml(t("dailyFocus"))}</b><button type="button" class="hv2-link" data-action="edit-focus">${escapeHtml(L("កែ", "Edit"))} ›</button></div>
+      <section class="hv2-card hv2-fx hv2-fx-cats focus-card${pct === 100 ? " all-done" : ""}" data-open="${open}">
+        <div class="fx-head">
+          <b class="fx-left fx-left-big" data-fx-left>${escapeHtml(focusLeft(done, total))}</b>
+          <span class="fx-count"><b data-fx-done>${done}</b>/${total}</span>
+        </div>
+        <div class="fx-seg" data-fx-seg role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}" aria-label="${escapeAttr(t("dailyFocus"))}">${d.focus.map((_, i) => `<i class="${i < done ? "on" : ""}"></i>`).join("")}</div>
+        <div class="hv2-cats">${groups.map(g => {
+          const info = fxCatInfo(g.id);
+          const gDone = g.items.filter(item => item.done).length;
+          const names = g.items.map(item => item.text).join(" · ");
+          return `<button type="button" class="hv2-cat${g.id === open ? " on" : ""}" data-fx-cat="${g.id}" aria-expanded="${g.id === open}"><span class="hv2-cat-e" style="background:${info[5]}">${info[1]}</span><span class="hv2-cat-t"><b>${escapeHtml(L(info[2], info[3]))}</b><small>${escapeHtml(names)}</small></span><span class="hv2-cat-n${gDone >= g.items.length ? " is-ok" : ""}">${gDone >= g.items.length ? "✓" : `${gDone}/${g.items.length}`}</span></button>`;
+        }).join("")}</div>
+        <div class="hv2-cat-panel"><b class="hv2-cat-title" data-fx-cat-title>${escapeHtml(`${openInfo[1]} ${L(openInfo[2], openInfo[3])}`)}</b>
+        <ul class="fx-grid focus-list">${d.focus.map(item => { const cat = fxCatOf(item.text); return `<li class="fx-tile focus-item${item.done ? " done" : ""}" data-cat="${cat}"${cat === open ? "" : " hidden"}><label><input type="checkbox" ${item.done ? "checked" : ""} data-focus-id="${escapeAttr(item.id)}"><span class="fx-em" aria-hidden="true">${focusEmoji(item.text)}</span><span class="focus-text">${escapeHtml(item.text)}</span><span class="fx-ck" aria-hidden="true"></span></label></li>`; }).join("")}</ul></div>
+      </section>`;
+    }
     return `<div class="hv2-sec"><b>${escapeHtml(t("dailyFocus"))}</b><button type="button" class="hv2-link" data-action="edit-focus">${escapeHtml(L("កែ", "Edit"))} ›</button></div>
       <section class="hv2-card hv2-fx focus-card${pct === 100 ? " all-done" : ""}">
         <div class="fx-head">
@@ -370,6 +421,8 @@ const HomeV2 = (() => {
   document.addEventListener("click", event => {
     const go = event.target.closest("[data-hv2-go]");
     if (go) { location.hash = go.dataset.hv2Go; return; }
+    const cat = event.target.closest("[data-fx-cat]");
+    if (cat) { const card = cat.closest(".hv2-fx-cats"); if (card) fxOpen(card, cat.dataset.fxCat); return; }
     const jump = event.target.closest("[data-hv2-scroll]");
     if (jump) { event.preventDefault(); document.querySelector(jump.dataset.hv2Scroll)?.scrollIntoView({ behavior: "smooth", block: "center" }); return; }
     const quickAction = event.target.closest("[data-hv2-quick]");
@@ -383,6 +436,12 @@ const HomeV2 = (() => {
     }
   });
   window.addEventListener("hashchange", () => document.body.classList.remove("hv2-search-open"));
+  // ticking a focus box: refresh the category counts (FocusEditor updates the rest)
+  document.addEventListener("change", event => {
+    if (!event.target.matches?.("[data-focus-id]")) return;
+    const card = event.target.closest(".hv2-fx-cats");
+    if (card) setTimeout(() => fxCatTiles(card), 30);
+  });
   // phone ↔ desktop width: the lavender layout is phone only, so draw Home again when crossing 900px
   try { window.matchMedia("(max-width: 900px)").addEventListener("change", () => { if (location.hash.replace("#", "").split("/")[0] === "home" && typeof App !== "undefined") App.render(); }); } catch (error) { /* old browsers */ }
 

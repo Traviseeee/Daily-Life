@@ -203,6 +203,25 @@
   html:root[data-theme="light"] body .hv2 .fx-tile .focus-text, html:root[data-theme="light"] body .hv2 .fx-tile.done .focus-text { color: var(--lv-ink) !important; }
 }
 
+
+/* daily focus by category (draft D, 31 Oct) — phone, light */
+@media (max-width: 900px) {
+  html:root[data-theme="light"] .hv2 .hv2-cats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  html:root[data-theme="light"] .hv2 .hv2-cat { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 10px; border: 1px solid var(--lv-line); border-radius: 20px; font: inherit; text-align: left; color: var(--lv-ink); background: #fff; cursor: pointer; transition: border-color .2s, background .2s; }
+  html:root[data-theme="light"] .hv2 .hv2-cat.on { border-color: #b9b0f0; background: #f6f4ff; }
+  html:root[data-theme="light"] .hv2 .hv2-cat-e { display: grid; place-items: center; width: 38px; height: 38px; flex: 0 0 auto; border-radius: 13px; font-size: 1.15rem; }
+  html:root[data-theme="light"] .hv2 .hv2-cat-t { display: grid; flex: 1; min-width: 0; line-height: 1.3; }
+  html:root[data-theme="light"] .hv2 .hv2-cat-t b { font-size: .84rem; font-weight: 700; }
+  html:root[data-theme="light"] .hv2 .hv2-cat-t small { overflow: hidden; font-size: .68rem; color: var(--lv-sub); white-space: nowrap; text-overflow: ellipsis; }
+  html:root[data-theme="light"] .hv2 .hv2-cat-n { flex: 0 0 auto; padding: 4px 7px; border-radius: 10px; font-size: .7rem; font-weight: 700; color: var(--lv-a); background: #f4f2fa; }
+  html:root[data-theme="light"] .hv2 .hv2-cat-n.is-ok { color: #1c9a6c; background: #e9f8f1; }
+  html:root[data-theme="light"] .hv2 .hv2-cat-panel { padding: 6px 12px 4px; border: 1px solid var(--lv-line); border-radius: 22px; background: #fff; }
+  html:root[data-theme="light"] .hv2 .hv2-cat-title { display: block; padding: 6px 2px 4px; font-size: .86rem; font-weight: 700; color: var(--lv-ink); }
+  html:root[data-theme="light"] .hv2 .hv2-cat-panel .fx-grid { gap: 0 !important; }
+  html:root[data-theme="light"] body .hv2 .hv2-cat-panel .fx-tile label, html:root[data-theme="light"] body .hv2 .hv2-cat-panel .fx-tile.done label { min-height: 58px; padding: 8px 2px !important; border: 0 !important; border-top: 1px dashed var(--lv-line) !important; border-radius: 0; }
+  html:root[data-theme="light"] .hv2 .hv2-cat-panel .fx-tile[hidden] { display: none !important; }
+}
+
 /* safety: if the lavender markup is ever drawn on a wide screen, keep the buddies small */
 @media (min-width: 901px) {
   .hv2 :is(.hv2-hero-buddy, .hv2-prog-buddy, .hv2-soft-buddy) { display: none; }
