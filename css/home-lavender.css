@@ -568,3 +568,57 @@
 @media (min-width: 901px) {
   html:root:not([data-theme="light"]) .hv2 .hv2-hero-buddy { width: 96px; height: 96px; }
 }
+
+/* Money card bottom (31 Oct, draft A): budget row + 3 small tiles with icons, both themes */
+@media all {
+  .wc-card.hv2-soft .hv2-soft-b { position: relative; align-self: stretch; justify-self: stretch; margin: 2px -18px 0; padding: 12px 16px 14px; border-top: 1px dashed #d9d4f0; text-align: left; }
+  .hv2-soft-bud { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; font-size: .78rem; color: #7a7698; }
+  .hv2-soft-bud b { color: #1A2347; font-weight: 800; }
+  .wc-card.hv2-soft .hv2-soft-bud .hv2-soft-edit { padding: 5px 11px; border: 0; border-radius: 99px; color: #504AB9 !important; background: #f1eeff !important; font: inherit; font-size: .74rem; font-weight: 700; cursor: pointer; }
+  .hv2-soft-a3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .hv2-soft-t { min-width: 0; padding: 10px 9px; border: 1px solid #ebe8f4; border-radius: 18px; background: #fff; }
+  .hv2-soft-t em { display: grid; place-items: center; width: 30px; height: 30px; margin-bottom: 6px; border-radius: 10px; font-style: normal; font-size: .85rem; color: #504AB9; }
+  .hv2-soft-t.is-spent em { background: #fff1e8; color: #d9824f; }
+  .hv2-soft-t.is-today em { background: #f1eeff; }
+  .hv2-soft-t.is-day em { background: #ecfaf3; color: #22a776; }
+  .wc-card.hv2-soft .hv2-soft-t small { display: block; font-size: .68rem; color: #7a7698 !important; }
+  .wc-card.hv2-soft .hv2-soft-t b { display: block; overflow: hidden; font-size: 1.02rem; font-weight: 800; color: #1A2347 !important; -webkit-text-fill-color: #1A2347; white-space: nowrap; text-overflow: ellipsis; }
+  .hv2-soft-t span { display: block; overflow: hidden; font-size: .62rem; color: #a7a3c2; white-space: nowrap; text-overflow: ellipsis; }
+  .hv2-soft .money-value.is-hidden { filter: blur(7px); }
+}
+
+/* Home v3 (31 Oct): one header style with an icon tile, equal radius / gaps, merged groups */
+@media all {
+  .hv2-v3 { display: grid; gap: 12px; }
+  .hv2-v3 > * { margin-top: 0 !important; margin-bottom: 0 !important; }
+  .hv2-v3 .hv2-sec { display: flex; align-items: center; gap: 10px; margin: 10px 2px -2px !important; }
+  .hv2-v3 .hv2-sec[data-ic]::before { content: attr(data-ic); display: grid; place-items: center; width: 32px; height: 32px; flex: 0 0 auto; border-radius: 11px; background: #f1eeff; font-size: .95rem; }
+  .hv2-v3 .hv2-sec[data-ic="📅"]::before { background: #eaf6ff; }
+  .hv2-v3 .hv2-sec[data-ic="🎯"]::before { background: #fff1e8; }
+  .hv2-v3 .hv2-sec[data-ic="📸"]::before { background: #f7eff4; }
+  .hv2-v3 .hv2-sec > :is(a, button, small):last-child { margin-left: auto; }
+  .hv2-v3 :is(.hv2-card, .hv2-fx, .hv2-me, .wc-card.hv2-soft, .mf-teaser) { border-radius: 24px !important; }
+  html:root:not([data-theme="light"]) .hv2-v3 .hv2-sec[data-ic]::before { background: rgba(182,168,255,.16); }
+  /* focus: Nomi in the head, the whole head folds / unfolds; done = folded */
+  .hv2-v3 .hv2-fx .fx-head { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+  .hv2-v3 .fx-nomi { flex: 0 0 auto; width: 46px; height: 42px; margin: -6px 0 -6px -4px; }
+  .hv2-v3 .fx-nomi .hv2-buddy { width: 100%; height: 100%; }
+  .hv2-v3 .fx-head .fx-count { margin-left: auto; }
+  .hv2-v3 .hv2-fx.all-done:not(.is-open) :is(.hv2-cats, .hv2-cat-panel) { display: none; }
+  .hv2-v3 .hv2-fx.all-done:not(.is-open) .fx-head::after { content: "▾"; margin-left: 6px; color: #7a7698; }
+  /* me today: mood + reflection inside one card */
+  .hv2-v3 .hv2-me { display: grid; gap: 12px; padding: 14px; border: 1px solid #ebe8f4; background: #fff; }
+  .hv2-v3 .hv2-me > :is(section, details) { margin: 0 !important; padding: 0 !important; border: 0 !important; border-radius: 0 !important; background: none !important; box-shadow: none !important; }
+  .hv2-v3 .hv2-me .hv2-ask textarea { border-radius: 16px; }
+  html:root:not([data-theme="light"]) .hv2-v3 .hv2-me { background: #2e2956; border-color: rgba(182,168,255,.18); }
+}
+@media all {
+  .hv2-v3 .hv2-sec > b:last-child { margin-left: 0 !important; }
+  .hv2-v3 .hv2-me .hv2-mood { border: 0 !important; padding: 0 !important; background: none !important; }
+  .hv2-v3 .hv2-me .hv2-ask textarea { border: 1px solid #ebe8f4 !important; }
+  html:root:not([data-theme="light"]) .hv2-v3 .hv2-me .hv2-ask textarea { border-color: rgba(182,168,255,.25) !important; }
+}
+@media all {
+  html:root .hv2-v3 .hv2-sec { justify-content: flex-start !important; }
+  html:root .hv2.hv2 .hv2-v3 .hv2-me > :is(section, details, .hv2-card) { margin: 0 !important; padding: 0 !important; border: 0 !important; background: none !important; box-shadow: none !important; }
+}
