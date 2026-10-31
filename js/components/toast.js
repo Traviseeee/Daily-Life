@@ -83,7 +83,7 @@ const Sound = {
     src.stop(start + dur + 0.02);
   },
   RECIPES: {
-    tap: (s, c) => s.tone(c, { freq: 520, to: 620, dur: 0.06, gain: 0.022 }),
+    tap: (s, c) => s.tone(c, { freq: 900, to: 1200, dur: 0.05, gain: 0.026 }),
     // Nomi (31 Oct): C hello · A pip-pip · D boing-hop · E purr-chirp · B nyaa
     nomiHello: (s, c) => { s.tone(c, { freq: 784, to: 800, dur: 0.13, gain: 0.07 }); s.tone(c, { at: 0.12, freq: 988, to: 1000, dur: 0.13, gain: 0.07 }); s.tone(c, { at: 0.24, freq: 1175, to: 1200, dur: 0.22, gain: 0.07 }); s.tone(c, { at: 0.36, freq: 2350, to: 2397, dur: 0.18, gain: 0.025, type: "triangle" }); s.tone(c, { at: 0.44, freq: 2794, to: 2850, dur: 0.18, gain: 0.025, type: "triangle" }); },
     nomiPip: (s, c) => { s.tone(c, { freq: 880, to: 1320, dur: 0.12, gain: 0.07 }); s.tone(c, { at: 0.14, freq: 990, to: 1560, dur: 0.16, gain: 0.07 }); },
@@ -97,19 +97,20 @@ const Sound = {
       o.connect(g); g.connect(s.master); o.start(t); l.start(t); o.stop(t + 0.34); l.stop(t + 0.34);
       s.tone(c, { at: 0.33, freq: 1100, to: 1700, dur: 0.14, gain: 0.06 });
     },
-    pop: (s, c) => s.tone(c, { freq: 700, to: 980, dur: 0.07, gain: 0.03, type: "triangle" }),
-    toggleOn: (s, c) => { s.tone(c, { freq: 600, dur: 0.06, gain: 0.03 }); s.tone(c, { at: 0.05, freq: 900, dur: 0.08, gain: 0.03 }); },
-    toggleOff: (s, c) => { s.tone(c, { freq: 800, dur: 0.06, gain: 0.028 }); s.tone(c, { at: 0.05, freq: 520, dur: 0.08, gain: 0.026 }); },
-    open: (s, c) => s.tone(c, { freq: 380, to: 760, dur: 0.16, gain: 0.03, type: "triangle", attack: 0.02 }),
-    close: (s, c) => s.tone(c, { freq: 700, to: 360, dur: 0.14, gain: 0.025, type: "triangle", attack: 0.01 }),
-    nav: (s, c) => s.tone(c, { freq: 880, dur: 0.035, gain: 0.012 }),
-    success: (s, c) => { s.tone(c, { freq: 660, dur: 0.12, gain: 0.04 }); s.tone(c, { at: 0.09, freq: 990, dur: 0.18, gain: 0.04 }); },
-    coin: (s, c) => { s.tone(c, { freq: 988, dur: 0.08, gain: 0.04, type: "square" }); s.tone(c, { at: 0.07, freq: 1319, dur: 0.22, gain: 0.035, type: "square" }); },
-    delete: (s, c) => { s.noise(c, { dur: 0.18, gain: 0.05 }); s.tone(c, { freq: 420, to: 180, dur: 0.18, gain: 0.025 }); },
-    warning: (s, c) => { s.tone(c, { freq: 520, dur: 0.1, gain: 0.04, type: "triangle" }); s.tone(c, { at: 0.13, freq: 520, dur: 0.12, gain: 0.04, type: "triangle" }); },
-    error: (s, c) => { s.tone(c, { freq: 440, to: 300, dur: 0.14, gain: 0.045, type: "sawtooth" }); s.tone(c, { at: 0.12, freq: 300, to: 200, dur: 0.2, gain: 0.04, type: "sawtooth" }); },
-    notify: (s, c) => { s.tone(c, { freq: 1046, dur: 0.5, gain: 0.05, attack: 0.005 }); s.tone(c, { freq: 2093, dur: 0.35, gain: 0.015, attack: 0.005 }); s.tone(c, { at: 0.18, freq: 1318, dur: 0.6, gain: 0.04, attack: 0.005 }); },
-    celebrate: (s, c) => [523, 659, 784, 1046].forEach((f, i) => s.tone(c, { at: i * 0.08, freq: f, dur: 0.22, gain: 0.04, type: "triangle" }))
+    // UI sounds in Nomi's voice (31 Oct): soft round sine "bubbles", upward glides and a little sparkle
+    pop: (s, c) => s.tone(c, { freq: 700, to: 1200, dur: 0.08, gain: 0.04 }),
+    toggleOn: (s, c) => { s.tone(c, { freq: 880, to: 1320, dur: 0.07, gain: 0.04 }); s.tone(c, { at: 0.07, freq: 1320, to: 1760, dur: 0.08, gain: 0.032 }); },
+    toggleOff: (s, c) => s.tone(c, { freq: 1100, to: 700, dur: 0.11, gain: 0.035 }),
+    open: (s, c) => { s.tone(c, { freq: 500, to: 1000, dur: 0.14, gain: 0.04, attack: 0.015 }); s.tone(c, { at: 0.1, freq: 2000, to: 2100, dur: 0.12, gain: 0.012, type: "triangle" }); },
+    close: (s, c) => s.tone(c, { freq: 1000, to: 520, dur: 0.12, gain: 0.032, attack: 0.01 }),
+    nav: (s, c) => s.tone(c, { freq: 1300, to: 1500, dur: 0.04, gain: 0.018 }),
+    success: (s, c) => { s.tone(c, { freq: 784, to: 800, dur: 0.11, gain: 0.05 }); s.tone(c, { at: 0.1, freq: 988, to: 1010, dur: 0.16, gain: 0.05 }); s.tone(c, { at: 0.2, freq: 2350, to: 2400, dur: 0.16, gain: 0.018, type: "triangle" }); },
+    coin: (s, c) => { s.tone(c, { freq: 1320, to: 1760, dur: 0.08, gain: 0.045 }); s.tone(c, { at: 0.08, freq: 1760, to: 2350, dur: 0.14, gain: 0.04 }); s.tone(c, { at: 0.18, freq: 2794, to: 2850, dur: 0.12, gain: 0.014, type: "triangle" }); },
+    delete: (s, c) => { s.tone(c, { freq: 620, to: 240, dur: 0.18, gain: 0.045 }); s.noise(c, { dur: 0.12, gain: 0.015, from: 1800, to: 400 }); },
+    warning: (s, c) => { s.tone(c, { freq: 620, to: 1040, dur: 0.14, gain: 0.045 }); s.tone(c, { at: 0.14, freq: 1040, to: 760, dur: 0.22, gain: 0.04 }); },
+    error: (s, c) => { s.tone(c, { freq: 560, to: 420, dur: 0.14, gain: 0.05 }); s.tone(c, { at: 0.14, freq: 420, to: 300, dur: 0.24, gain: 0.045 }); },
+    notify: (s, c) => { s.tone(c, { freq: 784, to: 800, dur: 0.13, gain: 0.06 }); s.tone(c, { at: 0.12, freq: 988, to: 1000, dur: 0.13, gain: 0.06 }); s.tone(c, { at: 0.24, freq: 1175, to: 1200, dur: 0.26, gain: 0.06 }); s.tone(c, { at: 0.36, freq: 2350, to: 2400, dur: 0.2, gain: 0.02, type: "triangle" }); },
+    celebrate: (s, c) => { [523, 659, 784, 1046].forEach((f, i) => s.tone(c, { at: i * 0.08, freq: f, to: f * 1.02, dur: 0.2, gain: 0.05 })); [2350, 2794, 3136].forEach((f, i) => s.tone(c, { at: 0.34 + i * 0.07, freq: f, to: f * 1.02, dur: 0.16, gain: 0.016, type: "triangle" })); }
   },
   play(type = "tap", { force = false } = {}) {
     this.enabled = window.appData?.profile?.soundEnabled !== false;
@@ -150,7 +151,7 @@ const Sound = {
   // Settings preview: plays a few sounds in a row
   preview() {
     this.unlock();
-    ["tap", "pop", "success", "coin", "notify", "celebrate"].forEach((name, i) => setTimeout(() => this.play(name, { force: true }), i * 520));
+    ["nomiHello", "tap", "pop", "toggleOn", "success", "coin", "notify", "celebrate"].forEach((name, i) => setTimeout(() => this.play(name, { force: true }), i * 560));
   }
 };
 
