@@ -84,6 +84,19 @@ const Sound = {
   },
   RECIPES: {
     tap: (s, c) => s.tone(c, { freq: 520, to: 620, dur: 0.06, gain: 0.022 }),
+    // Nomi (31 Oct): C hello · A pip-pip · D boing-hop · E purr-chirp · B nyaa
+    nomiHello: (s, c) => { s.tone(c, { freq: 784, to: 800, dur: 0.13, gain: 0.07 }); s.tone(c, { at: 0.12, freq: 988, to: 1000, dur: 0.13, gain: 0.07 }); s.tone(c, { at: 0.24, freq: 1175, to: 1200, dur: 0.22, gain: 0.07 }); s.tone(c, { at: 0.36, freq: 2350, to: 2397, dur: 0.18, gain: 0.025, type: "triangle" }); s.tone(c, { at: 0.44, freq: 2794, to: 2850, dur: 0.18, gain: 0.025, type: "triangle" }); },
+    nomiPip: (s, c) => { s.tone(c, { freq: 880, to: 1320, dur: 0.12, gain: 0.07 }); s.tone(c, { at: 0.14, freq: 990, to: 1560, dur: 0.16, gain: 0.07 }); },
+    nomiHop: (s, c) => { s.tone(c, { freq: 300, to: 900, dur: 0.16, gain: 0.075 }); s.tone(c, { at: 0.16, freq: 900, to: 1400, dur: 0.12, gain: 0.05 }); },
+    nomiNyaa: (s, c) => { s.tone(c, { freq: 620, to: 1040, dur: 0.18, gain: 0.065 }); s.tone(c, { at: 0.17, freq: 1040, to: 760, dur: 0.32, gain: 0.06 }); },
+    nomiPurr: (s, c) => {
+      const t = c.currentTime, o = c.createOscillator(), g = c.createGain(), l = c.createOscillator(), lg = c.createGain();
+      o.frequency.setValueAtTime(700, t); o.frequency.linearRampToValueAtTime(950, t + 0.3);
+      l.frequency.value = 28; lg.gain.value = 40; l.connect(lg); lg.connect(o.frequency);
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.055, t + 0.03); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.32);
+      o.connect(g); g.connect(s.master); o.start(t); l.start(t); o.stop(t + 0.34); l.stop(t + 0.34);
+      s.tone(c, { at: 0.33, freq: 1100, to: 1700, dur: 0.14, gain: 0.06 });
+    },
     pop: (s, c) => s.tone(c, { freq: 700, to: 980, dur: 0.07, gain: 0.03, type: "triangle" }),
     toggleOn: (s, c) => { s.tone(c, { freq: 600, dur: 0.06, gain: 0.03 }); s.tone(c, { at: 0.05, freq: 900, dur: 0.08, gain: 0.03 }); },
     toggleOff: (s, c) => { s.tone(c, { freq: 800, dur: 0.06, gain: 0.028 }); s.tone(c, { at: 0.05, freq: 520, dur: 0.08, gain: 0.026 }); },

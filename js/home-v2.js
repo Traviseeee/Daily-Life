@@ -557,6 +557,11 @@ const HomeV2 = (() => {
     if (nomi) {
       try { localStorage.setItem("mylife:nomi-hi", "1"); } catch (error) { /* ignore */ }
       nomiStep += 1;
+      // Nomi's voice (31 Oct): hello on the intro tap, nyaa when sleepy / worried, then pip-pip and boing-hop in turn
+      if (typeof Sound !== "undefined") {
+        const m = nomi.dataset.mood || MOOD_NOW;
+        Sound.play(nomiStep === 1 ? "nomiHello" : m === "sleepy" || m === "worry" ? "nomiNyaa" : nomi.closest("#loginModal, .tga-card, #modalRoot") ? "nomiPurr" : nomiStep % 2 ? "nomiHop" : "nomiPip");
+      }
       const say = nomi.querySelector("[data-nomi-say]");
       if (say) { say.textContent = nomi.classList.contains("hv2-soft-buddy") && nomiStep % 2 ? L(...(MONEY_SAY[nomi.dataset.mood] || MONEY_SAY.happy)) : nomiLine(nomi.dataset.mood || MOOD_NOW); say.classList.remove("is-pop"); void say.offsetWidth; say.classList.add("is-pop"); }
       nomi.classList.remove("is-hop"); void nomi.offsetWidth; nomi.classList.add("is-hop");

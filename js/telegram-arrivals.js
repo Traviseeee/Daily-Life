@@ -257,6 +257,7 @@ const TelegramArrivals = (() => {
         <span class="tga-timer" aria-hidden="true"><span style="animation-duration:${AUTO_CLOSE_MS}ms"></span></span>
       </section>`;
     document.body.appendChild(node);
+    if (typeof Sound !== "undefined" && node.querySelector(".tga-nomi")) setTimeout(() => Sound.play("nomiPurr"), 420); // Nomi cheers
     node.addEventListener("click", event => {
       if (event.target === node || event.target.closest("[data-tga-ok]") || event.target.closest("[data-tga-link]")) closePopup();
       if (event.target.closest("[data-tga-view]")) {

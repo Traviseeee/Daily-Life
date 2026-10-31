@@ -816,6 +816,7 @@ const App = {
       const target = event.target.closest("button, a, input, textarea, select, .mood-option, .home-action, .suggestion-button");
       if (!target || target.closest(".toast")) return;
       if (target.matches("input[type='checkbox'], input[type='radio']")) return;
+      if (target.closest("[data-nomi]")) return; // Nomi has its own voice
       Sound.play("tap");
     }, { passive: true });
   },
