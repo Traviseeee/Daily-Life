@@ -147,6 +147,84 @@
   .fam2.is-lav .fv-tg > .fv-tg-bar { margin-top: 12px !important; }
   .fam2.is-lav .fv-tg > .fv-tg-foot { margin-top: 8px !important; }
 }
+
+/* Notifications settings: clearer sections and consistent lavender actions. */
+@media (max-width: 900px) {
+  html:root[data-theme="light"] #app > .page.sv2-sub[data-sv2="notifications"] .sv-subhead .sv-back,
+  html:root:not([data-theme="light"]) #app > .page.sv2-sub[data-sv2="notifications"] .sv-subhead .sv-back {
+    display: grid !important;
+    place-items: center !important;
+    width: 44px !important;
+    height: 44px !important;
+    border: 1px solid rgba(255,255,255,.42) !important;
+    border-radius: 15px !important;
+    color: #fff !important;
+    background: rgba(255,255,255,.2) !important;
+    box-shadow: none !important;
+    font-size: 2rem !important;
+    line-height: 1 !important;
+  }
+  #settings-section-notifications > .settings-accordion-body { display: grid; gap: 10px; }
+  #settings-section-notifications .settings-preference-list-standalone {
+    display: block !important;
+    margin: 0 0 2px !important;
+    padding: 8px 12px !important;
+    border: 1px solid #e8e2f8 !important;
+    border-radius: 22px !important;
+    background: #fff !important;
+    box-shadow: 0 4px 16px rgba(80,74,185,.06) !important;
+  }
+  #settings-section-notifications .settings-nfc-link { min-height: 66px !important; padding: 8px 4px !important; border: 0 !important; }
+  #settings-section-notifications .settings-nfc-link > span { gap: 4px; }
+  #settings-section-notifications .settings-nfc-link strong { color: #242044 !important; font-size: .91rem !important; }
+  #settings-section-notifications .settings-nfc-link small { color: #77738e !important; font-size: .76rem !important; }
+  #settings-section-notifications .settings-nfc-link [data-nfc-open] {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    min-height: 40px !important;
+    padding: 0 14px !important;
+    border: 0 !important;
+    border-radius: 14px !important;
+    color: #fff !important;
+    background: linear-gradient(135deg, #8f7bfa, #5c50c8) !important;
+    box-shadow: none !important;
+  }
+  #settings-section-notifications .settings-preferences-card { padding: 16px !important; border: 1px solid #e8e2f8 !important; }
+  #settings-section-notifications .settings-preferences-card > .between {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    margin: 0 0 8px !important;
+    padding: 0 0 12px !important;
+    border-bottom: 1px solid #eeeaf7;
+  }
+  #settings-section-notifications .settings-preferences-card > .between > div { min-width: 0; }
+  #settings-section-notifications .settings-preferences-card > .between .section-title { margin: 0 !important; font-size: 1rem !important; }
+  #settings-section-notifications .settings-preferences-card > .between .secondary { margin: 4px 0 0 !important; font-size: .76rem !important; }
+  #settings-section-notifications .settings-preferences-card > .between > .pill { flex: 0 0 auto; }
+  #settings-section-notifications .settings-preferences-card .settings-preference-list {
+    margin: 0 !important;
+    padding: 2px 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+  #settings-section-notifications .settings-preference-row { min-height: 62px !important; padding: 9px 0 !important; border-top-color: #eeeaf7 !important; }
+  #settings-section-notifications .settings-preference-row strong { color: #252142 !important; }
+  #settings-section-notifications .settings-preference-row small { color: #77738e !important; }
+  #settings-section-notifications .settings-action-grid { display: grid !important; grid-template-columns: 1fr !important; gap: 8px !important; margin-top: 10px !important; }
+  #settings-section-notifications .settings-action { min-height: 62px !important; padding: 9px 11px !important; border: 1px solid #eeeaf7 !important; border-radius: 17px !important; background: #faf9ff !important; box-shadow: none !important; }
+  #settings-section-notifications .settings-action .icon-badge { color: #6256cc !important; background: #f0edff !important; }
+  #settings-section-notifications .settings-action strong { color: #252142 !important; }
+  #settings-section-notifications .auto-card { padding: 12px 14px !important; border: 1px solid #e8e2f8 !important; }
+  #settings-section-notifications .auto-help { margin: 0 !important; border: 1px solid #f5d7b0 !important; border-radius: 17px !important; background: #fff8ee !important; }
+  #settings-section-notifications .auto-help summary { color: #60451e !important; font-size: .82rem !important; }
+}
+@media (max-width: 900px) and (prefers-reduced-motion: reduce) {
+  #settings-section-notifications * { scroll-behavior: auto !important; transition-duration: 0.01ms !important; }
+}
 /* Finance picker: Nomi welcome bubble + Home's soft lavender card language. */
 html:root[data-theme="light"] .financial-sidebar {
   border-color: #e9e4f8 !important;
@@ -1218,4 +1296,29 @@ html:root:not([data-theme="light"]) body, html:root:not([data-theme="light"]) .a
   .fam2.is-lav .fv-tg-ymd span { padding: 4px 8px !important; font-size: .7rem !important; }
   .fam2.is-lav .fv-tg > .fv-tg-bar { margin-top: 12px !important; }
   .fam2.is-lav .fv-tg > .fv-tg-foot { margin-top: 8px !important; }
+}
+/* Mood picker: a small Nomi reaction after each saved choice. */
+@media (prefers-reduced-motion: no-preference) {
+  .hv2 .hv2-mood-btn.is-mood-change > span { animation: hv2MoodChoicePop 1.12s cubic-bezier(.2,.8,.25,1.15); }
+  .hv2 .hv2-mood-btn.is-mood-change .hv2-buddy-face .nb-bodyg { animation: hv2MoodChoiceBounce 1.12s cubic-bezier(.2,.8,.25,1.15); }
+  .hv2 .hv2-mood-btn.is-mood-change .hv2-buddy-face .nb-eye { animation: hv2MoodChoiceBlink .26s ease-in-out 2; }
+  @keyframes hv2MoodChoicePop {
+    0% { transform: scale(1); }
+    34% { transform: scale(1.24) rotate(-7deg); }
+    62% { transform: scale(.94) rotate(4deg); }
+    100% { transform: scale(1); }
+  }
+  @keyframes hv2MoodChoiceBounce {
+    0%, 100% { transform: translateY(0) scale(1); }
+    36% { transform: translateY(-5px) scale(1.03,.97); }
+    62% { transform: translateY(1px) scale(.98,1.02); }
+  }
+  @keyframes hv2MoodChoiceBlink {
+    0%, 30%, 62%, 100% { transform: scaleY(1); }
+    42%, 52% { transform: scaleY(.12); }
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hv2 .hv2-mood-btn.is-mood-change > span,
+  .hv2 .hv2-mood-btn.is-mood-change .hv2-buddy-face :is(.nb-bodyg, .nb-eye) { animation: none !important; }
 }

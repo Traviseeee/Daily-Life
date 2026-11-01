@@ -792,3 +792,22 @@
 @media all {
   html:root[data-theme="light"] body.topbar-home #app .hv2-v3 .wc-card.hv2-soft .hv2-soft-glow { display: none !important; }
 }
+
+/* Brighter, still-soft palette swatches in the Home card editor. */
+@media all {
+  html:root #modalRoot .wc-sheet-soft .wc-tint {
+    border-color: #e5def5;
+    transition: border-color 160ms ease, background-color 160ms ease, transform 160ms ease;
+  }
+  html:root #modalRoot .wc-sheet-soft .wc-tint:hover { transform: translateY(-2px); }
+  html:root #modalRoot .wc-sheet-soft .wc-tint i { height: 42px; border-color: rgba(45, 42, 85, .1); }
+  html:root #modalRoot .wc-sheet-soft .wc-tint[data-wc-tint="lavender"] { background: #f7f3ff; }
+  html:root #modalRoot .wc-sheet-soft .wc-tint[data-wc-tint="peach"] { background: #fff7f1; }
+  html:root #modalRoot .wc-sheet-soft .wc-tint[data-wc-tint="mint"] { background: #f1fbf5; }
+  html:root #modalRoot .wc-sheet-soft .wc-tint[data-wc-tint="sky"] { background: #f1f7ff; }
+  html:root #modalRoot .wc-sheet-soft .wc-tint[data-wc-tint="rose"] { background: #fff2f6; }
+  html:root #modalRoot .wc-sheet-soft .wc-tint[data-wc-tint="lemon"] { background: #fffbeb; }
+  html:root #modalRoot .wc-sheet-soft .wc-tint[data-wc-tint="mauve"] { background: #faf2f7; }
+  html:root #modalRoot .wc-sheet-soft .wc-tint.on { border-color: #6c5ce7 !important; box-shadow: 0 0 0 2px #6c5ce7, 0 5px 14px rgba(108,92,231,.16) !important; }
+  @media (prefers-reduced-motion: reduce) { html:root #modalRoot .wc-sheet-soft .wc-tint { transition: none; } }
+}
