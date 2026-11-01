@@ -3,11 +3,11 @@
    Palette: indigo #504AB9, lavender #7B68EE → #9F8CFF, mauve #CBACC1, peach #E6986B, page #F3F1F4, ink #1A2347.
    No drop shadows: white blocks get a hairline #EBE8F4. Dark mode and desktop are not touched. */
 @media all {
-  /* 1 · footer: white pill everywhere, active tab soft lavender */
-  html:root[data-theme="light"]:root body #mobileNav.mobile-nav { --f2-glass: rgba(255,255,255,.94); --f2-grad: #ece8ff; --f2-on: #3f37a8; --f2-glow: none; --f2-ink2: #8f8bad; --f2-line: #ebe8f4; --f2-sh: 0 10px 28px -16px rgba(80, 74, 185, .35); }
+  /* 1 · footer: white pill everywhere, selected tab filled purple */
+  html:root[data-theme="light"]:root body #mobileNav.mobile-nav { --f2-glass: rgba(255,255,255,.94); --f2-grad: linear-gradient(140deg, #9F8CFF, #6c5ce7); --f2-on: #fff; --f2-glow: none; --f2-ink2: #8f8bad; --f2-line: #ebe8f4; --f2-sh: 0 10px 28px -16px rgba(80, 74, 185, .35); }
   html:root[data-theme="light"]:root body #mobileNav.mobile-nav .nav-item.active,
-  html:root[data-theme="light"]:root body #mobileNav.mobile-nav .nav-item.active :is(span, svg) { color: #3f37a8 !important; }
-  html:root[data-theme="light"]:root body #mobileNav.mobile-nav .nav-item.active { background: #ece8ff !important; box-shadow: none !important; }
+  html:root[data-theme="light"]:root body #mobileNav.mobile-nav .nav-item.active :is(span, svg) { color: #fff !important; }
+  html:root[data-theme="light"]:root body #mobileNav.mobile-nav .nav-item.active { background: linear-gradient(140deg, #9F8CFF, #6c5ce7) !important; box-shadow: 0 6px 16px -10px rgba(80,74,185,.65) !important; }
 
   /* 1 · floating + button: lavender, no glow */
   html:root[data-theme="light"] body .quick-action-toggle { color: #fff !important; border: 0 !important; background: linear-gradient(140deg, #9F8CFF, #6c5ce7) !important; box-shadow: 0 10px 22px -12px rgba(80, 74, 185, .7) !important; }
@@ -82,8 +82,8 @@
 
   /* soft-crop lavender header behind the top of every page (Home, Money, Settings have their own) */
   html:root[data-theme="light"] body:not(.topbar-home):not(:has(.fv2-page)):not(:has(.sv2)) .app-main { background: #F3F1F4 !important; }
-  html:root[data-theme="light"] body:not(.topbar-home) #app > .page:not(.fv2-page):not(.sv2):not(.hv2) { position: relative; isolation: isolate; }
-  html:root[data-theme="light"] body:not(.topbar-home) #app > .page:not(.fv2-page):not(.sv2):not(.hv2)::before { content: ""; position: absolute; z-index: -1; left: -16px; right: -16px; top: -80px; height: 260px; border-radius: 0 0 40px 40px; pointer-events: none;
+  html:root[data-theme="light"] body:not(.topbar-home) #app > .page:not(.hv2) { position: relative; isolation: isolate; }
+  html:root[data-theme="light"] body:not(.topbar-home) #app > .page:not(.hv2)::before { content: ""; position: absolute; z-index: -1; left: -16px; right: -16px; top: -80px; height: 260px; border-radius: 0 0 40px 40px; pointer-events: none;
     background: radial-gradient(45% 140px at 88% 55%, rgba(255, 214, 190, .6), transparent 70%), linear-gradient(170deg, #7B68EE, #9F8CFF 55%, #c9bdff);
     -webkit-mask: linear-gradient(#000 70%, transparent); mask: linear-gradient(#000 70%, transparent); }
   html:root[data-theme="light"] body :is(.cv2-hero h1, .fv-title h1, .mf2-title, .gv-title, .page-header .page-title, .lv-hi-tx b, .tp-hero h1, .nf-hero h1) { color: #fff !important; -webkit-text-fill-color: #fff; }
@@ -117,6 +117,93 @@
   html:root[data-theme="light"] body :is(.login-logo, .al-logo, .home-nudge-svg) circle:nth-of-type(1) { stroke: #ece8ff; }
   html:root[data-theme="light"] body :is(.login-logo, .al-logo, .home-nudge-svg) circle:nth-of-type(2) { stroke: #6c5ce7; }
   html:root[data-theme="light"] body :is(.login-logo, .al-logo, .home-nudge-svg) circle:nth-of-type(3) { fill: #9F8CFF; }
+}
+/* Finance picker: Nomi welcome bubble + Home's soft lavender card language. */
+html:root[data-theme="light"] .financial-sidebar {
+  border-color: #e9e4f8 !important;
+  background: #f8f6fc !important;
+  box-shadow: 0 -16px 42px rgba(67, 56, 119, .14) !important;
+}
+html:root[data-theme="light"] .financial-sidebar-heading { color: #1d274b !important; }
+html:root[data-theme="light"] .financial-sidebar-heading-copy > strong { color: #1d274b !important; }
+html:root[data-theme="light"] .financial-sidebar-heading-copy > span { color: #687593 !important; }
+.financial-nav-welcome { display: flex; align-items: center; gap: 8px; min-width: 0; margin-top: 8px; }
+.financial-nav-nomi { display: grid; place-items: center; width: 38px; height: 38px; flex: 0 0 38px; animation: financialNomiBob 3s ease-in-out infinite; }
+.financial-nav-nomi .hv2-buddy { width: 100%; height: 100%; }
+.financial-nav-say { position: relative; padding: 7px 11px; border: 1px solid #e9e4fb; border-radius: 15px 15px 15px 5px; color: #51478e; background: #fff; font-size: .72rem; font-weight: 600; line-height: 1.35; }
+.financial-nav-say::before { content: ""; position: absolute; left: -5px; bottom: 8px; width: 8px; height: 8px; border-left: 1px solid #e9e4fb; border-bottom: 1px solid #e9e4fb; background: #fff; transform: rotate(45deg); }
+.financial-sidebar-nav .financial-nav-item { border-color: #e9e5f5 !important; background: #fff !important; }
+.financial-sidebar-nav .financial-nav-item:nth-child(1) { --financial-icon-color: #7965e8; }
+.financial-sidebar-nav .financial-nav-item:nth-child(2) { --financial-icon-color: #36a982; }
+.financial-sidebar-nav .financial-nav-item:nth-child(3) { --financial-icon-color: #ec8f68; }
+.financial-sidebar-nav .financial-nav-item:nth-child(4) { --financial-icon-color: #4d9dd8; }
+.financial-sidebar-nav .financial-nav-item:nth-child(5) { --financial-icon-color: #8b6de0; }
+.financial-sidebar-nav .financial-nav-item:nth-child(6) { --financial-icon-color: #df6687; }
+.financial-sidebar-nav .financial-nav-item:nth-child(7) { --financial-icon-color: #d99a39; }
+.financial-sidebar-nav .financial-nav-item.active {
+  border-color: #d8cff8 !important;
+  background: #eeeaff !important;
+  box-shadow: 0 4px 14px rgba(111, 91, 202, .08) !important;
+}
+html:root[data-theme="light"] .financial-sidebar .financial-nav-item.active .financial-nav-copy :is(strong, small) { color: #30265e !important; }
+html:root[data-theme="light"] .financial-sidebar .financial-nav-item.active > svg:last-child { color: #7660d8 !important; }
+html:root:not([data-theme="light"]) .financial-sidebar { border-color: rgba(182,168,255,.2); background: #292449; }
+html:root:not([data-theme="light"]) .financial-sidebar-heading,
+html:root:not([data-theme="light"]) .financial-sidebar-heading-copy > strong { color: #f4f2ff; }
+html:root:not([data-theme="light"]) .financial-sidebar-heading-copy > span { color: #bdb7e6; }
+html:root:not([data-theme="light"]) .financial-nav-say { border-color: rgba(182,168,255,.2); color: #e6e2ff; background: #38325f; }
+html:root:not([data-theme="light"]) .financial-nav-say::before { border-color: rgba(182,168,255,.2); background: #38325f; }
+html:root:not([data-theme="light"]) .financial-sidebar-nav .financial-nav-item { border-color: rgba(182,168,255,.15) !important; background: rgba(255,255,255,.045) !important; }
+html:root:not([data-theme="light"]) .financial-sidebar-nav .financial-nav-item.active { border-color: rgba(182,168,255,.42) !important; background: rgba(143,123,255,.2) !important; }
+html:root:not([data-theme="light"]) .financial-sidebar .financial-nav-item.active .financial-nav-copy :is(strong, small) { color: #f4f2ff !important; }
+@keyframes financialNomiBob { 50% { transform: translateY(-3px); } }
+@media (max-width: 900px) {
+  .financial-sidebar-heading { margin-bottom: 6px; }
+  .financial-sidebar-nav { gap: 6px; }
+  .financial-sidebar-nav .financial-nav-item { min-height: 54px; }
+}
+@media (prefers-reduced-motion: reduce) { .financial-nav-nomi { animation: none; } }
+
+/* Loan form: carded sections like the user's updated modal sample. */
+#modalForm:has(input[name="originalAmount"]) .sectioned-form { display: grid; gap: 12px; }
+#modalForm:has(input[name="originalAmount"]) .sectioned-form-card { min-width: 0; padding: 14px; border: 1px solid #e3eaff; border-radius: 23px; background: #fff; }
+#modalForm:has(input[name="originalAmount"]) .sectioned-form-heading { display: flex; align-items: center; gap: 10px; margin: 0 0 12px; }
+#modalForm:has(input[name="originalAmount"]) .sectioned-form-icon { display: grid; place-items: center; width: 38px; height: 38px; flex: 0 0 38px; border-radius: 13px; }
+#modalForm:has(input[name="originalAmount"]) .sectioned-form-icon svg { width: 20px; height: 20px; }
+#modalForm:has(input[name="originalAmount"]) .sectioned-form-icon.is-blue { color: #3478d7; background: #e7f1ff; }
+#modalForm:has(input[name="originalAmount"]) .sectioned-form-icon.is-violet { color: #715bce; background: #eee9ff; }
+#modalForm:has(input[name="originalAmount"]) .sectioned-form-icon.is-amber { color: #c47c2b; background: #fff0dc; }
+#modalForm:has(input[name="originalAmount"]) .sectioned-form-icon.is-green { color: #2b9d6c; background: #e3f7ee; }
+#modalForm:has(input[name="originalAmount"]) .sectioned-form-heading-copy { display: grid; gap: 3px; min-width: 0; }
+#modalForm:has(input[name="originalAmount"]) .sectioned-form-heading h3 { margin: 0; color: #1a2347; font-size: .94rem; font-weight: 800; }
+#modalForm:has(input[name="originalAmount"]) .sectioned-form-heading p { margin: 0; color: #8793ad; font-size: .73rem; line-height: 1.4; }
+#modalForm:has(input[name="originalAmount"]) .form-grid { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+#modalForm:has(input[name="originalAmount"]) .sectioned-form-card .form-grid { padding: 0; border: 0; border-radius: 0; background: transparent; }
+#modalForm:has(input[name="originalAmount"]) .sectioned-form-card .form-grid > .field:first-child { grid-column: auto; }
+#modalForm:has(input[name="originalAmount"]) .field { gap: 5px; min-width: 0; }
+#modalForm:has(input[name="originalAmount"]) .field label { color: #566584; font-size: .78rem; }
+#modalForm:has(input[name="originalAmount"]) .field-error { min-height: 0; font-size: .72rem; }
+#modalForm:has(input[name="originalAmount"]) .field :is(input, select, textarea) { min-height: 46px; border-color: #dfe5f4; border-radius: 15px; background-color: #faf9fe; box-shadow: none; }
+#modalForm:has(input[name="originalAmount"]) .field :is(input, select, textarea):focus { border-color: #8b78ed; outline: 2px solid rgba(139,120,237,.2); outline-offset: 0; }
+#modalForm:has(input[name="originalAmount"]) .field textarea { min-height: 74px; }
+#modalForm:has(input[name="originalAmount"]) .smart-fill { align-items: center; border-color: #ded8fb; border-radius: 18px; background: #f5f2ff; }
+#modalForm:has(input[name="originalAmount"]) .smart-fill-copy { display: flex; align-items: flex-start; gap: 8px; min-width: 0; }
+#modalForm:has(input[name="originalAmount"]) .smart-fill-icon { display: grid; place-items: center; width: 28px; height: 28px; flex: 0 0 28px; border-radius: 9px; color: #725bd0; background: #eae5ff; }
+#modalForm:has(input[name="originalAmount"]) .smart-fill-icon svg { width: 17px; height: 17px; }
+#modalForm:has(input[name="originalAmount"]) .smart-fill-message { color: #697695; font-size: .76rem; line-height: 1.4; }
+#modalForm:has(input[name="originalAmount"]) .smart-fill .button { min-height: 38px; padding: 7px 11px; border-color: #e3def6; border-radius: 999px; color: #504ab9; background: #fff; box-shadow: none; }
+#modalForm:has(input[name="originalAmount"]).su-plain .su-head-icon { color: #fff !important; border-radius: 14px; background: linear-gradient(135deg,#9f8cff,#6c5ce7) !important; box-shadow: 0 8px 18px rgba(108,92,231,.2) !important; }
+html:root[data-theme="light"] #modalRoot#modalRoot #modalForm.su-plain .su-head-icon { color: #fff !important; background: linear-gradient(135deg,#9f8cff,#6c5ce7) !important; box-shadow: 0 8px 18px rgba(108,92,231,.2) !important; }
+html:root:not([data-theme="light"]) #modalForm:has(input[name="originalAmount"]) .sectioned-form-card { border-color: rgba(182,168,255,.18); background: #2e2956; }
+html:root:not([data-theme="light"]) #modalForm:has(input[name="originalAmount"]) .sectioned-form-heading h3 { color: #f4f2ff; }
+html:root:not([data-theme="light"]) #modalForm:has(input[name="originalAmount"]) .sectioned-form-heading p,
+html:root:not([data-theme="light"]) #modalForm:has(input[name="originalAmount"]) .field label { color: #bdb7e6; }
+html:root:not([data-theme="light"]) #modalForm:has(input[name="originalAmount"]) .field :is(input, select, textarea) { border-color: rgba(182,168,255,.2); background-color: #252044; }
+html:root:not([data-theme="light"]) #modalForm:has(input[name="originalAmount"]) .smart-fill { border-color: rgba(182,168,255,.18); background: rgba(159,140,255,.1); }
+html:root:not([data-theme="light"]) #modalForm:has(input[name="originalAmount"]) .smart-fill-icon { color: #d9d2ff; background: rgba(159,140,255,.18); }
+@media (min-width: 600px) {
+  #modalForm:has(input[name="originalAmount"]) .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 16px; }
+  #modalForm:has(input[name="originalAmount"]) .field:has(.smart-fill) { grid-column: 1 / -1; }
 }
 
 /* Launcher in the Home look (light phone, 31 Oct): Nomi talks in the hero, money ring card, SVG quick add */
@@ -400,9 +487,9 @@
 
 /* D1 "Lavender Dusk" dark (31 Oct): generated from the light rules above — lavender hero like light, indigo page #211d3d, cards #2e2956, bright money card and white Nomi bubbles */
 @media all {
-  html:root:not([data-theme="light"]):root body #mobileNav.mobile-nav { --f2-glass: rgba(46,41,86,.94); --f2-grad: rgba(182,168,255,.14); --f2-on: #C9BDFF; --f2-glow: none; --f2-ink2: #bdb7e6; --f2-line: rgba(182,168,255,.18); --f2-sh: 0 10px 28px -16px rgba(80, 74, 185, .35); }
-  html:root:not([data-theme="light"]):root body #mobileNav.mobile-nav .nav-item.active, html:root:not([data-theme="light"]):root body #mobileNav.mobile-nav .nav-item.active :is(span, svg) { color: #C9BDFF !important; }
-  html:root:not([data-theme="light"]):root body #mobileNav.mobile-nav .nav-item.active { background: rgba(182,168,255,.14) !important; box-shadow: none !important; }
+  html:root:not([data-theme="light"]):root body #mobileNav.mobile-nav { --f2-glass: rgba(46,41,86,.94); --f2-grad: linear-gradient(140deg, #9F8CFF, #6c5ce7); --f2-on: #fff; --f2-glow: none; --f2-ink2: #bdb7e6; --f2-line: rgba(182,168,255,.18); --f2-sh: 0 10px 28px -16px rgba(80, 74, 185, .35); }
+  html:root:not([data-theme="light"]):root body #mobileNav.mobile-nav .nav-item.active, html:root:not([data-theme="light"]):root body #mobileNav.mobile-nav .nav-item.active :is(span, svg) { color: #fff !important; }
+  html:root:not([data-theme="light"]):root body #mobileNav.mobile-nav .nav-item.active { background: linear-gradient(140deg, #9F8CFF, #6c5ce7) !important; box-shadow: 0 6px 16px -10px rgba(80,74,185,.65) !important; }
   html:root:not([data-theme="light"]) body .quick-action-toggle { color: #fff !important; border: 0 !important; background: linear-gradient(140deg, #9F8CFF, #6c5ce7) !important; box-shadow: 0 10px 22px -12px rgba(80, 74, 185, .7) !important; }
   html:root:not([data-theme="light"]) body .quick-action-toggle svg { color: #fff !important; }
   html:root:not([data-theme="light"]) body .quick-action-menu :is(button, a) { border: 1px solid rgba(182,168,255,.18) !important; background: #2e2956 !important; box-shadow: none !important; color: #F4F2FF !important; }
@@ -461,8 +548,8 @@
   html:root:not([data-theme="light"]) body .page.smv { --s-soft: rgba(182,168,255,.14); --s-line: rgba(182,168,255,.18); --s-ink: #F4F2FF; --s-acc: #C9BDFF; --s-acc-ink: #C9BDFF; --s-grad: linear-gradient(120deg, #7B68EE, #504AB9); --s-shadow: none; --s-glow: none; }
   html:root:not([data-theme="light"]) body .fv2-page { --fv-soft: rgba(182,168,255,.14); --fv-line: rgba(182,168,255,.18); --fv-acc: #C9BDFF; --fv-acc-ink: #C9BDFF; --fv-grad: linear-gradient(120deg, #7B68EE, #504AB9); --fv-shadow: none; --fv-glow: none; }
   html:root:not([data-theme="light"]) body:not(.topbar-home):not(:has(.fv2-page)):not(:has(.sv2)) .app-main { background: #211d3d !important; }
-  html:root:not([data-theme="light"]) body:not(.topbar-home) #app > .page:not(.fv2-page):not(.sv2):not(.hv2) { position: relative; isolation: isolate; }
-  html:root:not([data-theme="light"]) body:not(.topbar-home) #app > .page:not(.fv2-page):not(.sv2):not(.hv2)::before { content: ""; position: absolute; z-index: -1; left: -16px; right: -16px; top: -80px; height: 260px; border-radius: 0 0 40px 40px; pointer-events: none;
+  html:root:not([data-theme="light"]) body:not(.topbar-home) #app > .page:not(.hv2) { position: relative; isolation: isolate; }
+  html:root:not([data-theme="light"]) body:not(.topbar-home) #app > .page:not(.hv2)::before { content: ""; position: absolute; z-index: -1; left: -16px; right: -16px; top: -80px; height: 260px; border-radius: 0 0 40px 40px; pointer-events: none;
     background: radial-gradient(45% 140px at 88% 55%, rgba(255, 214, 190, .6), transparent 70%), linear-gradient(170deg, #7B68EE, #9F8CFF 55%, #c9bdff);
     -webkit-mask: linear-gradient(#000 70%, transparent); mask: linear-gradient(#000 70%, transparent); }
   html:root:not([data-theme="light"]) body :is(.cv2-hero h1, .fv-title h1, .mf2-title, .gv-title, .page-header .page-title, .lv-hi-tx b, .tp-hero h1, .nf-hero h1) { color: #fff !important; -webkit-text-fill-color: #fff; }
@@ -816,6 +903,25 @@ html:root:not([data-theme="light"]) body, html:root:not([data-theme="light"]) .a
   html:root:not([data-theme="light"]) .sv2 .sv-hero + * { margin-top: -30px; position: relative; }
 }
 @media all { html:root:not([data-theme="light"]) body .sv2 .sv-hero.sv-hero { -webkit-mask: linear-gradient(#000 92%, transparent); mask: linear-gradient(#000 92%, transparent); } }
+@media all {
+  /* Keep the shared lavender header fade continuous with the page background. */
+  html:root[data-theme="light"] body.topbar-home .hv2-hero::before,
+  html:root[data-theme="light"] body:not(.topbar-home) #app > .page::before,
+  html:root[data-theme="light"] body .sv2 .sv-hero {
+    border-radius: 0 !important;
+    -webkit-mask: none !important;
+    mask: none !important;
+    background: radial-gradient(45% 140px at 88% 55%, rgba(255, 214, 190, .6), transparent 70%), linear-gradient(180deg, #7B68EE 0%, #9F8CFF 48%, rgba(201, 189, 255, .78) 76%, #F3F1F4 100%) !important;
+  }
+  html:root:not([data-theme="light"]) body.topbar-home .hv2-hero::before,
+  html:root:not([data-theme="light"]) body:not(.topbar-home) #app > .page::before,
+  html:root:not([data-theme="light"]) body .sv2 .sv-hero {
+    border-radius: 0 !important;
+    -webkit-mask: none !important;
+    mask: none !important;
+    background: radial-gradient(45% 140px at 88% 55%, rgba(255, 214, 190, .6), transparent 70%), linear-gradient(180deg, #7B68EE 0%, #9F8CFF 48%, rgba(201, 189, 255, .78) 76%, #211d3d 100%) !important;
+  }
+}
 @media all {
   /* Log out sheet with a sleepy Nomi (31 Oct) */
   #modalRoot .lo-sheet .lo-nomi { display: flex; align-items: center; gap: 10px; margin: 4px 0 8px; }

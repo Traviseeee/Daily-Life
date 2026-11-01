@@ -136,5 +136,104 @@ button.sv-chip, a.sv-chip { cursor: pointer; }
 .sv2-sub .section-title, .sv2-sub h2, .sv2-sub h3 { color: var(--sv-ink) !important; }
 .sv2-sub .secondary, .sv2-sub p { color: var(--sv-ink2); }
 .sv2-sub .settings-data-card { padding: 14px !important; }
+.sv2-sub[data-sv2="data"] .settings-layout {
+  padding-bottom: calc(104px + env(safe-area-inset-bottom, 0px));
+}
+.sv2-sub[data-sv2="data"] .settings-data-grid {
+  align-content: start;
+  gap: 12px;
+}
+.sv2-sub[data-sv2="data"] .settings-data-card {
+  display: grid;
+  min-width: 0;
+  gap: 12px;
+  padding: 15px !important;
+}
+.sv2-sub[data-sv2="data"] .settings-data-card > .between {
+  display: block !important;
+  min-width: 0;
+  padding: 0 0 12px;
+  border-bottom: 1px solid var(--sv-line);
+}
+.sv2-sub[data-sv2="data"] .settings-data-card > .between > div {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+}
+.sv2-sub[data-sv2="data"] .settings-data-card > .between > .icon-badge {
+  display: none !important;
+}
+.sv2-sub[data-sv2="data"] .settings-data-card > .between p {
+  max-width: 100%;
+  margin: 0;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+.sv2-sub[data-sv2="data"] .settings-data-card .settings-action-grid {
+  min-width: 0;
+  gap: 8px;
+  margin: 0;
+}
+.sv2-sub[data-sv2="data"] .settings-data-card .settings-action {
+  min-width: 0;
+  min-height: 62px;
+  padding: 10px 12px;
+}
+.sv2-sub[data-sv2="data"] .settings-data-card .settings-action > span:last-child {
+  min-width: 0;
+}
+.sv2-sub[data-sv2="data"] .settings-data-card .settings-action small {
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+.sv2-sub[data-sv2="data"] .auto-card {
+  min-width: 0;
+  padding: 15px !important;
+}
+.sv2-sub[data-sv2="data"] .auto-backups {
+  min-width: 0;
+  gap: 5px;
+  margin-top: 0;
+}
+.sv2-sub[data-sv2="data"] .auto-backups-head strong {
+  line-height: 1.35;
+}
+.sv2-sub[data-sv2="data"] .auto-backups-head small,
+.sv2-sub[data-sv2="data"] .auto-backup-list {
+  min-width: 0;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+.sv2-sub[data-sv2="data"] .settings-compact-card {
+  gap: 12px;
+  padding: 16px !important;
+}
+.sv2-sub[data-sv2="data"] .settings-database-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  padding: 0 2px 2px;
+  width: calc(100% - 16px);
+  margin: 0 8px 4px !important;
+}
+.sv2-sub[data-sv2="data"] .settings-compact-card > .section-title {
+  margin: 0 8px;
+}
+.sv2-sub[data-sv2="data"] .settings-database-stat {
+  min-width: 0;
+  min-height: 68px;
+  gap: 7px;
+  padding: 10px 11px;
+  border: 1px solid color-mix(in srgb, var(--sv-acc-ink) 14%, var(--sv-line));
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--sv-page) 70%, var(--sv-card));
+}
+.sv2-sub[data-sv2="data"] .settings-database-stat span {
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+.sv2-sub[data-sv2="data"] .settings-database-stat strong {
+  font-size: 1.15rem;
+}
 .sv2-sub input[type="checkbox"]:not(.sr-only)::after { opacity: 1 !important; border: 0 !important; transform: none !important; }
 .sv2-sub input[type="checkbox"]:not(.sr-only):checked::after { transform: translateX(18px) !important; }

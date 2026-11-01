@@ -12,6 +12,35 @@ html body .fv2-page .financial-content .xl-head .button svg, html body .fv2-page
 
 /* cards */
 .mt-card { padding: 14px; border-radius: 24px; background: var(--fv-card); box-shadow: var(--fv-shadow); color: var(--fv-ink); min-width: 0; }
+.mt-finance-group { display: grid; gap: 10px; min-width: 0; padding: 12px; border: 1px solid var(--fv-line); border-radius: 30px; color: var(--fv-ink); background: var(--fv-soft); }
+.mt-income-group .mt-list { display: grid; gap: 8px; padding: 0; background: transparent; box-shadow: none; }
+.mt-income-group .mt-list > .mt-row { padding: 10px 12px; border: 1px solid var(--fv-line); border-radius: 20px; background: var(--fv-card); }
+.mt-income-group .mt-list > .mt-row + .mt-row { border-top: 1px solid var(--fv-line); }
+.mt-total, .mt-loan { position: relative; }
+.mt-nomi-sticker { position: absolute; top: 12px; right: 14px; display: grid; place-items: center; width: 54px; height: 54px; border: 2px solid rgba(255,255,255,.94); border-radius: 19px; background: linear-gradient(145deg,#e8f4ff,#f2edff); box-shadow: 0 5px 14px rgba(80,74,185,.12); transform: rotate(-6deg); animation: hv2Bob 3.2s ease-in-out infinite; pointer-events: none; }
+.mt-nomi-sticker svg { display: block; width: 46px; height: 46px; overflow: visible; }
+.mt-loan .mt-nomi-sticker { top: 58px; right: 18px; width: 48px; height: 48px; border-radius: 17px; }
+.mt-loan .mt-nomi-sticker svg { width: 42px; height: 42px; }
+.mt-loan { display: grid; gap: 12px; padding: 16px; border-radius: 26px; }
+.mt-loan-talk { display: flex; align-items: center; gap: 9px; min-width: 0; padding: 8px 10px; border: 1px solid #e9e4f8; border-radius: 20px; background: rgba(255,255,255,.58); }
+.mt-loan-nomi { display: grid; place-items: center; width: 44px; height: 44px; flex: 0 0 44px; animation: mtNomiBob 3.2s ease-in-out infinite; cursor: pointer; }
+.mt-loan-nomi .hv2-buddy { width: 100%; height: 100%; }
+.mt-loan-say { position: relative; min-width: 0; padding: 8px 12px; border: 1px solid #e9e4f8; border-radius: 16px 16px 16px 5px; color: var(--fv-ink); background: #fff; font-size: .78rem; font-weight: 600; line-height: 1.4; }
+.mt-loan-say::before { content: ""; position: absolute; left: -5px; bottom: 10px; width: 8px; height: 8px; border-left: 1px solid #e9e4f8; border-bottom: 1px solid #e9e4f8; background: #fff; transform: rotate(45deg); }
+html:root:not([data-theme="light"]) .mt-loan-talk { border-color: var(--fv-line); background: rgba(255,255,255,.045); }
+html:root:not([data-theme="light"]) .mt-loan-say { border-color: var(--fv-line); }
+@keyframes mtNomiBob { 50% { transform: translateY(-3px); } }
+.mt-loan .mt-tags { margin-top: -4px; padding-right: 54px; }
+.mt-loan-progress { padding: 12px; border: 1px solid var(--fv-line); border-radius: 22px; background: var(--fv-soft); }
+.mt-loan-progress .mt-hero { margin-top: 0; }
+.mt-loan-payment { display: grid; gap: 10px; padding: 12px; border-radius: 22px; background: var(--fv-soft); }
+.mt-loan-payment .mt-next { margin: 0; border-style: solid; border-color: var(--fv-line); background: var(--fv-card); }
+.mt-loan-payment .mt-btn.is-wide { margin-top: 0; }
+.mt-loan-more { display: grid; gap: 8px; }
+.mt-loan-more .mt-acc { margin: 0; overflow: hidden; border: 1px solid var(--fv-line); border-radius: 18px; background: var(--fv-soft); }
+.mt-loan-more .mt-acc > summary { padding: 12px 14px; color: var(--fv-ink); }
+.mt-loan-more .mt-kv { padding: 0 12px 12px; }
+.mt-loan-more .mt-sched { padding: 0 10px 10px; }
 .mt-card small { color: var(--fv-ink2); }
 .mt-big { display: block; font-size: 1.75rem; font-weight: 800; line-height: 1.2; color: var(--fv-ink); }
 .mt-total > small { display: block; font-size: 0.78rem; }
@@ -148,7 +177,7 @@ html body .fv2-page .financial-content .financial-report-export-actions .finance
 html body .fv2-page .financial-content .financial-report-month input { min-height: 40px; border: 0 !important; border-radius: 12px !important; color: var(--fv-ink) !important; background: var(--fv-soft) !important; }
 html body .fv2-page .financial-content .financial-report-metadata > div, html body .fv2-page .financial-content .financial-report-metric { border: 0 !important; border-radius: 16px !important; color: var(--fv-ink) !important; background: var(--fv-soft) !important; box-shadow: none !important; }
 html body .fv2-page .financial-content .financial-report-table-wrap { border: 0 !important; border-radius: 16px !important; background: var(--fv-soft) !important; }
-@media (prefers-reduced-motion: reduce) { .mt-stack i, .mt-menu { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .mt-stack i, .mt-menu, .mt-nomi-sticker, .mt-loan-nomi { animation: none; } }
 
 /* ---------- savings (draft 24 Oct) ---------- */
 .sv-total { position: relative; overflow: hidden; padding: 16px; border-radius: 26px; color: var(--fv-on); background: var(--fv-grad); box-shadow: var(--fv-glow); }

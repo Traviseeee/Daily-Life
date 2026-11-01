@@ -82,14 +82,28 @@
 .fv2-loan .fv2-mini-icon { color: var(--fv-violet); background: var(--fv-violet-bg); }
 
 /* sections */
-.fv2-section { display: grid; gap: 8px; }
-.fv2-section-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 4px 4px 0; }
-.fv2-section-head h2 { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 1.02rem; font-weight: 700; color: var(--fv-ink); }
+.fv2-section { display: grid; min-width: 0; padding: 14px; border: 1px solid #ebe8f4; border-radius: 24px; background: #f8f6fc; }
+.fv2-section-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 38px; margin: 0 2px 12px; padding: 0; border: 0; }
+.fv2-section-head h2 { display: flex; align-items: center; gap: 10px; margin: 0; font-size: 1.02rem; font-weight: 700; color: var(--fv-ink); }
+.fv2-section-icon { display: grid; place-items: center; width: 32px; height: 32px; flex: 0 0 auto; border-radius: 11px; background: #eaf6ff; font-size: .95rem; }
 .fv2-section-head a { font-size: 0.82rem; font-weight: 600; color: var(--fv-acc-ink) !important; }
 .fv2-badge { display: inline-grid; place-items: center; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 99px; font-size: 0.74rem; color: var(--fv-amber); background: var(--fv-amber-bg); }
-.fv2-card { display: grid; padding: 6px 16px; border-radius: 24px; background: var(--fv-card); box-shadow: var(--fv-shadow); min-width: 0; }
+.fv2-card { display: grid; padding: 4px 14px; border: 1px solid rgba(231, 226, 243, .78); border-radius: 24px; background: #fff; box-shadow: none; min-width: 0; }
+.fv2-section-body { min-width: 0; }
+.fv2-quick-section { display: grid; gap: 0; }
+.fv2-quick-section .fv2-section-head { margin: 0 2px 12px; }
+.fv2-quick-card { min-width: 0; padding: 12px 14px; border-radius: 24px; background: #fff; }
 .fv2-card > .glass-card, .fv2-card .xl-groups { background: none; box-shadow: none; }
 .fv2-card .xl-recent-note { margin: 10px 0 4px; }
+/* Finance section groups borrow Home's lavender shell + white inset card. */
+html:root[data-theme="light"] body:has(#app .fv2-page) .fv2-section { padding: 14px !important; border: 1px solid #ebe8f4 !important; border-radius: 24px !important; background: #f8f6fc !important; box-shadow: none !important; }
+html:root[data-theme="light"] body:has(#app .fv2-page) .fv2-section > .fv2-card { display: contents !important; padding: 0 !important; border: 0 !important; border-radius: 0 !important; background: transparent !important; box-shadow: none !important; }
+html:root[data-theme="light"] body:has(#app .fv2-page) .fv2-section-head { margin: 0 2px 12px !important; padding: 0 !important; border: 0 !important; }
+html:root[data-theme="light"] body:has(#app .fv2-page) .fv2-section-icon { width: 32px; height: 32px; border-radius: 11px; background: #eaf6ff; }
+html:root[data-theme="light"] body:has(#app .fv2-page) .fv2-section-body:has(> .fv2-item) { display: grid; gap: 10px; }
+html:root[data-theme="light"] body:has(#app .fv2-page) .fv2-section-body > .fv2-item { min-height: 76px; padding: 11px 14px; border: 1px solid #ebe8f4; border-radius: 24px; background: #fff; }
+html:root[data-theme="light"] body:has(#app .fv2-page) .fv2-section-body > .fv2-item + .fv2-item { border-top: 1px solid #ebe8f4; }
+html:root[data-theme="light"] body:has(#app .fv2-page) .fv2-section-body { display: grid; gap: 10px; }
 
 .fv2-item { display: flex; align-items: center; gap: 12px; padding: 11px 0; min-width: 0; }
 .fv2-item + .fv2-item, .fv2-cat + .fv2-cat { border-top: 1px solid var(--fv-line); }
