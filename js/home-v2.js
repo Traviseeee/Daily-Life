@@ -534,7 +534,7 @@ const HomeV2 = (() => {
     return `<div class="hv2-body hv2-v3">
         ${alerts(d)}
         ${money(d)}
-        ${quick()}
+        <section class="hv2-group hv2-quick-group">${quick()}</section>
         ${icHead(schedule(d), "📅")}
         ${focus}
         <section class="hv2-me"><div class="hv2-sec" data-ic="💜"><b>${escapeHtml(L("ខ្ញុំថ្ងៃនេះ", "Me today"))}</b></div>
@@ -555,7 +555,7 @@ const HomeV2 = (() => {
         ${focusCard(d)}
         ${moodCard(d)}
         ${reflection(d)}`}
-        ${typeof MemoryFeed !== "undefined" ? `<div class="hv2-sec"${lav() ? ' data-ic="📸"' : ""}><b>${escapeHtml(L("អនុស្សាវរីយ៍គ្រួសារ", "Family memories"))}</b><a class="hv2-link" href="#memories">${escapeHtml(L("ទាំងអស់", "All"))} ›</a></div>${MemoryFeed.familyTeaser()}` : ""}
+        ${typeof MemoryFeed !== "undefined" ? `<section class="hv2-group hv2-memory-group"><div class="hv2-sec"${lav() ? ' data-ic="📸"' : ""}><b>${escapeHtml(L("អនុស្សាវរីយ៍គ្រួសារ", "Family memories"))}</b><a class="hv2-link" href="#memories">${escapeHtml(L("ទាំងអស់", "All"))} ›</a></div>${MemoryFeed.familyTeaser()}</section>` : ""}
       </div>
     </section>`;
   }

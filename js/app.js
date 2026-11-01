@@ -810,7 +810,17 @@ const App = {
           excited: { label: t("moodExcited"), robot: t("moodMotivated") }
         };
         const choice = moodMap[moodButton.dataset.mood];
-        if (choice) Store.updateMood({ value: moodButton.dataset.mood, ...choice });
+        if (choice) {
+          Store.updateMood({ value: moodButton.dataset.mood, ...choice });
+          requestAnimationFrame(() => {
+            const selected = document.querySelector(".hv2-mood-btn.is-on");
+            if (!selected) return;
+            selected.classList.remove("is-mood-change");
+            void selected.offsetWidth;
+            selected.classList.add("is-mood-change");
+            window.setTimeout(() => selected.classList.remove("is-mood-change"), 1160);
+          });
+        }
       }
 
       const target = event.target.closest("button, a, input, textarea, select, .mood-option, .home-action, .suggestion-button");
