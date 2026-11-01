@@ -57,15 +57,13 @@ const LauncherV2 = (() => {
     const today = launcherBadge("today");
     const plain = value => String(money(Math.abs(value))).replace(/<[^>]*>/g, "");
     const pct = m.income > 0 ? Math.min(100, Math.round((m.expenses / m.income) * 100)) : 0;
-    const iso = localDateInput();
-    const spentToday = (appData.expenses || []).filter(item => item.date === iso).reduce((t, item) => t + (typeof toProfileCurrency === "function" ? toProfileCurrency(item.amount, item.currency) : Number(item.amount) || 0), 0);
-    const waiting = typeof MoneyAsk !== "undefined" && appData.profile.moneyAsk !== false ? MoneyAsk.items().length : 0;
-    return `<div class="lv-sec"><b>${escapeHtml(L("លុយខែនេះ", "Money this month"))}</b><a href="#money">${escapeHtml(L("មើលលម្អិត ›", "Details ›"))}</a></div>
-      <a class="lv-card lv-money" href="#money">
-        <span class="lv-ring" style="--p:${pct}%"><i>${pct}%</i></span>
-        <span class="lv-money-tx"><small>${escapeHtml(m.left < 0 ? L("ខ្វះ", "Short") : L("នៅសល់សម្រាប់ចាយ", "Left to spend"))}</small><b class="money-value${m.left < 0 ? " is-neg" : ""}" data-private-money>${escapeHtml(plain(m.left))}</b>
-          <span class="lv-chips"><em>${escapeHtml(L("ថ្ងៃនេះ", "Today"))} <span class="money-value" data-private-money>${escapeHtml(plain(spentToday))}</span></em>${today?.text ? `<em class="is-day">${escapeHtml(today.text)}</em>` : ""}${waiting ? `<em class="is-warn">${escapeHtml(L(`${waiting} រង់ចាំឆ្លើយ`, `${waiting} waiting`))}</em>` : ""}</span></span>
-      </a>`;
+    const now = new Date();
+    const dayLabel = km() ? `${now.getDate()} ${KM_M[now.getMonth()]}` : now.toLocaleDateString("en-US", { day: "numeric", month: "short" });
+    const todayText = today?.tone === "muted" ? L("ថ្ងៃនេះទំនេរ 🌿", "Free today 🌿") : today?.text || L("បន្ថែមផែនការថ្ងៃនេះ", "Add a plan for today");
+    return `<div class="lv-sum">
+      <a class="lv-sc is-main" href="#today"><small>${escapeHtml(L("ថ្ងៃនេះ", "Today"))}</small><b>${escapeHtml(dayLabel)}</b><em>${escapeHtml(todayText)}</em></a>
+      <a class="lv-sc lv-sc-money" href="#money"><small>${escapeHtml(L("លុយខែនេះ", "Money this month"))}</small><b class="money-value${m.left < 0 ? " is-neg" : ""}" data-private-money>${escapeHtml(plain(m.left))}</b><em>${escapeHtml(m.left < 0 ? L("ខ្វះ · មើលលម្អិត ›", "Short · Details ›") : L("នៅសល់សម្រាប់ចាយ · មើល ›", "Left to spend · View ›"))}</em><span class="lv-progress" aria-label="${pct}% ${escapeAttr(L("បានចាយ", "spent"))}"><i style="width:${pct}%"></i></span></a>
+    </div>`;
   }
 
   function upcoming() {
@@ -91,9 +89,9 @@ const LauncherV2 = (() => {
   }
 
   function quickAdd() {
-    const actions = [["add-event", "📅", L("ព្រឹត្តិការណ៍", "Event")], ["add-expense", "💸", L("ចំណាយ", "Expense")], ["add-memory", "📸", L("អនុស្សាវរីយ៍", "Memory")], ["add-bill", "🧾", L("វិក្កយបត្រ", "Bill")]];
+    const actions = [["add-expense", "money", "💸", L("ចំណាយ", "Expense")], ["add-event", "calendar", "📅", L("ព្រឹត្តិការណ៍", "Event")], ["add-bill", "bill", "🧾", L("វិក្កយបត្រ", "Bill")], ["add-memory", "memory", "📸", L("អនុស្សាវរីយ៍", "Memory")]];
     return `<div class="lv-sec"><b>${escapeHtml(L("បន្ថែមរហ័ស", "Quick add"))}</b><button type="button" class="lv-link" data-footer-edit aria-pressed="false">${escapeHtml(L("រៀបចំ footer ›", "Arrange footer ›"))}</button></div>
-      <div class="lv-qa">${actions.map(([id, icon, label], i) => `<button type="button" class="lv-q" data-launcher-quick="${id}"><i${lav() ? ` class="lv-qi is-c${i + 1}"` : ""}>${lav() ? Icons[["calendar", "money", "memory", "bill"][i]]() : icon}</i><span>${escapeHtml(label)}</span></button>`).join("")}</div>`;
+      <div class="lv-qa">${actions.map(([id, iconKey, icon, label], i) => `<button type="button" class="lv-q" data-launcher-quick="${id}"><i${lav() ? ` class="lv-qi is-c${i + 1}"` : ""}>${lav() ? Icons[iconKey]() : icon}</i><span>${escapeHtml(label)}</span></button>`).join("")}</div>`;
   }
 
   function render() {
@@ -105,9 +103,9 @@ const LauncherV2 = (() => {
       <div class="lv-body">
         ${moneyRing()}
         <section class="footer-editor" data-footer-editor hidden></section>
-        ${upcoming()}
         ${quickAdd()}
         ${grid}
+        ${upcoming()}
       </div>
     </section>`;
     return `<section class="launcher-page page lv2">
@@ -115,10 +113,10 @@ const LauncherV2 = (() => {
       <div class="lv-body">
         ${widgets()}
         <section class="footer-editor" data-footer-editor hidden></section>
+        ${quickAdd()}
         <div class="lv-sec"><b>${escapeHtml(L("កម្មវិធីទាំងអស់", "All apps"))}</b></div>
         <nav class="app-grid lv-grid" aria-label="App tools">${ORDER.map(id => all.find(route => route.id === id)).filter(Boolean).map(launcherTool).join("")}</nav>
         ${upcoming()}
-        ${quickAdd()}
       </div>
     </section>`;
   }
