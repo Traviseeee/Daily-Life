@@ -25,12 +25,15 @@
   html:root[data-theme="light"] .hv2-hero :is(.hv2-wx, .hv2-bell, .hv2-top .hv2-menu) { color: #fff !important; background: rgba(255,255,255,.2) !important; border: 1px solid rgba(255,255,255,.28) !important; box-shadow: none !important; }
   html:root[data-theme="light"] .hv2-hero .hv2-wx * { color: #fff !important; }
   html:root[data-theme="light"] .hv2-hero .hv2-avatar-face { border-color: #fff !important; }
+  html:root[data-theme="light"] .hv2-hero .hv2-top { position: relative; z-index: 4; min-width: 0; }
   html:root[data-theme="light"] .hv2-hero-buddy { position: absolute; right: 16px; bottom: 64px; z-index: 3; width: 64px; height: 64px; padding: 0; border: 0; background: none; cursor: pointer; animation: hv2Bob 3.2s ease-in-out infinite; -webkit-tap-highlight-color: transparent; }
   html:root[data-theme="light"] .hv2-hero-buddy.is-hop .hv2-buddy { animation: hv2Hop .5s ease; }
   @keyframes hv2Hop { 30% { transform: translateY(-10px) rotate(-6deg); } 60% { transform: translateY(0) rotate(4deg); } }
   /* Nomi's speech bubble: shows for a few seconds, again on every tap */
   html:root[data-theme="light"] .hv2-say { position: absolute; right: calc(100% + 6px); top: 2px; width: max-content; max-width: 200px; padding: 8px 12px; border-radius: 16px 16px 4px 16px; font-size: .72rem; font-weight: 600; line-height: 1.4; text-align: left; white-space: normal; color: #3f37a8; background: #fff; pointer-events: none; animation: hv2Say 6s ease forwards; }
   html:root[data-theme="light"] .hv2-say.is-pop { animation: hv2Say 5s ease forwards; }
+  html:root[data-theme="light"] .hv2-hero-buddy .hv2-say { top: 54px !important; right: calc(100% + 8px); max-width: clamp(130px, 34vw, 180px); }
+  @media (max-width: 900px) { html:root[data-theme="light"] .hv2-hero-buddy .hv2-say { top: 12px !important; } }
   @keyframes hv2Say { 0% { opacity: 0; transform: translateY(6px) scale(.9); } 8%, 85% { opacity: 1; transform: none; } 100% { opacity: 0; transform: translateY(-4px); } }
   html:root[data-theme="light"] .hv2-buddy { display: block; width: 100%; height: 100%;  }
   @keyframes hv2Bob { 50% { transform: translateY(-4px); } }
@@ -49,6 +52,7 @@
   html:root[data-theme="light"] .hv2-head.is-lav .hv2-day { color: var(--lv-ink) !important; background: transparent !important; box-shadow: none !important; }
   html:root[data-theme="light"] .hv2-head.is-lav .hv2-day small { color: #9a97b8 !important; }
   html:root[data-theme="light"] .hv2-head.is-lav .hv2-day.is-today { color: #fff !important; background: linear-gradient(160deg, #504AB9, #7f74d6) !important; box-shadow: none !important; }
+  html:root[data-theme="light"] .hv2-head.is-lav .hv2-day.is-today { transform: none !important; }
   html:root[data-theme="light"] .hv2-head.is-lav .hv2-day.is-today small { color: #e4defc !important; }
   html:root[data-theme="light"] .hv2-head.is-lav .hv2-day i.has { background: var(--lv-p) !important; }
   html:root[data-theme="light"] .hv2-head.is-lav .hv2-day.is-today i.has { background: #fff !important; }
@@ -344,6 +348,8 @@
   html:root:not([data-theme="light"]) 60% { transform: translateY(0) rotate(4deg); }
   html:root:not([data-theme="light"]) .hv2-say { position: absolute; right: calc(100% + 6px); top: 2px; width: max-content; max-width: 200px; padding: 8px 12px; border-radius: 16px 16px 4px 16px; font-size: .72rem; font-weight: 600; line-height: 1.4; text-align: left; white-space: normal; color: #3f37a8; background: #fff; pointer-events: none; animation: hv2Say 6s ease forwards; }
   html:root:not([data-theme="light"]) .hv2-say.is-pop { animation: hv2Say 5s ease forwards; }
+  html:root:not([data-theme="light"]) .hv2-hero-buddy .hv2-say { top: 54px !important; right: calc(100% + 8px); max-width: clamp(130px, 34vw, 180px); }
+  @media (max-width: 900px) { html:root:not([data-theme="light"]) .hv2-hero-buddy .hv2-say { top: 12px !important; } }
   html:root:not([data-theme="light"]) 0% { opacity: 0; transform: translateY(6px) scale(.9); }
   html:root:not([data-theme="light"]) 8%, html:root:not([data-theme="light"]) 85% { opacity: 1; transform: none; }
   html:root:not([data-theme="light"]) 100% { opacity: 0; transform: translateY(-4px); }
@@ -360,6 +366,7 @@
   html:root:not([data-theme="light"]) .hv2-head.is-lav .hv2-day { color: var(--lv-ink) !important; background: transparent !important; box-shadow: none !important; }
   html:root:not([data-theme="light"]) .hv2-head.is-lav .hv2-day small { color: #9a97b8 !important; }
   html:root:not([data-theme="light"]) .hv2-head.is-lav .hv2-day.is-today { color: #fff !important; background: linear-gradient(160deg, #504AB9, #7f74d6) !important; box-shadow: none !important; }
+  html:root:not([data-theme="light"]) .hv2-head.is-lav .hv2-day.is-today { transform: none !important; }
   html:root:not([data-theme="light"]) .hv2-head.is-lav .hv2-day.is-today small { color: rgba(182,168,255,.14) !important; }
   html:root:not([data-theme="light"]) .hv2-head.is-lav .hv2-day i.has { background: var(--lv-p) !important; }
   html:root:not([data-theme="light"]) .hv2-head.is-lav .hv2-day.is-today i.has { background: #2e2956 !important; }
@@ -568,6 +575,30 @@
 @media (min-width: 901px) {
   html:root:not([data-theme="light"]) .hv2 .hv2-hero-buddy { width: 96px; height: 96px; }
 }
+/* At phone/tablet widths, place the stat tiles below the hero; wider layouts overlap them. */
+@media (max-width: 768px) {
+  html:root[data-theme="light"] .hv2-hero,
+  html:root:not([data-theme="light"]) .hv2-hero { padding-bottom: 28px; }
+  html:root[data-theme="light"] .hv2-hero::before,
+  html:root:not([data-theme="light"]) .hv2-hero::before { inset-block-end: 0; }
+  html:root[data-theme="light"] .hv2-stats,
+  html:root:not([data-theme="light"]) .hv2-stats { margin-top: 0; }
+  html:root[data-theme="light"] .hv2-hero-buddy,
+  html:root:not([data-theme="light"]) .hv2-hero-buddy { bottom: 6px; }
+}
+/* Compact phone reference: return the stat cards to the lower hero edge. */
+@media (max-width: 430px) {
+  html:root[data-theme="light"] .hv2-hero,
+  html:root:not([data-theme="light"]) .hv2-hero { padding-bottom: 86px; }
+  html:root[data-theme="light"] .hv2-hero::before,
+  html:root:not([data-theme="light"]) .hv2-hero::before { inset-block-end: -40px; }
+  html:root[data-theme="light"] .hv2-stats,
+  html:root:not([data-theme="light"]) .hv2-stats { margin-top: -58px; }
+  html:root[data-theme="light"] .hv2-hero-buddy,
+  html:root:not([data-theme="light"]) .hv2-hero-buddy { bottom: 64px; }
+  html:root[data-theme="light"] .hv2-hero-buddy .hv2-say,
+  html:root:not([data-theme="light"]) .hv2-hero-buddy .hv2-say { top: 28px !important; }
+}
 
 /* Money card bottom (31 Oct, draft A): budget row + 3 small tiles with icons, both themes */
 @media all {
@@ -591,6 +622,9 @@
 @media all {
   .hv2-v3 { display: grid; gap: 12px; }
   .hv2-v3 > * { margin-top: 0 !important; margin-bottom: 0 !important; }
+  .hv2-v3 .hv2-group { padding: 14px; border: 1px solid #ebe8f4; border-radius: 24px; background: #f8f6fc; }
+  .hv2-v3 .hv2-group > .hv2-sec { margin: 0 2px 12px !important; }
+  .hv2-v3 .hv2-group > .hv2-card { margin: 0 !important; }
   .hv2-v3 .hv2-sec { display: flex; align-items: center; gap: 10px; margin: 10px 2px -2px !important; }
   .hv2-v3 .hv2-sec[data-ic]::before { content: attr(data-ic); display: grid; place-items: center; width: 32px; height: 32px; flex: 0 0 auto; border-radius: 11px; background: #f1eeff; font-size: .95rem; }
   .hv2-v3 .hv2-sec[data-ic="📅"]::before { background: #eaf6ff; }
@@ -607,10 +641,12 @@
   .hv2-v3 .hv2-fx.all-done:not(.is-open) :is(.hv2-cats, .hv2-cat-panel) { display: none; }
   .hv2-v3 .hv2-fx.all-done:not(.is-open) .fx-head::after { content: "▾"; margin-left: 6px; color: #7a7698; }
   /* me today: mood + reflection inside one card */
-  .hv2-v3 .hv2-me { display: grid; gap: 12px; padding: 14px; border: 1px solid #ebe8f4; background: #fff; }
+  .hv2-v3 .hv2-me { display: grid; gap: 12px; padding: 14px; border: 1px solid #ebe8f4; background: #f8f6fc; }
+  .hv2-v3 .hv2-me > .hv2-sec { margin: 0 2px 0 !important; }
   .hv2-v3 .hv2-me > :is(section, details) { margin: 0 !important; padding: 0 !important; border: 0 !important; border-radius: 0 !important; background: none !important; box-shadow: none !important; }
   .hv2-v3 .hv2-me .hv2-ask textarea { border-radius: 16px; }
   html:root:not([data-theme="light"]) .hv2-v3 .hv2-me { background: #2e2956; border-color: rgba(182,168,255,.18); }
+  html:root:not([data-theme="light"]) .hv2-v3 .hv2-group { background: #2e2956; border-color: rgba(182,168,255,.18); }
 }
 @media all {
   .hv2-v3 .hv2-sec > b:last-child { margin-left: 0 !important; }
@@ -621,4 +657,95 @@
 @media all {
   html:root .hv2-v3 .hv2-sec { justify-content: flex-start !important; }
   html:root .hv2.hv2 .hv2-v3 .hv2-me > :is(section, details, .hv2-card) { margin: 0 !important; padding: 0 !important; border: 0 !important; background: none !important; box-shadow: none !important; }
+}
+
+/* Rain forecast ticker: steady headline, two gently sliding details, Nomi sticker. */
+@media all {
+  .hv2-v3 .hv2-rain.has-ticker { gap: 12px; }
+  .hv2-v3 .hv2-rain.has-ticker .hv2-tl-text { display: grid; min-width: 0; gap: 3px; }
+  .hv2-v3 .hv2-rain.has-ticker .hv2-tl-text > b { overflow: hidden; color: #202b50; font-size: .9rem; line-height: 1.35; white-space: nowrap; text-overflow: ellipsis; }
+  .hv2-v3 .hv2-rain-nomi { position: relative; overflow: visible; }
+  .hv2-v3 .hv2-rain-nomi .hv2-buddy { position: relative; z-index: 1; display: block; width: 44px; height: 44px; }
+  .hv2-v3 .hv2-rain-nomi > i { position: absolute; z-index: 4; right: -4px; bottom: -3px; display: grid; place-items: center; width: 21px; height: 21px; border: 2px solid #fff; border-radius: 50%; color: #2879e9; background: #eaf3ff; font-size: .72rem; font-style: normal; }
+  .hv2-v3 .hv2-rain-drops { position: absolute; z-index: 2; inset: -5px 0 auto; height: 54px; pointer-events: none; }
+  .hv2-v3 .hv2-rain-drops i { position: absolute; top: 0; width: 4px; height: 10px; border-radius: 99px; background: #3295e6; opacity: 0; transform: rotate(18deg); animation: hv2NomiRaindrop 1.15s ease-in infinite; }
+  .hv2-v3 .hv2-rain-drops i:nth-child(1) { left: 12%; animation-delay: 0s; }
+  .hv2-v3 .hv2-rain-drops i:nth-child(2) { left: 49%; animation-delay: .38s; }
+  .hv2-v3 .hv2-rain-drops i:nth-child(3) { left: 84%; animation-delay: .76s; }
+  .hv2-v3 .hv2-rain-ticker { display: block; height: 24px; overflow: hidden; color: #2863df; }
+  .hv2-v3 .hv2-rain-ticker-track { display: flex; width: 300%; animation: hv2RainTicker 12s cubic-bezier(.45,0,.2,1) infinite; }
+  .hv2-v3 .hv2-rain-ticker-track small { display: block; flex: 0 0 33.3333%; width: 33.3333%; overflow: hidden; height: 24px; color: inherit !important; font-size: .8rem; font-weight: 650; line-height: 24px; white-space: nowrap; text-overflow: ellipsis; }
+  .hv2-v3 .hv2-holiday.has-ticker { gap: 12px; }
+  .hv2-v3 .hv2-holiday.has-ticker .hv2-tl-text { display: grid; min-width: 0; gap: 3px; }
+  .hv2-v3 .hv2-holiday.has-ticker .hv2-tl-text > b { color: #202b50; font-size: .9rem; line-height: 1.35; }
+  .hv2-v3 .hv2-calendar-nomi { position: relative; overflow: visible; }
+  .hv2-v3 .hv2-calendar-nomi .hv2-buddy { position: relative; z-index: 1; display: block; width: 44px; height: 44px; }
+  .hv2-v3 .hv2-calendar-nomi > i { position: absolute; z-index: 4; right: -4px; bottom: -3px; display: grid; place-items: center; width: 21px; height: 21px; border: 2px solid #fff; border-radius: 50%; background: #fff3dc; font-size: .72rem; font-style: normal; }
+  .hv2-v3 .hv2-holiday-ticker { color: #6758d6; }
+  html:root:not([data-theme="light"]) .hv2-v3 .hv2-rain.has-ticker .hv2-tl-text > b { color: #f4f2ff; }
+  html:root:not([data-theme="light"]) .hv2-v3 .hv2-holiday.has-ticker .hv2-tl-text > b { color: #f4f2ff; }
+  html:root:not([data-theme="light"]) .hv2-v3 .hv2-rain-ticker { color: #a9cdf5; }
+  html:root:not([data-theme="light"]) .hv2-v3 .hv2-rain-nomi > i { border-color: #2e2956; color: #a9cdf5; background: rgba(169,205,245,.18); }
+  html:root:not([data-theme="light"]) .hv2-v3 .hv2-calendar-nomi > i { border-color: #2e2956; background: rgba(182,168,255,.18); }
+  html:root:not([data-theme="light"]) .hv2-v3 .hv2-holiday-ticker { color: #c9bdff; }
+}
+@media all {
+  .hv2-v3 .hv2-rain.has-ticker { position: relative; overflow: hidden; animation: hv2RainCardReveal 650ms cubic-bezier(.2,.75,.25,1) both; }
+  .hv2-v3 .hv2-rain.has-ticker .hv2-tl-text { padding-left: 66px; }
+  .hv2-v3 .hv2-rain.has-ticker .hv2-rain-nomi { position: absolute; z-index: 2; top: 50%; left: calc(100% - 72px); width: 54px; height: 54px; transform: translateY(-50%); animation: hv2RainNomiRun 2.4s cubic-bezier(.22,.72,.26,1) both; }
+  .hv2-v3 .hv2-rain-nomi .hv2-buddy { width: 52px; height: 52px; }
+  .hv2-v3 .hv2-rain.has-ticker .hv2-tl-text > b { opacity: 0; animation: hv2RainTextReveal 520ms ease 2.45s both; }
+  .hv2-v3 .hv2-rain.has-ticker .hv2-rain-ticker { opacity: 0; animation: hv2RainTextReveal 520ms ease 2.8s both; }
+  .hv2-v3 .hv2-rain.has-ticker .hv2-tag { opacity: 0; animation: hv2RainTextReveal 450ms ease 3.05s both; }
+  html:root[data-theme="light"] body .hv2-v3 .hv2-rain-nomi { width: 54px !important; height: 54px !important; border-radius: 18px !important; }
+  html:root:not([data-theme="light"]) body .hv2-v3 .hv2-rain-nomi { width: 54px !important; height: 54px !important; border-radius: 18px !important; }
+}
+@media all {
+  .hv2-v3 .hv2-calendar-item.has-ticker { position: relative; overflow: hidden; gap: 12px; animation: hv2RainCardReveal 650ms cubic-bezier(.2,.75,.25,1) both; }
+  .hv2-v3 .hv2-calendar-item.has-ticker .hv2-calendar-nomi { position: absolute; z-index: 2; top: 50%; left: calc(100% - 72px); width: 54px !important; height: 54px !important; transform: translateY(-50%); animation: hv2RainNomiRun 2.4s cubic-bezier(.22,.72,.26,1) both; }
+  .hv2-v3 .hv2-calendar-nomi .hv2-buddy { width: 52px; height: 52px; }
+  .hv2-v3 .hv2-calendar-item.has-ticker .hv2-tl-text { display: grid; min-width: 0; gap: 3px; padding-left: 66px; }
+  .hv2-v3 .hv2-calendar-item.has-ticker .hv2-tl-text > b { overflow: hidden; color: #202b50; font-size: .9rem; line-height: 1.35; white-space: nowrap; text-overflow: ellipsis; opacity: 0; animation: hv2RainTextReveal 520ms ease 2.45s both; }
+  .hv2-v3 .hv2-calendar-item.has-ticker .hv2-rain-ticker { opacity: 0; animation: hv2RainTextReveal 520ms ease 2.8s both; }
+  html:root:not([data-theme="light"]) .hv2-v3 .hv2-calendar-item.has-ticker .hv2-tl-text > b { color: #f4f2ff; }
+}
+@keyframes hv2RainCardReveal {
+  from { opacity: 0; transform: translateY(8px) scale(.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes hv2RainNomiRun {
+  0% { left: calc(100% - 72px); transform: translateY(-50%) scale(.82); }
+  78% { left: 14px; transform: translateY(-50%) scale(1.08); }
+  90%, 100% { left: 14px; transform: translateY(-50%) scale(1); }
+}
+@keyframes hv2NomiRaindrop {
+  0% { opacity: 0; transform: translateY(-4px) rotate(18deg); }
+  25% { opacity: .95; }
+  100% { opacity: 0; transform: translateY(44px) rotate(18deg); }
+}
+@keyframes hv2RainTextReveal {
+  from { opacity: 0; transform: translateX(10px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes hv2RainTicker {
+  0%, 24% { transform: translateX(0); }
+  32%, 40% { transform: translateX(-33.3333%); }
+  48%, 72% { transform: translateX(-33.3333%); }
+  80%, 100% { transform: translateX(-66.6667%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hv2-v3 .hv2-rain-ticker-track,
+  .hv2-v3 .hv2-rain.has-ticker,
+  .hv2-v3 .hv2-rain-nomi .hv2-buddy,
+  .hv2-v3 .hv2-rain.has-ticker .hv2-tl-text > b,
+  .hv2-v3 .hv2-rain.has-ticker .hv2-rain-ticker,
+  .hv2-v3 .hv2-rain.has-ticker .hv2-tag,
+  .hv2-v3 .hv2-calendar-item.has-ticker,
+  .hv2-v3 .hv2-calendar-item.has-ticker .hv2-calendar-nomi,
+  .hv2-v3 .hv2-calendar-item.has-ticker .hv2-tl-text > b,
+  .hv2-v3 .hv2-calendar-item.has-ticker .hv2-rain-ticker { animation: none; opacity: 1; transform: none; }
+  .hv2-v3 .hv2-rain-drops i { animation: none; opacity: 1; transform: rotate(18deg); }
+  .hv2-v3 .hv2-rain.has-ticker .hv2-rain-nomi { left: 14px; transform: translateY(-50%); }
+  .hv2-v3 .hv2-calendar-item.has-ticker .hv2-calendar-nomi { left: 14px; transform: translateY(-50%); }
+  .hv2-v3 .hv2-rain-ticker-track small:nth-child(n+2) { display: none; }
 }
