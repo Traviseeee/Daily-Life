@@ -394,12 +394,20 @@ const TopbarWeather = (() => {
     const range = to - from > 1 ? `${hourLabel(from)}–${hourLabel(to % 24)}` : hourLabel(from);
     return {
       title: km() ? "ថ្ងៃនេះអាចភ្លៀង" : "Rain likely today",
-      detail: km() ? `ប្រហែល ${range} · ${top}% · កុំភ្លេចឆ័ត្រ` : `Around ${range} · ${top}% · bring an umbrella`
+        detail: km() ? `ប្រហែល ${range} · ${top}% · កុំភ្លេចឆ័ត្រ` : `Around ${range} · ${top}% · bring an umbrella`,
+        ticker: km() ? [`${range} · ${top}%`, "កុំភ្លេចឆ័ត្រ"] : [`${range} · ${top}% chance`, "Bring an umbrella"]
     };
   }
   function rainRowHtml() {
     const alert = rainAlert();
     if (!alert) return "";
+    if (alert.ticker) {
+      const nomi = typeof HomeV2 !== "undefined" && HomeV2.buddy ? HomeV2.buddy("calm") : "☂";
+      const rainDrops = '<span class="hv2-rain-drops" aria-hidden="true"><i></i><i></i><i></i></span>';
+      const headline = km() ? "ថ្ងៃនេះអាចភ្លៀង" : "Rain likely today";
+      const tickerLabel = alert.ticker.join(" · ");
+      return `<button type="button" class="hv2-tl-row hv2-rain has-ticker" data-wx-open aria-label="${esc(`${headline}. ${tickerLabel}`)}"><span class="hv2-tl-time hv2-rain-ic hv2-rain-nomi" aria-hidden="true">${nomi}${rainDrops}<i>☔</i></span><span class="hv2-tl-text"><b>${esc(headline)}</b><span class="hv2-rain-ticker" aria-hidden="true"><span class="hv2-rain-ticker-track"><small>🌦 ${esc(alert.ticker[0])}</small><small>☂ ${esc(alert.ticker[1])}</small><small>🌦 ${esc(alert.ticker[0])}</small></span></span></span><span class="hv2-tag is-rain">${esc(km() ? "ភ្លៀង" : "Rain")}</span></button>`;
+    }
     return `<button type="button" class="hv2-tl-row hv2-rain" data-wx-open><span class="hv2-tl-time hv2-rain-ic" aria-hidden="true">☂</span><span class="hv2-tl-text"><b>${esc(alert.title)}</b><small>${esc(alert.detail)}</small></span><span class="hv2-tag is-rain">${esc(km() ? "ភ្លៀង" : "Rain")}</span></button>`;
   }
   // weather loaded after Home was drawn: add / drop the row without redrawing the page

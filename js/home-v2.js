@@ -391,10 +391,16 @@ const HomeV2 = (() => {
       const time = item.date === d.todayIso ? (clock(item.time) || L("ពេញថ្ងៃ", "All day")) : (() => { const date = new Date(`${item.date}T00:00:00`); return `${date.getDate()} ${km() ? KM_MONTHS[date.getMonth()] : date.toLocaleDateString("en-US", { month: "short" })}`; })();
       const sub = item.amount ? plainMoney(item.amount, item.currency) : (item.categoryLabel || "");
       const ic = { bill: "🧾", family: "👨‍👩‍👧", reminder: "🔔", holiday: "🎉", event: "📅" }[kind] || "📅";
+      if (lav()) {
+        const sticker = buddy(kind === "holiday" ? "cheer" : "happy");
+        const details = [time, sub, L(kmTag, enTag)].filter(Boolean);
+        const aria = `${item.title || ""}. ${details.join(". ")}`;
+        return `<a class="hv2-tl-row hv2-calendar-item${kind === "holiday" ? " hv2-holiday" : ""} has-ticker" href="${escapeAttr(item.href || "#calendar")}" aria-label="${escapeAttr(aria)}"><span class="hv2-tl-ic is-${tone} hv2-calendar-nomi" aria-hidden="true">${sticker}<i>${ic}</i></span><span class="hv2-tl-text"><b>${escapeHtml(item.title || "")}</b><span class="hv2-rain-ticker${kind === "holiday" ? " hv2-holiday-ticker" : ""}" aria-hidden="true"><span class="hv2-rain-ticker-track"><small>${escapeHtml(details[0] || "")}</small><small>${escapeHtml(details[1] || details[0] || "")}</small><small>${escapeHtml(details[2] || details[0] || "")}</small></span></span></span></a>`;
+      }
       return `<a class="hv2-tl-row" href="${escapeAttr(item.href || "#calendar")}">${lav() ? `<span class="hv2-tl-ic is-${tone}" aria-hidden="true">${ic}</span>` : ""}<span class="hv2-tl-time">${escapeHtml(time)}</span><span class="hv2-dot is-${tone}"></span><span class="hv2-tl-text"><b>${escapeHtml(item.title || "")}</b>${sub ? `<small>${escapeHtml(sub)}</small>` : ""}</span><span class="hv2-tag is-${tone}">${escapeHtml(L(kmTag, enTag))}</span></a>`;
     }).join("");
-    return `<div class="hv2-sec"><b>${escapeHtml(heading)}</b><a href="#calendar">${escapeHtml(L("ប្រតិទិន", "Calendar"))} ›</a></div>
-      <section class="hv2-card hv2-tl">${typeof TopbarWeather !== "undefined" && TopbarWeather.rainRowHtml ? TopbarWeather.rainRowHtml() : ""}${rows || `<button type="button" class="hv2-empty" data-action="add-event">${IC.cal()}<span>${escapeHtml(L("គ្មានអ្វីទេ — ចុចបន្ថែមព្រឹត្តិការណ៍", "Nothing planned — tap to add an event"))}</span></button>`}</section>`;
+    return `<section class="hv2-group hv2-upcoming"><div class="hv2-sec" data-ic="📅"><b>${escapeHtml(heading)}</b><a href="#calendar">${escapeHtml(L("ប្រតិទិន", "Calendar"))} ›</a></div>
+      <section class="hv2-card hv2-tl">${typeof TopbarWeather !== "undefined" && TopbarWeather.rainRowHtml ? TopbarWeather.rainRowHtml() : ""}${rows || `<button type="button" class="hv2-empty" data-action="add-event">${IC.cal()}<span>${escapeHtml(L("គ្មានអ្វីទេ — ចុចបន្ថែមព្រឹត្តិការណ៍", "Nothing planned — tap to add an event"))}</span></button>`}</section></section>`;
   }
 
   // emoji for a focus line, guessed from its words (✨ when nothing fits)
@@ -445,7 +451,7 @@ const HomeV2 = (() => {
       groups.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
       const open = (groups.find(g => g.items.some(item => !item.done)) || groups[0] || { id: "other" }).id;
       const openInfo = fxCatInfo(open);
-      return `<div class="hv2-sec"><b>${escapeHtml(t("dailyFocus"))}</b><button type="button" class="hv2-link" data-action="edit-focus">${escapeHtml(L("កែ", "Edit"))} ›</button></div>
+      return `<section class="hv2-group hv2-focus-group"><div class="hv2-sec" data-ic="🎯"><b>${escapeHtml(t("dailyFocus"))}</b><button type="button" class="hv2-link" data-action="edit-focus">${escapeHtml(L("កែ", "Edit"))} ›</button></div>
       <section class="hv2-card hv2-fx hv2-fx-cats focus-card${pct === 100 ? " all-done" : ""}" data-open="${open}">
         <div class="fx-head">
           <b class="fx-left fx-left-big" data-fx-left>${escapeHtml(focusLeft(done, total))}</b>
@@ -460,9 +466,9 @@ const HomeV2 = (() => {
         }).join("")}</div>
         <div class="hv2-cat-panel"><b class="hv2-cat-title" data-fx-cat-title>${escapeHtml(`${openInfo[1]} ${L(openInfo[2], openInfo[3])}`)}</b>
         <ul class="fx-grid focus-list">${d.focus.map(item => { const cat = fxCatOf(item.text); return `<li class="fx-tile focus-item${item.done ? " done" : ""}" data-cat="${cat}"${cat === open ? "" : " hidden"}><label><input type="checkbox" ${item.done ? "checked" : ""} data-focus-id="${escapeAttr(item.id)}"><span class="fx-em" aria-hidden="true">${focusEmoji(item.text)}</span><span class="focus-text">${escapeHtml(item.text)}</span><span class="fx-ck" aria-hidden="true"></span></label></li>`; }).join("")}</ul></div>
-      </section>`;
+      </section></section>`;
     }
-    return `<div class="hv2-sec"><b>${escapeHtml(t("dailyFocus"))}</b><button type="button" class="hv2-link" data-action="edit-focus">${escapeHtml(L("កែ", "Edit"))} ›</button></div>
+    return `<section class="hv2-group hv2-focus-group"><div class="hv2-sec" data-ic="🎯"><b>${escapeHtml(t("dailyFocus"))}</b><button type="button" class="hv2-link" data-action="edit-focus">${escapeHtml(L("កែ", "Edit"))} ›</button></div>
       <section class="hv2-card hv2-fx focus-card${pct === 100 ? " all-done" : ""}">
         <div class="fx-head">
           <b class="fx-left fx-left-big" data-fx-left>${escapeHtml(focusLeft(done, total))}</b>
@@ -470,7 +476,7 @@ const HomeV2 = (() => {
         </div>
         <div class="fx-seg" data-fx-seg role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}" aria-label="${escapeAttr(t("dailyFocus"))}">${d.focus.map((_, i) => `<i class="${i < done ? "on" : ""}"></i>`).join("")}</div>
         <ul class="fx-grid focus-list${total % 2 ? " is-odd" : ""}">${d.focus.map(item => `<li class="fx-tile focus-item${item.done ? " done" : ""}"><label><input type="checkbox" ${item.done ? "checked" : ""} data-focus-id="${escapeAttr(item.id)}"><span class="fx-em" aria-hidden="true">${focusEmoji(item.text)}</span><span class="focus-text">${escapeHtml(item.text)}</span><span class="fx-ck" aria-hidden="true"></span></label></li>`).join("")}</ul>
-      </section>`;
+      </section></section>`;
   }
 
   // one drawn style for all 5 moods (system emoji mixed styles / sizes on some phones)
@@ -531,8 +537,8 @@ const HomeV2 = (() => {
         ${quick()}
         ${icHead(schedule(d), "📅")}
         ${focus}
-        <div class="hv2-sec" data-ic="💜"><b>${escapeHtml(L("ខ្ញុំថ្ងៃនេះ", "Me today"))}</b></div>
-        <section class="hv2-me">${noHead(moodCard(d))}${noHead(reflection(d))}</section>`;
+        <section class="hv2-me"><div class="hv2-sec" data-ic="💜"><b>${escapeHtml(L("ខ្ញុំថ្ងៃនេះ", "Me today"))}</b></div>
+          ${noHead(moodCard(d))}${noHead(reflection(d))}</section>`;
   }
 
   function render() {
