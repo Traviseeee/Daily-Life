@@ -143,9 +143,12 @@ const MoneyV2 = (() => {
   }
 
   function section(title, href, body, count = "") {
+    const icon = href?.endsWith("/bills") ? "📅" : href?.endsWith("/expenses") ? "📊" : href?.endsWith("/savings") ? "🎯" : href?.endsWith("/loans") ? "🏦" : "📅";
     return `<section class="fv2-section">
-      <div class="fv2-section-head"><h2>${escapeHtml(title)}${count}</h2>${href ? `<a href="${href}">${escapeHtml(L("ទាំងអស់", "All"))} ›</a>` : ""}</div>
-      <div class="fv2-card">${body}</div>
+      <div class="fv2-card">
+        <div class="fv2-section-head"><h2><span class="fv2-section-icon" aria-hidden="true">${icon}</span>${escapeHtml(title)}${count}</h2>${href ? `<a href="${href}">${escapeHtml(L("ទាំងអស់", "All"))} ›</a>` : ""}</div>
+        <div class="fv2-section-body">${body}</div>
+      </div>
     </section>`;
   }
 
@@ -288,7 +291,7 @@ const MoneyV2 = (() => {
       ${waitingList(waiting)}
       ${categories(range)}
       ${upcoming()}
-      ${typeof SmartMoney !== "undefined" ? `<section class="fv2-section"><div class="fv2-section-head"><h2>${escapeHtml(L("កត់ចំណាយរហ័ស", "Quick expense"))}</h2></div>${SmartMoney.renderQuickExpense("qx-compact")}</section>` : ""}
+      ${typeof SmartMoney !== "undefined" ? `<section class="fv2-section fv2-quick-section"><div class="fv2-section-head"><h2><span class="fv2-section-icon" aria-hidden="true">🍽️</span>${escapeHtml(L("កត់ចំណាយរហ័ស", "Quick expense"))}</h2></div><div class="fv2-quick-card">${SmartMoney.renderQuickExpense("qx-compact")}</div></section>` : ""}
       ${recent()}
     </div>`;
   }

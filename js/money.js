@@ -156,7 +156,7 @@ function renderMoney(tab = "overview") {
             <button class="financial-nav-toggle" type="button" data-open-financial-nav aria-label="${t("money")} sections" title="${t("money")} sections"><span class="financial-nav-toggle-lines" aria-hidden="true"><i></i><i></i><i></i></span></button>
             <dialog class="financial-sidebar" aria-label="${t("money")} sections">
               <div class="financial-sidebar-handle" aria-hidden="true"><span></span></div>
-              <div class="financial-sidebar-heading"><div class="financial-sidebar-heading-copy"><strong>${t("money")} ${t("sections")}</strong><span>${t("financialSectionsSubtitle")}</span></div><button class="icon-button" type="button" data-close-financial-nav aria-label="${t("close")}">${Icons.close()}</button></div>
+              <div class="financial-sidebar-heading"><div class="financial-sidebar-heading-copy"><strong>${t("money")} ${t("sections")}</strong><span>${t("financialSectionsSubtitle")}</span><div class="financial-nav-welcome"><span class="financial-nav-nomi" aria-hidden="true">${HomeV2.buddy("happy")}</span><span class="financial-nav-say">${escapeHtml(languageCode() === "km" ? "តោះមើលផ្នែកហិរញ្ញវត្ថុដែលអ្នកចង់បាន 🐾" : "Pick a money section to explore 🐾")}</span></div></div><button class="icon-button" type="button" data-close-financial-nav aria-label="${t("close")}">${Icons.close()}</button></div>
               <nav class="financial-sidebar-nav" aria-label="${t("money")} sections">
               ${moneyTabs.map(([id, label, icon]) => `<a class="financial-nav-item ${tab === id ? "active" : ""}" href="#money/${id}"><span class="financial-nav-icon">${Icons[icon]()}</span><span class="financial-nav-copy"><strong>${t(label)}</strong><small>${t(`financialSection${id[0].toUpperCase()}${id.slice(1)}`)}</small></span>${Icons.chevron()}</a>`).join("")}
               </nav>
@@ -1482,17 +1482,21 @@ function openSavingsModal(item) {
 }
 
 function openLoanModal(item) {
-  Modal.open({ title: item ? t("editLoan") : t("addLoan"), submitText: item ? t("saveLoan") : t("addLoan"), fields: [
+  Modal.open({ title: item ? t("editLoan") : t("addLoan"), submitText: item ? t("saveLoan") : t("addLoan"), sectioned: true, fields: [
+    { type: "heading", label: languageCode() === "km" ? "ព័ត៌មានកម្ចី" : "Loan details", description: languageCode() === "km" ? "បញ្ចូលឈ្មោះ និងចំនួនប្រាក់កម្ចី។" : "Enter the loan name and amount.", icon: Icons.money(), tone: "blue" },
     { name: "name", label: t("loanName"), value: item?.name, required: true },
     { name: "originalAmount", label: t("originalAmount"), type: "number", value: item?.originalAmount, required: true },
     { name: "currency", label: t("currency"), type: "select", options: ["USD", "KHR"], value: item?.currency || appData.profile.currency || "USD" },
+    { type: "heading", label: languageCode() === "km" ? "ផែនការសងប្រាក់" : "Repayment plan", description: languageCode() === "km" ? "កំណត់ការប្រាក់ រយៈពេល និងចំនួនបង់ប្រចាំខែ។" : "Set the interest rate, term, and monthly payment.", icon: Icons.chart(), tone: "violet" },
     { name: "interestRate", label: t("interestRate"), type: "number", value: item?.interestRate || "" },
     { name: "durationMonths", label: t("loanDurationMonths"), type: "number", value: item?.durationMonths || "" },
     { name: "monthlyPayment", label: t("monthlyPayment"), type: "number", value: item?.monthlyPayment || 0 },
+    { type: "heading", label: languageCode() === "km" ? "កាលបរិច្ឆេទ និងការរំលឹក" : "Dates & reminders", description: languageCode() === "km" ? "ជ្រើសថ្ងៃបង់លើកដំបូង និងកាលបរិច្ឆេទបញ្ចប់។" : "Choose the first payment and final due date.", icon: Icons.calendar(), tone: "blue" },
     { name: "firstPaymentDate", label: t("firstPaymentDate"), type: "date", value: normalizeLoanPaymentDate(item?.firstPaymentDate || item?.startDate) },
     { name: "paymentDay", label: t("paymentDay"), type: "number", value: item ? (item.paymentDay || loanPaymentDay(item)) : "" },
     { name: "dueDate", label: t("dueDate"), type: "date", value: item?.dueDate },
     { name: "ask", label: languageCode() === "km" ? "💸 សួរ “បានបង់ហើយឬនៅ?” ពេលដល់ថ្ងៃ" : "💸 Ask “paid yet?” on the day", type: "checkbox", value: item?.ask ?? true },
+    { type: "heading", label: languageCode() === "km" ? "កំណត់ចំណាំ" : "Notes", description: languageCode() === "km" ? "ព័ត៌មានបន្ថែមអំពីកម្ចីនេះ (ស្រេចចិត្ត)។" : "Add any extra details about this loan (optional).", icon: Icons.edit(), tone: "amber" },
     { name: "notes", label: t("notes"), type: "textarea", value: item?.notes }
   ], onSubmit(data) {
     const rawFirstPaymentDate = normalizeLoanPaymentDate(data.firstPaymentDate || data.startDate || "");
@@ -1542,12 +1546,12 @@ function bindLoanSmartFill() {
   const helper = document.createElement("div");
   helper.className = "smart-fill";
   helper.innerHTML = `
-    <span>${t("smartFillNeedDates")}</span>
+    <div class="smart-fill-copy"><span class="smart-fill-icon" aria-hidden="true">${Icons.spark()}</span><span class="smart-fill-message">${t("smartFillNeedDates")}</span></div>
     <button class="button ghost-button" type="button" disabled>${Icons.plus()} ${t("applySuggestion")}</button>
   `;
   paymentField.appendChild(helper);
 
-  const message = helper.querySelector("span");
+  const message = helper.querySelector(".smart-fill-message");
   const button = helper.querySelector("button");
   const updateSuggestion = () => {
     const autoRate = interest.dataset.smartRate || "";

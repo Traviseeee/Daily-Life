@@ -40,6 +40,7 @@ const MoneyTabsV2 = (() => {
   }
   const empty = (title, body, action, label) => `<section class="mt-card mt-empty"><span>🗂️</span><h3>${escapeHtml(title)}</h3><p>${escapeHtml(body)}</p>${action ? `<button type="button" class="mt-btn is-main" data-action="${action}">＋ ${escapeHtml(label)}</button>` : ""}</section>`;
   const ring = (p, label) => `<span class="mt-ring" style="--p:${p}"><b>${p}%${label ? `<small>${escapeHtml(label)}</small>` : ""}</b></span>`;
+  const nomiSticker = () => `<span class="mt-nomi-sticker" aria-hidden="true"><svg viewBox="0 0 64 64" focusable="false"><ellipse cx="32" cy="58" rx="18" ry="3" fill="#a99ae0" opacity=".22"/><path d="M12 28 17 7l16 14L48 7l5 21" fill="#bba9ff"/><path d="m18 19 2-8 8 8m11 0 8-8 2 8" fill="#e4dcff"/><circle cx="32" cy="37" r="23" fill="#cbbdff"/><path d="M20 37l3-4 3 4-3 4zm18 0 3-4 3 4-3 4z" fill="#ffd34e" stroke="#5546a8" stroke-width="1.4"/><path d="M27 43q5 6 10 0" fill="none" stroke="#5546a8" stroke-width="2.2" stroke-linecap="round"/><circle cx="19" cy="43" r="2.5" fill="#ff9db3"/><circle cx="45" cy="43" r="2.5" fill="#ff9db3"/><path d="M51 44c7-2 7 5 2 7-2 1-4 0-5-2" fill="none" stroke="#cbbdff" stroke-width="4" stroke-linecap="round"/></svg></span>`;
 
   /* ---------- income ---------- */
   function income() {
@@ -48,7 +49,7 @@ const MoneyTabsV2 = (() => {
     const total = cats.reduce((sum, item) => sum + item.amount, 0);
     const used = cats.filter(item => item.amount > 0);
     const head = `<section class="mt-card mt-total">
-      <small>${escapeHtml(t("totalIncome"))}</small><b class="mt-big">${money(total)}</b>
+      ${nomiSticker()}<small>${escapeHtml(t("totalIncome"))}</small><b class="mt-big">${money(total)}</b>
       ${used.length ? `<div class="mt-stack">${used.map(item => `<i style="flex:${item.amount};background:${item.color}"></i>`).join("")}</div>
       <div class="mt-legend">${used.map(item => `<span><i style="background:${item.color}"></i>${escapeHtml(optionLabel(item.category))} <b>${money(item.amount)}</b></span>`).join("")}</div>` : ""}
     </section>`;
@@ -62,8 +63,8 @@ const MoneyTabsV2 = (() => {
         ${more("income", item)}
       </div>`;
     }).join("");
-    return `${head}${sec(t("incomeSources"), items.length, "add-income")}
-      ${items.length ? `<section class="mt-card mt-list">${rows}</section>` : empty(t("noIncomeYet"), t("noIncomeBody"), "add-income", t("addIncome"))}`;
+    return `<div class="mt-finance-group mt-income-group">${head}${sec(t("incomeSources"), items.length, "add-income")}
+      ${items.length ? `<section class="mt-card mt-list">${rows}</section>` : empty(t("noIncomeYet"), t("noIncomeBody"), "add-income", t("addIncome"))}</div>`;
   }
 
   /* ---------- savings (draft 24 Oct): total card + one card per account ---------- */
@@ -139,19 +140,23 @@ const MoneyTabsV2 = (() => {
       return `<section class="mt-card mt-loan" data-mt-row>
         <div class="mt-head"><span class="mt-ic" style="--c:#3b82f6">🏦</span><b>${escapeHtml(loan.name || t("loan"))}</b>${more("loan", loan)}</div>
         <div class="mt-tags"><span>${escapeHtml(loan.durationMonths ? `${loan.durationMonths} ${t("months")}` : optionLabel(loan.paymentFrequency || "Monthly"))}</span><span>${escapeHtml(t("interest"))} ${loan.interestRate || 0}%</span>${payDay ? `<span>${escapeHtml(L(`បង់ថ្ងៃទី ${payDay}`, `Pays on day ${payDay}`))}</span>` : ""}</div>
-        <div class="mt-hero">${ring(p, t("paid"))}<div><small>${escapeHtml(t("remaining"))}</small><span class="mt-big">${money(remaining, loan.currency)}</span><em>${money(paid, loan.currency)} / ${money(total, loan.currency)}</em></div></div>
-        <div class="mt-minis is-3"><div><small>${escapeHtml(t("monthlyPayment"))}</small><b>${money(loan.monthlyPayment, loan.currency)}</b></div><div><small>${escapeHtml(t("nextPaymentDate"))}</small><b>${next ? escapeHtml(dayLabel(next)) : "—"}</b></div><div><small>${escapeHtml(t("dueDate"))}</small><b>${loan.dueDate ? escapeHtml(monthLabel(loan.dueDate)) : "—"}</b></div></div>
-        ${next && remaining > 0 ? `<div class="mt-next"><span>📅</span><span><b>${escapeHtml(L("បង់លើកក្រោយ", "Next payment"))} · ${money(loan.monthlyPayment, loan.currency)}</b><small>${escapeHtml(dayLabel(next, true))}${nextDays != null && nextDays >= 0 ? ` · ${escapeHtml(inDays(nextDays))}` : ""}</small></span></div>` : ""}
-        <button type="button" class="mt-btn is-main is-wide" data-payment-loan="${escapeAttr(loan.id)}">＋ ${escapeHtml(t("makePayment"))}</button>
-        <details class="mt-acc"><summary>ⓘ ${escapeHtml(t("loanDetails"))}<span>›</span></summary><div class="mt-kv">
+        <div class="mt-loan-progress"><div class="mt-hero">${ring(p, t("paid"))}<div><small>${escapeHtml(t("remaining"))}</small><span class="mt-big">${money(remaining, loan.currency)}</span><em>${money(paid, loan.currency)} / ${money(total, loan.currency)}</em></div></div>
+          <div class="mt-minis is-3"><div><small>${escapeHtml(t("monthlyPayment"))}</small><b>${money(loan.monthlyPayment, loan.currency)}</b></div><div><small>${escapeHtml(t("nextPaymentDate"))}</small><b>${next ? escapeHtml(dayLabel(next)) : "—"}</b></div><div><small>${escapeHtml(t("dueDate"))}</small><b>${loan.dueDate ? escapeHtml(monthLabel(loan.dueDate)) : "—"}</b></div></div>
+        </div>
+        <div class="mt-loan-payment">${next && remaining > 0 ? `<div class="mt-next"><span>📅</span><span><b>${escapeHtml(L("បង់លើកក្រោយ", "Next payment"))} · ${money(loan.monthlyPayment, loan.currency)}</b><small>${escapeHtml(dayLabel(next, true))}${nextDays != null && nextDays >= 0 ? ` · ${escapeHtml(inDays(nextDays))}` : ""}</small></span></div>` : ""}
+          <button type="button" class="mt-btn is-main is-wide" data-payment-loan="${escapeAttr(loan.id)}">＋ ${escapeHtml(t("makePayment"))}</button>
+        </div>
+        <div class="mt-loan-more"><details class="mt-acc"><summary>ⓘ ${escapeHtml(t("loanDetails"))}<span>›</span></summary><div class="mt-kv">
           <div><small>${escapeHtml(t("original"))}</small><b>${money(loan.originalAmount, loan.currency)}</b></div>
           <div><small>${escapeHtml(t("firstPaymentDate"))}</small><b>${escapeHtml(dayLabel(loan.firstPaymentDate || loan.startDate, true) || "—")}</b></div>
           <div><small>${escapeHtml(t("totalInterest"))}</small><b>${money(interest, loan.currency)}</b></div>
         </div></details>
-        ${schedule.length ? `<details class="mt-acc"><summary>📋 ${escapeHtml(t("paymentSchedule"))} · ${schedule.filter(item => item.paid).length}/${schedule.length}<span>›</span></summary><div class="mt-sched">${schedule.slice().reverse().map(item => `<label class="mt-check is-sm${item.paid ? " is-on" : ""}"><input type="checkbox" data-loan-schedule="${escapeAttr(loan.id)}" data-payment-date="${escapeAttr(item.date)}" ${item.paid ? "checked" : ""}><span class="mt-box">${Icons.check()}</span><span><b>${escapeHtml(dayLabel(item.date, true))}</b><small>${money(item.amount, loan.currency)}</small></span></label>`).join("")}</div></details>` : ""}
+        ${schedule.length ? `<details class="mt-acc"><summary>📋 ${escapeHtml(t("paymentSchedule"))} · ${schedule.filter(item => item.paid).length}/${schedule.length}<span>›</span></summary><div class="mt-sched">${schedule.slice().reverse().map(item => `<label class="mt-check is-sm${item.paid ? " is-on" : ""}"><input type="checkbox" data-loan-schedule="${escapeAttr(loan.id)}" data-payment-date="${escapeAttr(item.date)}" ${item.paid ? "checked" : ""}><span class="mt-box">${Icons.check()}</span><span><b>${escapeHtml(dayLabel(item.date, true))}</b><small>${money(item.amount, loan.currency)}</small></span></label>`).join("")}</div></details>` : ""}</div>
       </section>`;
     }).join("");
-    return `${sec(t("loans"), items.length, "add-loan")}${typeof renderLoanDoubleCheck === "function" ? renderLoanDoubleCheck() : ""}${items.length ? cards : empty(t("noLoansYet"), t("noLoansBody"), "add-loan", t("addLoan"))}`;
+    const nomiSay = L("ខ្ញុំនៅទីនេះជួយអ្នកតាមដានកម្ចី 🐾", "I’m here to help you keep loans on track 🐾");
+    const intro = typeof HomeV2 !== "undefined" && HomeV2.buddy ? `<div class="mt-loan-talk"><span class="mt-loan-nomi" data-nomi data-mood="happy" role="button" tabindex="0" aria-label="Nomi">${HomeV2.buddy("happy")}</span><span class="mt-loan-say" data-nomi-say>${escapeHtml(nomiSay)}</span></div>` : "";
+    return `<div class="mt-finance-group mt-loans-group">${sec(t("loans"), items.length, "add-loan")}${intro}${typeof renderLoanDoubleCheck === "function" ? renderLoanDoubleCheck() : ""}${items.length ? cards : empty(t("noLoansYet"), t("noLoansBody"), "add-loan", t("addLoan"))}</div>`;
   }
 
   /* ---------- bills ---------- */
