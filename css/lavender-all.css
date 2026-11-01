@@ -1322,3 +1322,20 @@ html:root:not([data-theme="light"]) body, html:root:not([data-theme="light"]) .a
   .hv2 .hv2-mood-btn.is-mood-change > span,
   .hv2 .hv2-mood-btn.is-mood-change .hv2-buddy-face :is(.nb-bodyg, .nb-eye) { animation: none !important; }
 }
+/* Show why the available balance is zero before this month's income arrives. */
+@media all {
+  .hv2-soft-income-note {
+    position: relative;
+    display: block;
+    width: fit-content;
+    max-width: 100%;
+    margin: 6px auto 0;
+    padding: 5px 10px;
+    border-radius: 12px;
+    color: #77738e;
+    background: #f3f0ff;
+    font-size: .68rem;
+    line-height: 1.4;
+    text-align: center;
+  }
+}
