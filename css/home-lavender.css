@@ -80,10 +80,10 @@
   html:root[data-theme="light"] body .hv2 .fx-count { color: var(--lv-a) !important; background: #ece8ff !important; }
 
   /* footer on Home: white pill, active tab soft lavender */
-  html:root[data-theme="light"]:root body.topbar-home #mobileNav.mobile-nav { --f2-glass: rgba(255,255,255,.92); --f2-grad: #ece8ff; --f2-on: #3f37a8; --f2-glow: none; --f2-ink2: #8f8bad; }
+  html:root[data-theme="light"]:root body.topbar-home #mobileNav.mobile-nav { --f2-glass: rgba(255,255,255,.92); --f2-grad: linear-gradient(140deg, #9F8CFF, #6c5ce7); --f2-on: #fff; --f2-glow: none; --f2-ink2: #8f8bad; }
   html:root[data-theme="light"]:root body.topbar-home #mobileNav.mobile-nav .nav-item.active,
-  html:root[data-theme="light"]:root body.topbar-home #mobileNav.mobile-nav .nav-item.active :is(span, svg) { color: #3f37a8 !important; }
-  html:root[data-theme="light"]:root body.topbar-home #mobileNav.mobile-nav .nav-item.active { background: #ece8ff !important; box-shadow: none !important; }
+  html:root[data-theme="light"]:root body.topbar-home #mobileNav.mobile-nav .nav-item.active :is(span, svg) { color: #fff !important; }
+  html:root[data-theme="light"]:root body.topbar-home #mobileNav.mobile-nav .nav-item.active { background: linear-gradient(140deg, #9F8CFF, #6c5ce7) !important; box-shadow: 0 6px 16px -10px rgba(80,74,185,.65) !important; }
 
   /* money ticket on Home: same soft style as the progress card (peach bar, rounder, indigo glow) */
   html:root[data-theme="light"] .hv2 .wc-card.wc-tk { border-radius: 28px; box-shadow: none !important; }
@@ -388,9 +388,9 @@
   html:root:not([data-theme="light"]) body .hv2 .fx-tile.done label { background: linear-gradient(135deg, #8d84e6, #6c63d0) !important; box-shadow: none !important; }
   html:root:not([data-theme="light"]) body .hv2 .fx-seg i.on { background: linear-gradient(90deg, #f2bb92, #E6986B) !important; }
   html:root:not([data-theme="light"]) body .hv2 .fx-count { color: var(--lv-a) !important; background: rgba(182,168,255,.14) !important; }
-  html:root:not([data-theme="light"]):root body.topbar-home #mobileNav.mobile-nav { --f2-glass: rgba(46,41,86,.94); --f2-grad: rgba(182,168,255,.14); --f2-on: #C9BDFF; --f2-glow: none; --f2-ink2: #bdb7e6; }
-  html:root:not([data-theme="light"]):root body.topbar-home #mobileNav.mobile-nav .nav-item.active, html:root:not([data-theme="light"]):root body.topbar-home #mobileNav.mobile-nav .nav-item.active :is(span, svg) { color: #C9BDFF !important; }
-  html:root:not([data-theme="light"]):root body.topbar-home #mobileNav.mobile-nav .nav-item.active { background: rgba(182,168,255,.14) !important; box-shadow: none !important; }
+  html:root:not([data-theme="light"]):root body.topbar-home #mobileNav.mobile-nav { --f2-glass: rgba(46,41,86,.94); --f2-grad: linear-gradient(140deg, #9F8CFF, #6c5ce7); --f2-on: #fff; --f2-glow: none; --f2-ink2: #bdb7e6; }
+  html:root:not([data-theme="light"]):root body.topbar-home #mobileNav.mobile-nav .nav-item.active, html:root:not([data-theme="light"]):root body.topbar-home #mobileNav.mobile-nav .nav-item.active :is(span, svg) { color: #fff !important; }
+  html:root:not([data-theme="light"]):root body.topbar-home #mobileNav.mobile-nav .nav-item.active { background: linear-gradient(140deg, #9F8CFF, #6c5ce7) !important; box-shadow: 0 6px 16px -10px rgba(80,74,185,.65) !important; }
   html:root:not([data-theme="light"]) .hv2 .wc-card.wc-tk { border-radius: 28px; box-shadow: none !important; }
   html:root:not([data-theme="light"]) .hv2 .wc-tk-bar { height: 9px; background: rgba(255,255,255,.25); }
   html:root:not([data-theme="light"]) .hv2 .wc-tk-bar i { background: linear-gradient(90deg, #f2bb92, #E6986B); }
@@ -597,7 +597,7 @@
   html:root[data-theme="light"] .hv2-hero-buddy,
   html:root:not([data-theme="light"]) .hv2-hero-buddy { bottom: 64px; }
   html:root[data-theme="light"] .hv2-hero-buddy .hv2-say,
-  html:root:not([data-theme="light"]) .hv2-hero-buddy .hv2-say { top: 28px !important; }
+  html:root:not([data-theme="light"]) .hv2-hero-buddy .hv2-say { top: 8px !important; }
 }
 
 /* Money card bottom (31 Oct, draft A): budget row + 3 small tiles with icons, both themes */
@@ -625,6 +625,7 @@
   .hv2-v3 .hv2-group { padding: 14px; border: 1px solid #ebe8f4; border-radius: 24px; background: #f8f6fc; }
   .hv2-v3 .hv2-group > .hv2-sec { margin: 0 2px 12px !important; }
   .hv2-v3 .hv2-group > .hv2-card { margin: 0 !important; }
+  .hv2-v3 .hv2-quick-group > .hv2-quick { margin: 0 !important; }
   .hv2-v3 .hv2-sec { display: flex; align-items: center; gap: 10px; margin: 10px 2px -2px !important; }
   .hv2-v3 .hv2-sec[data-ic]::before { content: attr(data-ic); display: grid; place-items: center; width: 32px; height: 32px; flex: 0 0 auto; border-radius: 11px; background: #f1eeff; font-size: .95rem; }
   .hv2-v3 .hv2-sec[data-ic="📅"]::before { background: #eaf6ff; }
@@ -674,7 +675,7 @@
   .hv2-v3 .hv2-rain-drops i:nth-child(3) { left: 84%; animation-delay: .76s; }
   .hv2-v3 .hv2-rain-ticker { display: block; height: 24px; overflow: hidden; color: #2863df; }
   .hv2-v3 .hv2-rain-ticker-track { display: flex; width: 300%; animation: hv2RainTicker 12s cubic-bezier(.45,0,.2,1) infinite; }
-  .hv2-v3 .hv2-rain-ticker-track small { display: block; flex: 0 0 33.3333%; width: 33.3333%; overflow: hidden; height: 24px; color: inherit !important; font-size: .8rem; font-weight: 650; line-height: 24px; white-space: nowrap; text-overflow: ellipsis; }
+  .hv2-v3 .hv2-rain-ticker-track small { display: block; flex: 0 0 33.3333%; width: 33.3333%; overflow: hidden; height: 24px; color: inherit !important; font-size: .8rem; font-weight: 500; line-height: 24px; white-space: nowrap; text-overflow: ellipsis; }
   .hv2-v3 .hv2-holiday.has-ticker { gap: 12px; }
   .hv2-v3 .hv2-holiday.has-ticker .hv2-tl-text { display: grid; min-width: 0; gap: 3px; }
   .hv2-v3 .hv2-holiday.has-ticker .hv2-tl-text > b { color: #202b50; font-size: .9rem; line-height: 1.35; }
@@ -748,4 +749,46 @@
   .hv2-v3 .hv2-rain.has-ticker .hv2-rain-nomi { left: 14px; transform: translateY(-50%); }
   .hv2-v3 .hv2-calendar-item.has-ticker .hv2-calendar-nomi { left: 14px; transform: translateY(-50%); }
   .hv2-v3 .hv2-rain-ticker-track small:nth-child(n+2) { display: none; }
+}
+
+/* Approved color pass: keep the lavender fade flowing behind a clear week strip. */
+@media all {
+  html:root[data-theme="light"] body.topbar-home .hv2-hero::before {
+    inset: 0 0 -240px !important;
+    border-radius: 0 !important;
+    background:
+      radial-gradient(42% 150px at 88% 35%, rgba(255, 208, 220, .42), transparent 72%),
+      linear-gradient(180deg, #5f51c8 0%, #8276df 40%, rgba(200, 189, 244, .86) 64%, rgba(245, 242, 251, 0) 100%) !important;
+    -webkit-mask: none !important;
+    mask: none !important;
+  }
+  html:root[data-theme="light"] body.topbar-home #app .hv2-head.is-lav .hv2-week {
+    position: relative !important;
+    z-index: 3 !important;
+    opacity: 1 !important;
+    background: #fff !important;
+    background-image: none !important;
+    border: 1px solid #e6def8 !important;
+  }
+  html:root[data-theme="light"] body.topbar-home #app .hv2-head.is-lav .hv2-week .hv2-day:not(.is-today):not(.is-ok) {
+    color: #1a2347 !important;
+    background: transparent !important;
+    opacity: 1 !important;
+  }
+  html:root[data-theme="light"] body.topbar-home #app .hv2-head.is-lav .hv2-week .hv2-day:not(.is-today):not(.is-ok) small { color: #817c9c !important; }
+  html:root[data-theme="light"] body.topbar-home #app .hv2-head.is-lav .hv2-week .hv2-day:not(.is-today):not(.is-ok) b { color: #1a2347 !important; }
+  html:root[data-theme="light"] body.topbar-home #app .hv2-head.is-lav .hv2-week .hv2-day.is-ok { color: #fff !important; background: #bcb2ef !important; }
+  html:root[data-theme="light"] body.topbar-home #app .hv2-head.is-lav .hv2-week .hv2-day.is-ok :is(small, b) { color: #fff !important; }
+  html:root[data-theme="light"] body.topbar-home #app .hv2-head.is-lav .hv2-week .hv2-day.is-today { color: #fff !important; background: linear-gradient(160deg, #504ab9, #7f74d6) !important; }
+  html:root[data-theme="light"] body.topbar-home #app .hv2-head.is-lav .hv2-week .hv2-day.is-today :is(small, b) { color: #fff !important; }
+}
+
+/* Remove the halo behind the Nomi sticker; keep its small grounding ellipse. */
+@media all {
+  html:root[data-theme="light"] :is(.hv2, .fv2-page) .wc-card.hv2-soft .hv2-soft-glow { display: none !important; }
+}
+
+/* Target the home v3 money card markup: remove only the backdrop halo. */
+@media all {
+  html:root[data-theme="light"] body.topbar-home #app .hv2-v3 .wc-card.hv2-soft .hv2-soft-glow { display: none !important; }
 }
