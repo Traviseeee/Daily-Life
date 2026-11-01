@@ -118,6 +118,35 @@
   html:root[data-theme="light"] body :is(.login-logo, .al-logo, .home-nudge-svg) circle:nth-of-type(2) { stroke: #6c5ce7; }
   html:root[data-theme="light"] body :is(.login-logo, .al-logo, .home-nudge-svg) circle:nth-of-type(3) { fill: #9F8CFF; }
 }
+/* Give the compact Family anniversary card a clear identity and count hierarchy. */
+@media (max-width: 900px) {
+  .fam2.is-lav .fv-tg {
+    grid-template-columns: 88px minmax(0, 1fr) !important;
+    grid-template-areas: "nomi top" "nomi lbl" "nomi n" "nomi ymd" "bar bar" "foot foot" !important;
+    column-gap: 14px !important;
+    row-gap: 2px !important;
+    padding: 16px !important;
+    border-radius: 24px !important;
+    background: radial-gradient(70% 80% at 0% 50%, #fff0f5 0%, transparent 72%), #fff !important;
+    text-align: left !important;
+  }
+  .fam2.is-lav .fv-tg-nomi { width: 88px !important; height: 84px !important; align-self: center; }
+  .fam2.is-lav .fv-tg > .fv-tg-top {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 8px !important;
+    min-width: 0;
+  }
+  .fam2.is-lav .fv-tg-pair { flex: 0 0 auto; }
+  .fam2.is-lav .fv-tg-top small { overflow: hidden; font-size: .8rem !important; font-weight: 750 !important; white-space: nowrap; text-overflow: ellipsis; }
+  .fam2.is-lav .fv-tg-lbl { margin-top: 3px !important; font-size: .78rem !important; }
+  .fam2.is-lav .fv-tg-n { font-size: clamp(2.35rem, 10vw, 3rem) !important; line-height: 1 !important; }
+  .fam2.is-lav .fv-tg-ymd { gap: 5px !important; margin: 4px 0 2px !important; }
+  .fam2.is-lav .fv-tg-ymd span { padding: 4px 8px !important; font-size: .7rem !important; }
+  .fam2.is-lav .fv-tg > .fv-tg-bar { margin-top: 12px !important; }
+  .fam2.is-lav .fv-tg > .fv-tg-foot { margin-top: 8px !important; }
+}
 /* Finance picker: Nomi welcome bubble + Home's soft lavender card language. */
 html:root[data-theme="light"] .financial-sidebar {
   border-color: #e9e4f8 !important;
@@ -808,6 +837,125 @@ html:root:not([data-theme="light"]) #modalForm:has(input[name="originalAmount"])
   html:root:not([data-theme="light"]) body.notify-page-open #app > .page.nfc-page { padding-top: env(safe-area-inset-top, 0px); }
 }
 @media all { html:root:not([data-theme="light"]) .cv2-say { color: #1A2347; background: #fff; } }
+/* Match the long Home lavender fade behind the Finance page on phones. */
+@media (max-width: 900px) {
+  html:root[data-theme="light"] .page.fv2-page::before,
+  html:root:not([data-theme="light"]) .page.fv2-page::before {
+    top: -80px !important;
+    height: min(760px, calc(68vh + 80px)) !important;
+    border-radius: 0 !important;
+    background:
+      radial-gradient(42% 150px at 88% 35%, rgba(255, 208, 220, .42), transparent 72%),
+      linear-gradient(180deg, #5f51c8 0%, #8276df 40%, rgba(200, 189, 244, .86) 64%, rgba(245, 242, 251, 0) 100%) !important;
+    -webkit-mask: none !important;
+    mask: none !important;
+  }
+  html:root:not([data-theme="light"]) .page.fv2-page::before {
+    background:
+      radial-gradient(42% 150px at 88% 35%, rgba(255, 208, 220, .42), transparent 72%),
+      linear-gradient(180deg, #5f51c8 0%, #8276df 40%, rgba(200, 189, 244, .86) 64%, rgba(33, 29, 61, 0) 100%) !important;
+  }
+}
+
+/* Explicit mobile page roots: these pages used separate, shorter hero masks. */
+@media (max-width: 900px) {
+  html:root[data-theme="light"] body #app > .page.sv2,
+  html:root:not([data-theme="light"]) body #app > .page.sv2,
+  html:root[data-theme="light"] body #app > .page.cv2,
+  html:root:not([data-theme="light"]) body #app > .page.cv2,
+  html:root[data-theme="light"] body #app > .page.fam2.is-lav,
+  html:root:not([data-theme="light"]) body #app > .page.fam2.is-lav {
+    position: relative !important;
+    isolation: isolate !important;
+  }
+  html:root[data-theme="light"] body #app > .page.sv2::before,
+  html:root:not([data-theme="light"]) body #app > .page.sv2::before,
+  html:root[data-theme="light"] body #app > .page.cv2::before,
+  html:root:not([data-theme="light"]) body #app > .page.cv2::before,
+  html:root[data-theme="light"] body #app > .page.fam2.is-lav::before,
+  html:root:not([data-theme="light"]) body #app > .page.fam2.is-lav::before {
+    content: "" !important;
+    position: absolute !important;
+    z-index: -1 !important;
+    top: -80px !important;
+    right: -16px !important;
+    left: -16px !important;
+    height: min(760px, calc(68vh + 80px)) !important;
+    border-radius: 0 !important;
+    pointer-events: none;
+    -webkit-mask: none !important;
+    mask: none !important;
+  }
+  html:root[data-theme="light"] body #app > .page.sv2::before,
+  html:root[data-theme="light"] body #app > .page.cv2::before,
+  html:root[data-theme="light"] body #app > .page.fam2.is-lav::before {
+    background:
+      radial-gradient(42% 150px at 88% 35%, rgba(255, 208, 220, .42), transparent 72%),
+      linear-gradient(180deg, #5f51c8 0%, #8276df 40%, rgba(200, 189, 244, .86) 64%, rgba(245, 242, 251, 0) 100%) !important;
+  }
+  html:root:not([data-theme="light"]) body #app > .page.sv2::before,
+  html:root:not([data-theme="light"]) body #app > .page.cv2::before,
+  html:root:not([data-theme="light"]) body #app > .page.fam2.is-lav::before {
+    background:
+      radial-gradient(42% 150px at 88% 35%, rgba(255, 208, 220, .42), transparent 72%),
+      linear-gradient(180deg, #5f51c8 0%, #8276df 40%, rgba(200, 189, 244, .86) 64%, rgba(33, 29, 61, 0) 100%) !important;
+  }
+  html:root[data-theme="light"] body #app > .page.sv2 .sv-hero,
+  html:root:not([data-theme="light"]) body #app > .page.sv2 .sv-hero {
+    border-radius: 0 !important;
+    background: transparent !important;
+    -webkit-mask: none !important;
+    mask: none !important;
+  }
+}
+
+@media (max-width: 900px) {
+  html:root[data-theme="light"] body .sv2 {
+    background-image:
+      radial-gradient(42% 150px at 88% 35%, rgba(255, 208, 220, .42), transparent 72%),
+      linear-gradient(180deg, #5f51c8 0%, #8276df 40%, rgba(200, 189, 244, .86) 64%, rgba(245, 242, 251, 0) 100%) !important;
+    background-position: top center !important;
+    background-repeat: no-repeat !important;
+    background-size: 100% 680px !important;
+  }
+  html:root:not([data-theme="light"]) body .sv2 {
+    background-image:
+      radial-gradient(42% 150px at 88% 35%, rgba(255, 208, 220, .42), transparent 72%),
+      linear-gradient(180deg, #5f51c8 0%, #8276df 40%, rgba(200, 189, 244, .86) 64%, rgba(33, 29, 61, 0) 100%) !important;
+    background-position: top center !important;
+    background-repeat: no-repeat !important;
+    background-size: 100% 680px !important;
+  }
+  html:root[data-theme="light"] body .sv2 .sv-hero,
+  html:root:not([data-theme="light"]) body .sv2 .sv-hero {
+    border-radius: 0 !important;
+    background: transparent !important;
+    -webkit-mask: none !important;
+    mask: none !important;
+  }
+}
+
+/* Paint the fade on each page root too, so existing opaque page wrappers cannot clip it. */
+@media (max-width: 900px) {
+  html:root[data-theme="light"] body #app > .page.sv2,
+  html:root[data-theme="light"] body #app > .page.cv2,
+  html:root[data-theme="light"] body #app > .page.fam2.is-lav {
+    background-image:
+      radial-gradient(42% 150px at 88% 35%, rgba(255, 208, 220, .42), transparent 72%),
+      linear-gradient(180deg, #5f51c8 0%, #8276df 40%, rgba(200, 189, 244, .86) 64%, rgba(245, 242, 251, 0) 100%) !important;
+    background-repeat: no-repeat !important;
+    background-size: 100% min(760px, calc(68vh + 80px)) !important;
+  }
+  html:root:not([data-theme="light"]) body #app > .page.sv2,
+  html:root:not([data-theme="light"]) body #app > .page.cv2,
+  html:root:not([data-theme="light"]) body #app > .page.fam2.is-lav {
+    background-image:
+      radial-gradient(42% 150px at 88% 35%, rgba(255, 208, 220, .42), transparent 72%),
+      linear-gradient(180deg, #5f51c8 0%, #8276df 40%, rgba(200, 189, 244, .86) 64%, rgba(33, 29, 61, 0) 100%) !important;
+    background-repeat: no-repeat !important;
+    background-size: 100% min(760px, calc(68vh + 80px)) !important;
+  }
+}
 /* D1 fixes (31 Oct): global dark tokens to indigo / lavender, bright cards keep dark ink */
 html:root:not([data-theme="light"]) { --bg-main: #1b1834; --bg-secondary: #211d3d; --border: rgba(182,168,255,.14); --border-light: rgba(182,168,255,.22); --text-primary: #F4F2FF; --text-secondary: #cfc9f0; --text-muted: #9993c4; --accent: #B6A8FF; --accent-light: #d9d0ff; --accent-soft: rgba(182,168,255,.16); --blue: #a9cdf5; --purple: #d9d0ff; --shadow-glow: none; }
 html:root:not([data-theme="light"]) body, html:root:not([data-theme="light"]) .app-main { background-color: #211d3d !important; }
@@ -967,4 +1115,106 @@ html:root:not([data-theme="light"]) body, html:root:not([data-theme="light"]) .a
   html:root:not([data-theme="light"]) .tga-card .tga-btn:not(.tga-ok) { color: #e6e2ff !important; background: rgba(182,168,255,.16) !important; }
   html:root:not([data-theme="light"]) .tga-card .tga-nomi-ok { border-color: #2e2956; }
   html:root:not([data-theme="light"]) .tga-card .tga-timer { background: rgba(255,255,255,.1); }
+}
+
+/* Carry the Home / Finance lavender fade through the upper content on the other main pages. */
+@media (max-width: 900px) {
+  html:root[data-theme="light"] body:not(.topbar-home) #app > .page:is(.sv2, .cv2, .fam2.is-lav),
+  html:root:not([data-theme="light"]) body:not(.topbar-home) #app > .page:is(.sv2, .cv2, .fam2.is-lav) {
+    position: relative !important;
+    isolation: isolate !important;
+  }
+  html:root[data-theme="light"] body:not(.topbar-home) #app > .page:is(.sv2, .cv2, .fam2.is-lav)::before,
+  html:root:not([data-theme="light"]) body:not(.topbar-home) #app > .page:is(.sv2, .cv2, .fam2.is-lav)::before {
+    content: "" !important;
+    position: absolute !important;
+    z-index: -1 !important;
+    top: -80px !important;
+    right: -16px !important;
+    left: -16px !important;
+    height: min(760px, calc(68vh + 80px)) !important;
+    border-radius: 0 !important;
+    pointer-events: none;
+    -webkit-mask: none !important;
+    mask: none !important;
+  }
+  html:root[data-theme="light"] body:not(.topbar-home) #app > .page:is(.sv2, .cv2, .fam2.is-lav)::before {
+    background:
+      radial-gradient(42% 150px at 88% 35%, rgba(255, 208, 220, .42), transparent 72%),
+      linear-gradient(180deg, #5f51c8 0%, #8276df 40%, rgba(200, 189, 244, .86) 64%, rgba(245, 242, 251, 0) 100%) !important;
+  }
+  html:root:not([data-theme="light"]) body:not(.topbar-home) #app > .page:is(.sv2, .cv2, .fam2.is-lav)::before {
+    background:
+      radial-gradient(42% 150px at 88% 35%, rgba(255, 208, 220, .42), transparent 72%),
+      linear-gradient(180deg, #5f51c8 0%, #8276df 40%, rgba(200, 189, 244, .86) 64%, rgba(33, 29, 61, 0) 100%) !important;
+  }
+  html:root[data-theme="light"] body:not(.topbar-home) #app > .page.sv2 .sv-hero,
+  html:root:not([data-theme="light"]) body:not(.topbar-home) #app > .page.sv2 .sv-hero {
+    border-radius: 0 !important;
+    background: transparent !important;
+    -webkit-mask: none !important;
+    mask: none !important;
+  }
+}
+/* Settings, Calendar and Family share the full page lavender fade. */
+@media (max-width: 900px) {
+  html:root[data-theme="light"] #app > .page.sv2,
+  html:root:not([data-theme="light"]) #app > .page.sv2 {
+    position: relative !important;
+    isolation: isolate !important;
+  }
+  html:root[data-theme="light"] #app > .page.sv2::before,
+  html:root:not([data-theme="light"]) #app > .page.sv2::before {
+    content: "" !important;
+    position: absolute !important;
+    z-index: -1 !important;
+    top: -80px !important;
+    right: -16px !important;
+    left: -16px !important;
+    height: min(760px, calc(68vh + 80px)) !important;
+    border-radius: 0 !important;
+    pointer-events: none !important;
+    -webkit-mask: none !important;
+    mask: none !important;
+  }
+  html:root[data-theme="light"] #app > .page.sv2::before {
+    background:
+      radial-gradient(42% 150px at 88% 35%, rgba(255, 208, 220, .42), transparent 72%),
+      linear-gradient(180deg, #5f51c8 0%, #8276df 40%, rgba(200, 189, 244, .86) 64%, rgba(245, 242, 251, 0) 100%) !important;
+  }
+  html:root:not([data-theme="light"]) #app > .page.sv2::before {
+    background:
+      radial-gradient(42% 150px at 88% 35%, rgba(255, 208, 220, .42), transparent 72%),
+      linear-gradient(180deg, #5f51c8 0%, #8276df 40%, rgba(200, 189, 244, .86) 64%, rgba(33, 29, 61, 0) 100%) !important;
+  }
+  html:root[data-theme="light"] #app > .page.sv2 .sv-hero.sv-hero,
+  html:root:not([data-theme="light"]) #app > .page.sv2 .sv-hero.sv-hero {
+    background: transparent !important;
+    border-radius: 0 !important;
+    -webkit-mask: none !important;
+    mask: none !important;
+  }
+}
+/* Final mobile layout for the Family anniversary summary. */
+@media (max-width: 900px) {
+  html:root[data-theme="light"] .fam2.is-lav .fv-tg,
+  html:root:not([data-theme="light"]) .fam2.is-lav .fv-tg {
+    grid-template-columns: 88px minmax(0, 1fr) !important;
+    grid-template-areas: "nomi top" "nomi lbl" "nomi n" "nomi ymd" "bar bar" "foot foot" !important;
+    column-gap: 14px !important;
+    row-gap: 2px !important;
+    padding: 16px !important;
+    border-radius: 24px !important;
+    text-align: left !important;
+  }
+  .fam2.is-lav .fv-tg-nomi { width: 88px !important; height: 84px !important; align-self: center; }
+  .fam2.is-lav .fv-tg > .fv-tg-top { justify-content: flex-start !important; gap: 8px !important; min-width: 0; }
+  .fam2.is-lav .fv-tg-pair { flex: 0 0 auto; }
+  .fam2.is-lav .fv-tg-top small { overflow: hidden; font-size: .8rem !important; font-weight: 750 !important; white-space: nowrap; text-overflow: ellipsis; }
+  .fam2.is-lav .fv-tg-lbl { margin-top: 3px !important; font-size: .78rem !important; }
+  .fam2.is-lav .fv-tg-n { font-size: clamp(2.35rem, 10vw, 3rem) !important; line-height: 1 !important; }
+  .fam2.is-lav .fv-tg-ymd { gap: 5px !important; margin: 4px 0 2px !important; }
+  .fam2.is-lav .fv-tg-ymd span { padding: 4px 8px !important; font-size: .7rem !important; }
+  .fam2.is-lav .fv-tg > .fv-tg-bar { margin-top: 12px !important; }
+  .fam2.is-lav .fv-tg > .fv-tg-foot { margin-top: 8px !important; }
 }
