@@ -450,8 +450,9 @@ function moneyMonthNumbers(month = localDateInput().slice(0, 7)) {
   const plannedSavings = sumMoney(appData.savings || [], "monthlyContribution");
   const income = report.incomeTotal;
   const loans = report.loanPaymentTotal;
-  // what is left after spending, loan payments and this month's planned saving
-  const left = income - expenses - loans - Math.max(saved, plannedSavings);
+  // Available cash follows the user's actual flow: no income = zero, and only
+  // recorded expenses, paid loan installments, and completed savings reduce it.
+  const left = income > 0 ? income - expenses - loans - saved : 0;
   return { month, monthLabel: report.monthLabel, income, expenses, saved, plannedSavings, loans, left };
 }
 
@@ -959,14 +960,12 @@ function buildMonthlyFinanceReport(month) {
     const date = item.nextPaymentDate || String(item.createdAt || "").slice(0, 10);
     if (!recurring && date.slice(0, 7) !== month) return [];
 
-    const monthlyFactor = recurring
-      ? ({ Weekly: 52 / 12, Quarterly: 1 / 3, Yearly: 1 / 12 }[frequency] || 1)
-      : 1;
-    // a month answered "received" (pop-up / Telegram ✅) counts the real amount
+    // Recurring income is only spendable after it is marked received for this month.
     const received = item.received && typeof item.received === "object" ? item.received[month] : null;
+    if (recurring && !(Number(received?.amount) > 0)) return [];
     const amount = received && Number(received.amount) > 0
       ? toProfileCurrency(Number(received.amount), received.currency || item.currency)
-      : toProfileCurrency(Number(item.amount || 0) * monthlyFactor, item.currency);
+      : toProfileCurrency(Number(item.amount || 0), item.currency);
     return [{
       type: t("income"),
       description: item.name || t("income"),

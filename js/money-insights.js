@@ -94,11 +94,11 @@
       const recurring = item.recurring !== false && frequency !== "Once";
       const date = String(item.nextPaymentDate || item.createdAt || "").slice(0, 10);
       if (!recurring && date.slice(0, 7) !== month) return sum;
-      const factor = recurring ? ({ Weekly: 52 / 12, Quarterly: 1 / 3, Yearly: 1 / 12 }[frequency] || 1) : 1;
-      // a month answered "received" (app pop-up / Telegram ✅) counts the real amount, same as the app report
       const got = item.received && typeof item.received === "object" ? item.received[month] : null;
       if (got && Number(got.amount) > 0) return sum + convert(Number(got.amount), got.currency || item.currency || currency, currency);
-      return sum + convert(Number(item.amount || 0) * factor, item.currency || currency, currency);
+      // A scheduled recurring payment is not cash on hand until the user marks it received.
+      if (recurring) return sum;
+      return sum + convert(Number(item.amount || 0), item.currency || currency, currency);
     }, 0);
   }
 

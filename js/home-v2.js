@@ -101,6 +101,7 @@ const HomeV2 = (() => {
     calm: ["ជិតដល់កំណត់ថ្ងៃនេះហើយ ☁️", "Close to today's limit ☁️"],
     worry: ["ចាយលើសហើយ ប្រយ័ត្នបន្តិចណា 💸", "Over the limit, go easy 💸"]
   };
+  const MONEY_WAITING = ["អត់ទាន់មានលុយទេ ហាហា 😅 ប្រាក់ខែ ឬ freelance មកហើយ ចាំបញ្ចូលណា!", "No money yet haha 😅 Add your salary or freelance when it lands!"];
   let nomiStep = 0;
   function nomiLine(mood) {
     let seen = false;
@@ -211,10 +212,11 @@ const HomeV2 = (() => {
   // light: 3 stat tiles under the hero (money left · today's events · focus)
   function stats(d, focusDone) {
     const left = d.month ? d.month.left : 0;
+    const balanceSub = d.month?.income > 0 ? L("ខែនេះ", "this month") : L("មិនទាន់ទទួលចំណូល", "No income yet");
     const tile = (href, attrs, emoji, label, value, sub) => `<a class="hv2-st" ${href ? `href="${href}"` : 'href="#home"'} ${attrs}><i aria-hidden="true">${emoji}</i><small>${escapeHtml(label)}</small><b>${escapeHtml(value)}</b><em>${escapeHtml(sub)}</em></a>`;
     const short = Math.abs(left) >= 1000 ? `${left < 0 ? "−" : ""}$${(Math.abs(left) / 1000).toFixed(1)}k` : `${left < 0 ? "−" : ""}$${Math.round(Math.abs(left))}`;
     return `<div class="hv2-stats">
-      ${tile("#money", "", "💰", L("នៅសល់", "Left"), short, L("ខែនេះ", "this month"))}
+      ${tile("#money", "", "💰", L("នៅសល់", "Left"), short, balanceSub)}
       ${tile("#calendar", "", "📅", L("ព្រឹត្តិការណ៍", "Events"), String(d.agenda.today), L("ថ្ងៃនេះ", "today"))}
       ${tile("", 'data-hv2-scroll=".hv2-fx"', "🎯", L("ការផ្តោត", "Focus"), `${focusDone}/${d.focus.length}`, L("បានធ្វើ", "done"))}
     </div>`;
@@ -296,9 +298,11 @@ const HomeV2 = (() => {
     const dim = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
     const day = now.getDate();
     const daysLeft = Math.max(1, dim - day + 1);
+    const awaitingIncome = !(m.income > 0);
+    const available = awaitingIncome ? 0 : m.left;
     const monthName = km() ? KM_MONTHS[now.getMonth()] : now.toLocaleDateString("en-US", { month: "long" });
     const spentToday = (appData.expenses || []).filter(item => item.date === todayIso).reduce((t, item) => t + toProfileCurrency(item.amount, item.currency), 0);
-    const perDay = Math.max(0, m.left) / daysLeft;
+    const perDay = Math.max(0, available) / daysLeft;
     const pct = m.income > 0 ? Math.round((m.expenses / m.income) * 100) : 0;
     const marks = [1, 8, 15, 22, dim];
     const at = n => `${((n - 1) / Math.max(1, dim - 1)) * 100}%`;
@@ -307,13 +311,14 @@ const HomeV2 = (() => {
     // card settings from "Design my card" (walletCard.soft): tint + glow, Nomi, talk, month line
     const sc = typeof WalletCard !== "undefined" && WalletCard.softConf ? WalletCard.softConf() : { tint: "white", nomi: true, talk: true, track: true };
     const tint = typeof WalletCard !== "undefined" && WalletCard.tintOf ? WalletCard.tintOf(sc.tint) : ["white", "#ffffff", "#ffe1d2"];
-    const mood = sc.mood && sc.mood !== "auto" ? sc.mood : moneyMood(m, spentToday, perDay);
-    return `<article class="wc-card hv2-soft${m.left < 0 ? " is-short" : ""}${sc.nomi ? "" : " no-nomi"}" style="--sc-bg:${tint[1]};--sc-glow:${tint[2]}">
+    const mood = sc.mood && sc.mood !== "auto" ? sc.mood : moneyMood({ ...m, left: available }, spentToday, perDay);
+    return `<article class="wc-card hv2-soft${available < 0 ? " is-short" : ""}${sc.nomi ? "" : " no-nomi"}" style="--sc-bg:${tint[1]};--sc-glow:${tint[2]}">
         <span class="hv2-soft-glow" aria-hidden="true"></span>${top}
-        ${sc.nomi ? `<span class="hv2-soft-buddy" data-nomi data-mood="${mood}" role="button" tabindex="0" aria-label="Nomi">${MASCOT_FN(mood)}${sc.talk ? `<span class="hv2-say" data-nomi-say>${escapeHtml(L(...(MONEY_SAY[mood] || MONEY_SAY.happy)))}</span>` : ""}</span>` : ""}
+        ${sc.nomi ? `<span class="hv2-soft-buddy" data-nomi data-mood="${mood}" data-awaiting-income="${awaitingIncome}" role="button" tabindex="0" aria-label="Nomi">${MASCOT_FN(mood)}${sc.talk ? `<span class="hv2-say" data-nomi-say>${escapeHtml(L(...(awaitingIncome ? MONEY_WAITING : MONEY_SAY[mood] || MONEY_SAY.happy)))}</span>` : ""}</span>` : ""}
         <small>${escapeHtml(L(`នៅសល់សម្រាប់ចាយ · ខែ${monthName}`, `Left to spend · ${monthName}`))}</small>
-        <a class="hv2-soft-amt money-value${hide}" href="#money">${escapeHtml(plainMoney(m.left))}</a>
+        <a class="hv2-soft-amt money-value${hide}" href="#money">${escapeHtml(plainMoney(available))}</a>
         <span class="hv2-soft-pill">${escapeHtml(L(`ចាយរួច ${pct}% · ${daysLeft} ថ្ងៃទៀត`, `${pct}% spent · ${daysLeft} days left`))}</span>
+        ${awaitingIncome ? `<span class="hv2-soft-income-note">${escapeHtml(L("មិនទាន់ទទួលប្រាក់ខែ ឬចំណូល freelance ទេ", "No salary or freelance income received yet"))}</span>` : ""}
         ${sc.track ? track : ""}
         <div class="hv2-soft-b">
           <div class="hv2-soft-bud"><span>${escapeHtml(L("ថវិកាខែនេះ", "Budget this month"))} <b class="money-value${hide}">${escapeHtml(plainMoney(m.income))}</b></span><button type="button" class="hv2-soft-edit" data-wc-edit>✎ ${escapeHtml(L("កែកាត", "Edit card"))}</button></div>
@@ -588,7 +593,14 @@ const HomeV2 = (() => {
         Sound.play(nomiStep === 1 ? "nomiHello" : m === "sleepy" || m === "worry" ? "nomiNyaa" : nomi.closest("#loginModal, .tga-card, #modalRoot") ? "nomiPurr" : nomiStep % 2 ? "nomiHop" : "nomiPip");
       }
       const say = nomi.querySelector("[data-nomi-say]");
-      if (say) { say.textContent = nomi.classList.contains("hv2-soft-buddy") && nomiStep % 2 ? L(...(MONEY_SAY[nomi.dataset.mood] || MONEY_SAY.happy)) : nomiLine(nomi.dataset.mood || MOOD_NOW); say.classList.remove("is-pop"); void say.offsetWidth; say.classList.add("is-pop"); }
+      if (say) {
+        const isMoneyBuddy = nomi.classList.contains("hv2-soft-buddy");
+        const line = isMoneyBuddy && nomi.dataset.awaitingIncome === "true"
+          ? MONEY_WAITING
+          : isMoneyBuddy && nomiStep % 2 ? (MONEY_SAY[nomi.dataset.mood] || MONEY_SAY.happy) : nomiLine(nomi.dataset.mood || MOOD_NOW);
+        say.textContent = L(...line);
+        say.classList.remove("is-pop"); void say.offsetWidth; say.classList.add("is-pop");
+      }
       nomi.classList.remove("is-hop"); void nomi.offsetWidth; nomi.classList.add("is-hop");
       return;
     }
