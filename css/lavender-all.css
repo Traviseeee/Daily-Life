@@ -1199,20 +1199,21 @@ html:root:not([data-theme="light"]) body, html:root:not([data-theme="light"]) .a
 @media (max-width: 900px) {
   html:root[data-theme="light"] .fam2.is-lav .fv-tg,
   html:root:not([data-theme="light"]) .fam2.is-lav .fv-tg {
-    grid-template-columns: 88px minmax(0, 1fr) !important;
-    grid-template-areas: "nomi top" "nomi lbl" "nomi n" "nomi ymd" "bar bar" "foot foot" !important;
+    grid-template-columns: 72px minmax(0, 1fr) auto !important;
+    grid-template-areas: "nomi top top" "nomi lbl n" "nomi ymd ymd" "bar bar bar" "foot foot foot" !important;
+    justify-items: stretch !important;
     column-gap: 14px !important;
     row-gap: 2px !important;
     padding: 16px !important;
     border-radius: 24px !important;
     text-align: left !important;
   }
-  .fam2.is-lav .fv-tg-nomi { width: 88px !important; height: 84px !important; align-self: center; }
+  .fam2.is-lav .fv-tg-nomi { width: 78px !important; height: 76px !important; align-self: center; }
   .fam2.is-lav .fv-tg > .fv-tg-top { justify-content: flex-start !important; gap: 8px !important; min-width: 0; }
   .fam2.is-lav .fv-tg-pair { flex: 0 0 auto; }
   .fam2.is-lav .fv-tg-top small { overflow: hidden; font-size: .8rem !important; font-weight: 750 !important; white-space: nowrap; text-overflow: ellipsis; }
-  .fam2.is-lav .fv-tg-lbl { margin-top: 3px !important; font-size: .78rem !important; }
-  .fam2.is-lav .fv-tg-n { font-size: clamp(2.35rem, 10vw, 3rem) !important; line-height: 1 !important; }
+  .fam2.is-lav .fv-tg-lbl { align-self: center; margin-top: 3px !important; font-size: .78rem !important; }
+  .fam2.is-lav .fv-tg-n { justify-self: end; align-self: center; font-size: clamp(2.2rem, 9vw, 2.8rem) !important; line-height: 1 !important; white-space: nowrap; }
   .fam2.is-lav .fv-tg-ymd { gap: 5px !important; margin: 4px 0 2px !important; }
   .fam2.is-lav .fv-tg-ymd span { padding: 4px 8px !important; font-size: .7rem !important; }
   .fam2.is-lav .fv-tg > .fv-tg-bar { margin-top: 12px !important; }
