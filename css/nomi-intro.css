@@ -1,0 +1,51 @@
+.ni-backdrop {
+  position: fixed; inset: 0; z-index: 10010; display: grid; place-items: center;
+  padding: max(18px, env(safe-area-inset-top)) 16px max(18px, env(safe-area-inset-bottom));
+  background: rgba(26, 22, 48, .58); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  animation: ni-fade .24s ease both;
+}
+.ni-dialog {
+  position: relative; display: flex; flex-direction: column; align-items: center; width: min(100%, 460px);
+  max-height: min(760px, 94dvh); overflow: auto; padding: 25px 32px 24px; border: 1px solid rgba(255,255,255,.72);
+  border-radius: 30px; color: #252342; text-align: center; background: linear-gradient(160deg, #fff 8%, #f8f5ff 64%, #f0edff 100%);
+  box-shadow: 0 28px 90px rgba(28, 21, 75, .3); outline: none; animation: ni-rise .38s cubic-bezier(.2,.8,.2,1) both;
+}
+.ni-close { position: absolute; z-index: 2; top: 13px; right: 15px; display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: 50%; color: #716c8d; background: rgba(90,77,150,.08); cursor: pointer; }
+.ni-close svg { width: 18px; height: 18px; }
+.ni-close:hover { background: rgba(90,77,150,.15); }
+.ni-hero { position: relative; display: grid; place-items: center; width: 164px; height: 142px; margin: 0 auto 7px; }
+.ni-glow { position: absolute; width: 130px; height: 108px; border-radius: 50%; background: radial-gradient(ellipse, rgba(171,153,255,.42), rgba(208,198,255,.04) 70%); }
+.ni-mascot { position: relative; z-index: 1; display: block; width: 112px; height: 112px; animation: ni-bob 3s ease-in-out infinite; }
+.ni-mascot .hv2-buddy { width: 100%; height: 100%; }
+.ni-spark { position: absolute; color: #f5ae55; font-size: 23px; animation: ni-twinkle 2.4s ease-in-out infinite; }
+.ni-spark-one { top: 20px; left: 14px; }.ni-spark-two { top: 45px; right: 7px; animation-delay: .8s; color: #a493f5; }
+.ni-step-label { display: flex; align-items: center; justify-content: space-between; width: 100%; color: #6c668a; font-size: .68rem; font-weight: 800; letter-spacing: .12em; }
+.ni-step-label span { padding: 5px 9px; border-radius: 99px; color: #6554ba; background: #ebe7ff; letter-spacing: .03em; }
+.ni-icon { display: grid; place-items: center; width: 50px; height: 50px; margin: 16px 0 10px; border: 1px solid #e8e2ff; border-radius: 17px; color: #7767cc; background: #f1eeff; }
+.ni-icon svg { width: 23px; height: 23px; }
+.ni-dialog h2 { margin: 0; color: #292447; font-size: clamp(1.3rem, 5vw, 1.7rem); font-weight: 800; line-height: 1.25; }
+.ni-dialog > p { max-width: 350px; margin: 11px 0 0; color: #69657e; font-size: .94rem; line-height: 1.65; }
+.ni-dialog > .ni-note { margin-top: 9px; color: #6b628c; font-size: .8rem; }
+.ni-dots { display: flex; justify-content: center; gap: 7px; margin: 23px 0 19px; }
+.ni-dots span { width: 7px; height: 7px; border-radius: 99px; background: #d8d4e8; transition: width .2s, background .2s; }
+.ni-dots span.is-active { width: 22px; background: #8572e5; }
+.ni-actions { display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 12px; margin-top: auto; }
+.ni-skip, .ni-back, .ni-next { min-height: 46px; border: 0; border-radius: 14px; font: inherit; font-weight: 750; cursor: pointer; }
+.ni-skip, .ni-back { padding: 0 14px; color: #77728e; background: transparent; }
+.ni-skip:hover, .ni-back:hover { background: rgba(90,77,150,.08); }
+.ni-next-actions { display: flex; align-items: center; gap: 8px; }
+.ni-next { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-width: 126px; padding: 0 18px; color: white; background: linear-gradient(120deg, #806ce1, #9a83f3); box-shadow: 0 8px 20px rgba(129,108,225,.27); }
+.ni-next:hover { filter: brightness(1.05); transform: translateY(-1px); }
+.ni-next:focus-visible, .ni-close:focus-visible, .ni-skip:focus-visible, .ni-back:focus-visible { outline: 3px solid #f2b45e; outline-offset: 3px; }
+body.ni-open { overflow: hidden; }
+.ni-replay { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-top: 16px; padding: 15px 17px; border: 1px solid rgba(130,111,220,.18); border-radius: 18px; background: linear-gradient(110deg, rgba(164,146,255,.1), rgba(255,255,255,.65)); }
+.ni-replay-copy { display: grid; gap: 4px; }.ni-replay-copy strong { color: var(--text-primary); font-size: .9rem; }.ni-replay-copy small { color: var(--text-secondary); font-size: .78rem; line-height: 1.45; }
+.ni-replay button { flex: 0 0 auto; min-height: 44px; padding: 0 14px; border: 1px solid rgba(128,108,225,.22); border-radius: 12px; color: #6c59ca; background: #fff; font: inherit; font-weight: 750; cursor: pointer; }
+:root[data-theme="dark"] .ni-dialog { border-color: rgba(255,255,255,.12); color: #f4f1ff; background: linear-gradient(155deg, #27243d, #201d35 70%, #292344); }
+:root[data-theme="dark"] .ni-dialog h2 { color: #f7f4ff; }:root[data-theme="dark"] .ni-dialog > p { color: #d0cce2; }:root[data-theme="dark"] .ni-dialog > .ni-note { color: #bcb2ef; }
+:root[data-theme="dark"] .ni-step-label { color: #bcb6d3; }:root[data-theme="dark"] .ni-step-label span, :root[data-theme="dark"] .ni-icon { color: #d5ccff; background: rgba(154,131,243,.16); border-color: rgba(191,177,255,.2); }
+:root[data-theme="dark"] .ni-close { color: #ded9f4; background: rgba(255,255,255,.08); }:root[data-theme="dark"] .ni-replay { background: linear-gradient(110deg, rgba(164,146,255,.13), rgba(255,255,255,.025)); }:root[data-theme="dark"] .ni-replay button { color: #ddd5ff; background: #302b4a; }
+@keyframes ni-fade { from { opacity: 0; } to { opacity: 1; } } @keyframes ni-rise { from { opacity: 0; transform: translateY(16px) scale(.98); } to { opacity: 1; transform: none; } }
+@keyframes ni-bob { 0%,100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-7px) rotate(2deg); } } @keyframes ni-twinkle { 0%,100% { opacity: .45; transform: scale(.85); } 50% { opacity: 1; transform: scale(1.12); } }
+@media (max-width: 520px) { .ni-dialog { padding: 20px 21px max(19px, env(safe-area-inset-bottom)); border-radius: 25px; max-height: 92dvh; }.ni-hero { height: 124px; }.ni-mascot { width: 100px; height: 100px; }.ni-dialog > p { font-size: .88rem; }.ni-replay { align-items: flex-start; flex-direction: column; }.ni-replay button { align-self: flex-start; } }
+@media (prefers-reduced-motion: reduce) { .ni-backdrop, .ni-dialog, .ni-mascot, .ni-spark { animation: none !important; transition: none !important; } }
