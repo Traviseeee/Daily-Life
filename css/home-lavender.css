@@ -702,13 +702,24 @@
   html:root:not([data-theme="light"]) body .hv2-v3 .hv2-rain-nomi { width: 54px !important; height: 54px !important; border-radius: 18px !important; }
 }
 @media all {
-  .hv2-v3 .hv2-calendar-item.has-ticker { position: relative; overflow: hidden; gap: 12px; animation: hv2RainCardReveal 650ms cubic-bezier(.2,.75,.25,1) both; }
-  .hv2-v3 .hv2-calendar-item.has-ticker .hv2-calendar-nomi { position: absolute; z-index: 2; top: 50%; left: calc(100% - 72px); width: 54px !important; height: 54px !important; transform: translateY(-50%); animation: hv2RainNomiRun 2.4s cubic-bezier(.22,.72,.26,1) both; }
+  .hv2-v3 :is(.hv2-calendar-item, .hv2-weather).has-ticker { position: relative; overflow: hidden; gap: 12px; animation: hv2RainCardReveal 650ms cubic-bezier(.2,.75,.25,1) both; }
+  .hv2-v3 :is(.hv2-calendar-item, .hv2-weather).has-ticker .hv2-calendar-nomi { position: absolute; z-index: 2; top: 50%; left: calc(100% - 72px); width: 54px !important; height: 54px !important; transform: translateY(-50%); animation: hv2RainNomiRun 2.4s cubic-bezier(.22,.72,.26,1) both; }
   .hv2-v3 .hv2-calendar-nomi .hv2-buddy { width: 52px; height: 52px; }
-  .hv2-v3 .hv2-calendar-item.has-ticker .hv2-tl-text { display: grid; min-width: 0; gap: 3px; padding-left: 66px; }
-  .hv2-v3 .hv2-calendar-item.has-ticker .hv2-tl-text > b { overflow: hidden; color: #202b50; font-size: .9rem; line-height: 1.35; white-space: nowrap; text-overflow: ellipsis; opacity: 0; animation: hv2RainTextReveal 520ms ease 2.45s both; }
-  .hv2-v3 .hv2-calendar-item.has-ticker .hv2-rain-ticker { opacity: 0; animation: hv2RainTextReveal 520ms ease 2.8s both; }
-  html:root:not([data-theme="light"]) .hv2-v3 .hv2-calendar-item.has-ticker .hv2-tl-text > b { color: #f4f2ff; }
+  .hv2-v3 :is(.hv2-calendar-item, .hv2-weather).has-ticker .hv2-tl-text { display: grid; min-width: 0; gap: 3px; padding-left: 66px; }
+  .hv2-v3 :is(.hv2-calendar-item, .hv2-weather).has-ticker .hv2-tl-text > b { overflow: hidden; color: #202b50; font-size: .9rem; line-height: 1.35; white-space: nowrap; text-overflow: ellipsis; opacity: 0; animation: hv2RainTextReveal 520ms ease 2.45s both; }
+  .hv2-v3 :is(.hv2-calendar-item, .hv2-weather).has-ticker .hv2-rain-ticker { opacity: 0; animation: hv2RainTextReveal 520ms ease 2.8s both; }
+  .hv2-v3 .hv2-weather .hv2-calendar-nomi > i { color: #2879e9; background: #eaf3ff; }
+  html:root[data-theme="light"] .hv2-v3 .hv2-weather .hv2-tl-ic.is-weather { background: #eaf3ff; }
+  html:root[data-theme="light"] .hv2-v3 .hv2-weather[data-scene="sun"] .hv2-tl-ic.is-weather,
+  html:root[data-theme="light"] .hv2-v3 .hv2-weather[data-scene="partly"] .hv2-tl-ic.is-weather { background: #fff3dc; }
+  .hv2-v3 .hv2-weather .hv2-weather-backdrop { position: absolute; z-index: 0; top: -5px; right: -5px; display: block; width: 35px; height: 35px; opacity: .45; pointer-events: none; }
+  .hv2-v3 .hv2-weather .hv2-weather-backdrop .tw-icon { display: block; width: 100%; height: 100%; }
+  .hv2-v3 .hv2-weather .hv2-calendar-nomi > .hv2-buddy { z-index: 2; }
+  html:root:not([data-theme="light"]) .hv2-v3 :is(.hv2-calendar-item, .hv2-weather).has-ticker .hv2-tl-text > b { color: #f4f2ff; }
+  html:root:not([data-theme="light"]) .hv2-v3 .hv2-weather .hv2-calendar-nomi > i { color: #a9cdf5; border-color: #2e2956; background: rgba(169,205,245,.18); }
+  html:root:not([data-theme="light"]) .hv2-v3 .hv2-weather .hv2-tl-ic.is-weather { background: rgba(169,205,245,.16); }
+  html:root:not([data-theme="light"]) .hv2-v3 .hv2-weather[data-scene="sun"] .hv2-tl-ic.is-weather,
+  html:root:not([data-theme="light"]) .hv2-v3 .hv2-weather[data-scene="partly"] .hv2-tl-ic.is-weather { background: rgba(255,211,114,.14); }
 }
 @keyframes hv2RainCardReveal {
   from { opacity: 0; transform: translateY(8px) scale(.985); }
@@ -742,12 +753,17 @@
   .hv2-v3 .hv2-rain.has-ticker .hv2-rain-ticker,
   .hv2-v3 .hv2-rain.has-ticker .hv2-tag,
   .hv2-v3 .hv2-calendar-item.has-ticker,
+  .hv2-v3 .hv2-weather.has-ticker,
   .hv2-v3 .hv2-calendar-item.has-ticker .hv2-calendar-nomi,
   .hv2-v3 .hv2-calendar-item.has-ticker .hv2-tl-text > b,
   .hv2-v3 .hv2-calendar-item.has-ticker .hv2-rain-ticker { animation: none; opacity: 1; transform: none; }
+  .hv2-v3 .hv2-weather.has-ticker .hv2-calendar-nomi,
+  .hv2-v3 .hv2-weather.has-ticker .hv2-tl-text > b,
+  .hv2-v3 .hv2-weather.has-ticker .hv2-rain-ticker { animation: none; opacity: 1; transform: none; }
   .hv2-v3 .hv2-rain-drops i { animation: none; opacity: 1; transform: rotate(18deg); }
   .hv2-v3 .hv2-rain.has-ticker .hv2-rain-nomi { left: 14px; transform: translateY(-50%); }
   .hv2-v3 .hv2-calendar-item.has-ticker .hv2-calendar-nomi { left: 14px; transform: translateY(-50%); }
+  .hv2-v3 .hv2-weather.has-ticker .hv2-calendar-nomi { left: 14px; transform: translateY(-50%); }
   .hv2-v3 .hv2-rain-ticker-track small:nth-child(n+2) { display: none; }
 }
 

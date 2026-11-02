@@ -1,0 +1,2 @@
+/* Keep app text on Kantumruy Pro Medium, overriding legacy heavy weights. */
+html body, html body * { font-weight: 500 !important; }

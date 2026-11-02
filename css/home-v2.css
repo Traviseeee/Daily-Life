@@ -216,6 +216,7 @@ html:root[data-theme="light"]:root body .hv2-avatar .home-profile-menu .home-pro
 .hv2-rain-ic { display: grid; place-items: center; font-size: 1.35rem; }
 .hv2-rain small { color: var(--hv-acc-ink) !important; font-weight: 600; }
 .hv2-tag.is-rain { color: var(--hv-blue, #1d4ed8); background: var(--hv-blue-bg, #e1ecff); }
+.hv2-weather { width: 100%; margin: 0; padding: 9px 0; border: 0; border-radius: 0; font: inherit; text-align: left; color: inherit; background: none; cursor: pointer; }
 @media (prefers-reduced-motion: no-preference) { .hv2-rain-ic { animation: hv2Rain 2.4s ease-in-out infinite; } }
 @keyframes hv2Rain { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(-10deg) translateY(-1px); } }
 /* mood faces: one drawn style (js/home-v2.js FACES) */

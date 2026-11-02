@@ -302,8 +302,7 @@
 
 /* ---- hand-written (css/theme-sky-base.css) ---- */
 /* Light mode = sky blue (hand-written part, copied into css/theme-sky.css by tools/build-theme-sky.py) */
-/* Fonts as in the sky-blue draft: Inter for numbers/Latin, Noto Sans Khmer for Khmer.
-   Light mode keeps them thin: Latin never above 600, Khmer 900 → 800. Files are local (fast, offline). */
+/* Kantumruy Pro is the app-wide font; bundled local fonts remain as offline fallbacks. */
 @font-face { font-family: "MyLife Latin"; src: url("../assets/fonts/inter-latin-400-normal.woff2") format("woff2"); font-weight: 100 449; font-display: swap; }
 @font-face { font-family: "MyLife Latin"; src: url("../assets/fonts/inter-latin-500-normal.woff2") format("woff2"); font-weight: 450 549; font-display: swap; }
 @font-face { font-family: "MyLife Latin"; src: url("../assets/fonts/inter-latin-600-normal.woff2") format("woff2"); font-weight: 550 1000; font-display: swap; }
@@ -312,9 +311,9 @@
 @font-face { font-family: "MyLife Khmer"; src: url("../assets/fonts/noto-sans-khmer-khmer-600-normal.woff2") format("woff2"); font-weight: 550 649; font-display: swap; unicode-range: U+1780-17FF, U+19E0-19FF, U+200C-200D, U+25CC; }
 @font-face { font-family: "MyLife Khmer"; src: url("../assets/fonts/noto-sans-khmer-khmer-700-normal.woff2") format("woff2"); font-weight: 650 749; font-display: swap; unicode-range: U+1780-17FF, U+19E0-19FF, U+200C-200D, U+25CC; }
 @font-face { font-family: "MyLife Khmer"; src: url("../assets/fonts/noto-sans-khmer-khmer-800-normal.woff2") format("woff2"); font-weight: 750 1000; font-display: swap; unicode-range: U+1780-17FF, U+19E0-19FF, U+200C-200D, U+25CC; }
-:root { --font-display: "MyLife Latin", "MyLife Khmer", Inter, "Noto Sans Khmer", system-ui, sans-serif; }
+:root { --font-display: "Kantumruy Pro", "MyLife Latin", "MyLife Khmer", system-ui, sans-serif; }
 /* both themes use the same local fonts (thin like the draft) */
-body, button, input, select, textarea { font-family: "MyLife Latin", "MyLife Khmer", Inter, "Noto Sans Khmer", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+body, button, input, select, textarea { font-family: "Kantumruy Pro", "MyLife Latin", "MyLife Khmer", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
 body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
 /* money amounts: a little tighter, like the draft */
 :root[data-theme="light"] .mm-card strong,

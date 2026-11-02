@@ -35,7 +35,7 @@
     linear-gradient(135deg, #020d0b, #071d18 42%, #081c16 100%);
   --gradient-text: linear-gradient(120deg, var(--accent-light), var(--accent) 40%, var(--purple));
   --gradient-button: linear-gradient(120deg, var(--accent), var(--accent-light));
-  --font-display: "Inter", "Noto Sans Khmer", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Kantumruy Pro", ui-sans-serif, system-ui, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   --z-sidebar: 70;
   --z-topbar: 12;
