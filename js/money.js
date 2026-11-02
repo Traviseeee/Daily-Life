@@ -149,7 +149,7 @@ function renderMoney(tab = "overview") {
         <div class="financial-header-main">
           <div class="financial-header-copy">
             <h1 class="page-title page-title-with-icon"><span class="page-title-icon">${Icons.money()}</span>${t("money")}</h1>
-            <p class="page-subtitle">${t("moneySubtitle")}</p>
+            <p class="page-subtitle">${typeof MoneyV2 !== "undefined" ? (languageCode() === "km" ? "ចំណូល · ចំណាយ" : "Income · Expenses") : t("moneySubtitle")}</p>
             <a class="ms-scan-link" href="#scan">${Icons.scan()}<span>${t("smartScan")}</span></a>
           </div>
           <div class="financial-nav-dock">
@@ -163,6 +163,7 @@ function renderMoney(tab = "overview") {
             </dialog>
           </div>
         </div>
+        ${typeof MoneyV2 !== "undefined" && typeof HomeV2 !== "undefined" && typeof HomeV2.buddy === "function" ? `<div class="fv2-header-talk"><span class="fv2-header-nomi" data-nomi data-mood="happy" role="button" tabindex="0" aria-label="Nomi">${HomeV2.buddy("happy")}</span><span class="fv2-header-say" data-nomi-say>${escapeHtml(languageCode() === "km" ? "តោះមើលស្ថានភាពហិរញ្ញវត្ថុរបស់អ្នក 💸" : "Let’s check your money picture 💸")}</span></div>` : ""}
       </div>
       <nav class="financial-shortcuts" aria-label="${t("money")} ${t("sections")}">
         ${moneyTabs.map(([id, label, icon]) => `<a class="financial-shortcut ${tab === id ? "active" : ""}" href="#money/${id}" ${tab === id ? 'aria-current="page"' : ""}><span class="financial-shortcut-icon" aria-hidden="true">${Icons[icon]()}</span><span>${t(label)}</span></a>`).join("")}
@@ -1034,7 +1035,7 @@ function monthlyFinanceReportHtml(report) {
     [t("generatedOn"), report.generatedOn]
   ];
   const rows = report.rows.map(row => [row.type, row.description, row.category, row.period, formatPlainMoney(row.amount)]);
-  const fontStack = '"Noto Sans Khmer","Khmer OS System","Leelawadee UI",Calibri,Arial,sans-serif';
+  const fontStack = '"Kantumruy Pro","Khmer OS System","Leelawadee UI",Calibri,Arial,sans-serif';
   const table = (data, widths) => `<table style="width:100%;table-layout:fixed;border-collapse:collapse;margin:12px 0 24px;font-family:${fontStack};font-size:11pt"><colgroup>${widths.map(width => `<col style="width:${width}%">`).join("")}</colgroup><thead><tr>${data[0].map((cell, index) => `<th style="border:1px solid #aebc9f;padding:9px 10px;background:#c5ff60;color:#182313;font-family:${fontStack};font-size:10pt;font-weight:bold;text-align:${index === data[0].length - 1 ? "right" : "left"};vertical-align:top">${escapeHtml(cell)}</th>`).join("")}</tr></thead><tbody>${data.slice(1).map((row, rowIndex) => `<tr>${row.map((cell, index) => `<td style="border:1px solid #d5ddcc;padding:8px 10px;background:${rowIndex % 2 ? "#f4f7ef" : "#ffffff"};color:#20251b;font-family:${fontStack};font-size:11pt;text-align:${index === row.length - 1 ? "right" : "left"};vertical-align:top;word-wrap:break-word">${escapeHtml(cell)}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
   const transactionRows = rows.length ? rows : [[t("noMonthlyTransactions"), "", "", "", ""]];
   const detailTable = `<table style="width:100%;border-collapse:collapse;margin:12px 0 24px;font-family:${fontStack};font-size:11pt"><tbody>${details.map(([label, value]) => `<tr><th style="width:30%;border:1px solid #d5ddcc;padding:8px 10px;background:#f4f7ef;color:#35491b;font-family:${fontStack};text-align:left">${escapeHtml(label)}</th><td style="border:1px solid #d5ddcc;padding:8px 10px;background:#ffffff;color:#20251b;font-family:${fontStack}">${escapeHtml(value)}</td></tr>`).join("")}</tbody></table>`;

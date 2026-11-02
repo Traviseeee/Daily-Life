@@ -291,7 +291,7 @@ ${filter ? `<autoFilter ref="${filter}"/>` : ""}
 const ReportCanvas = (() => {
   const km = () => languageCode() === "km";
   const L = (k, e) => (km() ? k : e);
-  const FONT = '"Noto Sans Khmer","Khmer OS System","Leelawadee UI",Inter,Calibri,Arial,sans-serif';
+  const FONT = '"Kantumruy Pro","Khmer OS System","Leelawadee UI",Calibri,Arial,sans-serif';
 
   function roundRect(ctx, x, y, w, h, r) {
     ctx.beginPath();

@@ -55,8 +55,9 @@ function footerRoutes() {
     }
     localStorage.setItem("mylife:footer-today-v1", "1");
     const selected = Array.isArray(saved) ? saved.filter(id => allRoutes.some(route => route.id === id)) : defaults.slice();
-    // a saved footer that had Today / Summary: fill the gap from the defaults
-    if (Array.isArray(saved) && selected.length && selected.length < 5) defaults.forEach(id => { if (selected.length < 5 && !selected.includes(id)) selected.push(id); });
+    // Replace removed legacy routes once, but preserve intentional empty footer slots.
+    const hasLegacyItems = Array.isArray(saved) && saved.some(id => id === "today" || id === "summary");
+    if (hasLegacyItems && selected.length && selected.length < 5) defaults.forEach(id => { if (selected.length < 5 && !selected.includes(id)) selected.push(id); });
     return (selected.length ? selected : defaults).slice(0, 5).map(id => allRoutes.find(route => route.id === id));
   } catch (error) {
     return defaults.map(id => allRoutes.find(route => route.id === id));
@@ -134,3 +135,5 @@ function bindNavigationSheetGestures() {
   document.addEventListener("pointercancel", () => { gestureStart = null; });
   document.documentElement.dataset.navigationSheetGesturesBound = "true";
 }
+
+

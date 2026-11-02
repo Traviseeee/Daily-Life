@@ -362,9 +362,12 @@ const HomeV2 = (() => {
   function alerts(d) {
     const out = [];
     const today = d.todayIso;
-    (appData.bills || []).filter(bill => bill.due && bill.due < today && bill.status !== "Paid" && !(typeof billPaidCurrentCycle === "function" && billPaidCurrentCycle(bill)))
-      .slice(0, 2).forEach(bill => {
-        const days = Math.round((new Date(`${today}T00:00:00`) - new Date(`${bill.due}T00:00:00`)) / 86400000);
+    (appData.bills || []).map(bill => ({
+      bill,
+      due: typeof BillPay !== "undefined" && BillPay.effectiveDueDate ? BillPay.effectiveDueDate(bill, today) : bill.due
+    })).filter(({ bill, due }) => due && due < today && bill.status !== "Paid" && !(typeof billPaidCurrentCycle === "function" && billPaidCurrentCycle(bill)))
+      .slice(0, 2).forEach(({ bill, due }) => {
+        const days = Math.round((new Date(`${today}T00:00:00`) - new Date(`${due}T00:00:00`)) / 86400000);
         out.push(`<a class="hv2-alert is-red" href="#money/bills"><span>⚠️ ${escapeHtml(bill.name || t("bill"))} ${escapeHtml(L(`ហួស ${days} ថ្ងៃ`, `${days} days overdue`))} · ${escapeHtml(plainMoney(toProfileCurrency(bill.amount, bill.currency)))}</span><b>${escapeHtml(L("បង់", "Pay"))} ›</b></a>`);
       });
     if (typeof SmartMoney !== "undefined" && SmartMoney.budgetStatus) {
@@ -405,7 +408,7 @@ const HomeV2 = (() => {
       return `<a class="hv2-tl-row" href="${escapeAttr(item.href || "#calendar")}">${lav() ? `<span class="hv2-tl-ic is-${tone}" aria-hidden="true">${ic}</span>` : ""}<span class="hv2-tl-time">${escapeHtml(time)}</span><span class="hv2-dot is-${tone}"></span><span class="hv2-tl-text"><b>${escapeHtml(item.title || "")}</b>${sub ? `<small>${escapeHtml(sub)}</small>` : ""}</span><span class="hv2-tag is-${tone}">${escapeHtml(L(kmTag, enTag))}</span></a>`;
     }).join("");
     return `<section class="hv2-group hv2-upcoming"><div class="hv2-sec" data-ic="📅"><b>${escapeHtml(heading)}</b><a href="#calendar">${escapeHtml(L("ប្រតិទិន", "Calendar"))} ›</a></div>
-      <section class="hv2-card hv2-tl">${typeof TopbarWeather !== "undefined" && TopbarWeather.rainRowHtml ? TopbarWeather.rainRowHtml() : ""}${rows || `<button type="button" class="hv2-empty" data-action="add-event">${IC.cal()}<span>${escapeHtml(L("គ្មានអ្វីទេ — ចុចបន្ថែមព្រឹត្តិការណ៍", "Nothing planned — tap to add an event"))}</span></button>`}</section></section>`;
+      <section class="hv2-card hv2-tl">${typeof TopbarWeather !== "undefined" && TopbarWeather.weatherRowHtml ? TopbarWeather.weatherRowHtml() : ""}${rows || `<button type="button" class="hv2-empty" data-action="add-event">${IC.cal()}<span>${escapeHtml(L("គ្មានអ្វីទេ — ចុចបន្ថែមព្រឹត្តិការណ៍", "Nothing planned — tap to add an event"))}</span></button>`}</section></section>`;
   }
 
   // emoji for a focus line, guessed from its words (✨ when nothing fits)

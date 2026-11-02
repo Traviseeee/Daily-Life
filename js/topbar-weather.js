@@ -16,7 +16,8 @@ const TopbarWeather = (() => {
   const km = () => (typeof languageCode === "function" ? languageCode() : "en") === "km";
   const TEXT = {
     sun: ["Clear sky", "មេឃស្រឡះ"], moon: ["Clear night", "មេឃស្រឡះ"],
-    partly: ["Partly cloudy", "មានពពកខ្លះ"], cloud: ["Cloudy", "មានពពក"], fog: ["Foggy", "អ័ព្ទ"],
+    partly: ["Partly cloudy", "មានពពកខ្លះ"], partlyNight: ["Partly cloudy", "មានពពកខ្លះ"],
+    cloud: ["Cloudy", "មានពពក"], fog: ["Foggy", "អ័ព្ទ"], snow: ["Snow", "ព្រិល"],
     rain: ["Rain", "ភ្លៀង"], storm: ["Thunderstorm", "ភ្លៀងផ្គររន្ទះ"],
     feels: ["Feels", "មានអារម្មណ៍"], rainChance: ["Chance of rain", "ឱកាសភ្លៀង"],
     umbrella: ["Rain likely, bring an umbrella", "ថ្ងៃនេះអាចភ្លៀង កុំភ្លេចយកឆ័ត្រ"],
@@ -30,10 +31,12 @@ const TopbarWeather = (() => {
   function sceneOf(code, isDay) {
     if (code == null) return isDay ? "sun" : "moon";
     if (code >= 95) return "storm";
+    if ((code >= 71 && code <= 77) || code === 85 || code === 86) return "snow";
     if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) return "rain";
     if (code === 45 || code === 48) return "fog";
     if (code === 3) return "cloud";
-    if (code === 1 || code === 2) return isDay ? "partly" : "moon";
+    if (code === 2) return isDay ? "partly" : "partlyNight";
+    if (code === 1) return isDay ? "partly" : "moon";
     return isDay ? "sun" : "moon";
   }
 
@@ -47,13 +50,16 @@ const TopbarWeather = (() => {
     const moon = `<path class="tw-core" d="M60 14a34 34 0 1 0 26 52A28 28 0 0 1 60 14z" fill="${Y}"/><path class="tw-star" d="M82 18l2 5 5 2-5 2-2 5-2-5-5-2 5-2z" fill="${Y}"/><circle class="tw-star tw-d2" cx="16" cy="26" r="3" fill="${Y}"/>`;
     const cloudShape = fill => `<g fill="${fill}"><circle cx="40" cy="52" r="17"/><circle cx="60" cy="58" r="12"/><rect x="16" y="58" width="68" height="22" rx="11"/></g>`;
     const cloud = (fill = "#a6d4f7", back = "#d2e9fb") => `<g class="tw-drift2"><g transform="translate(14 -12) scale(.7)" opacity=".9">${cloudShape(back)}</g></g><g class="tw-drift">${cloudShape(fill)}</g>`;
+    const partlyNight = `<g transform="translate(3 0) scale(.86)">${moon}</g><g transform="translate(0 20) scale(.82)">${cloud("#a6d4f7", "#d2e9fb")}</g>`;
     const drops = `<g stroke="#5aa9e6" stroke-width="5" stroke-linecap="round"><path class="tw-drop" d="M37 82l-3 8"/><path class="tw-drop tw-d1" d="M51 82l-3 8"/><path class="tw-drop tw-d2" d="M65 82l-3 8"/></g>`;
     const bolt = `<path class="tw-bolt" d="M54 70l-10 15h9l-5 13 14-19h-9l5-9z" fill="${Y}"/>`;
     const fog = `<g class="tw-drift" stroke="#a6c4dc" stroke-width="5" stroke-linecap="round"><path d="M20 86h46M32 94h48"/></g>`;
+    const snow = `${cloud("#a6d4f7", "#d2e9fb")}<g fill="#65a9e3"><circle cx="32" cy="88" r="3"/><circle cx="50" cy="94" r="3"/><circle cx="69" cy="88" r="3"/></g>`;
     const body = {
       sun, moon,
       partly: `${smallSun}<g transform="translate(-4 4)">${cloud("#a6d4f7", "#a6d4f7").replace('<g class="tw-drift2">', '<g class="tw-drift2" style="display:none">')}</g>`,
-      cloud: cloud(),
+      partlyNight,
+      cloud: cloud(), snow,
       fog: cloud("#cfe2f2", "#e3eef8") + fog,
       rain: `<g transform="translate(0 -6)">${cloud("#8fc3ee", "#c3dff6")}</g>${drops}`,
       storm: `<g transform="translate(0 -8)">${cloud("#8fb0d0", "#b9cde2")}</g>${bolt}<g stroke="#5aa9e6" stroke-width="5" stroke-linecap="round"><path class="tw-drop" d="M30 82l-3 8"/><path class="tw-drop tw-d2" d="M72 82l-3 8"/></g>`
@@ -115,7 +121,7 @@ const TopbarWeather = (() => {
       try { localStorage.setItem(CACHE_KEY, JSON.stringify(data)); } catch (error) { /* storage full / private */ }
       render();
       if (!hadData) enter();
-      showRainRow();
+      showWeatherRow();
     } catch (error) {
       console.warn("MYLIFE weather unavailable.", error);
     } finally {
@@ -398,25 +404,27 @@ const TopbarWeather = (() => {
         ticker: km() ? [`${range} · ${top}%`, "កុំភ្លេចឆ័ត្រ"] : [`${range} · ${top}% chance`, "Bring an umbrella"]
     };
   }
-  function rainRowHtml() {
+  function weatherRowHtml() {
+    const scene = sceneOf(data?.code, data ? data.isDay : isDayNow());
+    const condition = data ? tx(scene) : tx("loading");
     const alert = rainAlert();
-    if (!alert) return "";
-    if (alert.ticker) {
-      const nomi = typeof HomeV2 !== "undefined" && HomeV2.buddy ? HomeV2.buddy("calm") : "☂";
-      const rainDrops = '<span class="hv2-rain-drops" aria-hidden="true"><i></i><i></i><i></i></span>';
-      const headline = km() ? "ថ្ងៃនេះអាចភ្លៀង" : "Rain likely today";
-      const tickerLabel = alert.ticker.join(" · ");
-      return `<button type="button" class="hv2-tl-row hv2-rain has-ticker" data-wx-open aria-label="${esc(`${headline}. ${tickerLabel}`)}"><span class="hv2-tl-time hv2-rain-ic hv2-rain-nomi" aria-hidden="true">${nomi}${rainDrops}<i>☔</i></span><span class="hv2-tl-text"><b>${esc(headline)}</b><span class="hv2-rain-ticker" aria-hidden="true"><span class="hv2-rain-ticker-track"><small>🌦 ${esc(alert.ticker[0])}</small><small>☂ ${esc(alert.ticker[1])}</small><small>🌦 ${esc(alert.ticker[0])}</small></span></span></span><span class="hv2-tag is-rain">${esc(km() ? "ភ្លៀង" : "Rain")}</span></button>`;
-    }
-    return `<button type="button" class="hv2-tl-row hv2-rain" data-wx-open><span class="hv2-tl-time hv2-rain-ic" aria-hidden="true">☂</span><span class="hv2-tl-text"><b>${esc(alert.title)}</b><small>${esc(alert.detail)}</small></span><span class="hv2-tag is-rain">${esc(km() ? "ភ្លៀង" : "Rain")}</span></button>`;
+    const wind = Number.isFinite(data?.wind) ? `${data.wind} km/h` : "";
+    const temp = num(data?.temp);
+    const feelsWind = data ? (km() ? `មានអារម្មណ៍ ${num(data.feels)} · ខ្យល់ ${wind}` : `Feels ${num(data.feels)} · Wind ${wind}`) : PLACE.name;
+    const rainText = alert?.detail || (data ? `${tx("rainChance")} ${data.rain}%` : tx("loading"));
+    const slides = data ? [`${PLACE.name} · ${temp}`, feelsWind, rainText] : [PLACE.name, tx("loading"), tx("loading")];
+    const sticker = ({ sun: "☀️", moon: "🌙", partly: "🌤️", partlyNight: "☁️", cloud: "☁️", fog: "🌫️", rain: "☔", storm: "⚡", snow: "❄️" })[scene] || "🌤️";
+    const mood = scene === "rain" || scene === "storm" ? "worry" : "happy";
+    const nomi = typeof HomeV2 !== "undefined" && HomeV2.buddy ? HomeV2.buddy(mood) : "🐾";
+    return `<button type="button" class="hv2-tl-row hv2-weather has-ticker" data-scene="${scene}" data-wx-open aria-label="${esc(`${condition}. ${slides.join(". ")}`)}"><span class="hv2-calendar-nomi" aria-hidden="true">${nomi}<i>${sticker}</i></span><span class="hv2-tl-text"><b>${esc(condition)}</b><span class="hv2-rain-ticker" aria-hidden="true"><span class="hv2-rain-ticker-track"><small>${esc(slides[0])}</small><small>${esc(slides[1])}</small><small>${esc(slides[2])}</small></span></span></span></button>`;
+    return `<button type="button" class="hv2-tl-row hv2-weather has-ticker" data-scene="${scene}" data-wx-open aria-label="${esc(`${condition}. ${slides.join(". ")}`)}"><span class="hv2-tl-ic is-weather hv2-calendar-nomi" aria-hidden="true"><span class="hv2-weather-backdrop">${icon(scene)}</span>${nomi}<i>${sticker}</i></span><span class="hv2-tl-text"><b>${esc(condition)}</b><span class="hv2-rain-ticker" aria-hidden="true"><span class="hv2-rain-ticker-track"><small>${esc(slides[0])}</small><small>${esc(slides[1])}</small><small>${esc(slides[2])}</small></span></span></span></button>`;
   }
-  // weather loaded after Home was drawn: add / drop the row without redrawing the page
-  function showRainRow() {
+  // refresh the all-condition row when current weather arrives
+  function showWeatherRow() {
     const list = document.querySelector(".hv2-tl");
     if (!list) return;
-    const html = rainRowHtml();
-    const row = list.querySelector(".hv2-rain");
-    if (!html) { row?.remove(); return; }
+    const html = weatherRowHtml();
+    const row = list.querySelector(".hv2-weather");
     if (row) row.outerHTML = html;
     else { list.querySelector(".hv2-empty")?.remove(); list.insertAdjacentHTML("afterbegin", html); }
   }
@@ -445,7 +453,7 @@ const TopbarWeather = (() => {
     });
   }
 
-  return { init, render, load, toggle, sceneOf, icon, popup, rainRowHtml };
+  return { init, render, load, toggle, sceneOf, icon, popup, weatherRowHtml };
 })();
 
 if (typeof window !== "undefined") window.TopbarWeather = TopbarWeather;
