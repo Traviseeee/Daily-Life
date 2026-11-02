@@ -26,8 +26,8 @@
   <link rel="apple-touch-startup-image" media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="assets/splash/launch-640x1136.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Khmer:wght@400;500;600;700;800&display=swap" onload="this.onload=null;this.rel='stylesheet'">
-  <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Khmer:wght@400;500;600;700;800&display=swap" rel="stylesheet"></noscript>
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Kantumruy+Pro:wght@300..700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Kantumruy+Pro:wght@300..700&display=swap" rel="stylesheet"></noscript>
   <script>
     // light / dark before the first paint, so the opening screen already has the right colours
     (function () {
@@ -43,7 +43,7 @@
     /* Opening screen (31 Oct): Nomi hops in on a lavender glow, then fades into the app.
        Dark = D1 "Lavender Dusk" (indigo), light = lavender like the Home hero. */
     html { background: #211d3d; }
-    #mylifeSplash { position: fixed; inset: 0; z-index: 2147483000; display: grid; place-items: center; background: radial-gradient(circle 360px at 50% 46%, #5b4bc4 0, #2a2458 55%, #1b1834 100%); color: #F4F2FF; font-family: Inter, "Noto Sans Khmer", system-ui, sans-serif; transition: opacity .42s ease, transform .42s ease; }
+    #mylifeSplash { position: fixed; inset: 0; z-index: 2147483000; display: grid; place-items: center; background: radial-gradient(circle 360px at 50% 46%, #5b4bc4 0, #2a2458 55%, #1b1834 100%); color: #F4F2FF; font-family: "Kantumruy Pro", system-ui, sans-serif; transition: opacity .42s ease, transform .42s ease; }
     #mylifeSplash .sp-text { position: absolute; left: 0; right: 0; top: calc(50% + 84px); display: flex; flex-direction: column; align-items: center; gap: 10px; }
     #mylifeSplash.is-done { opacity: 0; transform: scale(1.04); pointer-events: none; }
     #mylifeSplash .sp-nomi { width: 150px; height: 150px; transform: translateY(30px) scale(.6); opacity: 0; animation: sp-hop .7s cubic-bezier(.2, 1.5, .4, 1) .1s forwards, sp-bob 2.4s ease-in-out 1s infinite; }
@@ -67,8 +67,8 @@
     @keyframes sp-up { to { opacity: 1; transform: none; } }
     @media (prefers-reduced-motion: reduce) { #mylifeSplash *, #mylifeSplash { animation: none !important; transition: opacity .2s !important; } #mylifeSplash .sp-nomi, #mylifeSplash .sp-word, #mylifeSplash .sp-tag, #mylifeSplash .sp-dots { opacity: 1; transform: none; } }
   </style>
-  <link rel="stylesheet" href="css/variables.css" media="print" data-app-css>
-  <link rel="stylesheet" href="css/global.css" media="print" data-app-css>
+  <link rel="stylesheet" href="css/variables.css?v=kantumruy-font-scale-20261102" media="print" data-app-css>
+  <link rel="stylesheet" href="css/global.css?v=kantumruy-font-scale-20261102" media="print" data-app-css>
   <link rel="stylesheet" href="css/layout.css" media="print" data-app-css>
   <link rel="stylesheet" href="css/components.css?v=6c20821a" media="print" data-app-css>
   <link rel="stylesheet" href="css/notification-center.css?v=e10d07be" media="print" data-app-css>
@@ -96,10 +96,10 @@
   <link rel="stylesheet" href="css/touch-fit.css?v=c1994db6" media="print" data-app-css>
   <link rel="stylesheet" href="css/sky-light.css?v=3cb5894b" media="print" data-app-css>
   <link rel="stylesheet" href="css/a11y-fit.css?v=5f45e560" media="print" data-app-css>
-  <link rel="stylesheet" href="css/theme-sky.css?v=0870b489" media="print" data-app-css>
-  <link rel="stylesheet" href="css/home-v2.css?v=d1da4b8a" media="print" data-app-css>
+  <link rel="stylesheet" href="css/theme-sky.css?v=kantumruy-font-scale-20261102" media="print" data-app-css>
+  <link rel="stylesheet" href="css/home-v2.css?v=home-weather-same-size-20261102" media="print" data-app-css>
   <link rel="stylesheet" href="css/wallet-card.css?v=56265265" media="print" data-app-css>
-  <link rel="stylesheet" href="css/money-v2.css?v=quick-expense-group-20261101" media="print" data-app-css>
+  <link rel="stylesheet" href="css/money-v2.css?v=finance-header-subtitle-20261102" media="print" data-app-css>
   <link rel="stylesheet" href="css/calendar-v2.css?v=3d1b42d0" media="print" data-app-css>
   <link rel="stylesheet" href="css/family-v2.css?v=ada9762e" media="print" data-app-css>
   <link rel="stylesheet" href="css/settings-v2.css?v=data-grid-inset-v2-20261101" media="print" data-app-css>
@@ -113,12 +113,13 @@
   <link rel="stylesheet" href="css/features-v2.css?v=a3c4dc90" media="print" data-app-css>
   <link rel="stylesheet" href="css/money-tabs-v2.css?v=loan-nomi-bubble-20261101" media="print" data-app-css>
   <link rel="stylesheet" href="css/sky-soft.css?v=65c4b61f" media="print" data-app-css>
-  <link rel="stylesheet" href="css/home-lavender.css?v=card-palette-20261101" media="print" data-app-css>
+  <link rel="stylesheet" href="css/home-lavender.css?v=home-weather-sticker-tile-20261102" media="print" data-app-css>
   <link rel="stylesheet" href="css/lavender-all.css?v=received-income-zero-note-20261101" media="print" data-app-css>
   <link rel="stylesheet" href="css/nomi-intro.css?v=nomi-tour-20261101" media="print" data-app-css>
+  <link rel="stylesheet" href="css/kantumruy-medium.css?v=kantumruy-medium-20261102" media="print" data-app-css>
   <noscript>
-    <link rel="stylesheet" href="css/variables.css">
-    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/variables.css?v=kantumruy-font-scale-20261102">
+    <link rel="stylesheet" href="css/global.css?v=kantumruy-font-scale-20261102">
     <link rel="stylesheet" href="css/layout.css">
     <link rel="stylesheet" href="css/components.css?v=6c20821a">
     <link rel="stylesheet" href="css/notification-center.css?v=e10d07be">
@@ -146,10 +147,10 @@
     <link rel="stylesheet" href="css/touch-fit.css?v=c1994db6">
     <link rel="stylesheet" href="css/sky-light.css?v=3cb5894b">
     <link rel="stylesheet" href="css/a11y-fit.css?v=5f45e560">
-    <link rel="stylesheet" href="css/theme-sky.css?v=0870b489">
-    <link rel="stylesheet" href="css/home-v2.css?v=d1da4b8a">
+    <link rel="stylesheet" href="css/theme-sky.css?v=kantumruy-font-scale-20261102">
+    <link rel="stylesheet" href="css/home-v2.css?v=home-weather-same-size-20261102">
     <link rel="stylesheet" href="css/wallet-card.css?v=56265265">
-    <link rel="stylesheet" href="css/money-v2.css?v=quick-expense-group-20261101">
+    <link rel="stylesheet" href="css/money-v2.css?v=finance-header-subtitle-20261102">
     <link rel="stylesheet" href="css/calendar-v2.css?v=3d1b42d0">
     <link rel="stylesheet" href="css/family-v2.css?v=ada9762e">
     <link rel="stylesheet" href="css/settings-v2.css?v=data-grid-inset-v2-20261101">
@@ -163,9 +164,10 @@
     <link rel="stylesheet" href="css/features-v2.css?v=a3c4dc90">
     <link rel="stylesheet" href="css/money-tabs-v2.css?v=loan-nomi-bubble-20261101">
     <link rel="stylesheet" href="css/sky-soft.css?v=65c4b61f">
-    <link rel="stylesheet" href="css/home-lavender.css?v=card-palette-20261101">
+    <link rel="stylesheet" href="css/home-lavender.css?v=home-weather-sticker-tile-20261102">
     <link rel="stylesheet" href="css/lavender-all.css?v=received-income-zero-note-20261101">
     <link rel="stylesheet" href="css/nomi-intro.css?v=nomi-tour-20261101">
+    <link rel="stylesheet" href="css/kantumruy-medium.css?v=kantumruy-medium-20261102">
   </noscript>
   <script>
     // App styles load without blocking the first paint (the splash has its own
@@ -280,9 +282,9 @@
   <script src="js/login.js?v=0df7bb10" defer></script>
   <script src="js/components/charts.js?v=96593b97" defer></script>
   <script src="js/smart-assistant.js?v=99d623a3" defer></script>
-  <script src="js/navigation.js?v=be4fb220" defer></script>
+  <script src="js/navigation.js?v=3460257b" defer></script>
   <script src="js/wallet-card.js?v=card-palette-20261101" defer></script>
-  <script src="js/home-v2.js?v=current-cycle-due-20261101" defer></script>
+  <script src="js/home-v2.js?v=home-weather-sticker-ticker-20261102" defer></script>
   <script src="js/money-v2.js?v=quick-expense-group-20261101" defer></script>
   <script src="js/money-tabs-v2.js?v=current-cycle-due-20261101" defer></script>
   <script src="js/calendar-v2.js?v=d5fb14cc" defer></script>
@@ -303,8 +305,8 @@
   <script src="js/report-center.js?v=32b23aff" defer></script>
   <script src="js/pull-refresh.js?v=4069857e" defer></script>
   <script src="js/family-access.js?v=e5ca7082" defer></script>
-  <script src="js/money.js?v=actual-cash-only-20261101" defer></script>
-  <script src="js/report-export.js?v=f1dd9855" defer></script>
+  <script src="js/money.js?v=kantumruy-font-scale-20261102" defer></script>
+  <script src="js/report-export.js?v=kantumruy-font-scale-20261102" defer></script>
   <script src="js/money-insights.js?v=received-income-only-20261101" defer></script>
   <script src="js/smart-money.js?v=63e9c3be" defer></script>
   <script src="js/calendar.js?v=15934df0" defer></script>
@@ -327,7 +329,7 @@
   <script src="js/automation-settings.js?v=4c85cb24" defer></script>
   <script src="js/setup-form-ux.js?v=a9b864aa" defer></script>
   <script src="js/notification-center.js?v=855bdf79" defer></script>
-  <script src="js/topbar-weather.js?v=7fa9ddba" defer></script>
+  <script src="js/topbar-weather.js?v=home-weather-sticker-backdrop-20261102" defer></script>
   <script src="js/nomi-intro.js?v=nomi-tour-20261101" defer></script>
   <script src="js/app.js?v=nomi-intro-20261101" defer></script>
   <script src="js/sound-hooks.js?v=8edca574" defer></script>
@@ -379,3 +381,5 @@
   </script>
 </body>
 </html>
+
+
