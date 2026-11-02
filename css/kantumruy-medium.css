@@ -1,2 +1,3 @@
 /* Keep app text on Kantumruy Pro Medium, overriding legacy heavy weights. */
 html body, html body * { font-weight: 500 !important; }
+html body #app .fv2-page .financial-header .page-title { font-weight: 500 !important; }
