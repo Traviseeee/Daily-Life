@@ -307,18 +307,25 @@ const HomeV2 = (() => {
     const marks = [1, 8, 15, 22, dim];
     const at = n => `${((n - 1) / Math.max(1, dim - 1)) * 100}%`;
     const track = `<div class="hv2-mt"><div class="hv2-mt-lab">${marks.filter(n => Math.abs(n - day) > 3).map(n => `<span style="left:${at(n)}">${n}</span>`).join("")}<span class="is-now" style="left:${at(day)}">${escapeHtml(L("ថ្ងៃនេះ", "Today"))}</span></div>
-      <div class="hv2-mt-bar"><i style="width:${at(day)}"></i>${marks.filter(n => n < day).map(n => `<b style="left:${at(n)}">✓</b>`).join("")}<b class="is-now" style="left:${at(day)}">✓</b></div></div>`;
+      <div class="hv2-mt-bar"><i style="width:${at(day)}"></i>${marks.filter(n => n < day && Math.abs(n - day) > 3).map(n => `<b style="left:${at(n)}">✓</b>`).join("")}<b class="is-now" style="left:${at(day)}">✓</b></div></div>`;
     // card settings from "Design my card" (walletCard.soft): tint + glow, Nomi, talk, month line
     const sc = typeof WalletCard !== "undefined" && WalletCard.softConf ? WalletCard.softConf() : { tint: "white", nomi: true, talk: true, track: true };
     const tint = typeof WalletCard !== "undefined" && WalletCard.tintOf ? WalletCard.tintOf(sc.tint) : ["white", "#ffffff", "#ffe1d2"];
     const mood = sc.mood && sc.mood !== "auto" ? sc.mood : moneyMood({ ...m, left: available }, spentToday, perDay);
     return `<article class="wc-card hv2-soft${available < 0 ? " is-short" : ""}${sc.nomi ? "" : " no-nomi"}" style="--sc-bg:${tint[1]};--sc-glow:${tint[2]}">
         <span class="hv2-soft-glow" aria-hidden="true"></span>${top}
-        ${sc.nomi ? `<span class="hv2-soft-buddy" data-nomi data-mood="${mood}" data-awaiting-income="${awaitingIncome}" role="button" tabindex="0" aria-label="Nomi">${MASCOT_FN(mood)}${sc.talk ? `<span class="hv2-say" data-nomi-say>${escapeHtml(L(...(awaitingIncome ? MONEY_WAITING : MONEY_SAY[mood] || MONEY_SAY.happy)))}</span>` : ""}</span>` : ""}
-        <small>${escapeHtml(L(`នៅសល់សម្រាប់ចាយ · ខែ${monthName}`, `Left to spend · ${monthName}`))}</small>
-        <a class="hv2-soft-amt money-value${hide}" href="#money">${escapeHtml(plainMoney(available))}</a>
-        <span class="hv2-soft-pill">${escapeHtml(L(`ចាយរួច ${pct}% · ${daysLeft} ថ្ងៃទៀត`, `${pct}% spent · ${daysLeft} days left`))}</span>
-        ${awaitingIncome ? `<span class="hv2-soft-income-note">${escapeHtml(L("មិនទាន់ទទួលប្រាក់ខែ ឬចំណូល freelance ទេ", "No salary or freelance income received yet"))}</span>` : ""}
+        <div class="hv2-soft-hero${sc.nomi ? " has-nomi" : ""}">
+          <div class="hv2-soft-header">
+            <small class="hv2-soft-label"><span class="hv2-soft-icon" aria-hidden="true">${Icons.wallet()}</span><span>${escapeHtml(L("នៅសល់សម្រាប់ចាយ", "Left to spend"))}</span></small>
+            <span class="hv2-soft-month"><span aria-hidden="true">${Icons.calendar()}</span>${escapeHtml(L(`ខែ${monthName}`, monthName))}</span>
+          </div>
+          ${sc.nomi ? `<span class="hv2-soft-buddy" data-nomi data-mood="${mood}" data-awaiting-income="${awaitingIncome}" role="button" tabindex="0" aria-label="Nomi">${MASCOT_FN(mood)}${sc.talk ? `<span class="hv2-say hv2-soft-say" data-nomi-say>${escapeHtml(L(...(awaitingIncome ? MONEY_WAITING : MONEY_SAY[mood] || MONEY_SAY.happy)))}</span>` : ""}</span>` : ""}
+          <div class="hv2-soft-summary">
+            <a class="hv2-soft-amt money-value${hide}" href="#money">${escapeHtml(plainMoney(available))}</a>
+            <span class="hv2-soft-pill">${escapeHtml(L(`ចាយរួច ${pct}% · ${daysLeft} ថ្ងៃទៀត`, `${pct}% spent · ${daysLeft} days left`))}</span>
+            ${awaitingIncome ? `<span class="hv2-soft-income-note">${escapeHtml(L("មិនទាន់ទទួលប្រាក់ខែ ឬចំណូល freelance ទេ", "No salary or freelance income received yet"))}</span>` : ""}
+          </div>
+        </div>
         ${sc.track ? track : ""}
         <div class="hv2-soft-b">
           <div class="hv2-soft-bud"><span>${escapeHtml(L("ថវិកាខែនេះ", "Budget this month"))} <b class="money-value${hide}">${escapeHtml(plainMoney(m.income))}</b></span><button type="button" class="hv2-soft-edit" data-wc-edit>✎ ${escapeHtml(L("កែកាត", "Edit card"))}</button></div>
@@ -347,7 +354,7 @@ const HomeV2 = (() => {
     const marks = [1, 8, 15, 22, dim];
     const at = n => `${((n - 1) / Math.max(1, dim - 1)) * 100}%`;
     const track = `<div class="hv2-mt"><div class="hv2-mt-lab">${marks.filter(n => Math.abs(n - day) > 3).map(n => `<span style="left:${at(n)}">${n}</span>`).join("")}<span class="is-now" style="left:${at(day)}">${escapeHtml(L("ថ្ងៃនេះ", "Today"))}</span></div>
-      <div class="hv2-mt-bar"><i style="width:${at(day)}"></i>${marks.filter(n => n < day).map(n => `<b style="left:${at(n)}">✓</b>`).join("")}<b class="is-now" style="left:${at(day)}">✓</b></div></div>`;
+      <div class="hv2-mt-bar"><i style="width:${at(day)}"></i>${marks.filter(n => n < day && Math.abs(n - day) > 3).map(n => `<b style="left:${at(n)}">✓</b>`).join("")}<b class="is-now" style="left:${at(day)}">✓</b></div></div>`;
     const mini = typeof WalletCard !== "undefined" ? ((WalletCard.render(m, d.todayIso).match(/<div class="wc-mini">[\s\S]*?<\/div>\s*(?=<\/section>)/) || [""])[0]) : "";
     const dueHtml = due.length ? `<button type="button" class="hv2-wait" data-ma-home><span class="hv2-count">${due.length}</span><b>${escapeHtml(L(`${dueNames} រង់ចាំឆ្លើយ`, `${dueNames} waiting`))}</b><span class="hv2-pill">${escapeHtml(L("ឆ្លើយ", "Answer"))}</span></button>` : "";
     const segs = 8;
@@ -595,7 +602,7 @@ const HomeV2 = (() => {
         const m = nomi.dataset.mood || MOOD_NOW;
         Sound.play(nomiStep === 1 ? "nomiHello" : m === "sleepy" || m === "worry" ? "nomiNyaa" : nomi.closest("#loginModal, .tga-card, #modalRoot") ? "nomiPurr" : nomiStep % 2 ? "nomiHop" : "nomiPip");
       }
-      const say = nomi.querySelector("[data-nomi-say]");
+      const say = nomi.querySelector("[data-nomi-say]") || nomi.closest(".hv2-soft-hero")?.querySelector("[data-nomi-say]");
       if (say) {
         const isMoneyBuddy = nomi.classList.contains("hv2-soft-buddy");
         const line = isMoneyBuddy && nomi.dataset.awaitingIncome === "true"
