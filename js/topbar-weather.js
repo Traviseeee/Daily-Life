@@ -6,11 +6,27 @@
 // Cached 30 min in localStorage; without network the last value (or a neutral
 // placeholder) is shown, nothing else in the app depends on it.
 const TopbarWeather = (() => {
-  const PLACE = { name: "Phnom Penh", lat: 11.5564, lon: 104.9282 };
-  const CACHE_KEY = "mylife:weather:v3";
+  const DEFAULT_PLACE = { name: "Phnom Penh", lat: 11.5564, lon: 104.9282, isCurrent: false };
+  const PLACE_KEY = "mylife:weather-place:v1";
+  const CACHE_PREFIX = "mylife:weather:v4:";
+  const LEGACY_CACHE_KEY = "mylife:weather:v3";
+  function savedPlace() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(PLACE_KEY) || "null");
+      if (Number.isFinite(saved?.lat) && saved.lat >= -90 && saved.lat <= 90
+        && Number.isFinite(saved?.lon) && saved.lon >= -180 && saved.lon <= 180) {
+        return { name: "My location", lat: saved.lat, lon: saved.lon, isCurrent: true };
+      }
+    } catch (error) { /* unavailable or invalid saved location */ }
+    return { ...DEFAULT_PLACE };
+  }
+  let PLACE = savedPlace();
   const MAX_AGE = 30 * 60 * 1000;
   let data = null;
   let loading = false;
+  let loadSeq = 0;
+  let locationBusy = false;
+  let locationError = "";
   let open = false;
 
   const km = () => (typeof languageCode === "function" ? languageCode() : "en") === "km";
@@ -24,7 +40,15 @@ const TopbarWeather = (() => {
     umbrellaAt: ["Rain ~{t}, bring an umbrella", "ប្រហែលម៉ោង {t} អាចភ្លៀង កុំភ្លេចឆ័ត្រ"],
     now: ["Now", "ឥឡូវ"], more: ["Show hourly forecast", "ចុចមើលអាកាសធាតុតាមម៉ោង"],
     morning: ["Good morning", "អរុណសួស្តី"], afternoon: ["Good afternoon", "ទិវាសួស្តី"], evening: ["Good evening", "សាយណ្ហសួស្តី"],
-    loading: ["Loading weather…", "កំពុងមើលអាកាសធាតុ…"]
+    loading: ["Loading weather…", "កំពុងមើលអាកាសធាតុ…"],
+    myLocation: ["My location", "ទីតាំងខ្ញុំ"],
+    useLocation: ["Use my location", "ប្រើទីតាំងខ្ញុំ"],
+    updateLocation: ["Update location", "ធ្វើបច្ចុប្បន្នភាពទីតាំង"],
+    defaultLocation: ["Use Phnom Penh", "ប្រើភ្នំពេញ"],
+    locating: ["Finding location…", "កំពុងស្វែងរកទីតាំង…"],
+    locationDenied: ["Location access was denied. Allow it in browser settings and try again.", "មិនបានអនុញ្ញាតទីតាំងទេ។ សូមបើកការអនុញ្ញាតក្នុងការកំណត់ browser រួចសាកម្ដងទៀត។"],
+    locationUnavailable: ["Could not get your location. Try again.", "មិនអាចរកទីតាំងបានទេ។ សូមសាកម្ដងទៀត។"],
+    locationUnsupported: ["Location is not available in this browser.", "Browser នេះមិនគាំទ្រទីតាំងទេ។"]
   };
   const tx = key => TEXT[key][km() ? 1 : 0];
 
@@ -67,29 +91,38 @@ const TopbarWeather = (() => {
     return `<svg class="tw-icon tw-${scene}" viewBox="0 0 100 100" aria-hidden="true" focusable="false">${body}</svg>`;
   }
 
-  function readCache() {
+  function cacheKey(place = PLACE) { return `${CACHE_PREFIX}${Number(place.lat).toFixed(2)},${Number(place.lon).toFixed(2)}`; }
+  function readCache(place = PLACE) {
     try {
-      const saved = JSON.parse(localStorage.getItem(CACHE_KEY) || "null");
+      const key = cacheKey(place);
+      const cached = localStorage.getItem(key)
+        || (!place.isCurrent && place.lat === DEFAULT_PLACE.lat && place.lon === DEFAULT_PLACE.lon ? localStorage.getItem(LEGACY_CACHE_KEY) : null);
+      const saved = JSON.parse(cached || "null");
       return saved && saved.at ? saved : null;
     } catch (error) { return null; }
   }
 
   async function load(force) {
-    const cached = readCache();
+    const place = { ...PLACE };
+    const cached = readCache(place);
     if (cached) data = cached;
-    if (loading || (!force && cached && Date.now() - cached.at < MAX_AGE)) return;
+    if ((loading && !force) || (!force && cached && Date.now() - cached.at < MAX_AGE)) return;
     if (typeof navigator !== "undefined" && navigator.onLine === false) return;
+    const seq = ++loadSeq;
     loading = true;
     const hadData = !!data;
     try {
-      const url = `https://api.open-meteo.com/v1/forecast?latitude=${PLACE.lat}&longitude=${PLACE.lon}&current=temperature_2m,apparent_temperature,weather_code,is_day,relative_humidity_2m,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,wind_speed_10m_max,relative_humidity_2m_mean&hourly=temperature_2m,weather_code,precipitation_probability,is_day&timezone=auto&forecast_days=7`;
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${place.lat}&longitude=${place.lon}&current=temperature_2m,apparent_temperature,weather_code,is_day,relative_humidity_2m,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,wind_speed_10m_max,relative_humidity_2m_mean&hourly=temperature_2m,weather_code,precipitation_probability,is_day&timezone=auto&forecast_days=7`;
       const response = await fetch(url, { cache: "no-store" });
       if (!response.ok) throw new Error(`weather ${response.status}`);
       const json = await response.json();
+      if (seq !== loadSeq) return;
       const c = json.current || {};
       const d = json.daily || {};
       data = {
         at: Date.now(),
+        timezone: json.timezone || "",
+        utcOffsetSeconds: Number(json.utc_offset_seconds) || 7 * 3600,
         temp: Math.round(c.temperature_2m),
         feels: Math.round(c.apparent_temperature),
         code: c.weather_code,
@@ -118,14 +151,15 @@ const TopbarWeather = (() => {
           pop: Math.round((json.hourly.precipitation_probability || [])[i] || 0)
         }))
       };
-      try { localStorage.setItem(CACHE_KEY, JSON.stringify(data)); } catch (error) { /* storage full / private */ }
+      try { localStorage.setItem(cacheKey(place), JSON.stringify(data)); } catch (error) { /* storage full / private */ }
       render();
       if (!hadData) enter();
       showWeatherRow();
+      refreshOpenPopup();
     } catch (error) {
-      console.warn("MYLIFE weather unavailable.", error);
+      if (seq === loadSeq) console.warn("MYLIFE weather unavailable.", error);
     } finally {
-      loading = false;
+      if (seq === loadSeq) loading = false;
     }
   }
 
@@ -209,7 +243,7 @@ const TopbarWeather = (() => {
   function dateLabel() {
     const now = new Date();
     try {
-      return now.toLocaleDateString(km() ? "km-KH" : "en-US", { weekday: "short", day: "numeric", month: "short" });
+      return now.toLocaleDateString(km() ? "km-KH" : "en-US", { weekday: "short", day: "numeric", month: "short", ...(data?.timezone ? { timeZone: data.timezone } : {}) });
     } catch (error) { return now.toDateString(); }
   }
 
@@ -282,7 +316,7 @@ const TopbarWeather = (() => {
   function popupEsc(event) { if (event.key === "Escape") closePopup(); }
   const KM_DAY = ["អាទិ", "ចន្ទ", "អង្គ", "ពុធ", "ព្រហ", "សុក្រ", "សៅរ៍"];
   const KM_MON = ["មករា", "កុម្ភៈ", "មីនា", "មេសា", "ឧសភា", "មិថុនា", "កក្កដា", "សីហា", "កញ្ញា", "តុលា", "វិច្ឆិកា", "ធ្នូ"];
-  const placeTime = () => new Date(Date.now() + 7 * 3600 * 1000).toISOString(); // Phnom Penh is UTC+7
+  const placeTime = () => new Date(Date.now() + (Number(data?.utcOffsetSeconds) || 7 * 3600) * 1000).toISOString();
   const nowKey = () => placeTime().slice(0, 13);
   const dayShort = iso => { const d = new Date(`${iso}T00:00:00`); return km() ? KM_DAY[d.getDay()] : d.toLocaleDateString("en-US", { weekday: "short" }); };
   const dayLong = iso => { const d = new Date(`${iso}T00:00:00`); return km() ? `${KM_DAY[d.getDay()]} ${d.getDate()} ${KM_MON[d.getMonth()]}` : d.toLocaleDateString("en-US", { weekday: "short", day: "numeric", month: "short" }); };
@@ -311,7 +345,14 @@ const TopbarWeather = (() => {
     const lav = typeof HomeV2 !== "undefined" && !!HomeV2.buddy;
     const wet = /rain|storm|drizzle|thunder/i.test(scene);
     const nomiSay = tip || (wet ? tx("umbrella") : km() ? "អាកាសធាតុល្អ ចេញក្រៅបាន 🌤" : "Nice weather — go out and enjoy 🌤");
-    const top = `<small class="wxp-place">📍 ${esc(PLACE.name)} · ${esc(today ? dateLabel() : dayLong(day.date))}</small>
+    const placeControls = index === 0 ? `<div class="wxp-place-row">
+        <small class="wxp-place">📍 ${esc(PLACE.isCurrent ? tx("myLocation") : PLACE.name)} · ${esc(today ? dateLabel() : dayLong(day.date))}</small>
+        <span class="wxp-location-actions">
+          <button type="button" class="wxp-location" data-wxp-location${locationBusy ? " disabled" : ""}>${esc(locationBusy ? tx("locating") : tx(PLACE.isCurrent ? "updateLocation" : "useLocation"))}</button>
+          ${PLACE.isCurrent ? `<button type="button" class="wxp-location-reset" data-wxp-place-reset>${esc(tx("defaultLocation"))}</button>` : ""}
+        </span>
+      </div>${locationError ? `<small class="wxp-location-error" role="status">${esc(locationError)}</small>` : ""}` : `<small class="wxp-place">📍 ${esc(PLACE.isCurrent ? tx("myLocation") : PLACE.name)} · ${esc(today ? dateLabel() : dayLong(day.date))}</small>`;
+    const top = `${placeControls}
       <div class="wxp-icon">${icon(scene)}</div>
       <strong class="wxp-temp" data-wxp-temp="${Number(temp)}">${num(temp)}</strong>
       <span class="wxp-cond">${esc(data ? tx(scene) : tx("loading"))}${today ? "" : ` · ${num(day.max)} / ${num(day.min)}`}</span>`;
@@ -353,6 +394,8 @@ const TopbarWeather = (() => {
     document.addEventListener("keydown", popupEsc);
     node.addEventListener("click", event => {
       if (event.target === node || event.target.closest("[data-wxp-close]")) return closePopup();
+      if (event.target.closest("[data-wxp-location]")) { requestDeviceLocation(); return; }
+      if (event.target.closest("[data-wxp-place-reset]")) { resetWeatherPlace(); return; }
       const pick = event.target.closest("[data-wxp-day]");
       if (!pick || Number(pick.dataset.wxpDay) === popDay) return;
       popDay = Number(pick.dataset.wxpDay);
@@ -368,6 +411,62 @@ const TopbarWeather = (() => {
     });
     countUp(node);
     if (!data || !data.days) load(true).then(() => { if (node.isConnected && data) popup(); });
+  }
+
+  function refreshOpenPopup() {
+    const node = document.querySelector(".wxp");
+    const card = node?.querySelector(".wxp-card");
+    if (!node || !card) return;
+    const scene = sceneOf(data?.code, data ? data.isDay : isDayNow());
+    node.dataset.scene = scene;
+    card.dataset.scene = scene;
+    card.innerHTML = popupBody(popDay);
+    countUp(node);
+  }
+
+  function requestDeviceLocation() {
+    if (locationBusy) return;
+    locationError = "";
+    if (!navigator.geolocation) {
+      locationError = tx("locationUnsupported");
+      refreshOpenPopup();
+      return;
+    }
+    locationBusy = true;
+    refreshOpenPopup();
+    navigator.geolocation.getCurrentPosition(position => {
+      const round = value => Math.round(value * 100) / 100;
+      PLACE = {
+        name: "My location",
+        lat: round(position.coords.latitude),
+        lon: round(position.coords.longitude),
+        isCurrent: true
+      };
+      try { localStorage.setItem(PLACE_KEY, JSON.stringify({ lat: PLACE.lat, lon: PLACE.lon })); } catch (error) { /* keep active for this session */ }
+      locationBusy = false;
+      locationError = "";
+      data = readCache();
+      render();
+      showWeatherRow();
+      refreshOpenPopup();
+      load(true);
+    }, error => {
+      locationBusy = false;
+      locationError = error?.code === 1 ? tx("locationDenied") : tx("locationUnavailable");
+      refreshOpenPopup();
+    }, { enableHighAccuracy: false, timeout: 15000, maximumAge: 10 * 60 * 1000 });
+  }
+
+  function resetWeatherPlace() {
+    PLACE = { ...DEFAULT_PLACE };
+    locationBusy = false;
+    locationError = "";
+    try { localStorage.removeItem(PLACE_KEY); } catch (error) { /* default remains active for this session */ }
+    data = readCache();
+    render();
+    showWeatherRow();
+    refreshOpenPopup();
+    load(false);
   }
 
   /* ---------- rain alert on Home ("Coming up" list): only when rain is likely ---------- */
