@@ -116,9 +116,17 @@ const SettingsV2 = (() => {
 
   // one old section under a back header; the rest of the old page is hidden by CSS
   function sub(id, oldHtml) {
+    const subtitles = {
+      appearance: L("កែរូបរាង ភាសា និងការបង្ហាញក្នុង MYLIFE", "Adjust MYLIFE's appearance, language and display."),
+      money: L("រូបិយប័ណ្ណ ថវិកា និងការកំណត់លុយ", "Currency, budgets and money options"),
+      data: L("Backup, Sync, នាំចេញ និង PIN", "Backup, sync, export and PIN"),
+      ai: L("កំណត់ AI និងការភ្ជាប់ Telegram", "AI settings and Telegram connection"),
+      notifications: L("រំលឹកតាមកម្មវិធី Telegram និងទូរស័ព្ទ", "Reminders through Telegram and your phone")
+    };
+    const subtitle = subtitles[id] || "";
     const html = oldHtml
       .replace('<section class="page settings-page">', `<section class="page settings-page sv2 sv2-sub" data-sv2="${id}">
-        <header class="sv-hero sv-subhead"><a class="sv-back" href="#settings" aria-label="${escapeAttr(L("ត្រឡប់", "Back"))}">‹</a><h1>${escapeHtml(TITLES()[id] || t("settings"))}</h1></header>`)
+        <header class="sv-hero sv-subhead"><a class="sv-back" href="#settings" aria-label="${escapeAttr(L("ត្រឡប់", "Back"))}">‹</a><div class="sv-subhead-copy"><h1>${escapeHtml(TITLES()[id] || t("settings"))}</h1>${subtitle ? `<p class="sv-subtitle">${escapeHtml(subtitle)}</p>` : ""}</div></header>`)
       .replace(new RegExp(`<details class="settings-accordion" id="settings-section-${id}"(?: open)?>`), `<details class="settings-accordion" id="settings-section-${id}" open>`);
     return html;
   }

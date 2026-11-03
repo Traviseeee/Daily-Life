@@ -18,13 +18,13 @@ function renderSettingsPage() {
   const L = (km, en) => (isKm ? km : en);
   // 6 groups, like phone settings: account · look & language · money · notifications · data & privacy · about
   const settingsSections = [
-    ["account", "accountCategory", "settingsAccountSubtitle", "user"],
-    ["appearance", L("រូបរាង & ភាសា", "Look & language"), L("ពណ៌, ភាសា, ម៉ោង, សំឡេង, ប៊ូតុងរហ័ស", "Theme, language, clock, sound, quick buttons"), "palette"],
-    ["money", L("លុយ", "Money"), L("ទំព័រលុយ, ថវិកា, ការគណនា", "Money page, budgets, totals"), "calculator"],
-    ["notifications", L("ការជូនដំណឹង", "Notifications"), L("Telegram, App, ការរំលឹក, bot", "Telegram, app, reminders, bot"), "bell"],
-    ["ai", "AI · Gemini", L("សួរ AI, ដំបូន្មានលុយ, ជួយអានសារ", "Ask AI, money advice, hard messages"), "spark"],
-    ["data", L("ទិន្នន័យ & ឯកជនភាព", "Data & privacy"), L("Backup, Sync, Export, លាក់លុយ", "Backup, sync, export, hide money"), "shield"],
-    ["about", "about", "settingsAboutSubtitle", "info"]
+    ["account", L("គណនី", "Account"), L("ព័ត៌មានផ្ទាល់ខ្លួន និងការចូលគណនី", "Personal details and sign-in"), "user"],
+    ["appearance", L("រូបរាង & ភាសា", "Look & language"), L("ពណ៌ ភាសា ម៉ោង និងសំឡេង", "Theme, language, time and sound"), "palette"],
+    ["money", L("លុយ", "Money"), L("រូបិយប័ណ្ណ ថវិកា និងការកំណត់លុយ", "Currency, budgets and money options"), "calculator"],
+    ["notifications", L("ការជូនដំណឹង", "Notifications"), L("រំលឹកតាម Telegram និងទូរស័ព្ទ", "Reminders in Telegram and on your phone"), "bell"],
+    ["ai", "AI · Gemini", L("កំណត់ AI និងការភ្ជាប់ Telegram", "AI settings and Telegram connection"), "spark"],
+    ["data", L("ទិន្នន័យ & សុវត្ថិភាព", "Data & security"), L("Backup, Sync, នាំចេញ និង PIN", "Backup, sync, export and PIN"), "shield"],
+    ["about", L("អំពី MYLIFE", "About MYLIFE"), L("ព័ត៌មាន និងកំណែកម្មវិធី", "App information and version"), "info"]
   ];
   const label = text => (/^[a-zA-Z]+$/.test(text) ? t(text) : text);
   return `
@@ -83,9 +83,9 @@ function renderSettingsPage() {
                 <label class="settings-preference-row"><span><strong>${t("language")}</strong><small>${t("languageHelp")}</small></span><select data-preference="language"><option value="English" ${appData.profile.language !== "Khmer" ? "selected" : ""}>English</option><option value="Khmer" ${appData.profile.language === "Khmer" ? "selected" : ""}>ខ្មែរ</option></select></label>
                 <label class="settings-preference-row"><span><strong>${t("clockFormat")}</strong><small>${t("clockFormatHelp")}</small></span><select data-preference="clockFormat"><option value="12-hour" ${appData.profile.clockFormat !== "24-hour" ? "selected" : ""}>12-hour</option><option value="24-hour" ${appData.profile.clockFormat === "24-hour" ? "selected" : ""}>24-hour</option></select></label>
                 <label class="settings-preference-row"><span><strong>${t("soundEnabled")}</strong><small>${t("soundEnabledHelp")}</small></span><input type="checkbox" data-preference="soundEnabled" ${appData.profile.soundEnabled !== false ? "checked" : ""}></label>
-                <div class="settings-preference-row settings-sound-row"><span><strong>${languageCode() === "km" ? "កម្រិតសំឡេង" : "Sound volume"}</strong><small>${languageCode() === "km" ? "សំឡេងពេលចុច កត់លុយ ជូនដំណឹង និងសម្រេចគោលដៅ" : "Taps, money, alerts and goal celebrations"}</small></span><div class="settings-sound-controls"><input type="range" min="0" max="100" step="5" value="${Number.isFinite(Number(appData.profile.soundVolume)) ? Number(appData.profile.soundVolume) : 70}" data-sound-volume aria-label="Volume"><button type="button" class="button ghost-button" data-sound-preview>▶ ${languageCode() === "km" ? "សាក" : "Try"}</button></div></div>
-                <label class="settings-preference-row"><span><strong>${languageCode() === "km" ? "ញ័រទូរស័ព្ទ" : "Vibration"}</strong><small>${languageCode() === "km" ? "ញ័រតិចៗពេល save ការរំលឹក និងអបអរ (ទូរស័ព្ទ)" : "Small buzz on save, reminders and celebrations (phones)"}</small></span><input type="checkbox" data-preference="haptics" ${appData.profile.haptics !== false ? "checked" : ""}></label>
-                <label class="settings-preference-row"><span><strong>${languageCode() === "km" ? "រូបស្វាគមន៍ពេលបើក app" : "Welcome photo on open"}</strong><small>${languageCode() === "km" ? "រូបគ្រួសារ និងកិច្ចការថ្ងៃនេះ ពេលបើក app" : "Family photo and today's plan when the app opens"}</small></span><select data-preference="welcomePosterMode">${[["daily", languageCode() === "km" ? "ម្ដងក្នុងមួយថ្ងៃ" : "Once a day"], ["always", languageCode() === "km" ? "រាល់ពេលបើក" : "Every time"], ["off", languageCode() === "km" ? "បិទ" : "Off"]].map(([v, l]) => `<option value="${v}" ${(appData.profile.welcomePosterMode || "daily") === v ? "selected" : ""}>${l}</option>`).join("")}</select></label>
+                <div class="settings-preference-row settings-sound-row"><span><strong>${languageCode() === "km" ? "កម្រិតសំឡេង" : "Sound volume"}</strong><small>${languageCode() === "km" ? "សំឡេងពេលចុច លុយ រំលឹក និងសម្រេចគោលដៅ" : "Taps, money, alerts and goal celebrations"}</small></span><div class="settings-sound-controls"><input type="range" min="0" max="100" step="5" value="${Number.isFinite(Number(appData.profile.soundVolume)) ? Number(appData.profile.soundVolume) : 70}" data-sound-volume aria-label="Volume"><button type="button" class="button ghost-button" data-sound-preview>▶ ${languageCode() === "km" ? "សាក" : "Try"}</button></div></div>
+                <label class="settings-preference-row"><span><strong>${languageCode() === "km" ? "ញ័រទូរស័ព្ទ" : "Vibration"}</strong><small>${languageCode() === "km" ? "ញ័រពេលរក្សាទុក រំលឹក និងអបអរ" : "Small buzz on save, reminders and celebrations (phones)"}</small></span><input type="checkbox" data-preference="haptics" ${appData.profile.haptics !== false ? "checked" : ""}></label>
+                <label class="settings-preference-row"><span><strong>${languageCode() === "km" ? "រូបស្វាគមន៍ពេលបើក app" : "Welcome photo on open"}</strong><small>${languageCode() === "km" ? "រូបគ្រួសារ និងកិច្ចការថ្ងៃនេះ" : "Family photo and today's plan when the app opens"}</small></span><select data-preference="welcomePosterMode">${[["daily", languageCode() === "km" ? "ម្ដងក្នុងមួយថ្ងៃ" : "Once a day"], ["always", languageCode() === "km" ? "រាល់ពេលបើក" : "Every time"], ["off", languageCode() === "km" ? "បិទ" : "Off"]].map(([v, l]) => `<option value="${v}" ${(appData.profile.welcomePosterMode || "daily") === v ? "selected" : ""}>${l}</option>`).join("")}</select></label>
               </div>
               <article class="welcome-poster-settings">
                 <div class="welcome-poster-settings-copy">
@@ -110,7 +110,7 @@ function renderSettingsPage() {
                   const selected = saved.length && !oldDefault ? saved : QUICK_ACTION_DEFAULTS;
                   return quickActionList().map(([id, , label]) => `<label class="settings-preference-row settings-quick-action-row"><span><strong>${label}</strong><small>${t("showInQuickActions")}</small></span><input type="checkbox" data-quick-action-preference="${id}" ${selected.includes(id) ? "checked" : ""}></label>`).join("");
                 })()}
-                <div class="settings-preference-row settings-link-row"><span><strong>${languageCode() === "km" ? "Footer និងថវិកា" : "Footer and budgets"}</strong><small>${languageCode() === "km" ? "រៀបលំដាប់ footer ឬកំណត់ថវិកាតាមប្រភេទចំណាយ" : "Arrange the footer or set spending budgets"}</small></span><div class="settings-link-buttons"><button type="button" class="button ghost-button" data-open-footer-editor>${languageCode() === "km" ? "រៀបចំ footer" : "Arrange footer"}</button></div></div>
+                <div class="settings-preference-row settings-link-row"><span><strong>${languageCode() === "km" ? "Footer និងថវិកា" : "Footer and budgets"}</strong><small>${languageCode() === "km" ? "រៀប Footer និងកំណត់ថវិកា" : "Arrange the footer or set spending budgets"}</small></span><div class="settings-link-buttons"><button type="button" class="button ghost-button" data-open-footer-editor>${languageCode() === "km" ? "រៀបចំ footer" : "Arrange footer"}</button></div></div>
                 </div>
               </article>
             </div>
@@ -191,6 +191,7 @@ function renderSettingsPage() {
                 </div>
                 <p class="settings-about-closing">${t("aboutMylifeClosing")}</p>
                 <p class="settings-about-storage">${t("localStorageNote")}</p>
+                <div class="ni-replay"><span class="ni-replay-copy"><strong>${L("ចង់ស្គាល់ MYLIFE ម្តងទៀតទេ?", "Want a quick tour again?")}</strong><small>${L("Nomi អាចណែនាំចំណុចសំខាន់ៗម្តងទៀត។", "Nomi can show you around whenever you need.")}</small></span><button type="button" data-nomi-intro-open>${L("ជួប Nomi", "Meet Nomi")}</button></div>
               </section>
               ${renderReleaseNotes()}
             </div>
@@ -992,6 +993,8 @@ function backupDate() {
 }
 
 function renderHelp() {
+  const isKm = languageCode() === "km";
+  const L = (kh, en) => isKm ? kh : en;
   const helpSteps = [
     { icon: Icons.search(), title: t("search"), description: t("searchHelp"), tone: "search" },
     { icon: Icons.plus(), title: t("add"), description: t("addHelp"), tone: "add" },
@@ -1014,6 +1017,7 @@ function renderHelp() {
       <div class="help-grid">
         ${helpSteps.map(step => `<article class="help-card ${step.tone}"><span class="help-card-icon">${step.icon}</span><h2>${step.title}</h2><p>${step.description}</p></article>`).join("")}
       </div>
+      <div class="ni-replay"><span class="ni-replay-copy"><strong>${L("Nomi អាចណែនាំអ្នកបាន", "Meet your guide, Nomi")}</strong><small>${L("មើលការណែនាំខ្លីៗអំពីចំណុចសំខាន់ៗក្នុងកម្មវិធី។", "Take a short tour of the main parts of MYLIFE.")}</small></span><button type="button" data-nomi-intro-open>${L("មើលការណែនាំ", "Show introduction")}</button></div>
       ${renderSmartHelp()}
     </section>
   `;
