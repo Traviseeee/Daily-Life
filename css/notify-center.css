@@ -69,6 +69,12 @@
 
 .nfc-note, .nfc-foot { display: flex; align-items: flex-start; gap: 8px; margin: 0; font-size: 0.8rem; line-height: 1.5; color: var(--text-secondary); }
 .nfc-note svg, .nfc-foot svg { flex: 0 0 16px; width: 16px; height: 16px; margin-top: 2px; color: var(--text-muted); }
+.nfc-gold-feature { display: flex; align-items: center; gap: 10px; padding: 11px 12px; border: 1px solid var(--nfc-line); border-radius: 14px; background: var(--nfc-soft, rgba(242, 181, 64, .1)); }
+.nfc-gold-feature-icon { display: grid; place-items: center; width: 36px; height: 36px; flex: 0 0 36px; border-radius: 12px; color: #a56500; background: rgba(242, 181, 64, .18); }
+.nfc-gold-feature-icon svg { width: 21px; height: 21px; }
+.nfc-gold-feature > span:last-child { display: grid; gap: 3px; min-width: 0; }
+.nfc-gold-feature strong { color: var(--text-primary); font-size: .82rem; }
+.nfc-gold-feature small { color: var(--text-secondary); font-size: .72rem; line-height: 1.4; }
 .nfc-foot { margin: 0 6px; color: var(--text-muted); }
 .nfc-go { justify-self: start; display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 999px; border: 1px solid var(--nfc-line); color: var(--text-primary); text-decoration: none; font-weight: 700; font-size: 0.84rem; }
 .nfc-go svg { width: 15px; height: 15px; }

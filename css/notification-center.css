@@ -276,6 +276,22 @@
 }
 
 .nc-group { padding: 10px 0 2px; }
+.nc-gold-activity { padding: 12px; border: 1px solid var(--nc-line); border-radius: 18px; background: var(--nc-surface); }
+.nc-gold-activity h3 { margin-top: 0; }
+.nc-gold-month-total { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 7px 0; padding: 9px 10px; border-radius: 13px; background: var(--nc-surface-2); }
+.nc-gold-month-total > span { display: grid; gap: 2px; }
+.nc-gold-month-total small { color: var(--nc-text-3); font-size: .68rem; }
+.nc-gold-month-total strong { font-size: .88rem; }
+.nc-gold-month-total > b { flex: 0 0 auto; color: var(--nc-accent); font-size: .76rem; }
+.nc-gold-list { display: grid; }
+.nc-gold-row { display: flex; align-items: center; gap: 8px; padding: 8px 2px; }
+.nc-gold-row + .nc-gold-row { border-top: 1px solid var(--nc-line); }
+.nc-gold-coin { display: grid; place-items: center; width: 32px; height: 32px; flex: 0 0 32px; border-radius: 11px; background: var(--nc-surface-2); }
+.nc-gold-copy { display: grid; flex: 1; min-width: 0; gap: 2px; }
+.nc-gold-copy strong { overflow: hidden; font-size: .77rem; white-space: nowrap; text-overflow: ellipsis; }
+.nc-gold-copy small { overflow: hidden; color: var(--nc-text-3); font-size: .66rem; white-space: nowrap; text-overflow: ellipsis; }
+.nc-gold-row > b { flex: 0 0 auto; font-size: .76rem; }
+.nc-gold-open { display: block; padding-top: 7px; border-top: 1px solid var(--nc-line); font-size: .74rem; text-align: center; }
 
 .nc-group h3 {
   display: flex;

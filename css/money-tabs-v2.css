@@ -217,3 +217,41 @@ html body .fv2-page .financial-content .financial-report-table-wrap { border: 0 
 .sv-hist > div + div { border-top: 1px solid var(--fv-line); }
 .sv-hist > div.is-paid b { color: var(--fv-green); }
 .sv-hist p { margin: 6px 0; font-size: 0.8rem; color: var(--fv-ink2); }
+
+/* compact live reference strip + spend / investment actions for Savings */
+.sv-market-card { display: grid; gap: 7px; min-width: 0; padding: 12px 14px; border: 1px solid var(--fv-line); border-radius: 20px; color: var(--fv-ink); background: var(--fv-card); box-shadow: var(--fv-shadow); }
+.sv-market-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.sv-market-heading strong { font-size: .82rem; font-weight: 750; }
+.sv-market-refresh { display: grid; place-items: center; width: 30px; height: 30px; border: 0; border-radius: 50%; color: var(--fv-acc-ink); background: var(--fv-soft); font: inherit; font-size: 1.15rem; cursor: pointer; }
+.sv-market-refresh.is-loading { animation: svSpin .7s linear infinite; }
+.sv-market-refresh:disabled { opacity: .6; cursor: wait; }
+@keyframes svSpin { to { transform: rotate(360deg); } }
+.sv-market-quotes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
+.sv-market-tile { display: grid; gap: 6px; min-width: 0; padding: 9px 10px; border: 1px solid var(--fv-line); border-radius: 15px; color: var(--fv-ink); background: var(--fv-soft); }
+.sv-market-label { display: flex; align-items: center; gap: 6px; overflow: hidden; color: var(--fv-ink2); font-size: .68rem; font-weight: 600; white-space: nowrap; text-overflow: ellipsis; }
+.sv-market-tile > strong { overflow: hidden; font-size: clamp(.82rem, 4vw, 1rem); font-weight: 800; line-height: 1.2; white-space: nowrap; text-overflow: ellipsis; }
+.sv-market-tile > strong small { margin-left: 3px; color: var(--fv-ink2); font-size: .68rem; font-weight: 600; }
+.sv-market-tile.is-muted > strong { color: var(--fv-ink2); font-size: .74rem; font-weight: 600; }
+.sv-market-dot { width: 7px; height: 7px; border-radius: 50%; background: #eab84f; }
+.sv-market-dot.is-riel { background: #4e9ff5; }
+.sv-market-fx { display: flex; align-items: center; gap: 6px; grid-column: 1 / -1; min-width: 0; padding: 7px 10px; border-radius: 12px; color: var(--fv-ink2); background: color-mix(in srgb, var(--fv-soft) 72%, transparent); font-size: .7rem; }
+.sv-market-fx > span { font-weight: 750; color: var(--fv-ink); }
+.sv-market-fx > b { margin-left: auto; color: var(--fv-ink); font-size: .78rem; }
+.sv-market-fx > small { font-size: .64rem; }
+.sv-market-fx.is-muted { color: var(--fv-ink2); }
+.sv-market-meta { display: block; margin-top: 4px; font-size: .68rem; line-height: 1.45; text-align: center; color: var(--fv-ink2); }
+.sv-available { display: flex; align-items: baseline; flex-wrap: wrap; gap: 5px 8px; margin-top: 11px; padding: 9px 11px; border-radius: 14px; color: var(--fv-acc-ink); background: var(--fv-soft); }
+.sv-available > span { font-size: .74rem; }
+.sv-available > b { margin-left: auto; font-size: .98rem; font-weight: 800; color: var(--fv-ink); }
+.sv-available > small { flex-basis: 100%; font-size: .67rem; }
+.sv-use-btn { display: inline-flex; flex: 0 0 auto; align-items: center; justify-content: center; min-width: 72px; min-height: 46px; padding: 0 15px; border: 0; border-radius: 14px; color: var(--fv-on); background: var(--fv-grad); box-shadow: var(--fv-glow); font: inherit; font-size: .82rem; font-weight: 700; cursor: pointer; }
+.sv-use-btn:active { transform: scale(.96); }
+.sv-use-btn:disabled { color: var(--fv-ink2); background: var(--fv-soft); box-shadow: none; cursor: not-allowed; }
+.sv-use-history-row { align-items: center; gap: 8px; }
+.sv-use-history-row > span { display: grid; min-width: 0; }
+.sv-use-history-row > span b { color: var(--fv-ink); font-size: .77rem; }
+.sv-use-history-row > span small { overflow: hidden; max-width: 48vw; white-space: nowrap; text-overflow: ellipsis; font-size: .66rem; }
+.sv-use-history-row > strong { flex: 0 0 auto; color: var(--fv-red); font-size: .78rem; }
+.sv-gold-estimate-hint { display: block; margin-top: 5px; color: var(--fv-ink2); font-size: .7rem; line-height: 1.4; }
+#modalForm .field[hidden] { display: none !important; }
+@media (prefers-reduced-motion: reduce) { .sv-market-refresh.is-loading { animation: none; } }
