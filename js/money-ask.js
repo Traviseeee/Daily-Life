@@ -166,7 +166,7 @@ const MoneyAsk = (() => {
       return;
     }
     const income = (appData.income || []).find(entry => entry.id === item.id);
-    const result = income ? MoneyDue.recordIncomeReceived(income, item.month, { amount, date: today(), via: "App" }) : "missing";
+    const result = income ? MoneyDue.recordIncomeReceived(income, item.month, { amount, date: today(), via: "App", accountType: income.accountType }) : "missing";
     if (result === "updated") { Store.save(); App.render(); }
     const got = amount && Number(amount) !== Number(item.amount) ? plain(amount, item.currency) : "";
     if (result === "updated") offerSavings(row);

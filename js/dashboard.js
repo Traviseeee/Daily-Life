@@ -461,13 +461,25 @@ function renderHomeSmartLists(agenda, focusItems, todayIso) {
 function billPaidCurrentCycle(bill) {
   if (bill.status === "Paid") return true;
   if (!bill.lastPaidAt || !bill.due) return false;
-  return bill.due > localDashboardDate(new Date());
+  const today = localDashboardDate(new Date());
+  const nextDue = typeof BillPay !== "undefined" && BillPay.effectiveDueDate
+    ? BillPay.effectiveDueDate(bill, today)
+    : bill.due;
+  return nextDue > today;
 }
 
 // paidAmount: the real amount when it differs from the bill (EDC / water change each month)
-function markBillPaid(billId, paidAmount) {
+function markBillPaid(billId, paidAmount, paymentType) {
   const bill = appData.bills.find(item => item.id === billId);
   if (!bill || billPaidCurrentCycle(bill)) return;
+  paymentType = paymentType || bill.paymentType || "unspecified";
+  if (paymentType === "unspecified" && typeof Modal !== "undefined") {
+    const km = languageCode() === "km";
+    Modal.open({ title: km ? "បង់វិក្កយបត្រតាមវិធីណា?" : "How did you pay this bill?", submitText: km ? "បន្ត" : "Continue", fields: [
+      { name: "paymentType", label: km ? "វិធីបង់ប្រាក់" : "Payment method", type: "select", options: ["", "cash", "bank", "qr", "other"], optionLabels: km ? ["ជ្រើសរើសវិធីបង់", "សាច់ប្រាក់", "ផ្ទេរធនាគារ", "បង់ QR", "ផ្សេងៗ / មិនបញ្ជាក់"] : ["Choose payment method", "Cash", "Bank Transfer", "QR Payment", "Other / Unspecified"], value: "", required: true }
+    ], onSubmit(data) { if (!data.paymentType) return; bill.paymentType = data.paymentType; Store.save(); markBillPaid(billId, paidAmount, bill.paymentType); App.render(); } });
+    return;
+  }
   const frequency = bill.frequency || "Monthly";
   const paidOn = localDashboardDate(new Date());
   const nextBill = {
@@ -503,7 +515,7 @@ function markBillPaid(billId, paidAmount) {
   const loan = bill.loanId ? (appData.loans || []).find(item => item.id === bill.loanId) : null;
   if (amount > 0 && loan && typeof LoanPay !== "undefined") {
     // bill linked to a loan: ONE expense (category Loan) + the loan's payment for that due date
-    const done = LoanPay.recordLoanPayment(appData, loan, LoanPay.scheduleDateFor(loan, bill.due || paidOn), { amount, currency: bill.currency, billId: bill.id, today: paidOn, notes: t("bill") });
+    const done = LoanPay.recordLoanPayment(appData, loan, LoanPay.scheduleDateFor(loan, bill.due || paidOn), { amount, currency: bill.currency, billId: bill.id, today: paidOn, notes: t("bill"), paymentType });
     nextBill.lastPaidExpenseId = done.expense?.id || done.payment?.expenseId || "";
   } else if (amount > 0) {
     const existing = appData.expenses.find(item => item.billId === bill.id && item.date === paidOn);
@@ -516,7 +528,8 @@ function markBillPaid(billId, paidAmount) {
         currency: bill.currency || appData.profile.currency || "USD",
         date: paidOn,
         category: "Bills",
-        method: "",
+        method: ({ cash: "Cash", bank: "Bank Transfer", qr: "QR Payment", other: "Other" })[paymentType] || "",
+        paymentType,
         notes: t("bill"),
         billId: bill.id
       });

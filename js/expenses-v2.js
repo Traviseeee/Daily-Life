@@ -11,7 +11,7 @@ const ExpensesV2 = (() => {
   const km = () => languageCode() === "km";
   const L = (k, e) => (km() ? k : e);
   const KM_M = ["មករា", "កុម្ភៈ", "មីនា", "មេសា", "ឧសភា", "មិថុនា", "កក្កដា", "សីហា", "កញ្ញា", "តុលា", "វិច្ឆិកា", "ធ្នូ"];
-  const state = { view: "cat", cat: "", chip: "" };
+  const state = { view: "cat", cat: "", chip: "", payment: "all" };
   const cur = () => appData.profile.currency || "USD";
   const amt = item => toProfileCurrency(item.amount, item.currency);
   const colorOf = c => expenseCategoryColors[c] || "#8a94a6";
@@ -65,7 +65,8 @@ const ExpensesV2 = (() => {
     if (!months.includes(current)) months.unshift(current);
     if (expenseMonthFilter && expenseMonthFilter !== "all" && !months.includes(expenseMonthFilter)) expenseMonthFilter = "";
     const month = expenseMonthFilter || current;
-    const items = month === "all" ? all : all.filter(item => String(item.date || "").startsWith(month));
+    const monthItems = month === "all" ? all : all.filter(item => String(item.date || "").startsWith(month));
+    const items = state.payment === "all" ? monthItems : monthItems.filter(item => (item.paymentType || "unspecified") === state.payment);
     const isNow = month === current;
     const total = items.reduce((s, i) => s + amt(i), 0);
 
@@ -97,6 +98,9 @@ const ExpensesV2 = (() => {
         </select></label>
         <button type="button" class="ev-add" data-action="add-expense">＋ ${L("ចំណាយ", "Expense")}</button>
       </div>
+      <label class="ev-month"><span>${L("វិធីបង់", "Payment")}</span><select data-expense-payment>
+        ${[["all", "All Payments"], ["cash", "Cash Only"], ["bank", "Bank Only"], ["qr", "QR Payment Only"], ["other", "Other"], ["unspecified", "Unknown / Unspecified"]].map(([value, label]) => `<option value="${value}" ${state.payment === value ? "selected" : ""}>${L(value === "all" ? "ទាំងអស់" : value === "cash" ? "សាច់ប្រាក់" : value === "bank" ? "ធនាគារ" : value === "qr" ? "QR" : value === "other" ? "ផ្សេងៗ" : "មិនបានបញ្ជាក់", label)}</option>`).join("")}
+      </select></label>
       <div class="ev-big">${money(total)}${budgetTotal ? ` <small>/ ${money(budgetTotal)} ${L("ថវិកា", "budget")}</small>` : ""}</div>
       <p class="ev-sub">${sub}</p>
       ${list.length ? `<div class="ev-stack">${stack}</div>` : ""}
@@ -181,6 +185,12 @@ const ExpensesV2 = (() => {
     }
     App.render();
     if (cat || back) window.scrollTo({ top: Math.max(0, (document.querySelector(".ev")?.getBoundingClientRect().top || 0) + window.scrollY - 80), behavior: "instant" });
+  });
+
+  document.addEventListener("change", event => {
+    if (!event.target.matches("[data-expense-payment]")) return;
+    state.payment = event.target.value;
+    App.render();
   });
 
   return { render, state };

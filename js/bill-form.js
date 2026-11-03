@@ -114,6 +114,10 @@ const BillForm = (() => {
         </section>` : ""}
 
         <section class="ev-section bf-switches">
+          <div class="ev-label">💳<strong>${escapeHtml(L("វិធីបង់ប្រាក់", "Payment method"))}</strong></div>
+          <select class="ev-date" name="paymentType">
+            ${[["unspecified", L("មិនបានបញ្ជាក់", "Unspecified")], ["cash", L("សាច់ប្រាក់", "Cash")], ["bank", L("ផ្ទេរធនាគារ", "Bank Transfer")], ["qr", L("បង់ QR", "QR Payment")], ["other", L("ផ្សេងៗ", "Other")]].map(([value, label]) => `<option value="${value}" ${value === (item.paymentType || "unspecified") ? "selected" : ""}>${escapeHtml(label)}</option>`).join("")}
+          </select>
           ${switchRow("reminder", item.reminder ?? true, "🔔", t("reminder"), L("ជូនដំណឹង, Telegram និងសួរ “បានបង់ហើយឬនៅ?” ពេលដល់ថ្ងៃ", "Notify, Telegram, and ask “paid yet?” on the day"))}
           ${switchRow("autoPay", item.autoPay ?? false, "🔁", L("បង់ស្វ័យប្រវត្តិ", "Auto-pay"), L("Netflix, Wi-Fi… កត់ជាចំណាយដោយខ្លួនឯងនៅថ្ងៃបង់", "Netflix, Wi-Fi… logged as an expense on the due date"))}
         </section>
@@ -272,6 +276,7 @@ const BillForm = (() => {
         frequency: form.elements.frequency.value || "Monthly",
         due: form.elements.due.value,
         category: form.querySelector('input[name="category"]:checked')?.value || "",
+        paymentType: form.elements.paymentType.value || "unspecified",
         reminder: form.elements.reminder.checked,
         autoPay: form.elements.autoPay.checked,
         status: form.elements.status.value || "Upcoming",

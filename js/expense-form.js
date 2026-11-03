@@ -17,8 +17,9 @@ const ExpenseForm = (() => {
     { category: "Health", re: /ពេទ្យ|ថ្នាំ|មន្ទីរពេទ្យ|health|doctor|medicine|hospital|gym|clinic|pharmacy/i },
     { category: "Entertainment", re: /កុន|ហ្គេម|កម្សាន្ត|movie|game|netflix|spotify|fun|party|cinema|entertainment/i }
   ];
-  const METHODS = ["Cash", "KHQR", "ABA", "ACLEDA", "Wing", "Card"];
-  const METHOD_KM = { Cash: "សាច់ប្រាក់", Card: "កាត" };
+  const METHODS = ["Cash", "Bank Transfer", "QR Payment", "Other"];
+  const METHOD_KM = { Cash: "សាច់ប្រាក់", "Bank Transfer": "ផ្ទេរធនាគារ", "QR Payment": "បង់ QR", Other: "ផ្សេងៗ" };
+  const paymentTypeOf = method => /cash|សាច់ប្រាក់/i.test(method) ? "cash" : /qr|khqr/i.test(method) ? "qr" : /bank|aba|acleda|wing|transfer|card/i.test(method) ? "bank" : method ? "other" : "unspecified";
 
   // same words as the Telegram bot and MYLIFE Chat (js/smart-parse.js); the short list above is the fallback
   const findKeyword = text => {
@@ -272,6 +273,7 @@ const ExpenseForm = (() => {
         category,
         date: form.elements.date.value || today(),
         method: form.elements.methodChoice.value || form.elements.method.value.trim(),
+        paymentType: paymentTypeOf(form.elements.methodChoice.value || form.elements.method.value.trim()),
         notes: form.elements.notes.value.trim()
       };
       if (item.id) Store.edit("expenses", item.id, record);

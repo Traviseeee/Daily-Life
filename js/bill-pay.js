@@ -21,6 +21,47 @@ function parseDate(value) {
   return match ? new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3])) : null;
 }
 
+// Display the bill's date for its current recurring cycle. Older records can
+// still point at the date they were created; when there is no recent payment
+// date, keep the latest scheduled occurrence so overdue days do not accumulate
+// across several missed cycles. A recent payment starts the next cycle.
+function effectiveDueDate(bill, today) {
+  const due = parseDate(bill?.due);
+  const now = parseDate(today);
+  if (!due || !now || (bill.frequency || "Monthly") === "Once") return bill?.due || "";
+  const frequency = bill.frequency || "Monthly";
+  const step = date => {
+    if (frequency === "Daily") date.setDate(date.getDate() + 1);
+    else if (frequency === "Weekly") date.setDate(date.getDate() + 7);
+    else {
+      const months = frequency === "Quarterly" ? 3 : frequency === "Yearly" ? 12 : 1;
+      const day = date.getDate();
+      date.setDate(1);
+      date.setMonth(date.getMonth() + months);
+      date.setDate(Math.min(day, new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate()));
+    }
+  };
+  const lastPaid = parseDate(bill.lastPaidAt);
+  if (lastPaid && lastPaid >= due) {
+    while (due <= lastPaid) step(due);
+    return dateInput(due);
+  }
+  if (due > now) return dateInput(due);
+  while (due <= now) step(due);
+  // due is now the next date; return the occurrence that just passed.
+  const previous = new Date(due);
+  if (frequency === "Daily") previous.setDate(previous.getDate() - 1);
+  else if (frequency === "Weekly") previous.setDate(previous.getDate() - 7);
+  else {
+    const months = frequency === "Quarterly" ? 3 : frequency === "Yearly" ? 12 : 1;
+    const day = previous.getDate();
+    previous.setDate(1);
+    previous.setMonth(previous.getMonth() - months);
+    previous.setDate(Math.min(day, new Date(previous.getFullYear(), previous.getMonth() + 1, 0).getDate()));
+  }
+  return dateInput(previous);
+}
+
 // Same rules as markBillPaid() in js/dashboard.js.
 // force: a real receipt says it was paid (the next cycle's due may still be ahead)
 function markBillPaid(bill, today, force = false) {
@@ -54,12 +95,14 @@ function markBillPaid(bill, today, force = false) {
 function payBill(payload, bill, today, method = "Telegram", paid = {}) {
   const amount = Number(paid.amount) > 0 ? Number(paid.amount) : Number(bill.amount);
   const currency = paid.currency || bill.currency || payload.profile?.currency || "USD";
+  const paymentType = paid.paymentType || bill.paymentType || "unspecified";
+  const paymentLabel = ({ cash: "Cash", bank: "Bank Transfer", qr: "QR Payment", other: "Other" })[paymentType] || "";
   const result = markBillPaid(bill, today, Boolean(paid.force));
   const loan = bill.loanId ? (payload.loans || []).find(entry => entry.id === bill.loanId) : null;
   if (result === "updated" && amount > 0 && loan && LoanPay) {
     // a bill linked to a loan: ONE expense (category Loan) + the loan's payment for that due date
     const date = LoanPay.scheduleDateFor(loan, bill.lastPaidDue || today);
-    const done = LoanPay.recordLoanPayment(payload, loan, date, { amount, currency, via: method, billId: bill.id, today, notes: paid.notes || "Bill", source: "telegram" });
+    const done = LoanPay.recordLoanPayment(payload, loan, date, { amount, currency, via: method, billId: bill.id, today, notes: paid.notes || "Bill", source: "telegram", paymentType, paymentMethod: paymentLabel });
     bill.lastPaidExpenseId = done.expense?.id || done.payment?.expenseId || "";
   } else if (result === "updated" && amount > 0) {
     payload.expenses = Array.isArray(payload.expenses) ? payload.expenses : [];
@@ -67,7 +110,7 @@ function payBill(payload, bill, today, method = "Telegram", paid = {}) {
     const expenseId = existing?.id || `expenses-bill-${bill.id}-${Date.now()}`;
     if (!existing) {
       const now = new Date().toISOString();
-      payload.expenses.push({ id: expenseId, createdAt: now, updatedAt: now, description: bill.name || "Bill", amount, currency, date: today, category: "Bills", method, notes: paid.notes || "Bill", billId: bill.id, source: "telegram" });
+      payload.expenses.push({ id: expenseId, createdAt: now, updatedAt: now, description: bill.name || "Bill", amount, currency, date: today, category: "Bills", method: paymentLabel || method, paymentType, notes: paid.notes || "Bill", billId: bill.id, source: "telegram" });
     }
     bill.lastPaidExpenseId = expenseId;
   }
@@ -76,7 +119,7 @@ function payBill(payload, bill, today, method = "Telegram", paid = {}) {
   return result;
 }
 
-const api = { markBillPaid, payBill, parseDate, dateInput };
+const api = { markBillPaid, payBill, parseDate, dateInput, effectiveDueDate };
 if (typeof module !== "undefined" && module.exports) module.exports = api;
 else root.BillPay = api;
 })(typeof window !== "undefined" ? window : globalThis);

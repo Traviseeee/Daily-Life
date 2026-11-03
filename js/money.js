@@ -1426,7 +1426,7 @@ function toggleLoanScheduledPayment(input) {
   const existingIndex = loan.payments.findIndex(payment => payment.date === paymentDate);
   if (input.checked) {
     // one payment + one expense (category Loan); ticking again changes nothing
-    if (existingIndex === -1) LoanPay.recordLoanPayment(appData, loan, paymentDate, { amount: loan.monthlyPayment, today: localDateInput() });
+    if (existingIndex === -1) LoanPay.recordLoanPayment(appData, loan, paymentDate, { amount: loan.monthlyPayment, today: localDateInput(), paymentType: loan.paymentType });
   } else if (existingIndex > -1) {
     const done = LoanPay.removeLoanPayment(appData, loan, paymentDate);
     if (done.removedExpenseId) SyncState.record(appData, "expenses", done.removedExpenseId);
@@ -1458,6 +1458,7 @@ function openIncomeModal(item) {
     { name: "amount", label: t("amount"), type: "number", value: item?.amount, required: true },
     { name: "currency", label: t("currency"), type: "select", options: ["USD", "KHR"], value: item?.currency || appData.profile.currency || "USD" },
     { name: "category", label: t("category"), type: "select", options: incomeCategories, value: item?.category || "Salary" },
+    { name: "accountType", label: languageCode() === "km" ? "គណនីទទួលប្រាក់" : "Deposit to", type: "select", options: ["unspecified", "cash", "bank"], optionLabels: [languageCode() === "km" ? "មិនបានបញ្ជាក់" : "Unspecified", languageCode() === "km" ? "សាច់ប្រាក់" : "Cash", languageCode() === "km" ? "ធនាគារ" : "Bank"], value: item?.accountType || "unspecified" },
     { name: "frequency", label: t("frequency"), type: "select", options: ["Once", "Weekly", "Monthly", "Yearly"], value: item?.frequency || "Monthly" },
     { name: "nextPaymentDate", label: t("nextPaymentDate"), type: "date", value: item?.nextPaymentDate },
     { name: "recurring", label: t("recurring"), type: "checkbox", value: item?.recurring ?? true },
@@ -1722,6 +1723,7 @@ function openLoanModal(item) {
     { name: "interestRate", label: t("interestRate"), type: "number", value: item?.interestRate || "" },
     { name: "durationMonths", label: t("loanDurationMonths"), type: "number", value: item?.durationMonths || "" },
     { name: "monthlyPayment", label: t("monthlyPayment"), type: "number", value: item?.monthlyPayment || 0 },
+    { name: "paymentType", label: languageCode() === "km" ? "វិធីបង់កម្ចី" : "Repayment method", type: "select", options: ["unspecified", "cash", "bank", "qr", "other"], optionLabels: languageCode() === "km" ? ["មិនបានបញ្ជាក់", "សាច់ប្រាក់", "ផ្ទេរធនាគារ", "បង់ QR", "ផ្សេងៗ"] : ["Unspecified", "Cash", "Bank Transfer", "QR Payment", "Other"], value: item?.paymentType || "unspecified" },
     { type: "heading", label: languageCode() === "km" ? "កាលបរិច្ឆេទ និងការរំលឹក" : "Dates & reminders", description: languageCode() === "km" ? "ជ្រើសថ្ងៃបង់លើកដំបូង និងកាលបរិច្ឆេទបញ្ចប់។" : "Choose the first payment and final due date.", icon: Icons.calendar(), tone: "blue" },
     { name: "firstPaymentDate", label: t("firstPaymentDate"), type: "date", value: normalizeLoanPaymentDate(item?.firstPaymentDate || item?.startDate) },
     { name: "paymentDay", label: t("paymentDay"), type: "number", value: item ? (item.paymentDay || loanPaymentDay(item)) : "" },
@@ -1967,6 +1969,7 @@ function openBillModal(item) {
     { name: "frequency", label: t("frequency"), type: "select", options: ["Weekly", "Monthly", "Quarterly", "Yearly"], value: item?.frequency || "Monthly" },
     { name: "due", label: t("dueDateDay"), type: "date", value: item?.due },
     { name: "category", label: t("category"), value: item?.category },
+    { name: "paymentType", label: languageCode() === "km" ? "វិធីបង់ប្រាក់" : "Payment method", type: "select", options: ["unspecified", "cash", "bank", "qr", "other"], optionLabels: languageCode() === "km" ? ["មិនបានបញ្ជាក់", "សាច់ប្រាក់", "ផ្ទេរធនាគារ", "បង់ QR", "ផ្សេងៗ"] : ["Unspecified", "Cash", "Bank Transfer", "QR Payment", "Other"], value: item?.paymentType || "unspecified" },
     { name: "reminder", label: t("reminder"), type: "checkbox", value: item?.reminder ?? true },
     { name: "autoPay", label: languageCode() === "km" ? "🔁 បង់ស្វ័យប្រវត្តិ (Netflix, Wi-Fi…) — កត់ជាចំណាយដោយខ្លួនឯងនៅថ្ងៃបង់" : "🔁 Auto-pay (subscriptions) — logged as an expense on the due date", type: "checkbox", value: item?.autoPay ?? false },
     { name: "status", label: t("status"), type: "select", options: ["Upcoming", "Paid", "Overdue"], value: item?.status || "Upcoming" },
@@ -1977,19 +1980,20 @@ function openBillModal(item) {
 function openLoanPaymentModal(loan) {
   Modal.open({ title: t("makePayment"), submitText: t("savePayment"), fields: [
     { name: "amount", label: t("amount"), type: "number", value: loan.monthlyPayment || "", required: true },
-    { name: "date", label: t("date"), type: "date", value: localDateInput(), required: true }
+    { name: "date", label: t("date"), type: "date", value: localDateInput(), required: true },
+    { name: "paymentType", label: languageCode() === "km" ? "វិធីបង់ប្រាក់" : "Payment method", type: "select", options: ["unspecified", "cash", "bank", "qr", "other"], optionLabels: languageCode() === "km" ? ["មិនបានបញ្ជាក់", "សាច់ប្រាក់", "ផ្ទេរធនាគារ", "បង់ QR", "ផ្សេងៗ"] : ["Unspecified", "Cash", "Bank Transfer", "QR Payment", "Other"], value: "unspecified", required: true }
   ], onSubmit(data) {
     const amount = Number(data.amount || 0);
     if (LoanPay.findPayment(loan, data.date)) {
       // a second (partial) payment on the same day: its own expense, still counted once
       const payment = { amount, date: data.date, scheduled: false };
       const id = `expenses-loan-${loan.id}-${data.date}-${Date.now()}`;
-      appData.expenses.push({ id, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), description: loan.name || t("loan"), amount, currency: loan.currency || appData.profile.currency || "USD", date: data.date, category: "Loan", method: "", notes: "", loanId: loan.id, loanPaymentDate: `${data.date}#${Date.now()}` });
+      appData.expenses.push({ id, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), description: loan.name || t("loan"), amount, currency: loan.currency || appData.profile.currency || "USD", date: data.date, category: "Loan", method: ({ cash: "Cash", bank: "Bank Transfer", qr: "QR Payment", other: "Other" })[data.paymentType] || "Other", paymentType: data.paymentType || "other", notes: "", loanId: loan.id, loanPaymentDate: `${data.date}#${Date.now()}` });
       payment.expenseId = id;
       loan.payments = [payment, ...(loan.payments || [])];
       loan.updatedAt = new Date().toISOString();
     } else {
-      LoanPay.recordLoanPayment(appData, loan, data.date, { amount, scheduled: false, today: localDateInput() });
+      LoanPay.recordLoanPayment(appData, loan, data.date, { amount, scheduled: false, today: localDateInput(), paymentType: data.paymentType, paymentMethod: ({ cash: "Cash", bank: "Bank Transfer", qr: "QR Payment", other: "Other" })[data.paymentType] });
     }
     Store.save(); Toast.show(t("paymentSaved")); App.render();
   } });

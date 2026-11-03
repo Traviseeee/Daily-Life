@@ -45,6 +45,7 @@ function recordIncomeReceived(income, month, opts = {}) {
     currency: opts.currency || income.currency || "",
     date: opts.date || "",
     via: opts.via || "",
+    accountType: opts.accountType || income.accountType || "unspecified",
     at: new Date().toISOString()
   };
   income.updatedAt = new Date().toISOString();

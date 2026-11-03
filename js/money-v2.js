@@ -288,6 +288,7 @@ const MoneyV2 = (() => {
     return `<div class="fv2${periodOpen ? " show-period" : ""}">
       ${renderMoneyPeriodBar(range).replace("<strong>ខែ", "<strong>")}
       ${hero(stats, range)}
+      ${typeof AccountBalances !== "undefined" ? AccountBalances.render() : ""}
       ${miniGrid(stats, range, waiting)}
       ${waitingList(waiting)}
       ${categories(range)}

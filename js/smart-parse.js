@@ -237,7 +237,9 @@ function parseMoney(raw, defaultCurrency = "USD", today = null) {
 
   const amountMatch = text.match(AMOUNT_RE);
   if (!amountMatch) return null;
+  const paymentHint = text.match(/(?:^|\s)(cash|សាច់ប្រាក់|qr(?:\s*payment)?|khqr|aba|acleda|wing|bank(?:\s*transfer)?|transfer|card)(?=\s|$)/i);
   const hasUnit = Boolean(amountMatch[1] || amountMatch[3]);
+  if (!type && paymentHint) type = "expense";
   if (!type && /^\d+(?:[.,]\d+)?\s*(?:\$|៛|usd|khr|k|r)?$/i.test(text)) type = "expense"; // just "5000" or "2.5$"
   if (!type && hasUnitOrBare(text) && /ប្រាក់ខែ|ប្រាក់រង្វាន់|salary|payroll|bonus/i.test(text) && !PLAN_WORDS.test(text)) type = "income";
   if (!type) {
@@ -291,6 +293,14 @@ function parseMoney(raw, defaultCurrency = "USD", today = null) {
   }
 
   const keyword = type === "income" ? INCOME_KEYWORDS.find(item => item.re.test(rest)) : (category => category ? { category } : null)(categorizeExpense(rest));
+  let paymentType = "";
+  let method = "";
+  const payment = rest.match(/(?:^|\s)(cash|សាច់ប្រាក់|qr(?:\s*payment)?|khqr|aba|acleda|wing|bank(?:\s*transfer)?|transfer|card)(?=\s|$)/i) || paymentHint;
+  if (payment) {
+    method = payment[1];
+    paymentType = /cash|សាច់ប្រាក់/i.test(method) ? "cash" : /qr|khqr/i.test(method) ? "qr" : "bank";
+    rest = rest.replace(payment[0], " ").replace(/\s+/g, " ").trim();
+  }
   const description = rest
     .replace(new RegExp(String.raw`(^|\s)(?:${UNIT.replace(/\|\\\$\|៛\|k\(\?!\[a-z\]\)\|r\(\?!\[a-z\]\)/, "")})(?=\s|$)`, "gi"), " ")
     .replace(/\s+/g, " ")
@@ -298,7 +308,7 @@ function parseMoney(raw, defaultCurrency = "USD", today = null) {
     .replace(/^(?:for|on|at|of|to|from|សម្រាប់|ពី|ឱ្យ|អោយ)\s+/i, "")
     .replace(/^[\s,.:;\-–]+|[\s,.:;\-–]+$/g, "")
     .trim();
-  return { type, amount, currency, category: keyword ? keyword.category : "Other", description, ...(date ? { date } : {}) };
+  return { type, amount, currency, category: keyword ? keyword.category : "Other", description, ...(date ? { date } : {}), ...(paymentType ? { paymentType, method } : {}) };
 }
 
 // A forwarded ABA / PayWay payment request:
