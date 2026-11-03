@@ -19,6 +19,10 @@ const App = {
     this.bindChrome();
     this.bindInteractionSounds();
     this.startShellClock();
+    if (typeof NomiIntro !== "undefined") {
+      NomiIntro.init();
+      NomiIntro.startAfterLogin();
+    }
     if (typeof TopbarWeather !== "undefined") TopbarWeather.init();
     window.addEventListener("hashchange", () => this.render());
     window.addEventListener("popstate", () => this.render());
@@ -34,6 +38,7 @@ const App = {
     this.welcomePosterStartupTimer = window.setInterval(() => {
       attempts += 1;
       const modalRoot = document.getElementById("modalRoot");
+      if (typeof NomiIntro !== "undefined" && NomiIntro.isOpen()) return;
       if (Login.isOpen || modalRoot?.querySelector("#loginModal")) {
         if (attempts >= 120) window.clearInterval(this.welcomePosterStartupTimer);
         return;
@@ -636,6 +641,21 @@ const App = {
           url: "/#money/savings"
         });
       }
+      const followUpDays = typeof NotifyPrefs.savingsUseAfterDays === "function" ? NotifyPrefs.savingsUseAfterDays(appData.profile) : [];
+      (Array.isArray(saving.transactions) ? saving.transactions : []).forEach(transaction => {
+        if (!["spend", "gold", "investment"].includes(transaction.type) || !/^\d{4}-\d{2}-\d{2}$/.test(String(transaction.date || ""))) return;
+        followUpDays.forEach(days => {
+          add({
+            kind: "savings-use-followup",
+            id: `${transaction.id || `${saving.id}-use`}-followup-${days}`,
+            title: `${saving.name || t("savings")} · ${languageCode() === "km" ? "ពិនិត្យការប្រើសន្សំ" : "Savings follow-up"}`,
+            body: `${languageCode() === "km" ? "បានប្រើ" : "Used"} ${formatPlainMoney(transaction.amount, transaction.currency || saving.currency)} · ${transaction.note || transaction.category || (transaction.type === "gold" ? (languageCode() === "km" ? "ទិញមាស" : "Gold purchase") : (languageCode() === "km" ? "ចំណាយពីសន្សំ" : "Savings spending"))}`,
+            date: shiftIsoDate(transaction.date, days),
+            time: "09:00",
+            url: "/#money/savings"
+          });
+        });
+      });
     });
 
     if (typeof NotifyPrefs === "undefined") return items;

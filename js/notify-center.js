@@ -22,6 +22,7 @@ const NotifyCenter = (() => {
     expenses: () => Icons.wallet(),
     loans: () => svg('<path d="M3 10 12 4l9 6"/><path d="M5 10v8M9.5 10v8M14.5 10v8M19 10v8"/><path d="M3 20h18"/>'),
     savings: () => svg('<path d="M19 9.5c.9.4 1.5 1.2 1.5 2.5v1.5h-1.6a6.6 6.6 0 0 1-2.4 3V20h-3v-2.3a8 8 0 0 1-3 0V20h-3v-3.4A6 6 0 0 1 4 12c0-3.6 3.4-6.5 7.5-6.5 1.4 0 2.7.3 3.8.9L17.5 5v3.2c.6.4 1.1.8 1.5 1.3Z"/><path d="M15 10.5h.01"/>'),
+    "savings-use": () => svg('<path d="M5 8h14a2 2 0 0 1 2 2v8H5a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3h13v5"/><path d="M16 13h5M7 14h.01M12 14h.01"/><path d="M5 8V5"/>'),
     calendar: () => Icons.calendar(),
     family: () => Icons.cake(),
     reports: () => Icons.chart(),
@@ -36,6 +37,7 @@ const NotifyCenter = (() => {
     expenses: { km: "ចំណាយ & ថវិកា", en: "Expenses & budget", dkm: "ព្រមានថវិកា ចាយច្រើនខុសធម្មតា សួរពេលយប់", den: "Budget alerts, unusual spending, evening check", href: "#money/expenses" },
     loans: { km: "ប្រាក់កម្ចី", en: "Loans", dkm: "រំលឹកថ្ងៃបង់ប្រាក់", den: "Payment-day reminders", href: "#money/loans" },
     savings: { km: "សន្សំ & គោលដៅ", en: "Savings & goals", dkm: "ដាក់សន្សំប្រចាំខែ, ថ្ងៃកំណត់គោលដៅ", den: "Monthly saving, goal deadlines", href: "#money/savings" },
+    "savings-use": { km: "ការប្រើប្រាក់សន្សំ", en: "Savings use", dkm: "ចំណាយ · ទិញមាស · វិនិយោគផ្សេងៗ · សរុបប្រចាំខែ", den: "Spending · gold · other uses · monthly total", href: "#money/savings" },
     calendar: { km: "ប្រតិទិន & ការរំលឹក", en: "Calendar & reminders", dkm: "ព្រឹត្តិការណ៍ និងការរំលឹក", den: "Events and reminders", href: "#calendar" },
     family: { km: "គ្រួសារ", en: "Family", dkm: "ថ្ងៃកំណើត និងខួប", den: "Birthdays and anniversaries", href: "#family" },
     reports: { km: "របាយការណ៍", en: "Reports", dkm: "សង្ខេបព្រឹក, របាយការណ៍សប្តាហ៍ & ខែ", den: "Morning digest, weekly & monthly reports", href: "#money/reports" },
@@ -77,7 +79,7 @@ const NotifyCenter = (() => {
 
   const toggle = (attrs, on, label) => `<label class="nfc-switch" aria-label="${escapeAttr(label)}"><input type="checkbox" ${attrs} ${on ? "checked" : ""}><span></span></label>`;
   const tile = (name, tone) => `<span class="nfc-tile nfc-tone-${tone}">${ICON[name]()}</span>`;
-  const TONE = { bills: "amber", expenses: "rose", loans: "blue", savings: "green", calendar: "violet", family: "pink", reports: "teal", backup: "slate" };
+  const TONE = { bills: "amber", expenses: "rose", loans: "blue", savings: "green", "savings-use": "amber", calendar: "violet", family: "pink", reports: "teal", backup: "slate" };
 
   function summary() {
     const p = prefs();
@@ -90,7 +92,7 @@ const NotifyCenter = (() => {
   /* ---------- page ---------- */
   // tabs keep the page short: money tools · dated things · reports & backup
   const TABS = [
-    { id: "money", km: "ហិរញ្ញវត្ថុ", en: "Money", tools: ["bills", "expenses", "loans", "savings"] },
+    { id: "money", km: "ហិរញ្ញវត្ថុ", en: "Money", tools: ["bills", "expenses", "loans", "savings", "savings-use"] },
     { id: "days", km: "ថ្ងៃសំខាន់", en: "Dates", tools: ["calendar", "family"] },
     { id: "reports", km: "របាយការណ៍", en: "Reports", tools: ["reports", "backup"] }
   ];
@@ -347,6 +349,20 @@ const NotifyCenter = (() => {
       ${locked ? "" : `<button class="nfc-test" type="button" data-nfc-test="${tool}">${ICON.telegram()}<span>${L("ផ្ញើសារសាកល្បងទៅ Telegram", "Send a test to Telegram")}</span></button>`}`;
   }
 
+  function savingsUseFollowupPicker(p, locked) {
+    const chosen = p.savingsUseAfterDays || [];
+    const next = locked ? null : nextReminder("savings-use");
+    const lock = locked ? "disabled" : "";
+    return `
+      <p class="nfc-sublabel">${L("រំលឹកក្រោយពេលប្រើប្រាក់សន្សំ", "Remind me after using savings")}</p>
+      <div class="nfc-stages" data-nfc-followup>
+        ${[3, 2, 1].map(days => `<label class="nfc-stage ${chosen.includes(days) ? "is-on" : ""}"><input type="checkbox" data-nfc-followup-day="${days}" ${chosen.includes(days) ? "checked" : ""} ${lock}><span>${L(`ក្រោយ ${days} ថ្ងៃ`, `${days} day${days === 1 ? "" : "s"} after`)}</span></label>`).join("")}
+      </div>
+      ${chosen.length ? "" : `<p class="nfc-warn">${L("ជ្រើសចំនួនថ្ងៃ ដើម្បីកំណត់ការរំលឹកបន្ទាប់ពីដកប្រាក់។", "Choose a delay to schedule a follow-up after a withdrawal.")}</p>`}
+      ${next ? `<p class="nfc-next">🔔 <span>${L("បន្ទាប់", "Next")}: <b>${escapeHtml(next.title)}</b> · ${escapeHtml(next.when)}</span></p>` : ""}
+      ${locked ? "" : `<button class="nfc-test" type="button" data-nfc-test="savings-use">${ICON.telegram()}<span>${L("ផ្ញើសារសាកល្បងទៅ Telegram", "Send a test to Telegram")}</span></button>`}`;
+  }
+
   /* ---------- next reminder + test message ---------- */
   const dayFmt = iso => {
     try { return parseAppDate(iso).toLocaleDateString(km() ? "km-KH" : "en-US", { weekday: "short", day: "numeric", month: "short" }); }
@@ -380,6 +396,7 @@ const NotifyCenter = (() => {
     bills: { kind: "bill", title: "EDC", body: "ត្រូវបង់ · Due: 150,000៛" },
     loans: { kind: "loan", title: "Car loan", body: "ត្រូវបង់ប្រចាំខែ · Monthly payment: $250" },
     savings: { kind: "savings-deadline", title: "Trip fund", body: "" },
+    "savings-use": { kind: "savings-use-followup", title: "Emergency Fund", body: "ដកប្រើ · Withdrawn: $25.00\nប្រើសរុបខែនេះ · Used this month: $75.00" },
     calendar: { kind: "calendar", title: "Dinner", body: "" },
     family: { kind: "birthday", title: "Mom", body: "" }
   };
@@ -429,6 +446,11 @@ const NotifyCenter = (() => {
 
   function toolDetails(tool, p, locked = false) {
     lockedNow = locked;
+    if (tool === "savings-use") {
+      return `<div class="nfc-gold-feature"><span class="nfc-gold-feature-icon">${ICON[tool]()}</span><span><strong>${L("ប្រើប្រាក់ពីគណនីសន្សំ", "Use money from savings")}</strong><small>${L("ចំណាយ · ទិញមាស · វិនិយោគ ឬប្រើផ្សេងៗ · បង្ហាញសរុបប្រចាំខែ។", "Spending · gold · investments or any other use · monthly total included.")}</small></span></div>
+        ${note(L("ជូនដំណឹងភ្លាមៗពេលកត់ការដកប្រាក់ តាម channel ដែលបើកខាងលើ៖ Telegram និង App។", "Sends an alert as soon as a withdrawal is recorded, through the enabled Telegram and App channels."))}
+        ${savingsUseFollowupPicker(p, locked)}`;
+    }
     if (NotifyPrefs.STAGE_TOOLS.includes(tool)) {
       return `${stagePicker(tool, p, locked)}${note(L(...STAGE_NOTE[tool]))}`;
     }
@@ -499,6 +521,10 @@ const NotifyCenter = (() => {
       // billStages kept in step for older copies of the app / server
       save({ stages, billStages: stages.bills });
     })));
+    page.querySelectorAll("[data-nfc-followup-day]").forEach(input => input.addEventListener("change", () => {
+      const chosen = [...page.querySelectorAll("[data-nfc-followup-day]")].filter(item => item.checked).map(item => Number(item.dataset.nfcFollowupDay));
+      save({ savingsUseAfterDays: chosen });
+    }));
     page.querySelectorAll("[data-nfc-test]").forEach(button => button.addEventListener("click", () => sendTest(button)));
     page.querySelectorAll("[data-nfc-tab]").forEach(button => button.addEventListener("click", () => {
       if (tab === button.dataset.nfcTab) return;

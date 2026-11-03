@@ -15,14 +15,14 @@
  * The older switches (budgetAlerts, morningDigest, per-bill "reminder", ...) still apply.
  */
 (function (root) {
-  const TOOLS = ["bills", "expenses", "loans", "savings", "calendar", "family", "reports", "backup"];
+  const TOOLS = ["bills", "expenses", "loans", "savings", "savings-use", "calendar", "family", "reports", "backup"];
 
   // alert kind (server items, app items, bell types) → tool
   const TOOL_OF = {
     bill: "bills", autopay: "bills", utility: "bills",
     budget: "expenses", unusual: "expenses", evening: "expenses", expense: "expenses", income: "expenses",
     loan: "loans",
-    "savings-contribution": "savings", "savings-deadline": "savings", goal: "savings",
+    "savings-contribution": "savings", "savings-deadline": "savings", "savings-purchase": "savings-use", "savings-use": "savings-use", "savings-use-followup": "savings-use", goal: "savings",
     calendar: "calendar", event: "calendar", reminder: "calendar",
     birthday: "family", anniversary: "family", "family-birthday": "family", "family-anniversary": "family",
     digest: "reports", weekly: "reports", "weekly-image": "reports", "monthly-image": "reports", report: "reports",
@@ -39,7 +39,11 @@
   function prefs(profile) {
     const raw = (profile && typeof profile.notify === "object" && profile.notify) || {};
     const tools = {};
-    TOOLS.forEach(tool => { tools[tool] = !(raw.tools && raw.tools[tool] === false); });
+    TOOLS.forEach(tool => {
+      const hasCurrentValue = raw.tools && Object.prototype.hasOwnProperty.call(raw.tools, tool);
+      const legacyOff = tool === "savings-use" && raw.tools && raw.tools.gold === false;
+      tools[tool] = hasCurrentValue ? raw.tools[tool] !== false : !legacyOff;
+    });
     const saved = raw.stages && typeof raw.stages === "object" ? raw.stages : {};
     const stages = {};
     STAGE_TOOLS.forEach(tool => {
@@ -52,8 +56,18 @@
       app: raw.app !== false,
       tools,
       stages,
+      savingsUseAfterDays: cleanSavingsUseAfterDays(raw.savingsUseAfterDays),
       billStages: stages.bills
     };
+  }
+
+  function cleanSavingsUseAfterDays(list) {
+    const days = [...new Set((Array.isArray(list) ? list : [1]).map(Number).filter(n => [1, 2, 3].includes(n)))];
+    return days.sort((a, b) => b - a);
+  }
+
+  function savingsUseAfterDays(profile) {
+    return prefs(profile).savingsUseAfterDays;
   }
 
   // days-before list for a tool (or an alert kind); [0] for tools without dates
@@ -76,7 +90,7 @@
     return !tool || p.tools[tool];
   }
 
-  const api = { TOOLS, BILL_STAGES, STAGES, STAGE_TOOLS, prefs, toolOf, allows, stagesFor };
+  const api = { TOOLS, BILL_STAGES, STAGES, STAGE_TOOLS, prefs, toolOf, allows, stagesFor, savingsUseAfterDays };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.NotifyPrefs = api;
 })(typeof window !== "undefined" ? window : globalThis);

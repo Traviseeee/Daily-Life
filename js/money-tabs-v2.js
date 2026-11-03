@@ -7,6 +7,7 @@
 const MoneyTabsV2 = (() => {
   const km = () => languageCode() === "km";
   const L = (k, e) => (km() ? k : e);
+  const numberForSavings = (value, digits = 0) => Number(value || 0).toLocaleString("en-US", { maximumFractionDigits: digits });
   const KM_M = ["មករា", "កុម្ភៈ", "មីនា", "មេសា", "ឧសភា", "មិថុនា", "កក្កដា", "សីហា", "កញ្ញា", "តុលា", "វិច្ឆិកា", "ធ្នូ"];
   const INCOME_EMOJI = { Salary: "💼", Business: "🏪", Freelance: "🧑‍💻", Bonus: "🎁", Other: "💵" };
   const BILL_EMOJI = { Utilities: "⚡", Electricity: "⚡", Water: "💧", Internet: "📶", Phone: "📱", Rent: "🏠", Home: "🏠", Insurance: "🛡️", Subscription: "🔁", Education: "📚", Transport: "🚗", Health: "💊" };
@@ -71,6 +72,7 @@ const MoneyTabsV2 = (() => {
   const JARS = [["🐷", "#ff7aa8"], ["🏦", "#3b82f6"], ["🎯", "#f59e0b"], ["💰", "#22c55e"]];
   function savings() {
     const items = appData.savings || [];
+    const market = typeof SavingsMarket !== "undefined" ? SavingsMarket.render() : "";
     const month = getSavingsContributionMonth();
     const mine = (value, currency) => (typeof toProfileCurrency === "function" ? toProfileCurrency(value, currency) : Number(value || 0));
     const todayIso = today();
@@ -97,22 +99,34 @@ const MoneyTabsV2 = (() => {
       const late = !reached && /^\d{4}-\d{2}-\d{2}$/.test(item.deadline || "") && item.deadline < todayIso;
       const [jar, color] = JARS[index % JARS.length];
       const history = (Array.isArray(item.contributions) ? item.contributions : []).slice(0, 12);
+      const transactions = (Array.isArray(item.transactions) ? item.transactions : []).slice().sort((a, b) => String(b.createdAt || b.date || "").localeCompare(String(a.createdAt || a.date || "")));
+      const reserve = Math.min(Math.max(0, Number(item.reserveAmount || 0)), Math.max(0, Number(item.currentAmount || 0)));
+      const available = Math.max(0, Number(item.currentAmount || 0) - reserve);
+      const goldChi = transactions.filter(entry => entry.type === "gold").reduce((sum, entry) => sum + Math.max(0, Number(entry.goldWeightGrams || 0)) / 3.75, 0);
+      const transactionHistory = transactions.slice(0, 5).map(entry => {
+        const action = entry.type === "gold" ? L("ទិញមាស", "Gold investment") : entry.type === "investment" ? L("វិនិយោគ/ប្រើផ្សេងៗ", "Investment / other use") : L("ចំណាយ", "Spending");
+        const weightLabel = entry.type === "gold" ? (entry.goldChi && entry.goldChi !== "custom" ? `${numberForSavings(entry.goldChi, 2)} ជី` : entry.goldWeightGrams ? `${numberForSavings(entry.goldWeightGrams, 3)} g` : "") : "";
+        const detail = [entry.date || "", weightLabel, entry.type === "gold" ? entry.goldPurity || "24K" : entry.type === "spend" && entry.category ? optionLabel(entry.category) : "", entry.note || ""].filter(Boolean).join(" · ");
+        return `<div class="sv-use-history-row"><span><b>${escapeHtml(action)}</b><small>${escapeHtml(detail)}</small></span><strong>−${money(Number(entry.amount || 0), entry.currency || item.currency)}</strong></div>`;
+      }).join("");
       const status = reached ? ["is-ok", L("សម្រេចហើយ 🎉", "Reached 🎉")] : late ? ["is-late", L("ហួសថ្ងៃ", "Overdue")] : ["is-ok", L("ទាន់ពេល", "On track")];
       return `<section class="mt-card sv-card${late ? " is-late" : ""}" data-mt-row>
         <div class="mt-head"><span class="mt-ic" style="--c:${color}">${jar}</span><b>${escapeHtml(item.name || t("savings"))}</b><span class="sv-status ${status[0]}">${escapeHtml(status[1])}</span>${more("savings", item)}</div>
         ${item.notes ? `<p class="sv-note">${escapeHtml(item.notes)}</p>` : ""}
         <div class="sv-amt"><b>${money(item.currentAmount, item.currency)}</b>${Number(item.targetAmount || 0) ? `<span>/ ${money(item.targetAmount, item.currency)}</span><em>${p}%</em>` : ""}</div>
         ${Number(item.targetAmount || 0) ? `<div class="sv-bar"><i style="width:${Math.max(p, 2)}%"></i></div>` : ""}
-        <div class="sv-chips"><span>📅 ${money(monthly, item.currency)}${escapeHtml(L("/ខែ", "/mo"))}</span>${item.deadline ? `<span>🏁 ${escapeHtml(dayLabel(item.deadline, true))}</span>` : ""}</div>
+        <div class="sv-available"><span>${escapeHtml(L("អាចប្រើបាន", "Available to use"))}</span><b>${money(available, item.currency)}</b>${reserve ? `<small>${escapeHtml(L(`ទុកបម្រុង ${String(money(reserve, item.currency)).replace(/<[^>]*>/g, "")}`, `Reserve ${String(money(reserve, item.currency)).replace(/<[^>]*>/g, "")}`))}</small>` : ""}</div>
+        <div class="sv-chips"><span>📅 ${money(monthly, item.currency)}${escapeHtml(L("/ខែ", "/mo"))}</span>${item.deadline ? `<span>🏁 ${escapeHtml(dayLabel(item.deadline, true))}</span>` : ""}${goldChi ? `<span>🪙 ${numberForSavings(goldChi, 2)} ជី ${escapeHtml(L("មាស", "gold"))}</span>` : ""}</div>
         ${typeof SmartMoney !== "undefined" && !reached ? `<div class="sv-pace${late ? " is-late" : ""}">${SmartMoney.savingsPace(item)}</div>` : ""}
         <div class="sv-actions">
           <label class="sv-save${paid ? " is-done" : ""}"><input type="checkbox" data-savings-contribution="${escapeAttr(item.id)}" data-savings-month="${escapeAttr(month)}" ${paid ? "checked" : ""}><span>${paid ? `✓ ${escapeHtml(L(`ដាក់ខែ${monthLabel(month).split(" ")[0]}រួច`, `Saved for ${monthLabel(month)}`))}` : `＋ ${escapeHtml(L(`ដាក់ ${String(money(monthly, item.currency)).replace(/<[^>]*>/g, "")} ខែនេះ`, `Save ${String(money(monthly, item.currency)).replace(/<[^>]*>/g, "")} this month`))}`}</span></label>
+          <button type="button" class="sv-use-btn" data-use-savings="${escapeAttr(item.id)}" ${available <= 0 ? "disabled" : ""}>${escapeHtml(L("ប្រើប្រាក់", "Use"))}</button>
           <button type="button" class="sv-hist-btn" data-sv-hist aria-expanded="false" aria-label="${escapeAttr(L("ប្រវត្តិ", "History"))}">📋</button>
         </div>
-        <div class="sv-hist" hidden>${history.length ? history.map(entry => `<div class="${entry.paid ? "is-paid" : ""}"><span>${escapeHtml(monthLabel(entry.month))}</span><b>${entry.paid ? "✓ " : ""}${money(Number(entry.amount || item.monthlyContribution || 0), item.currency)}</b></div>`).join("") : `<p>${escapeHtml(L("មិនទាន់មានប្រវត្តិ", "No history yet"))}</p>`}</div>
+        <div class="sv-hist" hidden>${history.length ? `<small class="sv-hist-label">${escapeHtml(L("ដាក់សន្សំប្រចាំខែ", "Monthly savings"))}</small>${history.map(entry => `<div class="${entry.paid ? "is-paid" : ""}"><span>${escapeHtml(monthLabel(entry.month))}</span><b>${entry.paid ? "✓ " : ""}${money(Number(entry.amount || item.monthlyContribution || 0), item.currency)}</b></div>`).join("")}` : ""}${transactionHistory ? `<small class="sv-hist-label">${escapeHtml(L("ប្រើប្រាក់សន្សំ", "Savings used"))}</small>${transactionHistory}` : ""}${!history.length && !transactionHistory ? `<p>${escapeHtml(L("មិនទាន់មានប្រវត្តិ", "No history yet"))}</p>` : ""}</div>
       </section>`;
     }).join("");
-    return `${head}${sec(L("គណនីសន្សំ", "Savings accounts"), items.length, "add-savings")}${items.length ? cards : empty(t("noSavingsYet"), t("noSavingsBody"), "add-savings", t("addSavings"))}`;
+    return `${market}${head}${sec(L("គណនីសន្សំ", "Savings accounts"), items.length, "add-savings")}${items.length ? cards : empty(t("noSavingsYet"), t("noSavingsBody"), "add-savings", t("addSavings"))}`;
   }
   document.addEventListener("click", event => {
     const button = event.target.closest("[data-sv-hist]");
@@ -167,8 +181,9 @@ const MoneyTabsV2 = (() => {
     const toMine = bill => (typeof toProfileCurrency === "function" ? toProfileCurrency(bill.amount, bill.currency) : Number(bill.amount || 0));
     const state = bill => {
       const paid = billPaidCurrentCycle(bill);
-      const days = daysUntil(bill.due);
-      return { paid, days, late: !paid && days != null && days < 0 };
+      const due = typeof BillPay !== "undefined" && BillPay.effectiveDueDate ? BillPay.effectiveDueDate(bill, todayIso) : bill.due;
+      const days = daysUntil(due);
+      return { paid, days, due, late: !paid && days != null && days < 0 };
     };
     const rowsData = items.map(bill => ({ bill, ...state(bill) }))
       .sort((a, b) => Number(a.paid) - Number(b.paid) || String(a.bill.due || "9999").localeCompare(String(b.bill.due || "9999")));
@@ -180,11 +195,11 @@ const MoneyTabsV2 = (() => {
       <div><small>${escapeHtml(L("បង់ហើយ", "Paid"))}</small><b class="is-in">${money(paidMonth)}</b></div>
       <div><small>${escapeHtml(L("ហួសកំណត់", "Overdue"))}</small><b class="${late ? "is-out" : ""}">${late}</b></div>
     </div>` : "";
-    const rows = rowsData.map(({ bill, paid, days, late: isLate }) => {
+    const rows = rowsData.map(({ bill, paid, days, due, late: isLate }) => {
       const emoji = BILL_EMOJI[bill.category] || BILL_EMOJI[bill.name] || "🧾";
       const tag = paid ? `✓ ${L("បង់ហើយ", "Paid")}` : isLate ? L(`ហួស ${-days} ថ្ងៃ`, `${-days}d late`) : days == null ? L("កត់ថាបង់", "Mark paid") : days === 0 ? L("ថ្ងៃនេះ", "Today") : L(`${days} ថ្ងៃ`, `${days}d`);
       const tone = paid ? "is-paid" : isLate ? "is-late" : days != null && days <= 3 ? "is-soon" : "is-due";
-      const sub = paid && bill.lastPaidAt ? L(`បង់ ${dayLabel(bill.lastPaidAt)}`, `Paid ${dayLabel(bill.lastPaidAt)}`) : `${bill.due ? dayLabel(bill.due) : t("dueDate")} · ${optionLabel(bill.frequency || "Monthly")}`;
+      const sub = paid && bill.lastPaidAt ? L(`បង់ ${dayLabel(bill.lastPaidAt)}`, `Paid ${dayLabel(bill.lastPaidAt)}`) : `${due ? dayLabel(due) : t("dueDate")} · ${optionLabel(bill.frequency || "Monthly")}`;
       const amount = !(Number(bill.amount) > 0) && bill.invoiceUrl ? escapeHtml(L("មើលវិក្កយបត្រ", "See invoice")) : money(bill.amount, bill.currency);
       const extra = [
         bill.autoPay ? `<em class="mt-chip">🔁 ${escapeHtml(L("ស្វ័យប្រវត្តិ", "Auto-pay"))}</em>` : "",

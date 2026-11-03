@@ -315,6 +315,50 @@ const NotificationCenter = (() => {
     `;
   }
 
+  function savingsUseActivityHtml() {
+    if (typeof NotifyPrefs !== "undefined" && !NotifyPrefs.allows(appData.profile, "savings-use", "app")) return "";
+    const month = localDateInput().slice(0, 7);
+    const entries = (appData.savings || []).flatMap(saving => (Array.isArray(saving.transactions) ? saving.transactions : [])
+      .filter(entry => ["gold", "spend", "investment"].includes(entry.type) && String(entry.date || "").startsWith(month))
+      .map(entry => ({ ...entry, savingName: saving.name || L("ប្រាក់សន្សំ", "Savings") })))
+      .sort((a, b) => String(b.createdAt || b.date || "").localeCompare(String(a.createdAt || a.date || "")));
+    if (!entries.length) return "";
+    const totals = new Map();
+    const goldTotals = new Map();
+    const spendTotals = new Map();
+    const investmentTotals = new Map();
+    let chiTotal = 0;
+    entries.forEach(entry => {
+      const currency = entry.currency || appData.profile.currency || "USD";
+      totals.set(currency, (totals.get(currency) || 0) + Number(entry.amount || 0));
+      const typeTotals = entry.type === "gold" ? goldTotals : entry.type === "spend" ? spendTotals : investmentTotals;
+      typeTotals.set(currency, (typeTotals.get(currency) || 0) + Number(entry.amount || 0));
+      if (entry.type === "gold") chiTotal += Math.max(0, Number(entry.goldWeightGrams || 0)) / 3.75;
+    });
+    const monthDate = new Date(`${month}-01T00:00:00`);
+    const monthName = monthDate.toLocaleDateString(isKm() ? "km-KH" : "en-US", { month: "long", year: "numeric" });
+    const totalLabel = [...totals].map(([currency, amount]) => money(amount, currency)).join(" + ");
+    const breakdown = [
+      goldTotals.size ? `${L("មាស", "Gold")}: ${[...goldTotals].map(([currency, amount]) => String(money(amount, currency)).replace(/<[^>]*>/g, "")).join(" + ")}` : "",
+      spendTotals.size ? `${L("ចំណាយ", "Spending")}: ${[...spendTotals].map(([currency, amount]) => String(money(amount, currency)).replace(/<[^>]*>/g, "")).join(" + ")}` : "",
+      investmentTotals.size ? `${L("វិនិយោគ/ប្រើផ្សេងៗ", "Investment / other use")}: ${[...investmentTotals].map(([currency, amount]) => String(money(amount, currency)).replace(/<[^>]*>/g, "")).join(" + ")}` : ""
+    ].filter(Boolean).join(" · ");
+    return `<section class="nc-group nc-gold-activity" data-nc-group="savings-use">
+      <h3>💰 ${escapeHtml(L(`ការប្រើប្រាក់សន្សំ · ${monthName}`, `Savings use · ${monthName}`))}<span>${entries.length}</span></h3>
+      <div class="nc-gold-month-total"><span><small>${L("ប្រើពីសន្សំសរុបខែនេះ", "Total used from savings this month")}</small><strong>${totalLabel}</strong>${breakdown ? `<small>${escapeHtml(breakdown)}</small>` : ""}</span>${chiTotal ? `<b>${chiTotal.toLocaleString("en-US", { maximumFractionDigits: 2 })} ជី ${L("មាស", "gold")}</b>` : ""}</div>
+      <div class="nc-gold-list">${entries.slice(0, 5).map(entry => {
+        const weight = Number(entry.goldWeightGrams || 0) / 3.75;
+        const chi = entry.goldChi && entry.goldChi !== "custom" ? Number(entry.goldChi) : weight;
+        const detail = entry.type === "gold"
+          ? `${chi.toLocaleString("en-US", { maximumFractionDigits: 2 })} ជី · ${entry.goldPurity || "24K"}`
+          : entry.type === "spend" ? [entry.category ? optionLabel(entry.category) : L("ចំណាយ", "Spending"), entry.note || ""].filter(Boolean).join(" · ") : entry.note || L("ប្រើផ្សេងៗ", "Other use");
+        const txIcon = entry.type === "gold" ? "🪙" : entry.type === "spend" ? "💸" : "📈";
+        return `<div class="nc-gold-row"><span class="nc-gold-coin">${txIcon}</span><span class="nc-gold-copy"><strong>${escapeHtml(entry.savingName)}</strong><small>${escapeHtml(entry.date || "")} · ${escapeHtml(detail)}</small></span><b>−${money(Number(entry.amount || 0), entry.currency || "USD")}</b></div>`;
+      }).join("")}</div>
+      <a class="nc-gold-open" href="#money/savings">${L("បើកគណនីសន្សំ", "Open savings")} ›</a>
+    </section>`;
+  }
+
   function panelHtml() {
     const now = new Date();
     const enabled = appData.profile?.notificationsEnabled !== false;
@@ -368,6 +412,7 @@ const NotificationCenter = (() => {
         ` : ""}
 
         <div class="nc-scroll">
+          ${savingsUseActivityHtml()}
           ${telegramHtml()}
           ${groups.length ? groups.map(([id, title, items]) => `
             <section class="nc-group" data-nc-group="${id}">
@@ -541,5 +586,5 @@ const NotificationCenter = (() => {
     else open();
   }
 
-  return { open, close, toggle, renderBadge };
+  return { open, close, toggle, renderBadge, refresh: rerender };
 })();

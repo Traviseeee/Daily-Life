@@ -1320,6 +1320,16 @@ function bindMoney() {
   document.querySelectorAll('[data-action="add-income"]').forEach(button => button.addEventListener("click", () => openIncomeModal()));
   document.querySelectorAll('[data-action="add-expense"]').forEach(button => button.addEventListener("click", () => openExpenseModal()));
   document.querySelectorAll('[data-action="add-savings"]').forEach(button => button.addEventListener("click", () => openSavingsModal()));
+  document.querySelectorAll("[data-use-savings]").forEach(button => button.addEventListener("click", () => {
+    const saving = appData.savings.find(item => item.id === button.dataset.useSavings);
+    if (saving) openSavingsUseModal(saving);
+  }));
+  document.querySelectorAll("[data-sv-market-refresh]").forEach(button => button.addEventListener("click", async () => {
+    button.disabled = true;
+    button.classList.add("is-loading");
+    try { await SavingsMarket.refresh(true); }
+    finally { button.disabled = false; button.classList.remove("is-loading"); }
+  }));
   document.querySelectorAll('[data-action="add-loan"]').forEach(button => button.addEventListener("click", () => openLoanModal()));
   document.querySelectorAll('[data-action="add-bill"]').forEach(button => button.addEventListener("click", () => openBillModal()));
   document.querySelectorAll("[data-finance-mark-bill]").forEach(button => button.addEventListener("click", () => markBillPaid(button.dataset.financeMarkBill)));
@@ -1474,11 +1484,232 @@ function openSavingsModal(item) {
     { name: "name", label: t("savingsName"), value: item?.name, required: true },
     { name: "targetAmount", label: t("targetAmount"), type: "number", value: item?.targetAmount, required: true },
     { name: "currentAmount", label: t("currentAmount"), type: "number", value: item?.currentAmount || 0, required: true },
+    { name: "reserveAmount", label: languageCode() === "km" ? "ប្រាក់រក្សាទុក (មិនយកមកប្រើ)" : "Protected reserve (keep aside)", type: "number", value: item?.reserveAmount || 0 },
     { name: "monthlyContribution", label: t("monthlyContribution"), type: "number", value: item?.monthlyContribution || 0 },
     { name: "currency", label: t("currency"), type: "select", options: ["USD", "KHR"], value: item?.currency || appData.profile.currency || "USD" },
     { name: "deadline", label: t("deadline"), type: "date", value: item?.deadline },
     { name: "notes", label: t("notes"), type: "textarea", value: item?.notes }
-  ], onSubmit(data) { const record = { ...data, targetAmount: Number(data.targetAmount || 0), currentAmount: Number(data.currentAmount || 0), monthlyContribution: Number(data.monthlyContribution || 0), currency: data.currency || appData.profile.currency || "USD" }; item ? Store.edit("savings", item.id, record) : Store.add("savings", record); Toast.show(item ? t("savingsSaved") : t("savingsAdded")); } });
+  ], onSubmit(data) { const record = { ...data, targetAmount: Number(data.targetAmount || 0), currentAmount: Number(data.currentAmount || 0), reserveAmount: Number(data.reserveAmount || 0), monthlyContribution: Number(data.monthlyContribution || 0), currency: data.currency || appData.profile.currency || "USD" }; item ? Store.edit("savings", item.id, record) : Store.add("savings", record); Toast.show(item ? t("savingsSaved") : t("savingsAdded")); } });
+}
+
+function openSavingsUseModal(saving) {
+  const startingBalance = Math.max(0, Number(saving.currentAmount || 0));
+  const reserve = Math.min(startingBalance, Math.max(0, Number(saving.reserveAmount || 0)));
+  const available = Math.max(0, startingBalance - reserve);
+  const isKm = languageCode() === "km";
+  const L = (km, en) => isKm ? km : en;
+  const useOptions = ["spend", "gold", "investment"];
+  Modal.open({ title: L("ប្រើប្រាក់សន្សំ", "Use savings"), submitText: L("បញ្ជាក់ការប្រើប្រាស់", "Confirm use"), fields: [
+    { name: "useType", label: L("ប្រើសម្រាប់", "Use for"), type: "select", options: useOptions, optionLabels: [L("ចំណាយ", "Spending"), L("ទិញមាស 24K", "Buy 24K gold"), L("វិនិយោគ ឬប្រើផ្សេងទៀត", "Other investment or use")], value: "spend" },
+    { name: "amount", label: `${L("ចំនួនទឹកប្រាក់", "Amount")} · ${money(available, saving.currency)}`, type: "number", value: available, required: true },
+    { name: "category", label: t("category"), type: "select", options: expenseCategories, value: "Shopping" },
+    { name: "goldChi", label: L("ចំនួនជី", "Gold quantity"), type: "select", options: ["1", "2", "custom"], optionLabels: [L("១ ជី · 3.75 ក្រាម", "1 Chi / ជី · 3.75 g"), L("២ ជី · 7.50 ក្រាម", "2 Chi / ជី · 7.50 g"), L("កំណត់ទម្ងន់ផ្ទាល់ខ្លួន", "Custom weight")], value: "1" },
+    { name: "goldWeightGrams", label: L("ទម្ងន់មាស (ក្រាម) · ស្រេចចិត្ត", "Gold weight (grams) · optional"), type: "number", value: "" },
+    { name: "goldPurity", label: L("កម្រិតមាស", "Gold purity"), type: "select", options: ["24K", "22K", "18K"], value: "24K" },
+    { name: "note", label: L("កំណត់ចំណាំ / ឈ្មោះហាង", "Note / shop"), value: "" }
+  ], onSubmit(data) {
+    const amount = Number(data.amount);
+    const currentSaving = appData.savings.find(item => item.id === saving.id);
+    if (!currentSaving) return;
+    const liveBalance = Math.max(0, Number(currentSaving.currentAmount || 0));
+    const liveReserve = Math.min(liveBalance, Math.max(0, Number(currentSaving.reserveAmount || 0)));
+    const liveAvailable = Math.max(0, liveBalance - liveReserve);
+    if (!Number.isFinite(amount) || amount <= 0 || amount > liveAvailable) {
+      Toast.show(L(`អាចប្រើបានត្រឹម ${money(liveAvailable, saving.currency)}`, `You can use up to ${money(liveAvailable, saving.currency)}`));
+      return;
+    }
+    const previous = structuredClone(appData);
+    const timestamp = new Date().toISOString();
+    const date = localDateInput();
+    const quote = typeof SavingsMarket !== "undefined" ? SavingsMarket.quote() : {};
+    const isGold = data.useType === "gold";
+    const transaction = {
+      id: id("saving-use"), createdAt: timestamp, date,
+      type: data.useType, amount, currency: saving.currency || appData.profile.currency || "USD",
+      note: String(data.note || "").trim(),
+      ...(isGold ? {
+        goldWeightGrams: data.goldChi === "custom" ? Number(data.goldWeightGrams || 0) : Number(data.goldChi || 1) * 3.75,
+        goldChi: data.goldChi === "custom" ? "custom" : Number(data.goldChi || 1), goldPurity: data.goldPurity || "24K",
+        marketGoldUsdPerGram: Number(quote.goldUsdPerGram || 0), marketGoldUsdPerChi: Number(quote.goldUsdPerChi || 0), marketUsdKhr: Number(quote.usdKhr || 0), marketCheckedAt: quote.updatedAtLocal || ""
+      } : data.useType === "spend" ? { category: data.category || "Shopping" } : {})
+    };
+    currentSaving.currentAmount = liveBalance - amount;
+    currentSaving.transactions = Array.isArray(currentSaving.transactions) ? currentSaving.transactions : [];
+    currentSaving.transactions.unshift(transaction);
+    if (data.useType === "spend") {
+      if (!Array.isArray(appData.expenses)) appData.expenses = [];
+      appData.expenses.push({ id: id("expense"), createdAt: timestamp, description: transaction.note || L("ចំណាយពីប្រាក់សន្សំ", "Savings spending"), amount, currency: transaction.currency, category: transaction.category, date, method: L("ប្រាក់សន្សំ", "Savings"), notes: `${saving.name || t("savings")}${transaction.note ? ` · ${transaction.note}` : ""}`, savingsTransactionId: transaction.id });
+    }
+    if (!Store.save()) { restoreData(previous); return; }
+    Toast.show(isGold ? L("បានកត់ត្រាការទិញមាស", "Gold purchase recorded") : data.useType === "investment" ? L("បានកត់ត្រាការប្រើប្រាក់សន្សំ", "Savings use recorded") : L("បានកត់ត្រាចំណាយ", "Spending recorded"));
+    App.render();
+    {
+      const monthSummary = savingsUseMonthSummary(date.slice(0, 7));
+      const alert = buildSavingsUseAlert(transaction, currentSaving, monthSummary, date.slice(0, 7));
+      NotificationCenter.refresh?.();
+      if (typeof NotifyPrefs === "undefined" || NotifyPrefs.allows(appData.profile, "savings-use", "app")) showSavingsUseAppAlert(alert, transaction.id);
+      if (typeof NotifyPrefs === "undefined" || NotifyPrefs.allows(appData.profile, "savings-use", "telegram")) sendSavingsUseTelegramAlert(transaction, currentSaving, monthSummary).catch(error => {
+        console.warn("MYLIFE could not send the savings-use Telegram alert.", error);
+        Toast.show(L("បានរក្សាទុកក្នុង app ប៉ុន្តែផ្ញើ Telegram មិនបានទេ", "Saved in the app, but Telegram alert couldn't be sent"), "warning");
+      });
+    }
+  } });
+
+  const form = document.getElementById("modalForm");
+  const type = form?.elements.useType;
+  const amount = form?.elements.amount;
+  const noteInput = form?.elements.note;
+  const noteLabel = form?.querySelector('label[for="note"]');
+  const chi = form?.elements.goldChi;
+  const grams = form?.elements.goldWeightGrams;
+  const purity = form?.elements.goldPurity;
+  const categoryField = form?.querySelector('[name="category"]')?.closest(".field");
+  const chiField = form?.querySelector('[name="goldChi"]')?.closest(".field");
+  const weightField = form?.querySelector('[name="goldWeightGrams"]')?.closest(".field");
+  const purityField = form?.querySelector('[name="goldPurity"]')?.closest(".field");
+  const estimateHint = document.createElement("small");
+  estimateHint.className = "sv-gold-estimate-hint";
+  estimateHint.textContent = L("ប៉ាន់ស្មានតាមមាស 24K Spot; កែចំនួនឱ្យត្រូវតាមបង្កាន់ដៃហាង។", "Estimated from 24K gold spot; adjust the amount to match the shop receipt.");
+  amount?.closest(".field")?.append(estimateHint);
+  const setGoldWeight = () => {
+    if (grams && chi && chi.value !== "custom") grams.value = String(Number(chi.value || 1) * 3.75);
+  };
+  const suggestGoldAmount = () => {
+    if (type?.value !== "gold" || !amount) return;
+    const quote = typeof SavingsMarket !== "undefined" ? SavingsMarket.quote() : {};
+    const weight = chi?.value === "custom" ? Number(grams?.value || 0) : Number(chi?.value || 1) * 3.75;
+    const purityK = Number(String(purity?.value || "24K").match(/\d+/)?.[0] || 24);
+    const usdPerGram = Number(quote.goldUsdPerGram || 0);
+    const usdKhr = Number(quote.usdKhr || 0);
+    if (!(weight > 0 && usdPerGram > 0)) return;
+    const usdEstimate = weight * usdPerGram * Math.min(24, purityK) / 24;
+    const estimate = (saving.currency || appData.profile.currency) === "KHR" ? (usdKhr > 0 ? usdEstimate * usdKhr : 0) : usdEstimate;
+    if (!(estimate > 0)) return;
+    amount.value = (saving.currency || appData.profile.currency) === "KHR" ? String(Math.round(estimate)) : estimate.toFixed(2);
+  };
+  const syncFields = () => {
+    const gold = type?.value === "gold";
+    const spending = type?.value === "spend";
+    if (categoryField) categoryField.hidden = !spending;
+    if (chiField) chiField.hidden = !gold;
+    if (weightField) weightField.hidden = !gold || chi?.value !== "custom";
+    if (purityField) purityField.hidden = !gold;
+    if (noteLabel) noteLabel.textContent = type?.value === "investment" ? L("វិនិយោគ / ប្រើសម្រាប់អ្វី", "Investment / what was it for") : L("កំណត់ចំណាំ / ឈ្មោះហាង", "Note / shop");
+    if (gold && chi?.value !== "custom") setGoldWeight();
+    suggestGoldAmount();
+  };
+  type?.addEventListener("change", () => {
+    if (amount) amount.value = type.value === "gold" ? "" : String(available);
+    syncFields();
+  });
+  chi?.addEventListener("change", syncFields);
+  purity?.addEventListener("change", suggestGoldAmount);
+  grams?.addEventListener("input", suggestGoldAmount);
+  syncFields();
+  form?.addEventListener("submit", event => {
+    const value = Number(amount?.value);
+    const goldWeight = chi?.value === "custom" ? Number(grams?.value || 0) : Number(chi?.value || 0) * 3.75;
+    if (type?.value === "investment" && !String(noteInput?.value || "").trim()) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      const error = form.querySelector('[data-error="note"]');
+      if (error) error.textContent = L("សូមបញ្ជាក់ការវិនិយោគ ឬការប្រើប្រាស់", "Describe the investment or use");
+      noteInput?.focus();
+      return;
+    }
+    if (type?.value === "gold" && !(goldWeight > 0)) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      const error = form.querySelector('[data-error="goldWeightGrams"]');
+      if (error) error.textContent = L("សូមបញ្ចូលទម្ងន់មាស", "Enter the gold weight");
+      (chi?.value === "custom" ? grams : chi)?.focus();
+      return;
+    }
+    if (!Number.isFinite(value) || value <= 0 || value > available) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      const error = form.querySelector('[data-error="amount"]');
+      if (error) error.textContent = L(`ចំនួនត្រូវនៅចន្លោះ 0 និង ${money(available, saving.currency)}`, `Enter an amount from 0 to ${money(available, saving.currency)}`);
+      amount?.focus();
+    }
+  }, true);
+}
+
+function savingsUseMonthSummary(month) {
+  const totals = {};
+  const byType = { gold: {}, spend: {}, investment: {} };
+  let chiTotal = 0;
+  (appData.savings || []).forEach(saving => (saving.transactions || []).forEach(entry => {
+    if (!["gold", "spend", "investment"].includes(entry.type) || !String(entry.date || "").startsWith(month)) return;
+    const currency = entry.currency || saving.currency || appData.profile.currency || "USD";
+    totals[currency] = (totals[currency] || 0) + Number(entry.amount || 0);
+    byType[entry.type][currency] = (byType[entry.type][currency] || 0) + Number(entry.amount || 0);
+    if (entry.type === "gold") chiTotal += Math.max(0, Number(entry.goldWeightGrams || 0)) / 3.75;
+  }));
+  return { totals, byType, chiTotal };
+}
+
+function buildSavingsUseAlert(transaction, saving, summary, month) {
+  const isKm = languageCode() === "km";
+  const L = (km, en) => isKm ? km : en;
+  const plainMoney = (amount, currency) => String(money(amount, currency)).replace(/<[^>]*>/g, "");
+  const monthParts = month.split("-").map(Number);
+  const kmMonths = ["មករា", "កុម្ភៈ", "មីនា", "មេសា", "ឧសភា", "មិថុនា", "កក្កដា", "សីហា", "កញ្ញា", "តុលា", "វិច្ឆិកា", "ធ្នូ"];
+  const monthName = isKm ? `ខែ${kmMonths[monthParts[1] - 1]} ${monthParts[0]}` : new Date(monthParts[0], monthParts[1] - 1, 1).toLocaleDateString("en-US", { month: "long", year: "numeric" });
+  const currency = transaction.currency || saving.currency || appData.profile.currency || "USD";
+  const chi = transaction.goldChi === "custom" ? Number(transaction.goldWeightGrams || 0) / 3.75 : Number(transaction.goldChi || 0);
+  const monthTotals = Object.entries(summary.totals).map(([code, value]) => plainMoney(value, code)).join(" + ");
+  const detail = [transaction.type === "spend" ? transaction.category : "", transaction.note].filter(Boolean).join(" · ");
+  const action = transaction.type === "gold"
+    ? L(`ទិញមាស ${chi.toLocaleString("en-US", { maximumFractionDigits: 2 })} ជី ${transaction.goldPurity || "24K"}`, `Bought ${chi.toLocaleString("en-US", { maximumFractionDigits: 2 })} Chi gold`)
+    : transaction.type === "investment"
+      ? L(`វិនិយោគ/ប្រើផ្សេងៗ ${detail}`, `Investment / other use: ${detail}`)
+      : L(`ចំណាយ ${detail || ""}`, `Spent on ${detail || "an item"}`);
+  const title = L("បានប្រើប្រាក់ពីសន្សំ", "Savings money used");
+  const body = L(`${plainMoney(transaction.amount, currency)} · ${action} · សរុបខែនេះ ${monthTotals}`, `${plainMoney(transaction.amount, currency)} · ${action} · ${monthTotals} used this month`);
+  return { title: `${title} · ${monthName}`, body };
+}
+
+async function showSavingsUseAppAlert(alert, transactionId) {
+  try {
+    const plugin = typeof NotificationManager !== "undefined" ? NotificationManager.getPlugin?.() : null;
+    if (plugin) {
+      const permission = await plugin.checkPermissions();
+      if (permission.display === "granted") {
+        await plugin.schedule({ notifications: [{ id: Math.floor(Date.now() % 2147483000), title: alert.title, body: alert.body, schedule: { at: new Date(Date.now() + 1200) }, sound: "default", extra: { url: "/#money/savings", transactionId } }] });
+        return;
+      }
+    }
+    if (!("Notification" in window) || Notification.permission !== "granted") return;
+    const options = { body: alert.body, icon: "/assets/icons/mylife-icon-192.png", tag: `savings-use-${transactionId}`, data: { url: "/#money/savings" } };
+    const registration = await navigator.serviceWorker?.ready.catch(() => null);
+    if (registration?.showNotification) await registration.showNotification(alert.title, options);
+    else new Notification(alert.title, options);
+  } catch (error) {
+    console.warn("MYLIFE could not show the savings-use app notification.", error);
+  }
+}
+
+async function sendSavingsUseTelegramAlert(transaction, saving, summary) {
+  const token = await ReportTelegram.accessToken();
+  if (!token) throw new Error("not_signed_in");
+  const response = await fetch("/api/savings-use-alert", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify({
+      language: languageCode() === "km" ? "km" : "en",
+      monthlyTotals: summary.totals,
+      monthlyBreakdown: summary.byType,
+      use: {
+        id: transaction.id, date: transaction.date, type: transaction.type, amount: transaction.amount, currency: transaction.currency,
+        goldChi: transaction.goldChi, goldWeightGrams: transaction.goldWeightGrams, goldPurity: transaction.goldPurity,
+        category: transaction.category, note: transaction.note, savingName: saving.name, balanceAfter: saving.currentAmount
+      }
+    })
+  });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(result.error || `telegram_send_${response.status}`);
+  return result;
 }
 
 function openLoanModal(item) {
