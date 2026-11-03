@@ -218,6 +218,8 @@ html:root #modalRoot .modal.wc-sheet .wc-in input[type="text"] { -webkit-text-fi
 .wc-tk-who { display: grid; min-width: 0; flex: 1; line-height: 1.25; }
 .wc-tk-who b { overflow: hidden; font-size: 1.02rem; font-weight: 600; white-space: nowrap; text-overflow: ellipsis; }
 .wc-tk-who small { overflow: hidden; font-size: .7rem; white-space: nowrap; text-overflow: ellipsis; opacity: .85; }
+.wc-tk-month-link { color: inherit; text-decoration: none; }
+.wc-tk-month-link:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; border-radius: 3px; }
 .wc-tk .wc-tk-edit { width: auto; height: 30px; gap: 4px; display: inline-flex; align-items: center; padding: 0 11px; border-radius: 999px; font: inherit; font-size: .74rem; background: rgba(255,255,255,.2); }
 .wc-tk .wc-tk-edit svg { width: 13px; height: 13px; }
 .wc-tk-amt { display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; min-width: 0; }

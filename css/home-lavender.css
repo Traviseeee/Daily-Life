@@ -852,7 +852,7 @@
   .wc-card.hv2-soft .hv2-soft-label > span:last-child { min-width: 0; }
   .wc-card.hv2-soft .hv2-soft-icon { display: inline-grid; width: 17px; height: 17px; flex: 0 0 17px; place-items: center; color: var(--lv-a); }
   .wc-card.hv2-soft .hv2-soft-icon svg { display: block; width: 16px; height: 16px; }
-  .wc-card.hv2-soft .hv2-soft-month { display: inline-flex; flex: none; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 999px; color: var(--lv-a); background: #f0edff; font-size: .68rem; font-weight: 500; white-space: nowrap; }
+  .wc-card.hv2-soft .hv2-soft-month { display: inline-flex; flex: none; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 999px; color: var(--lv-a); background: #f0edff; font-size: .68rem; font-weight: 500; text-decoration: none; white-space: nowrap; }
   .wc-card.hv2-soft .hv2-soft-month > span { display: inline-grid; width: 14px; height: 14px; place-items: center; }
   .wc-card.hv2-soft .hv2-soft-month svg { display: block; width: 14px; height: 14px; }
   .wc-card.hv2-soft .hv2-soft-summary { display: flex; grid-column: 1; grid-row: 2; min-width: 0; flex-direction: column; align-items: flex-start; gap: 5px; }
