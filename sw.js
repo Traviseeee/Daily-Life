@@ -1,4 +1,4 @@
-const CACHE_NAME = "mylife-pwa-weather-location-opt-in-20261103";
+const CACHE_NAME = "mylife-pwa-finance-month-chip-20261103";
 // red number on the Home Screen icon: the app saves its bell count here and a
 // push that arrives while the app is closed adds 1 to it
 const BADGE_CACHE = "mylife-badge";
