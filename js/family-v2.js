@@ -99,7 +99,6 @@ const FamilyV2 = (() => {
       <nav class="fv-avs" aria-label="${escapeAttr(t("family"))}">
         ${me ? av(me, L("ខ្ញុំ", "Me"), first(me.name)) : `<button class="fv-av is-add" type="button" data-action="add-self"><span class="fv-ring"><span class="fv-face">${Icons.plus()}</span></span><b>${escapeHtml(L("ខ្ញុំ", "Me"))}</b><small>${escapeHtml(L("បន្ថែម", "Add"))}</small></button>`}
         ${others.map(member => av(member, first(member.name) || relLabel(member), relLabel(member))).join("")}
-        <button class="fv-av is-add" type="button" data-action="add-family"><span class="fv-ring"><span class="fv-face">${Icons.plus()}</span></span><b>${escapeHtml(L("បន្ថែម", "Add"))}</b><small>${escapeHtml(L("សមាជិក", "member"))}</small></button>
       </nav>
     </header>`;
   }
@@ -259,9 +258,10 @@ const FamilyV2 = (() => {
         ${loveCard()}
         ${importantDates()}
         ${typeof MemoryFeed !== "undefined" ? MemoryFeed.familyTeaser() : ""}
-        <div class="fv-sec"><b>${escapeHtml(L("សមាជិក", "Members"))}</b><button class="fv-link" type="button" data-action="add-family">+ ${escapeHtml(L("បន្ថែម", "Add"))}</button></div>
-        ${appData.family.map(memberCard).join("")}
-        <div class="fv-sec"><b>${escapeHtml(L("ក្រុមគ្រួសារ", "Family group"))}</b></div>
+        <section class="fv-members-panel${lav() ? " is-lav" : ""}">
+          <div class="fv-members-head"><b>👥 ${escapeHtml(L("សមាជិក", "Members"))}<small>${appData.family.length}</small></b><button class="fv-add-member" type="button" data-action="add-family"><span>＋</span>${escapeHtml(L("បន្ថែម", "Add"))}</button></div>
+          <div class="fv-members-list">${appData.family.length ? appData.family.map(memberCard).join("") : `<p class="fv-empty">${escapeHtml(L("មិនទាន់មានសមាជិក", "No members yet"))}</p>`}</div>
+        </section>
         <div class="fv-group" data-family-group></div>
         <details class="fv-media-fold">
           <summary><b>📷 ${escapeHtml(L("រូបភាព និងវីដេអូគ្រួសារ", "Family photos & videos"))}</b><span>${escapeHtml(L("បើក", "Open"))} ›</span></summary>

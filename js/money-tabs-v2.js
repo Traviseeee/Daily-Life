@@ -77,6 +77,30 @@ const MoneyTabsV2 = (() => {
     const mine = (value, currency) => (typeof toProfileCurrency === "function" ? toProfileCurrency(value, currency) : Number(value || 0));
     const todayIso = today();
     const total = items.reduce((sum, item) => sum + mine(item.currentAmount, item.currency), 0);
+    const goldTransactions = items.flatMap(item => (Array.isArray(item.transactions) ? item.transactions : []).filter(tx => tx.type === "gold").map(tx => ({ ...tx, savingName: item.name || t("savings"), currency: tx.currency || item.currency || appData.profile.currency || "USD" }))).sort((a, b) => String(b.date || b.createdAt || "").localeCompare(String(a.date || a.createdAt || "")));
+    const marketQuote = typeof SavingsMarket !== "undefined" ? SavingsMarket.quote() : {};
+    const totalInvested = goldTransactions.reduce((sum, tx) => sum + mine(Number(tx.purchaseValue ?? tx.amount ?? 0) + Number(tx.fees || 0), tx.currency), 0);
+    const fxAvailable = Number(marketQuote.usdKhr) > 0;
+    const currentInvestmentValue = Number(marketQuote.goldUsdPerGram) > 0 && (!goldTransactions.some(tx => tx.currency === "KHR") || fxAvailable) ? goldTransactions.reduce((sum, tx) => {
+      const purity = Math.min(24, Math.max(1, Number(String(tx.goldPurity || "24K").match(/\d+/)?.[0] || 24)));
+      const grams = Math.max(0, Number(tx.goldWeightGrams || 0));
+      const usd = grams * Number(marketQuote.goldUsdPerGram) * purity / 24;
+      const value = tx.currency === "KHR" ? usd * Number(marketQuote.usdKhr || 0) : usd;
+      return sum + mine(value, tx.currency);
+    }, 0) : null;
+    const goldProfitLoss = currentInvestmentValue === null ? null : currentInvestmentValue - totalInvested;
+    const ownedGoldChi = goldTransactions.reduce((sum, tx) => sum + Math.max(0, Number(tx.goldWeightGrams || 0)) / 3.75, 0);
+    const holdingRows = goldTransactions.map(tx => {
+      const grams = Math.max(0, Number(tx.goldWeightGrams || 0));
+      const purity = Math.min(24, Math.max(1, Number(String(tx.goldPurity || "24K").match(/\d+/)?.[0] || 24)));
+      const usd = Number(marketQuote.goldUsdPerGram || 0) > 0 ? grams * Number(marketQuote.goldUsdPerGram) * purity / 24 : null;
+      const nativeValue = usd === null ? null : tx.currency === "KHR" ? (fxAvailable ? usd * Number(marketQuote.usdKhr) : null) : usd;
+      const currentValue = nativeValue === null ? null : mine(nativeValue, tx.currency);
+      const cost = mine(Number(tx.purchaseValue ?? tx.amount ?? 0) + Number(tx.fees || 0), tx.currency);
+      const profit = currentValue === null ? null : currentValue - cost;
+      const returnPct = cost > 0 && profit !== null ? profit / cost * 100 : null;
+      return `<article class="sv-holding-row"><span class="sv-holding-coin">🪙</span><span class="sv-holding-info"><b>${numberForSavings(grams / 3.75, 2)} ${escapeHtml(L("ជី", "Chi"))} · ${escapeHtml(tx.goldPurity || "24K")}</b><small>${escapeHtml(tx.savingName)} · ${escapeHtml(tx.date || "")}</small><small>${escapeHtml(L("ទិញ", "Bought"))}: ${money(Number(tx.purchaseValue ?? tx.amount ?? 0) + Number(tx.fees || 0), tx.currency)}</small></span><span class="sv-holding-value"><b>${currentValue === null ? "—" : money(currentValue)}</b><small>${escapeHtml(L("តម្លៃប៉ាន់ស្មាន", "Est. value"))}</small>${profit === null ? "" : `<em class="${profit >= 0 ? "is-up" : "is-down"}">${profit >= 0 ? "+" : "−"}${money(Math.abs(profit))} · ${returnPct >= 0 ? "+" : ""}${returnPct.toFixed(1)}%</em>`}</span></article>`;
+    }).join("");
     const target = items.reduce((sum, item) => sum + mine(item.targetAmount, item.currency), 0);
     const planned = items.reduce((sum, item) => sum + mine(item.monthlyContribution, item.currency), 0);
     const doneItems = items.filter(item => getSavingsContribution(item, month)?.paid);
@@ -107,7 +131,7 @@ const MoneyTabsV2 = (() => {
         const action = entry.type === "gold" ? L("ទិញមាស", "Gold investment") : entry.type === "investment" ? L("វិនិយោគ/ប្រើផ្សេងៗ", "Investment / other use") : L("ចំណាយ", "Spending");
         const weightLabel = entry.type === "gold" ? (entry.goldChi && entry.goldChi !== "custom" ? `${numberForSavings(entry.goldChi, 2)} ជី` : entry.goldWeightGrams ? `${numberForSavings(entry.goldWeightGrams, 3)} g` : "") : "";
         const detail = [entry.date || "", weightLabel, entry.type === "gold" ? entry.goldPurity || "24K" : entry.type === "spend" && entry.category ? optionLabel(entry.category) : "", entry.note || ""].filter(Boolean).join(" · ");
-        return `<div class="sv-use-history-row"><span><b>${escapeHtml(action)}</b><small>${escapeHtml(detail)}</small></span><strong>−${money(Number(entry.amount || 0), entry.currency || item.currency)}</strong></div>`;
+        return `<div class="sv-use-history-row"><span><b>${escapeHtml(action)}</b><small>${escapeHtml(detail)}</small></span><strong>−${money(Number(entry.totalDebit ?? (Number(entry.amount || 0) + Number(entry.fees || 0))), entry.currency || item.currency)}</strong></div>`;
       }).join("");
       const status = reached ? ["is-ok", L("សម្រេចហើយ 🎉", "Reached 🎉")] : late ? ["is-late", L("ហួសថ្ងៃ", "Overdue")] : ["is-ok", L("ទាន់ពេល", "On track")];
       return `<section class="mt-card sv-card${late ? " is-late" : ""}" data-mt-row>
@@ -115,18 +139,21 @@ const MoneyTabsV2 = (() => {
         ${item.notes ? `<p class="sv-note">${escapeHtml(item.notes)}</p>` : ""}
         <div class="sv-amt"><b>${money(item.currentAmount, item.currency)}</b>${Number(item.targetAmount || 0) ? `<span>/ ${money(item.targetAmount, item.currency)}</span><em>${p}%</em>` : ""}</div>
         ${Number(item.targetAmount || 0) ? `<div class="sv-bar"><i style="width:${Math.max(p, 2)}%"></i></div>` : ""}
-        <div class="sv-available"><span>${escapeHtml(L("អាចប្រើបាន", "Available to use"))}</span><b>${money(available, item.currency)}</b>${reserve ? `<small>${escapeHtml(L(`ទុកបម្រុង ${String(money(reserve, item.currency)).replace(/<[^>]*>/g, "")}`, `Reserve ${String(money(reserve, item.currency)).replace(/<[^>]*>/g, "")}`))}</small>` : ""}</div>
-        <div class="sv-chips"><span>📅 ${money(monthly, item.currency)}${escapeHtml(L("/ខែ", "/mo"))}</span>${item.deadline ? `<span>🏁 ${escapeHtml(dayLabel(item.deadline, true))}</span>` : ""}${goldChi ? `<span>🪙 ${numberForSavings(goldChi, 2)} ជី ${escapeHtml(L("មាស", "gold"))}</span>` : ""}</div>
-        ${typeof SmartMoney !== "undefined" && !reached ? `<div class="sv-pace${late ? " is-late" : ""}">${SmartMoney.savingsPace(item)}</div>` : ""}
+        <div class="sv-account-info">
+          <div class="sv-available"><span>${escapeHtml(L("អាចប្រើបាន", "Available"))}</span><b>${money(available, item.currency)}</b>${reserve ? `<small>${escapeHtml(L(`បម្រុង ${String(money(reserve, item.currency)).replace(/<[^>]*>/g, "")}`, `Reserved ${String(money(reserve, item.currency)).replace(/<[^>]*>/g, "")}`))}</small>` : ""}</div>
+          <div class="sv-chips"><span>📅 ${money(monthly, item.currency)}${escapeHtml(L("/ខែ", "/mo"))}</span>${item.deadline ? `<span>🏁 ${escapeHtml(dayLabel(item.deadline, true))}</span>` : ""}${goldChi ? `<span>🪙 ${numberForSavings(goldChi, 2)} ជី ${escapeHtml(L("មាស", "gold"))}</span>` : ""}</div>
+          ${typeof SmartMoney !== "undefined" && !reached ? `<div class="sv-pace${late ? " is-late" : ""}">${SmartMoney.savingsPace(item)}</div>` : ""}
+        </div>
         <div class="sv-actions">
           <label class="sv-save${paid ? " is-done" : ""}"><input type="checkbox" data-savings-contribution="${escapeAttr(item.id)}" data-savings-month="${escapeAttr(month)}" ${paid ? "checked" : ""}><span>${paid ? `✓ ${escapeHtml(L(`ដាក់ខែ${monthLabel(month).split(" ")[0]}រួច`, `Saved for ${monthLabel(month)}`))}` : `＋ ${escapeHtml(L(`ដាក់ ${String(money(monthly, item.currency)).replace(/<[^>]*>/g, "")} ខែនេះ`, `Save ${String(money(monthly, item.currency)).replace(/<[^>]*>/g, "")} this month`))}`}</span></label>
-          <button type="button" class="sv-use-btn" data-use-savings="${escapeAttr(item.id)}" ${available <= 0 ? "disabled" : ""}>${escapeHtml(L("ប្រើប្រាក់", "Use"))}</button>
+          <button type="button" class="sv-use-btn" data-use-savings="${escapeAttr(item.id)}" title="${escapeAttr(L("ប្រើប្រាក់ ឬទិញមាស", "Use savings or buy gold"))}" ${available <= 0 ? "disabled" : ""}>${escapeHtml(L("ប្រើប្រាក់", "Use"))}</button>
           <button type="button" class="sv-hist-btn" data-sv-hist aria-expanded="false" aria-label="${escapeAttr(L("ប្រវត្តិ", "History"))}">📋</button>
         </div>
         <div class="sv-hist" hidden>${history.length ? `<small class="sv-hist-label">${escapeHtml(L("ដាក់សន្សំប្រចាំខែ", "Monthly savings"))}</small>${history.map(entry => `<div class="${entry.paid ? "is-paid" : ""}"><span>${escapeHtml(monthLabel(entry.month))}</span><b>${entry.paid ? "✓ " : ""}${money(Number(entry.amount || item.monthlyContribution || 0), item.currency)}</b></div>`).join("")}` : ""}${transactionHistory ? `<small class="sv-hist-label">${escapeHtml(L("ប្រើប្រាក់សន្សំ", "Savings used"))}</small>${transactionHistory}` : ""}${!history.length && !transactionHistory ? `<p>${escapeHtml(L("មិនទាន់មានប្រវត្តិ", "No history yet"))}</p>` : ""}</div>
       </section>`;
     }).join("");
-    return `${market}${head}${sec(L("គណនីសន្សំ", "Savings accounts"), items.length, "add-savings")}${items.length ? cards : empty(t("noSavingsYet"), t("noSavingsBody"), "add-savings", t("addSavings"))}`;
+    const goldPortfolio = goldTransactions.length ? `<section class="sv-gold-portfolio"><header><span class="sv-gold-portfolio-icon">🪙</span><span class="sv-gold-portfolio-title"><small>${escapeHtml(L("មាសសរុប", "Gold owned"))}</small><strong>${numberForSavings(ownedGoldChi, 2)} ${escapeHtml(L("ជី មាស", "Chi gold"))}</strong></span><span class="sv-gold-value"><small>${escapeHtml(L("តម្លៃប៉ាន់ស្មាន", "Est. value"))}</small><b>${currentInvestmentValue === null ? "—" : money(currentInvestmentValue)}</b></span></header><details class="sv-gold-details"><summary>📋 ${escapeHtml(L("ប្រវត្តិ និងដើមទុន", "History & cost"))}</summary><div class="sv-gold-portfolio-total"><span><small>${escapeHtml(L("ដើមទុន", "Cost"))}</small><b>${money(totalInvested)}</b></span><span><small>${escapeHtml(L("ចំណេញ/ខាត", "Gain/loss"))}</small><b>${goldProfitLoss === null ? "—" : `${goldProfitLoss >= 0 ? "+" : "−"}${money(Math.abs(goldProfitLoss))}`}</b></span></div><div class="sv-holding-list">${holdingRows}</div><small class="sv-gold-source">${escapeHtml(L("តម្លៃ Spot ប៉ាន់ស្មាន · តម្លៃហាងអាចខុស", "Spot estimate · shop prices may differ"))}</small></details></section>` : "";
+    return `${market}${goldPortfolio}${head}${sec(L("គណនីសន្សំ", "Savings accounts"), items.length, "add-savings")}${items.length ? cards : empty(t("noSavingsYet"), t("noSavingsBody"), "add-savings", t("addSavings"))}`;
   }
   document.addEventListener("click", event => {
     const button = event.target.closest("[data-sv-hist]");

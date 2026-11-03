@@ -15,14 +15,14 @@
  * The older switches (budgetAlerts, morningDigest, per-bill "reminder", ...) still apply.
  */
 (function (root) {
-  const TOOLS = ["bills", "expenses", "loans", "savings", "savings-use", "calendar", "family", "reports", "backup"];
+  const TOOLS = ["bills", "expenses", "loans", "savings", "savings-use", "investment-purchase", "investment-value", "gold-price", "calendar", "family", "reports", "backup"];
 
   // alert kind (server items, app items, bell types) → tool
   const TOOL_OF = {
     bill: "bills", autopay: "bills", utility: "bills",
     budget: "expenses", unusual: "expenses", evening: "expenses", expense: "expenses", income: "expenses",
     loan: "loans",
-    "savings-contribution": "savings", "savings-deadline": "savings", "savings-purchase": "savings-use", "savings-use": "savings-use", "savings-use-followup": "savings-use", goal: "savings",
+    "savings-contribution": "savings", "savings-deadline": "savings", "savings-purchase": "investment-purchase", "savings-use": "savings-use", "savings-use-followup": "savings-use", "gold-purchase": "investment-purchase", "investment-purchase": "investment-purchase", "investment-value": "investment-value", "gold-price": "gold-price", goal: "savings",
     calendar: "calendar", event: "calendar", reminder: "calendar",
     birthday: "family", anniversary: "family", "family-birthday": "family", "family-anniversary": "family",
     digest: "reports", weekly: "reports", "weekly-image": "reports", "monthly-image": "reports", report: "reports",
@@ -41,7 +41,7 @@
     const tools = {};
     TOOLS.forEach(tool => {
       const hasCurrentValue = raw.tools && Object.prototype.hasOwnProperty.call(raw.tools, tool);
-      const legacyOff = tool === "savings-use" && raw.tools && raw.tools.gold === false;
+      const legacyOff = ["savings-use", "investment-purchase"].includes(tool) && raw.tools && raw.tools.gold === false;
       tools[tool] = hasCurrentValue ? raw.tools[tool] !== false : !legacyOff;
     });
     const saved = raw.stages && typeof raw.stages === "object" ? raw.stages : {};

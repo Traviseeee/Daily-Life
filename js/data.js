@@ -533,16 +533,19 @@ const Store = {
       // a Google account nobody invited: sign out before touching this device's data
       if (!(await OAuthGate.allow(client, user, data || null))) return false;
 
-      // A cached payload belonging to another account must never be merged into this
-      // one, so drop it before anything else can read it.
-      if (SyncState.isDifferentAccount(user.id)) {
-        saveDataBackup("account-switch");
+      // Never merge a cached payload into a different signed-in account. When the
+      // local sync owner is unknown but this account already has cloud data, treat
+      // the local cache as untrusted too; it may belong to the previous user.
+      const remotePayload = toPayloadObject(data?.payload);
+      const knownLocalAccount = SyncState.getAccountId();
+      const isolateLocalData = SyncState.isDifferentAccount(user.id) || (!knownLocalAccount && !isEmptyPayload(remotePayload));
+      if (isolateLocalData) {
+        if (hasMeaningfulAppData(appData)) saveDataBackup(knownLocalAccount ? "account-switch" : "unbound-cache-account-switch");
         Object.assign(appData, structuredClone(emptyData));
         appData.profile = { ...emptyData.profile };
         SyncState.clearPending();
+        saveLocalSnapshot(appData);
       }
-      const remotePayload = toPayloadObject(data?.payload);
-
       // A brand-new account (empty cloud) on a device whose cached data has no known owner:
       // if that data was synced to some account before, or this sign-in came from a family
       // invite link, it belongs to someone else, so the new account starts empty instead of

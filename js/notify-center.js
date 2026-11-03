@@ -23,6 +23,9 @@ const NotifyCenter = (() => {
     loans: () => svg('<path d="M3 10 12 4l9 6"/><path d="M5 10v8M9.5 10v8M14.5 10v8M19 10v8"/><path d="M3 20h18"/>'),
     savings: () => svg('<path d="M19 9.5c.9.4 1.5 1.2 1.5 2.5v1.5h-1.6a6.6 6.6 0 0 1-2.4 3V20h-3v-2.3a8 8 0 0 1-3 0V20h-3v-3.4A6 6 0 0 1 4 12c0-3.6 3.4-6.5 7.5-6.5 1.4 0 2.7.3 3.8.9L17.5 5v3.2c.6.4 1.1.8 1.5 1.3Z"/><path d="M15 10.5h.01"/>'),
     "savings-use": () => svg('<path d="M5 8h14a2 2 0 0 1 2 2v8H5a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3h13v5"/><path d="M16 13h5M7 14h.01M12 14h.01"/><path d="M5 8V5"/>'),
+    "investment-purchase": () => svg('<path d="M12 3v18M17 7.5c0-1.7-2.2-3-5-3s-5 1.3-5 3 2.2 3 5 3 5 1.3 5 3-2.2 3-5 3-5-1.3-5-3"/>'),
+    "investment-value": () => svg('<path d="m3 17 6-6 4 3 8-9"/><path d="M15 5h6v6"/>'),
+    "gold-price": () => svg('<path d="m12 3 8 5v8l-8 5-8-5V8l8-5Z"/><path d="m4 8 8 5 8-5M12 13v8"/>'),
     calendar: () => Icons.calendar(),
     family: () => Icons.cake(),
     reports: () => Icons.chart(),
@@ -38,6 +41,9 @@ const NotifyCenter = (() => {
     loans: { km: "ប្រាក់កម្ចី", en: "Loans", dkm: "រំលឹកថ្ងៃបង់ប្រាក់", den: "Payment-day reminders", href: "#money/loans" },
     savings: { km: "សន្សំ & គោលដៅ", en: "Savings & goals", dkm: "ដាក់សន្សំប្រចាំខែ, ថ្ងៃកំណត់គោលដៅ", den: "Monthly saving, goal deadlines", href: "#money/savings" },
     "savings-use": { km: "ការប្រើប្រាក់សន្សំ", en: "Savings use", dkm: "ចំណាយ · ទិញមាស · វិនិយោគផ្សេងៗ · សរុបប្រចាំខែ", den: "Spending · gold · other uses · monthly total", href: "#money/savings" },
+    "investment-purchase": { km: "ទិញការវិនិយោគ", en: "Investment purchases", dkm: "ជូនដំណឹងពេលកត់ទិញមាស ឬទ្រព្យវិនិយោគ", den: "Alerts when gold or other investments are recorded", href: "#money/savings" },
+    "investment-value": { km: "តម្លៃវិនិយោគ", en: "Investment value", dkm: "ជូនដំណឹងពេលតម្លៃមាសឡើងឬចុះខ្លាំង", den: "Alerts when tracked gold value changes significantly", href: "#money/savings" },
+    "gold-price": { km: "តម្លៃមាស", en: "Gold price alerts", dkm: "ច្បាប់តម្លៃមាស និងការឆ្លងកម្រិតគោលដៅ", den: "Gold price rules and target crossings", href: "#money/savings" },
     calendar: { km: "ប្រតិទិន & ការរំលឹក", en: "Calendar & reminders", dkm: "ព្រឹត្តិការណ៍ និងការរំលឹក", den: "Events and reminders", href: "#calendar" },
     family: { km: "គ្រួសារ", en: "Family", dkm: "ថ្ងៃកំណើត និងខួប", den: "Birthdays and anniversaries", href: "#family" },
     reports: { km: "របាយការណ៍", en: "Reports", dkm: "សង្ខេបព្រឹក, របាយការណ៍សប្តាហ៍ & ខែ", den: "Morning digest, weekly & monthly reports", href: "#money/reports" },
@@ -79,7 +85,7 @@ const NotifyCenter = (() => {
 
   const toggle = (attrs, on, label) => `<label class="nfc-switch" aria-label="${escapeAttr(label)}"><input type="checkbox" ${attrs} ${on ? "checked" : ""}><span></span></label>`;
   const tile = (name, tone) => `<span class="nfc-tile nfc-tone-${tone}">${ICON[name]()}</span>`;
-  const TONE = { bills: "amber", expenses: "rose", loans: "blue", savings: "green", "savings-use": "amber", calendar: "violet", family: "pink", reports: "teal", backup: "slate" };
+  const TONE = { bills: "amber", expenses: "rose", loans: "blue", savings: "green", "savings-use": "amber", "investment-purchase": "teal", "investment-value": "violet", "gold-price": "amber", calendar: "violet", family: "pink", reports: "teal", backup: "slate" };
 
   function summary() {
     const p = prefs();
@@ -92,7 +98,7 @@ const NotifyCenter = (() => {
   /* ---------- page ---------- */
   // tabs keep the page short: money tools · dated things · reports & backup
   const TABS = [
-    { id: "money", km: "ហិរញ្ញវត្ថុ", en: "Money", tools: ["bills", "expenses", "loans", "savings", "savings-use"] },
+    { id: "money", km: "ហិរញ្ញវត្ថុ", en: "Money", tools: ["bills", "expenses", "loans", "savings", "savings-use", "investment-purchase", "investment-value", "gold-price"] },
     { id: "days", km: "ថ្ងៃសំខាន់", en: "Dates", tools: ["calendar", "family"] },
     { id: "reports", km: "របាយការណ៍", en: "Reports", tools: ["reports", "backup"] }
   ];
@@ -451,6 +457,9 @@ const NotifyCenter = (() => {
         ${note(L("ជូនដំណឹងភ្លាមៗពេលកត់ការដកប្រាក់ តាម channel ដែលបើកខាងលើ៖ Telegram និង App។", "Sends an alert as soon as a withdrawal is recorded, through the enabled Telegram and App channels."))}
         ${savingsUseFollowupPicker(p, locked)}`;
     }
+    if (tool === "gold-price") return note(L("បន្ថែម ឬកែច្បាប់តម្លៃមាសនៅ Savings → Market watch។ Cron ត្រួតពិនិត្យម្តងក្នុងមួយថ្ងៃ។", "Add or edit gold price rules in Savings → Market watch. The scheduled market check runs once per day."));
+    if (tool === "investment-purchase") return note(L("ជូនដំណឹងពេលទិញមាស ឬកត់វិនិយោគពីគណនីសន្សំ។", "Alerts when gold or another investment is recorded from savings."));
+    if (tool === "investment-value") return `<div class="nfc-subgroup"><label class="nfc-row nfc-sub"><span class="nfc-copy"><strong>${L("កម្រិតប្រែប្រួល", "Change threshold")}</strong><small>${L("ជូនដំណឹងពេលតម្លៃមាសវិនិយោគប្រែប្រួលដល់ភាគរយនេះ", "Alert when tracked gold value changes by this percentage")}</small></span><span><input class="nfc-time" type="number" min="0.1" max="100" step="0.1" data-nfc-investment-threshold value="${Number(appData.profile.investmentValueAlertPercent || 5)}" ${locked ? "disabled" : ""}>%</span></label></div>`;
     if (NotifyPrefs.STAGE_TOOLS.includes(tool)) {
       return `${stagePicker(tool, p, locked)}${note(L(...STAGE_NOTE[tool]))}`;
     }
@@ -525,6 +534,10 @@ const NotifyCenter = (() => {
       const chosen = [...page.querySelectorAll("[data-nfc-followup-day]")].filter(item => item.checked).map(item => Number(item.dataset.nfcFollowupDay));
       save({ savingsUseAfterDays: chosen });
     }));
+    page.querySelector("[data-nfc-investment-threshold]")?.addEventListener("change", event => {
+      const value = Math.min(100, Math.max(0.1, Number(event.target.value) || 5));
+      saveProfile({ investmentValueAlertPercent: value });
+    });
     page.querySelectorAll("[data-nfc-test]").forEach(button => button.addEventListener("click", () => sendTest(button)));
     page.querySelectorAll("[data-nfc-tab]").forEach(button => button.addEventListener("click", () => {
       if (tab === button.dataset.nfcTab) return;

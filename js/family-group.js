@@ -37,7 +37,7 @@ const FamilyGroup = (() => {
   const DEFAULT_PERMS = { memories: true, calendar: true, shopping: true };
   const ROLE = { admin: ["អ្នកគ្រប់គ្រង", "Admin"], member: ["សមាជិក", "Member"], viewer: ["អ្នកមើល", "Viewer"] };
 
-  const state = { status: "idle", family: null, members: [], invites: [], me: null, error: "" };
+  const state = { status: "idle", family: null, members: [], invites: [], me: null, mePhoto: "", error: "" };
   let loading = null;
 
   const client = () => (typeof window !== "undefined" ? window.supabaseClient : null);
@@ -50,9 +50,16 @@ const FamilyGroup = (() => {
     if (loading && !force) return loading;
     loading = (async () => {
       if (!client()?.from) { state.status = "offline"; return state; }
-      const uid = await myId();
+      let sessionUser = null;
+      try {
+        const { data } = await client().auth.getSession();
+        sessionUser = data?.session?.user || null;
+      } catch (error) { /* Continue with initials if auth metadata is unavailable. */ }
+      const uid = sessionUser?.id || await myId();
       if (!uid) { state.status = "signedout"; return state; }
       state.me = uid;
+      const metadata = sessionUser?.user_metadata || {};
+      state.mePhoto = String(metadata.avatar_url || metadata.picture || metadata.photo_url || metadata.avatar || "");
       const mine = await client().from("family_members").select("family_id, role").eq("user_id", uid).limit(1);
       if (mine.error) { state.status = missingTable(mine.error) ? "notsetup" : "error"; state.error = mine.error.message; return state; }
       const row = (mine.data || [])[0];
@@ -85,13 +92,28 @@ const FamilyGroup = (() => {
     if (member.user_id === state.me) return appData.profile?.name || L("អ្នក", "You");
     return L("សមាជិក", "Member");
   }
+  function familyDisplayName() {
+    const raw = String(state.family?.name || "").trim();
+    const clean = raw.replace(/^(?:គ្រួសារ|family)(?:\s+|[-–:]\s*)/i, "").trim();
+    return clean || L("មិនទាន់ដាក់ឈ្មោះ", "Unnamed group");
+  }
   const initials = name => String(name || "?").trim().split(/\s+/).map(part => Array.from(part)[0] || "").join("").slice(0, 2).toUpperCase() || "?";
   const TONES = ["#d9ff7b", "#ffc7e1", "#bfe0ff", "#ffd28a", "#c9b8ff", "#9df0d2"];
   const toneOf = id => TONES[Array.from(String(id)).reduce((sum, ch) => sum + ch.charCodeAt(0), 0) % TONES.length];
-  const avatar = (member, size = "") => `<span class="fg-avatar ${size}" style="--fg-tone:${toneOf(member.user_id)}">${escapeHtml(member.avatar || initials(nameOf(member)))}</span>`;
+  const avatar = (member, size = "") => {
+    const isSelf = member.user_id === state.me;
+    const localPhotoIsCurrent = isSelf && typeof SyncState !== "undefined" && SyncState.getAccountId() === state.me;
+    const profilePhoto = localPhotoIsCurrent ? (appData.profile?.photo || state.mePhoto) : (isSelf ? state.mePhoto : "");
+    const usesLocalPhoto = localPhotoIsCurrent && Boolean(appData.profile?.photo);
+    const position = usesLocalPhoto && typeof imagePosition === "function" ? imagePosition(appData.profile?.photoPosition) : { x: 0, y: 0 };
+    const face = profilePhoto
+      ? `<img src="${escapeAttr(profilePhoto)}" alt="" style="--image-position-x:${position.x}%;--image-position-y:${position.y}%">`
+      : escapeHtml(member.avatar || initials(nameOf(member)));
+    return `<span class="fg-avatar ${size}" style="--fg-tone:${toneOf(member.user_id)}">${face}</span>`;
+  };
   const rolePill = role => `<span class="fg-role is-${role}">${escapeHtml(L(...ROLE[role]))}</span>`;
   function seesText(member) {
-    if (member.role === "admin") return isOwner(member) ? L("ម្ចាស់គ្រួសារ", "Family owner") : L("អ្នកគ្រប់គ្រង", "Admin");
+    if (member.role === "admin") return "";
     const list = PERMS.filter(perm => member.permissions?.[perm.key]).map(perm => L(...perm.short));
     const text = list.join(" · ") || L("មិនទាន់ឲ្យមើលអ្វីទេ", "Nothing shared yet");
     return member.role === "viewer" ? `${L("មើលប៉ុណ្ណោះ", "View only")} · ${text}` : text;
@@ -110,13 +132,16 @@ const FamilyGroup = (() => {
     const admin = isAdmin();
     const moneyTo = state.members.filter(member => member.role !== "admin" && member.permissions?.money).map(nameOf);
     return `<article class="fg-card">
-      <div class="fg-head"><div><h2>${escapeHtml(state.family?.name || L("គ្រួសារខ្ញុំ", "My family"))}</h2><small>${escapeHtml(L(`សមាជិក ${state.members.length} នាក់`, `${state.members.length} members`))}</small></div>${rolePill(meRow()?.role || "member")}</div>
-      <div class="fg-list">${state.members.map(member => `<button type="button" class="fg-row" data-fg-member="${escapeAttr(member.user_id)}" ${admin || member.user_id === state.me ? "" : "disabled"}>
+      <div class="fg-head"><div><h2>${escapeHtml(familyDisplayName())}</h2><small>${escapeHtml(L(`សមាជិក ${state.members.length} នាក់`, `${state.members.length} members`))}</small></div></div>
+      <div class="fg-list">${state.members.map(member => {
+        const detail = seesText(member);
+        return `<button type="button" class="fg-row" data-fg-member="${escapeAttr(member.user_id)}" ${admin || member.user_id === state.me ? "" : "disabled"}>
         ${avatar(member)}
-        <span class="fg-row-text"><strong>${escapeHtml(nameOf(member))}${member.user_id === state.me ? ` <em>(${escapeHtml(L("អ្នក", "you"))})</em>` : ""}</strong><small>${escapeHtml(seesText(member))}</small></span>
+        <span class="fg-row-text"><strong>${escapeHtml(nameOf(member))}${member.user_id === state.me ? ` <em>(${escapeHtml(L("អ្នក", "you"))})</em>` : ""}</strong>${detail ? `<small>${escapeHtml(detail)}</small>` : ""}</span>
         ${member.role !== "admin" && member.permissions?.money ? `<span class="fg-money-on" title="${escapeAttr(L("មើលលុយបាន", "Can view money"))}">${IC.unlock()}</span>` : ""}
         ${rolePill(member.role)}
-      </button>`).join("")}</div>
+      </button>`;
+      }).join("")}</div>
       ${admin && state.invites?.length ? `<div class="fg-invites"><h3 class="fg-label">${escapeHtml(L(`Link អញ្ជើញកំពុងរង់ចាំ (${state.invites.length})`, `Pending invite links (${state.invites.length})`))}</h3>${state.invites.map(entry => `<div class="fg-invite-row">${rolePill(entry.role)}<small>${escapeHtml(L("ផុតកំណត់", "Expires"))} ${escapeHtml(formatDate(String(entry.expires_at).slice(0, 10)))}</small><button type="button" class="fg-mini is-ghost" data-fg-cancel="${escapeAttr(entry.token)}">${escapeHtml(L("បោះបង់", "Cancel"))}</button></div>`).join("")}</div>` : ""}
       ${admin ? `<button type="button" class="fg-primary" data-fg-invite>${IC.userPlus()}<span>${escapeHtml(L("អញ្ជើញសមាជិក", "Invite a member"))}</span></button>` : ""}
       <p class="fg-note">${moneyTo.length ? `${IC.unlock()}<span>${escapeHtml(L(`${moneyTo.join(", ")} មើលលុយបាន (មើលប៉ុណ្ណោះ)`, `${moneyTo.join(", ")} can view money (view only)`))}</span>` : `${IC.lock()}<span>${escapeHtml(L("លុយ និងកម្ចី មិនចែករំលែកទេ", "Money and loans are not shared"))}</span>`}</p>
@@ -126,6 +151,13 @@ const FamilyGroup = (() => {
   function paint() {
     document.querySelectorAll("[data-family-group]").forEach(slot => {
       slot.innerHTML = cardHtml();
+      const card = slot.querySelector(".fg-card");
+      if (card) {
+        const title = document.createElement("div");
+        title.className = "fg-section-title";
+        title.innerHTML = `${icon("family")}<span>${escapeHtml(L("ក្រុមគ្រួសារ", "Family group"))}</span>`;
+        card.prepend(title);
+      }
       slot.querySelector("[data-fg-retry]")?.addEventListener("click", () => refresh(true));
       slot.querySelector("[data-fg-create]")?.addEventListener("click", createFamily);
       slot.querySelector("[data-fg-invite]")?.addEventListener("click", openInvite);

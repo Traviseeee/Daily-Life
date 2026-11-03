@@ -1503,6 +1503,7 @@ function openSavingsUseModal(saving) {
   Modal.open({ title: L("ប្រើប្រាក់សន្សំ", "Use savings"), submitText: L("បញ្ជាក់ការប្រើប្រាស់", "Confirm use"), fields: [
     { name: "useType", label: L("ប្រើសម្រាប់", "Use for"), type: "select", options: useOptions, optionLabels: [L("ចំណាយ", "Spending"), L("ទិញមាស 24K", "Buy 24K gold"), L("វិនិយោគ ឬប្រើផ្សេងទៀត", "Other investment or use")], value: "spend" },
     { name: "amount", label: `${L("ចំនួនទឹកប្រាក់", "Amount")} · ${money(available, saving.currency)}`, type: "number", value: available, required: true },
+    { name: "fees", label: L("ថ្លៃសេវាទិញមាស (ស្រេចចិត្ត)", "Purchase fees (optional)"), type: "number", value: "0" },
     { name: "category", label: t("category"), type: "select", options: expenseCategories, value: "Shopping" },
     { name: "goldChi", label: L("ចំនួនជី", "Gold quantity"), type: "select", options: ["1", "2", "custom"], optionLabels: [L("១ ជី · 3.75 ក្រាម", "1 Chi / ជី · 3.75 g"), L("២ ជី · 7.50 ក្រាម", "2 Chi / ជី · 7.50 g"), L("កំណត់ទម្ងន់ផ្ទាល់ខ្លួន", "Custom weight")], value: "1" },
     { name: "goldWeightGrams", label: L("ទម្ងន់មាស (ក្រាម) · ស្រេចចិត្ត", "Gold weight (grams) · optional"), type: "number", value: "" },
@@ -1515,10 +1516,12 @@ function openSavingsUseModal(saving) {
     const liveBalance = Math.max(0, Number(currentSaving.currentAmount || 0));
     const liveReserve = Math.min(liveBalance, Math.max(0, Number(currentSaving.reserveAmount || 0)));
     const liveAvailable = Math.max(0, liveBalance - liveReserve);
-    if (!Number.isFinite(amount) || amount <= 0 || amount > liveAvailable) {
+    const fees = data.useType === "gold" ? Math.max(0, Number(data.fees || 0)) : 0;
+    if (!Number.isFinite(amount) || amount <= 0 || !Number.isFinite(fees) || amount + fees > liveAvailable) {
       Toast.show(L(`អាចប្រើបានត្រឹម ${money(liveAvailable, saving.currency)}`, `You can use up to ${money(liveAvailable, saving.currency)}`));
       return;
     }
+    const totalDebit = amount + fees;
     const previous = structuredClone(appData);
     const timestamp = new Date().toISOString();
     const date = localDateInput();
@@ -1526,15 +1529,15 @@ function openSavingsUseModal(saving) {
     const isGold = data.useType === "gold";
     const transaction = {
       id: id("saving-use"), createdAt: timestamp, date,
-      type: data.useType, amount, currency: saving.currency || appData.profile.currency || "USD",
+      type: data.useType, amount, currency: saving.currency || appData.profile.currency || "USD", fees, totalDebit,
       note: String(data.note || "").trim(),
       ...(isGold ? {
         goldWeightGrams: data.goldChi === "custom" ? Number(data.goldWeightGrams || 0) : Number(data.goldChi || 1) * 3.75,
-        goldChi: data.goldChi === "custom" ? "custom" : Number(data.goldChi || 1), goldPurity: data.goldPurity || "24K",
+        goldChi: data.goldChi === "custom" ? "custom" : Number(data.goldChi || 1), goldPurity: data.goldPurity || "24K", purchaseValue: amount,
         marketGoldUsdPerGram: Number(quote.goldUsdPerGram || 0), marketGoldUsdPerChi: Number(quote.goldUsdPerChi || 0), marketUsdKhr: Number(quote.usdKhr || 0), marketCheckedAt: quote.updatedAtLocal || ""
       } : data.useType === "spend" ? { category: data.category || "Shopping" } : {})
     };
-    currentSaving.currentAmount = liveBalance - amount;
+    currentSaving.currentAmount = liveBalance - totalDebit;
     currentSaving.transactions = Array.isArray(currentSaving.transactions) ? currentSaving.transactions : [];
     currentSaving.transactions.unshift(transaction);
     if (data.useType === "spend") {
@@ -1548,8 +1551,9 @@ function openSavingsUseModal(saving) {
       const monthSummary = savingsUseMonthSummary(date.slice(0, 7));
       const alert = buildSavingsUseAlert(transaction, currentSaving, monthSummary, date.slice(0, 7));
       NotificationCenter.refresh?.();
-      if (typeof NotifyPrefs === "undefined" || NotifyPrefs.allows(appData.profile, "savings-use", "app")) showSavingsUseAppAlert(alert, transaction.id);
-      if (typeof NotifyPrefs === "undefined" || NotifyPrefs.allows(appData.profile, "savings-use", "telegram")) sendSavingsUseTelegramAlert(transaction, currentSaving, monthSummary).catch(error => {
+      const alertKind = transaction.type === "gold" || transaction.type === "investment" ? "investment-purchase" : "savings-use";
+      if (typeof NotifyPrefs === "undefined" || NotifyPrefs.allows(appData.profile, alertKind, "app")) showSavingsUseAppAlert(alert, transaction.id);
+      if (typeof NotifyPrefs === "undefined" || NotifyPrefs.allows(appData.profile, alertKind, "telegram")) sendSavingsUseTelegramAlert(transaction, currentSaving, monthSummary).catch(error => {
         console.warn("MYLIFE could not send the savings-use Telegram alert.", error);
         Toast.show(L("បានរក្សាទុកក្នុង app ប៉ុន្តែផ្ញើ Telegram មិនបានទេ", "Saved in the app, but Telegram alert couldn't be sent"), "warning");
       });
@@ -1559,8 +1563,10 @@ function openSavingsUseModal(saving) {
   const form = document.getElementById("modalForm");
   const type = form?.elements.useType;
   const amount = form?.elements.amount;
+  const feesInput = form?.elements.fees;
   const noteInput = form?.elements.note;
   const noteLabel = form?.querySelector('label[for="note"]');
+  const feesField = feesInput?.closest(".field");
   const chi = form?.elements.goldChi;
   const grams = form?.elements.goldWeightGrams;
   const purity = form?.elements.goldPurity;
@@ -1595,6 +1601,7 @@ function openSavingsUseModal(saving) {
     if (chiField) chiField.hidden = !gold;
     if (weightField) weightField.hidden = !gold || chi?.value !== "custom";
     if (purityField) purityField.hidden = !gold;
+    if (feesField) feesField.hidden = !gold;
     if (noteLabel) noteLabel.textContent = type?.value === "investment" ? L("វិនិយោគ / ប្រើសម្រាប់អ្វី", "Investment / what was it for") : L("កំណត់ចំណាំ / ឈ្មោះហាង", "Note / shop");
     if (gold && chi?.value !== "custom") setGoldWeight();
     suggestGoldAmount();
@@ -1626,7 +1633,8 @@ function openSavingsUseModal(saving) {
       (chi?.value === "custom" ? grams : chi)?.focus();
       return;
     }
-    if (!Number.isFinite(value) || value <= 0 || value > available) {
+    const fees = type?.value === "gold" ? Math.max(0, Number(feesInput?.value || 0)) : 0;
+    if (!Number.isFinite(value) || value <= 0 || !Number.isFinite(fees) || value + fees > available) {
       event.preventDefault();
       event.stopImmediatePropagation();
       const error = form.querySelector('[data-error="amount"]');
@@ -1643,8 +1651,9 @@ function savingsUseMonthSummary(month) {
   (appData.savings || []).forEach(saving => (saving.transactions || []).forEach(entry => {
     if (!["gold", "spend", "investment"].includes(entry.type) || !String(entry.date || "").startsWith(month)) return;
     const currency = entry.currency || saving.currency || appData.profile.currency || "USD";
-    totals[currency] = (totals[currency] || 0) + Number(entry.amount || 0);
-    byType[entry.type][currency] = (byType[entry.type][currency] || 0) + Number(entry.amount || 0);
+    const totalUse = Number(entry.totalDebit ?? (Number(entry.amount || 0) + Number(entry.fees || 0)));
+    totals[currency] = (totals[currency] || 0) + totalUse;
+    byType[entry.type][currency] = (byType[entry.type][currency] || 0) + totalUse;
     if (entry.type === "gold") chiTotal += Math.max(0, Number(entry.goldWeightGrams || 0)) / 3.75;
   }));
   return { totals, byType, chiTotal };
@@ -1667,7 +1676,7 @@ function buildSavingsUseAlert(transaction, saving, summary, month) {
       ? L(`វិនិយោគ/ប្រើផ្សេងៗ ${detail}`, `Investment / other use: ${detail}`)
       : L(`ចំណាយ ${detail || ""}`, `Spent on ${detail || "an item"}`);
   const title = L("បានប្រើប្រាក់ពីសន្សំ", "Savings money used");
-  const body = L(`${plainMoney(transaction.amount, currency)} · ${action} · សរុបខែនេះ ${monthTotals}`, `${plainMoney(transaction.amount, currency)} · ${action} · ${monthTotals} used this month`);
+  const body = L(`${plainMoney(transaction.totalDebit ?? transaction.amount, currency)} · ${action} · សរុបខែនេះ ${monthTotals}`, `${plainMoney(transaction.totalDebit ?? transaction.amount, currency)} · ${action} · ${monthTotals} used this month`);
   return { title: `${title} · ${monthName}`, body };
 }
 
