@@ -202,6 +202,12 @@ html body .fv2-page .financial-content .financial-report-table-wrap { border: 0 
 .sv-bar i { display: block; height: 100%; border-radius: inherit; background: var(--fv-grad); animation: mtGrow 700ms ease both; transform-origin: left; }
 .sv-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
 .sv-chips > span { padding: 5px 10px; border-radius: 999px; font-size: 0.72rem; font-weight: 600; color: var(--fv-ink2); background: var(--fv-soft); }
+.sv-account-info { display: grid; gap: 5px; margin-top: 11px; padding: 10px 12px; border: 1px solid var(--fv-line); border-radius: 16px; background: color-mix(in srgb, var(--fv-soft) 46%, var(--fv-card)); }
+.sv-account-info .sv-available { margin: 0; padding: 0 0 7px; border-bottom: 1px solid var(--fv-line); border-radius: 0; background: transparent; }
+.sv-account-info .sv-chips { gap: 5px; margin: 3px 0 0; }
+.sv-account-info .sv-chips > span { padding: 4px 8px; background: var(--fv-card); }
+.sv-account-info .sv-pace .pace { margin: 3px 0 0 !important; padding: 6px 8px !important; font-size: .7rem !important; }
+.sv-account-info .sv-pace.is-late .pace { background: transparent !important; }
 .fv2-page .sv-pace .pace { margin: 10px 0 0 !important; padding: 8px 11px !important; border: 0 !important; border-radius: 12px !important; font-size: 0.74rem !important; font-weight: 600; color: var(--fv-acc-ink) !important; background: var(--fv-soft) !important; }
 .fv2-page .sv-pace.is-late .pace { color: var(--fv-red) !important; background: var(--fv-red-bg) !important; }
 .sv-actions { display: flex; gap: 8px; margin-top: 12px; }
@@ -239,7 +245,77 @@ html body .fv2-page .financial-content .financial-report-table-wrap { border: 0 
 .sv-market-fx > b { margin-left: auto; color: var(--fv-ink); font-size: .78rem; }
 .sv-market-fx > small { font-size: .64rem; }
 .sv-market-fx.is-muted { color: var(--fv-ink2); }
-.sv-market-meta { display: block; margin-top: 4px; font-size: .68rem; line-height: 1.45; text-align: center; color: var(--fv-ink2); }
+.sv-market-meta { display: flex; align-items: center; gap: 5px; margin: 1px 2px 0; color: var(--fv-ink2); font-size: .66rem; line-height: 1.35; }
+.sv-investment-summary { display: grid; gap: 10px; padding: 14px; border: 1px solid var(--fv-line); border-radius: 18px; color: var(--fv-ink); background: var(--fv-card); box-shadow: var(--fv-shadow); }
+.sv-investment-summary > b { font-size: .84rem; }
+.sv-investment-summary > div { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.sv-investment-summary > div > span { display: grid; gap: 4px; min-width: 0; padding: 9px 10px; border-radius: 13px; background: var(--fv-soft); }
+.sv-investment-summary small { color: var(--fv-ink2); font-size: .68rem; line-height: 1.4; }
+.sv-investment-summary strong { font-size: .96rem; }
+.sv-investment-summary > div > .is-total { background: color-mix(in srgb, var(--fv-green) 16%, var(--fv-card)); }
+.sv-gold-portfolio { display: grid; gap: 10px; padding: 14px; border: 1px solid color-mix(in srgb, #d6a53d 24%, var(--fv-line)); border-radius: 20px; color: var(--fv-ink); background: linear-gradient(145deg, color-mix(in srgb, #fff3ce 66%, var(--fv-card)), var(--fv-card) 72%); box-shadow: var(--fv-shadow); }
+.sv-gold-portfolio > header { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.sv-gold-portfolio-icon { display: grid; place-items: center; flex: 0 0 42px; width: 42px; height: 42px; border-radius: 15px; background: #ffedbd; font-size: 1.35rem; }
+.sv-gold-portfolio-title { display: grid; gap: 2px; min-width: 0; }
+.sv-gold-portfolio-title small, .sv-gold-portfolio-total small, .sv-holding-info small, .sv-holding-value small, .sv-gold-source { color: var(--fv-ink2); font-size: .68rem; line-height: 1.4; }
+.sv-gold-portfolio-title strong { color: #9a6810; font-size: 1.22rem; }
+.sv-gold-value { display: grid; gap: 2px; margin-left: auto; text-align: right; }
+.sv-gold-value small { color: var(--fv-ink2); font-size: .65rem; }
+.sv-gold-value b { color: #80601c; font-size: .96rem; }
+.sv-gold-details { padding-top: 8px; border-top: 1px solid color-mix(in srgb, #d6a53d 20%, var(--fv-line)); }
+.sv-gold-details summary { color: var(--fv-ink2); font-size: .72rem; font-weight: 700; cursor: pointer; }
+.sv-gold-details[open] { display: grid; gap: 9px; }
+.sv-gold-portfolio-total { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.sv-gold-portfolio-total > span { display: grid; gap: 4px; min-width: 0; padding: 10px; border-radius: 13px; background: color-mix(in srgb, #f5e8c4 44%, var(--fv-card)); }
+.sv-gold-portfolio-total b { font-size: .94rem; overflow-wrap: anywhere; }
+.sv-holding-list { display: grid; gap: 9px; }
+.sv-holding-row { display: flex; align-items: center; gap: 9px; min-width: 0; padding-top: 9px; border-top: 1px solid var(--fv-line); }
+.sv-holding-coin { display: grid; place-items: center; flex: 0 0 34px; width: 34px; height: 34px; border-radius: 12px; background: #fff3d5; }
+.sv-holding-info, .sv-holding-value { display: grid; gap: 2px; min-width: 0; }
+.sv-holding-info { flex: 1; }
+.sv-holding-info b, .sv-holding-value b { font-size: .76rem; }
+.sv-holding-info small { overflow-wrap: anywhere; }
+.sv-holding-value { text-align: right; }
+.sv-holding-value em { font-size: .65rem; font-style: normal; font-weight: 700; white-space: nowrap; }
+.sv-holding-value em.is-up { color: #14804a; }
+.sv-holding-value em.is-down { color: #be3153; }
+.sv-gold-source { display: block; }
+.sv-market-history { display: grid; gap: 7px; padding-top: 3px; }
+.sv-market-history-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.sv-market-history-head > b { color: var(--fv-ink2); font-size: .72rem; }
+.sv-market-range { display: flex; gap: 2px; padding: 3px; border-radius: 999px; background: var(--fv-soft); }
+.sv-market-range button, .sv-market-alert-head button { border: 0; border-radius: 999px; padding: 5px 10px; color: var(--fv-ink2); background: transparent; font: inherit; font-size: .66rem; cursor: pointer; }
+.sv-market-range button.is-active { color: var(--fv-on); background: var(--fv-grad); box-shadow: 0 2px 7px rgba(76, 66, 173, .18); }
+.sv-market-chart-head, .sv-market-chart-scale { display: flex; justify-content: space-between; gap: 8px; color: var(--fv-ink2); font-size: .68rem; }
+.sv-market-chart-head { margin-top: 7px; }
+.sv-market-chart-head b.is-up { color: #14804a; }
+.sv-market-chart-head b.is-down { color: #be3153; }
+.sv-market-chart { display: block; width: 100%; height: 100px; overflow: visible; color: #d4a23b; }
+.sv-market-chart-empty { display: flex; align-items: center; gap: 9px; min-height: 46px; padding: 8px 11px; border-radius: 13px; color: var(--fv-ink2); background: color-mix(in srgb, var(--fv-soft) 58%, transparent); }
+.sv-market-chart-empty > span { display: grid; place-items: center; flex: 0 0 32px; width: 32px; height: 32px; border-radius: 11px; background: var(--fv-card); font-size: 1rem; }
+.sv-market-chart-empty > b { color: var(--fv-ink2); font-size: .7rem; font-weight: 600; }
+.sv-market-chart-scale { font-size: .6rem; }
+.sv-market-alert-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 2px; padding: 8px 10px; border-radius: 12px; background: var(--fv-soft); }
+.sv-market-alert-head > b { font-size: .74rem; }
+.sv-market-alert-head button { color: var(--fv-acc-ink); background: var(--fv-card); }
+.sv-market-alerts { display: grid; gap: 7px; }
+.sv-market-alerts[hidden] { display: none; }
+.sv-market-alerts > small { color: var(--fv-ink2); font-size: .7rem; }
+.sv-market-alert-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 7px 9px; border-radius: 12px; background: var(--fv-soft); font-size: .72rem; }
+.sv-market-alert-row button { border: 0; color: var(--fv-red); background: transparent; font-size: 1.1rem; cursor: pointer; }
+.sv-market-alert-form { display: grid; grid-template-columns: 1.2fr .7fr .8fr .55fr auto; gap: 5px; }
+.sv-market-alert-form select, .sv-market-alert-form input { min-width: 0; width: 100%; padding: 7px 5px; border: 1px solid var(--fv-line); border-radius: 9px; color: var(--fv-ink); background: var(--fv-card); font: inherit; font-size: .64rem; }
+.sv-market-alert-form button { padding: 6px 8px; border: 0; border-radius: 9px; color: var(--fv-on); background: var(--fv-grad); font: inherit; font-size: .66rem; }
+.sv-market-change { color: #14804a; font-size: .64rem; }
+.sv-market-change.is-down { color: #be3153; }
+.sv-market-alert-history { display: grid; gap: 6px; border-top: 1px solid var(--fv-line); padding-top: 7px; }
+.sv-market-alert-history summary { color: var(--fv-ink2); font-size: .7rem; cursor: pointer; }
+.sv-market-history-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: .7rem; }
+.sv-market-history-row > span { display: grid; min-width: 0; }
+.sv-market-history-row b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sv-market-history-row small { color: var(--fv-ink2); }
+.sv-market-history-row button { border: 0; border-radius: 8px; padding: 4px 7px; color: var(--fv-acc-ink); background: var(--fv-soft); font: inherit; font-size: .65rem; }
+.sv-market-history-row.is-read { opacity: .65; }
 .sv-available { display: flex; align-items: baseline; flex-wrap: wrap; gap: 5px 8px; margin-top: 11px; padding: 9px 11px; border-radius: 14px; color: var(--fv-acc-ink); background: var(--fv-soft); }
 .sv-available > span { font-size: .74rem; }
 .sv-available > b { margin-left: auto; font-size: .98rem; font-weight: 800; color: var(--fv-ink); }
@@ -255,3 +331,4 @@ html body .fv2-page .financial-content .financial-report-table-wrap { border: 0 
 .sv-gold-estimate-hint { display: block; margin-top: 5px; color: var(--fv-ink2); font-size: .7rem; line-height: 1.4; }
 #modalForm .field[hidden] { display: none !important; }
 @media (prefers-reduced-motion: reduce) { .sv-market-refresh.is-loading { animation: none; } }
+@media (max-width: 420px) { .sv-market-alert-form { grid-template-columns: 1fr 1fr; } }

@@ -19,7 +19,8 @@
 .fg-row-text strong { overflow: hidden; font-size: 0.95rem; white-space: nowrap; text-overflow: ellipsis; }
 .fg-row-text strong em { font-style: normal; font-weight: 500; color: #a9c9b4; }
 .fg-row-text small { overflow: hidden; font-size: 0.78rem; color: #a9c9b4; white-space: nowrap; text-overflow: ellipsis; }
-.fg-avatar { display: grid; place-items: center; width: 44px; height: 44px; flex: 0 0 auto; border-radius: 50%; font-size: 0.92rem; font-weight: 800; color: #10261c; background: var(--fg-tone, #d9ff7b); }
+.fg-avatar { display: grid; place-items: center; width: 44px; height: 44px; flex: 0 0 auto; overflow: hidden; border-radius: 50%; font-size: 0.92rem; font-weight: 800; color: #10261c; background: var(--fg-tone, #d9ff7b); }
+.fg-avatar img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: calc(50% + var(--image-position-x, 0%)) calc(50% + var(--image-position-y, 0%)); }
 .fg-avatar.is-lg { width: 52px; height: 52px; font-size: 1.05rem; }
 .fg-money-on { display: grid; place-items: center; color: #ffc27a; }
 .fg-money-on svg { width: 17px; height: 17px; }

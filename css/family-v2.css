@@ -51,6 +51,12 @@
 .fv-sec { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin: 6px 4px 8px; }
 .fv-sec b { font-size: 1rem; font-weight: 700; }
 .fv-link { padding: 4px 0; border: 0; background: none; font-size: 0.8rem; font-weight: 600; color: var(--fv-acc-ink) !important; cursor: pointer; }
+.fv-members-panel { margin: 0 0 14px; padding: 8px 14px 12px; border: 1px solid var(--fv-line); border-radius: 24px; color: var(--fv-ink); background: var(--fv-card); box-shadow: var(--fv-shadow); }
+.fv-members-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 4px 2px 10px; }
+.fv-members-head > b { display: flex; align-items: center; gap: 7px; font-size: .94rem; }
+.fv-members-head > b > small { display: grid; place-items: center; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 999px; color: var(--fv-acc-ink); background: var(--fv-soft); font-size: .68rem; }
+.fv-add-member { display: inline-flex; align-items: center; gap: 5px; min-height: 34px; padding: 0 12px; border: 0; border-radius: 999px; color: var(--fv-on); background: var(--fv-grad); font: inherit; font-size: .76rem; font-weight: 700; cursor: pointer; }
+.fv-add-member > span { font-size: 1.05rem; line-height: 1; }
 .fv-empty { margin: 4px 0; font-size: 0.84rem; color: var(--fv-ink2); }
 
 /* days together */
@@ -118,6 +124,8 @@
 .fam2 .fv-group .fg-card, .fam2 .family-media-card, .fam2 .family-photo-card { margin: 0 0 12px !important; border: 0 !important; border-radius: 26px !important; background: var(--fv-card) !important; box-shadow: var(--fv-shadow) !important; }
 .fam2 .fv-group .fg-card h2, .fam2 .family-media-card h2, .fam2 .family-photo-card h2 { color: var(--fv-ink) !important; }
 .fam2 .fv-group .fg-card small, .fam2 .fv-group .fg-note { color: var(--fv-ink2) !important; }
+.fam2 .fv-group .fg-section-title { display: flex; align-items: center; gap: 7px; margin-bottom: -3px; color: var(--fv-acc-ink); font-size: .78rem; font-weight: 750; }
+.fam2 .fv-group .fg-section-title svg { width: 18px; height: 18px; }
 .fam2 .fv-group .fg-primary { color: var(--fv-on) !important; background: var(--fv-grad) !important; border: 0 !important; box-shadow: var(--fv-glow) !important; }
 .fam2 .fv-group .fg-row { background: var(--fv-page) !important; border-color: var(--fv-line) !important; }
 

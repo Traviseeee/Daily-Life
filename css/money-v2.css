@@ -87,6 +87,7 @@
 .fv2-section-head h2 { display: flex; align-items: center; gap: 10px; margin: 0; font-size: 1.02rem; font-weight: 700; color: var(--fv-ink); }
 .fv2-section-icon { display: grid; place-items: center; width: 32px; height: 32px; flex: 0 0 auto; border-radius: 11px; background: #eaf6ff; font-size: .95rem; }
 .fv2-section-head a { font-size: 0.82rem; font-weight: 600; color: var(--fv-acc-ink) !important; }
+.ev .ab-section { --fv-card: var(--ft-card); --fv-soft: var(--ft-soft); --fv-line: var(--ft-line); --fv-ink: var(--ft-ink); --fv-ink2: var(--ft-ink2); --fv-acc-ink: var(--ft-acc-ink); --fv-green: var(--ft-green); --fv-green-bg: var(--ft-green-bg); --fv-violet: var(--ft-acc); --fv-violet-bg: var(--ft-soft); --fv-blue: var(--ft-acc); --fv-blue-bg: var(--ft-soft); --fv-shadow: var(--ft-shadow); }
 .ab-section { gap: 12px; padding: 18px; border-color: var(--fv-line); background: linear-gradient(145deg, var(--fv-card), var(--fv-soft)); }
 .ab-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .ab-title { display: flex; align-items: center; gap: 8px; min-width: 0; }
