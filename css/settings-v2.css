@@ -93,7 +93,9 @@ button.sv-chip, a.sv-chip { cursor: pointer; }
 /* a section page: back header + only that section of the old page */
 .sv-subhead { display: flex; align-items: center; gap: 10px; padding-bottom: 16px; }
 .sv-back { display: grid; place-items: center; width: 40px; height: 40px; flex: 0 0 auto; border-radius: 50%; font-size: 1.5rem; line-height: 1; color: var(--sv-ink) !important; background: var(--sv-card); box-shadow: var(--sv-shadow); }
+.sv-subhead-copy { display: grid; gap: 2px; min-width: 0; }
 .sv-subhead h1 { font-size: 1.32rem; }
+.sv-subtitle { margin: 0; color: var(--sv-ink2); font-size: 0.76rem; line-height: 1.4; }
 .sv2-sub > .settings-header, .sv2-sub .settings-summary, .sv2-sub .settings-guest-preview, .sv2-sub .settings-danger-zone { display: none !important; }
 .sv2-sub .settings-layout { padding: 12px 14px 0; }
 .sv2-sub .settings-accordion { display: none !important; }

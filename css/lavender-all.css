@@ -40,6 +40,7 @@
   }
   html:root[data-theme="light"] body .sv2 .sv-hero { background: var(--sv-hero) !important; padding-bottom: 46px; border-radius: 0 0 40px 40px; -webkit-mask: linear-gradient(#000 78%, rgba(0,0,0,.0)); mask: linear-gradient(#000 78%, rgba(0,0,0,0)); }
   html:root[data-theme="light"] body .sv2 .sv-hero h1 { color: #fff !important; -webkit-text-fill-color: #fff; }
+  html:root[data-theme="light"] .sv2 .sv-subhead .sv-subtitle { color: rgba(255,255,255,.84) !important; }
   html:root[data-theme="light"] .sv2 .sv-hero + * { margin-top: -30px; position: relative; }
   html:root[data-theme="light"] .sv2 :is(.sv-prof, .sv-grp, .sv-quick > *) { border: 1px solid #ebe8f4; box-shadow: none !important; }
   html:root[data-theme="light"] .sv2 .sv-hero .sv-chip { color: #fff !important; background: rgba(255,255,255,.22) !important; border: 1px solid rgba(255,255,255,.35); }
@@ -48,6 +49,39 @@
   html:root[data-theme="light"] .sv2 .sv-ic.is-blue { background: #e8f1ff; }
   html:root[data-theme="light"] .sv2 .sv-ic.is-violet { background: #ece8ff; }
   html:root[data-theme="light"] .sv2 .sv-subhead :is(h1, button, a) { color: #fff !important; }
+  /* Keep the back arrow visible on its white circular button. */
+  html:root[data-theme="light"] .sv2 .sv-subhead .sv-back {
+    color: #504AB9 !important;
+    background: #fff !important;
+    border: 1px solid rgba(80, 74, 185, .18) !important;
+    position: relative;
+    overflow: hidden;
+    font-size: 0 !important;
+  }
+  html:root[data-theme="light"] .sv2 .sv-subhead .sv-back::before {
+    content: "";
+    position: absolute;
+    left: 16px;
+    top: calc(50% - 1px);
+    width: 9px;
+    height: 2px;
+    border-radius: 999px;
+    background: #504AB9;
+    transform: rotate(-45deg);
+    transform-origin: left center;
+  }
+  html:root[data-theme="light"] .sv2 .sv-subhead .sv-back::after {
+    content: "";
+    position: absolute;
+    left: 16px;
+    top: calc(50% - 1px);
+    width: 9px;
+    height: 2px;
+    border-radius: 999px;
+    background: #504AB9;
+    transform: rotate(45deg);
+    transform-origin: left center;
+  }
 
   /* event / expense sheets: their accent variable + the parts that hard-code blue */
   html:root[data-theme="light"] body #modalRoot#modalRoot .modal.modal.modal { --ev-lime: #7B68EE !important; }
@@ -150,20 +184,6 @@
 
 /* Notifications settings: clearer sections and consistent lavender actions. */
 @media (max-width: 900px) {
-  html:root[data-theme="light"] #app > .page.sv2-sub[data-sv2="notifications"] .sv-subhead .sv-back,
-  html:root:not([data-theme="light"]) #app > .page.sv2-sub[data-sv2="notifications"] .sv-subhead .sv-back {
-    display: grid !important;
-    place-items: center !important;
-    width: 44px !important;
-    height: 44px !important;
-    border: 1px solid rgba(255,255,255,.42) !important;
-    border-radius: 15px !important;
-    color: #fff !important;
-    background: rgba(255,255,255,.2) !important;
-    box-shadow: none !important;
-    font-size: 2rem !important;
-    line-height: 1 !important;
-  }
   #settings-section-notifications > .settings-accordion-body { display: grid; gap: 10px; }
   #settings-section-notifications .settings-preference-list-standalone {
     display: block !important;
