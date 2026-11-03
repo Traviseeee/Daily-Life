@@ -14,7 +14,7 @@ const { buildTelegramText } = require("../lib/telegram-message");
 const { isOwner } = require("../lib/owner");
 
 const TEST_KINDS = {
-  bill: "/#money/bills", loan: "/#money/loans", "savings-deadline": "/#money/savings", goal: "/#goals",
+  bill: "/#money/bills", loan: "/#money/loans", "savings-deadline": "/#money/savings", "savings-use": "/#money/savings", "savings-use-followup": "/#money/savings", goal: "/#goals",
   calendar: "/#calendar", reminder: "/#daily", birthday: "/#family", anniversary: "/#family"
 };
 
