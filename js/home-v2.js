@@ -272,7 +272,7 @@ const HomeV2 = (() => {
     if (lav()) return softMoney(d, m, due, dueNames);
     if (typeof WalletCard !== "undefined") {
       const dueHtml = due.length ? `<button type="button" class="hv2-wait" data-ma-home><span class="hv2-count">${due.length}</span><b>${escapeHtml(L(`${dueNames} រង់ចាំឆ្លើយ`, `${dueNames} waiting`))}</b><span class="hv2-pill">${escapeHtml(L("ឆ្លើយ", "Answer"))}</span></button>` : "";
-      return WalletCard.render(m, d.todayIso, dueHtml);
+      return WalletCard.render(m, d.todayIso, dueHtml, { monthLink: true });
     }
     return `<section class="hv2-card hv2-money">
       <div class="hv2-row"><span class="hv2-label">${escapeHtml(L(`នៅសល់ខែ${monthName}`, `Left in ${monthName}`))}</span><a class="hv2-chip" href="#money">${escapeHtml(L("មើល", "View"))} ›</a></div>
@@ -291,7 +291,7 @@ const HomeV2 = (() => {
 
   // red / amber strip at the top: overdue bills and budgets at 80%+ (from the old Today page)
   // the white money card itself (Home + Money overview share it). top = extra HTML for its first row
-  function softArticle(todayIso, m, top = "") {
+  function softArticle(todayIso, m, top = "", periodControl = "") {
     const conf = appData.profile?.walletCard || {};
     const hide = conf.hide ? " is-hidden" : "";
     const now = new Date();
@@ -317,7 +317,7 @@ const HomeV2 = (() => {
         <div class="hv2-soft-hero${sc.nomi ? " has-nomi" : ""}">
           <div class="hv2-soft-header">
             <small class="hv2-soft-label"><span class="hv2-soft-icon" aria-hidden="true">${Icons.wallet()}</span><span>${escapeHtml(L("នៅសល់សម្រាប់ចាយ", "Left to spend"))}</span></small>
-            <span class="hv2-soft-month"><span aria-hidden="true">${Icons.calendar()}</span>${escapeHtml(L(`ខែ${monthName}`, monthName))}</span>
+            ${periodControl || `<a class="hv2-soft-month" href="#money" aria-label="${escapeAttr(L(`មើលហិរញ្ញវត្ថុខែ${monthName}`, `Open ${monthName} finances`))}"><span aria-hidden="true">${Icons.calendar()}</span>${escapeHtml(L(`ខែ${monthName}`, monthName))}</a>`}
           </div>
           ${sc.nomi ? `<span class="hv2-soft-buddy" data-nomi data-mood="${mood}" data-awaiting-income="${awaitingIncome}" role="button" tabindex="0" aria-label="Nomi">${MASCOT_FN(mood)}${sc.talk ? `<span class="hv2-say hv2-soft-say" data-nomi-say>${escapeHtml(L(...(awaitingIncome ? MONEY_WAITING : MONEY_SAY[mood] || MONEY_SAY.happy)))}</span>` : ""}</span>` : ""}
           <div class="hv2-soft-summary">

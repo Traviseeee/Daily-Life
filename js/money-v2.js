@@ -83,7 +83,8 @@ const MoneyV2 = (() => {
       const chip = `<button type="button" class="fv2-period-chip wc-tk-period" data-fv2-period aria-expanded="${periodOpen}">${escapeHtml(range.label)} ▾</button>`;
       // light phone (31 Oct): the same white card as Home, period chip on top
       if (typeof HomeV2 !== "undefined" && HomeV2.softArticle && HomeV2.lav && HomeV2.lav()) {
-        return `<section class="hv2-money wc-wrap fv2-soft">${HomeV2.softArticle(today, { ...m, left, income, expenses: spent }, `<div class="hv2-soft-top">${chip}</div>`)}</section>`;
+        const monthControl = `<button type="button" class="hv2-soft-month fv2-period-chip wc-tk-period" data-fv2-period aria-expanded="${periodOpen}"><span aria-hidden="true">${Icons.calendar()}</span>${escapeHtml(range.label)} ▾</button>`;
+        return `<section class="hv2-money wc-wrap fv2-soft">${HomeV2.softArticle(today, { ...m, left, income, expenses: spent }, "", monthControl)}</section>`;
       }
       return WalletCard.render({ ...m, left, income, expenses: spent }, today)
         .replace(/<div class="wc-mini">[\s\S]*?<\/div>\s*<\/section>/, "</section>")

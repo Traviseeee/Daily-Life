@@ -92,7 +92,7 @@ const WalletCard = (() => {
   }
 
   // m = moneyMonthNumbers(); due = MoneyAsk items (optional "waiting" row)
-  function render(m, todayIso, dueHtml = "") {
+  function render(m, todayIso, dueHtml = "", options = {}) {
     const c = conf();
     const now = new Date();
     const monthName = km() ? KM_MONTHS[now.getMonth()] : now.toLocaleDateString("en-US", { month: "long" });
@@ -106,7 +106,7 @@ const WalletCard = (() => {
         <div class="wc-tk-top">
           <div class="wc-tk-head">
             ${frameHtml(c.frame === "none" ? c : { ...c, frame: "ring" }, "wc-tk-pf")}
-            <span class="wc-tk-who"><b>${escapeHtml(c.title)}</b><small>${escapeHtml(L(`នៅសល់ខែ${monthName} · ${daysLeft} ថ្ងៃទៀត`, `${monthName} · ${daysLeft} days left`))}</small></span>
+            <span class="wc-tk-who"><b>${escapeHtml(c.title)}</b><small>${options.monthLink ? `<a class="wc-tk-month-link" href="#money">${escapeHtml(L(`នៅសល់ខែ${monthName} · ${daysLeft} ថ្ងៃទៀត`, `${monthName} · ${daysLeft} days left`))}</a>` : escapeHtml(L(`នៅសល់ខែ${monthName} · ${daysLeft} ថ្ងៃទៀត`, `${monthName} · ${daysLeft} days left`))}</small></span>
             <button type="button" class="wc-edit wc-tk-edit" data-wc-edit aria-label="${escapeAttr(L("រចនាកាត", "Design card"))}">${ICON.pen}<span>${escapeHtml(L("កែ", "Edit"))}</span></button>
           </div>
           <div class="wc-tk-amt">
@@ -319,10 +319,10 @@ const WalletCard = (() => {
   // edits that card instead: background tint (+ matching glow), Nomi on / talking, month line, hide.
   // Saved in walletCard.soft = { tint, nomi, talk, track }; hide stays shared with the ticket card.
   const TINTS = [
-    ["white", "#ffffff", "#ffe1d2", "ស", "White"], ["lavender", "#f1eeff", "#d9d0ff", "Lavender", "Lavender"],
-    ["peach", "#fff2ea", "#ffd3bd", "Peach", "Peach"], ["mint", "#ecfaf3", "#c8f0dc", "Mint", "Mint"],
-    ["sky", "#eef5ff", "#cfe2ff", "Sky", "Sky"], ["rose", "#fff0f4", "#ffd0de", "Rose", "Rose"],
-    ["lemon", "#fffbe8", "#fff0b3", "Lemon", "Lemon"], ["mauve", "#f7eff4", "#e6cbdc", "Mauve", "Mauve"]
+    ["white", "#ffffff", "#ffd1b8", "ស", "White"], ["lavender", "#eee8ff", "#c7b5ff", "Lavender", "Lavender"],
+    ["peach", "#ffede3", "#ffb991", "Peach", "Peach"], ["mint", "#e2f8ed", "#a5e4c2", "Mint", "Mint"],
+    ["sky", "#e5f0ff", "#a8ccff", "Sky", "Sky"], ["rose", "#ffe5ee", "#ffa9c4", "Rose", "Rose"],
+    ["lemon", "#fff7d5", "#ffdf73", "Lemon", "Lemon"], ["mauve", "#f3e4ee", "#d5a6c0", "Mauve", "Mauve"]
   ];
   // Nomi sticker on the card: "auto" follows today's spending, or pin one mood (31 Oct)
   const MOODS = [["auto", "ស្វ័យប្រវត្តិ", "Auto"], ["happy", "សប្បាយ", "Happy"], ["cheer", "រំភើប", "Cheer"], ["love", "ស្រលាញ់", "Love"], ["wink", "ព្រិចភ្នែក", "Wink"], ["proud", "មោទនភាព", "Proud"], ["calm", "ស្ងប់", "Calm"], ["sleepy", "ងងុយ", "Sleepy"], ["worry", "បារម្ភ", "Worry"]];
