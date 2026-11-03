@@ -39,13 +39,13 @@ function applyDone(payload, item, opts = {}) {
   if (item.kind === "bill") {
     const bill = (payload.bills || []).find(entry => entry.id === id);
     if (!bill) return "missing";
-    return payBill(payload, bill, today, "Telegram", Number(opts.amount) > 0 ? { amount: Number(opts.amount) } : {});
+    return payBill(payload, bill, today, "Telegram", { ...(Number(opts.amount) > 0 ? { amount: Number(opts.amount) } : {}), paymentType: opts.paymentType || bill.paymentType || "unspecified" });
   }
   if (item.kind === "loan") {
     const loan = (payload.loans || []).find(entry => entry.id === id);
     if (!loan) return "missing";
     // one payment + one expense (category Loan); a retry or second press → "already"
-    return LoanPay.recordLoanPayment(payload, loan, item.date, { amount: loan.monthlyPayment, via: "Telegram", today: zonedToday(), source: "telegram", makeId: recordId }).result;
+    return LoanPay.recordLoanPayment(payload, loan, item.date, { amount: loan.monthlyPayment, via: "Telegram", today: zonedToday(), source: "telegram", makeId: recordId, paymentType: opts.paymentType || loan.paymentType }).result;
   }
   if (item.kind === "reminder") {
     const reminder = (payload.reminders || []).find(entry => entry.id === id);
@@ -73,7 +73,7 @@ function applyDone(payload, item, opts = {}) {
     // salary day ✅: saved once per month (same rule as the app pop-up)
     const income = (payload.income || []).find(entry => entry.id === id);
     if (!income) return "missing";
-    return MoneyDue.recordIncomeReceived(income, item.month || today.slice(0, 7), { date: today, via: "Telegram", amount: opts.amount });
+    return MoneyDue.recordIncomeReceived(income, item.month || today.slice(0, 7), { date: today, via: "Telegram", amount: opts.amount, accountType: income.accountType });
   }
   if (item.kind === "savings-contribution") {
     const saving = (payload.savings || []).find(entry => entry.id === id);
@@ -311,10 +311,12 @@ function entryRecord(entry, today, fallbackCurrency) {
   const date = entry.date || today;
   if (entry.type === "income") {
     const id = recordId("income");
-    return { collection: "income", record: { id, createdAt: now, updatedAt: now, name: entry.description || INCOME_KM[entry.category] || "Income", amount: entry.amount, currency: entry.currency || fallbackCurrency, category: entry.category || "Other", frequency: "Once", recurring: false, nextPaymentDate: date, notes: "Telegram", source: "telegram" } };
+    return { collection: "income", record: { id, createdAt: now, updatedAt: now, name: entry.description || INCOME_KM[entry.category] || "Income", amount: entry.amount, currency: entry.currency || fallbackCurrency, category: entry.category || "Other", frequency: "Once", recurring: false, nextPaymentDate: date, accountType: entry.accountType || "unspecified", notes: "Telegram", source: "telegram" } };
   }
   const id = recordId("expenses");
-  return { collection: "expenses", record: { id, createdAt: now, updatedAt: now, description: entry.description || CATEGORY_KM[entry.category] || entry.category, amount: entry.amount, currency: entry.currency || fallbackCurrency, category: entry.category || "Other", date, method: "Telegram", notes: entry.via || "", source: "telegram" } };
+  const paymentType = entry.paymentType || "unspecified";
+  const method = entry.method || (paymentType === "cash" ? "Cash" : paymentType === "bank" ? "Bank Transfer" : paymentType === "qr" ? "QR Payment" : "");
+  return { collection: "expenses", record: { id, createdAt: now, updatedAt: now, description: entry.description || CATEGORY_KM[entry.category] || entry.category, amount: entry.amount, currency: entry.currency || fallbackCurrency, category: entry.category || "Other", date, method, paymentType, notes: entry.via || "", source: "telegram" } };
 }
 
 const fmt = (amount, currency) => {
@@ -814,6 +816,19 @@ async function aiReply(message, payload, today, job, heading = "") {
 
 // saves parsed money lines (from the parser or the AI) and replies with undo buttons
 async function saveMoneyEntries(message, { userId, payload, today, redis }, entries, skipped = [], viaAi = false) {
+  const missingPayment = entries.some(entry => entry.type !== "income" && !entry.paymentType);
+  const missingAccount = entries.some(entry => entry.type === "income" && !entry.accountType);
+  if (missingPayment || missingAccount) {
+    const token = await saveAction(redis, { userId, item: { kind: "expense-payment", entries, skipped, viaAi, today } });
+    const question = missingAccount && !missingPayment
+      ? "💰 <b>Where did you receive this income?</b>"
+      : "💳 <b>How did you pay?</b>\nChoose a payment method before I save this expense.";
+    return reply(message, question, { inline_keyboard: [
+      [{ text: "💵 Cash", callback_data: `paycash|${token}` }, { text: "📱 QR Payment", callback_data: `payqr|${token}` }],
+      [{ text: "🏦 Bank Transfer", callback_data: `paybank|${token}` }, { text: "Other", callback_data: `payother|${token}` }],
+      [{ text: "✖️ Cancel", callback_data: `paycancel|${token}` }]
+    ] });
+  }
   const currency = payload.profile?.currency || "USD";
   const saved = entries.map(entry => entryRecord(entry, today, currency));
   if (viaAi) saved.forEach(({ record }) => { record.notes = record.notes ? `${record.notes} · AI` : "AI"; });
@@ -953,7 +968,7 @@ async function handleMessage(message, redis) {
   const currency = payload.profile?.currency || "USD";
   // forwarded ABA Pay request ("Hi, NAME has requested you to pay $1.91 …"): one expense, name + amount only
   const payRequest = parsePayRequest(text);
-  if (payRequest) return saveMoneyEntries(message, { userId, payload, today, redis }, [payRequest], []);
+  if (payRequest) return saveMoneyEntries(message, { userId, payload, today, redis }, [{ ...payRequest, paymentType: "bank", method: "ABA Pay" }], []);
   const rows = text.split(/\n+/).map(line => line.trim()).filter(Boolean);
   const parsedRows = rows.map(line => ({ line, entry: parseMoney(line, currency, today) }));
   const moneyRows = parsedRows.filter(row => row.entry);
@@ -1049,7 +1064,115 @@ module.exports = async (req, res) => {
         return res.status(200).json({ ok: true });
       }
     }
-    if (item.kind === "scan" && /^scan(save|force|link|kind|cancel)$/.test(verb)) {
+    if (verb === "received" && item.kind === "income") {
+      const linkedPayload = await readPayload(action.userId);
+      const linkedIncome = (linkedPayload?.income || []).find(entry => entry.id === (item.sourceId || item.id));
+      item.accountType = linkedIncome?.accountType || "unspecified";
+    }
+    if (verb === "paid" && item.kind === "bill") {
+      const linkedPayload = await readPayload(action.userId);
+      const linkedBill = (linkedPayload?.bills || []).find(entry => entry.id === (item.sourceId || item.id));
+      item.paymentType = linkedBill?.paymentType || "unspecified";
+    }
+    if (verb === "paid" && item.kind === "loan") {
+      const linkedPayload = await readPayload(action.userId);
+      const linkedLoan = (linkedPayload?.loans || []).find(entry => entry.id === (item.sourceId || item.id));
+      item.paymentType = linkedLoan?.paymentType || "unspecified";
+    }
+    if (item.kind === "expense-payment" && ( /^pay(cash|bank|qr|other)$/.test(verb) || verb === "paycancel")) {
+      const onceKey = `mylife:tg:expense-payment:done:${token}`;
+      const claimed = await redis.set(onceKey, "1", { nx: true, ex: 45 * 24 * 60 * 60 });
+      if (!claimed) {
+        await answer(verb === "paycancel" ? "✖️ Already cancelled" : "✅ Already processed");
+        return res.status(200).json({ ok: true });
+      }
+      if (verb === "paycancel") {
+        await answer("✖️ Cancelled");
+        await tgCall("editMessageText", { chat_id: chatId, message_id: query.message.message_id, text: "✖️ Cancelled. No expense was saved." }).catch(() => {});
+        return res.status(200).json({ ok: true });
+      }
+      const paymentType = { paycash: "cash", paybank: "bank", payqr: "qr", payother: "other" }[verb];
+      const label = { cash: "Cash", bank: "Bank Transfer", qr: "QR Payment", other: "Other" }[paymentType];
+      const entries = item.entries.map(entry => entry.type === "income"
+        ? { ...entry, accountType: entry.accountType || (paymentType === "other" ? "unspecified" : paymentType === "qr" ? "bank" : paymentType) }
+        : entry.paymentType ? entry : { ...entry, paymentType, method: label });
+      await answer(`✅ ${label}`);
+      await tgCall("editMessageText", { chat_id: chatId, message_id: query.message.message_id, text: `💳 ${escapeHtml(label)} selected. Saving…`, parse_mode: "HTML" }).catch(() => {});
+      await saveMoneyEntries({ chat: { id: chatId }, message_id: query.message.message_id }, { userId: action.userId, payload: await readPayload(action.userId), today: item.today || zonedToday(), redis }, entries, item.skipped || [], item.viaAi);
+      return res.status(200).json({ ok: true });
+    } else if (verb === "received" && item.kind === "income" && item.accountType === "unspecified") {
+      const accountToken = await saveAction(redis, { userId: action.userId, item: { kind: "income-received-account", incomeItem: item } });
+      await answer("💰 Choose where you received it");
+      await tgCall("sendMessage", { chat_id: chatId, text: `💰 <b>${escapeHtml(item.title || "Income")}</b> · Where did you receive it?`, parse_mode: "HTML", reply_to_message_id: query.message.message_id, reply_markup: { inline_keyboard: [[{ text: "💵 Cash", callback_data: `rcash|${accountToken}` }, { text: "🏦 Bank", callback_data: `rbank|${accountToken}` }], [{ text: "Other / Unspecified", callback_data: `rother|${accountToken}` }]] } }).catch(() => {});
+      return res.status(200).json({ ok: true });
+    } else if (verb === "paid" && item.kind === "bill" && item.paymentType === "unspecified") {
+      const billToken = await saveAction(redis, { userId: action.userId, item: { kind: "bill-payment", billItem: item } });
+      await answer("💳 Choose how you paid");
+      await tgCall("sendMessage", { chat_id: chatId, text: `🧾 <b>${escapeHtml(item.title || "Bill")}</b> · How did you pay?`, parse_mode: "HTML", reply_to_message_id: query.message.message_id, reply_markup: { inline_keyboard: [[{ text: "💵 Cash", callback_data: `paycash|${billToken}` }, { text: "📱 QR Payment", callback_data: `payqr|${billToken}` }], [{ text: "🏦 Bank Transfer", callback_data: `paybank|${billToken}` }, { text: "Other", callback_data: `payother|${billToken}` }], [{ text: "✖️ Cancel", callback_data: `paycancel|${billToken}` }]] } }).catch(() => {});
+      return res.status(200).json({ ok: true });
+    } else if (item.kind === "bill-payment" && (/^pay(cash|bank|qr|other)$/.test(verb) || verb === "paycancel")) {
+      const onceKey = `mylife:tg:bill-payment:done:${token}`;
+      const claimed = await redis.set(onceKey, "1", { nx: true, ex: 45 * 24 * 60 * 60 });
+      if (!claimed) { await answer("✅ Already processed"); return res.status(200).json({ ok: true }); }
+      if (verb === "paycancel") {
+        await answer("✖️ Cancelled");
+        await tgCall("editMessageText", { chat_id: chatId, message_id: query.message.message_id, text: "✖️ Cancelled. The bill was not marked paid." }).catch(() => {});
+        return res.status(200).json({ ok: true });
+      }
+      const paymentType = { paycash: "cash", paybank: "bank", payqr: "qr", payother: "other" }[verb];
+      const billItem = item.billItem;
+      const result = await updatePayload(action.userId, payload => {
+        const bill = (payload.bills || []).find(entry => entry.id === (billItem.sourceId || billItem.id));
+        if (!bill) return "missing";
+        bill.paymentType = paymentType;
+        return applyDone(payload, billItem, { paymentType });
+      });
+      await answer(result === "updated" ? `✅ ${paymentType}` : result === "already" ? "Already paid" : "Bill not found");
+      await tgCall("editMessageText", { chat_id: chatId, message_id: query.message.message_id, text: result === "updated" ? `✅ Bill marked paid (${paymentType}) and expense saved.` : result === "already" ? "✅ Bill was already paid." : "⚠️ Bill not found." }).catch(() => {});
+      if (result === "updated") await pushAdded(action.userId, `✅ បានបង់ · ${billItem.title || "Bill"}`, `ពី Telegram · ${paymentType}`, "/#money/bills", "bill");
+      return res.status(200).json({ ok: true });
+    } else if (verb === "paid" && item.kind === "loan" && item.paymentType === "unspecified") {
+      const loanToken = await saveAction(redis, { userId: action.userId, item: { kind: "loan-payment", loanItem: item } });
+      await answer("💳 Choose how you paid");
+      await tgCall("sendMessage", { chat_id: chatId, text: `🏦 <b>${escapeHtml(item.title || "Loan payment")}</b> · How did you pay?`, parse_mode: "HTML", reply_to_message_id: query.message.message_id, reply_markup: { inline_keyboard: [[{ text: "💵 Cash", callback_data: `paycash|${loanToken}` }, { text: "📱 QR Payment", callback_data: `payqr|${loanToken}` }], [{ text: "🏦 Bank Transfer", callback_data: `paybank|${loanToken}` }, { text: "Other", callback_data: `payother|${loanToken}` }], [{ text: "✖️ Cancel", callback_data: `paycancel|${loanToken}` }]] } }).catch(() => {});
+      return res.status(200).json({ ok: true });
+    } else if (item.kind === "loan-payment" && (/^pay(cash|bank|qr|other)$/.test(verb) || verb === "paycancel")) {
+      const onceKey = `mylife:tg:loan-payment:done:${token}`;
+      const claimed = await redis.set(onceKey, "1", { nx: true, ex: 45 * 24 * 60 * 60 });
+      if (!claimed) { await answer("✅ Already processed"); return res.status(200).json({ ok: true }); }
+      if (verb === "paycancel") {
+        await answer("✖️ Cancelled");
+        await tgCall("editMessageText", { chat_id: chatId, message_id: query.message.message_id, text: "✖️ Cancelled. No loan payment was saved." }).catch(() => {});
+        return res.status(200).json({ ok: true });
+      }
+      const paymentType = { paycash: "cash", paybank: "bank", payqr: "qr", payother: "other" }[verb];
+      const loanItem = item.loanItem;
+      const result = await updatePayload(action.userId, payload => {
+        const loan = (payload.loans || []).find(entry => entry.id === (loanItem.sourceId || loanItem.id));
+        if (!loan) return "missing";
+        loan.paymentType = paymentType;
+        return applyDone(payload, loanItem, { paymentType });
+      });
+      await answer(result === "updated" ? `✅ ${paymentType}` : result === "already" ? "Already paid" : "Loan not found");
+      await tgCall("editMessageText", { chat_id: chatId, message_id: query.message.message_id, text: result === "updated" ? `✅ Loan payment saved (${paymentType}).` : result === "already" ? "✅ Loan payment was already saved." : "⚠️ Loan not found." }).catch(() => {});
+      if (result === "updated") await pushAdded(action.userId, `🏦 បានកត់ការបង់កម្ចី · ${loanItem.title || "Loan"}`, paymentType, "/#money/loans", "loan");
+      return res.status(200).json({ ok: true });
+    } else if (item.kind === "income-received-account" && /^r(cash|bank|other)$/.test(verb)) {
+      const accountType = { rcash: "cash", rbank: "bank", rother: "unspecified" }[verb];
+      const incomeItem = item.incomeItem;
+      const result = await updatePayload(action.userId, payload => {
+        const income = (payload.income || []).find(entry => entry.id === (incomeItem.sourceId || incomeItem.id));
+        if (!income) return "missing";
+        if (MoneyDue.incomeReceived(income, incomeItem.month || zonedToday().slice(0, 7))) return "already";
+        income.accountType = accountType;
+        return applyDone(payload, incomeItem);
+      });
+      const label = accountType === "cash" ? "Cash" : accountType === "bank" ? "Bank" : "Unspecified";
+      await answer(result === "updated" ? `✅ ${label}` : result === "already" ? "Already received" : "Income not found");
+      await tgCall("editMessageText", { chat_id: chatId, message_id: query.message.message_id, text: result === "updated" ? `✅ Income received and assigned to ${label}.` : result === "already" ? "✅ Income was already recorded." : "⚠️ Income not found." }).catch(() => {});
+      if (result === "updated") await pushAdded(action.userId, `💰 បានទទួល · ${incomeItem.title || "Income"}`, `បានកត់ក្នុង MYLIFE · ${label}`, "/#money/income", "income");
+      return res.status(200).json({ ok: true });
+    } else if (item.kind === "scan" && /^scan(save|force|link|kind|cancel)$/.test(verb)) {
       await SmartScan.handleScanAction(verb, token, action, query, { ...scanContext(redis), answer });
       return res.status(200).json({ ok: true });
     }
@@ -1120,25 +1243,9 @@ module.exports = async (req, res) => {
         return res.status(200).json({ ok: true });
       }
       const today = zonedToday();
-      const saved = [entryRecord({ type: "expense", amount: entry.amount, currency: entry.currency, category: entry.category, description: entry.description, date: item.date || today }, today, entry.currency)];
-      let after = null;
-      await updatePayload(action.userId, data => {
-        data.expenses = Array.isArray(data.expenses) ? data.expenses : [];
-        data.expenses.push(saved[0].record);
-        after = data;
-        return "updated";
-      });
-      const undoToken = await saveAction(redis, { userId: action.userId, item: { kind: "undo", entries: [{ collection: "expenses", id: saved[0].record.id }], collection: "expenses", id: saved[0].record.id, url: "/#money/expenses" } });
-      await answer(`✅ ${entry.description}`);
-      await tgCall("sendMessage", {
-        chat_id: chatId,
-        text: moneyReplyText(after, saved, today),
-        parse_mode: "HTML",
-        disable_web_page_preview: true,
-        reply_to_message_id: query.message.message_id,
-        reply_markup: moneyKeyboard(undoToken, saved)
-      }).catch(() => {});
-      await pushAdded(action.userId, "📲 បានកត់ចំណាយពី Telegram", `−${formatMoney(entry.amount, entry.currency)} · ${catLabel({ collection: "expenses", category: entry.category })} · ${entry.description}`, "/#money/expenses", "expense");
+      const paymentToken = await saveAction(redis, { userId: action.userId, item: { kind: "expense-payment", entries: [{ type: "expense", amount: entry.amount, currency: entry.currency, category: entry.category, description: entry.description, date: item.date || today }], today } });
+      await answer("💳 Choose payment method");
+      await tgCall("sendMessage", { chat_id: chatId, text: `💸 <b>${escapeHtml(entry.description || "Expense")}</b> · ${formatMoney(entry.amount, entry.currency)}\nHow did you pay?`, parse_mode: "HTML", reply_to_message_id: query.message.message_id, reply_markup: { inline_keyboard: [[{ text: "💵 Cash", callback_data: `paycash|${paymentToken}` }, { text: "📱 QR Payment", callback_data: `payqr|${paymentToken}` }], [{ text: "🏦 Bank Transfer", callback_data: `paybank|${paymentToken}` }, { text: "Other", callback_data: `payother|${paymentToken}` }], [{ text: "✖️ Cancel", callback_data: `paycancel|${paymentToken}` }]] } }).catch(() => {});
       return res.status(200).json({ ok: true });
     } else if (verb === "other" && (item.kind === "bill" || item.kind === "income")) {
       await redis.set(amountKey(chatId), JSON.stringify({ userId: action.userId, item, messageId: query.message?.message_id }), { ex: 900 });
