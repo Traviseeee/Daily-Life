@@ -1324,6 +1324,8 @@ function bindMoney() {
     const saving = appData.savings.find(item => item.id === button.dataset.useSavings);
     if (saving) openSavingsUseModal(saving);
   }));
+  document.querySelectorAll("[data-sell-gold]").forEach(button => button.addEventListener("click", openGoldSaleModal));
+  document.querySelectorAll("[data-remove-gold-purchase]").forEach(button => button.addEventListener("click", () => removeGoldPurchase(button.dataset.savingId, button.dataset.removeGoldPurchase)));
   document.querySelectorAll("[data-sv-market-refresh]").forEach(button => button.addEventListener("click", async () => {
     button.disabled = true;
     button.classList.add("is-loading");
@@ -1640,6 +1642,110 @@ function openSavingsUseModal(saving) {
       const error = form.querySelector('[data-error="amount"]');
       if (error) error.textContent = L(`ចំនួនត្រូវនៅចន្លោះ 0 និង ${money(available, saving.currency)}`, `Enter an amount from 0 to ${money(available, saving.currency)}`);
       amount?.focus();
+    }
+  }, true);
+}
+
+function goldBalanceGrams(saving, purity) {
+  return (Array.isArray(saving?.transactions) ? saving.transactions : []).reduce((total, transaction) => {
+    if (String(transaction.goldPurity || "24K") !== purity) return total;
+    const grams = Math.max(0, Number(transaction.goldWeightGrams || 0));
+    if (transaction.type === "gold") return total + grams;
+    if (transaction.type === "gold-sale") return total - grams;
+    return total;
+  }, 0);
+}
+
+function removeGoldPurchase(savingId, transactionId) {
+  const isKm = languageCode() === "km";
+  const L = (km, en) => isKm ? km : en;
+  const saving = (appData.savings || []).find(item => item.id === savingId);
+  const transaction = saving?.transactions?.find(entry => entry.id === transactionId && entry.type === "gold");
+  if (!saving || !transaction) return;
+  Modal.confirm({
+    title: L("លុបការទិញមាសនេះ?", "Remove this gold purchase?"),
+    message: L("មាសនឹងត្រូវដកចេញពីសរុប ហើយប្រាក់ដែលបានកាត់នឹងត្រឡប់ទៅគណនីសន្សំវិញ។", "This removes the gold from your total and refunds the amount to this savings account."),
+    confirmText: L("លុប និងសងប្រាក់", "Remove & refund"),
+    onConfirm: () => {
+      const grams = Math.max(0, Number(transaction.goldWeightGrams || 0));
+      const remaining = goldBalanceGrams(saving, transaction.goldPurity || "24K") - grams;
+      if (remaining < -1e-8) {
+        Toast.show(L("មិនអាចលុបបានទេ ព្រោះមាសនេះមានការលក់រួចហើយ។", "Can't remove this purchase because some of this gold has already been sold."), "warning");
+        return;
+      }
+      const previous = structuredClone(appData);
+      const refund = Math.max(0, Number(transaction.totalDebit ?? (Number(transaction.amount || 0) + Number(transaction.fees || 0))));
+      saving.currentAmount = Number(saving.currentAmount || 0) + refund;
+      saving.transactions = saving.transactions.filter(entry => entry.id !== transactionId);
+      if (!Store.save()) { restoreData(previous); return; }
+      Toast.show(L("បានលុបការទិញ ហើយសងប្រាក់ទៅសន្សំវិញ", "Purchase removed and savings refunded"));
+      App.render();
+    }
+  });
+}
+
+function openGoldSaleModal() {
+  const isKm = languageCode() === "km";
+  const L = (km, en) => isKm ? km : en;
+  const accounts = (appData.savings || []).filter(saving => ["24K", "22K", "18K"].some(purity => goldBalanceGrams(saving, purity) > 1e-8));
+  if (!accounts.length) { Toast.show(L("មិនទាន់មានមាសសម្រាប់លក់ទេ", "There is no gold available to sell")); return; }
+  const accountOptions = accounts.map(saving => saving.id);
+  const accountLabels = accounts.map(saving => saving.name || t("savings"));
+  const purities = ["24K", "22K", "18K"];
+  Modal.open({ title: L("លក់មាស", "Sell gold"), submitText: L("កត់ត្រាការលក់", "Record sale"), fields: [
+    { name: "savingId", label: L("គណនីមាស", "Gold account"), type: "select", options: accountOptions, optionLabels: accountLabels, value: accountOptions[0] },
+    { name: "goldPurity", label: L("កម្រិតមាស", "Gold purity"), type: "select", options: purities, value: "24K" },
+    { name: "goldChi", label: L("ចំនួនជីដែលលក់ (ជី)", "Amount sold (Chi / ជី)"), type: "number", value: "1", required: true },
+    { name: "amount", label: L("ប្រាក់លក់", "Sale proceeds"), type: "number", value: "", required: true },
+    { name: "fees", label: L("ថ្លៃសេវាលក់ (ស្រេចចិត្ត)", "Selling fees (optional)"), type: "number", value: "0" },
+    { name: "note", label: L("កំណត់ចំណាំ / ឈ្មោះហាង", "Note / shop"), value: "" }
+  ], onSubmit(data) {
+    const saving = (appData.savings || []).find(item => item.id === data.savingId);
+    if (!saving) return;
+    const chi = Number(data.goldChi);
+    const weight = chi * 3.75;
+    const gross = Number(data.amount);
+    const fees = Math.max(0, Number(data.fees || 0));
+    const available = Math.max(0, goldBalanceGrams(saving, data.goldPurity));
+    if (!(weight > 0) || weight > available + 1e-8 || !(gross > 0) || !Number.isFinite(fees) || fees >= gross) {
+      const availableChi = (available / 3.75).toLocaleString("en-US", { maximumFractionDigits: 2 });
+      Toast.show(L(`ពិនិត្យចំនួនជី និងប្រាក់លក់។ មាន ${availableChi} ជី`, `Check the Chi amount and sale proceeds. Available: ${availableChi} Chi`), "warning");
+      return;
+    }
+    const previous = structuredClone(appData);
+    const timestamp = new Date().toISOString();
+    const date = localDateInput();
+    const netProceeds = gross - fees;
+    const transaction = {
+      id: id("gold-sale"), createdAt: timestamp, date, type: "gold-sale", amount: gross,
+      currency: saving.currency || appData.profile.currency || "USD", fees, netProceeds,
+      goldWeightGrams: weight, goldChi: chi, goldPurity: data.goldPurity || "24K",
+      note: String(data.note || "").trim()
+    };
+    saving.currentAmount = Number(saving.currentAmount || 0) + netProceeds;
+    saving.transactions = Array.isArray(saving.transactions) ? saving.transactions : [];
+    saving.transactions.unshift(transaction);
+    if (!Store.save()) { restoreData(previous); return; }
+    const chiLabel = chi.toLocaleString("en-US", { maximumFractionDigits: 2 });
+    Toast.show(L(`បានកត់ត្រាលក់ ${chiLabel} ជីមាស`, `Recorded sale of ${chiLabel} Chi gold`));
+    App.render();
+    NotificationCenter.refresh?.();
+  } });
+
+  const form = document.getElementById("modalForm");
+  form?.addEventListener("submit", event => {
+    const saving = (appData.savings || []).find(item => item.id === form.elements.savingId?.value);
+    const purity = form.elements.goldPurity?.value || "24K";
+    const chi = Number(form.elements.goldChi?.value);
+    const weight = chi * 3.75;
+    const gross = Number(form.elements.amount?.value);
+    const fees = Number(form.elements.fees?.value || 0);
+    const available = goldBalanceGrams(saving, purity);
+    if (!saving || !Number.isFinite(weight) || weight <= 0 || weight > available + 1e-8 || !Number.isFinite(gross) || gross <= 0 || !Number.isFinite(fees) || fees < 0 || fees >= gross) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      const availableChi = (Math.max(0, available) / 3.75).toLocaleString("en-US", { maximumFractionDigits: 2 });
+      Toast.show(L(`អាចលក់បានត្រឹម ${availableChi} ជី ហើយប្រាក់លក់ត្រូវធំជាងថ្លៃសេវា`, `Enter up to ${availableChi} Chi; proceeds must exceed fees`), "warning");
     }
   }, true);
 }
