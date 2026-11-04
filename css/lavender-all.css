@@ -1376,3 +1376,30 @@ html:root:not([data-theme="light"]) .fam2.is-lav .fv-members-head > b { color: #
 html:root:not([data-theme="light"]) .fam2.is-lav .fv-members-head > b > small { color: #d1c9ff; background: rgba(182,168,255,.14); }
 html:root:not([data-theme="light"]) .fam2.is-lav .fv-members-list > .fv-member.is-lav { margin: 0; padding: 13px 0; border: 0 !important; border-radius: 0; background: transparent !important; box-shadow: none !important; }
 html:root:not([data-theme="light"]) .fam2.is-lav .fv-members-list > .fv-member.is-lav + .fv-member.is-lav { border-color: rgba(182,168,255,.18) !important; }
+
+/* Money page: keep the section shells and quick-entry card on the dark palette. */
+html:root:not([data-theme="light"]) body:has(#app .fv2-page) .fv2-section {
+  color: #F4F2FF !important;
+  border-color: rgba(182,168,255,.16) !important;
+  background: #292449 !important;
+}
+html:root:not([data-theme="light"]) body:has(#app .fv2-page) .fv2-section > .fv2-card {
+  color: #F4F2FF !important;
+  border-color: rgba(182,168,255,.16) !important;
+  background: #2e2956 !important;
+}
+html:root:not([data-theme="light"]) body:has(#app .fv2-page) .fv2-section:has(.fv2-item) > .fv2-card {
+  background: transparent !important;
+}
+html:root:not([data-theme="light"]) body:has(#app .fv2-page) .fv2-section-head h2 {
+  color: #F4F2FF !important;
+}
+html:root:not([data-theme="light"]) body:has(#app .fv2-page) .fv2-section-icon {
+  color: #D8D0FF !important;
+  background: rgba(182,168,255,.16) !important;
+}
+html:root:not([data-theme="light"]) body:has(#app .fv2-page) .fv2-quick-card {
+  color: #F4F2FF !important;
+  border: 1px solid rgba(182,168,255,.16) !important;
+  background: #2e2956 !important;
+}
