@@ -6,6 +6,7 @@ const { telegramSenderAllowed } = require("../lib/safe-auth");
 const { createClient } = require("@supabase/supabase-js");
 const { getRedis, sendToUser } = require("../lib/push");
 const crypto = require("crypto");
+const { waitUntil } = require("@vercel/functions");
 const { tgCall, tgUpload, sendAlert, webhookSecret, loadAction, saveAction, addSnooze, appLink } = require("../lib/telegram");
 const { buildTelegramText, buildWeeklyText, dateLabels, timeLabels, escapeHtml } = require("../lib/telegram-message");
 const { parseEvent, parseMoney, parsePayRequest } = require("../lib/smart-parse");
@@ -20,6 +21,7 @@ const { detectUtility, findUtilityBill, PROVIDERS } = require("../lib/utility-bi
 const NotifyPrefs = require("../lib/notify-prefs");
 const SmartScan = require("../lib/scan-telegram");
 const AiAssist = require("../lib/ai-assist");
+const GoldMarket = require("../lib/gold-market");
 
 const APP_TIME_ZONE = "Asia/Phnom_Penh";
 
@@ -212,6 +214,8 @@ const HELP_TEXT = [
   "☰ <b>Commands</b>",
   "/today ☀️ ថ្ងៃនេះ · /bills 🧾 វិក្កយបត្រ · /evening 🌙 កត់ចំណាយ",
   "/week 📈 7 ថ្ងៃ · /month 🗓️ ខែនេះ · /lastmonth 📅 ខែមុន",
+  "/gold 🪙 តម្លៃមាស · /goldalert 🔔 ច្បាប់ Alert · /investment 📈 មាសវិនិយោគ",
+  "/portfolio 📊 ទ្រព្យសរុប · /saving 🐷 សមតុល្យសន្សំ",
   "/scan 📷 · /words 🏷️ · /backup 💾 · /menu ☰",
   "",
   "🤖 <b>AI (Gemini)</b> — ពេលមាន key នៅ ការកំណត់ → AI",
@@ -453,6 +457,11 @@ const COMMAND_WORDS = [
   ["lastmonth", /^\/lastmonth\b/i],
   ["backup", /^\/backup\b/i],
   ["bills", /^\/bills\b|^🧾 វិក្កយបត្រ$|^វិក្កយបត្រ$|^bills$/i],
+  ["gold", /^\/gold\b/i],
+  ["goldalert", /^\/goldalert\b/i],
+  ["investment", /^\/investment\b/i],
+  ["portfolio", /^\/portfolio\b/i],
+  ["saving", /^\/saving\b/i],
   ["scan", /^\/scan\b/i],
   ["words", /^\/words\b|^ពាក្យ$/i],
   ["advice", /^\/advice\b|^🤖 ដំបូន្មានលុយ$|^ដំបូន្មាន(លុយ)?$/i],
@@ -528,6 +537,53 @@ async function runCommand(command, { message, userId, payload, today, redis }) {
       return reply(message, menuText(payload || {}, today), menuKeyboard());
     case "bills":
       return billsReply(message, { userId, payload, today, redis });
+    case "gold": {
+      const quote = await GoldMarket.fetchQuote().catch(() => null);
+      const last = (payload.profile?.goldMarketHistory || []).at(-1);
+      const usd = quote?.goldUsdPerChi || last?.goldUsdPerChi;
+      const khr = quote?.goldKhrPerChi || last?.goldKhrPerChi;
+      if (!(usd > 0)) return reply(message, "🪙 <b>តម្លៃមាសមិនអាចទាញបានទេ</b> · Gold price unavailable. Please try again later.");
+      const prior = (payload.profile?.goldMarketHistory || []).filter(item => item.date < today).sort((a, b) => a.date.localeCompare(b.date)).at(-1);
+      const movement = prior?.goldUsdPerChi > 0 ? `\nPrevious: $${Number(prior.goldUsdPerChi).toFixed(2)} / Chi · ${(100 * (Number(usd) - Number(prior.goldUsdPerChi)) / Number(prior.goldUsdPerChi)).toFixed(2)}%` : "";
+      const stale = !quote ? "\n⚠️ Showing last saved daily quote" : "";
+      const updated = quote?.fetchedAt || last?.updatedAt || "";
+      return reply(message, `🪙 <b>មាស 24K Spot · តម្លៃមាស</b>\n🇺🇸 $${Number(usd).toFixed(2)} / ជី\n🇰🇭 ៛${Math.round(Number(khr || 0)).toLocaleString("en-US")} / ជី${movement}\nប្រភព Gold API · KHR Frankfurter${updated ? `\nUpdated: ${escapeHtml(updated)}` : ""}${stale}`, { inline_keyboard: [[{ text: "🔔 Gold alerts", url: appLink({ url: "/#money/savings" }) }, { text: "📈 Savings", url: appLink({ url: "/#money/savings" }) }]] });
+    }
+    case "goldalert": {
+      const rules = Array.isArray(payload.profile?.goldPriceAlerts) ? payload.profile.goldPriceAlerts.filter(rule => rule.enabled) : [];
+      const detail = rules.length ? rules.map(rule => `• ${rule.type} ${rule.threshold}${["rise", "drop"].includes(rule.type) ? "%" : ` ${rule.currency || "USD"}/Chi`}`).join("\n") : "មិនទាន់មានច្បាប់ · No alert rules configured";
+      return reply(message, `🔔 <b>ការជូនដំណឹងតម្លៃមាស · Gold alerts</b>\n${detail}\n\nគ្រប់គ្រងច្បាប់នៅ MYLIFE Savings។`, { inline_keyboard: [[{ text: "⚙️ Manage gold alerts", url: appLink({ url: "/#money/savings" }) }]] });
+    }
+    case "investment": {
+      const quote = await GoldMarket.fetchQuote().catch(() => null);
+      if (!quote) return reply(message, "📈 តម្លៃទីផ្សារមិនអាចទាញបាន · Market quote unavailable; try again later.");
+      const holdings = GoldMarket.valueGoldInvestments(payload.savings, quote);
+      const totals = {};
+      holdings.forEach(item => { const currency = item.currency || "USD"; totals[currency] ||= { cost: 0, value: 0 }; totals[currency].cost += item.originalValue; totals[currency].value += item.currentValue; });
+      const format = (amount, currency) => currency === "KHR" ? `៛${Math.round(amount).toLocaleString("en-US")}` : `$${amount.toFixed(2)}`;
+      const rows = holdings.map(item => `• ${Number(item.grams / 3.75).toFixed(2)} ជី · ${item.currentValue === null ? "—" : format(item.currentValue, item.currency)} (${item.profitLoss === null ? "–" : `${item.profitLoss >= 0 ? "+" : ""}${item.returnPercent?.toFixed(2) ?? "–"}%`})`).join("\n");
+      const summary = Object.entries(totals).map(([currency, total]) => `${currency} cost: ${format(total.cost, currency)} · value: ${holdings.some(item => item.currency === currency && item.currentValue === null) ? "unavailable (FX)" : format(total.value, currency)}${holdings.some(item => item.currency === currency && item.currentValue === null) ? "" : ` · P/L: ${format(total.value - total.cost, currency)}`}`).join("\n");
+      return reply(message, `📈 <b>Gold investments · វិនិយោគមាស</b>\n${rows || "មិនទាន់មានការទិញមាស · No gold purchases yet"}${summary ? `\n\n${summary}` : ""}\nSource: Gold API · ${escapeHtml(quote.fetchedAt)}`, { inline_keyboard: [[{ text: "📱 Open portfolio", url: appLink({ url: "/#money/savings" }) }]] });
+    }
+    case "portfolio": {
+      const quote = await GoldMarket.fetchQuote().catch(() => null);
+      if (!quote) return reply(message, "📊 ទិន្នន័យទីផ្សារមិនអាចទាញបាន · Market data unavailable. Try again later.");
+      const savings = Array.isArray(payload.savings) ? payload.savings : [];
+      const cashUsd = savings.reduce((sum, item) => sum + (item.currency === "KHR" ? 0 : Number(item.currentAmount || 0)), 0);
+      const cashKhr = savings.reduce((sum, item) => sum + (item.currency === "KHR" ? Number(item.currentAmount || 0) : 0), 0);
+      const holdings = GoldMarket.valueGoldInvestments(savings, quote);
+      const goldUsd = holdings.reduce((sum, item) => sum + Number(item.currentUsd || 0), 0);
+      const combinedUsd = cashUsd + goldUsd + (quote.usdKhr > 0 ? cashKhr / quote.usdKhr : 0);
+      const separatedCurrency = cashKhr > 0 && !(quote.usdKhr > 0);
+      return reply(message, `📊 <b>Total tracked assets · ទ្រព្យសម្បត្តិសរុប</b>\nAvailable USD savings: $${cashUsd.toFixed(2)}${cashKhr ? `\nAvailable KHR savings: ៛${Math.round(cashKhr).toLocaleString("en-US")}` : ""}\nGold estimated value: $${goldUsd.toFixed(2)}${separatedCurrency ? `\nUSD total: $${combinedUsd.toFixed(2)} · KHR stays separate (FX unavailable)` : `\n<b>Total: $${combinedUsd.toFixed(2)}</b>`}\n\nSavings already used to buy gold are excluded from cash to avoid double-counting.\nSource: Gold API${quote.usdKhr > 0 ? " · Frankfurter FX" : " · FX unavailable"} · ${escapeHtml(quote.fetchedAt)}`, { inline_keyboard: [[{ text: "📱 Open Savings", url: appLink({ url: "/#money/savings" }) }]] });
+    }
+    case "saving": {
+      const savings = Array.isArray(payload.savings) ? payload.savings : [];
+      const fmt = (amount, currency) => currency === "KHR" ? `៛${Math.round(amount).toLocaleString("en-US")}` : `$${Number(amount).toFixed(2)}`;
+      const totalByCurrency = {};
+      const lines = savings.map(item => { const currency = item.currency || payload.profile?.currency || "USD"; totalByCurrency[currency] = (totalByCurrency[currency] || 0) + Number(item.currentAmount || 0); return `• ${escapeHtml(item.name || "Savings")}: <b>${fmt(Number(item.currentAmount || 0), currency)}</b>`; });
+      return reply(message, `🐷 <b>សមតុល្យសន្សំ · Saving balances</b>\n${lines.join("\n") || "មិនទាន់មានគណនីសន្សំ"}\n\n${Object.entries(totalByCurrency).map(([currency, amount]) => `Total ${currency}: ${fmt(amount, currency)}`).join("\n")}`, { inline_keyboard: [[{ text: "📱 Open savings", url: appLink({ url: "/#money/savings" }) }]] });
+    }
     case "scan":
       return reply(message, SCAN_TEXT);
     case "words":
@@ -770,7 +826,7 @@ async function handleUtility(message, notice, redis) {
 
 // what lib/scan-telegram.js needs from this file
 function scanContext(redis = getRedis()) {
-  return { redis, tgCall, reply, ownerUserId, readPayload, updatePayload, saveAction, pushAdded, appLink, makeId: recordId, aiSettings, AiAssist, zonedToday };
+  return { redis, tgCall, reply, ownerUserId, readPayload, updatePayload, saveAction, pushAdded, appLink, makeId: recordId, aiSettings, AiAssist, zonedToday, waitUntil: process.env.VERCEL ? waitUntil : null };
 }
 
 /* ---------------- AI (Gemini) ---------------- */
