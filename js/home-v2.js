@@ -579,13 +579,13 @@ const HomeV2 = (() => {
   const NOMI_ACTS = ["look", "tilt", "spin", "jump", "wiggle", "peek"];
   setInterval(() => {
     if (document.hidden) return;
-    const all = [...document.querySelectorAll("[data-nomi] .hv2-buddy, .hv2-face .hv2-buddy")].filter(el => el.getBoundingClientRect().width > 0 && !el.className.baseVal.includes(" act-"));
+    const all = [...document.querySelectorAll("[data-nomi] .hv2-buddy, .hv2-face .hv2-buddy")].filter(el => { const r = el.getBoundingClientRect(); return r.width > 0 && r.bottom > 0 && r.top < innerHeight; }).filter(el => !el.className.baseVal.includes(" act-"));
     if (!all.length) return;
     const el = all[Math.floor(Math.random() * all.length)];
     const act = NOMI_ACTS[Math.floor(Math.random() * NOMI_ACTS.length)];
     el.classList.add(`act-${act}`);
     setTimeout(() => el.classList.remove(`act-${act}`), 1600);
-  }, 2600);
+  }, 5200); // calmer: one little act every ~5 s, only Nomis on screen (5 Nov)
 
   // extra buttons that are not bound elsewhere
   document.addEventListener("click", event => {

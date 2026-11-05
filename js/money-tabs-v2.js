@@ -104,7 +104,7 @@ const MoneyTabsV2 = (() => {
       <small>${escapeHtml(L(`សន្សំសរុប · ${items.length} គណនី`, `Saved in total · ${items.length} account${items.length === 1 ? "" : "s"}`))}</small>
       <b class="sv-big">${money(total)}${target ? `<em> / ${money(target)}</em>` : ""}</b>
       <div class="sv-tiles">
-        <div><small>${escapeHtml(L("ខែនេះត្រូវដាក់", "To save this month"))}</small><b>${money(planned)}</b></div>
+        <div><small>${escapeHtml(L("ខែនេះ", "This month"))}</small><b>${money(planned)}</b></div>
         <div><small>${escapeHtml(L("ដាក់រួច", "Saved"))}</small><b>${money(doneAmount)} · ${doneItems.length}/${items.length}</b></div>
         <div><small>${escapeHtml(L("ខែក្រោយ", "Next month"))}</small><b>${money(planned)}</b></div>
       </div>
@@ -129,7 +129,8 @@ const MoneyTabsV2 = (() => {
         const historyAmount = entry.type === "gold-sale" ? Number(entry.netProceeds ?? (Number(entry.amount || 0) - Number(entry.fees || 0))) : Number(entry.totalDebit ?? (Number(entry.amount || 0) + Number(entry.fees || 0)));
         return `<div class="sv-use-history-row"><span><b>${escapeHtml(action)}</b><small>${escapeHtml(detail)}</small></span><strong class="${entry.type === "gold-sale" ? "is-credit" : ""}">${entry.type === "gold-sale" ? "+" : "−"}${money(historyAmount, entry.currency || item.currency)}</strong>${entry.type === "gold" ? `<button type="button" class="sv-tx-delete" data-remove-gold-purchase="${escapeAttr(entry.id)}" data-saving-id="${escapeAttr(item.id)}" aria-label="${escapeAttr(L("លុបការទិញមាស", "Remove gold purchase"))}" title="${escapeAttr(L("លុបការទិញសាកល្បង", "Remove test purchase"))}">×</button>` : ""}</div>`;
       }).join("");
-      const status = reached ? ["is-ok", L("សម្រេចហើយ 🎉", "Reached 🎉")] : late ? ["is-late", L("ហួសថ្ងៃ", "Overdue")] : ["is-ok", L("ទាន់ពេល", "On track")];
+      const behind = !reached && !late && typeof SmartMoney !== "undefined" && SmartMoney.savingsBehind && SmartMoney.savingsBehind(item);
+      const status = reached ? ["is-ok", L("សម្រេចហើយ 🎉", "Reached 🎉")] : late ? ["is-late", L("ហួសថ្ងៃ", "Overdue")] : behind ? ["is-behind", L("យឺតបន្តិច", "Behind")] : ["is-ok", L("ទាន់ពេល", "On track")];
       return `<section class="mt-card sv-card${late ? " is-late" : ""}" data-mt-row>
         <div class="mt-head"><span class="mt-ic" style="--c:${color}">${jar}</span><b>${escapeHtml(item.name || t("savings"))}</b><span class="sv-status ${status[0]}">${escapeHtml(status[1])}</span>${more("savings", item)}</div>
         ${item.notes ? `<p class="sv-note">${escapeHtml(item.notes)}</p>` : ""}
@@ -149,7 +150,7 @@ const MoneyTabsV2 = (() => {
       </section>`;
     }).join("");
     const goldPortfolio = goldTransactions.length ? `<section class="sv-gold-portfolio"><header><span class="sv-gold-portfolio-icon">🪙</span><span class="sv-gold-portfolio-title"><small>${escapeHtml(L("មាសសរុប", "Gold owned"))}</small><strong>${numberForSavings(Math.max(0, ownedGoldChi), 2)} ${escapeHtml(L("ជី មាស", "Chi gold"))}</strong></span><span class="sv-gold-value"><small>${escapeHtml(L("តម្លៃប៉ាន់ស្មាន", "Est. value"))}</small><b>${currentInvestmentValue === null ? "—" : money(currentInvestmentValue)}</b></span>${ownedGoldChi > 0 ? `<button type="button" class="sv-gold-sell" data-sell-gold>${escapeHtml(L("លក់មាស", "Sell gold"))}</button>` : ""}</header><details class="sv-gold-details"><summary>📋 ${escapeHtml(L("ប្រវត្តិ និងដើមទុនសុទ្ធ", "History & net cost"))}</summary><div class="sv-gold-portfolio-total"><span><small>${escapeHtml(L("ដើមទុនសុទ្ធ", "Net invested"))}</small><b>${money(totalInvested)}</b></span><span><small>${escapeHtml(L("ចំណេញ/ខាត", "Gain/loss"))}</small><b>${goldProfitLoss === null ? "—" : `${goldProfitLoss >= 0 ? "+" : "−"}${money(Math.abs(goldProfitLoss))}`}</b></span></div><div class="sv-holding-list">${holdingRows}</div><small class="sv-gold-source">${escapeHtml(L("តម្លៃ Spot ប៉ាន់ស្មាន · តម្លៃហាងអាចខុស", "Spot estimate · shop prices may differ"))}</small></details></section>` : "";
-    return `${market}${goldPortfolio}${head}${sec(L("គណនីសន្សំ", "Savings accounts"), items.length, "add-savings")}${items.length ? cards : empty(t("noSavingsYet"), t("noSavingsBody"), "add-savings", t("addSavings"))}`;
+    return `${head}${market}${goldPortfolio}${sec(L("គណនីសន្សំ", "Savings accounts"), items.length, "add-savings")}${items.length ? cards : empty(t("noSavingsYet"), t("noSavingsBody"), "add-savings", t("addSavings"))}`;
   }
   document.addEventListener("click", event => {
     const button = event.target.closest("[data-sv-hist]");

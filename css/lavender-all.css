@@ -1414,3 +1414,25 @@ html:root:not([data-theme="light"]) body:has(#app .fv2-page) .fv2-quick-card {
   /* QC 5 Nov: the money tab row scrolls — soft fade at both edges instead of a hard cut */
   .financial-sidebar-nav { -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 18px, #000 calc(100% - 18px), transparent 100%); mask-image: linear-gradient(90deg, transparent 0, #000 18px, #000 calc(100% - 18px), transparent 100%); scroll-padding-inline: 18px; padding-inline: 14px !important; }
 }
+
+/* QC 5 Nov (savings + home) */
+@media all {
+  /* savings: status chip "Behind", white total in dark */
+  .sv-status.is-behind { color: #c0623a; background: #fff1e8; }
+  html:root:not([data-theme="light"]) .sv-status.is-behind { color: #ffc9a8; background: rgba(255,152,107,.18); }
+  html:root:not([data-theme="light"]) .sv-total, html:root:not([data-theme="light"]) .sv-total :is(.sv-big, .sv-big em, small, b, .money-value) { color: #fff !important; -webkit-text-fill-color: #fff; }
+  /* dark: active money tab like light (white pill, dark text) */
+  html:root:not([data-theme="light"]) .financial-sidebar-nav .financial-nav-item.active { border-color: transparent !important; background: #fff !important; }
+  html:root:not([data-theme="light"]) .financial-sidebar-nav .financial-nav-item.active :is(strong, small, span, svg) { color: #2a2470 !important; }
+  /* home dark: softer glow behind Nomi, white "today" knob like light */
+  html:root:not([data-theme="light"]) .hv2-soft-glow { opacity: .45; transform: translateX(-50%) scale(.75); }
+  html:root:not([data-theme="light"]) .hv2-mt-bar > b.is-now { color: #f06a7f !important; background: #fff !important; border: 3px solid #f06a7f !important; }
+}
+@media (max-width: 900px) {
+  /* money tabs have their own Add buttons — hide the floating + there so they don't stack */
+  body.money-page-open .quick-action-dock { display: none !important; }
+}
+@media all {
+  html:root:not([data-theme="light"]) body .page.fv2-page .financial-shortcuts .financial-shortcut.active.active { color: #504AB9 !important; background: #fff !important; border-color: #fff !important; }
+  html:root:not([data-theme="light"]) body .page.fv2-page .financial-shortcuts .financial-shortcut.active.active * { color: #504AB9 !important; }
+}

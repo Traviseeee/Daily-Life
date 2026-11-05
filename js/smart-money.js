@@ -350,7 +350,17 @@ const SmartMoney = (() => {
       return `<div class="pace pace-ok">✓ ${km() ? "ទាន់ពេល" : "On track"} — ${km() ? `ដល់ប្រហែល ${monthName(remaining / monthly)}` : `done around ${monthName(remaining / monthly)}`}</div>`;
     }
     const lateBy = monthly ? Math.ceil(remaining / monthly - months) : 0;
-    return `<div class="pace ${monthly ? "pace-late" : "pace-info"}">${monthly ? `⚠️ ${km() ? `យឺត ${lateBy} ខែ` : `${lateBy} mo late`} · ` : "💡 "}${km() ? "ត្រូវសន្សំ" : "Save"} <b>${fmt(perMonth)}</b>/${km() ? "ខែ ដើម្បីទាន់ពេល" : "month to make it"}</div>`;
+    // clearer (5 Nov): say what the current monthly amount leads to, then what it takes to be on time
+    if (monthly) return `<div class="pace pace-late">⚠️ ${km() ? `ដាក់ ${fmt(monthly)}/ខែ នឹងដល់យឺត ${lateBy} ខែ · ត្រូវដាក់ <b>${fmt(perMonth)}</b>/ខែ ដើម្បីទាន់` : `At ${fmt(monthly)}/mo you'll be ${lateBy} mo late · save <b>${fmt(perMonth)}</b>/mo to make it`}</div>`;
+    return `<div class="pace pace-info">💡 ${km() ? "ត្រូវសន្សំ" : "Save"} <b>${fmt(perMonth)}</b>/${km() ? "ខែ ដើម្បីទាន់ពេល" : "month to make it"}</div>`;
+  }
+
+  // true when the monthly amount can't reach the target by the deadline (deadline still ahead)
+  function savingsBehind(item) {
+    const remaining = Number(item.targetAmount || 0) - Number(item.currentAmount || 0);
+    const months = monthsUntil(item.deadline);
+    if (!Number(item.targetAmount) || remaining <= 0 || months === null || months <= 0) return false;
+    return Number(item.monthlyContribution || 0) < (remaining / Math.max(1, months)) * 0.98;
   }
 
   function savingsPace(item) {
@@ -420,6 +430,7 @@ const SmartMoney = (() => {
     renderQuickExpense,
     bindQuickExpense,
     savingsPace,
+    savingsBehind,
     goalPace,
     linkedSaving,
     linkedBadge,
