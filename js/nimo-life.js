@@ -11,6 +11,7 @@ const NimoLife = (() => {
   let busy = new Set();
   let popupShown = 0;
   let lastFinance = 0;
+  let open = false; // details (today's ticks + this month) shown only on tap
 
   function read() { try { return JSON.parse(localStorage.getItem(CACHE) || "null"); } catch (error) { return null; } }
   function keep(next) { state = next; try { localStorage.setItem(CACHE, JSON.stringify(next)); } catch (error) { /* memory copy is fine */ } }
@@ -88,15 +89,20 @@ const NimoLife = (() => {
       const on = done.includes(key);
       return `<button type="button" class="nmc-tick${on ? " is-on" : ""}"${go[key] && !on ? ` data-hv2-go="${go[key].slice(1)}"` : ""}>${on ? "✓" : "○"} ${escapeHtml(labels[key])}</button>`;
     }).join("");
-    return `<div data-nimo-life class="nmc-wrap">
-      <section class="nmc">
+    const doneCount = DAILY.filter(key => done.includes(key)).length;
+    return `<div data-nimo-life class="nmc-wrap${open ? " is-open" : ""}">
+      <section class="nmc" data-nmc-toggle role="button" tabindex="0" aria-expanded="${open}" aria-label="${escapeAttr(L("មើលលម្អិត Nimo", "Show Nimo details"))}">
         <span class="nmc-av" style="--p:${pct}"><span class="nmc-nomi" data-nomi data-mood="${mood}" role="button" tabindex="0" aria-label="Nomi">${nomi}</span><b class="nmc-lv">Lv ${level}</b></span>
         <span class="nmc-mid"><b>Nimo · ${escapeHtml(L(`កម្រិត ${level}`, `Level ${level}`))}</b><span class="nmc-bar"><i style="width:${pct}%"></i></span><small>${xp} / ${to} XP · ${escapeHtml(L(`ទៀត ${Math.max(0, to - xp)}`, `${Math.max(0, to - xp)} to go`))}</small></span>
         <span class="nmc-fire${streak ? "" : " is-off"}" title="${escapeAttr(L(`ថ្ងៃជាប់គ្នាវែងបំផុត ${state.longestStreak || 0}`, `Longest ${state.longestStreak || 0} days`))}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2c1 4 5 5 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3-1-6 1-9z" fill="currentColor"/></svg><b>${streak}</b><small>${escapeHtml(L("ថ្ងៃ", "days"))}</small></span>
         <span class="nmc-fire nmc-month${Number(state.monthStreak || 0) ? "" : " is-off"}" title="${escapeAttr(L("ខែជាប់គ្នា ដែលបង់កម្ចី / វិក្កយបត្រ / ដាក់សន្សំ", "Months in a row with a loan, bill or savings payment"))}"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="currentColor"/><path d="M12 7v10M9.5 9.5h3.8a1.7 1.7 0 0 1 0 3.4h-2.6a1.7 1.7 0 0 0 0 3.4H14.5" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg><b>${Number(state.monthStreak || 0)}</b><small>${escapeHtml(L("ខែ", "mo"))}</small></span>
+        <span class="nmc-chev" aria-hidden="true"><b>${doneCount}/4</b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span>
       </section>
+      <div class="nmc-more"${open ? "" : " hidden"}>
+      <small class="nmc-cap">${escapeHtml(L("ថ្ងៃនេះ", "Today"))}</small>
       <div class="nmc-ticks">${ticks}</div>
-      ${(state.month || []).length ? `<div class="nmc-ticks nmc-month-ticks">${(state.month || []).slice(0, 4).map(item => `<span class="nmc-tick is-on is-money">${{ loan: "🏦", bill: "🧾", save: "🐷" }[item.activity] || "✓"} ${escapeHtml(String(item.text || "").replace(/^.*· /, ""))} +${item.xp}</span>`).join("")}</div>` : ""}
+      ${(state.month || []).length ? `<small class="nmc-cap">${escapeHtml(L("ខែនេះ", "This month"))}</small><div class="nmc-ticks nmc-month-ticks">${(state.month || []).slice(0, 4).map(item => `<span class="nmc-tick is-on is-money">${{ loan: "🏦", bill: "🧾", save: "🐷" }[item.activity] || "✓"} ${escapeHtml(String(item.text || "").replace(/^.*· /, ""))} +${item.xp}</span>`).join("")}</div>` : ""}
+      </div>
     </div>`;
   }
 
@@ -123,6 +129,20 @@ const NimoLife = (() => {
       </div></div>`);
     if (typeof Sound !== "undefined") { try { Sound.play("nomiHello"); } catch (error) { /* no sound */ } }
   }
+
+  document.addEventListener("click", event => {
+    const head = event.target.closest("[data-nmc-toggle]");
+    if (!head || event.target.closest("[data-nomi]")) return;
+    open = !open;
+    const wrap = head.closest(".nmc-wrap");
+    wrap?.classList.toggle("is-open", open);
+    head.setAttribute("aria-expanded", String(open));
+    const more = wrap?.querySelector(".nmc-more");
+    if (more) more.hidden = !open;
+  });
+  document.addEventListener("keydown", event => {
+    if ((event.key === "Enter" || event.key === " ") && event.target.matches?.("[data-nmc-toggle]")) { event.preventDefault(); event.target.click(); }
+  });
 
   document.addEventListener("click", async event => {
     if (!event.target.closest("[data-nmc-pop-ok]") && !event.target.classList?.contains("nmc-pop")) return;

@@ -1567,8 +1567,16 @@ html:root:not([data-theme="light"]) body:has(#app .fv2-page) .fv2-quick-card {
 }
 /* Nimo Life Companion · small home row + level-up popup (5 Nov, draft B) */
 @media all {
-  .nmc-wrap { display: grid; gap: 8px; }
-  .nmc { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid #ebe8f4; border-radius: 22px; background: #fff; }
+  .nmc-wrap { display: grid; border: 1px solid #ebe8f4; border-radius: 22px; background: #fff; overflow: hidden; }
+  .nmc { display: flex; align-items: center; gap: 12px; padding: 10px 12px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .nmc-chev { display: grid; justify-items: center; gap: 1px; flex: 0 0 auto; margin-left: -4px; color: #a7a3c2; }
+  .nmc-chev b { color: #7a7698; font: 800 .6rem Inter, sans-serif; }
+  .nmc-chev svg { width: 16px; height: 16px; transition: transform .2s; }
+  .nmc-wrap.is-open .nmc-chev svg { transform: rotate(180deg); }
+  .nmc-more { display: grid; gap: 6px; padding: 10px 12px 12px; border-top: 1px dashed #ebe8f4; animation: nmcDrop .2s ease; }
+  .nmc-more[hidden] { display: none; }
+  .nmc-cap { color: #7a7698; font-size: .64rem; font-weight: 700; }
+  @keyframes nmcDrop { from { opacity: 0; transform: translateY(-4px); } }
   .nmc-av { position: relative; flex: 0 0 56px; width: 56px; height: 56px; border-radius: 50%; background: conic-gradient(#7B68EE calc(var(--p) * 1%), #f1eeff 0); display: grid; place-items: center; }
   .nmc-av::before { content: ""; position: absolute; inset: 4px; border-radius: 50%; background: radial-gradient(circle at 50% 40%, #fff, #f1eeff); }
   .nmc-nomi { position: relative; width: 44px; height: 42px; cursor: pointer; }
@@ -1588,7 +1596,7 @@ html:root:not([data-theme="light"]) body:has(#app .fv2-page) .fv2-quick-card {
   .nmc-wrap .nmc-ticks .nmc-tick.is-on.is-money { background: #fff7e0; color: #9a6810; }
   .nmc-fire.is-off { background: #f7f5fc; color: #c9c5dc; }
   .nmc-fire.is-off b, .nmc-fire.is-off small { color: #a7a3c2; }
-  .nmc-ticks { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+  .nmc-ticks { display: flex; flex-wrap: wrap; gap: 6px; }
   .nmc-wrap .nmc-ticks .nmc-tick { padding: 4px 10px; border: 1px solid #ebe8f4; border-radius: 99px; background: #fff; color: #7a7698; min-height: 0; font: 600 .68rem/1.4 "Kantumruy Pro", Inter, sans-serif; cursor: pointer; }
   .nmc-wrap .nmc-ticks .nmc-tick.is-on { border-color: transparent; background: #e8f8ef; color: #1f9d63; cursor: default; }
   .nmc-pop { position: fixed; inset: 0; z-index: 9000; display: grid; place-items: center; padding: 24px; background: rgba(26,35,71,.45); animation: nmcFade .25s ease; }
@@ -1608,7 +1616,9 @@ html:root:not([data-theme="light"]) body:has(#app .fv2-page) .fv2-quick-card {
   @keyframes nmcTw { 50% { opacity: .3; transform: scale(.7); } }
   @media (prefers-reduced-motion: reduce) { .nmc-pop-card, .nmc-pop-nomi, .nmc-sp { animation: none; } }
 
-  html:root:not([data-theme="light"]) .nmc { background: #2e2956; border-color: rgba(182,168,255,.18); }
+  html:root:not([data-theme="light"]) .nmc-wrap { background: #2e2956; border-color: rgba(182,168,255,.18); }
+  html:root:not([data-theme="light"]) .nmc-more { border-top-color: rgba(182,168,255,.18); }
+  html:root:not([data-theme="light"]) .nmc-cap, html:root:not([data-theme="light"]) .nmc-chev b { color: #bdb7e6; }
   html:root:not([data-theme="light"]) .nmc-av { background: conic-gradient(#B6A8FF calc(var(--p) * 1%), rgba(182,168,255,.16) 0); }
   html:root:not([data-theme="light"]) .nmc-av::before { background: radial-gradient(circle at 50% 40%, #3d3770, #2e2956); }
   html:root:not([data-theme="light"]) .nmc-lv { border-color: #2e2956; }
