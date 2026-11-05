@@ -1577,19 +1577,21 @@ html:root:not([data-theme="light"]) body:has(#app .fv2-page) .fv2-quick-card {
   .nmc-more[hidden] { display: none; }
   .nmc-cap { color: #7a7698; font-size: .64rem; font-weight: 700; }
   @keyframes nmcDrop { from { opacity: 0; transform: translateY(-4px); } }
-  .nmc-av { position: relative; flex: 0 0 56px; width: 56px; height: 56px; border-radius: 50%; background: conic-gradient(#7B68EE calc(var(--p) * 1%), #f1eeff 0); display: grid; place-items: center; }
+  .nmc-av { position: relative; flex: 0 0 60px; width: 60px; height: 60px; border-radius: 50%; background: conic-gradient(#7B68EE calc(var(--p) * 1%), #f1eeff 0); display: grid; place-items: center; }
   .nmc-av::before { content: ""; position: absolute; inset: 4px; border-radius: 50%; background: radial-gradient(circle at 50% 40%, #fff, #f1eeff); }
   .nmc-nomi { position: relative; width: 44px; height: 42px; cursor: pointer; }
   .nmc-nomi .hv2-buddy { width: 100%; height: 100%; }
   .nmc-lv { position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%); padding: 1px 7px; border: 2px solid #fff; border-radius: 99px; background: linear-gradient(135deg, #7B68EE, #504AB9); color: #fff; font: 800 .58rem Inter, sans-serif; white-space: nowrap; }
   .nmc-mid { display: grid; gap: 4px; flex: 1; min-width: 0; }
   .nmc-mid b { color: #1A2347; font-size: .86rem; }
-  .nmc-bar { height: 8px; border-radius: 99px; background: #f1eeff; overflow: hidden; }
+  .nmc-bar { height: 10px; border-radius: 99px; background: #f1eeff; overflow: hidden; }
   .nmc-bar i { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, #9F8CFF, #504AB9); transition: width .6s ease; }
   .nmc-mid small { color: #7a7698; font: 600 .66rem Inter, "Kantumruy Pro", sans-serif; }
-  .nmc-fire { display: grid; justify-items: center; flex: 0 0 auto; min-width: 46px; padding: 5px 8px; border-radius: 14px; background: #fff1e8; color: #ff7a45; }
-  .nmc-fire svg { width: 16px; height: 16px; }
-  .nmc-fire b { color: #c0623a; font: 800 .9rem/1 Inter, sans-serif; }
+  .nmc-fire { display: grid; justify-items: center; gap: 2px; flex: 0 0 auto; min-width: 54px; padding: 7px 10px; border-radius: 16px; background: #fff1e8; color: #ff7a45; }
+  .nmc-fire-top { display: flex; align-items: center; gap: 3px; }
+  .nmc-fire svg { width: 18px; height: 18px; }
+  .nmc-fire b { color: #c0623a; font: 800 1.1rem/1 Inter, sans-serif; }
+  .nmc-fire .nmc-mo { margin-top: 1px; padding: 1px 6px; border-radius: 99px; background: #fff7e0; color: #9a6810; font: 700 .56rem/1.4 "Kantumruy Pro", Inter, sans-serif; font-style: normal; white-space: nowrap; }
   .nmc-fire small { color: #c0623a; font-size: .56rem; font-weight: 600; }
   .nmc-month { margin-left: -6px; background: #fff7e0; color: #E0A42E; }
   .nmc-month b, .nmc-month small { color: #9a6810 !important; }
@@ -1626,6 +1628,7 @@ html:root:not([data-theme="light"]) body:has(#app .fv2-page) .fv2-quick-card {
   html:root:not([data-theme="light"]) .nmc-mid small { color: #bdb7e6; }
   html:root:not([data-theme="light"]) .nmc-bar { background: rgba(182,168,255,.16); }
   html:root:not([data-theme="light"]) .nmc-fire { background: rgba(255,152,107,.16); }
+  html:root:not([data-theme="light"]) .nmc-fire .nmc-mo { background: rgba(245,196,90,.16); color: #ffd98a; }
   html:root:not([data-theme="light"]) .nmc-fire b, html:root:not([data-theme="light"]) .nmc-fire small { color: #ffc9a8; }
   html:root:not([data-theme="light"]) .nmc-month { background: rgba(245,196,90,.16); }
   html:root:not([data-theme="light"]) .nmc-month b, html:root:not([data-theme="light"]) .nmc-month small, html:root:not([data-theme="light"]) .nmc-wrap .nmc-ticks .nmc-tick.is-on.is-money { color: #ffd98a !important; }
