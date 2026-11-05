@@ -373,6 +373,7 @@ const App = {
     this.scheduleDueReminderAlerts();
     // (home suggestion toast removed — the mood / reflection / focus cards are on Home already)
     this.renderNotificationBadge();
+    if (typeof NimoLife !== "undefined") { try { NimoLife.sync(route, this.param); } catch (error) { console.warn("MYLIFE Nimo XP skipped.", error); } }
     app.focus({ preventScroll: true });
   },
   renderNotificationBadge() {

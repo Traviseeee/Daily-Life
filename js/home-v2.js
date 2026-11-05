@@ -547,6 +547,7 @@ const HomeV2 = (() => {
     const fm = progMood(d);
     const focus = icHead(focusCard(d), "🎯").replace('<div class="fx-head">', `<div class="fx-head" data-fx-toggle><span class="fx-nomi" data-nomi data-mood="${fm}" role="button" tabindex="0" aria-label="Nomi">${buddy(fm)}</span>`);
     return `<div class="hv2-body hv2-v3">
+        ${typeof NimoLife !== "undefined" ? NimoLife.card() : ""}
         ${alerts(d)}
         ${money(d)}
         <section class="hv2-group hv2-quick-group">${quick()}</section>
