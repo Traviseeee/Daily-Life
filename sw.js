@@ -1,4 +1,4 @@
-const CACHE_NAME = "mylife-pwa-gold-portfolio-delete-20261103";
+const CACHE_NAME = "mylife-pwa-e8770b8e";
 // red number on the Home Screen icon: the app saves its bell count here and a
 // push that arrives while the app is closed adds 1 to it
 const BADGE_CACHE = "mylife-badge";
@@ -107,6 +107,7 @@ const APP_SHELL = [
   "./js/money-v2.js",
   "./js/money-tabs-v2.js",
   "./js/savings-market.js",
+  "./js/account-balances.js",
   "./js/calendar-v2.js",
   "./js/family-v2.js",
   "./js/settings-v2.js",
