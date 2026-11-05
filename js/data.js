@@ -1560,6 +1560,13 @@ function loanPaymentDay(loan) {
   return Number.isNaN(first.getTime()) ? 0 : first.getDate();
 }
 
+// A payment counts for its scheduled month even when it was made a few days early or late
+// (paid 5 Nov for the 6 Nov due date → November is paid). 5 Nov 2026.
+function loanMonthPaid(loan, dateValue) {
+  const month = String(dateValue || "").slice(0, 7);
+  return (loan.payments || []).some(payment => payment.date === dateValue || String(payment.date || "").slice(0, 7) === month);
+}
+
 function loanPaymentScheduleToCurrent(loan) {
   const firstPaymentDate = loan.firstPaymentDate || loan.startDate;
   const first = parseAppDate(firstPaymentDate);
@@ -1573,12 +1580,13 @@ function loanPaymentScheduleToCurrent(loan) {
 
   for (let index = 0; index <= maxIndex; index += 1) {
     const date = addMonths(first, index);
-    if (date > today) break;
     const dateValue = toDateInput(date);
+    const paid = loanMonthPaid(loan, dateValue);
+    if (date > today && !paid) break; // keep an early-paid upcoming month in the list
     rows.push({
       date: dateValue,
       amount: monthlyPayment,
-      paid: (loan.payments || []).some(payment => payment.date === dateValue)
+      paid
     });
   }
 
@@ -1594,11 +1602,12 @@ function nextLoanPaymentDate(loan) {
   const today = stripTime(new Date());
   let next = stripTime(first);
   let index = 0;
-  while (next < today && (!durationMonths || index < durationMonths - 1)) {
+  // skip past dates and months already paid (early payments move "next" to the month after)
+  while ((next < today || loanMonthPaid(loan, toDateInput(next))) && (!durationMonths || index < durationMonths - 1)) {
     index += 1;
     next = addMonths(first, index);
   }
-  if (durationMonths && next < today) return "";
+  if (durationMonths && (next < today || loanMonthPaid(loan, toDateInput(next)))) return "";
   return toDateInput(next);
 }
 

@@ -470,7 +470,7 @@ function renderMoneySmartOverview() {
   const dueLoans = (appData.loans || []).flatMap(loan => {
     const due = nextLoanPaymentDate(loan);
     if (!due || due < todayIso || due > weekEndIso) return [];
-    const paid = (loan.payments || []).some(payment => payment.date === due);
+    const paid = loanMonthPaid(loan, due);
     return paid ? [] : [{ title: loan.name || t("loan"), date: due, amount: loan.monthlyPayment, currency: loan.currency, href: "#money/loans" }];
   });
   const overdueLoanPayments = (appData.loans || []).flatMap(loan => {

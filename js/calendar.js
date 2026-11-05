@@ -285,7 +285,7 @@ function calendarItemsForMonth(cursor) {
       auto: true,
       amount: loan.monthlyPayment,
       currency: loan.currency,
-      paid: (loan.payments || []).some(payment => payment.date === date),
+      paid: (typeof loanMonthPaid === "function" ? loanMonthPaid(loan, date) : (loan.payments || []).some(payment => payment.date === date)),
       href: "#money/loans",
       notes: loan.notes || ""
     }));

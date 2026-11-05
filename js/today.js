@@ -36,7 +36,7 @@ function todayDayEntries(day) {
   appData.loans.forEach(loan => {
     if (typeof loanPaymentDatesInMonth !== "function") return;
     if (!loanPaymentDatesInMonth(loan, dayDate).includes(day)) return;
-    const paid = (loan.payments || []).some(payment => payment.date === day);
+    const paid = loanMonthPaid(loan, day);
     entries.push({ kind: "loan", tone: "loan", icon: Icons.loan(), title: loan.name, time: "", sub: t("loan"), amount: money(loan.monthlyPayment, loan.currency), href: "#money/loans", paid });
   });
 

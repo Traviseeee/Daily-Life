@@ -251,7 +251,7 @@ const NotifyCenter = (() => {
       const date = first && typeof LoanPay !== "undefined" ? LoanPay.scheduleDateFor(loan, today) : "";
       const day = Number(loan.paymentDay || 0) || Number(/^\d{4}-\d{2}-(\d{2})/.exec(String(first || ""))?.[1] || 0);
       const finished = loan.dueDate && loan.dueDate < `${month}-01`;
-      const paid = date && (loan.payments || []).some(payment => payment.date === date);
+      const paid = date && loanMonthPaid(loan, date);
       const linked = (appData.bills || []).some(bill => bill.loanId === loan.id);
       const meta = !first ? `<span class="nfc-ma-warn">${L("គ្មានថ្ងៃ", "No day")}</span>` : finished ? L("បង់អស់ហើយ", "Finished") : `${dayEvery(day)}${linked ? ` · ${L("ភ្ជាប់វិក្កយបត្រ", "linked bill")}` : ""}`;
       let status = "";

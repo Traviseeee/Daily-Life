@@ -88,7 +88,7 @@ const App = {
     });
     appData.loans.forEach(loan => {
       if (typeof nextLoanPaymentDate !== "function" || nextLoanPaymentDate(loan) !== today) return;
-      if ((loan.payments || []).some(payment => payment.date === today)) return;
+      if (loanMonthPaid(loan, today)) return;
       add({
         type: "loan",
         title: loan.name || t("loan"),
@@ -604,7 +604,7 @@ const App = {
     appData.loans.forEach(loan => {
       const nextPayment = typeof nextLoanPaymentDate === "function" ? nextLoanPaymentDate(loan) : "";
       if (!nextPayment) return;
-      const alreadyPaid = (loan.payments || []).some(payment => payment.date === nextPayment);
+      const alreadyPaid = loanMonthPaid(loan, nextPayment);
       if (alreadyPaid) return;
       add({
         kind: "loan",

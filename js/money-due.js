@@ -92,7 +92,7 @@ function dueToday(payload, today) {
     if (!date || date > today) return;
     if (String(loan.firstPaymentDate || loan.startDate) > date) return;
     if (loan.dueDate && date > loan.dueDate) return; // finished
-    if ((loan.payments || []).some(payment => payment.date === date)) return;
+    if ((typeof loanMonthPaid === "function" ? loanMonthPaid(loan, date) : (loan.payments || []).some(payment => payment.date === date || String(payment.date || "").slice(0, 7) === String(date).slice(0, 7)))) return;
     out.push({ kind: "loan", id: loan.id, key: `loan:${loan.id}:${date}`, title: loan.name || "Loan", amount: Number(loan.monthlyPayment || 0), currency: loan.currency || "", date, month, overdueDays: days(date) });
   });
 
