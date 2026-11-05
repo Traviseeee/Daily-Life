@@ -363,6 +363,13 @@ const SmartMoney = (() => {
     return Number(item.monthlyContribution || 0) < (remaining / Math.max(1, months)) * 0.98;
   }
 
+  function savingsNeed(item) {
+    const remaining = Number(item.targetAmount || 0) - Number(item.currentAmount || 0);
+    const months = monthsUntil(item.deadline);
+    if (!Number(item.targetAmount) || remaining <= 0 || months === null || months <= 0) return null;
+    return remaining / Math.max(1, months);
+  }
+
   function savingsPace(item) {
     return paceHtml({
       current: Number(item.currentAmount || 0),
@@ -431,6 +438,7 @@ const SmartMoney = (() => {
     bindQuickExpense,
     savingsPace,
     savingsBehind,
+    savingsNeed,
     goalPace,
     linkedSaving,
     linkedBadge,

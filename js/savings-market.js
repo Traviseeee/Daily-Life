@@ -9,6 +9,7 @@ const SavingsMarket = (() => {
   let request = null;
   let range = 30;
   let alertsOpen = false;
+  let panelOpen = false;
 
   function readCache() {
     try { const value = JSON.parse(localStorage.getItem(CACHE_KEY) || "null"); return value && typeof value === "object" ? value : {}; }
@@ -77,7 +78,7 @@ const SavingsMarket = (() => {
     const stale = lastGoldQuoteAt && Date.now() - lastGoldQuoteAt > 6 * 60 * 60 * 1000;
     const sourceHint = L("Gold API · Spot 24K / ជី · KHR តាម Frankfurter · តម្លៃហាងអាចខុស", "Gold API · 24K spot / Chi · Frankfurter KHR · shop prices may vary");
     const metaLabel = stale ? L("តម្លៃអាចចាស់", "May be outdated") : L("ធ្វើបច្ចុប្បន្នភាព", "Updated");
-    return `${price}${chips ? `<div class="svm-chips">${chips}</div>` : ""}<div class="svm-chart-box">${chartMarkup()}</div><div class="sv-market-range svm-range" role="group" aria-label="${escapeAttr(L("រយៈពេលក្រាប", "Chart range"))}">${[7, 30, 365].map(days => `<button type="button" data-sv-range="${days}" class="${range === days ? "is-active" : ""}">${days === 365 ? "1y" : `${days}d`}</button>`).join("")}</div><button type="button" class="svm-alert-line" data-sv-alert-toggle aria-expanded="${alertsOpen}"><span class="svm-ii">${ICON.bell}</span><span><b>${escapeHtml(L("ជូនដំណឹងតម្លៃ", "Price alerts"))}</b><small>${escapeHtml(L("ប្រាប់ពេលមាសធ្លាក់ ឬឡើង", "Tell me when gold drops or rises"))}</small></span><em>${rules().length} ${alertsOpen ? "−" : "›"}</em></button>${alertMarkup()}${alertHistoryMarkup()}<small class="sv-market-meta" title="${escapeAttr(sourceHint)}">${escapeHtml(metaLabel)} · ${escapeHtml(timeLabel())} · ${escapeHtml(L("តម្លៃហាងអាចខុស", "shop prices may differ"))}</small>`;
+    return `${chips ? `<div class="svm-chips">${chips}</div>` : ""}<div class="svm-chart-box">${chartMarkup()}</div><div class="sv-market-range svm-range" role="group" aria-label="${escapeAttr(L("រយៈពេលក្រាប", "Chart range"))}">${[7, 30, 365].map(days => `<button type="button" data-sv-range="${days}" class="${range === days ? "is-active" : ""}">${days === 365 ? "1y" : `${days}d`}</button>`).join("")}</div><button type="button" class="svm-alert-line" data-sv-alert-toggle aria-expanded="${alertsOpen}"><span class="svm-ii">${ICON.bell}</span><span><b>${escapeHtml(L("ជូនដំណឹងតម្លៃ", "Price alerts"))}</b></span><em>${rules().length} ${alertsOpen ? "−" : "›"}</em></button>${alertMarkup()}${alertHistoryMarkup()}<small class="sv-market-meta" title="${escapeAttr(sourceHint)}">${escapeHtml(metaLabel)} · ${escapeHtml(timeLabel())} · ${escapeHtml(L("តម្លៃហាងអាចខុស", "shop prices may differ"))}</small>`;
   }
   function paint() { const root = document.querySelector("[data-savings-market]"); if (root) root.innerHTML = content(); }
   async function fetchJson(url) {
@@ -131,7 +132,33 @@ const SavingsMarket = (() => {
     saveRules([...rules(), { id: `gold-rule-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, type: String(data.get("type")), threshold, currency: data.get("currency") === "KHR" ? "KHR" : "USD", cooldownHours: Number(data.get("cooldownHours") || 24), enabled: true }]);
   });
   window.setInterval(() => { if (document.visibilityState === "visible" && document.querySelector("[data-savings-market]")) refresh(true); }, CACHE_MS);
+  function sparkPath() {
+    const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 29);
+    const pts = history().filter(item => new Date(`${item.date}T00:00:00`) >= cutoff && Number(item.goldUsdPerChi) > 0).map(item => Number(item.goldUsdPerChi));
+    if (pts.length < 2) return "";
+    const min = Math.min(...pts), span = Math.max(...pts) - min || 1;
+    return pts.map((v, i) => `${i ? "L" : "M"}${(i / (pts.length - 1) * 60).toFixed(1)},${(19 - (v - min) / span * 16).toFixed(1)}`).join(" ");
+  }
+  // compact market row for the gold card; tapping it opens the chart, chips and alerts
+  function line() {
+    if (!fresh()) refresh();
+    const usd = Number(state.goldUsdPerOunce) > 0 ? Number(state.goldUsdPerOunce) / GRAMS_PER_TROY_OUNCE * GRAMS_PER_CHI : 0;
+    const tr = trend(30), path = sparkPath();
+    const chg = tr === null ? "" : `<em class="${tr < 0 ? "is-down" : "is-up"}">${tr > 0 ? "+" : tr < 0 ? "−" : ""}${number(Math.abs(tr), 1)}%</em>`;
+    return `<button type="button" class="svg-market${panelOpen ? " is-open" : ""}" data-gold-market aria-expanded="${panelOpen}"><i class="svg-mk-dot" aria-hidden="true"></i><span>${escapeHtml(L("តម្លៃ 24K", "24K price"))}</span><b>${usd > 0 ? `$${number(usd, 2)}` : escapeHtml(L("កំពុងផ្ទុក…", "Loading…"))}</b>${chg}${path ? `<svg class="svg-spark" viewBox="0 0 60 22" aria-hidden="true"><path d="${path}" fill="none" stroke="#E0A42E" stroke-width="2" stroke-linejoin="round"/></svg>` : ""}<svg class="svg-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button><div class="svg-market-panel" data-gold-panel ${panelOpen ? "" : "hidden"}><div class="svg-mk-top"><small>${escapeHtml(L("តម្លៃ 1 ជី · Spot", "Per Chi · spot"))}</small><button type="button" class="sv-market-refresh" data-sv-market-refresh aria-label="${escapeAttr(L("ធ្វើបច្ចុប្បន្នភាព", "Refresh market quotes"))}">${ICON.refresh}</button></div><div data-savings-market>${content()}</div></div>`;
+  }
+  function setPanel(open) {
+    panelOpen = open;
+    const panel = document.querySelector("[data-gold-panel]"), btn = document.querySelector("[data-gold-market]");
+    if (panel) panel.hidden = !open;
+    if (btn) { btn.classList.toggle("is-open", open); btn.setAttribute("aria-expanded", String(open)); }
+  }
+  document.addEventListener("click", event => {
+    if (event.target.closest("[data-gold-market]")) { setPanel(!panelOpen); return; }
+    if (event.target.closest("[data-gold-alerts]")) { alertsOpen = true; setPanel(true); paint(); document.querySelector(".sv-market-alerts")?.scrollIntoView({ behavior: "smooth", block: "center" }); }
+  });
   return {
+    line,
     render() { if (!fresh()) refresh(); return `<section class="sv-market-card" aria-label="${escapeAttr(L("ព័ត៌មានតម្លៃមាស", "Gold prices"))}"><div class="sv-market-heading"><strong>${escapeHtml(L("តម្លៃមាស 24K", "24K gold price"))}</strong><button type="button" class="sv-market-refresh" data-sv-market-refresh aria-label="${escapeAttr(L("ធ្វើបច្ចុប្បន្នភាព", "Refresh market quotes"))}" title="${escapeAttr(L("ធ្វើបច្ចុប្បន្នភាព", "Refresh"))}">${ICON.refresh}</button></div><div data-savings-market>${content()}</div></section>`; },
     refresh,
     trend,

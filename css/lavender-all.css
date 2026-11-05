@@ -1509,3 +1509,59 @@ html:root:not([data-theme="light"]) body:has(#app .fv2-page) .fv2-quick-card {
   html:root:not([data-theme="light"]) .svm-range button { color: #d9d2ff; }
   html:root:not([data-theme="light"]) .svm-range button.is-active { background: #fff; color: #504AB9; }
 }
+/* Savings lean (5 Nov): month row, merged gold + market, short account card */
+@media all {
+  .sv-total .sv-month { display: flex; align-items: center; gap: 10px; margin-top: 10px; padding: 8px 10px; border-radius: 14px; background: rgba(255,255,255,.16); font-size: .74rem; }
+  .sv-total .sv-month > span:first-child { flex: 0 0 auto; }
+  .sv-total .sv-month-bar { flex: 1; height: 8px; border-radius: 99px; background: rgba(255,255,255,.25); overflow: hidden; }
+  .sv-total .sv-month-bar i { display: block; height: 100%; min-width: 4px; border-radius: 99px; background: #fff; }
+  .sv-total .sv-month b { font-size: .78rem; white-space: nowrap; }
+  .sv-total .sv-month, .sv-total .sv-month * { color: #fff; }
+
+  .sv-gold-portfolio.svg-hero { gap: 10px; padding: 12px 14px; }
+  .svg-hero .svg-row { position: relative; }
+  .svg-hero .svg-nomi { flex-basis: 52px; width: 52px; height: 48px; }
+  .svg-hero .svg-coin { width: 20px; height: 20px; }
+  .svg-hero .svg-main strong { font-size: 1.35rem; }
+  .svg-hero .svg-worth { display: grid; justify-items: end; gap: 2px; margin-left: auto; text-align: right; }
+  .svg-hero .svg-worth b { font-size: 1rem; color: #1A2347; }
+  .svg-hero .svg-worth small { color: #7a7698; font-size: .72rem; }
+  .svg-hero .svg-gain { padding: 2px 8px; font-size: .68rem; }
+  .svg-hero .svg-say { display: none; position: absolute; left: 50px; top: -6px; z-index: 2; max-width: calc(100% - 60px); box-shadow: 0 6px 16px rgba(80,74,185,.16); }
+  .svg-hero.is-talk .svg-say { display: block; animation: svgPop .25s ease; }
+  @keyframes svgPop { from { opacity: 0; transform: translateY(4px) scale(.96); } }
+  .svg-hero .svg-market { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 42px; padding: 8px 10px; border: 0; border-radius: 14px; background: rgba(255,255,255,.7); color: #1A2347; font: inherit; font-size: .74rem; text-align: left; cursor: pointer; }
+  .svg-hero .svg-market b { font: 800 .86rem Inter, sans-serif; }
+  .svg-hero .svg-market em { font-style: normal; font-size: .7rem; font-weight: 800; color: #1f9d63; }
+  .svg-hero .svg-market em.is-down { color: #d23f4a; }
+  .svg-hero .svg-mk-dot { width: 10px; height: 10px; border-radius: 50%; background: #F5C45A; box-shadow: 0 0 0 3px rgba(245,196,90,.3); }
+  .svg-hero .svg-spark { width: 60px; height: 22px; margin-left: auto; }
+  .svg-hero .svg-chev { flex: 0 0 16px; width: 16px; height: 16px; color: #7a7698; transition: transform .2s; }
+  .svg-hero .svg-market:not(:has(.svg-spark)) .svg-chev { margin-left: auto; }
+  .svg-hero .svg-market.is-open .svg-chev { transform: rotate(180deg); }
+  .svg-hero .svg-market-panel { display: grid; gap: 6px; padding: 10px; border-radius: 16px; background: rgba(255,255,255,.75); }
+  .svg-hero .svg-market-panel[hidden] { display: none; }
+  .svg-hero .svg-mk-top { display: flex; align-items: center; justify-content: space-between; }
+  .svg-hero .svg-mk-top small { color: #7a7698; font-size: .66rem; font-weight: 600; }
+  .svg-hero .svg-mk-top .sv-market-refresh { width: 28px; height: 28px; }
+  .svg-hero .svg-hist .svg-tiles { grid-template-columns: 1fr 1fr; }
+
+  .sv-card .mt-head .sv-title { display: grid; gap: 1px; min-width: 0; }
+  .sv-card .mt-head .sv-title b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sv-card .mt-head .sv-title small { color: var(--fv-ink2, #7a7698); font-size: .68rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sv-card .sv-reserve { margin: 6px 2px 0; color: var(--fv-ink2, #7a7698); font-size: .72rem; }
+  .sv-card .sv-reserve b { color: var(--fv-ink, #1A2347); }
+  .sv-card .sv-tip { display: flex; align-items: center; gap: 6px; margin: 8px 2px 0; color: #c0623a; font-size: .74rem; font-weight: 600; }
+  .sv-card .sv-tip::before { content: "!"; display: grid; place-items: center; flex: 0 0 16px; height: 16px; border-radius: 50%; background: #fff1e8; color: #c0623a; font: 800 .62rem Inter, sans-serif; }
+  .sv-card .sv-tip.is-late { color: #d23f4a; }
+
+  html:root:not([data-theme="light"]) .svg-hero .svg-worth b { color: #fff; }
+  html:root:not([data-theme="light"]) .svg-hero .svg-worth small, html:root:not([data-theme="light"]) .svg-hero .svg-mk-top small { color: #e6dcc4; }
+  html:root:not([data-theme="light"]) .svg-hero .svg-market, html:root:not([data-theme="light"]) .svg-hero .svg-market-panel { background: rgba(255,255,255,.08); color: #fff; }
+  html:root:not([data-theme="light"]) .svg-hero .svg-market em { color: #5fe0a0; }
+  html:root:not([data-theme="light"]) .svg-hero .svg-market em.is-down { color: #ff8a92; }
+  html:root:not([data-theme="light"]) .svg-hero .svg-chev { color: #e6dcc4; }
+  html:root:not([data-theme="light"]) .sv-card .sv-reserve b { color: #fff; }
+  html:root:not([data-theme="light"]) .sv-card .sv-tip { color: #ffc9a8; }
+  html:root:not([data-theme="light"]) .sv-card .sv-tip::before { background: rgba(255,152,107,.18); color: #ffc9a8; }
+}
