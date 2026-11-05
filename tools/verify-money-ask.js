@@ -96,7 +96,7 @@ check("one-off income planned earlier → asked on its day", MoneyDue.dueToday(p
 /* reports use the real received amount (server image = app report) */
 const MoneyInsights = require(path.join(__dirname, "../js/money-insights.js"));
 p = base(); p.income = [p.income[0]];
-check("income this month = planned before answer", MoneyInsights.incomeThisMonth(p, "2026-10") === 800);
+check("income this month = 0 until received (recurring pay is not cash yet)", MoneyInsights.incomeThisMonth(p, "2026-10") === 0);
 MoneyDue.recordIncomeReceived(p.income[0], "2026-10", { amount: 760, date: "2026-10-05" });
 check("income this month = received 760 after answer", MoneyInsights.incomeThisMonth(p, "2026-10") === 760);
 check("weekly income counts the received day", MoneyInsights.incomeBetween(p, "2026-10-01", "2026-10-07") === 760 && MoneyInsights.incomeBetween(p, "2026-10-08", "2026-10-14") === 0);

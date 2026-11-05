@@ -101,7 +101,7 @@ const HomeV2 = (() => {
     calm: ["ជិតដល់កំណត់ថ្ងៃនេះហើយ ☁️", "Close to today's limit ☁️"],
     worry: ["ចាយលើសហើយ ប្រយ័ត្នបន្តិចណា 💸", "Over the limit, go easy 💸"]
   };
-  const MONEY_WAITING = ["អត់ទាន់មានលុយទេ ហាហា 😅 ប្រាក់ខែ ឬ freelance មកហើយ ចាំបញ្ចូលណា!", "No money yet haha 😅 Add your salary or freelance when it lands!"];
+  const MONEY_WAITING = ["រង់ចាំប្រាក់ខែ 💸", "Waiting for pay 💸"];
   let nomiStep = 0;
   function nomiLine(mood) {
     let seen = false;
@@ -323,7 +323,7 @@ const HomeV2 = (() => {
           <div class="hv2-soft-summary">
             <a class="hv2-soft-amt money-value${hide}" href="#money">${escapeHtml(plainMoney(available))}</a>
             <span class="hv2-soft-pill">${escapeHtml(L(`ចាយរួច ${pct}% · ${daysLeft} ថ្ងៃទៀត`, `${pct}% spent · ${daysLeft} days left`))}</span>
-            ${awaitingIncome ? `<span class="hv2-soft-income-note">${escapeHtml(L("មិនទាន់ទទួលប្រាក់ខែ ឬចំណូល freelance ទេ", "No salary or freelance income received yet"))}</span>` : ""}
+            ${awaitingIncome && !(sc.nomi && sc.talk) ? `<span class="hv2-soft-income-note">${escapeHtml(L("មិនទាន់ទទួលប្រាក់ខែ ឬចំណូល freelance ទេ", "No salary or freelance income received yet"))}</span>` : ""}
           </div>
         </div>
         ${sc.track ? track : ""}

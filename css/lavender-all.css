@@ -1403,3 +1403,14 @@ html:root:not([data-theme="light"]) body:has(#app .fv2-page) .fv2-quick-card {
   border: 1px solid rgba(182,168,255,.16) !important;
   background: #2e2956 !important;
 }
+@media all {
+  /* QC 5 Nov: dark switches + money check-in icon follow D1 lavender */
+  html:root:not([data-theme="light"]) .nfc-switch input:checked + span { background: linear-gradient(135deg, #9F8CFF, #7B68EE) !important; }
+  html:root:not([data-theme="light"]) .nfc-switch span { background: rgba(182,168,255,.22); }
+  html:root:not([data-theme="light"]) .nfc-switch span::after { background: #fff !important; }
+  html:root:not([data-theme="light"]) .nfc-ma-main { color: #fff !important; background: linear-gradient(135deg, #9F8CFF, #7B68EE) !important; }
+}
+@media (max-width: 900px) {
+  /* QC 5 Nov: the money tab row scrolls — soft fade at both edges instead of a hard cut */
+  .financial-sidebar-nav { -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 18px, #000 calc(100% - 18px), transparent 100%); mask-image: linear-gradient(90deg, transparent 0, #000 18px, #000 calc(100% - 18px), transparent 100%); scroll-padding-inline: 18px; padding-inline: 14px !important; }
+}
