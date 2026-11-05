@@ -1637,3 +1637,73 @@ html:root:not([data-theme="light"]) body:has(#app .fv2-page) .fv2-quick-card {
   html:root:not([data-theme="light"]) .nmc-tick { background: #2e2956; border-color: rgba(182,168,255,.18); color: #bdb7e6; }
   html:root:not([data-theme="light"]) .nmc-tick.is-on { background: rgba(95,224,160,.14); color: #5fe0a0; }
 }
+/* Nimo sheet: XP, streaks, today, real money, level road with outfits (5 Nov) */
+@media all {
+  .nmc { cursor: pointer; }
+  .nmc-pop-tip { display: block; margin-top: 6px; font-size: .68rem; opacity: .85; }
+  .nms { position: fixed; inset: 0; z-index: 8500; }
+  .nms-scrim { position: absolute; inset: 0; background: rgba(26,35,71,.45); opacity: 0; transition: opacity .25s; }
+  .nms-sheet { position: absolute; left: 50%; bottom: 0; display: flex; flex-direction: column; width: min(520px, 100%); max-height: 92vh; border-radius: 28px 28px 0 0; background: #F3F1F4; color: #1A2347; transform: translate(-50%, 100%); transition: transform .32s cubic-bezier(.2,.9,.3,1); }
+  .nms.is-in .nms-scrim { opacity: 1; }
+  .nms.is-in .nms-sheet { transform: translate(-50%, 0); }
+  body.nms-open { overflow: hidden; }
+  .nms-grab { flex: 0 0 auto; width: 40px; height: 5px; margin: 8px auto 0; border-radius: 99px; background: #dcd8ea; }
+  .nms-x { position: absolute; right: 12px; top: 10px; z-index: 2; width: 34px; height: 34px; border: 0; border-radius: 50%; background: #f1eeff; color: #504AB9; font-size: 1rem; cursor: pointer; }
+  .nms-sc { overflow: auto; padding: 6px 14px calc(18px + env(safe-area-inset-bottom)); overscroll-behavior: contain; }
+  .nms-big { position: relative; display: grid; justify-items: center; gap: 4px; padding: 6px 16px 14px; border-radius: 24px; overflow: hidden; color: #fff; text-align: center; background: radial-gradient(70% 80% at 50% 0%, rgba(255,214,190,.5), transparent 70%), linear-gradient(160deg, #7B68EE, #9F8CFF); }
+  .nms-stage { width: 140px; height: 134px; cursor: pointer; animation: nmcHop 3s ease-in-out infinite; }
+  .nms-stage .hv2-buddy { width: 100%; height: 100%; }
+  .nms-big h3 { margin: 0; font-size: 1.05rem; }
+  .nms-bar { width: 100%; height: 10px; border-radius: 99px; background: rgba(255,255,255,.3); overflow: hidden; }
+  .nms-bar i { display: block; height: 100%; border-radius: 99px; background: #fff; }
+  .nms-big small { font: 600 .7rem Inter, "Kantumruy Pro", sans-serif; opacity: .95; }
+  .nms-tag { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 8px; margin-top: 4px; padding: 4px 6px 4px 12px; border-radius: 99px; background: rgba(255,255,255,.22); font-size: .7rem; font-weight: 700; }
+  .nms-tag button { padding: 5px 14px; border: 0; border-radius: 99px; background: #fff; color: #504AB9; font: inherit; font-weight: 800; cursor: pointer; }
+  .nms-two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+  .nms-st { display: flex; align-items: center; gap: 9px; min-width: 0; padding: 9px 11px; border: 1px solid #ebe8f4; border-radius: 18px; background: #fff; }
+  .nms-st > span { display: grid; place-items: center; flex: 0 0 34px; height: 34px; border-radius: 12px; font-size: 1rem; }
+  .nms-st .is-fire { background: #fff1e8; } .nms-st .is-gold { background: #fff7e0; }
+  .nms-st b { display: block; font: 800 .95rem Inter, "Kantumruy Pro", sans-serif; }
+  .nms-st small { display: block; color: #7a7698; font-size: .62rem; line-height: 1.35; }
+  .nms h4 { display: flex; justify-content: space-between; align-items: baseline; margin: 16px 4px 8px; font-size: .86rem; }
+  .nms h4 span { color: #7a7698; font-size: .66rem; font-weight: 600; }
+  .nms-box { padding: 2px 12px; border: 1px solid #ebe8f4; border-radius: 20px; background: #fff; }
+  .nms-row { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 0; border: 0; background: none; color: inherit; font: inherit; font-size: .78rem; text-align: left; }
+  .nms-row + .nms-row { border-top: 1px solid #ebe8f4; }
+  button.nms-row { cursor: pointer; }
+  .nms-ck { display: grid; place-items: center; flex: 0 0 26px; height: 26px; border-radius: 9px; background: #f1eeff; color: #7a7698; font-size: .74rem; font-weight: 800; }
+  .nms-ck.is-on { background: #e8f8ef; color: #1f9d63; } .nms-ck.is-gold { background: #fff7e0; color: #9a6810; }
+  .nms-t { flex: 1; min-width: 0; } .nms-t small { display: block; color: #7a7698; font-size: .64rem; }
+  .nms-row.is-on .nms-t { color: #7a7698; }
+  .nms-row em { font-style: normal; font: 800 .72rem Inter, sans-serif; color: #7B68EE; white-space: nowrap; }
+  .nms-empty { margin: 10px 0; color: #7a7698; font-size: .72rem; }
+  .nms-road { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .nms-lvl { position: relative; display: grid; justify-items: center; gap: 2px; padding: 8px 2px 6px; border: 1px solid #ebe8f4; border-radius: 16px; background: #fff; color: inherit; font: inherit; cursor: pointer; }
+  .nms-lvl .hv2-buddy { width: 48px; height: 48px; }
+  .nms-lvl b { font: 800 .64rem Inter, sans-serif; }
+  .nms-lvl small { min-height: 2.6em; color: #7a7698; font-size: .56rem; line-height: 1.3; text-align: center; }
+  .nms-lvl.is-got b { color: #1f9d63; }
+  .nms-lvl.is-lock .hv2-buddy { filter: grayscale(1) opacity(.45); }
+  .nms-lvl.is-lock::after { content: ""; position: absolute; right: 5px; top: 5px; width: 15px; height: 15px; border-radius: 50%; background: #504AB9 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round'%3E%3Crect x='6' y='11' width='12' height='9' rx='2'/%3E%3Cpath d='M8.5 11V8a3.5 3.5 0 0 1 7 0v3'/%3E%3C/svg%3E") center/9px no-repeat; }
+  .nms-lvl.is-outfit::before { content: "👕"; position: absolute; left: 5px; top: 4px; font-size: .62rem; }
+  .nms-lvl.is-now { border-color: #7B68EE; box-shadow: 0 0 0 2px rgba(123,104,238,.25); }
+  .nms-lvl.is-sel { background: #f1eeff; }
+  .nms-lvl .hv2-buddy * { animation: none !important; }
+  .nms-try { display: block; width: 100%; margin-top: 14px; padding: 12px; border: 0; border-radius: 16px; background: linear-gradient(135deg, #7B68EE, #504AB9); color: #fff; font: inherit; font-weight: 800; font-size: .84rem; cursor: pointer; }
+  .nms-note { margin: 8px 0 0; color: #7a7698; font-size: .64rem; text-align: center; }
+  .nmc-pop { z-index: 9000; }
+
+  html:root:not([data-theme="light"]) .nms-sheet { background: #211d3d; color: #F4F2FF; }
+  html:root:not([data-theme="light"]) .nms-grab { background: rgba(182,168,255,.25); }
+  html:root:not([data-theme="light"]) .nms-x { background: rgba(182,168,255,.16); color: #fff; }
+  html:root:not([data-theme="light"]) :is(.nms-st, .nms-box, .nms-lvl) { background: #2e2956; border-color: rgba(182,168,255,.18); }
+  html:root:not([data-theme="light"]) .nms-row + .nms-row { border-top-color: rgba(182,168,255,.18); }
+  html:root:not([data-theme="light"]) :is(.nms-st small, .nms h4 span, .nms-t small, .nms-row.is-on .nms-t, .nms-empty, .nms-lvl small, .nms-note) { color: #bdb7e6; }
+  html:root:not([data-theme="light"]) .nms-ck { background: rgba(182,168,255,.14); color: #bdb7e6; }
+  html:root:not([data-theme="light"]) .nms-ck.is-on { background: rgba(95,224,160,.14); color: #5fe0a0; }
+  html:root:not([data-theme="light"]) .nms-ck.is-gold, html:root:not([data-theme="light"]) .nms-st .is-gold { background: rgba(245,196,90,.16); color: #ffd98a; }
+  html:root:not([data-theme="light"]) .nms-st .is-fire { background: rgba(255,152,107,.16); }
+  html:root:not([data-theme="light"]) .nms-row em { color: #C9BDFF; }
+  html:root:not([data-theme="light"]) .nms-lvl.is-got b { color: #5fe0a0; }
+  html:root:not([data-theme="light"]) .nms-lvl.is-sel { background: rgba(182,168,255,.16); }
+}
