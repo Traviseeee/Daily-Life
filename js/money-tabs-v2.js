@@ -149,10 +149,39 @@ const MoneyTabsV2 = (() => {
         <div class="sv-hist" hidden>${history.length ? `<small class="sv-hist-label">${escapeHtml(L("ដាក់សន្សំប្រចាំខែ", "Monthly savings"))}</small>${history.map(entry => `<div class="${entry.paid ? "is-paid" : ""}"><span>${escapeHtml(monthLabel(entry.month))}</span><b>${entry.paid ? "✓ " : ""}${money(Number(entry.amount || item.monthlyContribution || 0), item.currency)}</b></div>`).join("")}` : ""}${transactionHistory ? `<small class="sv-hist-label">${escapeHtml(L("ប្រើប្រាក់សន្សំ", "Savings used"))}</small>${transactionHistory}` : ""}${!history.length && !transactionHistory ? `<p>${escapeHtml(L("មិនទាន់មានប្រវត្តិ", "No history yet"))}</p>` : ""}</div>
       </section>`;
     }).join("");
-    const goldPortfolio = goldTransactions.length ? `<section class="sv-gold-portfolio"><header><span class="sv-gold-portfolio-icon">🪙</span><span class="sv-gold-portfolio-title"><small>${escapeHtml(L("មាសសរុប", "Gold owned"))}</small><strong>${numberForSavings(Math.max(0, ownedGoldChi), 2)} ${escapeHtml(L("ជី មាស", "Chi gold"))}</strong></span><span class="sv-gold-value"><small>${escapeHtml(L("តម្លៃប៉ាន់ស្មាន", "Est. value"))}</small><b>${currentInvestmentValue === null ? "—" : money(currentInvestmentValue)}</b></span>${ownedGoldChi > 0 ? `<button type="button" class="sv-gold-sell" data-sell-gold>${escapeHtml(L("លក់មាស", "Sell gold"))}</button>` : ""}</header><details class="sv-gold-details"><summary>📋 ${escapeHtml(L("ប្រវត្តិ និងដើមទុនសុទ្ធ", "History & net cost"))}</summary><div class="sv-gold-portfolio-total"><span><small>${escapeHtml(L("ដើមទុនសុទ្ធ", "Net invested"))}</small><b>${money(totalInvested)}</b></span><span><small>${escapeHtml(L("ចំណេញ/ខាត", "Gain/loss"))}</small><b>${goldProfitLoss === null ? "—" : `${goldProfitLoss >= 0 ? "+" : "−"}${money(Math.abs(goldProfitLoss))}`}</b></span></div><div class="sv-holding-list">${holdingRows}</div><small class="sv-gold-source">${escapeHtml(L("តម្លៃ Spot ប៉ាន់ស្មាន · តម្លៃហាងអាចខុស", "Spot estimate · shop prices may differ"))}</small></details></section>` : "";
-    return `${head}${market}${goldPortfolio}${sec(L("គណនីសន្សំ", "Savings accounts"), items.length, "add-savings")}${items.length ? cards : empty(t("noSavingsYet"), t("noSavingsBody"), "add-savings", t("addSavings"))}`;
+    const goldBuys = goldTransactions.filter(tx => tx.type === "gold");
+    const lastBuy = goldBuys.map(tx => tx.date || "").filter(Boolean).sort().at(-1) || "";
+    const goldPct = goldProfitLoss !== null && totalInvested > 0 ? goldProfitLoss / totalInvested * 100 : null;
+    const goldTrend = typeof SavingsMarket !== "undefined" && SavingsMarket.trend ? SavingsMarket.trend(30) : null;
+    const goldMood = goldProfitLoss === null ? "calm" : goldProfitLoss >= 0 ? "proud" : "worry";
+    const goldSay = goldProfitLoss === null ? L("កំពុងទាញតម្លៃមាស… រង់ចាំបន្តិច 🪙", "Checking the gold price… one sec 🪙")
+      : goldProfitLoss >= 0 ? (goldTrend !== null && goldTrend > 0 ? L(`មាសឡើងថ្លៃ ${numberForSavings(goldTrend, 1)}% ក្នុង 30 ថ្ងៃ ✨ ចំណេញ ${plainMoney(goldProfitLoss)} ហើយ!`, `Gold is up ${numberForSavings(goldTrend, 1)}% in 30 days ✨ You're ${plainMoney(goldProfitLoss)} ahead!`) : L(`មាសរបស់អ្នកចំណេញ ${plainMoney(goldProfitLoss)} ✨ រក្សាទុកល្អណាស់!`, `Your gold is ${plainMoney(goldProfitLoss)} ahead ✨ Nice keep!`))
+      : L(`តម្លៃធ្លាក់បន្តិច (${plainMoney(Math.abs(goldProfitLoss))}) · មាសជាការសន្សំរយៈវែង កុំបារម្ភ 💜`, `Price dipped a little (${plainMoney(Math.abs(goldProfitLoss))}) · gold is a long-term keep 💜`);
+    const GI = {
+      up: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 16l6-6 4 4 6-6"/></svg>',
+      down: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8l6 6 4-4 6 6"/></svg>',
+      plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
+      swap: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h11l-3-3M17 17H6l3 3"/></svg>',
+      list: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg>'
+    };
+    const goldNomi = typeof HomeV2 !== "undefined" && HomeV2.buddy ? `<span class="svg-nomi" data-nomi data-mood="${goldMood}" role="button" tabindex="0" aria-label="Nomi">${HomeV2.buddy(goldMood)}<i class="svg-coin" aria-hidden="true"></i></span>` : "";
+    const goldPortfolio = goldTransactions.length ? `<section class="sv-gold-portfolio svg-hero" data-gold-hero>
+      <div class="svg-row">${goldNomi}<div class="svg-main"><small>${escapeHtml(L("មាសរបស់ខ្ញុំ", "My gold"))}</small><strong>${numberForSavings(Math.max(0, ownedGoldChi), 2)} <span>${escapeHtml(L("ជី · 24K", "Chi · 24K"))}</span></strong>${goldProfitLoss === null ? "" : `<em class="svg-gain ${goldProfitLoss < 0 ? "is-down" : "is-up"}">${goldProfitLoss < 0 ? GI.down : GI.up}${goldProfitLoss < 0 ? "−" : "+"}${money(Math.abs(goldProfitLoss))}${goldPct === null ? "" : ` · ${numberForSavings(Math.abs(goldPct), 1)}%`}</em>`}</div></div>
+      <p class="svg-say" data-nomi-say>${escapeHtml(goldSay)}</p>
+      <div class="svg-tiles"><div><small>${escapeHtml(L("តម្លៃឥឡូវ", "Worth now"))}</small><b>${currentInvestmentValue === null ? "—" : money(currentInvestmentValue)}</b></div><div><small>${escapeHtml(L("ដើមទុន", "Paid"))}</small><b>${money(totalInvested)}</b></div><div><small>${escapeHtml(L("ទិញចុងក្រោយ", "Last buy"))}</small><b>${lastBuy ? escapeHtml(dayLabel(lastBuy, false)) : "—"}</b></div></div>
+      <div class="svg-acts"><button type="button" class="svg-btn is-primary" data-buy-gold>${GI.plus}${escapeHtml(L("ទិញមាស", "Buy gold"))}</button>${ownedGoldChi > 0 ? `<button type="button" class="svg-btn" data-sell-gold>${GI.swap}${escapeHtml(L("លក់មាស", "Sell gold"))}</button>` : ""}<button type="button" class="svg-btn is-icon" data-gold-hist aria-expanded="false" aria-label="${escapeAttr(L("ប្រវត្តិមាស", "Gold history"))}">${GI.list}</button></div>
+      <div class="svg-hist" hidden><div class="sv-holding-list">${holdingRows}</div><small class="sv-gold-source">${escapeHtml(L("តម្លៃ Spot ប៉ាន់ស្មាន · តម្លៃហាងអាចខុស", "Spot estimate · shop prices may differ"))}</small></div>
+    </section>` : "";
+    return `${head}${goldPortfolio}${market}${sec(L("គណនីសន្សំ", "Savings accounts"), items.length, "add-savings")}${items.length ? cards : empty(t("noSavingsYet"), t("noSavingsBody"), "add-savings", t("addSavings"))}`;
   }
+  const plainMoney = value => String(money(value)).replace(/<[^>]*>/g, "");
   document.addEventListener("click", event => {
+    const goldHist = event.target.closest("[data-gold-hist]");
+    if (goldHist) {
+      const panel = goldHist.closest("[data-gold-hero]")?.querySelector(".svg-hist");
+      if (panel) { panel.hidden = !panel.hidden; goldHist.setAttribute("aria-expanded", String(!panel.hidden)); goldHist.classList.toggle("on", !panel.hidden); }
+      return;
+    }
     const button = event.target.closest("[data-sv-hist]");
     if (!button) return;
     const panel = button.closest(".sv-card")?.querySelector(".sv-hist");

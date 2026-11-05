@@ -1325,6 +1325,11 @@ function bindMoney() {
     if (saving) openSavingsUseModal(saving);
   }));
   document.querySelectorAll("[data-sell-gold]").forEach(button => button.addEventListener("click", openGoldSaleModal));
+  document.querySelectorAll("[data-buy-gold]").forEach(button => button.addEventListener("click", () => {
+    const list = appData.savings || [];
+    const saving = list.find(item => item.id === button.dataset.buyGold) || list.find(item => Number(item.currentAmount || 0) > Number(item.reserveAmount || 0)) || list[0];
+    if (saving) openSavingsUseModal(saving, "gold");
+  }));
   document.querySelectorAll("[data-remove-gold-purchase]").forEach(button => button.addEventListener("click", () => removeGoldPurchase(button.dataset.savingId, button.dataset.removeGoldPurchase)));
   document.querySelectorAll("[data-sv-market-refresh]").forEach(button => button.addEventListener("click", async () => {
     button.disabled = true;
@@ -1495,7 +1500,7 @@ function openSavingsModal(item) {
   ], onSubmit(data) { const record = { ...data, targetAmount: Number(data.targetAmount || 0), currentAmount: Number(data.currentAmount || 0), reserveAmount: Number(data.reserveAmount || 0), monthlyContribution: Number(data.monthlyContribution || 0), currency: data.currency || appData.profile.currency || "USD" }; item ? Store.edit("savings", item.id, record) : Store.add("savings", record); Toast.show(item ? t("savingsSaved") : t("savingsAdded")); } });
 }
 
-function openSavingsUseModal(saving) {
+function openSavingsUseModal(saving, preset = "") {
   const startingBalance = Math.max(0, Number(saving.currentAmount || 0));
   const reserve = Math.min(startingBalance, Math.max(0, Number(saving.reserveAmount || 0)));
   const available = Math.max(0, startingBalance - reserve);
@@ -1503,7 +1508,7 @@ function openSavingsUseModal(saving) {
   const L = (km, en) => isKm ? km : en;
   const useOptions = ["spend", "gold", "investment"];
   Modal.open({ title: L("ប្រើប្រាក់សន្សំ", "Use savings"), submitText: L("បញ្ជាក់ការប្រើប្រាស់", "Confirm use"), fields: [
-    { name: "useType", label: L("ប្រើសម្រាប់", "Use for"), type: "select", options: useOptions, optionLabels: [L("ចំណាយ", "Spending"), L("ទិញមាស 24K", "Buy 24K gold"), L("វិនិយោគ ឬប្រើផ្សេងទៀត", "Other investment or use")], value: "spend" },
+    { name: "useType", label: L("ប្រើសម្រាប់", "Use for"), type: "select", options: useOptions, optionLabels: [L("ចំណាយ", "Spending"), L("ទិញមាស 24K", "Buy 24K gold"), L("វិនិយោគ ឬប្រើផ្សេងទៀត", "Other investment or use")], value: preset === "gold" ? "gold" : "spend" },
     { name: "amount", label: `${L("ចំនួនទឹកប្រាក់", "Amount")} · ${money(available, saving.currency)}`, type: "number", value: available, required: true },
     { name: "fees", label: L("ថ្លៃសេវាទិញមាស (ស្រេចចិត្ត)", "Purchase fees (optional)"), type: "number", value: "0" },
     { name: "category", label: t("category"), type: "select", options: expenseCategories, value: "Shopping" },

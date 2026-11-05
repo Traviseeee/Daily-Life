@@ -25,6 +25,15 @@ const SavingsMarket = (() => {
     if (!checkedAt) return state.hasAttempted ? L("មិនមានទិន្នន័យ", "unavailable") : L("កំពុងទាញទិន្នន័យ…", "Loading market data…");
     return new Date(checkedAt).toLocaleString(km() ? "km-KH" : "en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
   }
+  const ICON = {
+    bell: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 8 3 8H3s3-1 3-8M10 20a2 2 0 0 0 4 0"/></svg>',
+    refresh: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5"/></svg>'
+  };
+  function trend(days = 30) {
+    const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - days + 1);
+    const points = history().filter(item => new Date(`${item.date}T00:00:00`) >= cutoff && Number(item.goldUsdPerChi) > 0).map(item => Number(item.goldUsdPerChi));
+    return points.length >= 2 && points[0] > 0 ? (points[points.length - 1] - points[0]) / points[0] * 100 : null;
+  }
   function dailyChange(currency, current) {
     const previous = history().filter(item => item.date < new Date().toISOString().slice(0, 10)).sort((a, b) => a.date.localeCompare(b.date)).at(-1);
     const base = Number(currency === "KHR" ? previous?.goldKhrPerChi : previous?.goldUsdPerChi);
@@ -37,12 +46,12 @@ const SavingsMarket = (() => {
     const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - range + 1);
     const series = history().filter(item => new Date(`${item.date}T00:00:00`) >= cutoff && Number(item.goldUsdPerChi) > 0);
     const points = series.map(item => Number(item.goldUsdPerChi));
-    if (points.length < 2) return `<div class="sv-market-chart-empty"><span aria-hidden="true">📈</span><b>${escapeHtml(L("កំពុងប្រមូលទិន្នន័យក្រាប…", "Collecting chart data…"))}</b></div>`;
+    if (points.length < 2) return `<div class="sv-market-chart-empty"><b>${escapeHtml(L("កំពុងប្រមូលទិន្នន័យក្រាប…", "Collecting chart data…"))}</b></div>`;
     const min = Math.min(...points), max = Math.max(...points), span = max - min || 1;
-    const path = points.map((value, i) => `${i ? "L" : "M"}${(i / (points.length - 1) * 100).toFixed(2)},${(38 - (value - min) / span * 30).toFixed(2)}`).join(" ");
-    const first = points[0], last = points[points.length - 1], pct = first ? ((last - first) / first) * 100 : 0;
-    const tone = pct < 0 ? "down" : "up";
-    return `<div class="sv-market-chart-head"><span>${escapeHtml(L("តម្លៃមាស USD / ជី", "Gold price · USD / Chi"))}</span><b class="is-${tone}">${pct > 0 ? "+" : ""}${number(pct, 2)}%</b></div><svg class="sv-market-chart" viewBox="0 0 100 42" preserveAspectRatio="none" role="img" aria-label="Gold price history chart"><path d="${path}" fill="none" stroke="currentColor" stroke-width="1.8" vector-effect="non-scaling-stroke"/><circle cx="100" cy="${(38 - (last - min) / span * 30).toFixed(2)}" r="1.5" fill="currentColor"/></svg><div class="sv-market-chart-scale"><span>$${number(min, 2)}</span><span>${series[0].date} — ${series.at(-1).date}</span><span>$${number(max, 2)}</span></div>`;
+    const xy = points.map((value, i) => [(i / (points.length - 1) * 100).toFixed(2), (36 - (value - min) / span * 28).toFixed(2)]);
+    const line = xy.map(([x, y], i) => `${i ? "L" : "M"}${x},${y}`).join(" ");
+    const last = xy[xy.length - 1];
+    return `<svg class="sv-market-chart svm-chart" viewBox="0 0 100 42" preserveAspectRatio="none" role="img" aria-label="${escapeAttr(L("ក្រាបតម្លៃមាស", "Gold price history chart"))}"><defs><linearGradient id="svmFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E8B03C" stop-opacity=".35"/><stop offset="1" stop-color="#E8B03C" stop-opacity="0"/></linearGradient></defs><path d="${line} L100,42 L0,42 Z" fill="url(#svmFill)"/><path d="${line}" fill="none" stroke="#E0A42E" stroke-width="2.2" vector-effect="non-scaling-stroke" stroke-linejoin="round"/></svg><span class="svm-dot" style="top:${(last[1] / 42 * 100).toFixed(1)}%"></span><div class="sv-market-chart-scale"><span>$${number(min, 2)}</span><span>${series[0].date.slice(5)} — ${series.at(-1).date.slice(5)}</span><span>$${number(max, 2)}</span></div>`;
   }
   const typeLabel = rule => ({ rise: L("ឡើង", "Rises"), drop: L("ធ្លាក់", "Drops"), above: L("លើស", "Above"), below: L("ក្រោម", "Below") })[rule.type] || rule.type;
   function alertMarkup() {
@@ -57,14 +66,18 @@ const SavingsMarket = (() => {
   function content() {
     const usd = Number(state.goldUsdPerOunce) > 0 ? Number(state.goldUsdPerOunce) / GRAMS_PER_TROY_OUNCE * GRAMS_PER_CHI : 0;
     const khr = usd > 0 && Number(state.usdKhr) > 0 ? usd * Number(state.usdKhr) : 0;
-    const gold = usd > 0 ? `<div class="sv-market-tile"><span class="sv-market-label"><i class="sv-market-dot is-gold"></i>${escapeHtml(L("មាស 24K · ដុល្លារ", "24K gold · USD"))}</span><strong>$${number(usd, 2)}<small>${escapeHtml(L("/ ជី", "/ Chi"))}</small></strong>${dailyChange("USD", usd)}</div>` : `<div class="sv-market-tile is-muted"><span class="sv-market-label"><i class="sv-market-dot is-gold"></i>24K · USD</span><strong>${escapeHtml(L("កំពុងផ្ទុក…", "Loading…"))}</strong></div>`;
-    const goldKhr = khr > 0 ? `<div class="sv-market-tile"><span class="sv-market-label"><i class="sv-market-dot is-riel"></i>${escapeHtml(L("មាស 24K · រៀល", "24K gold · riel"))}</span><strong>៛${number(khr)}<small>${escapeHtml(L("/ ជី", "/ Chi"))}</small></strong>${dailyChange("KHR", khr)}</div>` : `<div class="sv-market-tile is-muted"><span class="sv-market-label">24K · KHR</span><strong>${escapeHtml(L("កំពុងផ្ទុក…", "Loading…"))}</strong></div>`;
-    const fx = Number(state.usdKhr) > 0 ? `<div class="sv-market-fx"><span>USD/KHR</span><b>${number(state.usdKhr)} ៛</b><small>${escapeHtml(L("អត្រាយោងប្រចាំថ្ងៃ", "daily reference rate"))}</small></div>` : `<div class="sv-market-fx is-muted"><span>USD/KHR</span><b>${escapeHtml(L("មិនមានទិន្នន័យ", "Unavailable"))}</b></div>`;
+    const pctSpan = (a, b) => (a > 0 && b > 0 ? (b - a) / a * 100 : null);
+    const prev = history().filter(item => item.date < new Date().toISOString().slice(0, 10) && Number(item.goldUsdPerChi) > 0).sort((a, b) => a.date.localeCompare(b.date)).at(-1);
+    const day = pctSpan(Number(prev?.goldUsdPerChi), usd);
+    const signed = v => `${v > 0 ? "+" : v < 0 ? "−" : ""}${number(Math.abs(v), 2)}%`;
+    const trendPct = trend(range);
+    const price = usd > 0 ? `<div class="svm-price"><b>$${number(usd, 2)}</b><span>${escapeHtml(L("/ ជី", "/ Chi"))}</span>${trendPct === null ? "" : `<em class="svm-chg ${trendPct < 0 ? "is-down" : "is-up"}">${signed(trendPct)} · ${range === 365 ? "1y" : `${range}d`}</em>`}</div>` : `<div class="svm-price is-muted"><b>${escapeHtml(L("កំពុងផ្ទុក…", "Loading…"))}</b></div>`;
+    const chips = [khr > 0 ? `៛${number(khr)} ${L("/ ជី", "/ Chi")}` : "", Number(state.usdKhr) > 0 ? `1$ = ${number(state.usdKhr)}៛` : "", day === null ? "" : `${L("ថ្ងៃនេះ", "Today")} ${signed(day)}`].filter(Boolean).map(text => `<span>${escapeHtml(text)}</span>`).join("");
     const lastGoldQuoteAt = Number(state.goldFetchedAt || state.fetchedAt || 0);
     const stale = lastGoldQuoteAt && Date.now() - lastGoldQuoteAt > 6 * 60 * 60 * 1000;
     const sourceHint = L("Gold API · Spot 24K / ជី · KHR តាម Frankfurter · តម្លៃហាងអាចខុស", "Gold API · 24K spot / Chi · Frankfurter KHR · shop prices may vary");
     const metaLabel = stale ? L("តម្លៃអាចចាស់", "May be outdated") : L("ធ្វើបច្ចុប្បន្នភាព", "Updated");
-    return `<div class="sv-market-quotes">${gold}${goldKhr}${fx}</div><small class="sv-market-meta" title="${escapeAttr(sourceHint)}">${escapeHtml(metaLabel)} · ${escapeHtml(timeLabel())}</small><div class="sv-market-history"><div class="sv-market-history-head"><b>${escapeHtml(L("ប្រវត្តិតម្លៃ", "Price history"))}</b><div class="sv-market-range" role="group" aria-label="${escapeAttr(L("រយៈពេលក្រាប", "Chart range"))}">${[7, 30, 365].map(days => `<button type="button" data-sv-range="${days}" class="${range === days ? "is-active" : ""}">${days === 365 ? "1y" : `${days}d`}</button>`).join("")}</div></div>${chartMarkup()}</div><div class="sv-market-alert-head"><b>🔔 ${escapeHtml(L("ជូនដំណឹង", "Alerts"))}</b><button type="button" data-sv-alert-toggle aria-expanded="${alertsOpen}">${alertsOpen ? "−" : "＋"} ${escapeHtml(L("ច្បាប់", "Rules"))} · ${rules().length}</button></div>${alertMarkup()}${alertHistoryMarkup()}`;
+    return `${price}${chips ? `<div class="svm-chips">${chips}</div>` : ""}<div class="svm-chart-box">${chartMarkup()}</div><div class="sv-market-range svm-range" role="group" aria-label="${escapeAttr(L("រយៈពេលក្រាប", "Chart range"))}">${[7, 30, 365].map(days => `<button type="button" data-sv-range="${days}" class="${range === days ? "is-active" : ""}">${days === 365 ? "1y" : `${days}d`}</button>`).join("")}</div><button type="button" class="svm-alert-line" data-sv-alert-toggle aria-expanded="${alertsOpen}"><span class="svm-ii">${ICON.bell}</span><span><b>${escapeHtml(L("ជូនដំណឹងតម្លៃ", "Price alerts"))}</b><small>${escapeHtml(L("ប្រាប់ពេលមាសធ្លាក់ ឬឡើង", "Tell me when gold drops or rises"))}</small></span><em>${rules().length} ${alertsOpen ? "−" : "›"}</em></button>${alertMarkup()}${alertHistoryMarkup()}<small class="sv-market-meta" title="${escapeAttr(sourceHint)}">${escapeHtml(metaLabel)} · ${escapeHtml(timeLabel())} · ${escapeHtml(L("តម្លៃហាងអាចខុស", "shop prices may differ"))}</small>`;
   }
   function paint() { const root = document.querySelector("[data-savings-market]"); if (root) root.innerHTML = content(); }
   async function fetchJson(url) {
@@ -119,8 +132,9 @@ const SavingsMarket = (() => {
   });
   window.setInterval(() => { if (document.visibilityState === "visible" && document.querySelector("[data-savings-market]")) refresh(true); }, CACHE_MS);
   return {
-    render() { if (!fresh()) refresh(); return `<section class="sv-market-card" aria-label="${escapeAttr(L("ព័ត៌មានតម្លៃមាស", "Gold prices"))}"><div class="sv-market-heading"><strong>🪙 ${escapeHtml(L("តម្លៃមាស 24K", "24K gold prices"))}</strong><button type="button" class="sv-market-refresh" data-sv-market-refresh aria-label="${escapeAttr(L("ធ្វើបច្ចុប្បន្នភាព", "Refresh market quotes"))}" title="${escapeAttr(L("ធ្វើបច្ចុប្បន្នភាព", "Refresh"))}">↻</button></div><div data-savings-market>${content()}</div></section>`; },
+    render() { if (!fresh()) refresh(); return `<section class="sv-market-card" aria-label="${escapeAttr(L("ព័ត៌មានតម្លៃមាស", "Gold prices"))}"><div class="sv-market-heading"><strong>${escapeHtml(L("តម្លៃមាស 24K", "24K gold price"))}</strong><button type="button" class="sv-market-refresh" data-sv-market-refresh aria-label="${escapeAttr(L("ធ្វើបច្ចុប្បន្នភាព", "Refresh market quotes"))}" title="${escapeAttr(L("ធ្វើបច្ចុប្បន្នភាព", "Refresh"))}">${ICON.refresh}</button></div><div data-savings-market>${content()}</div></section>`; },
     refresh,
+    trend,
     quote: () => ({ ...state, goldUsdPerGram: Number(state.goldUsdPerOunce || 0) / GRAMS_PER_TROY_OUNCE, goldUsdPerChi: Number(state.goldUsdPerOunce || 0) / GRAMS_PER_TROY_OUNCE * GRAMS_PER_CHI, goldKhrPerChi: Number(state.goldUsdPerOunce || 0) / GRAMS_PER_TROY_OUNCE * GRAMS_PER_CHI * Number(state.usdKhr || 0) })
   };
 })();
