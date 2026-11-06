@@ -141,3 +141,7 @@ html:root body .hv2 .hv4-today .hv2-tl-row.has-ticker { min-height: 74px; }
 /* the hero fade reaches under the week strip and the cards: keep them above it */
 html:root body .hv2-head.is-lav .hv2-week { position: relative; z-index: 2; }
 html:root body .hv2 .hv2-body.hv4 > * { position: relative; z-index: 1; }
+/* picked mood: one clean lavender circle (no orange ring, no second box behind it) */
+html:root body .hv2 .hv4-me .hv2-mood-btn.is-on { background: none !important; }
+html:root body .hv2 .hv4-me .hv2-mood-btn.is-on span { background: #e4ddff !important; box-shadow: none !important; }
+html:root:not([data-theme="light"]) body .hv2 .hv4-me .hv2-mood-btn.is-on span { background: rgba(182, 168, 255, .3) !important; }
