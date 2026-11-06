@@ -60,6 +60,8 @@ const HomeV2 = (() => {
     const spentToday = d ? (appData.expenses || []).filter(item => item.date === d.todayIso).reduce((t, item) => t + toProfileCurrency(item.amount, item.currency), 0) : 0;
     if (m && (m.left < 0 || (spentToday > 0 && spentToday > Math.max(0, m.left + spentToday) / daysLeft))) return "worry";
     if (d && d.focus.length && d.focus.every(item => item.done)) return "love";
+    // the rest follows the clock in Phnom Penh (js/nimo-day.js, 7 Nov)
+    if (typeof NimoDay !== "undefined") return NimoDay.moodNow();
     if (h >= 22 || h < 5) return "sleepy";
     if (h < 11) return "wink";
     if (h >= 18) return "calm";
@@ -67,6 +69,8 @@ const HomeV2 = (() => {
   }
   let MOOD_NOW = "happy";
   const MASCOT_FN = (m = MOOD_NOW) => buddy(m);
+  // the big Nomi on Home: what Nimo is doing right now in Phnom Penh, unless money / focus says otherwise
+  const heroBuddy = () => (MOOD_NOW === "worry" || MOOD_NOW === "love" || typeof NimoDay === "undefined" ? buddy(MOOD_NOW) : NimoDay.svg());
   // each place shows Nomi in its own mood (31 Oct)
   function progMood(d) {
     const done = d.focus.filter(item => item.done).length;
@@ -187,7 +191,7 @@ const HomeV2 = (() => {
         <a class="hv2-bell hv2-menu" href="#launcher" aria-label="${escapeAttr(L("ម៉ឺនុយទាំងអស់", "All menus"))}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="4" y="4" width="6.5" height="6.5" rx="2"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="2"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="2"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="2"/></svg></a>
         <button type="button" class="hv2-bell" data-hv2-bell aria-label="${escapeAttr(L("ការជូនដំណឹង", "Notifications"))}">${document.getElementById("bellButton")?.innerHTML || Icons.bell()}</button>
       </div>
-      <div class="hv2-title-row">${lav() ? "" : `<button type="button" class="hv2-nomi-dark" data-nomi aria-label="Nomi">${MASCOT_FN()}<span class="hv2-say" data-nomi-say>${escapeHtml(nomiLine(MOOD_NOW))}</span></button>`}
+      <div class="hv2-title-row">${lav() ? "" : `<button type="button" class="hv2-nomi-dark" data-nomi aria-label="Nomi">${heroBuddy()}<span class="hv2-say" data-nomi-say>${escapeHtml(nomiLine(MOOD_NOW))}</span></button>`}
         <div class="hv2-title">
           ${lav() ? `<small class="hv4-date">${escapeHtml(longDate(today))}</small>` : ""}
           <h1>${things ? L(`<span>${things} រឿង</span> ថ្ងៃនេះ`, `<span>${things}</span> to do`) : L(`ថ្ងៃនេះ <span>ទំនេរ</span> 🌿`, `Today is <span>free</span> 🌿`)}</h1>
@@ -200,7 +204,7 @@ const HomeV2 = (() => {
           </div>
         </div>
       </div>
-      ${lav() ? `<button type="button" class="hv2-hero-buddy" data-nomi aria-label="Nomi">${MASCOT_FN()}<span class="hv2-say" data-nomi-say data-hero-say>${escapeHtml(nomiLine(MOOD_NOW))}</span></button>${nimoBadge()}</div>` : ""}
+      ${lav() ? `<button type="button" class="hv2-hero-buddy" data-nomi aria-label="Nomi">${heroBuddy()}<span class="hv2-say" data-nomi-say data-hero-say>${escapeHtml(nomiLine(MOOD_NOW))}</span></button>${nimoBadge()}</div>` : ""}
       <nav class="hv2-week" aria-label="${escapeAttr(L("សប្តាហ៍នេះ", "This week"))}">${week.map(date => {
         const key = iso(date);
         const on = key === d.todayIso;

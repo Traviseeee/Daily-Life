@@ -45,7 +45,7 @@ const LauncherV2 = (() => {
         <span class="lv-hi-tx"><small>${escapeHtml(`${date} · ${hello}`)}</small><b>${escapeHtml(String(p.name || L("ភ្ញៀវ", "Guest")).split(/\s+/)[0])}</b></span>
         ${lav() ? `<a class="lv-bell" href="#notifications" aria-label="${escapeAttr(L("ការជូនដំណឹង", "Notifications"))}">${Icons.bell()}</a>` : `<span class="lv-wx" data-hv2-wx role="button" tabindex="0">${document.getElementById("topbarWeather")?.innerHTML || ""}</span>`}
       </div>
-      ${lav() ? (() => { const [say, mood] = nomiLine(); return `<div class="lv-talk"><span class="lv-nomi" data-nomi data-mood="${mood}" role="button" tabindex="0" aria-label="Nomi">${HomeV2.buddy(mood)}</span><span class="hv2-say lv-say" data-nomi-say>${escapeHtml(say)}</span></div>`; })() : ""}
+      ${lav() ? (() => { const [say, mood] = nomiLine(); return `<div class="lv-talk"><span class="lv-nomi" data-nomi data-mood="${mood}" role="button" tabindex="0" aria-label="Nomi">${mood === "worry" || typeof NimoDay === "undefined" ? HomeV2.buddy(mood) : NimoDay.svg()}</span><span class="hv2-say lv-say" data-nomi-say>${escapeHtml(say)}</span></div>`; })() : ""}
       <div class="lv-search">
         <button type="button" class="lv-search-go" data-lv-search>${lav() ? Icons.search() : "🔍"} <span>${escapeHtml(L("ស្វែងរកក្នុង MYLIFE…", "Search MYLIFE…"))}</span></button>
         ${lav() ? `<a class="lv-scan-pill" href="#scan">${Icons.scan()}<span>${escapeHtml(L("ស្កេន", "Scan"))}</span></a><button type="button" class="lv-search-btn lv-ai-btn" data-lv-ai aria-label="AI">${Icons.spark()}</button>` : `<a class="lv-search-btn" href="#scan" aria-label="${escapeAttr(L("ស្កេន", "Scan"))}">${Icons.scan()}</a>

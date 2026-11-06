@@ -1,4 +1,4 @@
-const CACHE_NAME = "mylife-pwa-fb0f7373";
+const CACHE_NAME = "mylife-pwa-46fbefbd";
 // red number on the Home Screen icon: the app saves its bell count here and a
 // push that arrives while the app is closed adds 1 to it
 const BADGE_CACHE = "mylife-badge";
@@ -51,6 +51,7 @@ const APP_SHELL = [
   "./css/home-v4.css",
   "./css/ios-safe.css",
   "./css/launcher-v3.css",
+  "./css/nimo-day.css",
   "./css/member-profile.css",
   "./css/family-chat.css",
   "./css/done-feed.css",
@@ -123,6 +124,7 @@ const APP_SHELL = [
   "./js/nimo-life.js",
   "./js/auto-budget.js",
   "./js/done-feed.js",
+  "./js/nimo-day.js",
   "./js/home-v2.js",
   "./js/money-v2.js",
   "./js/money-tabs-v2.js",

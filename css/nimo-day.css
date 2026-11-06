@@ -1,0 +1,73 @@
+/* Nimo's day (7 Nov 2026): parts + motion for js/nimo-day.js. Classes are nd-* so they never mix with the classic Nomi (nb-*). */
+svg.nd-scene { overflow: visible; }
+.nd-scene .nd-body { transform-origin:50px 90px; animation:ndbreathe 3.2s ease-in-out infinite; }
+.nd-scene .nd-eye { transform-box:fill-box; transform-origin:center; animation:ndblink 4.2s infinite; }
+.nd-scene .nd-tail { transform-origin:74px 80px; animation:ndtail 2.4s ease-in-out infinite; }
+.nd-scene .nd-ear-l { transform-origin:36px 30px; animation:ndear 5s infinite; }
+.nd-scene .nd-ear-r { transform-origin:64px 30px; animation:ndear 5s .3s infinite; }
+/* wake: stretch up + yawn */
+.nd-is-wake .nd-body { animation:ndstretch 3.6s ease-in-out infinite; }
+.nd-is-wake .nd-yawn { transform-box:fill-box; transform-origin:center; animation:ndyawn 3.6s ease-in-out infinite; }
+.nd-is-wake .nd-sun { animation:ndrise 3.6s ease-in-out infinite; }
+/* coffee: sip + steam */
+.nd-is-coffee .nd-cup { transform-origin:30px 74px; animation:ndsip 4s ease-in-out infinite; }
+.nd-steam path { stroke-dasharray:14; animation:ndsteam 2.2s linear infinite; opacity:.8; }
+.nd-steam path:nth-child(2) { animation-delay:.7s; }
+.nd-steam path:nth-child(3) { animation-delay:1.4s; }
+.nd-is-coffee .nd-toast { animation:ndhop 2s ease-in-out infinite; }
+/* work: typing paws, little ideas */
+.nd-is-work .nd-body, .nd-is-work2 .nd-body { animation:ndbreathe 2.6s ease-in-out infinite; }
+.nd-paw-l { animation:ndtype .32s ease-in-out infinite alternate; }
+.nd-paw-r { animation:ndtype .32s .16s ease-in-out infinite alternate; }
+.nd-spark { transform-box:fill-box; transform-origin:center; animation:ndspark 1.8s ease-in-out infinite; }
+.nd-spark:nth-of-type(2) { animation-delay:.6s; }
+.nd-is-work2 .nd-head { transform-origin:50px 70px; animation:ndthink 3s ease-in-out infinite; }
+.nd-bulb { animation:ndbulb 3s ease-in-out infinite; }
+/* lunch: chopsticks + chewing + hearts */
+.nd-chop { transform-origin:72px 60px; animation:ndchop 1.1s ease-in-out infinite; }
+.nd-chew { transform-box:fill-box; transform-origin:center; animation:ndchew .55s ease-in-out infinite alternate; }
+.nd-floatheart { animation:ndfloatup 2.6s ease-out infinite; opacity:0; }
+.nd-floatheart.d2 { animation-delay:1.3s; }
+/* relax: sway with music */
+.nd-is-relax .nd-body { transform-origin:50px 92px; animation:ndsway 2.2s ease-in-out infinite; }
+.nd-note-m { animation:ndfloatup 2.4s ease-out infinite; opacity:0; }
+.nd-note-m.d2 { animation-delay:.8s; } .nd-note-m.d3 { animation-delay:1.6s; }
+/* dinner with family: happy bounce */
+.nd-is-dinner .nd-body { animation:ndhop 1.6s ease-in-out infinite; }
+/* sleepy: slow nod, droopy ears */
+.nd-is-sleepy .nd-head { transform-origin:50px 72px; animation:ndnod 3.4s ease-in-out infinite; }
+.nd-is-sleepy .nd-ear-l, .nd-is-sleepy .nd-ear-r { animation:none; }
+.nd-is-sleepy .nd-ear-l { transform:rotate(-14deg); } .nd-is-sleepy .nd-ear-r { transform:rotate(14deg); }
+.nd-is-sleepy .nd-rub { transform-origin:30px 62px; animation:ndrub 3.4s ease-in-out infinite; }
+/* sleep: curled, slow breathing, z z z */
+.nd-is-sleep .nd-body { animation:ndsleepbreathe 4.5s ease-in-out infinite; }
+.nd-is-sleep .nd-tail { animation:none; }
+.nd-zz text { animation:ndzz 3s ease-out infinite; opacity:0; }
+.nd-zz text:nth-child(2) { animation-delay:1s; } .nd-zz text:nth-child(3) { animation-delay:2s; }
+.nd-moon { animation:ndglow 4s ease-in-out infinite; }
+
+@keyframes ndbreathe { 0%,100% { transform:scale(1,1); } 50% { transform:scale(1.025,.975); } }
+@keyframes ndblink { 0%,92%,100% { transform:scaleY(1); } 95% { transform:scaleY(.1); } }
+@keyframes ndtail { 0%,100% { transform:rotate(0); } 50% { transform:rotate(-12deg); } }
+@keyframes ndear { 0%,88%,100% { transform:rotate(0); } 92% { transform:rotate(-10deg); } }
+@keyframes ndstretch { 0%,100% { transform:scale(1,1); } 35%,55% { transform:scale(.94,1.1); } }
+@keyframes ndyawn { 0%,20%,80%,100% { transform:scale(.4); } 40%,60% { transform:scale(1.15); } }
+@keyframes ndrise { 0% { transform:translateY(8px); opacity:.6; } 50% { transform:translateY(0); opacity:1; } 100% { transform:translateY(8px); opacity:.6; } }
+@keyframes ndsip { 0%,60%,100% { transform:rotate(0) translateY(0); } 70%,85% { transform:rotate(-24deg) translate(4px,-10px); } }
+@keyframes ndsteam { from { stroke-dashoffset:28; transform:translateY(0); opacity:.8; } to { stroke-dashoffset:0; transform:translateY(-8px); opacity:0; } }
+@keyframes ndhop { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-3px); } }
+@keyframes ndtype { from { transform:translateY(0); } to { transform:translateY(-3px); } }
+@keyframes ndspark { 0%,100% { transform:scale(.3); opacity:0; } 50% { transform:scale(1); opacity:1; } }
+@keyframes ndthink { 0%,100% { transform:rotate(0); } 50% { transform:rotate(-6deg); } }
+@keyframes ndbulb { 0%,40%,100% { opacity:.25; } 55%,85% { opacity:1; } }
+@keyframes ndchop { 0%,100% { transform:rotate(0); } 50% { transform:rotate(-22deg) translate(-2px,-4px); } }
+@keyframes ndchew { from { transform:scaleY(.6); } to { transform:scaleY(1.2); } }
+@keyframes ndfloatup { 0% { transform:translateY(6px); opacity:0; } 20% { opacity:1; } 100% { transform:translateY(-22px); opacity:0; } }
+@keyframes ndsway { 0%,100% { transform:rotate(-5deg); } 50% { transform:rotate(5deg); } }
+@keyframes ndnod { 0%,40%,100% { transform:rotate(0) translateY(0); } 60%,75% { transform:rotate(8deg) translateY(3px); } }
+@keyframes ndrub { 0%,55%,100% { transform:rotate(0); } 65%,85% { transform:rotate(-18deg) translate(4px,-6px); } }
+@keyframes ndsleepbreathe { 0%,100% { transform:scale(1,1); } 50% { transform:scale(1.04,.96); } }
+@keyframes ndzz { 0% { transform:translate(0,6px) scale(.6); opacity:0; } 25% { opacity:1; } 100% { transform:translate(14px,-22px) scale(1.25); opacity:0; } }
+@keyframes ndglow { 0%,100% { filter:drop-shadow(0 0 2px #fff6c2); } 50% { filter:drop-shadow(0 0 7px #fff6c2); } }
+@keyframes ndtwinkle { 0%,100% { opacity:.25; } 50% { opacity:1; } }
+@media (prefers-reduced-motion: reduce) { .nd-scene * { animation:none !important; } }
