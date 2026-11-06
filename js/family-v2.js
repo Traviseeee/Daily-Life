@@ -284,12 +284,29 @@ const FamilyV2 = (() => {
     const when = d === 0 ? L("ហៅថ្ងៃនេះ", "called today") : d === 1 ? L("ហៅម្សិលមិញ", "called yesterday") : L(`ហៅចុងក្រោយ ${d} ថ្ងៃមុន`, `last call ${d} days ago`);
     return d >= 10 ? `${when} · ${L("យូរហើយ 💜", "it's been a while 💜")}` : when;
   }
+  // the family account behind a card: its link, else the one member with the same name
+  function accountUid(member) {
+    const g = groupState();
+    if (!g?.family || typeof FamilyChat === "undefined") return "";
+    const others = (g.members || []).filter(m => m.user_id !== g.me);
+    if (member.userId) return others.some(m => m.user_id === member.userId) ? member.userId : "";
+    const norm = v => String(v || "").trim().toLowerCase();
+    const want = norm(member.name);
+    if (!want) return "";
+    const nameOfM = m => (typeof FamilyGroup !== "undefined" && FamilyGroup.nameOf ? FamilyGroup.nameOf(m) : m.display_name);
+    let hit = others.filter(m => norm(nameOfM(m)) === want || norm(m.display_name) === want);
+    if (!hit.length) hit = others.filter(m => norm(nameOfM(m)).split(/\s+/)[0] === want.split(/\s+/)[0]);
+    return hit.length === 1 ? hit[0].user_id : "";
+  }
   // call / message / love buttons for one member (no phone: call and message add the number)
   function careButtons(member) {
     const tel = telOf(member);
     const id = escapeAttr(member.id);
     const call = tel ? `<a class="fv4-act is-call" href="tel:${escapeAttr(tel)}" data-fv-called="${id}" aria-label="${escapeAttr(L(`ហៅទៅ ${member.name}`, `Call ${member.name}`))}">${FI.phone}</a>` : `<button class="fv4-act is-call is-off" type="button" data-fv-edit="${id}" aria-label="${escapeAttr(L("បន្ថែមលេខទូរស័ព្ទ", "Add phone"))}">${FI.phone}</button>`;
-    const sms = tel ? `<a class="fv4-act is-msg" href="sms:${escapeAttr(tel)}" aria-label="${escapeAttr(L(`ផ្ញើសារទៅ ${member.name}`, `Message ${member.name}`))}">${FI.msg}</a>` : `<button class="fv4-act is-msg is-off" type="button" data-fv-edit="${id}" aria-label="${escapeAttr(L("បន្ថែមលេខទូរស័ព្ទ", "Add phone"))}">${FI.msg}</button>`;
+    // a member with a MYLIFE account → open the private in-app chat (6 Nov); otherwise SMS as before
+    const chatUid = accountUid(member);
+    const sms = chatUid ? `<a class="fv4-act is-msg" href="#chat/dm-${escapeAttr(chatUid)}" aria-label="${escapeAttr(L(`ជជែកជាមួយ ${member.name}`, `Chat with ${member.name}`))}">${FI.msg}</a>`
+      : tel ? `<a class="fv4-act is-msg" href="sms:${escapeAttr(tel)}" aria-label="${escapeAttr(L(`ផ្ញើសារទៅ ${member.name}`, `Message ${member.name}`))}">${FI.msg}</a>` : `<button class="fv4-act is-msg is-off" type="button" data-fv-edit="${id}" aria-label="${escapeAttr(L("បន្ថែមលេខទូរស័ព្ទ", "Add phone"))}">${FI.msg}</button>`;
     const love = tel ? `<a class="fv4-act is-love" href="sms:${escapeAttr(tel)}?&body=${encodeURIComponent(loveText())}" aria-label="${escapeAttr(L("ផ្ញើក្តីស្រឡាញ់", "Send love"))}">${FI.heart}</a>` : `<button class="fv4-act is-love" type="button" data-fv-sheet="${id}" aria-label="${escapeAttr(L("ផ្ញើក្តីស្រឡាញ់", "Send love"))}">${FI.heart}</button>`;
     return `${call}${sms}${love}`;
   }
