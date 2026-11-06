@@ -87,7 +87,7 @@ const HomeV2 = (() => {
     happy: [["ថ្ងៃនេះល្អណាស់! ចាប់ផ្តើមតូចៗ 🌱", "Nice day! Start small 🌱"], ["ខ្ញុំនៅទីនេះជាមួយអ្នក 💜", "I'm right here with you 💜"]],
     cheer: [["អស្ចារ្យ! ធ្វើការផ្តោតរួចហើយ 🎉", "Amazing! Focus all done 🎉"], ["អ្នកពូកែណាស់ថ្ងៃនេះ ✨", "You did great today ✨"]],
     sleepy: [["យប់ហើយ… សម្រាកឱ្យបានល្អណា 😴", "It's late… rest well 😴"], ["ស្អែកយើងបន្តទៀត 🌙", "We'll keep going tomorrow 🌙"]],
-    worry: [["ថ្ងៃនេះចាយច្រើនបន្តិច ប្រយ័ត្នណា 💸", "A bit much spent today, careful 💸"], ["យើងសន្សំបន្តិចទៀតស្អែក 🐷", "Let's save a little tomorrow 🐷"]],
+    worry: [["ចាយច្រើន ប្រយ័ត្ន 👀", "Spent a lot 👀"], ["យើងសន្សំបន្តិចទៀតស្អែក 🐷", "Let's save a little tomorrow 🐷"]],
     love: [["ធ្វើរួចទាំងអស់! ខ្ញុំស្រលាញ់ថ្ងៃនេះ 💜", "All done! I love today 💜"], ["អ្នកអស្ចារ្យណាស់ 🥰", "You're amazing 🥰"]],
     wink: [["អរុណសួស្តី! ☀️ ថ្ងៃថ្មីចាប់ផ្តើមហើយ", "Good morning! ☀️ A new day"], ["ញ៉ាំអាហារពេលព្រឹកហើយឬនៅ? 🍳", "Had breakfast yet? 🍳"]],
     proud: [["ខ្ញុំមោទនភាពនឹងអ្នក ⭐", "I'm proud of you ⭐"], ["សន្សំបានល្អ ⭐", "Saving well ⭐"]],
@@ -190,7 +190,7 @@ const HomeV2 = (() => {
       <div class="hv2-title-row">${lav() ? "" : `<button type="button" class="hv2-nomi-dark" data-nomi aria-label="Nomi">${MASCOT_FN()}<span class="hv2-say" data-nomi-say>${escapeHtml(nomiLine(MOOD_NOW))}</span></button>`}
         <div class="hv2-title">
           ${lav() ? `<small class="hv4-date">${escapeHtml(longDate(today))}</small>` : ""}
-          <h1>${things ? L(`ថ្ងៃនេះមាន <span>${things} រឿង</span> ត្រូវធ្វើ`, `<span>${things} thing${things === 1 ? "" : "s"}</span> to do today`) : L(`ថ្ងៃនេះ <span>ទំនេរ</span> 🌿`, `Today is <span>free</span> 🌿`)}</h1>
+          <h1>${things ? L(`<span>${things} រឿង</span> ថ្ងៃនេះ`, `<span>${things}</span> to do`) : L(`ថ្ងៃនេះ <span>ទំនេរ</span> 🌿`, `Today is <span>free</span> 🌿`)}</h1>
           <div class="hv2-why">
             <p>${escapeHtml(longDate(today))}</p>
             <span>📅 ${escapeHtml(L(`${d.agenda.today} ព្រឹត្តិការណ៍`, `${d.agenda.today} event${d.agenda.today === 1 ? "" : "s"}`))}</span>

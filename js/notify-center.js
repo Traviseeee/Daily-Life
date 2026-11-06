@@ -37,13 +37,13 @@ const NotifyCenter = (() => {
 
   const TOOL_META = {
     bills: { km: "វិក្កយបត្រ & ទឹកភ្លើង", en: "Bills & utilities", dkm: "ថ្ងៃផុតកំណត់ ការបង់ស្វ័យប្រវត្តិ PPWSA / EDC", den: "Due dates, auto-pay, PPWSA / EDC", href: "#money/bills" },
-    expenses: { km: "ចំណាយ & ថវិកា", en: "Expenses & budget", dkm: "ព្រមានថវិកា ចាយច្រើនខុសធម្មតា សួរពេលយប់", den: "Budget alerts, unusual spending, evening check", href: "#money/expenses" },
+    expenses: { km: "ចំណាយ & ថវិកា", en: "Expenses & budget", dkm: "ថវិកា · ចាយខុសធម្មតា · ពេលយប់", den: "Budget · unusual · evening", href: "#money/expenses" },
     loans: { km: "ប្រាក់កម្ចី", en: "Loans", dkm: "រំលឹកថ្ងៃបង់ប្រាក់", den: "Payment-day reminders", href: "#money/loans" },
     savings: { km: "សន្សំ & គោលដៅ", en: "Savings & goals", dkm: "ដាក់សន្សំប្រចាំខែ, ថ្ងៃកំណត់គោលដៅ", den: "Monthly saving, goal deadlines", href: "#money/savings" },
-    "savings-use": { km: "ការប្រើប្រាក់សន្សំ", en: "Savings use", dkm: "ចំណាយ · ទិញមាស · វិនិយោគផ្សេងៗ · សរុបប្រចាំខែ", den: "Spending · gold · other uses · monthly total", href: "#money/savings" },
-    "investment-purchase": { km: "ទិញការវិនិយោគ", en: "Investment purchases", dkm: "ជូនដំណឹងពេលកត់ទិញមាស ឬទ្រព្យវិនិយោគ", den: "Alerts when gold or other investments are recorded", href: "#money/savings" },
-    "investment-value": { km: "តម្លៃវិនិយោគ", en: "Investment value", dkm: "ជូនដំណឹងពេលតម្លៃមាសឡើងឬចុះខ្លាំង", den: "Alerts when tracked gold value changes significantly", href: "#money/savings" },
-    "gold-price": { km: "តម្លៃមាស", en: "Gold price alerts", dkm: "ច្បាប់តម្លៃមាស និងការឆ្លងកម្រិតគោលដៅ", den: "Gold price rules and target crossings", href: "#money/savings" },
+    "savings-use": { km: "ការប្រើប្រាក់សន្សំ", en: "Savings use", dkm: "ចំណាយ · មាស · វិនិយោគ · សរុបខែ", den: "Spend · gold · invest · monthly", href: "#money/savings" },
+    "investment-purchase": { km: "ទិញការវិនិយោគ", en: "Investment purchases", dkm: "ជូនដំណឹងពេលកត់ទិញមាស ឬទ្រព្យវិនិយោគ", den: "New gold / investment", href: "#money/savings" },
+    "investment-value": { km: "តម្លៃវិនិយោគ", en: "Investment value", dkm: "ជូនដំណឹងពេលតម្លៃមាសឡើងឬចុះខ្លាំង", den: "Big gold price change", href: "#money/savings" },
+    "gold-price": { km: "តម្លៃមាស", en: "Gold price alerts", dkm: "ច្បាប់តម្លៃមាស និងការឆ្លងកម្រិតគោលដៅ", den: "Gold price targets", href: "#money/savings" },
     calendar: { km: "ប្រតិទិន & ការរំលឹក", en: "Calendar & reminders", dkm: "ព្រឹត្តិការណ៍ និងការរំលឹក", den: "Events and reminders", href: "#calendar" },
     family: { km: "គ្រួសារ", en: "Family", dkm: "ថ្ងៃកំណើត និងខួប", den: "Birthdays and anniversaries", href: "#family" },
     reports: { km: "របាយការណ៍", en: "Reports", dkm: "សង្ខេបព្រឹក, របាយការណ៍សប្តាហ៍ & ខែ", den: "Morning digest, weekly & monthly reports", href: "#money/reports" },
