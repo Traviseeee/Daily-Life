@@ -1,0 +1,67 @@
+/* Launcher polish (6 Nov 2026): same layout as Launcher V2 lavender, just better.
+   Today + Money cards with the next thing / % spent, a live hint under each app,
+   coloured "coming up" rows, the same 3-column grid in light and dark, no sideways scroll.
+   Markup: js/launcher-v2.js. Loaded after lavender-all.css. */
+html:root body #app .lv2.is-lav { --lv3-card: #fff; --lv3-line: #ebe8f4; --lv3-ink: #1a2347; --lv3-sub: #756d8f; --lv3-a: #504ab9; --lv3-soft: #f1eeff; overflow-x: clip; }
+html:root:not([data-theme="light"]) body #app .lv2.is-lav { --lv3-card: #2a2550; --lv3-line: rgba(182, 168, 255, .18); --lv3-ink: #f4f2ff; --lv3-sub: #bdb7e6; --lv3-a: #c9bdff; --lv3-soft: rgba(182, 168, 255, .14); }
+
+/* Today + Money */
+html:root body #app .lv2.is-lav .lv-sum { gap: 10px; align-items: stretch; }
+html:root body #app .lv2.is-lav .lv-sc { gap: 3px; padding: 13px 14px 14px; border-radius: 22px; min-height: 118px; }
+html:root body #app .lv2.is-lav .lv3-top { display: flex; align-items: center; justify-content: space-between; gap: 6px; min-width: 0; }
+html:root body #app .lv2.is-lav .lv3-top small { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+html:root body #app .lv2.is-lav .lv-sc > b { font-size: 1.32rem; font-weight: 800; line-height: 1.35; letter-spacing: -.01em; }
+html:root body #app .lv2.is-lav .lv3-today { display: flex; flex-direction: column; color: #fff !important; background: linear-gradient(140deg, #8875ec 0%, #6a58e0 60%, #5847c9 100%) !important; border: 0 !important; box-shadow: 0 10px 24px rgba(91, 79, 214, .28) !important; }
+html:root body #app .lv2.is-lav .lv3-today small, html:root body #app .lv2.is-lav .lv3-today b { color: #fff !important; }
+html:root body #app .lv2.is-lav .lv3-next { display: block; margin-top: auto; padding: 5px 9px; border-radius: 12px; overflow: hidden; font-size: .72rem; font-style: normal; font-weight: 600; white-space: nowrap; text-overflow: ellipsis; color: #fff !important; background: rgba(255, 255, 255, .18); opacity: 1 !important; }
+html:root body #app .lv2.is-lav .lv3-count { display: grid; place-items: center; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 99px; font-size: .7rem; font-style: normal; font-weight: 800; color: #5847c9; background: #fff; }
+html:root body #app .lv2.is-lav .lv3-money { position: relative; display: grid; align-content: start; padding-bottom: 14px; color: var(--lv3-ink) !important; background: var(--lv3-card) !important; border: 1px solid var(--lv3-line) !important; }
+html:root body #app .lv2.is-lav .lv3-money > b { color: var(--lv3-a) !important; }
+html:root body #app .lv2.is-lav .lv3-money.is-neg > b { color: #d0455b !important; }
+html:root body #app .lv2.is-lav .lv3-money em { font-size: .72rem; font-style: normal; font-weight: 600; color: var(--lv3-sub) !important; }
+html:root body #app .lv2.is-lav .lv3-mi { display: grid; place-items: center; width: 26px; height: 26px; flex: 0 0 auto; border-radius: 9px; color: var(--lv3-a); background: var(--lv3-soft); }
+html:root body #app .lv2.is-lav .lv3-mi svg { width: 16px; height: 16px; }
+html:root body #app .lv2.is-lav .lv3-bar { position: static; display: block; height: 6px; margin-top: 8px; border-radius: 99px; background: var(--lv3-soft); }
+html:root body #app .lv2.is-lav .lv3-bar i { background: linear-gradient(90deg, #9b8cff, #6a58e0); }
+html:root body #app .lv2.is-lav .lv3-money.is-warn .lv3-bar i { background: linear-gradient(90deg, #ffc46b, #f08a3a); }
+html:root body #app .lv2.is-lav .lv3-money.is-neg .lv3-bar i { background: linear-gradient(90deg, #ff8f9e, #d0455b); }
+html:root body #app .lv2.is-lav .lv3-spent { margin-top: 4px; overflow: hidden; font-size: .66rem; white-space: nowrap; text-overflow: ellipsis; color: var(--lv3-sub) !important; }
+
+/* quick add: a touch more press feedback */
+html:root body #app .lv2.is-lav .lv-q { transition: transform .15s ease; }
+html:root body #app .lv2.is-lav .lv-q:active, html:root body #app .lv2.is-lav .app-icon:active { transform: scale(.96); }
+html:root:not([data-theme="light"]) body #app .lv2.is-lav .lv-q { border: 1px solid var(--lv3-line); background: var(--lv3-card); }
+
+/* all apps: the same 3 columns in both themes + a live hint under the name */
+html:root body #app .lv2.is-lav .lv-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 14px 6px !important; padding: 16px 8px 14px !important; border: 1px solid var(--lv3-line); background: var(--lv3-card) !important; }
+html:root body #app .lv2.is-lav .lv-grid .app-icon { display: grid; justify-items: center; gap: 5px; min-width: 0; }
+html:root body #app .lv2.is-lav .lv-grid .app-icon-label { max-width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: var(--lv3-ink) !important; }
+html:root body #app .lv2.is-lav .lv3-hint { max-width: 100%; margin-top: -3px; overflow: hidden; font-size: .64rem; font-weight: 600; white-space: nowrap; text-overflow: ellipsis; color: var(--lv3-sub); }
+html:root body #app .lv2.is-lav .lv3-hint.is-pink { color: #d0457b; }
+html:root body #app .lv2.is-lav .lv3-hint.is-blue { color: #3f76d4; }
+html:root body #app .lv2.is-lav .lv3-hint.is-purple { color: #6a58e0; }
+html:root body #app .lv2.is-lav .lv3-hint.is-green, html:root body #app .lv2.is-lav .lv3-hint.is-lime { color: #25845d; }
+html:root body #app .lv2.is-lav .lv3-hint.is-red { color: #d0455b; }
+html:root:not([data-theme="light"]) body #app .lv2.is-lav .lv3-hint.is-pink { color: #ff9cc2; }
+html:root:not([data-theme="light"]) body #app .lv2.is-lav .lv3-hint.is-blue { color: #9cc8ff; }
+html:root:not([data-theme="light"]) body #app .lv2.is-lav .lv3-hint.is-purple { color: #c9bdff; }
+html:root:not([data-theme="light"]) body #app .lv2.is-lav .lv3-hint:is(.is-green, .is-lime) { color: #7ee2a8; }
+html:root:not([data-theme="light"]) body #app .lv2.is-lav .lv3-hint.is-red { color: #ff8b8b; }
+html:root:not([data-theme="light"]) body #app .lv2.is-lav .lv-grid .app-icon-tile { background: rgba(182, 168, 255, .12) !important; }
+
+/* coming up: a colour mark per kind, today stands out */
+html:root body #app .lv2.is-lav .lv-ups { border: 1px solid var(--lv3-line); background: var(--lv3-card) !important; }
+html:root body #app .lv2.is-lav .lv-up { position: relative; padding-left: 10px; }
+html:root body #app .lv2.is-lav .lv-up::before { content: ""; position: absolute; top: 14px; bottom: 14px; left: 0; width: 3px; border-radius: 9px; background: var(--lv3-mark, #9b8cff); }
+html:root body #app .lv2.is-lav .lv-up.is-amber { --lv3-mark: #f0a03a; }
+html:root body #app .lv2.is-lav .lv-up.is-pink { --lv3-mark: #ff6f91; }
+html:root body #app .lv2.is-lav .lv-up.is-green { --lv3-mark: #2fb489; }
+html:root body #app .lv2.is-lav .lv-up.is-blue { --lv3-mark: #6a8ff0; }
+html:root body #app .lv2.is-lav .lv-up .lv-dt { background: var(--lv3-soft); color: var(--lv3-ink); }
+html:root body #app .lv2.is-lav .lv-up.is-today .lv-dt { color: #fff; background: linear-gradient(140deg, #8875ec, #5847c9); }
+html:root body #app .lv2.is-lav .lv-up.is-today .lv-dt small { color: rgba(255, 255, 255, .85); }
+
+@media (max-width: 370px) {
+  html:root body #app .lv2.is-lav .lv-sc > b { font-size: 1.15rem; }
+  html:root body #app .lv2.is-lav .lv3-hint { font-size: .6rem; }
+}

@@ -16,6 +16,22 @@ const LauncherV2 = (() => {
   const lav = () => typeof HomeV2 !== "undefined" && !!HomeV2.buddy;
   const NOMI_SAY = [["ចង់ទៅណា? ស្វែងរក ឬជ្រើសកម្មវិធីខាងក្រោម 🐾", "Where to? Search or pick an app below 🐾"]];
 
+  // what Nomi says here (6 Nov): the most useful thing right now, else "where to?"
+  function nomiLine() {
+    try {
+      const m = typeof moneyMonthNumbers === "function" ? moneyMonthNumbers() : null;
+      const soon = getUpcomingNotifications(2, 6);
+      const bill = soon.find(item => item.kind === "bill");
+      const todayN = soon.filter(item => item.daysLeft === 0).length;
+      const hour = new Date().getHours();
+      if (m && m.left < 0) return [L("ខែនេះចាយលើសហើយ 😿 មើលហិរញ្ញវត្ថុបន្តិចណា", "Over budget this month 😿 take a look at Money"), "worry"];
+      if (bill) return [bill.daysLeft === 0 ? L(`ថ្ងៃនេះត្រូវបង់ ${bill.title} 🧾`, `${bill.title} is due today 🧾`) : L(`${bill.title} ត្រូវបង់${bill.daysLeft === 1 ? "ស្អែក" : ` ក្នុង ${bill.daysLeft} ថ្ងៃ`} 🧾`, `${bill.title} due ${bill.daysLeft === 1 ? "tomorrow" : `in ${bill.daysLeft} days`} 🧾`), "wink"];
+      if (todayN) return [L(`ថ្ងៃនេះមាន ${todayN} រឿង — ចុចប្រតិទិនមើលណា 📅`, `${todayN} thing${todayN > 1 ? "s" : ""} today — check your calendar 📅`), "happy"];
+      if (hour >= 22 || hour < 5) return [L("យប់ហើយ សម្រាកផងណា 🌙", "It's late — rest well 🌙"), "sleepy"];
+    } catch (error) { /* fall through */ }
+    return [L(...NOMI_SAY[0]), "happy"];
+  }
+
   function hero() {
     const p = appData.profile;
     const now = new Date();
@@ -29,7 +45,7 @@ const LauncherV2 = (() => {
         <span class="lv-hi-tx"><small>${escapeHtml(`${date} · ${hello}`)}</small><b>${escapeHtml(String(p.name || L("ភ្ញៀវ", "Guest")).split(/\s+/)[0])}</b></span>
         ${lav() ? `<a class="lv-bell" href="#notifications" aria-label="${escapeAttr(L("ការជូនដំណឹង", "Notifications"))}">${Icons.bell()}</a>` : `<span class="lv-wx" data-hv2-wx role="button" tabindex="0">${document.getElementById("topbarWeather")?.innerHTML || ""}</span>`}
       </div>
-      ${lav() ? `<div class="lv-talk"><span class="lv-nomi" data-nomi data-mood="happy" role="button" tabindex="0" aria-label="Nomi">${HomeV2.buddy("happy")}</span><span class="hv2-say lv-say" data-nomi-say>${escapeHtml(L(...NOMI_SAY[0]))}</span></div>` : ""}
+      ${lav() ? (() => { const [say, mood] = nomiLine(); return `<div class="lv-talk"><span class="lv-nomi" data-nomi data-mood="${mood}" role="button" tabindex="0" aria-label="Nomi">${HomeV2.buddy(mood)}</span><span class="hv2-say lv-say" data-nomi-say>${escapeHtml(say)}</span></div>`; })() : ""}
       <div class="lv-search">
         <button type="button" class="lv-search-go" data-lv-search>${lav() ? Icons.search() : "🔍"} <span>${escapeHtml(L("ស្វែងរកក្នុង MYLIFE…", "Search MYLIFE…"))}</span></button>
         ${lav() ? `<a class="lv-scan-pill" href="#scan">${Icons.scan()}<span>${escapeHtml(L("ស្កេន", "Scan"))}</span></a><button type="button" class="lv-search-btn lv-ai-btn" data-lv-ai aria-label="AI">${Icons.spark()}</button>` : `<a class="lv-search-btn" href="#scan" aria-label="${escapeAttr(L("ស្កេន", "Scan"))}">${Icons.scan()}</a>
@@ -54,15 +70,30 @@ const LauncherV2 = (() => {
   function moneyRing() {
     const m = typeof moneyMonthNumbers === "function" ? moneyMonthNumbers() : null;
     if (!m) return widgets();
-    const today = launcherBadge("today");
     const plain = value => String(money(Math.abs(value))).replace(/<[^>]*>/g, "");
     const pct = m.income > 0 ? Math.min(100, Math.round((m.expenses / m.income) * 100)) : 0;
     const now = new Date();
+    const dayName = km() ? KM_DAY[now.getDay()] : now.toLocaleDateString("en-US", { weekday: "long" });
     const dayLabel = km() ? `${now.getDate()} ${KM_M[now.getMonth()]}` : now.toLocaleDateString("en-US", { day: "numeric", month: "short" });
-    const todayText = today?.tone === "muted" ? L("ថ្ងៃនេះទំនេរ 🌿", "Free today 🌿") : today?.text || L("បន្ថែមផែនការថ្ងៃនេះ", "Add a plan for today");
+    let next = null, todayN = 0;
+    try { const list = getUpcomingNotifications(7, 8); next = list[0] || null; todayN = list.filter(item => item.daysLeft === 0).length; } catch (error) { /* none */ }
+    const when = item => item.daysLeft === 0 ? L("ថ្ងៃនេះ", "today") : item.daysLeft === 1 ? L("ស្អែក", "tomorrow") : L(`${item.daysLeft} ថ្ងៃទៀត`, `in ${item.daysLeft} d`);
+    const nextLine = next ? `${next.title || ""} · ${when(next)}` : L("ថ្ងៃនេះទំនេរ 🌿", "Free today 🌿");
+    const tone = m.left < 0 ? "is-neg" : pct >= 80 ? "is-warn" : "";
+    const spentLine = m.income > 0 ? L(`ចាយ ${pct}% នៃចំណូល`, `${pct}% of income spent`) : L("មិនទាន់មានចំណូលខែនេះ", "No income yet this month");
     return `<div class="lv-sum">
-      <a class="lv-sc is-main" href="#today"><small>${escapeHtml(L("ថ្ងៃនេះ", "Today"))}</small><b>${escapeHtml(dayLabel)}</b><em>${escapeHtml(todayText)}</em></a>
-      <a class="lv-sc lv-sc-money" href="#money"><small>${escapeHtml(L("លុយខែនេះ", "Money this month"))}</small><b class="money-value${m.left < 0 ? " is-neg" : ""}" data-private-money>${escapeHtml(plain(m.left))}</b><em>${escapeHtml(m.left < 0 ? L("ខ្វះ · មើលលម្អិត ›", "Short · Details ›") : L("នៅសល់សម្រាប់ចាយ · មើល ›", "Left to spend · View ›"))}</em><span class="lv-progress" aria-label="${pct}% ${escapeAttr(L("បានចាយ", "spent"))}"><i style="width:${pct}%"></i></span></a>
+      <a class="lv-sc is-main lv3-today" href="#calendar">
+        <span class="lv3-top"><small>${escapeHtml(L("ថ្ងៃនេះ", "Today"))} · ${escapeHtml(dayName)}</small>${todayN ? `<i class="lv3-count">${todayN}</i>` : ""}</span>
+        <b>${escapeHtml(dayLabel)}</b>
+        <em class="lv3-next">${next ? "⏰ " : ""}${escapeHtml(nextLine)}</em>
+      </a>
+      <a class="lv-sc lv-sc-money lv3-money ${tone}" href="#money">
+        <span class="lv3-top"><small>${escapeHtml(L("លុយខែនេះ", "This month"))}</small><span class="lv3-mi">${Icons.money()}</span></span>
+        <b class="money-value${m.left < 0 ? " is-neg" : ""}" data-private-money>${escapeHtml(m.left < 0 ? `-${plain(m.left)}` : plain(m.left))}</b>
+        <em>${escapeHtml(m.left < 0 ? L("ខ្វះ · មើលលម្អិត ›", "Short · details ›") : L("នៅសល់សម្រាប់ចាយ", "left to spend"))}</em>
+        <span class="lv-progress lv3-bar" aria-label="${pct}% ${escapeAttr(L("បានចាយ", "spent"))}"><i style="width:${pct}%"></i></span>
+        <small class="lv3-spent">${escapeHtml(spentLine)}</small>
+      </a>
     </div>`;
   }
 
@@ -78,7 +109,7 @@ const LauncherV2 = (() => {
       const tone = isBill ? "amber" : item.kind === "birthday" || item.type === "birthday" ? "pink" : item.kind === "reminder" ? "green" : "blue";
       const when = item.daysLeft === 0 ? L("ថ្ងៃនេះ", "today") : item.daysLeft === 1 ? L("ស្អែក", "tomorrow") : L(`ក្នុង ${item.daysLeft} ថ្ងៃ`, `in ${item.daysLeft} days`);
       const amount = item.amount ? String(money(item.amount, item.currency || undefined)) : "";
-      return `<a class="lv-up" href="${isBill ? "#money/bills" : "#calendar"}">
+      return `<a class="lv-up is-${tone}${item.daysLeft === 0 ? " is-today" : ""}" href="${isBill ? "#money/bills" : "#calendar"}">
         <span class="lv-dt"><b>${d.getDate()}</b><small>${escapeHtml(item.date.slice(0, 7) === thisMonth ? (km() ? KM_DAY_S[d.getDay()] : d.toLocaleDateString("en-US", { weekday: "short" })) : (km() ? KM_M[d.getMonth()] : d.toLocaleDateString("en-US", { month: "short" })))}</small></span>
         <span class="lv-up-tx"><b>${escapeHtml(item.title || "")}</b><small>${amount ? `${amount} · ` : ""}${escapeHtml(when)}</small></span>
         <span class="lv-tag is-${tone}">${escapeHtml(tag)}</span>
@@ -94,10 +125,20 @@ const LauncherV2 = (() => {
       <div class="lv-qa">${actions.map(([id, iconKey, icon, label], i) => `<button type="button" class="lv-q" data-launcher-quick="${id}"><i${lav() ? ` class="lv-qi is-c${i + 1}"` : ""}>${lav() ? Icons[iconKey]() : icon}</i><span>${escapeHtml(label)}</span></button>`).join("")}</div>`;
   }
 
+  // the shared tile + one short live fact under the name ("$237 left", "🎂 in 9 days")
+  function tile(route) {
+    const html = launcherTool(route);
+    let hint = null;
+    try { hint = ["money", "notifications", "settings"].includes(route.id) ? null : launcherBadge(route.id); } catch (error) { hint = null; }
+    if (!hint?.text) return html;
+    const i = html.indexOf("</a>");
+    return i < 0 ? html : `${html.slice(0, i)}<small class="lv3-hint is-${escapeAttr(hint.tone || "muted")}">${escapeHtml(hint.text)}</small>${html.slice(i)}`;
+  }
+
   function render() {
     const all = launcherAllRoutes();
     const grid = `<div class="lv-sec"><b>${escapeHtml(L("កម្មវិធីទាំងអស់", "All apps"))}</b></div>
-        <nav class="app-grid lv-grid" aria-label="App tools">${ORDER.map(id => all.find(route => route.id === id)).filter(Boolean).map(launcherTool).join("")}</nav>`;
+        <nav class="app-grid lv-grid lv3-grid" aria-label="App tools">${ORDER.map(id => all.find(route => route.id === id)).filter(Boolean).map(tile).join("")}</nav>`;
     if (lav()) return `<section class="launcher-page page lv2 is-lav">
       ${hero()}
       <div class="lv-body">
