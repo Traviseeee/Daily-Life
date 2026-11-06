@@ -344,6 +344,7 @@ const FamilyV2 = (() => {
       <div class="fv4-info">${rows.map(([k, v]) => `<div><span>${escapeHtml(k)}</span><b>${v}</b></div>`).join("")}</div>
       ${tags.length ? `<div class="fv-tags">${tags.map(tag => `<span>${escapeHtml(tag)}</span>`).join("")}</div>` : ""}
       ${notes.map(note => `<p class="fv4-note">📝 ${escapeHtml(note)}</p>`).join("")}
+      ${member.userId ? `<a class="fv4-profile" href="#profile/${escapeAttr(member.userId)}" data-fv-profile>👤 ${escapeHtml(L("មើល Profile", "View profile"))} ›</a>` : ""}
       <div class="fv4-two"><button type="button" class="fv4-edit" data-fv-edit="${escapeAttr(member.id)}">${FI.edit} ${escapeHtml(L("កែព័ត៌មាន", "Edit"))}</button><button type="button" class="fv4-del" data-fv-delete="${escapeAttr(member.id)}">${escapeHtml(L("លុបចេញ", "Remove"))}</button></div>
     </div>`;
     root.classList.add("open");
@@ -385,6 +386,7 @@ const FamilyV2 = (() => {
   document.addEventListener("click", event => {
     const sheet = event.target.closest("[data-fv-sheet]");
     if (sheet) { event.preventDefault(); openSheet(sheet.dataset.fvSheet); return; }
+    if (event.target.closest("[data-fv-profile]") && typeof Modal !== "undefined") { Modal.close(); return; }
     const edit = event.target.closest("[data-fv-edit]");
     if (edit) {
       const member = appData.family.find(item => item.id === edit.dataset.fvEdit);

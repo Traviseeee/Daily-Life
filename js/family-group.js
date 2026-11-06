@@ -37,7 +37,7 @@ const FamilyGroup = (() => {
   const DEFAULT_PERMS = { memories: true, calendar: true, shopping: true };
   const ROLE = { admin: ["អ្នកគ្រប់គ្រង", "Admin"], member: ["សមាជិក", "Member"], viewer: ["អ្នកមើល", "Viewer"] };
 
-  const state = { status: "idle", family: null, members: [], invites: [], me: null, mePhoto: "", error: "" };
+  const state = { status: "idle", family: null, members: [], invites: [], requests: [], profiles: {}, v2: false, me: null, mePhoto: "", error: "" };
   let loading = null;
 
   const client = () => (typeof window !== "undefined" ? window.supabaseClient : null);
@@ -73,10 +73,29 @@ const FamilyGroup = (() => {
       const order = { admin: 0, member: 1, viewer: 2 };
       state.members = (members.data || []).sort((a, b) => (order[a.role] - order[b.role]) || String(a.joined_at).localeCompare(String(b.joined_at)));
       state.invites = [];
-      if (row.role === "admin") { // links not used yet and not expired (RLS: admin only)
-        const invites = await client().from("family_invites").select("token, role, created_at, expires_at, used_at").eq("family_id", row.family_id);
+      state.requests = [];
+      // v2 (20261106_invite_v2_profiles.sql): everyone's profile in one call; missing function = old database
+      const profiles = await client().rpc("family_profiles", { p_family: row.family_id });
+      state.v2 = !profiles.error;
+      state.profiles = {};
+      (profiles.data || []).forEach(entry => { state.profiles[entry.user_id] = entry; });
+      if (row.role === "admin") { // links (RLS: admin only)
+        const invites = await client().from("family_invites").select("*").eq("family_id", row.family_id);
         const now = Date.now();
-        state.invites = (invites.data || []).filter(entry => !entry.used_at && Date.parse(entry.expires_at) > now).sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)));
+        const list = invites.data || [];
+        if (state.v2) {
+          const tokens = list.map(entry => entry.token);
+          const uses = tokens.length ? await client().from("family_invite_uses").select("*").in("token", tokens) : { data: [] };
+          const useRows = uses.data || [];
+          list.forEach(entry => { entry.status = inviteStatus(entry, now); entry.uses = useRows.filter(use => use.token === entry.token); });
+          state.requests = useRows.filter(use => use.status === "pending").map(use => ({ ...use, invite: list.find(entry => entry.token === use.token) }));
+          linkCards(list);
+          // live links + the last 30 days of used / expired / cancelled ones
+          state.invites = list.filter(entry => entry.status === "ok" || now - Date.parse(entry.used_at || entry.cancelled_at || entry.expires_at || entry.created_at) < 30 * 864e5)
+            .sort((a, b) => (a.status === "ok" ? 0 : 1) - (b.status === "ok" ? 0 : 1) || String(b.created_at).localeCompare(String(a.created_at)));
+        } else {
+          state.invites = list.filter(entry => !entry.used_at && Date.parse(entry.expires_at) > now).map(entry => ({ ...entry, status: "ok" })).sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)));
+        }
       }
       state.status = "ready";
       return state;
@@ -84,10 +103,32 @@ const FamilyGroup = (() => {
     return loading;
   }
 
+  function inviteStatus(entry, now = Date.now()) {
+    if (entry.cancelled_at) return "cancelled";
+    if (entry.expires_at && Date.parse(entry.expires_at) < now) return "expired";
+    if ((entry.max_uses || 1) <= 1 ? Boolean(entry.used_by) : Number(entry.use_count || 0) >= Number(entry.max_uses || 1)) return "used";
+    return "ok";
+  }
+  // an invite made "for Lychee" links her family card to her account once she joins
+  function linkCards(list) {
+    let changed = false;
+    list.forEach(entry => {
+      if (!entry.member_card_id) return;
+      const joined = (entry.uses || []).find(use => use.status === "joined");
+      const card = (appData.family || []).find(person => person.id === entry.member_card_id);
+      if (!joined || !card || card.userId === joined.user_id) return;
+      if ((appData.family || []).some(person => person.userId === joined.user_id)) return;
+      card.userId = joined.user_id;
+      changed = true;
+    });
+    if (changed) { try { Store.save(); } catch (error) { /* next save picks it up */ } }
+  }
+  const profileOf = userId => state.profiles?.[userId] || null;
   const meRow = () => state.members.find(member => member.user_id === state.me) || null;
   const isAdmin = () => meRow()?.role === "admin";
   const isOwner = member => state.family && member.user_id === state.family.owner_id;
   function nameOf(member) {
+    if (profileOf(member.user_id)?.display_name) return profileOf(member.user_id).display_name;
     if (member.display_name) return member.display_name;
     if (member.user_id === state.me) return appData.profile?.name || L("អ្នក", "You");
     return L("សមាជិក", "Member");
@@ -106,7 +147,8 @@ const FamilyGroup = (() => {
     const profilePhoto = localPhotoIsCurrent ? (appData.profile?.photo || state.mePhoto) : (isSelf ? state.mePhoto : "");
     const usesLocalPhoto = localPhotoIsCurrent && Boolean(appData.profile?.photo);
     const position = usesLocalPhoto && typeof imagePosition === "function" ? imagePosition(appData.profile?.photoPosition) : { x: 0, y: 0 };
-    const face = profilePhoto
+    const sharedPhoto = profileOf(member.user_id)?.photo || "";
+    const face = sharedPhoto ? `<img src="${escapeAttr(sharedPhoto)}" alt="">` : profilePhoto
       ? `<img src="${escapeAttr(profilePhoto)}" alt="" style="--image-position-x:${position.x}%;--image-position-y:${position.y}%">`
       : escapeHtml(member.avatar || initials(nameOf(member)));
     return `<span class="fg-avatar ${size}" style="--fg-tone:${toneOf(member.user_id)}">${face}</span>`;
@@ -135,17 +177,41 @@ const FamilyGroup = (() => {
       <div class="fg-head"><div><h2>${escapeHtml(familyDisplayName())}</h2><small>${escapeHtml(L(`សមាជិក ${state.members.length} នាក់`, `${state.members.length} members`))}</small></div></div>
       <div class="fg-list">${state.members.map(member => {
         const detail = seesText(member);
-        return `<button type="button" class="fg-row" data-fg-member="${escapeAttr(member.user_id)}" ${admin || member.user_id === state.me ? "" : "disabled"}>
+        return `<button type="button" class="fg-row" data-fg-member="${escapeAttr(member.user_id)}" ${state.v2 || admin || member.user_id === state.me ? "" : "disabled"}>
         ${avatar(member)}
         <span class="fg-row-text"><strong>${escapeHtml(nameOf(member))}${member.user_id === state.me ? ` <em>(${escapeHtml(L("អ្នក", "you"))})</em>` : ""}</strong>${detail ? `<small>${escapeHtml(detail)}</small>` : ""}</span>
         ${member.role !== "admin" && member.permissions?.money ? `<span class="fg-money-on" title="${escapeAttr(L("មើលលុយបាន", "Can view money"))}">${IC.unlock()}</span>` : ""}
         ${rolePill(member.role)}
       </button>`;
       }).join("")}</div>
-      ${admin && state.invites?.length ? `<div class="fg-invites"><h3 class="fg-label">${escapeHtml(L(`Link អញ្ជើញកំពុងរង់ចាំ (${state.invites.length})`, `Pending invite links (${state.invites.length})`))}</h3>${state.invites.map(entry => `<div class="fg-invite-row">${rolePill(entry.role)}<small>${escapeHtml(L("ផុតកំណត់", "Expires"))} ${escapeHtml(formatDate(String(entry.expires_at).slice(0, 10)))}</small><button type="button" class="fg-mini is-ghost" data-fg-cancel="${escapeAttr(entry.token)}">${escapeHtml(L("បោះបង់", "Cancel"))}</button></div>`).join("")}</div>` : ""}
+      ${admin && state.requests?.length ? `<div class="fg-invites fg-requests"><h3 class="fg-label">${escapeHtml(L(`សុំចូលរួម (${state.requests.length})`, `Asking to join (${state.requests.length})`))}</h3>${state.requests.map(req => `<div class="fg-invite-row fg-req"><span class="fg-avatar" style="--fg-tone:${toneOf(req.user_id)}">${escapeHtml(initials(req.display_name || "?"))}</span><span class="fg-row-text"><strong>${escapeHtml(req.display_name || L("អ្នកថ្មី", "Someone"))}</strong><small>${escapeHtml(L(`តាម ${req.invite?.label || "link"}`, `Via ${req.invite?.label || "link"}`))}</small></span><button type="button" class="fg-mini is-yes" data-fg-decide="${escapeAttr(`${req.token}|${req.user_id}`)}" data-fg-yes="1">${escapeHtml(L("យល់ព្រម", "Approve"))}</button><button type="button" class="fg-mini is-no" data-fg-decide="${escapeAttr(`${req.token}|${req.user_id}`)}">${escapeHtml(L("បដិសេធ", "Decline"))}</button></div>`).join("")}</div>` : ""}
+      ${admin && state.invites?.length ? `<div class="fg-invites"><h3 class="fg-label">${escapeHtml(L("Link អញ្ជើញ", "Invite links"))}</h3>${state.invites.map(inviteRow).join("")}</div>` : ""}
       ${admin ? `<button type="button" class="fg-primary" data-fg-invite>${IC.userPlus()}<span>${escapeHtml(L("អញ្ជើញសមាជិក", "Invite a member"))}</span></button>` : ""}
       <p class="fg-note">${moneyTo.length ? `${IC.unlock()}<span>${escapeHtml(L(`${moneyTo.join(", ")} មើលលុយបាន (មើលប៉ុណ្ណោះ)`, `${moneyTo.join(", ")} can view money (view only)`))}</span>` : `${IC.lock()}<span>${escapeHtml(L("លុយ និងកម្ចី មិនចែករំលែកទេ", "Money and loans are not shared"))}</span>`}</p>
     </article>`;
+  }
+
+  const STATUS = { ok: ["កំពុងប្រើបាន", "Active"], used: ["បានប្រើ", "Used"], expired: ["ផុតកំណត់", "Expired"], cancelled: ["បានបោះបង់", "Cancelled"] };
+  function inviteMeta(entry) {
+    const bits = [];
+    if (entry.status === "ok") bits.push(entry.expires_at ? L(`ដល់ ${formatDate(String(entry.expires_at).slice(0, 10))}`, `Until ${formatDate(String(entry.expires_at).slice(0, 10))}`) : L("គ្មានផុតកំណត់", "No expiry"));
+    if ((entry.max_uses || 1) > 1) bits.push(L(`ប្រើ ${entry.use_count || 0}/${entry.max_uses}`, `Used ${entry.use_count || 0}/${entry.max_uses}`));
+    const joined = (entry.uses || []).filter(use => use.status === "joined").map(use => use.display_name).filter(Boolean);
+    if (joined.length) bits.push(L(`ចូល: ${joined.join(", ")}`, `Joined: ${joined.join(", ")}`));
+    if (entry.needs_approval && entry.status === "ok") bits.push(L("ត្រូវយល់ព្រម", "Needs approval"));
+    return bits.join(" · ");
+  }
+  function inviteRow(entry) {
+    const card = entry.member_card_id ? (appData.family || []).find(person => person.id === entry.member_card_id) : null;
+    const title = entry.label || card?.name || L((entry.max_uses || 1) > 1 ? "Link គ្រួសារ" : "Link អញ្ជើញ", (entry.max_uses || 1) > 1 ? "Family link" : "Invite link");
+    return `<div class="fg-invite-row is-${entry.status}">
+      <button type="button" class="fg-link-open" data-fg-link-open="${escapeAttr(entry.token)}" ${entry.status === "ok" && entry.code ? "" : "disabled"}>
+        <span class="fg-link-ic">${(entry.max_uses || 1) > 1 ? "👪" : "✉️"}</span>
+        <span class="fg-row-text"><strong>${escapeHtml(title)}${entry.code && entry.status === "ok" ? ` <em class="fg-code-mini">${escapeHtml(entry.code)}</em>` : ""}</strong><small>${escapeHtml([L(...ROLE[entry.role]), inviteMeta(entry)].filter(Boolean).join(" · "))}</small></span>
+      </button>
+      <span class="fg-st is-${entry.status}">${escapeHtml(L(...STATUS[entry.status]))}</span>
+      ${entry.status === "ok" ? `<button type="button" class="fg-mini is-ghost" data-fg-cancel="${escapeAttr(entry.token)}">${escapeHtml(L("បោះបង់", "Cancel"))}</button>` : ""}
+    </div>`;
   }
 
   function paint() {
@@ -161,11 +227,25 @@ const FamilyGroup = (() => {
       slot.querySelector("[data-fg-retry]")?.addEventListener("click", () => refresh(true));
       slot.querySelector("[data-fg-create]")?.addEventListener("click", createFamily);
       slot.querySelector("[data-fg-invite]")?.addEventListener("click", openInvite);
-      slot.querySelectorAll("[data-fg-member]").forEach(button => button.addEventListener("click", () => openMember(button.dataset.fgMember)));
+      slot.querySelectorAll("[data-fg-member]").forEach(button => button.addEventListener("click", () => {
+        if (state.v2) location.hash = `#profile/${button.dataset.fgMember}`;
+        else openMember(button.dataset.fgMember);
+      }));
+      slot.querySelectorAll("[data-fg-decide]").forEach(button => button.addEventListener("click", async () => {
+        const [token, user] = button.dataset.fgDecide.split("|");
+        const approve = button.dataset.fgYes === "1";
+        button.disabled = true;
+        const { error } = await client().rpc("decide_family_join", { p_token: token, p_user: user, p_approve: approve });
+        Toast.show(error ? `⚠️ ${error.message}` : approve ? L("✅ បានយល់ព្រម · ចូលរួមហើយ", "✅ Approved · they are in") : L("បានបដិសេធ", "Declined"));
+        refresh(true);
+      }));
+      slot.querySelectorAll("[data-fg-link-open]").forEach(button => button.addEventListener("click", () => openLink(button.dataset.fgLinkOpen)));
       slot.querySelectorAll("[data-fg-cancel]").forEach(button => button.addEventListener("click", async () => {
         if (button.dataset.armed !== "1") { button.dataset.armed = "1"; button.textContent = L("ចុចម្តងទៀត", "Tap again"); setTimeout(() => { button.dataset.armed = ""; button.textContent = L("បោះបង់", "Cancel"); }, 4000); return; }
         button.disabled = true;
-        const { error } = await client().from("family_invites").delete().eq("token", button.dataset.fgCancel);
+        const { error } = state.v2
+          ? await client().rpc("cancel_family_invite", { p_token: button.dataset.fgCancel })
+          : await client().from("family_invites").delete().eq("token", button.dataset.fgCancel);
         Toast.show(error ? `⚠️ ${error.message}` : L("បានបោះបង់ link — ប្រើលែងបាន", "Link cancelled — it no longer works"));
         refresh(true);
       }));
@@ -302,7 +382,7 @@ const FamilyGroup = (() => {
   const publicBase = () => (/^https:$/.test(location.protocol) && !/^(localhost|127\.|10\.|192\.168\.|\[::1\])/.test(location.hostname) ? `${location.origin}${location.pathname.replace(/index\.html$/, "")}` : APP_URL);
   const joinUrl = token => `${publicBase()}?join=${encodeURIComponent(token)}`;
 
-  function openInvite() {
+  function openInviteV1() {
     if (!isAdmin() || !state.family) return;
     let role = "member";
     const perms = { ...DEFAULT_PERMS };
@@ -367,6 +447,113 @@ const FamilyGroup = (() => {
     });
   }
 
+  /* ---------- 3b. invite v2: for whom · how long · how many · code ---------- */
+  const DAYS = [[1, ["1 ថ្ងៃ", "1 day"]], [7, ["7 ថ្ងៃ", "7 days"]], [30, ["30 ថ្ងៃ", "30 days"]], [null, ["គ្មានផុតកំណត់", "No expiry"]]];
+  function shareHtml() {
+    return `<div class="fg-share-v2">
+      <div class="fg-share-who" data-fg-share-who></div>
+      <div class="fg-share-grid"><div class="fg-qr" data-fg-qr></div><div><span class="fg-code" data-fg-code></span><small>${escapeHtml(L("លេខកូដចូលរួម · វាយនៅទំព័រ login បាន ដោយមិនចាំបាច់ចុច link", "Join code · type it on the login page, no link needed"))}</small></div></div>
+      <input class="fg-link" data-fg-link readonly aria-label="Invite link">
+      <div class="fg-share fg-share3">
+        <button type="button" class="fg-primary" data-fg-copy>${IC.copy()}<span>${escapeHtml(L("ចម្លង link", "Copy link"))}</span></button>
+        <a class="fg-secondary" data-fg-tg target="_blank" rel="noopener">${IC.send()}<span>Telegram</span></a>
+        <button type="button" class="fg-secondary" data-fg-copycode>${escapeHtml(L("ចម្លងកូដ", "Copy code"))}</button>
+      </div></div>`;
+  }
+  async function fillShare(node, entry) {
+    const url = joinUrl(entry.token);
+    node.querySelector("[data-fg-link]").value = url;
+    node.querySelector("[data-fg-code]").textContent = entry.code || "";
+    node.querySelector("[data-fg-share-who]").innerHTML = `<strong>${escapeHtml(entry.label || L("Link អញ្ជើញ", "Invite link"))}</strong><small>${escapeHtml([L(...ROLE[entry.role]), inviteMeta({ ...entry, status: "ok" })].filter(Boolean).join(" · "))}</small>`;
+    const text = L(`អញ្ជើញចូលគ្រួសារ ${state.family.name} ក្នុង MYLIFE · លេខកូដ ${entry.code}`, `Join ${state.family.name} on MYLIFE · code ${entry.code}`);
+    node.querySelector("[data-fg-tg]").href = `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
+    const copy = async (value, done) => {
+      try { await navigator.clipboard.writeText(value); } catch (error) { const input = node.querySelector("[data-fg-link]"); input.value = value; input.select(); try { document.execCommand("copy"); } catch (copyError) { /* select is enough */ } input.value = url; }
+      Toast.show(done);
+    };
+    node.querySelector("[data-fg-copy]").addEventListener("click", () => copy(url, L("✅ បានចម្លង link", "✅ Link copied")));
+    node.querySelector("[data-fg-copycode]").addEventListener("click", () => copy(entry.code || "", L("✅ បានចម្លងកូដ", "✅ Code copied")));
+    try {
+      const qrcode = await loadQr();
+      const qr = qrcode(0, "M");
+      qr.addData(url);
+      qr.make();
+      node.querySelector("[data-fg-qr]").innerHTML = qr.createSvgTag({ cellSize: 5, margin: 2, scalable: true });
+    } catch (qrError) { node.querySelector("[data-fg-qr]").hidden = true; }
+  }
+  function openLink(token) {
+    const entry = state.invites.find(item => item.token === token);
+    if (!entry || !state.family) return;
+    const node = sheet(`<div class="fg-sheet-title"><strong>${escapeHtml(L("ចែក link អញ្ជើញ", "Share invite"))}</strong><button type="button" class="fg-icon-btn" data-fg-close aria-label="Close">${icon("close")}</button></div>${shareHtml()}`);
+    fillShare(node, entry);
+  }
+
+  function openInvite() {
+    if (!isAdmin() || !state.family) return;
+    if (!state.v2) { openInviteV1(); return; }
+    let role = "member", days = 7, many = false, cardId = "";
+    const perms = { ...DEFAULT_PERMS };
+    const cards = (appData.family || []).filter(person => person && person.id && person.relationship !== "Me" && !person.userId);
+    const face = person => person.photo ? `<img src="${escapeAttr(person.photo)}" alt="">` : escapeHtml(initials(person.name));
+    const chips = () => PERMS.map(perm => {
+      const locked = perm.group === "private";
+      const on = Boolean(perms[perm.key]);
+      return `<button type="button" class="fg-chip ${on ? "is-on" : ""} ${locked ? "is-private" : ""}" data-fg-chip="${perm.key}" aria-pressed="${on}">${on ? icon("check") : locked ? IC.lock() : ""}<span>${escapeHtml(L(...perm.short))}</span></button>`;
+    }).join("");
+    const node = sheet(`
+      <div class="fg-sheet-title"><strong>${escapeHtml(L("អញ្ជើញសមាជិកថ្មី", "Invite a new member"))}</strong><button type="button" class="fg-icon-btn" data-fg-close aria-label="Close">${icon("close")}</button></div>
+      <div data-fg-step="choose">
+        <h3 class="fg-label">${escapeHtml(L("សម្រាប់អ្នកណា?", "Who is it for?"))}</h3>
+        <div class="fg-who" data-fg-who>
+          ${cards.map(person => `<button type="button" class="fg-who-btn" data-fg-card="${escapeAttr(person.id)}"><span class="fg-who-face" style="--fg-tone:${toneOf(person.id)}">${face(person)}</span><span>${escapeHtml(String(person.name || "").split(/\s+/)[0])}</span></button>`).join("")}
+          <button type="button" class="fg-who-btn is-on" data-fg-card=""><span class="fg-who-face is-new">＋</span><span>${escapeHtml(L("មនុស្សថ្មី", "Someone new"))}</span></button>
+        </div>
+        <h3 class="fg-label">${escapeHtml(L("តួនាទី", "Role"))}</h3>
+        <div class="fg-pills">${["member", "viewer"].map(entry => `<button type="button" class="fg-pill ${entry === role ? "is-on" : ""}" data-fg-irole="${entry}">${escapeHtml(L(...ROLE[entry]))}<small>${escapeHtml(entry === "member" ? L("post, ❤️, បញ្ចេញមតិ", "post, ❤️, comment") : L("មើល និង ❤️ ប៉ុណ្ណោះ", "view and ❤️ only"))}</small></button>`).join("")}</div>
+        <h3 class="fg-label">${escapeHtml(L("Link ប្រើបានរយៈពេល", "Link works for"))}</h3>
+        <div class="fg-seg" data-fg-days>${DAYS.map(([value, label]) => `<button type="button" class="${value === days ? "is-on" : ""}" data-fg-day="${value === null ? "" : value}">${escapeHtml(L(...label))}</button>`).join("")}</div>
+        <h3 class="fg-label">${escapeHtml(L("ចំនួនអ្នកប្រើ", "How many people"))}</h3>
+        <div class="fg-seg" data-fg-many><button type="button" class="is-on" data-fg-uses="1">${escapeHtml(L("1 នាក់", "1 person"))}</button><button type="button" data-fg-uses="10">${escapeHtml(L("ច្រើននាក់ (Link គ្រួសារ)", "Several (family link)"))}</button></div>
+        <p class="fg-approve" data-fg-approve hidden>🛡️ <span>${escapeHtml(L("Link គ្មានផុតកំណត់ ឬច្រើននាក់៖ អ្នកណាចុច ត្រូវរង់ចាំអ្នកយល់ព្រមសិន ទើបចូលបាន។", "No-expiry or several-people links: whoever opens it waits for your approval first."))}</span></p>
+        <h3 class="fg-label">${escapeHtml(L("ឲ្យមើលអ្វីខ្លះ៖", "What they can see:"))}</h3>
+        <div class="fg-chips" data-fg-chips>${chips()}</div>
+        <button type="button" class="fg-primary" data-fg-make>${IC.userPlus()}<span>${escapeHtml(L("បង្កើត link អញ្ជើញ", "Create invite link"))}</span></button>
+      </div>
+      <div data-fg-step="share" hidden>${shareHtml()}</div>`, () => refresh(true));
+
+    const sync = () => {
+      node.querySelectorAll("[data-fg-card]").forEach(button => button.classList.toggle("is-on", button.dataset.fgCard === cardId));
+      node.querySelectorAll("[data-fg-day]").forEach(button => button.classList.toggle("is-on", (button.dataset.fgDay === "" ? null : Number(button.dataset.fgDay)) === days));
+      node.querySelectorAll("[data-fg-uses]").forEach(button => button.classList.toggle("is-on", (button.dataset.fgUses !== "1") === many));
+      node.querySelector("[data-fg-approve]").hidden = !(days === null || many);
+    };
+    node.querySelector("[data-fg-who]").addEventListener("click", event => { const b = event.target.closest("[data-fg-card]"); if (!b) return; cardId = b.dataset.fgCard; if (cardId) many = false; sync(); });
+    node.querySelector("[data-fg-days]").addEventListener("click", event => { const b = event.target.closest("[data-fg-day]"); if (!b) return; days = b.dataset.fgDay === "" ? null : Number(b.dataset.fgDay); sync(); });
+    node.querySelector("[data-fg-many]").addEventListener("click", event => { const b = event.target.closest("[data-fg-uses]"); if (!b) return; many = b.dataset.fgUses !== "1"; if (many) cardId = ""; sync(); });
+    node.querySelectorAll("[data-fg-irole]").forEach(button => button.addEventListener("click", () => {
+      role = button.dataset.fgIrole;
+      node.querySelectorAll("[data-fg-irole]").forEach(entry => entry.classList.toggle("is-on", entry === button));
+    }));
+    const bindChips = () => node.querySelectorAll("[data-fg-chip]").forEach(button => button.addEventListener("click", () => {
+      perms[button.dataset.fgChip] = !perms[button.dataset.fgChip];
+      node.querySelector("[data-fg-chips]").innerHTML = chips();
+      bindChips();
+    }));
+    bindChips();
+    node.querySelector("[data-fg-make]").addEventListener("click", async event => {
+      const button = event.currentTarget;
+      button.disabled = true;
+      const card = cards.find(person => person.id === cardId);
+      const label = card?.name || (many ? L("Link គ្រួសារ", "Family link") : null);
+      const { data, error } = await client().rpc("create_family_invite_v2", { p_family: state.family.id, p_role: role, p_permissions: perms, p_days: days, p_max_uses: many ? 10 : 1, p_label: label, p_card_id: card ? card.id : null });
+      const made = Array.isArray(data) ? data[0] : data;
+      if (error || !made?.token) { Toast.show(`⚠️ ${error?.message || "invite failed"}`); button.disabled = false; return; }
+      node.querySelector("[data-fg-step=choose]").hidden = true;
+      node.querySelector("[data-fg-step=share]").hidden = false;
+      fillShare(node, { token: made.token, code: made.code, role, label, expires_at: days === null ? null : new Date(Date.now() + days * 864e5).toISOString(), max_uses: many ? 10 : 1, use_count: 0, needs_approval: days === null || many });
+    });
+  }
+
   /* ---------- joining with /?join=<token> ---------- */
   function rememberJoin() {
     try {
@@ -388,6 +575,10 @@ const FamilyGroup = (() => {
     if (!token || joinShown || !client()?.rpc) return;
     if (!(await myId())) return; // after login (onAuthStateChange calls again)
     joinShown = true;
+    const v2 = await client().rpc("family_invite_preview_v2", { p_key: token });
+    if (!v2.error) { joinV2(token, Array.isArray(v2.data) ? v2.data[0] : v2.data); return; }
+    if (!missingTable(v2.error)) { joinShown = false; Toast.show(`⚠️ ${v2.error.message}`); return; }
+    if (!/^[0-9a-f]{32,}$/i.test(token)) { clearJoin(); joinShown = false; Toast.show(L("⚠️ លេខកូដមិនទាន់ប្រើបាន", "⚠️ Codes are not set up yet")); return; }
     const { data, error } = await client().rpc("family_invite_preview", { p_token: token });
     const info = Array.isArray(data) ? data[0] : data;
     if (error || !info) { clearJoin(); joinShown = false; Toast.show(L("⚠️ Link អញ្ជើញមិនត្រឹមត្រូវ", "⚠️ Invite link not valid")); return; }
@@ -417,6 +608,82 @@ const FamilyGroup = (() => {
     });
   }
 
+  /* ---------- joining v2: welcome → (wait for approval) → profile → what you can see → family ---------- */
+  const buddy = mood => (typeof HomeV2 !== "undefined" && HomeV2.buddy ? HomeV2.buddy(mood) : "🐱");
+  const steps = n => `<div class="fg-steps">${[1, 2, 3, 4].map(i => `<i class="${i <= n ? "is-on" : ""}"></i>`).join("")}</div>`;
+  function joinV2(key, info) {
+    if (!info) { clearJoin(); joinShown = false; Toast.show(L("⚠️ Link ឬលេខកូដមិនត្រឹមត្រូវ", "⚠️ Invite link or code not valid")); return; }
+    const inviter = info.inviter || L("គ្រួសារ", "The family");
+    if (info.my_status === "member") { clearJoin(); joinShown = false; welcomeAfterJoin(info, true); return; }
+    if (info.my_status === "pending") { joinShown = false; Toast.show(L(`⏳ កំពុងរង់ចាំ ${inviter} យល់ព្រម`, `⏳ Waiting for ${inviter} to approve`)); return; }
+    if (info.my_status === "rejected") { clearJoin(); joinShown = false; Toast.show(L("សំណើចូលរួមត្រូវបានបដិសេធ", "Your request was declined")); return; }
+    if (info.status !== "ok") {
+      clearJoin(); joinShown = false;
+      Toast.show(info.status === "used" ? L("⚠️ Link នេះបានប្រើរួចហើយ — សុំ link ថ្មី", "⚠️ This link was already used — ask for a new one")
+        : info.status === "cancelled" ? L("⚠️ Link នេះត្រូវបានបោះបង់ — សុំ link ថ្មី", "⚠️ This link was cancelled — ask for a new one")
+        : L("⚠️ Link ផុតកំណត់ — សុំ link ថ្មី", "⚠️ This link expired — ask for a new one"));
+      return;
+    }
+    const node = sheet(`<div class="fg-welcome">${steps(1)}
+        <span class="fg-welcome-nomi">${buddy("wink")}</span>
+        <strong>${escapeHtml(L(`${inviter} បានអញ្ជើញអ្នក 💜`, `${inviter} invited you 💜`))}</strong>
+        <p>${escapeHtml(L(`ចូលរួម «${familyName(info.family_name)}» ក្នុង MYLIFE · សមាជិក ${info.member_count} នាក់`, `Join “${familyName(info.family_name)}” on MYLIFE · ${info.member_count} members`))}</p>
+        <p class="fg-welcome-role">${escapeHtml(L(`ជា ${ROLE[info.role][0]} · លុយ និងកំណត់ត្រាផ្ទាល់ខ្លួនរបស់អ្នក នៅតែជារបស់អ្នក`, `As ${ROLE[info.role][1]} · your own money and notes stay yours`))}</p>
+        ${info.needs_approval ? `<p class="fg-approve">🛡️ <span>${escapeHtml(L(`${inviter} នឹងយល់ព្រមមុន ទើបអ្នកចូលបាន`, `${inviter} approves before you get in`))}</span></p>` : ""}
+        <button type="button" class="fg-primary" data-fg-accept>${escapeHtml(info.needs_approval ? L("ផ្ញើសំណើចូលរួម", "Ask to join") : L("ចូលរួម", "Join"))}</button>
+        <button type="button" class="fg-text-btn" data-fg-close>${escapeHtml(L("ពេលក្រោយ", "Not now"))}</button>
+      </div>`, () => { joinShown = false; });
+    node.querySelector("[data-fg-accept]").addEventListener("click", async event => {
+      event.currentTarget.disabled = true;
+      const { data, error } = await client().rpc("accept_family_invite_v2", { p_key: key, p_display_name: appData.profile?.name || null });
+      const result = Array.isArray(data) ? data[0] : data;
+      if (error) { clearJoin(); closeSheet(); joinShown = false; Toast.show(`⚠️ ${error.message}`); return; }
+      if (result?.status === "pending") {
+        node.querySelector(".fg-panel").innerHTML = `<div class="fg-welcome">${steps(1)}<span class="fg-welcome-nomi">${buddy("love")}</span>
+          <strong>${escapeHtml(L("បានផ្ញើសំណើហើយ ✓", "Request sent ✓"))}</strong>
+          <p>${escapeHtml(L(`រង់ចាំ ${inviter} យល់ព្រម។ ពេលយល់ព្រមហើយ បើក app ម្តងទៀត ដើម្បីបន្ត។`, `Waiting for ${inviter}. Once approved, open the app again to continue.`))}</p>
+          <button type="button" class="fg-primary" data-fg-close>${escapeHtml(L("យល់ហើយ", "OK"))}</button></div>`;
+        window.familyAlert?.("join");
+        return;
+      }
+      clearJoin();
+      window.familyAlert?.("join");
+      await load(true);
+      welcomeAfterJoin(info, false, node);
+    });
+  }
+  const familyName = raw => String(raw || "").trim() || L("គ្រួសារ", "Family");
+  async function welcomeAfterJoin(info, approvedLater, node) {
+    if (approvedLater) {
+      if (typeof MemberProfile !== "undefined" && MemberProfile.hasMine && await MemberProfile.hasMine()) return; // already set up
+      await load(true);
+    }
+    const panel = node ? node.querySelector(".fg-panel") : sheet("", () => { joinShown = false; refresh(true); }).querySelector(".fg-panel");
+    // step 2: my profile
+    panel.innerHTML = `<div class="fg-welcome">${steps(2)}
+      ${approvedLater ? `<span class="fg-welcome-nomi">${buddy("love")}</span><strong>${escapeHtml(L("🎉 អ្នកបានចូលរួមហើយ!", "🎉 You're in!"))}</strong>` : ""}
+      <strong>${escapeHtml(L("រៀបចំ Profile របស់អ្នក", "Set up your profile"))}</strong><p>${escapeHtml(L("គ្រួសារនឹងឃើញព័ត៌មាននេះ", "Your family will see this"))}</p>
+      <div data-fg-setup></div></div>`;
+    const done = () => {
+      // step 3: what I can see
+      const me = meRow();
+      const perms = me?.permissions || {};
+      panel.innerHTML = `<div class="fg-welcome">${steps(3)}
+        <strong>${escapeHtml(L("អ្វីដែលអ្នកអាចមើល", "What you can see"))}</strong><p>${escapeHtml(L(`${info.inviter || "Admin"} បានកំណត់សិទ្ធិទាំងនេះ`, `${info.inviter || "The admin"} set these`))}</p>
+        <div class="fg-can">${PERMS.map(perm => `<div class="${perms[perm.key] ? "" : "is-off"}">${perm.icon()}<span>${escapeHtml(L(perm.km, perm.en))}</span><b>${perms[perm.key] ? "✓" : escapeHtml(L("មិនបង្ហាញ", "Hidden"))}</b></div>`).join("")}</div>
+        <p class="fg-welcome-role">🔒 ${escapeHtml(L("លុយ និងកំណត់ត្រាផ្ទាល់ខ្លួនរបស់អ្នក ជារបស់អ្នកម្នាក់ឯង", "Your own money and notes are only yours"))}</p>
+        <button type="button" class="fg-primary" data-fg-go>${escapeHtml(L("ចូលទៅគ្រួសារ 🎉", "Go to the family 🎉"))}</button></div>`;
+      panel.querySelector("[data-fg-go]").addEventListener("click", () => {
+        closeSheet(); joinShown = false;
+        location.hash = "#family";
+        refresh(true);
+        if (typeof DoneFeed !== "undefined") DoneFeed.celebrate({ mood: "love", title: L("🎉 ស្វាគមន៍មកកាន់គ្រួសារ!", "🎉 Welcome to the family!"), sub: familyName(info.family_name) });
+      });
+    };
+    if (typeof MemberProfile !== "undefined" && MemberProfile.mountSetup) MemberProfile.mountSetup(panel.querySelector("[data-fg-setup]"), done);
+    else done();
+  }
+
   rememberJoin();
   if (typeof window !== "undefined") {
     // a family member (not the owner) opened MYLIFE: let the owner know, at most every 6 hours
@@ -438,5 +705,5 @@ const FamilyGroup = (() => {
     if (document.readyState === "complete") setTimeout(start, 1500); else window.addEventListener("load", () => setTimeout(start, 1500));
   }
 
-  return { mount, refresh, load, state, openInvite, openMember, tryJoin, PERMS, DEFAULT_PERMS };
+  return { mount, refresh, load, state, openInvite, openMember, tryJoin, PERMS, DEFAULT_PERMS, ROLE, isAdmin, profileOf, nameOf, isOwner };
 })();

@@ -109,6 +109,9 @@ const Login = {
           <button type="button" class="login-guest-button" id="loginGuestButton">${t("continueAsGuest")}</button>
           ${(supabaseConfigured || hasAccount) && !isReset ? `<button type="button" class="login-reset-link" id="loginResetButton">${t("forgotPassword")}</button>` : ""}
         </form>
+        ${supabaseConfigured && !isReset && !SIGNUP_OPEN ? `<details class="login-code"><summary>${L("មានលេខកូដចូលរួមគ្រួសារ?", "Have a family join code?")}</summary>
+          <div class="login-code-row"><input id="loginJoinCode" maxlength="6" autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="LY7K2Q" aria-label="${L("លេខកូដ 6 តួ", "6-character code")}"><button type="button" class="button" id="loginJoinCodeButton">${L("ប្រើកូដ", "Use code")}</button></div>
+          <small>${L("វាយលេខកូដដែលអ្នកទទួលបាន រួចបង្កើតគណនី ឬ login", "Type the code you got, then create an account or log in")}</small></details>` : ""}
         <div class="login-footer">
           <p class="secondary">${supabaseConfigured ? L("🔒 ទិន្នន័យ sync សុវត្ថិភាពជាមួយគណនីរបស់អ្នក", "🔒 Your data syncs securely with your account") : t("noDataStored")}</p>
         </div>
@@ -119,6 +122,16 @@ const Login = {
     modalRoot.classList.add("open");
     modalRoot.appendChild(modal);
     this.decorate(modal, L);
+
+    // family join code (6 chars) = the same as opening an invite link (js/family-group.js reads it after login)
+    document.getElementById("loginJoinCodeButton")?.addEventListener("click", () => {
+      const input = document.getElementById("loginJoinCode");
+      const code = String(input?.value || "").trim().toUpperCase();
+      if (!/^[A-Z2-9]{6}$/.test(code)) { const err = document.getElementById("loginError"); if (err) err.textContent = L("លេខកូដត្រូវមាន 6 តួ", "The code has 6 characters"); return; }
+      try { sessionStorage.setItem("mylife:family-join", code); localStorage.setItem("mylife:family-join", code); } catch (error) { /* ignore */ }
+      this.close();
+      this.open("signup");
+    });
 
     document.getElementById("loginForm").addEventListener("submit", (e) => {
       e.preventDefault();
