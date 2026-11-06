@@ -104,6 +104,7 @@ const ExpensesV2 = (() => {
       <div class="ev-big">${money(total)}${budgetTotal ? ` <small>/ ${money(budgetTotal)} ${L("ថវិកា", "budget")}</small>` : ""}</div>
       <p class="ev-sub">${sub}</p>
       ${list.length ? `<div class="ev-stack">${stack}</div>` : ""}
+      ${isNow && typeof AutoBudget !== "undefined" ? AutoBudget.buttonHtml() : ""}
       ${isNow ? `<details class="xb-all" ${moneyBudgetOpen ? "open" : ""}><summary>${L("កែថវិកា · ការព្រមាន", "Budgets · alerts")}</summary>
         <label class="bud-alert-toggle"><input type="checkbox" data-budget-alerts ${appData.profile.budgetAlerts !== false ? "checked" : ""}>
           <span>📲 ${L("ព្រមានតាម Telegram ពេលចាយដល់ 80% និង 100%", "Telegram alert at 80% and 100%")}</span></label>

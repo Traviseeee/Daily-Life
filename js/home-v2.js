@@ -684,6 +684,7 @@ const HomeV2 = (() => {
     return `<div class="hv2-body hv2-v3 hv4">
         ${alerts(d)}
         ${typeof DoneFeed !== "undefined" ? DoneFeed.tickerHtml() : ""}
+        ${typeof AutoBudget !== "undefined" ? AutoBudget.offerHtml() : ""}
         ${homeMoney(d)}
         ${todayCard(d)}
         ${meCard(d)}

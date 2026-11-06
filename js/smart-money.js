@@ -134,6 +134,7 @@ const SmartMoney = (() => {
       </div>
       <div class="xb-track"><i style="width:${Math.min(100, pct)}%"></i></div>
       <p class="xb-note">${totalBudget ? (warn ? `⚠️ ${warn} ${km() ? "ប្រភេទជិតអស់ថវិកា" : "categories near the limit"}` : (km() ? "✓ ចាយក្នុងថវិកា" : "✓ Within budget")) : (km() ? "ចុច ＋ កំណត់ថវិកា ក្រោមប្រភេទនីមួយៗ" : "Tap ＋ Set a budget under a category")}</p>
+      ${typeof AutoBudget !== "undefined" ? AutoBudget.buttonHtml() : ""}
       <details class="xb-all" ${open ? "open" : ""}><summary>${km() ? "កែថវិកាទាំងអស់ · ការព្រមាន" : "All budgets · alerts"}</summary>
         <label class="bud-alert-toggle"><input type="checkbox" data-budget-alerts ${alertsOn ? "checked" : ""}>
           <span>📲 ${km() ? "ព្រមានតាម Telegram ពេលចាយដល់ 80% និង 100%" : "Telegram alert at 80% and 100%"}</span></label>
