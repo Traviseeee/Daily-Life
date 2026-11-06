@@ -142,7 +142,7 @@ const FamilyChat = (() => {
   }
 
   /* ---------- share cards from the app ---------- */
-  const fmt = n => (typeof money === "function" ? money(Number(n) || 0) : `$${Number(n || 0).toLocaleString()}`);
+  const fmt = n => (typeof money === "function" ? String(money(Number(n) || 0)).replace(/<[^>]*>/g, "") : `$${Number(n || 0).toLocaleString()}`);
   function shareOptions() {
     const out = [];
     const data = typeof appData !== "undefined" ? appData : {};
@@ -159,10 +159,12 @@ const FamilyChat = (() => {
       .forEach(e => out.push({ type: "event", icon: "📅", head: L("📅 ព្រឹត្តិការណ៍", "📅 Event"), title: e.title || L("ព្រឹត្តិការណ៍", "Event"), sub: `${dayLabel(`${e.date}T${e.time || "12:00"}`)}${e.time ? ` · ${e.time}` : ""}`, date: e.date, time: e.time || "" }));
     return out;
   }
+  // plain text only (cards sent before 6 Nov could carry the money <span> markup)
+  const plainText = v => String(v ?? "").replace(/<[^>]*>/g, "");
   function cardHtml(d, mine) {
     const type = ["paid", "save", "goal", "event"].includes(d.type) ? d.type : "paid";
     const pct = Math.max(0, Math.min(100, Number(d.pct) || 0));
-    return `<div class="fc-card is-${type}"><div class="fc-card-h">${esc(d.head || "📌")}</div><div class="fc-card-b"><b>${esc(d.title || "")}</b>${d.sub ? `<small>${esc(d.sub)}</small>` : ""}${type === "goal" ? `<div class="fc-bar"><i style="width:${pct}%"></i></div>` : ""}</div>${type === "event" && !mine ? `<div class="fc-card-f"><button type="button" data-fc-going>✋ ${esc(L("ខ្ញុំទៅ", "I'm going"))}</button><button type="button" data-fc-addcal>📅 ${esc(L("ដាក់ក្នុងប្រតិទិនខ្ញុំ", "Add to my calendar"))}</button></div>` : ""}</div>`;
+    return `<div class="fc-card is-${type}"><div class="fc-card-h">${esc(d.head || "📌")}</div><div class="fc-card-b"><b>${esc(plainText(d.title))}</b>${d.sub ? `<small>${esc(plainText(d.sub))}</small>` : ""}${type === "goal" ? `<div class="fc-bar"><i style="width:${pct}%"></i></div>` : ""}</div>${type === "event" && !mine ? `<div class="fc-card-f"><button type="button" data-fc-going>✋ ${esc(L("ខ្ញុំទៅ", "I'm going"))}</button><button type="button" data-fc-addcal>📅 ${esc(L("ដាក់ក្នុងប្រតិទិនខ្ញុំ", "Add to my calendar"))}</button></div>` : ""}</div>`;
   }
   function stickerHtml(id) {
     const s = STICKERS.find(x => x[0] === id) || STICKERS[0];
@@ -288,7 +290,7 @@ const FamilyChat = (() => {
     } else {
       const opts = shareOptions();
       S.shareOpts = opts;
-      el.innerHTML = opts.length ? `<p class="fc-dtitle">${esc(L("ចែករំលែកពី app", "Share from the app"))}</p><div class="fc-shgrid">${opts.map((o, i) => `<button type="button" data-fc-share="${i}"><span>${o.icon}</span><span><b>${esc(o.title)}</b><small>${esc(o.sub)}</small></span></button>`).join("")}</div>`
+      el.innerHTML = opts.length ? `<p class="fc-dtitle">${esc(L("ចែករំលែកពី app", "Share from the app"))}</p><div class="fc-shgrid">${opts.map((o, i) => `<button type="button" data-fc-share="${i}"><span>${o.icon}</span><span><b>${esc(plainText(o.title))}</b><small>${esc(plainText(o.sub))}</small></span></button>`).join("")}</div>`
         : `<p class="fc-dtitle">${esc(L("មិនទាន់មានអ្វីចែករំលែក — បង់វិក្កយបត្រ ដាក់សន្សំ ឬបន្ថែមព្រឹត្តិការណ៍សិន", "Nothing to share yet — pay a bill, save, or add an event first"))}</p>`;
     }
   }
