@@ -1,0 +1,96 @@
+/* Family v4 (6 Nov 2026, approved draft) — same card language as Home v4.
+   Members in one white row (tap → member sheet), coming dates with countdowns,
+   "Stay close" (call · message · love per person), memories card, family group.
+   Markup: js/family-v2.js (lav). Loaded after lavender-all.css. */
+
+html:root .fam2.is-lav { --f4-card: #fff; --f4-line: #f0edf8; --f4-ink: #14183a; --f4-sub: #6a6f8c; --f4-a: #504ab9; --f4-chip: #efebff; --f4-sh: 0 10px 30px rgba(80, 74, 185, .08); }
+html:root:not([data-theme="light"]) .fam2.is-lav { --f4-card: #2e2956; --f4-line: rgba(182, 168, 255, .16); --f4-ink: #f4f2ff; --f4-sub: #bdb7e6; --f4-a: #c9bdff; --f4-chip: rgba(182, 168, 255, .16); --f4-sh: none; }
+
+/* members row: one white panel, all faces fit */
+html:root body .fam2.is-lav.fam2.is-lav .fv-avs { justify-content: space-between; gap: 6px !important; margin-top: 14px !important; padding: 14px 12px 12px; border-radius: 24px; background: var(--f4-card); box-shadow: 0 10px 26px rgba(80, 74, 185, .12); }
+html:root body .fam2.is-lav.fam2.is-lav .fv-avs .fv4-av.fv4-av { width: 58px !important; }
+html:root body .fam2.is-lav.fam2.is-lav .fv-avs .fv4-av.fv4-av .fv-ring { width: 54px !important; height: 54px !important; padding: 2px; background: var(--f4-line) !important; box-shadow: none !important; }
+html:root body .fam2.is-lav.fam2.is-lav .fv-avs .fv4-av.fv4-av.is-near .fv-ring { background: linear-gradient(135deg, #ffb3c4, #ff6f91) !important; }
+html:root body .fam2.is-lav.fam2.is-lav .fv-avs .fv4-av.fv4-av .fv-face { border: 2.5px solid var(--f4-card) !important; border-color: var(--f4-card) !important; font-size: 1.05rem; color: #fff; }
+html:root body .fam2.is-lav.fam2.is-lav .fv-avs .fv4-av.fv4-av b { color: var(--f4-ink) !important; -webkit-text-fill-color: var(--f4-ink); font-size: .76rem; }
+html:root body .fam2.is-lav.fam2.is-lav .fv-avs .fv4-av.fv4-av small { color: #e8556f !important; -webkit-text-fill-color: #e8556f; font-size: .64rem; font-weight: 600; }
+html:root body .fam2.is-lav.fam2.is-lav .fv-avs .fv4-av.fv4-av.is-add .fv-ring { background: transparent !important; box-shadow: none !important; }
+html:root body .fam2.is-lav.fam2.is-lav .fv-avs .fv4-av.fv4-av.is-add .fv-face { border: 2px dashed #cfc7f3 !important; color: var(--f4-a) !important; background: var(--f4-chip) !important; }
+
+/* cards */
+html:root body .fam2.is-lav .fv-body.fv4 { display: grid; gap: 14px; }
+.fv4-card { position: relative; min-width: 0; padding: 16px; border-radius: 26px; color: var(--f4-ink); background: var(--f4-card); box-shadow: var(--f4-sh); }
+.fv4-ch { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.fv4-ch h2 { flex: 1; min-width: 0; margin: 0; font-size: 1rem; font-weight: 600; color: var(--f4-ink); }
+.fv4-gi { display: grid; place-items: center; width: 32px; height: 32px; flex: 0 0 auto; border-radius: 11px; color: var(--c); background: color-mix(in srgb, var(--c) 13%, transparent); }
+.fv4-gi svg { width: 18px; height: 18px; }
+html:root body .fam2 .fv4-more { display: inline-flex; align-items: center; padding: 5px 11px; border: 0; border-radius: 99px; color: var(--f4-a) !important; background: var(--f4-chip) !important; font: inherit; font-size: .76rem; font-weight: 500; white-space: nowrap; text-decoration: none; cursor: pointer; }
+
+/* coming dates */
+.fv4-dy, .fv4-who { display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 0; border: 0; color: inherit; background: none; font: inherit; text-align: left; cursor: pointer; }
+.fv4-dy + .fv4-dy { border-top: 1px solid var(--f4-line); }
+.fv4-ch + .fv4-dy { padding-top: 2px; }
+.fv4-de { display: grid; place-items: center; width: 46px; height: 46px; flex: 0 0 auto; border-radius: 15px; font-size: 1.35rem; background: color-mix(in srgb, var(--c) 12%, transparent); }
+.fv4-tx { display: grid; flex: 1; min-width: 0; }
+.fv4-tx b { overflow: hidden; font-size: .9rem; font-weight: 600; white-space: nowrap; text-overflow: ellipsis; color: var(--f4-ink); }
+.fv4-tx small { overflow: hidden; font-size: .76rem; font-weight: 400; white-space: nowrap; text-overflow: ellipsis; color: var(--f4-sub); }
+.fv4-cd { display: grid; justify-items: center; min-width: 54px; padding: 5px 8px; border-radius: 14px; line-height: 1.1; color: var(--c); background: color-mix(in srgb, var(--c) 10%, transparent); }
+.fv4-cd b { font-size: 1.05rem; font-weight: 700; }
+.fv4-cd small { font-size: .62rem; font-weight: 500; }
+.fv4-addrow { display: flex; align-items: center; justify-content: center; width: 100%; height: 40px; margin-top: 6px; border: 1.5px dashed #d9d2f5; border-radius: 14px; color: var(--f4-a); background: none; font: inherit; font-size: .82rem; cursor: pointer; }
+
+/* stay close */
+.fv4-cl { display: flex; align-items: center; gap: 8px; }
+.fv4-cl + .fv4-cl { border-top: 1px solid var(--f4-line); }
+.fv4-who { flex: 1; min-width: 0; }
+.fv4-face { display: grid; place-items: center; width: 42px; height: 42px; flex: 0 0 auto; overflow: hidden; border-radius: 50%; color: #fff; font-size: .95rem; font-weight: 700; }
+.fv4-face img { width: 100%; height: 100%; object-fit: cover; }
+.fv4-acts { display: flex; gap: 6px; flex: 0 0 auto; }
+html:root body .fam2 .fv4-act, #modalRoot .fv4-act { display: grid; place-items: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 12px; cursor: pointer; text-decoration: none; }
+.fv4-act svg { width: 18px; height: 18px; }
+.fv4-act.is-call { color: #1f9d74; background: #e3f6ee; }
+.fv4-act.is-msg { color: #2f7bf5; background: #e8f2ff; }
+.fv4-act.is-love { color: #ff6f91; background: #ffeef3; }
+.fv4-act.is-off { opacity: .45; }
+html:root:not([data-theme="light"]) .fv4-act { background: rgba(182, 168, 255, .14) !important; }
+
+/* memories */
+html:root body .fam2 .fv4-mem .mf-teaser { display: block; margin: 0; padding: 0; border: 0 !important; background: none !important; box-shadow: none !important; }
+html:root body .fam2 .fv4-mem .mf-teaser-head { display: none; }
+html:root body .fam2 .fv4-mem .mf-teaser-row { display: flex; gap: 10px; margin: 0 -16px; padding: 0 16px 2px; overflow-x: auto; scrollbar-width: none; }
+html:root body .fam2 .fv4-mem .mf-teaser-cell { flex: 0 0 auto; width: 92px !important; height: 112px !important; border-radius: 18px !important; overflow: hidden; }
+html:root body .fam2 .fv4-mem .mf-teaser-cell :is(img, video) { width: 100%; height: 100%; object-fit: cover; }
+html:root body .fam2 .fv4-fold { margin: 12px 0 0 !important; border: 0 !important; background: none !important; box-shadow: none !important; }
+html:root body .fam2 .fv4-fold > summary { padding: 10px 12px !important; border: 1px solid var(--f4-line); border-radius: 14px; font-size: .82rem; }
+
+/* family group: same card look */
+html:root body .fam2.is-lav .fv4 > .fv-group > * { border-radius: 26px !important; box-shadow: var(--f4-sh) !important; }
+
+/* member sheet */
+#modalRoot .modal.fv4-sheet { --f4-card: #fff; --f4-line: #f0edf8; --f4-ink: #14183a; --f4-sub: #6a6f8c; --f4-a: #504ab9; --f4-chip: #efebff;
+  position: relative; width: min(460px, 100%); max-height: calc(100dvh - 20px); overflow-y: auto; padding: 10px 18px 20px; border-radius: 28px; color: var(--f4-ink); background: var(--f4-card) !important; }
+html:root:not([data-theme="light"]) #modalRoot .modal.fv4-sheet { --f4-card: #2a2550; --f4-line: rgba(182, 168, 255, .16); --f4-ink: #f4f2ff; --f4-sub: #bdb7e6; --f4-a: #c9bdff; --f4-chip: rgba(182, 168, 255, .16); }
+.fv4-grab { display: block; width: 40px; height: 5px; margin: 0 auto 12px; border-radius: 9px; background: rgba(127, 127, 127, .3); }
+#modalRoot .fv4-sheet .fv4-x { position: absolute; top: 12px; right: 12px; width: 34px; height: 34px; border-radius: 50%; color: var(--f4-ink); background: rgba(127, 127, 127, .14) !important; }
+.fv4-sh { display: flex; align-items: center; gap: 14px; padding-right: 36px; }
+.fv4-face.is-big { width: 64px; height: 64px; font-size: 1.4rem; }
+.fv4-sh h3 { margin: 0; font-size: 1.2rem; font-weight: 700; color: var(--f4-ink); }
+.fv4-sh small { font-size: .8rem; color: var(--f4-sub); }
+.fv4-big { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 16px 0 10px; }
+#modalRoot .fv4-big .fv4-act { width: auto; height: 58px; border-radius: 16px; }
+#modalRoot .fv4-big .fv4-act svg { width: 24px; height: 24px; }
+.fv4-idea { margin: 0 0 10px; padding: 10px 12px; border-radius: 14px; font-size: .82rem; color: var(--f4-ink); background: var(--f4-chip); }
+.fv4-info { padding: 2px 14px; border-radius: 18px; background: color-mix(in srgb, var(--f4-chip) 55%, transparent); }
+.fv4-info > div { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 11px 0; font-size: .86rem; }
+.fv4-info > div + div { border-top: 1px solid var(--f4-line); }
+.fv4-info span { color: var(--f4-sub); font-weight: 400; }
+.fv4-info b { font-weight: 600; text-align: right; }
+.fv4-link { padding: 0; border: 0; color: var(--f4-a); background: none; font: inherit; font-weight: 600; cursor: pointer; }
+.fv4-note { margin: 8px 0 0; font-size: .82rem; color: var(--f4-sub); }
+.fv4-sheet .fv-tags { margin-top: 10px; }
+.fv4-two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; }
+.fv4-two button { display: flex; align-items: center; justify-content: center; gap: 6px; height: 46px; border: 0; border-radius: 14px; font: inherit; font-size: .86rem; font-weight: 600; cursor: pointer; }
+.fv4-two svg { width: 18px; height: 18px; }
+.fv4-edit { color: var(--f4-a); background: var(--f4-chip); }
+.fv4-del { color: #d6455d; background: #ffe8ec; }
+html:root:not([data-theme="light"]) .fv4-del { background: rgba(214, 69, 93, .16); }

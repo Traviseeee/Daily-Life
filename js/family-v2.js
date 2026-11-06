@@ -88,6 +88,12 @@ const FamilyV2 = (() => {
     const av = (member, label, sub) => {
       const next = nextBirthdayDate(member.birthday);
       const party = next && next <= soon;
+      if (lav()) {
+        // Family v4: one tidy row; a pink ring + countdown when a birthday is within 60 days; tap → member sheet
+        const d = next ? daysUntil(next) : -1;
+        const near = d >= 0 && d <= 60;
+        return `<button class="fv-av fv4-av${near ? " is-near" : ""}" type="button" data-fv-sheet="${escapeAttr(member.id)}" title="${escapeAttr(member.name || "")}"><span class="fv-ring"><span class="fv-face" style="background:${coverOf(member)}">${face(member)}</span></span><b>${escapeHtml(label)}</b>${d >= 0 ? `<small>${escapeHtml(d === 0 ? L("ថ្ងៃនេះ 🎂", "today 🎂") : L(`${d} ថ្ងៃ 🎂`, `${d} d 🎂`))}</small>` : ""}</button>`;
+      }
       return `<button class="fv-av${PARTNER.includes(member.relationship) ? " is-love" : ""}${party ? " is-party" : ""}" type="button" data-fam-jump="${escapeAttr(member.id)}" title="${escapeAttr(member.name || "")}"><span class="fv-ring"><span class="fv-face" style="background:${coverOf(member)}">${face(member)}</span></span><b>${escapeHtml(label)}</b><small>${escapeHtml(sub)}</small></button>`;
     };
     return `<header class="fv-hero">
@@ -97,8 +103,9 @@ const FamilyV2 = (() => {
       </div>
       ${lav() ? (() => { const [say, mood] = nomiLine(); return `<div class="fv-talk">${nomi(mood, "fv-nomi")}<span class="fv-say" data-nomi-say>${escapeHtml(say)}</span></div>`; })() : ""}
       <nav class="fv-avs" aria-label="${escapeAttr(t("family"))}">
-        ${me ? av(me, L("ខ្ញុំ", "Me"), first(me.name)) : `<button class="fv-av is-add" type="button" data-action="add-self"><span class="fv-ring"><span class="fv-face">${Icons.plus()}</span></span><b>${escapeHtml(L("ខ្ញុំ", "Me"))}</b><small>${escapeHtml(L("បន្ថែម", "Add"))}</small></button>`}
+        ${me ? av(me, L("ខ្ញុំ", "Me"), first(me.name)) : `<button class="fv-av is-add${lav() ? " fv4-av" : ""}" type="button" data-action="add-self"><span class="fv-ring"><span class="fv-face">${Icons.plus()}</span></span><b>${escapeHtml(L("ខ្ញុំ", "Me"))}</b><small>${escapeHtml(L("បន្ថែម", "Add"))}</small></button>`}
         ${others.map(member => av(member, first(member.name) || relLabel(member), relLabel(member))).join("")}
+        ${lav() ? `<button class="fv-av fv4-av is-add" type="button" data-action="add-family"><span class="fv-ring"><span class="fv-face">${Icons.plus()}</span></span><b>${escapeHtml(L("បន្ថែម", "Add"))}</b></button>` : ""}
       </nav>
     </header>`;
   }
@@ -145,6 +152,15 @@ const FamilyV2 = (() => {
   // birthdays, anniversaries (one per couple) and family events, nearest first
   function importantDates() {
     if (lav()) {
+      const list = dateItems().slice(0, 6);
+      const tone = { love: "#ff6f91", amber: "#e08a2e", blue: "#2f7bf5" };
+      return `<section class="fv4-card fv4-dates">
+        ${head("cal", "#ff6f91", L("ថ្ងៃសំខាន់ខាងមុខ", "Coming dates"), `<a class="fv4-more" href="#calendar">${escapeHtml(L("ប្រតិទិន", "Calendar"))} ›</a>`)}
+        ${list.map(item => { const d = daysUntil(item.date); const c = tone[item.tone] || "#7b68ee"; return `<button class="fv4-dy" type="button" ${item.attrs.replace("data-fam-jump", "data-fv-sheet")} style="--c:${c}"><span class="fv4-de">${item.icon}</span><span class="fv4-tx"><b>${escapeHtml(item.title)}</b><small>${escapeHtml(item.sub)}</small></span><span class="fv4-cd">${d === 0 ? `<b>🎉</b><small>${escapeHtml(L("ថ្ងៃនេះ", "today"))}</small>` : `<b>${d}</b><small>${escapeHtml(d === 1 ? L("ស្អែក", "tmrw") : L("ថ្ងៃទៀត", "days"))}</small>`}</span></button>`; }).join("") || `<p class="fv-empty">${escapeHtml(L("បន្ថែមថ្ងៃកំណើត ឬខួប ដើម្បីរំលឹកមុន", "Add birthdays or anniversaries to be reminded"))}</p>`}
+        <button class="fv4-addrow" type="button" data-action="add-event">＋ ${escapeHtml(L("បន្ថែមថ្ងៃសំខាន់", "Add a date"))}</button>
+      </section>`;
+    }
+    if (false) {
       const list = dateItems().slice(0, 6);
       return `<div class="fv-sec"><b>${escapeHtml(L("ថ្ងៃសំខាន់", "Important dates"))}</b><button class="fv-link" type="button" data-action="add-event">+ ${escapeHtml(L("ព្រឹត្តិការណ៍", "Event"))}</button></div>
         ${list.length ? `<div class="fv-dts">${list.map(item => { const d = daysUntil(item.date); return `<button class="fv-dt is-${item.tone}" type="button" ${item.attrs}><em>${item.icon}</em><b>${escapeHtml(item.short)}</b><small>${escapeHtml(dayMonth(item.date))}</small><strong>${d === 0 ? "🎉" : d}<span>${escapeHtml(d === 0 ? L("ថ្ងៃនេះ", "today") : d === 1 ? L("ស្អែក", "tmrw") : L("ថ្ងៃ", "days"))}</span></strong></button>`; }).join("")}</div>` : `<section class="fv-card fv-ups"><p class="fv-empty">${escapeHtml(L("បន្ថែមថ្ងៃកំណើត ឬខួប ដើម្បីរំលឹកមុន", "Add birthdays or anniversaries to be reminded"))}</p></section>`}`;
@@ -250,15 +266,109 @@ const FamilyV2 = (() => {
     requestAnimationFrame(step);
   }
 
+  /* ---------- Family v4 (6 Nov 2026, approved draft) ---------- */
+  const FI = {
+    cal: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="3" fill="currentColor" fill-opacity=".2"/><path d="M8 3v4M16 3v4M4 10h16"/></svg>',
+    heart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" fill="currentColor" fill-opacity=".2"/></svg>',
+    photo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3" fill="currentColor" fill-opacity=".2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-8 8"/></svg>',
+    phone: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z" fill="currentColor" fill-opacity=".18"/></svg>',
+    msg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z" fill="currentColor" fill-opacity=".18"/></svg>',
+    edit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z" fill="currentColor" fill-opacity=".18"/></svg>'
+  };
+  const head = (icon, color, title, link = "") => `<div class="fv4-ch"><span class="fv4-gi" style="--c:${color}">${FI[icon]}</span><h2>${escapeHtml(title)}</h2>${link}</div>`;
+  const telOf = member => (member?.phone ? String(member.phone).replace(/[^\d+]/g, "") : "");
+  const loveText = () => L("គិតដល់ណា 💜 ថ្ងៃនេះសុខសប្បាយទេ?", "Thinking of you 💜 How is your day?");
+  function lastCallText(member) {
+    if (!member.lastCallAt) return "";
+    const d = Math.max(0, Math.round((dateOf(todayIso()) - dateOf(String(member.lastCallAt).slice(0, 10))) / 86400000));
+    const when = d === 0 ? L("ហៅថ្ងៃនេះ", "called today") : d === 1 ? L("ហៅម្សិលមិញ", "called yesterday") : L(`ហៅចុងក្រោយ ${d} ថ្ងៃមុន`, `last call ${d} days ago`);
+    return d >= 10 ? `${when} · ${L("យូរហើយ 💜", "it's been a while 💜")}` : when;
+  }
+  // call / message / love buttons for one member (no phone: call and message add the number)
+  function careButtons(member) {
+    const tel = telOf(member);
+    const id = escapeAttr(member.id);
+    const call = tel ? `<a class="fv4-act is-call" href="tel:${escapeAttr(tel)}" data-fv-called="${id}" aria-label="${escapeAttr(L(`ហៅទៅ ${member.name}`, `Call ${member.name}`))}">${FI.phone}</a>` : `<button class="fv4-act is-call is-off" type="button" data-fv-edit="${id}" aria-label="${escapeAttr(L("បន្ថែមលេខទូរស័ព្ទ", "Add phone"))}">${FI.phone}</button>`;
+    const sms = tel ? `<a class="fv4-act is-msg" href="sms:${escapeAttr(tel)}" aria-label="${escapeAttr(L(`ផ្ញើសារទៅ ${member.name}`, `Message ${member.name}`))}">${FI.msg}</a>` : `<button class="fv4-act is-msg is-off" type="button" data-fv-edit="${id}" aria-label="${escapeAttr(L("បន្ថែមលេខទូរស័ព្ទ", "Add phone"))}">${FI.msg}</button>`;
+    const love = tel ? `<a class="fv4-act is-love" href="sms:${escapeAttr(tel)}?&body=${encodeURIComponent(loveText())}" aria-label="${escapeAttr(L("ផ្ញើក្តីស្រឡាញ់", "Send love"))}">${FI.heart}</a>` : `<button class="fv4-act is-love" type="button" data-fv-sheet="${id}" aria-label="${escapeAttr(L("ផ្ញើក្តីស្រឡាញ់", "Send love"))}">${FI.heart}</button>`;
+    return `${call}${sms}${love}`;
+  }
+  // "Stay close": everyone except me, one row each
+  function closeCard() {
+    const list = appData.family.filter(member => member.relationship !== "Me");
+    if (!list.length) return "";
+    return `<section class="fv4-card fv4-close">
+      ${head("heart", "#1f9d74", L("នៅជិតគ្នា", "Stay close"), `<button class="fv4-more" type="button" data-action="add-family">＋ ${escapeHtml(L("បន្ថែម", "Add"))}</button>`)}
+      ${list.map(member => {
+        const sub = lastCallText(member) || (telOf(member) ? [relLabel(member), idea(member)].filter(Boolean).join(" · ") : L("មិនទាន់មានលេខទូរស័ព្ទ", "No phone number yet"));
+        return `<div class="fv4-cl" id="family-member-${escapeAttr(member.id)}"><button class="fv4-who" type="button" data-fv-sheet="${escapeAttr(member.id)}"><span class="fv4-face" style="background:${coverOf(member)}">${face(member)}</span><span class="fv4-tx"><b>${escapeHtml(member.name || "")}</b><small>${escapeHtml(sub)}</small></span></button><span class="fv4-acts">${careButtons(member)}</span></div>`;
+      }).join("")}
+    </section>`;
+  }
+  function memoriesCard() {
+    return `<section class="fv4-card fv4-mem">
+      ${head("photo", "#e08a2e", L("អនុស្សាវរីយ៍គ្រួសារ", "Family memories"), `<a class="fv4-more" href="#memories">${escapeHtml(L("ទាំងអស់", "All"))} ›</a>`)}
+      ${typeof MemoryFeed !== "undefined" ? MemoryFeed.familyTeaser() : ""}
+      <details class="fv-media-fold fv4-fold">
+        <summary><b>📷 ${escapeHtml(L("រូបភាព និងវីដេអូគ្រួសារ", "Family photos & videos"))}</b><span>${escapeHtml(L("បើក", "Open"))} ›</span></summary>
+        ${familyMediaCard()}
+        ${familyPhotoCard()}
+      </details>
+    </section>`;
+  }
+  // member sheet: big face, call / message / love, details, edit · delete
+  function openSheet(id) {
+    const member = appData.family.find(item => item.id === id);
+    const root = document.getElementById("modalRoot");
+    if (!member || !root) return;
+    if (typeof Modal !== "undefined" && Modal.escapeHandler) document.removeEventListener("keydown", Modal.escapeHandler);
+    const next = nextBirthdayDate(member.birthday);
+    const d = next ? daysUntil(next) : -1;
+    const related = appData.family.find(item => item.id === member.relatedMemberId);
+    const ZODIAC = { Aries: "♈", Taurus: "♉", Gemini: "♊", Cancer: "♋", Leo: "♌", Virgo: "♍", Libra: "♎", Scorpio: "♏", Sagittarius: "♐", Capricorn: "♑", Aquarius: "♒", Pisces: "♓" };
+    const tags = [member.zodiacSign && `${ZODIAC[member.zodiacSign] || "✨"} ${member.zodiacSign}`, member.favorite && `❤️ ${member.favorite}`].filter(Boolean);
+    const notes = [member.relationshipNote, member.notes].filter(Boolean);
+    const rows = [
+      [L("លេខទូរស័ព្ទ", "Phone"), member.phone ? escapeHtml(String(member.phone)) : `<button type="button" class="fv4-link" data-fv-edit="${escapeAttr(member.id)}">+ ${escapeHtml(L("បន្ថែម", "Add"))}</button>`, !member.phone],
+      [L("ថ្ងៃកំណើត", "Birthday"), member.birthday ? escapeHtml(dayMonth(member.birthday)) : `<button type="button" class="fv4-link" data-fv-edit="${escapeAttr(member.id)}">+ ${escapeHtml(L("បន្ថែម", "Add"))}</button>`, !member.birthday],
+      [L("ទំនាក់ទំនង", "Relationship"), escapeHtml([relLabel(member), related ? related.name : ""].filter(Boolean).join(" · ") || "—"), true],
+      member.anniversaryDate ? [L("ខួប", "Anniversary"), escapeHtml(dayMonth(member.anniversaryDate)), true] : null,
+      member.lastCallAt ? [L("ហៅចុងក្រោយ", "Last call"), escapeHtml(lastCallText(member)), true] : null
+    ].filter(Boolean);
+    root.innerHTML = `<div class="modal glass-card fv4-sheet" id="modalForm" role="dialog" aria-modal="true" aria-label="${escapeAttr(member.name || "")}">
+      <span class="fv4-grab" aria-hidden="true"></span>
+      <button class="icon-button fv4-x" type="button" data-close aria-label="${escapeAttr(t("close"))}">${Icons.close()}</button>
+      <div class="fv4-sh"><span class="fv4-face is-big" style="background:${coverOf(member)}">${face(member)}</span><span><h3>${escapeHtml(member.name || "")}</h3><small>${escapeHtml(d >= 0 ? (d === 0 ? L("🎂 ថ្ងៃកំណើតថ្ងៃនេះ!", "🎂 Birthday today!") : L(`🎂 ខួប ${dayMonth(next)} · នៅ ${d} ថ្ងៃ`, `🎂 ${dayMonth(next)} · in ${d} days`)) : relLabel(member))}</small></span></div>
+      <div class="fv4-big">${careButtons(member)}</div>
+      <p class="fv4-idea">💡 ${escapeHtml(idea(member))}</p>
+      <div class="fv4-info">${rows.map(([k, v]) => `<div><span>${escapeHtml(k)}</span><b>${v}</b></div>`).join("")}</div>
+      ${tags.length ? `<div class="fv-tags">${tags.map(tag => `<span>${escapeHtml(tag)}</span>`).join("")}</div>` : ""}
+      ${notes.map(note => `<p class="fv4-note">📝 ${escapeHtml(note)}</p>`).join("")}
+      <div class="fv4-two"><button type="button" class="fv4-edit" data-fv-edit="${escapeAttr(member.id)}">${FI.edit} ${escapeHtml(L("កែព័ត៌មាន", "Edit"))}</button><button type="button" class="fv4-del" data-fv-delete="${escapeAttr(member.id)}">${escapeHtml(L("លុបចេញ", "Remove"))}</button></div>
+    </div>`;
+    root.classList.add("open");
+    if (typeof Modal !== "undefined") {
+      Modal.escapeHandler = event => { if (event.key === "Escape") Modal.close(); };
+      document.addEventListener("keydown", Modal.escapeHandler);
+    }
+    root.querySelectorAll("[data-close]").forEach(button => button.addEventListener("click", () => Modal.close()));
+  }
+
   function render() {
     if (lav()) requestAnimationFrame(countUp);
     return `<section class="page family-page fam2${lav() ? " is-lav" : ""}">
       ${hero()}
-      <div class="fv-body">
+      ${lav() ? `<div class="fv-body fv4">
+        ${loveCard()}
+        ${importantDates()}
+        ${closeCard()}
+        ${memoriesCard()}
+        <div class="fv-group" data-family-group></div>
+      </div>` : `<div class="fv-body">
         ${loveCard()}
         ${importantDates()}
         ${typeof MemoryFeed !== "undefined" ? MemoryFeed.familyTeaser() : ""}
-        <section class="fv-members-panel${lav() ? " is-lav" : ""}">
+        <section class="fv-members-panel">
           <div class="fv-members-head"><b>👥 ${escapeHtml(L("សមាជិក", "Members"))}<small>${appData.family.length}</small></b><button class="fv-add-member" type="button" data-action="add-family"><span>＋</span>${escapeHtml(L("បន្ថែម", "Add"))}</button></div>
           <div class="fv-members-list">${appData.family.length ? appData.family.map(memberCard).join("") : `<p class="fv-empty">${escapeHtml(L("មិនទាន់មានសមាជិក", "No members yet"))}</p>`}</div>
         </section>
@@ -268,11 +378,34 @@ const FamilyV2 = (() => {
           ${familyMediaCard()}
           ${familyPhotoCard()}
         </details>
-      </div>
+      </div>`}
     </section>`;
   }
 
   document.addEventListener("click", event => {
+    const sheet = event.target.closest("[data-fv-sheet]");
+    if (sheet) { event.preventDefault(); openSheet(sheet.dataset.fvSheet); return; }
+    const edit = event.target.closest("[data-fv-edit]");
+    if (edit) {
+      const member = appData.family.find(item => item.id === edit.dataset.fvEdit);
+      if (typeof Modal !== "undefined") Modal.close();
+      if (member && typeof openFamilyModal === "function") setTimeout(() => openFamilyModal(member), 60);
+      return;
+    }
+    const del = event.target.closest("[data-fv-delete]");
+    if (del) {
+      const id = del.dataset.fvDelete;
+      Modal.close();
+      setTimeout(() => Modal.confirm({ title: t("deleteFamilyMember"), message: t("deleteFamilyMessage"), confirmText: t("delete"), onConfirm: () => { Store.delete("family", id); Toast.show(t("familyMemberDeleted")); } }), 60);
+      return;
+    }
+    // tapping Call remembers the day, so "Stay close" can say when you last called (no page redraw)
+    const called = event.target.closest("[data-fv-called]");
+    if (called) {
+      const member = appData.family.find(item => item.id === called.dataset.fvCalled);
+      if (member) { member.lastCallAt = todayIso(); try { Store.save(); } catch (error) { /* call still goes */ } }
+      return;
+    }
     if (!event.target.closest("[data-fv-invite]")) return;
     // admin of a family group: invite link; otherwise add a member to my list
     if (isGroupAdmin() && typeof FamilyGroup.openInvite === "function") FamilyGroup.openInvite();
