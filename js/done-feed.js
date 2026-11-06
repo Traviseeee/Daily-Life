@@ -165,5 +165,18 @@ const DoneFeed = (() => {
     });
   }
 
-  return { celebrate, afterLoanPay, afterBillPay, afterSave, items, bellHtml, homeRows, heroLines, loanInfo };
+  // Home news ticker: week summary + each thing done, scrolling in one line
+  function tickerHtml() {
+    const list = items(7);
+    if (!list.length) return "";
+    const paid = list.filter(item => item.kind !== "save").length;
+    const saved = list.filter(item => item.kind === "save").length;
+    const head = [paid ? L(`បង់ ${paid}`, `${paid} paid`) : "", saved ? L(`សន្សំ ${saved} ដង`, `${saved} saved`) : ""].filter(Boolean).join(" · ");
+    const bits = [`🎉 ${L("សប្តាហ៍នេះ", "This week")}: ${head}`, ...list.slice(0, 8).map(item => `✓ ${item.title}${item.kind === "save" && item.sub ? ` (${item.sub})` : ""} ${item.amount}`)];
+    const line = bits.map(text => `<span>${esc(text)}</span>`).join('<i aria-hidden="true">•</i>');
+    const dur = Math.max(14, Math.round(bits.join(" ").length * 0.28));
+    return `<a class="df-ticker" href="#money" aria-label="${esc(bits.join(". "))}"><b class="df-tk-tag">✓ ${esc(L("រួចហើយ", "Done"))}</b><span class="df-tk-win"><span class="df-tk-run" style="--dur:${dur}s">${line}<i aria-hidden="true">•</i>${line}<i aria-hidden="true">•</i></span></span></a>`;
+  }
+
+  return { tickerHtml, celebrate, afterLoanPay, afterBillPay, afterSave, items, bellHtml, homeRows, heroLines, loanInfo };
 })();

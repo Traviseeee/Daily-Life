@@ -683,6 +683,7 @@ const HomeV2 = (() => {
     // Home v4 (6 Nov): money + quick actions · today (focus, weather, events) · me today · memories
     return `<div class="hv2-body hv2-v3 hv4">
         ${alerts(d)}
+        ${typeof DoneFeed !== "undefined" ? DoneFeed.tickerHtml() : ""}
         ${homeMoney(d)}
         ${todayCard(d)}
         ${meCard(d)}

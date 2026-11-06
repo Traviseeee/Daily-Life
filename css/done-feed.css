@@ -41,3 +41,15 @@ html:root:not([data-theme="light"]) .df-amt { color: #7fe0b8; }
 .df-home-row { display: flex !important; align-items: center; gap: 12px; text-decoration: none; color: inherit; }
 .df-home-row .df-home-ic { display: grid; place-items: center; width: 40px; height: 40px; flex: 0 0 auto; border-radius: 14px; font-size: 1.05rem; font-weight: 700; color: #1f9d74 !important; background: #e3f6ee !important; }
 html:root:not([data-theme="light"]) .df-home-row .df-home-ic { color: #7fe0b8 !important; background: rgba(95, 211, 167, .16) !important; }
+
+/* Home news ticker: "✓ Done" tag + scrolling summary */
+.df-ticker { display: flex; align-items: center; gap: 10px; min-width: 0; height: 44px; padding: 0 6px 0 6px; border-radius: 22px; color: #14183a; background: #fff; box-shadow: 0 10px 26px rgba(80, 74, 185, .1); text-decoration: none; overflow: hidden; position: relative; z-index: 1; }
+.df-tk-tag { flex: 0 0 auto; padding: 6px 12px; border-radius: 99px; font-size: .76rem; font-weight: 700; color: #fff; background: linear-gradient(135deg, #39c18f, #1f9d74); white-space: nowrap; }
+.df-tk-win { position: relative; flex: 1; min-width: 0; overflow: hidden; -webkit-mask-image: linear-gradient(90deg, transparent, #000 14px, #000 calc(100% - 20px), transparent); mask-image: linear-gradient(90deg, transparent, #000 14px, #000 calc(100% - 20px), transparent); }
+.df-tk-run { display: inline-flex; align-items: center; gap: 12px; white-space: nowrap; font-size: .82rem; font-weight: 500; padding-right: 12px; animation: dfTick var(--dur, 20s) linear infinite; will-change: transform; }
+.df-tk-run > span:first-child, .df-tk-run > i + span:nth-of-type(1) { font-weight: 700; }
+.df-tk-run i { font-style: normal; color: #9aa0c0; }
+.df-ticker:hover .df-tk-run, .df-ticker:focus-visible .df-tk-run { animation-play-state: paused; }
+@keyframes dfTick { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@media (prefers-reduced-motion: reduce) { .df-tk-run { animation: none; } }
+html:root:not([data-theme="light"]) .df-ticker { color: #f4f2ff; background: #2e2956; box-shadow: none; }
