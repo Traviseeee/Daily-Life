@@ -1435,13 +1435,16 @@ function applySavingsDeposit(saving, input, amount) {
   const partner = input.dataset.savingsWho === "partner";
   if (partner ? entry?.partnerPaid : entry?.paid) return;
   const next = partner
-    ? { ...(entry || { month: monthKey, amount: Number(saving.monthlyContribution || 0), paid: false }), partnerPaid: true, partnerAmount: amount }
-    : { ...(entry || {}), month: monthKey, amount, paid: true };
+    ? { ...(entry || { month: monthKey, amount: Number(saving.monthlyContribution || 0), paid: false }), partnerPaid: true, partnerAmount: amount, partnerAt: new Date().toISOString() }
+    : { ...(entry || {}), month: monthKey, amount, paid: true, at: new Date().toISOString() };
   if (index >= 0) contributions[index] = next; else contributions.unshift(next);
   saving.contributions = contributions;
   saving.currentAmount = Number(saving.currentAmount || 0) + amount;
   Store.save();
-  Toast.show(t("savingsAdded"));
+  if (typeof DoneFeed !== "undefined") {
+    const member = partner ? (appData.family || []).find(person => person.id === saving.jointWith) : null;
+    DoneFeed.afterSave(saving, partner ? String(member?.name || saving.jointName || "").trim().split(/\s+/)[0] : (saving.jointWith ? (languageCode() === "km" ? "ខ្ញុំ" : "I") : ""), amount);
+  } else Toast.show(t("savingsAdded"));
   App.render();
 }
 
@@ -1483,9 +1486,9 @@ function toggleSavingsContribution(input) {
 
   if (input.checked && !wasPaid) {
     if (existingIndex >= 0) {
-      contributions[existingIndex] = { ...contributions[existingIndex], month: monthKey, amount: contributionAmount, paid: true };
+      contributions[existingIndex] = { ...contributions[existingIndex], month: monthKey, amount: contributionAmount, paid: true, at: new Date().toISOString() };
     } else {
-      contributions.unshift({ month: monthKey, amount: contributionAmount, paid: true });
+      contributions.unshift({ month: monthKey, amount: contributionAmount, paid: true, at: new Date().toISOString() });
     }
     saving.currentAmount = Number(saving.currentAmount || 0) + contributionAmount;
   } else if (!input.checked && wasPaid) {
@@ -1499,7 +1502,8 @@ function toggleSavingsContribution(input) {
 
   saving.contributions = contributions;
   Store.save();
-  Toast.show(input.checked ? t("savingsAdded") : t("savingsRemoved"));
+  if (input.checked && !wasPaid && typeof DoneFeed !== "undefined") DoneFeed.afterSave(saving, "", contributionAmount);
+  else Toast.show(input.checked ? t("savingsAdded") : t("savingsRemoved"));
   App.render();
 }
 
@@ -1517,7 +1521,8 @@ function toggleLoanScheduledPayment(input) {
     if (done.removedExpenseId) SyncState.record(appData, "expenses", done.removedExpenseId);
   }
   Store.save();
-  Toast.show(input.checked ? t("paymentMarkedPaid") : t("paymentMarkedUnpaid"));
+  if (input.checked && typeof DoneFeed !== "undefined") DoneFeed.afterLoanPay(loan, paymentDate);
+  else Toast.show(input.checked ? t("paymentMarkedPaid") : t("paymentMarkedUnpaid"));
   App.render();
 }
 
@@ -2215,6 +2220,8 @@ function openLoanPaymentModal(loan) {
     } else {
       LoanPay.recordLoanPayment(appData, loan, data.date, { amount, scheduled: false, today: localDateInput(), paymentType: data.paymentType, paymentMethod: ({ cash: "Cash", bank: "Bank Transfer", qr: "QR Payment", other: "Other" })[data.paymentType] });
     }
-    Store.save(); Toast.show(t("paymentSaved")); App.render();
+    Store.save();
+    if (typeof DoneFeed !== "undefined") DoneFeed.afterLoanPay(loan, data.date); else Toast.show(t("paymentSaved"));
+    App.render();
   } });
 }

@@ -537,7 +537,8 @@ function markBillPaid(billId, paidAmount, paymentType) {
     nextBill.lastPaidExpenseId = expenseId;
   }
   Store.edit("bills", bill.id, nextBill);
-  Toast.show(t("paymentMarkedPaid"));
+  if (typeof DoneFeed !== "undefined") { if (loan) DoneFeed.afterLoanPay(loan, bill.lastPaidDue || paidOn); else DoneFeed.afterBillPay(bill); }
+  else Toast.show(t("paymentMarkedPaid"));
 }
 
 function markBillUnpaid(billId) {

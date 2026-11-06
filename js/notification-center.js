@@ -426,6 +426,7 @@ const NotificationCenter = (() => {
               <small>${L("ការរំលឹក ព្រឹត្តិការណ៍ និងវិក្កយបត្រក្នុង 7 ថ្ងៃខាងមុខនឹងបង្ហាញនៅទីនេះ", "Reminders, events and bills for the next 7 days show up here")}</small>
             </div>
           `}
+          ${typeof DoneFeed !== "undefined" ? DoneFeed.bellHtml() : ""}
         </div>
 
         <footer class="nc-footer">

@@ -1,0 +1,43 @@
+/* Done feed (6 Nov 2026): celebrate card + bell "Done" group + Home ✓ rows. Markup: js/done-feed.js */
+.df-cele { position: fixed; inset: 0; z-index: 9000; display: grid; place-items: start center; padding-top: calc(env(safe-area-inset-top, 0px) + 74px); pointer-events: none; }
+.df-cele .df-card { pointer-events: auto; display: flex; align-items: center; gap: 12px; width: min(360px, calc(100vw - 32px)); padding: 12px 16px 12px 10px; border-radius: 24px; color: #14183a; background: #fff; box-shadow: 0 18px 44px rgba(80, 74, 185, .26); animation: dfIn 420ms cubic-bezier(.2, 1.3, .4, 1) both; }
+.df-cele.is-out .df-card { animation: dfOut 260ms ease both; }
+.df-nomi { display: grid; place-items: center; width: 54px; height: 54px; flex: 0 0 auto; border-radius: 18px; background: #f2efff; animation: dfHop 900ms ease 300ms 2; }
+.df-nomi svg { width: 46px; height: 46px; }
+.df-tx { display: grid; gap: 2px; min-width: 0; }
+.df-tx b { font-size: .98rem; font-weight: 700; line-height: 1.35; }
+.df-tx small { font-size: .78rem; font-weight: 400; color: #6a6f8c; }
+.df-cele.is-big { place-items: center; padding-top: 0; background: rgba(20, 18, 50, .28); pointer-events: auto; animation: dfFade 260ms ease both; }
+.df-cele.is-big .df-card { flex-direction: column; text-align: center; gap: 10px; padding: 22px 20px 20px; width: min(320px, calc(100vw - 48px)); border-radius: 30px; }
+.df-cele.is-big .df-nomi { width: 92px; height: 92px; border-radius: 30px; background: linear-gradient(135deg, #f2efff, #ffeef3); }
+.df-cele.is-big .df-nomi svg { width: 78px; height: 78px; }
+.df-cele.is-big .df-tx b { font-size: 1.25rem; }
+.df-confetti { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.df-confetti i { position: absolute; top: -12px; left: var(--x); width: 8px; height: 12px; border-radius: 2px; background: var(--c); transform: rotate(var(--r)); animation: dfFall 1.9s cubic-bezier(.3, .6, .5, 1) var(--d) both; }
+.df-cele:not(.is-big) .df-confetti i { animation-duration: 1.4s; }
+@keyframes dfIn { from { opacity: 0; transform: translateY(-18px) scale(.92); } to { opacity: 1; transform: none; } }
+@keyframes dfOut { to { opacity: 0; transform: translateY(-12px) scale(.96); } }
+@keyframes dfHop { 0%, 100% { transform: none; } 40% { transform: translateY(-6px) rotate(-4deg); } 70% { transform: translateY(0) rotate(3deg); } }
+@keyframes dfFade { from { opacity: 0; } }
+@keyframes dfFall { 0% { opacity: 1; transform: translateY(0) rotate(var(--r)); } 100% { opacity: 0; transform: translateY(70vh) rotate(calc(var(--r) + 540deg)); } }
+@media (prefers-reduced-motion: reduce) { .df-cele *, .df-cele { animation: none !important; } .df-confetti { display: none; } }
+html:root:not([data-theme="light"]) .df-cele .df-card { color: #f4f2ff; background: #2e2956; box-shadow: 0 18px 44px rgba(0, 0, 0, .4); }
+html:root:not([data-theme="light"]) .df-tx small { color: #bdb7e6; }
+html:root:not([data-theme="light"]) .df-nomi, html:root:not([data-theme="light"]) .df-cele.is-big .df-nomi { background: rgba(182, 168, 255, .16); }
+
+/* bell: ✓ Done */
+.df-bell .df-list { display: grid; gap: 2px; padding: 4px 12px; border-radius: 18px; background: rgba(31, 157, 116, .07); }
+.df-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; color: inherit; text-decoration: none; }
+.df-row + .df-row { border-top: 1px solid rgba(127, 127, 127, .12); }
+.df-ic { display: grid; place-items: center; width: 34px; height: 34px; flex: 0 0 auto; border-radius: 12px; background: #e3f6ee; font-size: 1rem; }
+.df-copy { display: grid; flex: 1; min-width: 0; }
+.df-copy b { overflow: hidden; font-size: .86rem; font-weight: 500; white-space: nowrap; text-overflow: ellipsis; }
+.df-copy small { overflow: hidden; font-size: .72rem; font-weight: 400; white-space: nowrap; text-overflow: ellipsis; opacity: .7; }
+.df-amt { flex: 0 0 auto; font-size: .82rem; font-weight: 500; color: #1f9d74; white-space: nowrap; }
+html:root:not([data-theme="light"]) .df-ic { background: rgba(95, 211, 167, .16); }
+html:root:not([data-theme="light"]) .df-amt { color: #7fe0b8; }
+
+/* Home Today card: ✓ done rows */
+.df-home-row { display: flex !important; align-items: center; gap: 12px; text-decoration: none; color: inherit; }
+.df-home-row .df-home-ic { display: grid; place-items: center; width: 40px; height: 40px; flex: 0 0 auto; border-radius: 14px; font-size: 1.05rem; font-weight: 700; color: #1f9d74 !important; background: #e3f6ee !important; }
+html:root:not([data-theme="light"]) .df-home-row .df-home-ic { color: #7fe0b8 !important; background: rgba(95, 211, 167, .16) !important; }

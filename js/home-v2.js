@@ -587,6 +587,7 @@ const HomeV2 = (() => {
     const out = [];
     const st = typeof NimoLife !== "undefined" && NimoLife.state ? NimoLife.state() : null;
     const streak = Number(st?.streak || 0);
+    if (typeof DoneFeed !== "undefined") out.push(...DoneFeed.heroLines());
     if (streak > 0) out.push([`🔥 ${streak} ថ្ងៃជាប់! កុំឲ្យដាច់ណា`, `🔥 ${streak} day streak! Keep it going`]);
     const m = d.month;
     if (m) {
@@ -650,7 +651,7 @@ const HomeV2 = (() => {
     const listInner = (sched.match(/<section class="hv2-card hv2-tl">([\s\S]*)<\/section><\/section>\s*$/) || ["", ""])[1];
     return `<section class="hv2-card hv4-card hv2-upcoming hv4-today">
       ${cardHead("cal", "violet", L("ថ្ងៃនេះ", "Today"), `<a class="hv4-more" href="#calendar">${escapeHtml(L("ប្រតិទិន", "Calendar"))} ›</a>`)}
-      <div class="hv2-tl">${focusRow}${panel}${listInner}</div>
+      <div class="hv2-tl">${focusRow}${panel}${typeof DoneFeed !== "undefined" ? DoneFeed.homeRows() : ""}${listInner}</div>
     </section>`;
   }
 
