@@ -490,7 +490,8 @@ function syncFamilyProfileBasics(data) {
     if (!uid || !fg?.state?.family || !client?.from) return;
     const patch = {};
     if (data.name) patch.display_name = String(data.name).trim().slice(0, 40);
-    if (data.photo) patch.photo = data.photo;
+    // the photo goes through MemberProfile (makes a small copy the family can read, creates my row if needed)
+    if (data.photo && typeof MemberProfile !== "undefined" && MemberProfile.ensureMyPhoto) setTimeout(() => MemberProfile.ensureMyPhoto({ force: true }), 300);
     if (!Object.keys(patch).length) return;
     Promise.resolve(client.from("member_profiles").update({ ...patch, updated_at: new Date().toISOString() }).eq("user_id", uid))
       .then(() => fg.load?.(true)).catch(() => {});

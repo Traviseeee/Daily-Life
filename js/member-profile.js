@@ -161,6 +161,39 @@ const MemberProfile = (() => {
     const { data } = await client().from("member_profiles").select("*").eq("user_id", uid).limit(1);
     return (data || [])[0] || null;
   }
+  // my app photo → my family profile, so the family (chat, Family page) sees me (6 Nov).
+  // The app photo can sit in my own private storage that others can't read, so a small copy goes here.
+  // Runs once per photo; never replaces a photo I picked on purpose in "Edit my profile".
+  let ensuring = false, failedSig = "";
+  async function ensureMyPhoto({ force = false } = {}) {
+    const fg = FG(); const uid = fg?.state?.me;
+    const src = String((typeof appData !== "undefined" && appData.profile?.photo) || "");
+    if (ensuring || !uid || !fg.state.family || !fg.state.v2 || !client() || !src) return false;
+    const mark = `mylife:mp-photo-sync:${uid}`;
+    const sig = `${src.length}:${src.slice(-40)}`;
+    if (!force && failedSig === sig) return false; // tried this session already
+    try { if (!force && localStorage.getItem(mark) === sig) return false; } catch (error) { /* ignore */ }
+    if (!force && fg.profileOf?.(uid)?.photo) { try { localStorage.setItem(mark, sig); } catch (error) { /* ignore */ } return false; }
+    ensuring = true;
+    try {
+      const blob = src.startsWith("data:") ? await (await fetch(src)).blob() : await (await fetch(src, { mode: "cors", cache: "no-store" })).blob();
+      if (!blob || !/^image\//.test(blob.type || "image/")) return false;
+      const photo = await resize(blob, 320, 320);
+      const row = { user_id: uid, photo, updated_at: new Date().toISOString() };
+      if (!fg.profileOf?.(uid)) row.display_name = fg.nameOf ? String(fg.nameOf(fg.state.members.find(m => m.user_id === uid) || {})).slice(0, 40) || null : null;
+      const { error } = await client().from("member_profiles").upsert(row, { onConflict: "user_id" });
+      if (error) throw error;
+      try { localStorage.setItem(mark, sig); } catch (error) { /* ignore */ }
+      await fg.load(true);
+      if (typeof App !== "undefined" && ["family", "chat", "profile"].includes(App.route)) App.render();
+      return true;
+    } catch (error) {
+      failedSig = sig;
+      console.warn("MYLIFE: could not copy the profile photo to the family profile", error);
+      return false;
+    } finally { ensuring = false; }
+  }
+
   async function hasMine() { try { return Boolean(await myRow()); } catch (error) { return false; } }
 
   async function save(values) {
@@ -274,5 +307,5 @@ const MemberProfile = (() => {
     bindForm(container, p, () => onDone());
   }
 
-  return { render, bind, openEdit, mountSetup, hasMine, person };
+  return { render, bind, openEdit, mountSetup, hasMine, person, ensureMyPhoto };
 })();

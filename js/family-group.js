@@ -97,6 +97,8 @@ const FamilyGroup = (() => {
         }
       }
       state.status = "ready";
+      // my photo for the family to see (once; js/member-profile.js)
+      if (state.v2 && typeof MemberProfile !== "undefined" && MemberProfile.ensureMyPhoto) setTimeout(() => MemberProfile.ensureMyPhoto(), 1500);
       return state;
     })().finally(() => { loading = null; });
     return loading;
