@@ -8,6 +8,8 @@ const entries = [
   "index.html",
   "privacy.html",
   "manifest.webmanifest",
+  "apple-touch-icon.png",
+  "apple-touch-icon-precomposed.png",
   "sw.js",
   "assets",
   "css",

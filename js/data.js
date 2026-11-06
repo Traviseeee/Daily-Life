@@ -198,6 +198,12 @@ const OAuthGate = {
         ok = !preview.error && info?.status === "ok" && info?.my_status !== "rejected";
         if (!ok) { try { sessionStorage.removeItem("mylife:family-join"); localStorage.removeItem("mylife:family-join"); } catch (error) { /* ignore */ } }
       }
+      // asked to join with a link that needs the owner's OK: let them in to wait (their own data only),
+      // also on a phone / Home Screen app that never saw the link (6 Nov)
+      if (!ok) {
+        const waiting = await client.from("family_invite_uses").select("status").eq("user_id", user.id).eq("status", "pending").limit(1);
+        ok = !waiting.error && (waiting.data || []).length > 0;
+      }
       if (ok) { this.checked.set(user.id, Date.now()); this.approve(user.id); return true; }
       await this.block(client, "not_linked");
       return false;

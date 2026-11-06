@@ -66,7 +66,25 @@ module.exports = async (req, res) => {
       const count = redis ? await redis.incr(`mylife:fam-alert:blocked-day:${new Date().toISOString().slice(0, 10)}`) : 1;
       if (redis && count === 1) await redis.expire(`mylife:fam-alert:blocked-day:${new Date().toISOString().slice(0, 10)}`, 90000);
       if (once === null || count > 20) return res.status(200).json({ sent: false, reason: "limited" });
-      text = [
+      // used one of the owner's invite links before? then it is a known person, not a stranger (6 Nov)
+      let invited = null;
+      try {
+        const { data: ownFam } = await supabase.from("families").select("id").eq("owner_id", owner).maybeSingle();
+        if (ownFam) {
+          const { data: uses } = await supabase.from("family_invite_uses").select("status, display_name, family_invites!inner(family_id)").eq("user_id", user.id).eq("family_invites.family_id", ownFam.id).order("created_at", { ascending: false }).limit(1);
+          invited = (uses || [])[0] || null;
+        }
+      } catch (error) { invited = null; }
+      if (invited) {
+        text = [
+          "ℹ️ <b>មនុស្សដែលធ្លាប់ទទួល invite ព្យាយាមចូល</b>",
+          "",
+          `👤 ${esc(invited.display_name || meta.full_name || meta.name || "—")} · ${esc(maskEmail(user.email))}`,
+          `🔑 ${via} · 🕒 ${esc(phnomPenhTime())}`,
+          "",
+          invited.status === "pending" ? "<i>កំពុងរង់ចាំអ្នកអនុម័ត · បើកទំព័រគ្រួសារ ដើម្បីទទួល</i>" : "<i>មិនទាន់នៅក្នុងគ្រួសារ (ឬត្រូវបានដកចេញ) · app បានស្នើឱ្យគាត់វាយលេខកូដ invite</i>"
+        ].join("\n");
+      } else text = [
         "⚠️ <b>គណនីចម្លែកព្យាយាមចូល MYLIFE</b>",
         "",
         `👤 ${esc(meta.full_name || meta.name || "—")} · ${esc(maskEmail(user.email))}`,

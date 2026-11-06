@@ -110,8 +110,8 @@ const Login = {
           ${(supabaseConfigured || hasAccount) && !isReset ? `<button type="button" class="login-reset-link" id="loginResetButton">${t("forgotPassword")}</button>` : ""}
         </form>
         ${supabaseConfigured && !isReset && !SIGNUP_OPEN ? `<details class="login-code"><summary>${L("មានលេខកូដចូលរួមគ្រួសារ?", "Have a family join code?")}</summary>
-          <div class="login-code-row"><input id="loginJoinCode" maxlength="6" autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="LY7K2Q" aria-label="${L("លេខកូដ 6 តួ", "6-character code")}"><button type="button" class="button" id="loginJoinCodeButton">${L("ប្រើកូដ", "Use code")}</button></div>
-          <small>${L("វាយលេខកូដដែលអ្នកទទួលបាន រួចបង្កើតគណនី ឬ login", "Type the code you got, then create an account or log in")}</small></details>` : ""}
+          <div class="login-code-row"><input id="loginJoinCode" maxlength="400" autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="LY7K2Q" aria-label="${L("លេខកូដ 6 តួ ឬ link អញ្ជើញ", "6-character code or invite link")}"><button type="button" class="button" id="loginJoinCodeButton">${L("ប្រើកូដ", "Use code")}</button></div>
+          <small>${L("វាយលេខកូដ 6 តួ ឬ paste link អញ្ជើញទាំងមូល រួច login", "Type the 6-character code or paste the whole invite link, then log in")}</small></details>` : ""}
         <div class="login-footer">
           <p class="secondary">${supabaseConfigured ? L("🔒 ទិន្នន័យ sync សុវត្ថិភាពជាមួយគណនីរបស់អ្នក", "🔒 Your data syncs securely with your account") : t("noDataStored")}</p>
         </div>
@@ -126,11 +126,22 @@ const Login = {
     // family join code (6 chars) = the same as opening an invite link (js/family-group.js reads it after login)
     document.getElementById("loginJoinCodeButton")?.addEventListener("click", () => {
       const input = document.getElementById("loginJoinCode");
-      const code = String(input?.value || "").trim().toUpperCase();
-      if (!/^[A-Z2-9]{6}$/.test(code)) { const err = document.getElementById("loginError"); if (err) err.textContent = L("លេខកូដត្រូវមាន 6 តួ", "The code has 6 characters"); return; }
-      try { sessionStorage.setItem("mylife:family-join", code); localStorage.setItem("mylife:family-join", code); } catch (error) { /* ignore */ }
+      // a 6-char code, or the whole invite link pasted (iPhone: the Home Screen app does not see links opened in Safari)
+      const raw = String(input?.value || "").trim();
+      let key = "";
+      const fromLink = raw.match(/[?&#]join=([^&#\s]+)/i);
+      if (fromLink) { try { key = decodeURIComponent(fromLink[1]); } catch (error) { key = fromLink[1]; } }
+      else if (/^[A-Za-z2-9]{6}$/.test(raw)) key = raw.toUpperCase();
+      else if (/^[A-Za-z0-9_-]{32,}$/.test(raw)) key = raw;
+      if (/^[A-Za-z2-9]{6}$/.test(key)) key = key.toUpperCase();
+      if (!key) { const err = document.getElementById("loginError"); if (err) err.textContent = L("វាយលេខកូដ 6 តួ ឬ paste link អញ្ជើញ", "Type the 6-character code or paste the invite link"); return; }
+      try { sessionStorage.setItem("mylife:family-join", key); localStorage.setItem("mylife:family-join", key); } catch (error) { /* ignore */ }
+      const already = this.lastBlock === "not_linked";
+      this.lastBlock = "";
       this.close();
-      this.open("signup");
+      // someone who already has an account (turned away a moment ago) logs in; a new person creates one
+      this.open(already ? "login" : "signup");
+      if (already) setTimeout(() => { const box = document.getElementById("loginError"); if (box) box.textContent = L("✅ បានទទួលកូដ · login ម្ដងទៀត ដើម្បីចូលរួមគ្រួសារ", "✅ Code saved · log in again to join the family"); }, 50);
     });
 
     document.getElementById("loginForm").addEventListener("submit", (e) => {
@@ -352,9 +363,15 @@ const Login = {
     try { sessionStorage.removeItem("mylife:oauth-pending"); } catch (error) { /* ignore */ }
     const text = reason === "check_failed"
       ? (km ? "មិនអាចពិនិត្យគណនី Google បានទេ។ សូមពិនិត្យ internet ហើយសាកម្ដងទៀត។" : "Couldn't check this Google account. Check your internet and try again.")
-      : (km ? "គណនីនេះមិនមែនជាសមាជិកគ្រួសារ MYLIFE ទេ (ឬត្រូវបានដកចេញ)។ សូមសុំ link អញ្ជើញថ្មីពីម្ចាស់គ្រួសារ។" : "This account isn't in the MYLIFE family (or was removed). Ask the family owner for a new invite link.");
+      : (km ? "គណនីនេះមិនទាន់នៅក្នុងគ្រួសារ MYLIFE ទេ។ បើមាន link អញ្ជើញ វាយលេខកូដ 6 តួ ឬ paste link ខាងក្រោម រួច login ម្ដងទៀត។" : "This account isn't in the MYLIFE family yet. If you have an invite, type its 6-character code or paste the link below, then log in again.");
+    this.lastBlock = reason || "";
     if (!this.isOpen) this.open();
-    const show = () => { const box = document.getElementById("loginError"); if (box) box.textContent = text; };
+    const show = () => {
+      const box = document.getElementById("loginError"); if (box) box.textContent = text;
+      // open the code box straight away (an app on the iPhone Home Screen never saw the link opened in Safari)
+      const code = document.querySelector("#loginModal details.login-code");
+      if (code && reason !== "check_failed") code.open = true;
+    };
     show();
     setTimeout(show, 300);
   },
