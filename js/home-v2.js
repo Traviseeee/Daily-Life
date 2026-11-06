@@ -647,10 +647,9 @@ const HomeV2 = (() => {
     const fxInner = focusCard(d).replace(/^\s*<section class="hv2-group hv2-focus-group">\s*<div class="hv2-sec"[\s\S]*?<\/div>/, "").replace(/<\/section>\s*$/, "");
     const panel = `<div class="hv4-fx-panel" hidden>${fxInner}<button type="button" class="hv4-more hv4-fx-edit" data-action="edit-focus">✎ ${escapeHtml(L("កែការផ្តោត", "Edit focus"))}</button></div>`;
     const sched = schedule(d);
-    const heading = (sched.match(/<div class="hv2-sec"[^>]*><b>([^<]*)<\/b>/) || [])[1] || L("ថ្ងៃនេះ", "Today");
     const listInner = (sched.match(/<section class="hv2-card hv2-tl">([\s\S]*)<\/section><\/section>\s*$/) || ["", ""])[1];
     return `<section class="hv2-card hv4-card hv2-upcoming hv4-today">
-      ${cardHead("cal", "violet", heading === L("ខាងមុខ", "Coming up") ? L("ថ្ងៃនេះ", "Today") : heading, `<a class="hv4-more" href="#calendar">${escapeHtml(L("ប្រតិទិន", "Calendar"))} ›</a>`)}
+      ${cardHead("cal", "violet", L("ថ្ងៃនេះ", "Today"), `<a class="hv4-more" href="#calendar">${escapeHtml(L("ប្រតិទិន", "Calendar"))} ›</a>`)}
       <div class="hv2-tl">${focusRow}${panel}${listInner}</div>
     </section>`;
   }
@@ -768,6 +767,16 @@ const HomeV2 = (() => {
     }
   });
   window.addEventListener("hashchange", () => document.body.classList.remove("hv2-search-open"));
+  // after saving the reflection, the "write a little" line says it is written
+  document.addEventListener("click", event => {
+    if (!event.target.closest('.hv4-write [data-action="save-reflection"]')) return;
+    setTimeout(() => {
+      const box = document.querySelector(".hv4-write");
+      const text = box?.querySelector("[data-reflection-textarea]")?.value.trim();
+      const line = box?.querySelector("summary > span:last-child");
+      if (line && text) line.textContent = L("បានសរសេរ ✓ · ចុចដើម្បីមើល", "Written ✓ · tap to view");
+    }, 80);
+  });
   // ticking a focus box: refresh the category counts (FocusEditor updates the rest)
   document.addEventListener("change", event => {
     if (!event.target.matches?.("[data-focus-id]")) return;

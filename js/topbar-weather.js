@@ -314,6 +314,8 @@ const TopbarWeather = (() => {
     setTimeout(() => node.remove(), reduceMotion() ? 0 : 200);
   }
   function popupEsc(event) { if (event.key === "Escape") closePopup(); }
+  // changing page (nav, link, phone back) closes the pop-up so it never covers the next page
+  window.addEventListener("hashchange", () => closePopup());
   const KM_DAY = ["អាទិ", "ចន្ទ", "អង្គ", "ពុធ", "ព្រហ", "សុក្រ", "សៅរ៍"];
   const KM_MON = ["មករា", "កុម្ភៈ", "មីនា", "មេសា", "ឧសភា", "មិថុនា", "កក្កដា", "សីហា", "កញ្ញា", "តុលា", "វិច្ឆិកា", "ធ្នូ"];
   const placeTime = () => new Date(Date.now() + (Number(data?.utcOffsetSeconds) || 7 * 3600) * 1000).toISOString();

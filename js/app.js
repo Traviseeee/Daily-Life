@@ -320,6 +320,9 @@ const App = {
     // Today and Summary live inside Home now; old links and bookmarks land there
     // Daily life page removed (30 Oct 2026): reminders show on Home, old links land there too
     if (this.route === "today" || this.route === "summary" || this.route === "daily") { this.route = "home"; history.replaceState(null, "", "#home"); }
+    // a mistyped / old address (plain word only, never a login token hash) shows Home: say so in the address bar too
+    const KNOWN = ["home", "launcher", "family", "goals", "money", "calendar", "memories", "tips", "settings", "notifications", "scan", "help"];
+    if (/^[a-z-]+$/.test(this.route) && !KNOWN.includes(this.route)) { this.route = "home"; history.replaceState(null, "", "#home"); }
     this.param = param;
   },
   render() {
