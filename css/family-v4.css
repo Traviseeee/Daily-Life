@@ -7,8 +7,8 @@ html:root .fam2.is-lav { --f4-card: #fff; --f4-line: #f0edf8; --f4-ink: #14183a;
 html:root:not([data-theme="light"]) .fam2.is-lav { --f4-card: #2e2956; --f4-line: rgba(182, 168, 255, .16); --f4-ink: #f4f2ff; --f4-sub: #bdb7e6; --f4-a: #c9bdff; --f4-chip: rgba(182, 168, 255, .16); --f4-sh: none; }
 
 /* members row: one white panel, all faces fit */
-html:root body .fam2.is-lav.fam2.is-lav .fv-avs { justify-content: space-between; gap: 6px !important; margin-top: 14px !important; padding: 14px 12px 12px; border-radius: 24px; background: var(--f4-card); box-shadow: 0 10px 26px rgba(80, 74, 185, .12); }
-html:root body .fam2.is-lav.fam2.is-lav .fv-avs .fv4-av.fv4-av { width: 58px !important; }
+html:root body .fam2.is-lav.fam2.is-lav .fv-avs { justify-content: flex-start !important; gap: 14px !important; overflow-x: auto; scrollbar-width: none; margin-top: 14px !important; padding: 14px 12px 12px; border-radius: 24px; background: var(--f4-card); box-shadow: 0 10px 26px rgba(80, 74, 185, .12); }
+html:root body .fam2.is-lav.fam2.is-lav .fv-avs .fv4-av.fv4-av { width: 58px !important; flex: 0 0 auto !important; }
 html:root body .fam2.is-lav.fam2.is-lav .fv-avs .fv4-av.fv4-av .fv-ring { width: 54px !important; height: 54px !important; padding: 2px; background: var(--f4-line) !important; box-shadow: none !important; }
 html:root body .fam2.is-lav.fam2.is-lav .fv-avs .fv4-av.fv4-av.is-near .fv-ring { background: linear-gradient(135deg, #ffb3c4, #ff6f91) !important; }
 html:root body .fam2.is-lav.fam2.is-lav .fv-avs .fv4-av.fv4-av .fv-face { border: 2.5px solid var(--f4-card) !important; border-color: var(--f4-card) !important; font-size: 1.05rem; color: #fff; }
