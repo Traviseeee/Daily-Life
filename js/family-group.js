@@ -90,9 +90,8 @@ const FamilyGroup = (() => {
           list.forEach(entry => { entry.status = inviteStatus(entry, now); entry.uses = useRows.filter(use => use.token === entry.token); });
           state.requests = useRows.filter(use => use.status === "pending").map(use => ({ ...use, invite: list.find(entry => entry.token === use.token) }));
           linkCards(list);
-          // live links + the last 30 days of used / expired / cancelled ones
-          state.invites = list.filter(entry => entry.status === "ok" || now - Date.parse(entry.used_at || entry.cancelled_at || entry.expires_at || entry.created_at) < 30 * 864e5)
-            .sort((a, b) => (a.status === "ok" ? 0 : 1) - (b.status === "ok" ? 0 : 1) || String(b.created_at).localeCompare(String(a.created_at)));
+          // only links that still work; used / expired / cancelled ones stay in Supabase (history), not on screen
+          state.invites = list.filter(entry => entry.status === "ok").sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)));
         } else {
           state.invites = list.filter(entry => !entry.used_at && Date.parse(entry.expires_at) > now).map(entry => ({ ...entry, status: "ok" })).sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)));
         }

@@ -1,6 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-label="MYLIFE">
-  <rect width="240" height="240" rx="56" fill="#0f3326"/>
-  <circle cx="120" cy="120" r="66" fill="none" stroke="#1f4a38" stroke-width="22"/>
-  <circle cx="120" cy="120" r="66" fill="none" stroke="#d9ff7b" stroke-width="22" stroke-linecap="round" stroke-dasharray="311 415" transform="rotate(-90 120 120)"/>
-  <circle cx="120" cy="120" r="20" fill="#9ef06a"/>
+  <defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#9b8cff"/><stop offset="1" stop-color="#5b4fd6"/></linearGradient></defs>
+  <rect width="240" height="240" rx="56" fill="url(#bg)"/>
+  <circle cx="120" cy="120" r="66" fill="none" stroke="#ffffff" stroke-opacity=".22" stroke-width="22"/>
+  <circle cx="120" cy="120" r="66" fill="none" stroke="#ffffff" stroke-width="22" stroke-linecap="round" stroke-dasharray="311 415" transform="rotate(-90 120 120)"/>
+  <circle cx="120" cy="120" r="20" fill="#ffb3c7"/>
 </svg>
