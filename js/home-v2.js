@@ -44,13 +44,19 @@ const HomeV2 = (() => {
     return blush("#ffb9c4") + e(cx - dx, ey) + e(cx + dx, ey) + `<path d="M${cx - 8 * s} ${my - 2 * s}q8 9 16 0" fill="#E6986B" stroke="${BUDDY_INK}" stroke-width="${2.5 * s}" stroke-linecap="round" stroke-linejoin="round"/>`;
   }
   // parts are grouped so css/home-v2.css can move them: breathe, blink, ears, tail, heart, arms (31 Oct)
-  const buddy = (m = "happy") => `<svg class="hv2-buddy is-${m}" viewBox="0 0 100 100" aria-hidden="true"><ellipse class="nb-shadow" cx="50" cy="95" rx="24" ry="4" fill="rgba(40,38,148,.18)"/>`
+  const classicBuddy = (m = "happy") => `<svg class="hv2-buddy is-${m}" viewBox="0 0 100 100" aria-hidden="true"><ellipse class="nb-shadow" cx="50" cy="95" rx="24" ry="4" fill="rgba(40,38,148,.18)"/>`
     + `<g class="nb-tail"><path d="M74 80c14 2 18-12 10-18" stroke="#b9adf5" stroke-width="6" fill="none" stroke-linecap="round"/><path class="nb-heart" d="M84 58c-3-4-9-1-6 4l6 6 6-6c3-5-3-8-6-4z" fill="#ff8fab"/></g>`
     + `<g class="nb-bodyg"><g class="nb-ear-l"><path d="M28 34l4-16 14 10z" fill="#b3a6f7"/><path d="M31 30l2-7 6 5z" fill="#ffc2d1"/></g><g class="nb-ear-r"><path d="M72 34l-4-16-14 10z" fill="#b3a6f7"/><path d="M69 30l-2-7-6 5z" fill="#ffc2d1"/></g>`
     + `<ellipse cx="50" cy="60" rx="31" ry="30" fill="#c9bdff"/><ellipse cx="50" cy="72" rx="18" ry="14" fill="#f4f0ff"/>`
     + (m === "wink" ? '<ellipse class="nb-arm-r" cx="78" cy="46" rx="6" ry="8" fill="#c9bdff" transform="rotate(30 78 46)"/>' : "")
     + (m === "cheer" ? '<ellipse class="nb-arm-l" cx="22" cy="46" rx="6" ry="8" fill="#c9bdff" transform="rotate(-30 22 46)"/><ellipse class="nb-arm-r" cx="78" cy="46" rx="6" ry="8" fill="#c9bdff" transform="rotate(30 78 46)"/>' : "")
     + `<g class="nb-face">${buddyFace(m, 50, 56, 0.9)}</g></g></svg>`;
+  // Nimo everywhere follows the clock in Phnom Penh (js/nimo-day.js, 7 Nov): an everyday mood becomes
+  // what Nimo is doing now (coffee, work, lunch, asleep…); moods that mean something stay as they are
+  const DAY_MOODS = new Set(["happy", "calm", "wink", "sleepy"]);
+  const buddy = (m = "happy") => (DAY_MOODS.has(m) && typeof NimoDay !== "undefined" ? NimoDay.svg() : classicBuddy(m));
+  // Nimo doing the job of this place (money, holiday, bills…), face by the time of day
+  const roleBuddy = (name, m = "happy") => (typeof NimoDay !== "undefined" && NimoDay.role ? NimoDay.role(name, m) : buddy(m));
   // which mood fits right now
   function buddyMood(d) {
     const h = new Date().getHours();
@@ -327,7 +333,7 @@ const HomeV2 = (() => {
           <a class="hv4-status is-${tone}" href="#money">${escapeHtml(status)} · ${escapeHtml(monthName)}</a>
           <button type="button" class="hv4-edit" data-wc-edit aria-label="${escapeAttr(L("កែកាត", "Edit card"))}">✎</button></div>
         <div class="hv2-soft-hero${sc.nomi ? " has-nomi" : ""}">
-          ${sc.nomi ? `<span class="hv2-soft-buddy" data-nomi data-mood="${mood}" data-awaiting-income="${awaitingIncome}" role="button" tabindex="0" aria-label="Nomi">${MASCOT_FN(mood)}</span>` : ""}
+          ${sc.nomi ? `<span class="hv2-soft-buddy" data-nomi data-mood="${mood}" data-awaiting-income="${awaitingIncome}" role="button" tabindex="0" aria-label="Nomi">${roleBuddy("money", mood)}</span>` : ""}
           <div class="hv2-soft-summary">
             <a class="hv2-soft-amt money-value${hide}" href="#money">${escapeHtml(plainMoney(available))}</a>
             <span class="hv2-soft-pill">${escapeHtml(L(`ចាយរួច ${pct}% នៃ ${plainMoney(m.income)} · នៅ ${daysLeft} ថ្ងៃ`, `${pct}% of ${plainMoney(m.income)} spent · ${daysLeft} days left`))}</span>
@@ -349,7 +355,7 @@ const HomeV2 = (() => {
             <small class="hv2-soft-label"><span class="hv2-soft-icon" aria-hidden="true">${Icons.wallet()}</span><span>${escapeHtml(L("នៅសល់សម្រាប់ចាយ", "Left to spend"))}</span></small>
             ${periodControl || `<a class="hv2-soft-month" href="#money" aria-label="${escapeAttr(L(`មើលហិរញ្ញវត្ថុខែ${monthName}`, `Open ${monthName} finances`))}"><span aria-hidden="true">${Icons.calendar()}</span>${escapeHtml(L(`ខែ${monthName}`, monthName))}</a>`}
           </div>
-          ${sc.nomi ? `<span class="hv2-soft-buddy" data-nomi data-mood="${mood}" data-awaiting-income="${awaitingIncome}" role="button" tabindex="0" aria-label="Nomi">${MASCOT_FN(mood)}${sc.talk ? `<span class="hv2-say hv2-soft-say" data-nomi-say>${escapeHtml(L(...(awaitingIncome ? MONEY_WAITING : MONEY_SAY[mood] || MONEY_SAY.happy)))}</span>` : ""}</span>` : ""}
+          ${sc.nomi ? `<span class="hv2-soft-buddy" data-nomi data-mood="${mood}" data-awaiting-income="${awaitingIncome}" role="button" tabindex="0" aria-label="Nomi">${roleBuddy("money", mood)}${sc.talk ? `<span class="hv2-say hv2-soft-say" data-nomi-say>${escapeHtml(L(...(awaitingIncome ? MONEY_WAITING : MONEY_SAY[mood] || MONEY_SAY.happy)))}</span>` : ""}</span>` : ""}
           <div class="hv2-soft-summary">
             <a class="hv2-soft-amt money-value${hide}" href="#money">${escapeHtml(plainMoney(available))}</a>
             <span class="hv2-soft-pill">${escapeHtml(L(`ចាយរួច ${pct}% · ${daysLeft} ថ្ងៃទៀត`, `${pct}% spent · ${daysLeft} days left`))}</span>
@@ -437,7 +443,7 @@ const HomeV2 = (() => {
       const sub = item.amount ? plainMoney(item.amount, item.currency) : (item.categoryLabel || "");
       const ic = { bill: "🧾", family: "👨‍👩‍👧", reminder: "🔔", holiday: "🎉", event: "📅" }[kind] || "📅";
       if (lav()) {
-        const sticker = buddy(kind === "holiday" ? "cheer" : "happy");
+        const sticker = roleBuddy({ holiday: "holiday", bill: "bill", family: "family" }[kind] || "calendar", kind === "holiday" ? "cheer" : "happy");
         const details = [time, sub, L(kmTag, enTag)].filter(Boolean);
         const aria = `${item.title || ""}. ${details.join(". ")}`;
         return `<a class="hv2-tl-row hv2-calendar-item${kind === "holiday" ? " hv2-holiday" : ""} has-ticker" href="${escapeAttr(item.href || "#calendar")}" aria-label="${escapeAttr(aria)}"><span class="hv2-tl-ic is-${tone} hv2-calendar-nomi" aria-hidden="true">${sticker}<i>${ic}</i></span><span class="hv2-tl-text"><b>${escapeHtml(item.title || "")}</b><span class="hv2-rain-ticker${kind === "holiday" ? " hv2-holiday-ticker" : ""}" aria-hidden="true"><span class="hv2-rain-ticker-track"><small>${escapeHtml(details[0] || "")}</small><small>${escapeHtml(details[1] || details[0] || "")}</small><small>${escapeHtml(details[2] || details[0] || "")}</small></span></span></span></a>`;
@@ -535,7 +541,7 @@ const HomeV2 = (() => {
     excited: `<path d="M15 12.6l1.3 2.7 3 .4-2.2 2 .6 3-2.7-1.5-2.7 1.5.6-3-2.2-2 3-.4z" fill="#ff5a7a"/><path d="M25 12.6l1.3 2.7 3 .4-2.2 2 .6 3-2.7-1.5-2.7 1.5.6-3-2.2-2 3-.4z" fill="#ff5a7a"/><path d="M12 23.5q8 10 16 0z" fill="#6b3d12"/><path d="M15.5 27.4q4.5 2.6 9 0" fill="none" stroke="#ff8f8f" stroke-width="2.2" stroke-linecap="round"/>`
   };
   // mood buttons draw Nomi (31 Oct): happy · calm · tired → sleepy · stressed → worry · excited → cheer
-  const face = key => buddy({ happy: "happy", calm: "calm", tired: "sleepy", stressed: "worry", excited: "cheer" }[key] || "happy").replace('class="hv2-buddy', 'class="hv2-face hv2-buddy-face');
+  const face = key => classicBuddy({ happy: "happy", calm: "calm", tired: "sleepy", stressed: "worry", excited: "cheer" }[key] || "happy").replace('class="hv2-buddy', 'class="hv2-face hv2-buddy-face');
 
   // a short friendly line after picking a mood
   const MOOD_NOTE = {
@@ -648,7 +654,7 @@ const HomeV2 = (() => {
     const fm = progMood(d);
     const left = d.focus.filter(item => !item.done).map(item => item.text);
     const lines = [focusLeft(done, total), (left.length ? left : d.focus.map(item => item.text)).slice(0, 3).join(" · "), L(`បានធ្វើ ${done}/${total}`, `${done}/${total} done`)];
-    const focusRow = `<button type="button" class="hv2-tl-row hv2-calendar-item has-ticker hv4-fx-row" data-hv4-fx aria-expanded="false" aria-label="${escapeAttr(`${t("dailyFocus")}. ${done}/${total}`)}"><span class="hv2-tl-ic is-amber hv2-calendar-nomi" aria-hidden="true">${buddy(fm === "proud" ? "cheer" : fm)}<i>🎯</i></span><span class="hv2-tl-text"><b>${escapeHtml(t("dailyFocus"))} · <span data-hv4-fx-count>${done}/${total}</span></b><span class="hv2-rain-ticker hv4-fx-ticker" aria-hidden="true"><span class="hv2-rain-ticker-track">${lines.map(text => `<small>${escapeHtml(text)}</small>`).join("")}</span></span></span><span class="hv4-chev" aria-hidden="true">${IC.chev()}</span></button>`;
+    const focusRow = `<button type="button" class="hv2-tl-row hv2-calendar-item has-ticker hv4-fx-row" data-hv4-fx aria-expanded="false" aria-label="${escapeAttr(`${t("dailyFocus")}. ${done}/${total}`)}"><span class="hv2-tl-ic is-amber hv2-calendar-nomi" aria-hidden="true">${roleBuddy("focus", fm === "proud" ? "cheer" : fm)}<i>🎯</i></span><span class="hv2-tl-text"><b>${escapeHtml(t("dailyFocus"))} · <span data-hv4-fx-count>${done}/${total}</span></b><span class="hv2-rain-ticker hv4-fx-ticker" aria-hidden="true"><span class="hv2-rain-ticker-track">${lines.map(text => `<small>${escapeHtml(text)}</small>`).join("")}</span></span></span><span class="hv4-chev" aria-hidden="true">${IC.chev()}</span></button>`;
     const fxInner = focusCard(d).replace(/^\s*<section class="hv2-group hv2-focus-group">\s*<div class="hv2-sec"[\s\S]*?<\/div>/, "").replace(/<\/section>\s*$/, "");
     const panel = `<div class="hv4-fx-panel" hidden>${fxInner}<button type="button" class="hv4-more hv4-fx-edit" data-action="edit-focus">✎ ${escapeHtml(L("កែការផ្តោត", "Edit focus"))}</button></div>`;
     const sched = schedule(d);
@@ -811,5 +817,5 @@ const HomeV2 = (() => {
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", () => { mirror("topbarWeather", "[data-hv2-wx]"); mirror("bellButton", "[data-hv2-bell]"); });
   else { mirror("topbarWeather", "[data-hv2-wx]"); mirror("bellButton", "[data-hv2-bell]"); }
 
-  return { focusLeft, render, softArticle, lav, buddy, nimoBadge };
+  return { focusLeft, render, softArticle, lav, buddy, classic: classicBuddy, role: roleBuddy, nimoBadge };
 })();

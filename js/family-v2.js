@@ -42,7 +42,7 @@ const FamilyV2 = (() => {
 
   // Lavender (light, 31 Oct): Nomi in the hero, a big "days together" counter card, small date cards, compact members
   const lav = () => typeof HomeV2 !== "undefined" && !!HomeV2.buddy;
-  const nomi = (mood, cls) => `<span class="${cls}" data-nomi data-mood="${mood}" role="button" tabindex="0" aria-label="Nomi">${HomeV2.buddy(mood)}</span>`;
+  const nomi = (mood, cls) => `<span class="${cls}" data-nomi data-mood="${mood}" role="button" tabindex="0" aria-label="Nomi">${HomeV2.role ? HomeV2.role("family", mood) : HomeV2.buddy(mood)}</span>`;
   function dateItems() {
     const items = [];
     const seenPairs = new Set();
@@ -230,7 +230,7 @@ const FamilyV2 = (() => {
         </div>
         ${tags.length ? `<div class="fv-tags">${tags.map(tag => `<span>${escapeHtml(tag)}</span>`).join("")}</div>` : ""}
         ${missing.length ? `<div class="fv-missing">${missing.map(label => `<button type="button" data-edit-family="${escapeAttr(member.id)}">+ ${escapeHtml(label)}</button>`).join("")}</div>` : ""}
-        <button class="fv-idea fv-tip" type="button" data-family-about aria-expanded="false"><span class="fv-tip-row"><span class="fv-tip-nomi">${HomeV2.buddy("happy")}</span><span class="fv-tip-tx">${escapeHtml(idea(member))}</span>${notes.length ? `<span class="fv-tip-more">${escapeHtml(L(`ចំណាំ ${notes.length}`, `${notes.length} notes`))} ›</span>` : ""}</span>${notes.map(note => `<span class="fv-note">📝 ${escapeHtml(note)}</span>`).join("")}</button>
+        <button class="fv-idea fv-tip" type="button" data-family-about aria-expanded="false"><span class="fv-tip-row"><span class="fv-tip-nomi">${HomeV2.role ? HomeV2.role("family") : HomeV2.buddy("happy")}</span><span class="fv-tip-tx">${escapeHtml(idea(member))}</span>${notes.length ? `<span class="fv-tip-more">${escapeHtml(L(`ចំណាំ ${notes.length}`, `${notes.length} notes`))} ›</span>` : ""}</span>${notes.map(note => `<span class="fv-note">📝 ${escapeHtml(note)}</span>`).join("")}</button>
       </article>`;
     }
     return `<article class="fv-member" id="family-member-${escapeAttr(member.id || "")}">

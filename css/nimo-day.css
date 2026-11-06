@@ -71,3 +71,47 @@ svg.nd-scene { overflow: visible; }
 @keyframes ndglow { 0%,100% { filter:drop-shadow(0 0 2px #fff6c2); } 50% { filter:drop-shadow(0 0 7px #fff6c2); } }
 @keyframes ndtwinkle { 0%,100% { opacity:.25; } 50% { opacity:1; } }
 @media (prefers-reduced-motion: reduce) { .nd-scene * { animation:none !important; } }
+
+/* Nimo at work (7 Nov): the job each place gives Nimo (js/nimo-day.js role()) */
+.nd-scene .nd-coin { animation: ndCoinDrop 1.6s ease-in infinite; }
+.nd-scene .nd-coin.d2 { animation-delay: .8s; }
+.nd-scene .nd-key { animation: ndKeyTap 1.2s steps(1) infinite; }
+.nd-scene .nd-key.d2 { animation-delay: .4s; } .nd-scene .nd-key.d3 { animation-delay: .8s; }
+.nd-scene .nd-wobble { transform-origin: 41px 94px; animation: ndWobble 1.4s ease-in-out infinite; }
+.nd-scene .nd-drop { animation: ndDrop 1.6s ease-in infinite; }
+.nd-scene .nd-pigcoin { animation: ndPigCoin 2s ease-in infinite; }
+.nd-scene .nd-stamp { transform-origin: 70px 56px; animation: ndStamp 2s ease-in-out infinite; }
+.nd-scene .nd-paid { transform-box: fill-box; transform-origin: center; animation: ndPaid 2s ease-in-out infinite; }
+.nd-scene .nd-confetti > * { animation: ndConfetti 2.2s linear infinite; }
+.nd-scene .nd-confetti > :nth-child(2n) { animation-delay: .5s; } .nd-scene .nd-confetti > :nth-child(3n) { animation-delay: 1s; }
+.nd-scene .nd-wave { transform-origin: 76px 50px; animation: ndWave .5s ease-in-out infinite alternate; }
+.nd-scene .nd-rain path { animation: ndRain 1s linear infinite; }
+.nd-scene .nd-rain path:nth-child(2) { animation-delay: .3s; } .nd-scene .nd-rain path:nth-child(3) { animation-delay: .6s; } .nd-scene .nd-rain path:nth-child(4) { animation-delay: .15s; }
+.nd-scene .nd-umb { transform-origin: 50px 40px; animation: ndsway 2.4s ease-in-out infinite; }
+.nd-scene .nd-cloud { animation: ndCloud 6s ease-in-out infinite; }
+.nd-scene .nd-dart { animation: ndDart 2.4s ease-in infinite; }
+.nd-scene .nd-tick { stroke-dasharray: 26; animation: ndTick 2.4s ease-in-out infinite; }
+.nd-scene .nd-page { transform-box: fill-box; transform-origin: center; animation: ndFlip 2.6s ease-in-out infinite; }
+.nd-scene .nd-pencil { animation: ndWrite 1s ease-in-out infinite alternate; }
+.nd-scene .nd-flash { opacity: 0; animation: ndFlash 2.4s ease-out infinite; }
+.nd-scene .nd-bubble { transform-box: fill-box; transform-origin: center; animation: ndPop 2.4s ease-in-out infinite; }
+.nd-scene .nd-bubble.d2 { animation-delay: 1.2s; }
+.nd-is-sleep .nd-moon { animation: ndglow 4s ease-in-out infinite; }
+@keyframes ndCoinDrop { 0% { transform: translateY(-16px); opacity: 0; } 20% { opacity: 1; } 70% { transform: translateY(8px); opacity: 1; } 100% { transform: translateY(8px); opacity: 0; } }
+@keyframes ndKeyTap { 0%, 100% { fill: #fff; } 50% { fill: #ffd36b; } }
+@keyframes ndWobble { 0%, 100% { transform: rotate(-4deg); } 50% { transform: rotate(4deg); } }
+@keyframes ndDrop { 0% { transform: translateY(-2px); opacity: 0; } 30% { opacity: 1; } 100% { transform: translateY(10px); opacity: 0; } }
+@keyframes ndPigCoin { 0% { transform: translateY(-14px); opacity: 0; } 25% { opacity: 1; } 60% { transform: translateY(4px); opacity: 1; } 61%, 100% { opacity: 0; } }
+@keyframes ndStamp { 0%, 40%, 100% { transform: translateY(-8px) rotate(-8deg); } 55%, 70% { transform: translateY(0) rotate(0); } }
+@keyframes ndPaid { 0%, 55% { opacity: 0; transform: scale(.6); } 65%, 100% { opacity: 1; transform: scale(1); } }
+@keyframes ndConfetti { 0% { transform: translateY(-14px) rotate(0); opacity: 0; } 15% { opacity: 1; } 100% { transform: translateY(40px) rotate(260deg); opacity: 0; } }
+@keyframes ndWave { from { transform: rotate(-10deg); } to { transform: rotate(18deg); } }
+@keyframes ndRain { from { transform: translateY(-10px); opacity: 0; } 30% { opacity: 1; } to { transform: translateY(26px); opacity: 0; } }
+@keyframes ndCloud { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(8px); } }
+@keyframes ndDart { 0%, 40% { transform: translate(-40px, 10px); opacity: 0; } 45% { opacity: 1; } 60%, 100% { transform: translate(0, 0); opacity: 1; } }
+@keyframes ndTick { 0%, 30% { stroke-dashoffset: 26; } 60%, 100% { stroke-dashoffset: 0; } }
+@keyframes ndFlip { 0%, 50%, 100% { transform: scaleY(1); } 70% { transform: scaleY(.1); } }
+@keyframes ndWrite { from { transform: translate(0, 0) rotate(0); } to { transform: translate(6px, 1px) rotate(4deg); } }
+@keyframes ndFlash { 0%, 70%, 100% { opacity: 0; } 75% { opacity: 1; } }
+@keyframes ndPop { 0%, 100% { transform: scale(.85); opacity: .6; } 50% { transform: scale(1); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .nd-scene * { animation: none !important; } }

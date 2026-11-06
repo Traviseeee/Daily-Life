@@ -516,7 +516,8 @@ const TopbarWeather = (() => {
     const slides = data ? [`${PLACE.name} · ${temp}`, feelsWind, rainText] : [PLACE.name, tx("loading"), tx("loading")];
     const sticker = ({ sun: "☀️", moon: "🌙", partly: "🌤️", partlyNight: "☁️", cloud: "☁️", fog: "🌫️", rain: "☔", storm: "⚡", snow: "❄️" })[scene] || "🌤️";
     const mood = scene === "rain" || scene === "storm" ? "worry" : "happy";
-    const nomi = typeof HomeV2 !== "undefined" && HomeV2.buddy ? HomeV2.buddy(mood) : "🐾";
+    const job = { sun: "sun", partly: "sun", rain: "rain", storm: "rain", cloud: "cloud", fog: "cloud" }[scene];
+    const nomi = typeof HomeV2 !== "undefined" && HomeV2.role && job ? HomeV2.role(job, mood) : typeof HomeV2 !== "undefined" && HomeV2.buddy ? HomeV2.buddy(mood) : "🐾";
     return `<button type="button" class="hv2-tl-row hv2-weather has-ticker" data-scene="${scene}" data-wx-open aria-label="${esc(`${condition}. ${slides.join(". ")}`)}"><span class="hv2-calendar-nomi" aria-hidden="true">${nomi}<i>${sticker}</i></span><span class="hv2-tl-text"><b>${esc(condition)}</b><span class="hv2-rain-ticker" aria-hidden="true"><span class="hv2-rain-ticker-track"><small>${esc(slides[0])}</small><small>${esc(slides[1])}</small><small>${esc(slides[2])}</small></span></span></span></button>`;
     return `<button type="button" class="hv2-tl-row hv2-weather has-ticker" data-scene="${scene}" data-wx-open aria-label="${esc(`${condition}. ${slides.join(". ")}`)}"><span class="hv2-tl-ic is-weather hv2-calendar-nomi" aria-hidden="true"><span class="hv2-weather-backdrop">${icon(scene)}</span>${nomi}<i>${sticker}</i></span><span class="hv2-tl-text"><b>${esc(condition)}</b><span class="hv2-rain-ticker" aria-hidden="true"><span class="hv2-rain-ticker-track"><small>${esc(slides[0])}</small><small>${esc(slides[1])}</small><small>${esc(slides[2])}</small></span></span></span></button>`;
   }

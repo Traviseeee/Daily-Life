@@ -57,7 +57,8 @@ const NimoLife = (() => {
     if (back) out = out.replace('<g class="nb-bodyg">', `<g class="nb-bodyg">${back}`);
     return out.replace(/<\/g><\/svg>$/, `<g class="nb-outfit">${front}</g></g></svg>`);
   }
-  const nomiSvg = (mood, look = myLook()) => (typeof HomeV2 !== "undefined" && HomeV2.buddy ? dress(HomeV2.buddy(mood), look) : "🐱");
+  // outfits sit on the classic Nomi (the time-of-day scenes would hide them)
+  const nomiSvg = (mood, look = myLook()) => (typeof HomeV2 !== "undefined" && (HomeV2.classic || HomeV2.buddy) ? dress((HomeV2.classic || HomeV2.buddy)(mood), look) : "🐱");
   const xpFor = lv => { const steps = [0, 50, 150, 300, 500, 800, 1200, 1700, 2300, 3000]; if (lv <= 10) return steps[lv - 1]; let need = 3000, gap = 800; for (let i = 11; i <= lv; i++) { need += gap; gap += 100; } return need; };
 
   const km = () => (typeof languageCode === "function" ? languageCode() === "km" : true);

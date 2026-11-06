@@ -107,7 +107,7 @@ const AutoBudget = (() => {
 
   function sheetHtml() {
     const { info, source } = current;
-    const nomi = typeof HomeV2 !== "undefined" && HomeV2.buddy ? HomeV2.buddy(info.free > 0 ? "happy" : "worry") : "🐱";
+    const nomi = typeof HomeV2 !== "undefined" && HomeV2.role ? HomeV2.role("money", info.free > 0 ? "happy" : "worry") : "🐱";
     const line = (icon, label, value, minus) => `<div class="${minus ? "is-minus" : ""}"><span>${icon} ${esc(label)}</span><b>${minus ? "− " : ""}${esc(fmt(value))}</b></div>`;
     const empty = !(info.income > 0);
     return `<div class="ab" role="dialog" aria-modal="true" aria-label="${esc(L("ថវិកាស្វ័យប្រវត្តិ", "Auto budget"))}">

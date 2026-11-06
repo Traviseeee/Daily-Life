@@ -167,7 +167,7 @@ const MoneyTabsV2 = (() => {
       bell: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 8 3 8H3s3-1 3-8M10 20a2 2 0 0 0 4 0"/></svg>',
       list: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg>'
     };
-    const goldNomi = typeof HomeV2 !== "undefined" && HomeV2.buddy ? `<span class="svg-nomi" data-nomi data-mood="${goldMood}" role="button" tabindex="0" aria-label="Nomi">${HomeV2.buddy(goldMood)}<i class="svg-coin" aria-hidden="true"></i></span>` : "";
+    const goldNomi = typeof HomeV2 !== "undefined" && HomeV2.buddy ? `<span class="svg-nomi" data-nomi data-mood="${goldMood}" role="button" tabindex="0" aria-label="Nomi">${HomeV2.role ? HomeV2.role("save", goldMood) : HomeV2.buddy(goldMood)}<i class="svg-coin" aria-hidden="true"></i></span>` : "";
     const goldPortfolio = typeof SavingsMarket !== "undefined" && SavingsMarket.line ? `<section class="sv-gold-portfolio svg-hero" data-gold-hero>
       <div class="svg-row">${goldNomi}<div class="svg-main"><small>${escapeHtml(L("មាសរបស់ខ្ញុំ", "My gold"))}</small><strong>${numberForSavings(Math.max(0, ownedGoldChi), 2)} <span>${escapeHtml(L("ជី", "Chi"))}</span></strong></div>${goldTransactions.length ? `<div class="svg-worth"><b>${currentInvestmentValue === null ? "—" : money(currentInvestmentValue)}</b>${goldProfitLoss === null ? "" : `<em class="svg-gain ${goldProfitLoss < 0 ? "is-down" : "is-up"}">${goldProfitLoss < 0 ? "−" : "+"}${money(Math.abs(goldProfitLoss))}${goldPct === null ? "" : ` · ${numberForSavings(Math.abs(goldPct), 1)}%`}</em>`}</div>` : `<div class="svg-worth"><small>${escapeHtml(L("មិនទាន់មានមាស", "No gold yet"))}</small></div>`}<p class="svg-say" data-gold-say>${escapeHtml(goldSay)}</p></div>
       ${SavingsMarket.line()}
@@ -227,7 +227,7 @@ const MoneyTabsV2 = (() => {
       </section>`;
     }).join("");
     const nomiSay = L("ខ្ញុំនៅទីនេះជួយអ្នកតាមដានកម្ចី 🐾", "I’m here to help you keep loans on track 🐾");
-    const intro = typeof HomeV2 !== "undefined" && HomeV2.buddy ? `<div class="mt-loan-talk"><span class="mt-loan-nomi" data-nomi data-mood="happy" role="button" tabindex="0" aria-label="Nomi">${HomeV2.buddy("happy")}</span><span class="mt-loan-say" data-nomi-say>${escapeHtml(nomiSay)}</span></div>` : "";
+    const intro = typeof HomeV2 !== "undefined" && HomeV2.buddy ? `<div class="mt-loan-talk"><span class="mt-loan-nomi" data-nomi data-mood="happy" role="button" tabindex="0" aria-label="Nomi">${HomeV2.role ? HomeV2.role("bill") : HomeV2.buddy("happy")}</span><span class="mt-loan-say" data-nomi-say>${escapeHtml(nomiSay)}</span></div>` : "";
     return `<div class="mt-finance-group mt-loans-group">${sec(t("loans"), items.length, "add-loan")}${intro}${typeof renderLoanDoubleCheck === "function" ? renderLoanDoubleCheck() : ""}${items.length ? cards : empty(t("noLoansYet"), t("noLoansBody"), "add-loan", t("addLoan"))}</div>`;
   }
 

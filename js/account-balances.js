@@ -41,7 +41,7 @@ const AccountBalances = (() => {
     const value = calculate();
     const currency = appData.profile.currency || "USD";
     const fmt = amount => formatPlainMoney(amount, currency);
-    const nomi = typeof HomeV2 !== "undefined" && HomeV2.buddy ? HomeV2.buddy("happy") : "🐱";
+    const nomi = typeof HomeV2 !== "undefined" && HomeV2.role ? HomeV2.role("money") : typeof HomeV2 !== "undefined" && HomeV2.buddy ? HomeV2.buddy("happy") : "🐱";
     return `<section class="fv2-section ab-section">
       <div class="ab-head"><div class="ab-title"><div><h2>${escapeHtml(L("សមតុល្យ", "Balances"))}</h2><p>${escapeHtml(L("សាច់ប្រាក់ · ធនាគារ · សរុប", "Cash · Bank · Total"))}</p></div><span class="ab-nomi" aria-hidden="true">${nomi}</span></div><button type="button" class="ab-edit" data-account-balances-edit aria-label="${escapeAttr(L("កែសមតុល្យដើម", "Edit opening balances"))}">${Icons.edit()}<span>${escapeHtml(L("កែ", "Edit"))}</span></button></div>
       <div class="ab-grid">

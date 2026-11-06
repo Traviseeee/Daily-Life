@@ -61,7 +61,7 @@ const CalendarV2 = (() => {
         const nextTx = next ? (() => { const d = daysBetween(today, next.date); const when = d === 1 ? L("ស្អែក", "Tomorrow") : L(`${d} ថ្ងៃទៀត`, `In ${d} days`); return `${when}: ${cleanTitle(next)}${next.amount ? ` ${full(next.amount, next.currency).replace(/<[^>]*>/g, "")}` : ""}`; })() : "";
         const say = todayCount ? L(`ថ្ងៃនេះមាន ${todayCount} រឿង កុំភ្លេចណា! 📌`, `${todayCount} things today — don't forget! 📌`) + (nextTx ? ` ${nextTx}` : "") : `${L("ថ្ងៃនេះទំនេរ 🌿", "Free today 🌿")}${nextTx ? ` ${nextTx}` : ""}`;
         const mood = todayCount ? "cheer" : "happy";
-        return `<div class="cv2-talk"><span class="cv2-nomi" data-nomi data-mood="${mood}" role="button" tabindex="0" aria-label="Nomi">${HomeV2.buddy(mood)}</span><span class="cv2-say" data-nomi-say>${escapeHtml(say)}</span></div>`;
+        return `<div class="cv2-talk"><span class="cv2-nomi" data-nomi data-mood="${mood}" role="button" tabindex="0" aria-label="Nomi">${HomeV2.role ? HomeV2.role("calendar", mood) : HomeV2.buddy(mood)}</span><span class="cv2-say" data-nomi-say>${escapeHtml(say)}</span></div>`;
       })()}
       <nav class="cv2-seg">${seg.map(([id, label]) => `<a class="${ctx.view === id ? "on" : ""}" href="#calendar/${id}/${id === "month" ? ctx.visibleMonth : ctx.selectedLinkDate}"${ctx.view === id ? ' aria-current="page"' : ""}>${escapeHtml(label)}</a>`).join("")}</nav>
     </header>`;
@@ -140,7 +140,7 @@ const CalendarV2 = (() => {
     const rows = allDay.map(event => row(event, iso < today)).join("") + timedRows + endNow + spentRows;
     const count = events.length;
     return `<div class="cv2-sec"><b>${escapeHtml(longDay(iso))}</b><small>${escapeHtml(L(`${count} រឿង`, `${count} items`))}</small></div>
-      <section class="cv2-card cv2-day">${rows || `<div class="cv2-free"><span class="cv2-free-nomi">${HomeV2.buddy(iso < today ? "calm" : "sleepy")}</span><span class="cv2-free-tx"><b>${escapeHtml(L("គ្មានអ្វីត្រូវធ្វើ", "Nothing planned"))}</b><small>${escapeHtml(iso < today ? L("ថ្ងៃនេះកន្លងហើយ", "This day has passed") : L("សម្រាក ឬបន្ថែមផែនការ", "Rest, or add a plan"))}</small></span><button class="cv2-free-add" type="button" data-action="add-calendar" data-calendar-date="${iso}">${Icons.plus()}<span>${escapeHtml(L("បន្ថែម", "Add"))}</span></button></div>`}</section>`;
+      <section class="cv2-card cv2-day">${rows || `<div class="cv2-free"><span class="cv2-free-nomi">${HomeV2.role ? HomeV2.role("calendar", "calm") : HomeV2.buddy(iso < today ? "calm" : "sleepy")}</span><span class="cv2-free-tx"><b>${escapeHtml(L("គ្មានអ្វីត្រូវធ្វើ", "Nothing planned"))}</b><small>${escapeHtml(iso < today ? L("ថ្ងៃនេះកន្លងហើយ", "This day has passed") : L("សម្រាក ឬបន្ថែមផែនការ", "Rest, or add a plan"))}</small></span><button class="cv2-free-add" type="button" data-action="add-calendar" data-calendar-date="${iso}">${Icons.plus()}<span>${escapeHtml(L("បន្ថែម", "Add"))}</span></button></div>`}</section>`;
   }
 
   function upcoming() {

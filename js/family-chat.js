@@ -168,7 +168,7 @@ const FamilyChat = (() => {
   }
   function stickerHtml(id) {
     const s = STICKERS.find(x => x[0] === id) || STICKERS[0];
-    const art = typeof HomeV2 !== "undefined" && HomeV2.buddy ? HomeV2.buddy(s[1]) : "🐱";
+    const art = typeof HomeV2 !== "undefined" && HomeV2.classic ? HomeV2.classic(s[1]) : "🐱";
     return `<div class="fc-sticker">${art}<b>${esc(L(s[2], s[3]))}</b></div>`;
   }
 
@@ -190,7 +190,7 @@ const FamilyChat = (() => {
     const dms = S.chats.filter(c => c.kind === "dm");
     const others = (s.members || []).filter(m => m.user_id !== s.me && !dms.some(c => c.other_user === m.user_id));
     const row = c => `<a class="fc-row" href="#chat/${attr(c.chat_id)}">${c.kind === "group" ? groupAv("") : av(c.other_user)}<span class="fc-tx"><b>${esc(chatTitle(c))}</b><small>${c.last_sender && c.kind === "group" && c.last_kind ? `${esc(c.last_sender === me() ? L("អ្នក", "You") : first(c.last_sender))}: ` : ""}${esc(preview(c))}</small></span><span class="fc-meta">${esc(listTime(c.last_at))}${c.unread ? `<i class="fc-badge">${c.unread > 9 ? "9+" : c.unread}</i>` : ""}</span></a>`;
-    const nomi = typeof HomeV2 !== "undefined" && HomeV2.buddy ? HomeV2.buddy("wink") : "🐱";
+    const nomi = typeof HomeV2 !== "undefined" && HomeV2.role ? HomeV2.role("chat") : "🐱";
     return `<header class="fc-head"><a class="fc-back" href="#family" aria-label="${attr(L("ត្រឡប់", "Back"))}">‹</a><div><h1>💬 ${esc(L("សារគ្រួសារ", "Family chat"))}</h1><p>${esc(familyName())} · ${esc(L(`${(s.members || []).length} នាក់`, `${(s.members || []).length} people`))}</p></div></header>
       ${group.map(row).join("")}
       ${dms.length || others.length ? `<p class="fc-sec">${esc(L("ជជែក 2 នាក់", "Just the two of you"))}</p>` : ""}
@@ -247,7 +247,7 @@ const FamilyChat = (() => {
         <span class="fc-time">${esc(clock(m.created_at))}</span></div>`;
       return out;
     }).join("");
-    box.innerHTML = html || `<div class="fc-empty is-small">${typeof HomeV2 !== "undefined" && HomeV2.buddy ? `<span class="fc-hi">${HomeV2.buddy("happy")}</span>` : "👋"}${esc(L("មិនទាន់មានសារ — ផ្ញើ sticker សួស្តីមួយ!", "No messages yet — send a hello sticker!"))}</div>`;
+    box.innerHTML = html || `<div class="fc-empty is-small">${typeof HomeV2 !== "undefined" && HomeV2.role ? `<span class="fc-hi">${HomeV2.role("chat")}</span>` : "👋"}${esc(L("មិនទាន់មានសារ — ផ្ញើ sticker សួស្តីមួយ!", "No messages yet — send a hello sticker!"))}</div>`;
     if (nearBottom || !box.dataset.painted) box.scrollTop = box.scrollHeight;
     box.dataset.painted = "1";
   }
@@ -285,7 +285,7 @@ const FamilyChat = (() => {
     if (same) { el.hidden = true; return; }
     el.dataset.which = which; el.hidden = false;
     if (which === "sticker") {
-      const art = m => (typeof HomeV2 !== "undefined" && HomeV2.buddy ? HomeV2.buddy(m) : "🐱");
+      const art = m => (typeof HomeV2 !== "undefined" && HomeV2.classic ? HomeV2.classic(m) : "🐱");
       el.innerHTML = `<div class="fc-sgrid">${STICKERS.map(s => `<button type="button" data-fc-sticker="${attr(s[0])}">${art(s[1])}<small>${esc(L(s[2], s[3]))}</small></button>`).join("")}</div>`;
     } else {
       const opts = shareOptions();
