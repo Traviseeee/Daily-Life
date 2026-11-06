@@ -191,9 +191,11 @@ const OAuthGate = {
       if (!ok && this.invitePending()) {
         let token = "";
         try { token = sessionStorage.getItem("mylife:family-join") || localStorage.getItem("mylife:family-join") || ""; } catch (error) { token = ""; }
-        const preview = await client.rpc("family_invite_preview", { p_token: token });
+        // v2 (6 Nov) also reads the 6-char join code; an old database falls back to the first version
+        let preview = await client.rpc("family_invite_preview_v2", { p_key: token });
+        if (preview.error) preview = await client.rpc("family_invite_preview", { p_token: token });
         const info = Array.isArray(preview.data) ? preview.data[0] : preview.data;
-        ok = !preview.error && info?.status === "ok";
+        ok = !preview.error && info?.status === "ok" && info?.my_status !== "rejected";
         if (!ok) { try { sessionStorage.removeItem("mylife:family-join"); localStorage.removeItem("mylife:family-join"); } catch (error) { /* ignore */ } }
       }
       if (ok) { this.checked.set(user.id, Date.now()); this.approve(user.id); return true; }
