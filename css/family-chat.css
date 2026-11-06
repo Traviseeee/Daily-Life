@@ -1,0 +1,115 @@
+/* Family Chat (6 Nov 2026). Markup: js/family-chat.js. Lavender, light + dark. */
+:root { --fc-bg: #f6f4ff; --fc-card: #fff; --fc-ink: #14183a; --fc-sub: #6a6f8c; --fc-line: #ece8fa; --fc-soft: #efebff; --fc-a: #504ab9; --fc-them: #fff; --fc-grad: linear-gradient(135deg, #8b7cf6, #6b5ce7); --fc-field: #faf9ff; }
+html:root:not([data-theme="light"]) { --fc-bg: #1b1834; --fc-card: #2a2550; --fc-ink: #f4f2ff; --fc-sub: #bdb7e6; --fc-line: rgba(182, 168, 255, .16); --fc-soft: rgba(182, 168, 255, .16); --fc-a: #c9bdff; --fc-them: #2f2a5c; --fc-field: rgba(182, 168, 255, .08); }
+
+/* ---------- list ---------- */
+.fc-page { display: grid; gap: 8px; padding-bottom: 110px; color: var(--fc-ink); }
+.fc-head { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+.fc-head h1 { margin: 0; font-size: 1.25rem; font-weight: 700; color: var(--fc-ink); }
+.fc-head p { margin: 2px 0 0; font-size: .78rem; font-weight: 400; color: var(--fc-sub); }
+.fc-back { display: grid; place-items: center; flex: 0 0 auto; width: 40px; height: 40px; border-radius: 14px; font-size: 1.4rem; line-height: 1; text-decoration: none; color: var(--fc-a); background: var(--fc-soft); }
+.fc-row { display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid var(--fc-line); border-radius: 20px; text-decoration: none; color: var(--fc-ink); background: var(--fc-card); box-shadow: 0 6px 18px rgba(80, 74, 185, .06); }
+.fc-row:active { transform: scale(.99); }
+.fc-row.is-new { border-style: dashed; box-shadow: none; }
+.fc-tx { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.fc-tx b { font-size: .92rem; font-weight: 700; }
+.fc-tx small { overflow: hidden; font-size: .78rem; font-weight: 400; white-space: nowrap; text-overflow: ellipsis; color: var(--fc-sub); }
+.fc-meta { display: grid; justify-items: end; gap: 4px; font-size: .68rem; color: var(--fc-sub); }
+.fc-badge, .fc-open i { display: grid; place-items: center; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 99px; font-size: .68rem; font-style: normal; font-weight: 700; color: #fff; background: #ff6f91; }
+.fc-sec { margin: 10px 4px 0; font-size: .74rem; color: var(--fc-sub); }
+.fc-av { position: relative; display: grid; place-items: center; flex: 0 0 auto; width: 44px; height: 44px; overflow: hidden; border-radius: 50%; font-size: .95rem; font-weight: 700; color: #fff; }
+.fc-av img { width: 100%; height: 100%; object-fit: cover; }
+.fc-av.is-fam { font-size: 1.3rem; background: var(--fc-grad); }
+.fc-av.is-sm { width: 30px; height: 30px; font-size: .72rem; }
+.fc-av-gap { flex: 0 0 30px; }
+.fc-tip { display: flex; align-items: center; gap: 10px; margin-top: 8px; padding: 12px 14px; border-radius: 20px; font-size: .8rem; color: var(--fc-a); background: var(--fc-soft); }
+.fc-tip-nomi, .fc-hi { display: block; flex: 0 0 52px; width: 52px; height: 52px; }
+.fc-page .fc-tip-nomi svg.hv2-buddy, .fc-msgs .fc-hi svg.hv2-buddy { display: block; width: 52px !important; height: 52px !important; max-width: none; margin: 0; }
+.fc-empty { display: grid; gap: 10px; justify-items: center; padding: 40px 20px; border-radius: 24px; text-align: center; color: var(--fc-sub); background: var(--fc-card); }
+.fc-empty.is-small { margin: auto; padding: 24px; background: transparent; }
+.fc-link { color: var(--fc-a); }
+
+/* entry button on the Family page */
+.fc-open { position: relative; display: inline-flex; align-items: center; gap: 6px; height: 42px; padding: 0 14px; flex: 0 0 auto; border-radius: 999px; font-size: .82rem; font-weight: 700; text-decoration: none; color: var(--fc-a) !important; background: var(--fc-soft); }
+.fc-open i { position: absolute; top: -6px; right: -6px; }
+.fc-open i[hidden] { display: none; }
+.fv-title-acts { display: flex; gap: 8px; align-items: center; }
+.nav-item.fc-has-new { position: relative; }
+.nav-item.fc-has-new::after { content: ""; position: absolute; top: 6px; right: calc(50% - 16px); width: 9px; height: 9px; border: 2px solid var(--fc-card); border-radius: 50%; background: #ff6f91; }
+
+/* ---------- one chat: full screen above everything ---------- */
+html:root:root body.fc-room-open #mobileNav.mobile-nav, html:root:root body.fc-room-open .quick-action-dock, html:root body.fc-room-open .demo-bar { display: none !important; }
+.fc-room-page { padding: 0; }
+.fc-room { position: fixed; inset: 0; z-index: 55; display: flex; flex-direction: column; color: var(--fc-ink); background: var(--fc-bg); }
+.fc-rhead { display: flex; align-items: center; gap: 10px; padding: calc(var(--sat, env(safe-area-inset-top, 0px)) + 10px) 12px 10px; border-bottom: 1px solid var(--fc-line); background: var(--fc-card); }
+.fc-rhead .fc-av { width: 40px; height: 40px; }
+.fc-rtitle { flex: 1; min-width: 0; display: grid; }
+.fc-rtitle b { overflow: hidden; font-size: .95rem; white-space: nowrap; text-overflow: ellipsis; }
+.fc-rtitle small { font-size: .72rem; font-weight: 400; color: var(--fc-sub); }
+.fc-ibtn { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 14px; text-decoration: none; background: var(--fc-soft); }
+.fc-msgs { flex: 1; display: flex; flex-direction: column; gap: 4px; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; padding: 12px 12px 10px; }
+.fc-day { align-self: center; margin: 10px 0 6px; padding: 3px 12px; border-radius: 99px; font-size: .68rem; color: var(--fc-sub); background: var(--fc-soft); }
+.fc-m { display: flex; align-items: flex-end; gap: 8px; max-width: 86%; margin-top: 6px; }
+.fc-m.is-chain { margin-top: 0; }
+.fc-m.is-me { align-self: flex-end; flex-direction: row-reverse; }
+.fc-col { position: relative; display: grid; gap: 2px; min-width: 0; justify-items: start; }
+.fc-m.is-me .fc-col { justify-items: end; }
+.fc-who { margin-left: 4px; font-size: .68rem; color: var(--fc-sub); }
+.fc-bub { max-width: 100%; padding: 9px 13px; border: 1px solid var(--fc-line); border-radius: 18px 18px 18px 6px; font-size: .9rem; line-height: 1.55; overflow-wrap: anywhere; color: var(--fc-ink); background: var(--fc-them); box-shadow: 0 2px 8px rgba(80, 74, 185, .05); user-select: text; -webkit-user-select: text; }
+.fc-m.is-me .fc-bub { border: 0; border-radius: 18px 18px 6px 18px; color: #fff; background: var(--fc-grad); }
+.fc-bub.is-del { font-style: italic; opacity: .6; }
+.fc-m.is-me .fc-bub.is-del { color: var(--fc-sub); background: var(--fc-soft); }
+.fc-time { flex: 0 0 auto; margin-bottom: 3px; font-size: .62rem; color: var(--fc-sub); }
+.fc-m[data-fc-msg^="tmp-"] { opacity: .6; }
+.fc-reacts { display: flex; gap: 4px; margin-top: -4px; }
+.fc-reacts button { padding: 1px 7px; border: 1px solid var(--fc-line); border-radius: 99px; font: inherit; font-size: .72rem; color: var(--fc-ink); background: var(--fc-card); cursor: pointer; }
+.fc-reacts button.is-mine { border-color: #b8adff; background: var(--fc-soft); }
+.fc-sticker { display: grid; justify-items: center; width: 116px; }
+.fc-msgs .fc-sticker svg.hv2-buddy { width: 96px !important; height: 96px !important; margin: 0; }
+.fc-sticker b { margin-top: -6px; font-size: .74rem; color: var(--fc-a); }
+.fc-card { min-width: 220px; max-width: 260px; overflow: hidden; border: 1px solid var(--fc-line); border-radius: 18px; color: var(--fc-ink); background: var(--fc-card); text-align: left; }
+.fc-card-h { padding: 8px 12px; font-size: .72rem; color: var(--fc-a); background: var(--fc-soft); }
+.fc-card.is-paid .fc-card-h, .fc-card.is-save .fc-card-h { color: #1f9d74; background: #e3f6ee; }
+.fc-card.is-event .fc-card-h { color: #a86b00; background: #fff4d6; }
+html:root:not([data-theme="light"]) .fc-card.is-paid .fc-card-h, html:root:not([data-theme="light"]) .fc-card.is-save .fc-card-h { color: #7fe3bd; background: rgba(47, 208, 143, .14); }
+html:root:not([data-theme="light"]) .fc-card.is-event .fc-card-h { color: #ffd37a; background: rgba(255, 196, 77, .14); }
+.fc-card-b { display: grid; gap: 2px; padding: 10px 12px; }
+.fc-card-b b { font-size: .92rem; }
+.fc-card-b small { font-size: .76rem; font-weight: 400; color: var(--fc-sub); }
+.fc-bar { height: 7px; margin-top: 6px; overflow: hidden; border-radius: 9px; background: var(--fc-soft); }
+.fc-bar i { display: block; height: 100%; border-radius: 9px; background: var(--fc-grad); }
+.fc-card-f { display: flex; border-top: 1px solid var(--fc-line); }
+.fc-card-f button { flex: 1; padding: 9px 4px; border: 0; font: inherit; font-size: .74rem; color: var(--fc-a); background: none; cursor: pointer; }
+.fc-card-f button + button { border-left: 1px solid var(--fc-line); }
+/* hold menu */
+.fc-menu { position: absolute; bottom: calc(100% + 6px); z-index: 5; display: grid; gap: 4px; padding: 6px; border: 1px solid var(--fc-line); border-radius: 18px; background: var(--fc-card); box-shadow: 0 12px 30px rgba(20, 18, 50, .2); }
+.fc-m:not(.is-me) .fc-menu { left: 0; }
+.fc-m.is-me .fc-menu { right: 0; }
+.fc-menu-e { display: flex; gap: 2px; }
+.fc-menu-e button { width: 38px; height: 38px; border: 0; border-radius: 12px; font-size: 1.3rem; background: none; cursor: pointer; }
+.fc-menu-e button:active { background: var(--fc-soft); }
+.fc-menu-del { padding: 8px 10px; border: 0; border-radius: 12px; font: inherit; font-size: .8rem; text-align: left; color: var(--fc-ink); background: var(--fc-field); cursor: pointer; }
+/* quick replies, drawer, composer */
+.fc-quick { display: flex; gap: 6px; overflow-x: auto; padding: 8px 10px 0; background: var(--fc-card); border-top: 1px solid var(--fc-line); scrollbar-width: none; }
+.fc-quick::-webkit-scrollbar { display: none; }
+.fc-quick button { flex: 0 0 auto; padding: 6px 12px; border: 1px solid var(--fc-line); border-radius: 99px; font: inherit; font-size: .76rem; color: var(--fc-ink); background: var(--fc-field); cursor: pointer; }
+.fc-drawer { max-height: 46vh; overflow-y: auto; padding: 10px 12px 4px; background: var(--fc-card); border-top: 1px solid var(--fc-line); }
+.fc-drawer[hidden] { display: none; }
+.fc-dtitle { margin: 0 2px 8px; font-size: .74rem; color: var(--fc-sub); }
+.fc-sgrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.fc-sgrid button { display: grid; justify-items: center; padding: 4px 2px 6px; border: 0; border-radius: 16px; font: inherit; color: var(--fc-sub); background: var(--fc-field); cursor: pointer; }
+.fc-drawer .fc-sgrid svg.hv2-buddy { width: 58px !important; height: 58px !important; margin: 0; }
+.fc-sgrid small { font-size: .64rem; }
+.fc-shgrid { display: grid; gap: 6px; }
+.fc-shgrid button { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--fc-line); border-radius: 16px; font: inherit; text-align: left; color: var(--fc-ink); background: var(--fc-field); cursor: pointer; }
+.fc-shgrid button > span:first-child { font-size: 1.3rem; }
+.fc-shgrid b { display: block; font-size: .84rem; }
+.fc-shgrid small { font-size: .72rem; font-weight: 400; color: var(--fc-sub); }
+.fc-comp { display: flex; align-items: center; gap: 8px; margin: 0; padding: 10px 10px calc(var(--sab, env(safe-area-inset-bottom, 0px)) + 10px); background: var(--fc-card); }
+.fc-ib, .fc-send { display: grid; place-items: center; flex: 0 0 auto; width: 42px; height: 42px; border: 0; border-radius: 14px; font-size: 1.1rem; cursor: pointer; }
+.fc-ib { color: var(--fc-a); background: var(--fc-soft); }
+.fc-ib.is-on { color: #fff; background: var(--fc-grad); }
+.fc-send { color: #fff; background: var(--fc-grad); }
+.fc-inp { flex: 1; min-width: 0; height: 42px; padding: 0 14px; border: 1px solid var(--fc-line); border-radius: 14px; font: inherit; font-size: 16px; color: var(--fc-ink); background: var(--fc-field); }
+.fc-inp:focus { outline: 2px solid #b8adff; outline-offset: 0; }
+@media (min-width: 901px) { .fc-room { left: auto; right: 0; width: min(480px, 100%); box-shadow: -10px 0 40px rgba(20, 18, 50, .18); } }

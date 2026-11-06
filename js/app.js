@@ -321,7 +321,7 @@ const App = {
     // Daily life page removed (30 Oct 2026): reminders show on Home, old links land there too
     if (this.route === "today" || this.route === "summary" || this.route === "daily") { this.route = "home"; history.replaceState(null, "", "#home"); }
     // a mistyped / old address (plain word only, never a login token hash) shows Home: say so in the address bar too
-    const KNOWN = ["home", "launcher", "family", "goals", "money", "calendar", "memories", "tips", "settings", "notifications", "scan", "help", "profile"];
+    const KNOWN = ["home", "launcher", "family", "goals", "money", "calendar", "memories", "tips", "settings", "notifications", "scan", "help", "profile", "chat"];
     if (/^[a-z-]+$/.test(this.route) && !KNOWN.includes(this.route)) { this.route = "home"; history.replaceState(null, "", "#home"); }
     this.param = param;
   },
@@ -350,6 +350,7 @@ const App = {
     else if (route === "summary") app.innerHTML = renderSummary();
     else if (route === "family") app.innerHTML = renderFamily();
     else if (route === "profile" && typeof MemberProfile !== "undefined") app.innerHTML = MemberProfile.render(this.param);
+    else if (route === "chat" && typeof FamilyChat !== "undefined") app.innerHTML = FamilyChat.render(this.param);
     else if (route === "goals") app.innerHTML = renderGoals(this.param);
     else if (route === "money") app.innerHTML = renderMoney(this.param || "overview");
     else if (route === "calendar") app.innerHTML = renderCalendar(this.param || "month");
@@ -809,6 +810,7 @@ const App = {
     if (route === "summary" && typeof bindHomeActions === "function") bindHomeActions({ bindProfile: false });
     if (route === "family" && typeof bindFamily === "function") bindFamily();
     if (route === "profile" && typeof MemberProfile !== "undefined") MemberProfile.bind();
+    if (typeof FamilyChat !== "undefined") { if (route === "chat") FamilyChat.bind(); else document.body.classList.remove("fc-room-open"); }
     if (route === "goals" && typeof bindGoals === "function") bindGoals(this.param);
     if (route === "money" && typeof bindMoney === "function") bindMoney();
     if (route === "calendar" && typeof bindCalendar === "function") bindCalendar();

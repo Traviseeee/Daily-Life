@@ -99,7 +99,7 @@ const FamilyV2 = (() => {
     return `<header class="fv-hero">
       <div class="fv-title">
         <div><h1>${escapeHtml(t("family"))}</h1><p>${escapeHtml([groupName || L("គ្រួសារខ្ញុំ", "My family"), L(`${fam().length} នាក់`, `${fam().length} people`), isGroupAdmin() ? L("អ្នកគ្រប់គ្រង", "Admin") : ""].filter(Boolean).join(" · "))}</p></div>
-        ${s?.family && !isGroupAdmin() ? "" : `<button class="fv-invite" type="button" data-fv-invite>${Icons.plus()}<span>${escapeHtml(L("អញ្ជើញ", "Invite"))}</span></button>`}
+        <div class="fv-title-acts">${s?.family && typeof FamilyChat !== "undefined" ? FamilyChat.buttonHtml() : ""}${s?.family && !isGroupAdmin() ? "" : `<button class="fv-invite" type="button" data-fv-invite>${Icons.plus()}<span>${escapeHtml(L("អញ្ជើញ", "Invite"))}</span></button>`}</div>
       </div>
       ${lav() ? (() => { const [say, mood] = nomiLine(); return `<div class="fv-talk">${nomi(mood, "fv-nomi")}<span class="fv-say" data-nomi-say>${escapeHtml(say)}</span></div>`; })() : ""}
       <nav class="fv-avs" aria-label="${escapeAttr(t("family"))}">

@@ -73,8 +73,11 @@
       created_by: "11111111-1111-1111-1111-111111111111", created_at: new Date().toISOString(), expires_at: r.days ? new Date(Date.now() + r.days * 864e5).toISOString() : null,
       max_uses: r.max_uses, use_count: 0, label: r.label, member_card_id: r.member_card_id, needs_approval: r.needs_approval, used_by: null, used_at: null, cancelled_at: null });
   });
+  ["family_chats", "family_messages", "family_chat_reads"].forEach(k => { if (!Array.isArray(db[k])) db[k] = []; }); // chat (6 Nov)
   const keep = () => { try { localStorage.setItem(DB_KEY, JSON.stringify(db)); } catch (error) { /* ignore */ } };
   keep();
+  // another tab is another person: pick up what they wrote
+  window.addEventListener("storage", event => { if (event.key === DB_KEY && event.newValue) { try { db = JSON.parse(event.newValue); } catch (error) { /* ignore */ } } });
   const ok = data => Promise.resolve({ data, error: null });
   const fail = message => Promise.resolve({ data: null, error: { message, code: "P0001" } });
   const now = () => new Date().toISOString();
@@ -85,6 +88,18 @@
   const find = key => db.family_invites.find(i => i.token === key || (String(key).length === 6 && i.code === String(key).toUpperCase()));
   const status = i => i.cancelled_at ? "cancelled" : i.expires_at && Date.parse(i.expires_at) < Date.now() ? "expired" : (i.max_uses <= 1 ? i.used_by : i.use_count >= i.max_uses) ? "used" : "ok";
   const ABC = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+  // chat rules, same as 20261106_family_chat.sql
+  const inFam = (fid, uid) => db.family_members.some(m => m.family_id === fid && m.user_id === uid);
+  function canChat(id) {
+    const c = db.family_chats.find(x => x.id === id);
+    if (!c || !inFam(c.family_id, me.id)) return false;
+    if (c.kind === "group") return true;
+    if (![c.user_a, c.user_b].includes(me.id)) return false;
+    return inFam(c.family_id, c.user_a === me.id ? c.user_b : c.user_a);
+  }
+  const uid = () => crypto.randomUUID ? crypto.randomUUID() : `id-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  const readAt = (chat, user) => db.family_chat_reads.find(r => r.chat_id === chat && r.user_id === user)?.last_read_at || "";
+  const markRead = chat => { const r = db.family_chat_reads.find(x => x.chat_id === chat && x.user_id === me.id); if (r) r.last_read_at = now(); else db.family_chat_reads.push({ chat_id: chat, user_id: me.id, last_read_at: now() }); };
 
   // table reads follow the same rules as the real RLS
   const visible = {
@@ -93,6 +108,9 @@
     family_invites: r => isAdmin(r.family_id),
     family_invite_uses: r => r.user_id === me.id || db.family_invites.some(i => i.token === r.token && isAdmin(i.family_id)),
     member_profiles: r => r.user_id === me.id,
+    family_chats: r => canChat(r.id),
+    family_messages: r => canChat(r.chat_id),
+    family_chat_reads: r => r.user_id === me.id,
     app_data: r => r.user_id === me.id
   };
   function from(table) {
@@ -203,6 +221,58 @@
         if (!i || !isAdmin(i.family_id)) return fail("only an admin can cancel");
         i.cancelled_at = i.cancelled_at || now(); keep();
         return ok(null);
+      }
+      case "family_chat_list": {
+        if (!isMember(a.p_family)) return fail("not a member");
+        if (!db.family_chats.some(c => c.family_id === a.p_family && c.kind === "group")) { db.family_chats.push({ id: uid(), family_id: a.p_family, kind: "group", user_a: null, user_b: null, created_at: now() }); keep(); }
+        const rows = db.family_chats.filter(c => c.family_id === a.p_family && canChat(c.id)).map(c => {
+          const msgs = db.family_messages.filter(m => m.chat_id === c.id && !m.deleted_at).sort((x, y) => x.created_at.localeCompare(y.created_at));
+          const last = msgs[msgs.length - 1];
+          const seen = readAt(c.id, me.id);
+          return { chat_id: c.id, kind: c.kind, other_user: c.kind === "dm" ? (c.user_a === me.id ? c.user_b : c.user_a) : null, last_body: last?.body ?? null, last_kind: last?.kind ?? null,
+            last_sender: last?.sender ?? null, last_at: last?.created_at || c.created_at, unread: msgs.filter(m => m.sender !== me.id && m.created_at > seen).length };
+        }).sort((x, y) => (y.kind === "group") - (x.kind === "group") || String(y.last_at).localeCompare(String(x.last_at)));
+        return ok(rows);
+      }
+      case "family_chat_open_dm": {
+        if (!isMember(a.p_family)) return fail("not a member");
+        if (!a.p_other || a.p_other === me.id) return fail("choose another member");
+        if (!inFam(a.p_family, a.p_other)) return fail("not in this family");
+        const [x, y] = [me.id, a.p_other].sort();
+        let c = db.family_chats.find(r => r.family_id === a.p_family && r.kind === "dm" && r.user_a === x && r.user_b === y);
+        if (!c) { c = { id: uid(), family_id: a.p_family, kind: "dm", user_a: x, user_b: y, created_at: now() }; db.family_chats.push(c); keep(); }
+        return ok(c.id);
+      }
+      case "family_chat_send": {
+        if (!canChat(a.p_chat)) return fail("not in this chat");
+        const body = String(a.p_body ?? "").trim() || null;
+        if (!["text", "sticker", "share"].includes(a.p_kind)) return fail("bad kind");
+        if (a.p_kind === "text" && !body) return fail("empty message");
+        if (body && body.length > 1000) return fail("message too long");
+        const row = { id: uid(), chat_id: a.p_chat, sender: me.id, kind: a.p_kind, body, data: a.p_data || {}, reactions: {}, created_at: now(), deleted_at: null };
+        db.family_messages.push(row); markRead(a.p_chat); keep();
+        return ok(row);
+      }
+      case "family_chat_react": {
+        const m = db.family_messages.find(x => x.id === a.p_message && !x.deleted_at);
+        if (!m || !canChat(m.chat_id)) return fail("not in this chat");
+        if (!["❤️", "😂", "👍", "🎉", "😢", "🙏"].includes(a.p_emoji)) return fail("bad emoji");
+        const list = m.reactions[a.p_emoji] || [];
+        const next = list.includes(me.id) ? list.filter(x => x !== me.id) : [...list, me.id];
+        if (next.length) m.reactions[a.p_emoji] = next; else delete m.reactions[a.p_emoji];
+        keep(); return ok(m.reactions);
+      }
+      case "family_chat_delete": {
+        const m = db.family_messages.find(x => x.id === a.p_message);
+        if (!m || !canChat(m.chat_id)) return fail("not in this chat");
+        const c = db.family_chats.find(x => x.id === m.chat_id);
+        if (m.sender !== me.id && !(c.kind === "group" && isAdmin(c.family_id))) return fail("only the writer (or an admin in the group) can delete");
+        Object.assign(m, { deleted_at: now(), body: null, data: {}, reactions: {} }); keep();
+        return ok(null);
+      }
+      case "family_chat_read": {
+        if (!canChat(a.p_chat)) return fail("not in this chat");
+        markRead(a.p_chat); keep(); return ok(null);
       }
       case "create_family": return ok(fam.id);
       default: return ok(null);

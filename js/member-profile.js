@@ -98,7 +98,7 @@ const MemberProfile = (() => {
           ${p.relation ? `<span class="mp-rel">💗 ${esc(relLabel(p.relation))}</span>` : `<span class="mp-rel is-role">${esc(roleName)}</span>`}
           ${p.bio ? `<p class="mp-bio">${esc(p.bio)}</p>` : p.self ? `<p class="mp-bio is-empty">${esc(L("សរសេរពីខ្លួនអ្នកបន្តិច…", "Write a little about you…"))}</p>` : ""}
           ${p.self ? `<button type="button" class="mp-edit" data-mp-edit>✎ ${esc(L("កែ Profile ខ្ញុំ", "Edit my profile"))}</button>`
-            : `<div class="mp-acts">${act(phone ? `tel:${phone}` : "", "is-call", "📞", L("ហៅ", "Call"))}${act(tg, "is-tg", "✈️", "Telegram")}${act(phone ? `sms:${phone}` : "", "is-msg", "💬", L("សារ", "Message"))}</div>`}
+            : `<div class="mp-acts">${act(phone ? `tel:${phone}` : "", "is-call", "📞", L("ហៅ", "Call"))}${act(tg, "is-tg", "✈️", "Telegram")}${act(`#chat/dm-${p.userId}`, "is-msg", "💬", L("សារ", "Message"))}</div>`}
           <div class="mp-stats">
             <div><b>${days === null ? "—" : days === 0 ? "🎉" : days}</b><small>${esc(days === 0 ? L("ថ្ងៃកំណើតថ្ងៃនេះ!", "Birthday today!") : L("ថ្ងៃដល់ខួបកំណើត", "days to birthday"))}</small></div>
             <div><b>${esc(monthYear(p.joined).split(" ")[0] || "—")}</b><small>${esc(L("ចូលរួម", "joined"))}</small></div>
