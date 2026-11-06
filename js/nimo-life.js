@@ -69,6 +69,8 @@ const NimoLife = (() => {
   function paint() {
     const slot = document.querySelector("[data-nimo-life]");
     if (slot) slot.outerHTML = card();
+    // Home v4: streak + level chips sit by the hero Nomi
+    if (typeof HomeV2 !== "undefined" && HomeV2.nimoBadge) document.querySelectorAll("[data-nimo-badge]").forEach(el => { el.outerHTML = HomeV2.nimoBadge(); });
     maybePopup();
   }
 

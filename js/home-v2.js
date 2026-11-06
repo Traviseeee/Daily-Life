@@ -189,6 +189,7 @@ const HomeV2 = (() => {
       </div>
       <div class="hv2-title-row">${lav() ? "" : `<button type="button" class="hv2-nomi-dark" data-nomi aria-label="Nomi">${MASCOT_FN()}<span class="hv2-say" data-nomi-say>${escapeHtml(nomiLine(MOOD_NOW))}</span></button>`}
         <div class="hv2-title">
+          ${lav() ? `<small class="hv4-date">${escapeHtml(longDate(today))}</small>` : ""}
           <h1>${things ? L(`ថ្ងៃនេះមាន <span>${things} រឿង</span> ត្រូវធ្វើ`, `<span>${things} thing${things === 1 ? "" : "s"}</span> to do today`) : L(`ថ្ងៃនេះ <span>ទំនេរ</span> 🌿`, `Today is <span>free</span> 🌿`)}</h1>
           <div class="hv2-why">
             <p>${escapeHtml(longDate(today))}</p>
@@ -199,7 +200,7 @@ const HomeV2 = (() => {
           </div>
         </div>
       </div>
-      ${lav() ? `<button type="button" class="hv2-hero-buddy" data-nomi aria-label="Nomi">${MASCOT_FN()}<span class="hv2-say" data-nomi-say>${escapeHtml(nomiLine(MOOD_NOW))}</span></button></div>${stats(d, focusDone)}` : ""}
+      ${lav() ? `<button type="button" class="hv2-hero-buddy" data-nomi aria-label="Nomi">${MASCOT_FN()}<span class="hv2-say" data-nomi-say data-hero-say>${escapeHtml(nomiLine(MOOD_NOW))}</span></button>${nimoBadge()}</div>` : ""}
       <nav class="hv2-week" aria-label="${escapeAttr(L("សប្តាហ៍នេះ", "This week"))}">${week.map(date => {
         const key = iso(date);
         const on = key === d.todayIso;
@@ -291,7 +292,7 @@ const HomeV2 = (() => {
 
   // red / amber strip at the top: overdue bills and budgets at 80%+ (from the old Today page)
   // the white money card itself (Home + Money overview share it). top = extra HTML for its first row
-  function softArticle(todayIso, m, top = "", periodControl = "") {
+  function softArticle(todayIso, m, top = "", periodControl = "", opts = {}) {
     const conf = appData.profile?.walletCard || {};
     const hide = conf.hide ? " is-hidden" : "";
     const now = new Date();
@@ -312,6 +313,31 @@ const HomeV2 = (() => {
     const sc = typeof WalletCard !== "undefined" && WalletCard.softConf ? WalletCard.softConf() : { tint: "white", nomi: true, talk: true, track: true };
     const tint = typeof WalletCard !== "undefined" && WalletCard.tintOf ? WalletCard.tintOf(sc.tint) : ["white", "#ffffff", "#ffe1d2"];
     const mood = sc.mood && sc.mood !== "auto" ? sc.mood : moneyMood({ ...m, left: available }, spentToday, perDay);
+    if (opts.home) {
+      // Home v4: one status chip (how spending goes · month) instead of the month chip and Nomi's bubble,
+      // the 3 numbers in one row and the quick actions at the bottom of the same card
+      const tone = awaitingIncome ? "wait" : mood === "worry" ? "bad" : mood === "calm" ? "mid" : "ok";
+      const status = awaitingIncome ? L("រង់ចាំប្រាក់ខែ", "Waiting for pay") : { ok: L("✓ ចាយបានល្អ", "✓ On track"), mid: L("ជិតដល់កំណត់", "Near the limit"), bad: L("ចាយលើសហើយ", "Over the limit") }[tone];
+      return `<article class="wc-card hv2-soft hv4-soft${available < 0 ? " is-short" : ""}${sc.nomi ? "" : " no-nomi"}" style="--sc-bg:${tint[1]};--sc-glow:${tint[2]}">
+        <div class="hv4-mhead"><small class="hv2-soft-label"><span>${escapeHtml(L("នៅសល់សម្រាប់ចាយ", "Left to spend"))}</span></small>
+          <a class="hv4-status is-${tone}" href="#money">${escapeHtml(status)} · ${escapeHtml(monthName)}</a>
+          <button type="button" class="hv4-edit" data-wc-edit aria-label="${escapeAttr(L("កែកាត", "Edit card"))}">✎</button></div>
+        <div class="hv2-soft-hero${sc.nomi ? " has-nomi" : ""}">
+          ${sc.nomi ? `<span class="hv2-soft-buddy" data-nomi data-mood="${mood}" data-awaiting-income="${awaitingIncome}" role="button" tabindex="0" aria-label="Nomi">${MASCOT_FN(mood)}</span>` : ""}
+          <div class="hv2-soft-summary">
+            <a class="hv2-soft-amt money-value${hide}" href="#money">${escapeHtml(plainMoney(available))}</a>
+            <span class="hv2-soft-pill">${escapeHtml(L(`ចាយរួច ${pct}% នៃ ${plainMoney(m.income)} · នៅ ${daysLeft} ថ្ងៃ`, `${pct}% of ${plainMoney(m.income)} spent · ${daysLeft} days left`))}</span>
+          </div>
+        </div>
+        ${sc.track ? track : ""}
+        <div class="hv4-m3">
+          <div><small>${escapeHtml(L("ចាយរួច", "Spent"))}</small><b class="money-value${hide}">${escapeHtml(plainMoney(m.expenses))}</b></div>
+          <div><small>${escapeHtml(L("ថ្ងៃនេះ", "Today"))}</small><b class="money-value${hide}">${escapeHtml(plainMoney(spentToday))}</b></div>
+          <div><small>${escapeHtml(L("ចាយបាន/ថ្ងៃ", "Per day"))}</small><b class="money-value${hide}">${escapeHtml(plainMoney(perDay))}</b></div>
+        </div>
+        ${quick()}
+      </article>`;
+    }
     return `<article class="wc-card hv2-soft${available < 0 ? " is-short" : ""}${sc.nomi ? "" : " no-nomi"}" style="--sc-bg:${tint[1]};--sc-glow:${tint[2]}">
         <span class="hv2-soft-glow" aria-hidden="true"></span>${top}
         <div class="hv2-soft-hero${sc.nomi ? " has-nomi" : ""}">
@@ -539,22 +565,128 @@ const HomeV2 = (() => {
     </details>`;
   }
 
+  // Home v4 (6 Nov, draft): small line icons for the card heads
+  const HI = {
+    cal: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="3" fill="currentColor" fill-opacity=".2"/><path d="M8 3v4M16 3v4M4 10h16"/></svg>',
+    heart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" fill="currentColor" fill-opacity=".2"/></svg>',
+    photo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3" fill="currentColor" fill-opacity=".2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-8 8"/></svg>',
+    pen: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z" fill="currentColor" fill-opacity=".2"/></svg>'
+  };
+  const cardHead = (icon, tone, title, link) => `<div class="hv4-ch"><span class="hv4-gi is-${tone}">${HI[icon]}</span><h2>${escapeHtml(title)}</h2>${link || ""}</div>`;
+
+  // streak + level chips next to the hero Nomi (tap → Nimo sheet); empty until Nimo has loaded
+  function nimoBadge() {
+    const st = typeof NimoLife !== "undefined" && NimoLife.state ? NimoLife.state() : null;
+    if (!st) return '<span class="hv4-nb" data-nimo-badge hidden></span>';
+    const streak = Number(st.streak || 0);
+    return `<span class="hv4-nb" data-nimo-badge data-nmc-open role="button" tabindex="0" aria-label="${escapeAttr(L(`Nimo កម្រិត ${st.level || 1} · ${streak} ថ្ងៃជាប់`, `Nimo level ${st.level || 1} · ${streak} day streak`))}"><em class="hv4-fire${streak ? "" : " is-off"}">🔥${streak}</em><em class="hv4-lv">Lv ${Number(st.level || 1)}</em></span>`;
+  }
+
+  // what the hero Nomi says, in turn: its own line, streak, money, weather, XP, next holiday / event
+  function heroLines(d) {
+    const out = [];
+    const st = typeof NimoLife !== "undefined" && NimoLife.state ? NimoLife.state() : null;
+    const streak = Number(st?.streak || 0);
+    if (streak > 0) out.push([`🔥 ${streak} ថ្ងៃជាប់! កុំឲ្យដាច់ណា`, `🔥 ${streak} day streak! Keep it going`]);
+    const m = d.month;
+    if (m) {
+      if (!(m.income > 0)) out.push(MONEY_WAITING);
+      else {
+        const now = new Date();
+        const daysLeft = Math.max(1, new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate() - now.getDate() + 1);
+        const spentToday = (appData.expenses || []).filter(item => item.date === d.todayIso).reduce((t, item) => t + toProfileCurrency(item.amount, item.currency), 0);
+        out.push(MONEY_SAY[moneyMood(m, spentToday, Math.max(0, m.left) / daysLeft)] || MONEY_SAY.happy);
+      }
+    }
+    const rain = document.querySelector(".hv2-weather [aria-label]")?.getAttribute("aria-label");
+    const wx = typeof TopbarWeather !== "undefined" && TopbarWeather.weatherRowHtml ? (TopbarWeather.weatherRowHtml().match(/aria-label="([^"]*)"/) || [])[1] : rain;
+    if (wx) { const first = wx.split(". ")[0]; if (first) out.push([`ថ្ងៃនេះ ${first} ☁️`, `Today: ${first} ☁️`]); }
+    if (st) {
+      const to = Number(st.nextXp || 0), xp = Number(st.xp || 0);
+      if (to > xp) out.push([`ទៀត ${to - xp} XP ខ្ញុំឡើង Lv ${Number(st.level || 1) + 1} ✨`, `${to - xp} XP more and I reach Lv ${Number(st.level || 1) + 1} ✨`]);
+    }
+    const next = (d.agenda.allItems || d.agenda.items || []).find(item => !item.overdue && item.date > d.todayIso);
+    if (next) {
+      const date = new Date(`${next.date}T00:00:00`);
+      out.push([`${KM_DAYS[date.getDay()]} ${date.getDate()} · ${next.title || ""} 🎉`, `${date.toLocaleDateString("en-US", { weekday: "short", day: "numeric" })} · ${next.title || ""} 🎉`]);
+    }
+    return out;
+  }
+  let HERO_LINES = [];
+  let heroStep = 0;
+  setInterval(() => {
+    if (document.hidden || !HERO_LINES.length) return;
+    const say = document.querySelector("[data-hero-say]");
+    if (!say || !say.getBoundingClientRect().width && !say.offsetParent) return;
+    heroStep += 1;
+    const pool = HERO_LINES;
+    const line = heroStep % (pool.length + 1) === 0 ? L(...(NOMI_LINES[MOOD_NOW] || NOMI_LINES.happy)[0]) : L(...pool[(heroStep - 1) % pool.length]);
+    say.textContent = line;
+    say.classList.remove("is-pop"); void say.offsetWidth; say.classList.add("is-pop");
+  }, 6500);
+
+  // money card on Home: the shared white card, status chip on top, quick actions inside
+  function homeMoney(d) {
+    const m = d.month;
+    if (!m) return `<section class="hv2-card hv4-card hv4-quick-only">${quick()}</section>`;
+    const html = softArticle(d.todayIso, m, "", "", { home: true });
+    const due = d.due;
+    const dueNames = due.slice(0, 2).map(item => item.title).join(" · ");
+    const dueHtml = due.length ? `<button type="button" class="hv2-wait" data-ma-home><span class="hv2-count">${due.length}</span><b>${escapeHtml(L(`${dueNames} រង់ចាំឆ្លើយ`, `${dueNames} waiting`))}</b><span class="hv2-pill">${escapeHtml(L("ឆ្លើយ", "Answer"))}</span></button>` : "";
+    return `<section class="hv2-money wc-wrap hv2-soft-wrap hv4-money">${html}${dueHtml}</section>`;
+  }
+
+  // "Today" card: focus (tap to open the ticks) · weather · today's / coming events
+  function todayCard(d) {
+    const done = d.focus.filter(item => item.done).length;
+    const total = d.focus.length;
+    const fm = progMood(d);
+    const left = d.focus.filter(item => !item.done).map(item => item.text);
+    const lines = [focusLeft(done, total), (left.length ? left : d.focus.map(item => item.text)).slice(0, 3).join(" · "), L(`បានធ្វើ ${done}/${total}`, `${done}/${total} done`)];
+    const focusRow = `<button type="button" class="hv2-tl-row hv2-calendar-item has-ticker hv4-fx-row" data-hv4-fx aria-expanded="false" aria-label="${escapeAttr(`${t("dailyFocus")}. ${done}/${total}`)}"><span class="hv2-tl-ic is-amber hv2-calendar-nomi" aria-hidden="true">${buddy(fm === "proud" ? "cheer" : fm)}<i>🎯</i></span><span class="hv2-tl-text"><b>${escapeHtml(t("dailyFocus"))} · <span data-hv4-fx-count>${done}/${total}</span></b><span class="hv2-rain-ticker hv4-fx-ticker" aria-hidden="true"><span class="hv2-rain-ticker-track">${lines.map(text => `<small>${escapeHtml(text)}</small>`).join("")}</span></span></span><span class="hv4-chev" aria-hidden="true">${IC.chev()}</span></button>`;
+    const fxInner = focusCard(d).replace(/^\s*<section class="hv2-group hv2-focus-group">\s*<div class="hv2-sec"[\s\S]*?<\/div>/, "").replace(/<\/section>\s*$/, "");
+    const panel = `<div class="hv4-fx-panel" hidden>${fxInner}<button type="button" class="hv4-more hv4-fx-edit" data-action="edit-focus">✎ ${escapeHtml(L("កែការផ្តោត", "Edit focus"))}</button></div>`;
+    const sched = schedule(d);
+    const heading = (sched.match(/<div class="hv2-sec"[^>]*><b>([^<]*)<\/b>/) || [])[1] || L("ថ្ងៃនេះ", "Today");
+    const listInner = (sched.match(/<section class="hv2-card hv2-tl">([\s\S]*)<\/section><\/section>\s*$/) || ["", ""])[1];
+    return `<section class="hv2-card hv4-card hv2-upcoming hv4-today">
+      ${cardHead("cal", "violet", heading === L("ខាងមុខ", "Coming up") ? L("ថ្ងៃនេះ", "Today") : heading, `<a class="hv4-more" href="#calendar">${escapeHtml(L("ប្រតិទិន", "Calendar"))} ›</a>`)}
+      <div class="hv2-tl">${focusRow}${panel}${listInner}</div>
+    </section>`;
+  }
+
+  // "Me today": mood (Nomi faces) + a small "write a little" that opens the reflection box
+  function meCard(d) {
+    const current = appData.mood?.date === d.todayIso ? appData.mood.value : "";
+    const text = appData.dailyReflection?.date === d.todayIso ? (appData.dailyReflection.text || "") : "";
+    const chip = current ? `<span class="hv4-more is-ok">✓ ${escapeHtml(L("បានជ្រើស", "Picked"))}</span>` : "";
+    return `<section class="hv2-card hv4-card hv2-me hv4-me">
+      ${cardHead("heart", "pink", L("ខ្ញុំថ្ងៃនេះ", "Me today"), chip)}
+      <p class="hv4-sub">${escapeHtml(L("ថ្ងៃនេះមានអារម្មណ៍យ៉ាងណាដែរ?", "How do you feel today?"))}</p>
+      ${noHead(moodCard(d))}
+      <details class="hv4-write"${text ? " open" : ""}><summary><span class="hv4-pen">${HI.pen}</span><span>${escapeHtml(text ? L("បានសរសេរ ✓ · ចុចដើម្បីមើល", "Written ✓ · tap to view") : L("សរសេរបន្តិច…", "Write a little…"))}</span></summary>${noHead(reflection(d))}</details>
+    </section>`;
+  }
+
+  function memoriesCard() {
+    if (typeof MemoryFeed === "undefined") return "";
+    return `<section class="hv2-card hv4-card hv2-memory-group hv4-mem">${cardHead("photo", "amber", L("អនុស្សាវរីយ៍គ្រួសារ", "Family memories"), `<a class="hv4-more" href="#memories">${escapeHtml(L("ទាំងអស់", "All"))} ›</a>`)}${MemoryFeed.familyTeaser()}</section>`;
+  }
+
   // Home v3 (31 Oct): no repeats, grouped by urgency, one header style.
+
   // alerts → money card + quick add → coming up → focus (one card, folds when all done) → me (mood + reflection) → memories
   const icHead = (html, ic) => html.replace('<div class="hv2-sec">', `<div class="hv2-sec" data-ic="${ic}">`);
   const noHead = html => html.replace(/^\s*<div class="hv2-sec">[\s\S]*?<\/div>\s*/, "");
   function homeV3(d) {
-    const fm = progMood(d);
-    const focus = icHead(focusCard(d), "🎯").replace('<div class="fx-head">', `<div class="fx-head" data-fx-toggle><span class="fx-nomi" data-nomi data-mood="${fm}" role="button" tabindex="0" aria-label="Nomi">${buddy(fm)}</span>`);
-    return `<div class="hv2-body hv2-v3">
-        ${typeof NimoLife !== "undefined" ? NimoLife.card() : ""}
+    HERO_LINES = heroLines(d);
+    // Home v4 (6 Nov): money + quick actions · today (focus, weather, events) · me today · memories
+    return `<div class="hv2-body hv2-v3 hv4">
         ${alerts(d)}
-        ${money(d)}
-        <section class="hv2-group hv2-quick-group">${quick()}</section>
-        ${icHead(schedule(d), "📅")}
-        ${focus}
-        <section class="hv2-me"><div class="hv2-sec" data-ic="💜"><b>${escapeHtml(L("ខ្ញុំថ្ងៃនេះ", "Me today"))}</b></div>
-          ${noHead(moodCard(d))}${noHead(reflection(d))}</section>`;
+        ${homeMoney(d)}
+        ${todayCard(d)}
+        ${meCard(d)}
+        ${memoriesCard()}`;
   }
 
   function render() {
@@ -571,7 +703,7 @@ const HomeV2 = (() => {
         ${focusCard(d)}
         ${moodCard(d)}
         ${reflection(d)}`}
-        ${typeof MemoryFeed !== "undefined" ? `<section class="hv2-group hv2-memory-group"><div class="hv2-sec"${lav() ? ' data-ic="📸"' : ""}><b>${escapeHtml(L("អនុស្សាវរីយ៍គ្រួសារ", "Family memories"))}</b><a class="hv2-link" href="#memories">${escapeHtml(L("ទាំងអស់", "All"))} ›</a></div>${MemoryFeed.familyTeaser()}</section>` : ""}
+        ${!lav() && typeof MemoryFeed !== "undefined" ? `<section class="hv2-group hv2-memory-group"><div class="hv2-sec"${lav() ? ' data-ic="📸"' : ""}><b>${escapeHtml(L("អនុស្សាវរីយ៍គ្រួសារ", "Family memories"))}</b><a class="hv2-link" href="#memories">${escapeHtml(L("ទាំងអស់", "All"))} ›</a></div>${MemoryFeed.familyTeaser()}</section>` : ""}
       </div>
     </section>`;
   }
@@ -592,6 +724,12 @@ const HomeV2 = (() => {
   document.addEventListener("click", event => {
     const go = event.target.closest("[data-hv2-go]");
     if (go) { location.hash = go.dataset.hv2Go; return; }
+    const fxRow = event.target.closest("[data-hv4-fx]");
+    if (fxRow) {
+      const panel = fxRow.parentElement.querySelector(".hv4-fx-panel");
+      if (panel) { panel.hidden = !panel.hidden; fxRow.setAttribute("aria-expanded", String(!panel.hidden)); fxRow.classList.toggle("is-open", !panel.hidden); }
+      return;
+    }
     const fxHead = event.target.closest("[data-fx-toggle]");
     if (fxHead && !event.target.closest("[data-nomi]")) { fxHead.closest(".hv2-fx")?.classList.toggle("is-open"); return; }
     const nomi = event.target.closest("[data-nomi]");
@@ -635,6 +773,12 @@ const HomeV2 = (() => {
     if (!event.target.matches?.("[data-focus-id]")) return;
     const card = event.target.closest(".hv2-fx-cats");
     if (card) setTimeout(() => fxCatTiles(card), 30);
+    const today = event.target.closest(".hv4-today");
+    if (today) setTimeout(() => {
+      const boxes = [...today.querySelectorAll("[data-focus-id]")];
+      const count = today.querySelector("[data-hv4-fx-count]");
+      if (count) count.textContent = `${boxes.filter(box => box.checked).length}/${boxes.length}`;
+    }, 30);
   });
   // phone ↔ desktop width: the lavender layout is phone only, so draw Home again when crossing 900px
   try { window.matchMedia("(max-width: 900px)").addEventListener("change", () => { if (location.hash.replace("#", "").split("/")[0] === "home" && typeof App !== "undefined") App.render(); }); } catch (error) { /* old browsers */ }
@@ -651,5 +795,5 @@ const HomeV2 = (() => {
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", () => { mirror("topbarWeather", "[data-hv2-wx]"); mirror("bellButton", "[data-hv2-bell]"); });
   else { mirror("topbarWeather", "[data-hv2-wx]"); mirror("bellButton", "[data-hv2-bell]"); }
 
-  return { focusLeft, render, softArticle, lav, buddy };
+  return { focusLeft, render, softArticle, lav, buddy, nimoBadge };
 })();

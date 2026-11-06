@@ -1,0 +1,142 @@
+/* Home v4 (6 Nov 2026, from the approved draft)
+   - the hero colour fades softly into the page (no cut edge), no stat tiles
+   - Nomi's bubble takes turns (streak, money, weather, XP, next day off); streak + level chips by Nomi
+   - 4 cards, each with the same head (icon tile + title + chip):
+     money + quick actions · today (focus, weather, events) · me today (mood + write) · family memories
+   Markup: js/home-v2.js (homeV3 → hv4). Loaded after home-lavender.css. */
+
+html:root .hv2 { --h4-card: #fff; --h4-line: #efecf7; --h4-ink: #14183a; --h4-sub: #6a6f8c; --h4-a: #504ab9; --h4-chip: #efebff; --h4-sh: 0 10px 30px rgba(80, 74, 185, .08); }
+html:root:not([data-theme="light"]) .hv2 { --h4-card: #2e2956; --h4-line: rgba(182, 168, 255, .16); --h4-ink: #f4f2ff; --h4-sub: #bdb7e6; --h4-a: #c9bdff; --h4-chip: rgba(182, 168, 255, .16); --h4-sh: none; }
+
+/* ---------- hero: soft fade, no tiles ---------- */
+html:root .hv2-head.is-lav .hv2-hero { padding-bottom: 18px; }
+html:root body.topbar-home .hv2-head.is-lav .hv2-hero::before {
+  inset: 0 -1px -380px !important; border-radius: 0 !important; -webkit-mask: none !important; mask: none !important;
+  background:
+    radial-gradient(120% 60% at 88% -6%, rgba(255, 182, 213, .5), transparent 55%),
+    radial-gradient(90% 46% at 0% 12%, rgba(160, 140, 255, .5), transparent 60%),
+    linear-gradient(180deg, #8f80f3 0, #a597f6 150px, #c6bcfa 290px, #e4defc 420px, rgba(243, 241, 244, 0) 600px) !important;
+}
+html:root:not([data-theme="light"]) body.topbar-home .hv2-head.is-lav .hv2-hero::before {
+  background:
+    radial-gradient(120% 60% at 88% -6%, rgba(255, 150, 200, .22), transparent 55%),
+    linear-gradient(180deg, #6d5ce0 0, #5a4bc4 150px, #40358f 290px, #2b2560 420px, rgba(33, 29, 61, 0) 600px) !important;
+}
+html:root .hv2-head.is-lav .hv2-stats { display: none !important; }
+html:root .hv2-head.is-lav .hv2-title-row { padding-right: 218px; min-height: 88px; align-items: flex-end; }
+html:root .hv2-head.is-lav .hv4-date { display: block; margin-bottom: 2px; color: #fff; font-size: .8rem; font-weight: 400; opacity: .92; }
+html:root .hv2-head.is-lav .hv2-hero .hv2-title h1 { font-size: 1.42rem !important; font-weight: 700; line-height: 1.35; }
+html:root .hv2-head.is-lav .hv2-hero .hv2-title h1 span { color: #fff !important; -webkit-text-fill-color: #fff; }
+html:root .hv2 .hv2-hero-buddy { right: 14px !important; bottom: 18px !important; width: 78px !important; height: 78px !important; }
+html:root .hv2 .hv2-hero-buddy .hv2-say { top: 6px !important; max-width: 128px !important; font-size: .74rem; font-weight: 500; color: var(--h4-ink); }
+html:root:not([data-theme="light"]) .hv2 .hv2-hero-buddy .hv2-say { color: #1a2347; }
+/* streak + level chips by Nomi */
+.hv4-nb { position: absolute; right: 14px; bottom: 18px; z-index: 4; width: 78px; height: 78px; pointer-events: none; }
+.hv4-nb[hidden] { display: none; }
+.hv4-nb em { position: absolute; font-style: normal; font-weight: 700; white-space: nowrap; pointer-events: auto; cursor: pointer; }
+.hv4-fire { right: -6px; top: -4px; padding: 2px 7px; border-radius: 99px; font-size: .7rem; color: #e8622c; background: #fff; box-shadow: 0 4px 10px rgba(232, 98, 44, .25); }
+.hv4-fire.is-off { filter: grayscale(1); opacity: .8; }
+.hv4-lv { left: 50%; bottom: -6px; transform: translateX(-50%); padding: 1px 8px; border-radius: 99px; font-size: .64rem; color: #fff; background: #504ab9; box-shadow: 0 0 0 2px rgba(255, 255, 255, .85); }
+
+/* ---------- body: 4 cards ---------- */
+html:root .hv2 .hv2-body.hv4 { display: grid; gap: 16px; }
+html:root .hv2 .hv4 .hv4-card { position: relative; margin: 0; padding: 16px; border: 0 !important; border-radius: 26px !important; color: var(--h4-ink); background: var(--h4-card) !important; box-shadow: var(--h4-sh) !important; }
+.hv4-ch { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.hv4-ch h2 { flex: 1; min-width: 0; margin: 0; font-size: 1rem; font-weight: 600; color: var(--h4-ink); }
+.hv4-gi { display: grid; place-items: center; width: 32px; height: 32px; flex: 0 0 auto; border-radius: 11px; }
+.hv4-gi svg { width: 18px; height: 18px; }
+.hv4-gi.is-violet { color: #7b68ee; background: #efebff; }
+.hv4-gi.is-pink { color: #ff6f91; background: #ffeef3; }
+.hv4-gi.is-amber { color: #e08a2e; background: #fff3e3; }
+html:root:not([data-theme="light"]) .hv4-gi { background: rgba(182, 168, 255, .16) !important; }
+html:root .hv2 .hv4-more { display: inline-flex; align-items: center; gap: 2px; padding: 5px 11px; border: 0; border-radius: 99px; color: var(--h4-a) !important; background: var(--h4-chip) !important; font: inherit; font-size: .76rem; font-weight: 500; white-space: nowrap; text-decoration: none; cursor: pointer; }
+html:root .hv2 .hv4-more.is-ok { color: #1d8a52 !important; background: #e7f7ee !important; }
+
+/* money card */
+html:root .hv2 .hv4-money { margin: 0; }
+html:root .hv2 .hv4-money .hv4-soft { padding: 16px; border-radius: 26px !important; background: var(--h4-card) !important; box-shadow: var(--h4-sh) !important; border: 0 !important; }
+.hv4-mhead { position: relative; z-index: 2; display: flex; align-items: center; gap: 6px; }
+.hv4-mhead .hv2-soft-label { flex: 1; min-width: 0; font-size: .82rem; color: var(--h4-sub) !important; }
+.hv4-status { padding: 4px 10px; border-radius: 99px; font-size: .74rem; font-weight: 600; white-space: nowrap; text-decoration: none; }
+.hv4-status.is-ok { color: #1d8a52; background: #e7f7ee; }
+.hv4-status.is-mid { color: #b06a10; background: #fff3dc; }
+.hv4-status.is-bad { color: #d6455d; background: #ffe8ec; }
+.hv4-status.is-wait { color: var(--h4-a); background: var(--h4-chip); }
+html:root .hv2 .hv4-edit { display: grid; place-items: center; width: 26px; height: 26px; padding: 0; border: 0; border-radius: 50%; color: var(--h4-sub); background: transparent; font-size: .8rem; cursor: pointer; }
+html:root .hv2 .hv4-soft .hv2-soft-hero { min-height: 92px; margin-top: 4px; }
+html:root .hv2 .hv4-soft .hv2-soft-amt { font-size: 2.3rem !important; font-weight: 600 !important; letter-spacing: -.5px; }
+html:root .hv2 .hv4-soft .hv2-soft-pill { margin-top: 4px; }
+.hv4-m3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--h4-line); }
+.hv4-m3 > div { display: grid; gap: 1px; min-width: 0; padding-left: 12px; border-left: 1px solid var(--h4-line); }
+.hv4-m3 > div:first-child { padding-left: 0; border-left: 0; }
+.hv4-m3 small { font-size: .74rem; font-weight: 400; color: var(--h4-sub); }
+.hv4-m3 b { overflow: hidden; font-size: 1rem; font-weight: 600; color: var(--h4-ink); white-space: nowrap; text-overflow: ellipsis; }
+/* quick actions at the bottom of the money card */
+html:root .hv2 .hv4 .hv2-quick { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; margin: 16px -6px -2px; padding: 14px 0 0; border-top: 1px solid var(--h4-line); background: none !important; box-shadow: none !important; }
+html:root .hv2 .hv4 .hv2-q { display: grid; justify-items: center; gap: 6px; min-height: 0; padding: 0; border: 0 !important; color: var(--h4-ink) !important; background: none !important; box-shadow: none !important; font-size: .76rem; font-weight: 500; }
+html:root .hv2 .hv4 .hv2-q i { display: grid; place-items: center; width: 50px; height: 50px; margin: 0; border: 0 !important; border-radius: 17px; box-shadow: none; }
+html:root .hv2 .hv4 .hv2-q i svg { width: 22px; height: 22px; }
+html:root .hv2 .hv4 .hv2-q i.hv2-q-a { color: #fff !important; background: linear-gradient(140deg, #7b68ee, #504ab9) !important; box-shadow: 0 8px 16px rgba(80, 74, 185, .3); }
+html:root .hv2 .hv4 .hv2-q i.hv2-q-b { color: #1f9d74 !important; background: #e3f6ee !important; }
+html:root .hv2 .hv4 .hv2-q i.hv2-q-c { color: #7b68ee !important; background: #efebff !important; }
+html:root .hv2 .hv4 .hv2-q i.hv2-q-d { color: #e08a2e !important; background: #fff3e3 !important; }
+html:root:not([data-theme="light"]) .hv2 .hv4 .hv2-q i:not(.hv2-q-a) { background: rgba(182, 168, 255, .16) !important; }
+.hv4-quick-only .hv2-quick { margin-top: 0 !important; padding-top: 0 !important; border-top: 0 !important; }
+
+/* today card */
+html:root .hv2 .hv4-today .hv2-tl { margin: 0; padding: 0; border: 0 !important; background: none !important; box-shadow: none !important; }
+html:root .hv2 .hv4-today .hv2-tl-row { width: 100%; padding: 10px 0; border-top: 1px solid var(--h4-line); text-align: left; font: inherit; color: inherit; background: none; }
+html:root .hv2 .hv4-today .hv2-tl > .hv2-tl-row:first-child { border-top: 0; padding-top: 2px; }
+.hv4-fx-row { cursor: pointer; border-left: 0; border-right: 0; border-bottom: 0; }
+.hv4-fx-ticker { color: #e8622c !important; }
+html:root:not([data-theme="light"]) .hv4-fx-ticker { color: #ffb38f !important; }
+.hv4-chev { display: grid; place-items: center; width: 26px; height: 26px; flex: 0 0 auto; border-radius: 50%; color: var(--h4-sub); background: var(--h4-chip); transition: transform .2s; }
+.hv4-chev svg { width: 14px; height: 14px; transform: rotate(90deg); }
+.hv4-fx-row.is-open .hv4-chev { transform: rotate(180deg); }
+.hv4-fx-panel { padding: 2px 0 12px; }
+.hv4-fx-panel[hidden] { display: none; }
+html:root .hv2 .hv4-fx-panel .hv2-fx { margin: 0; padding: 0; border: 0 !important; background: none !important; box-shadow: none !important; }
+html:root .hv2 .hv4-fx-panel .hv2-fx .fx-head { display: none; }
+.hv4-fx-edit { margin-top: 10px; }
+
+/* me today */
+.hv4-sub { margin: -4px 0 8px; font-size: .8rem; font-weight: 400; color: var(--h4-sub); }
+html:root .hv2 .hv4-me .hv2-mood-wrap { margin: 0; padding: 0; border: 0 !important; background: none !important; box-shadow: none !important; }
+html:root .hv2 .hv4-me .hv2-mood { display: flex; justify-content: space-between; gap: 2px; }
+html:root .hv2 .hv4-me .hv2-mood-btn { flex: 1; min-width: 0; padding: 6px 0 5px; border: 0 !important; border-radius: 16px; background: none !important; box-shadow: none !important; }
+html:root .hv2 .hv4-me .hv2-mood-btn.is-on { background: var(--h4-chip) !important; }
+html:root .hv2 .hv4-me .hv2-mood-btn.is-on small { color: var(--h4-a) !important; font-weight: 600; }
+.hv4-write { margin-top: 12px; }
+.hv4-write summary { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border: 1px solid var(--h4-line); border-radius: 14px; list-style: none; font-size: .8rem; color: var(--h4-sub); cursor: pointer; }
+.hv4-write summary::-webkit-details-marker { display: none; }
+.hv4-pen { display: grid; color: var(--h4-a); }
+.hv4-pen svg { width: 16px; height: 16px; }
+.hv4-write[open] summary { margin-bottom: 8px; }
+
+/* family memories */
+html:root .hv2 .hv4-mem .mf-teaser { display: block; margin: 0; padding: 0; border: 0 !important; background: none !important; box-shadow: none !important; }
+html:root .hv2 .hv4-mem .mf-teaser-head { display: none; }
+html:root .hv2 .hv4-mem .mf-teaser-row { display: flex; gap: 10px; margin: 0 -16px; padding: 0 16px 2px; overflow-x: auto; scrollbar-width: none; }
+html:root .hv2 .hv4-mem .mf-teaser-row::-webkit-scrollbar { display: none; }
+html:root .hv2 .hv4-mem .mf-teaser-cell { flex: 0 0 auto; width: 92px !important; height: 112px !important; border-radius: 18px !important; overflow: hidden; }
+html:root .hv2 .hv4-mem .mf-teaser-cell :is(img, video) { width: 100%; height: 100%; object-fit: cover; }
+
+/* ---------- beat the older lavender rules (they use !important and theme selectors) ---------- */
+html:root body .hv2 .hv4 .wc-card.hv4-soft { justify-items: stretch !important; padding: 16px 16px 16px !important; text-align: left; }
+html:root body .hv2 .hv4 .hv4-soft > * { justify-self: stretch; }
+html:root body .hv2 .hv4 .hv4-soft .hv2-soft-hero { width: 100%; }
+html:root body .hv2 .hv4 .hv2-quick { display: grid !important; grid-template-columns: repeat(4, minmax(0, 1fr)) !important; gap: 4px !important; margin: 16px -6px -2px !important; padding: 14px 0 0 !important; border: 0 !important; border-top: 1px solid var(--h4-line) !important; border-radius: 0 !important; background: none !important; box-shadow: none !important; }
+html:root body .hv2 .hv4 .hv2-q { display: grid !important; flex-direction: column !important; justify-items: center; gap: 6px !important; padding: 0 !important; border: 0 !important; border-radius: 0 !important; background: none !important; box-shadow: none !important; }
+html:root body .hv2 .hv4 .hv2-q i { width: 50px !important; height: 50px !important; border-radius: 17px !important; }
+html:root body .hv2 .hv4 .hv2-q i svg { width: 22px !important; height: 22px !important; }
+html:root body .hv2 .hv4 .hv2-q span { font-size: .76rem !important; font-weight: 500 !important; white-space: nowrap; }
+html:root body .hv2 .hv4-today .hv2-tl-row { padding: 12px 0 !important; border: 0 !important; border-top: 1px solid var(--h4-line) !important; border-radius: 0 !important; background: none !important; box-shadow: none !important; }
+html:root body .hv2 .hv4-today .hv2-tl > .hv2-tl-row:first-child { border-top: 0 !important; padding-top: 2px !important; }
+html:root body .hv2 .hv4-today .hv4-fx-panel + .hv2-tl-row { border-top: 1px solid var(--h4-line) !important; }
+html:root body .hv2 .hv4 .hv4-card.hv2-card { border: 0 !important; }
+/* Nomi runs in and stops at left 14px (54px wide): keep the text clear of it */
+html:root body .hv2 .hv4-today .hv2-tl-row.has-ticker .hv2-tl-text { padding-left: 76px !important; }
+html:root body .hv2 .hv4-today .hv2-tl-row.has-ticker { min-height: 74px; }
+/* the hero fade reaches under the week strip and the cards: keep them above it */
+html:root body .hv2-head.is-lav .hv2-week { position: relative; z-index: 2; }
+html:root body .hv2 .hv2-body.hv4 > * { position: relative; z-index: 1; }
