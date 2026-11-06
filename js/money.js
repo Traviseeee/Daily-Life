@@ -163,7 +163,7 @@ function renderMoney(tab = "overview") {
             </dialog>
           </div>
         </div>
-        ${typeof MoneyV2 !== "undefined" && typeof HomeV2 !== "undefined" && typeof HomeV2.buddy === "function" ? `<div class="fv2-header-talk"><span class="fv2-header-nomi" data-nomi data-mood="happy" role="button" tabindex="0" aria-label="Nomi">${HomeV2.buddy("happy")}</span><span class="fv2-header-say" data-nomi-say>${escapeHtml(languageCode() === "km" ? "តោះមើលស្ថានភាពហិរញ្ញវត្ថុរបស់អ្នក 💸" : "Let’s check your money picture 💸")}</span></div>` : ""}
+        ${typeof MoneyV2 !== "undefined" && typeof HomeV2 !== "undefined" && typeof HomeV2.buddy === "function" ? `<div class="fv2-header-talk"><span class="fv2-header-nomi" data-nomi data-mood="happy" role="button" tabindex="0" aria-label="Nomi">${HomeV2.buddy("happy")}</span><span class="fv2-header-say" data-nomi-say>${escapeHtml(languageCode() === "km" ? "មើលលុយយើង 💸" : "Let’s check your money picture 💸")}</span></div>` : ""}
       </div>
       <nav class="financial-shortcuts" aria-label="${t("money")} ${t("sections")}">
         ${moneyTabs.map(([id, label, icon]) => `<a class="financial-shortcut ${tab === id ? "active" : ""}" href="#money/${id}" ${tab === id ? 'aria-current="page"' : ""}><span class="financial-shortcut-icon" aria-hidden="true">${Icons[icon]()}</span><span>${t(label)}</span></a>`).join("")}
@@ -1394,15 +1394,92 @@ function toggleFinanceBillPayment(billId) {
   markBillUnpaid(billId);
 }
 
+// joint account: tapping ＋ asks how much this time (prefilled with the usual amount, quick chips)
+function askSavingsDepositAmount(input, saving) {
+  const km = languageCode() === "km";
+  const partner = input.dataset.savingsWho === "partner";
+  const member = partner ? (appData.family || []).find(person => person.id === saving.jointWith) : null;
+  const who = partner ? String(member?.name || saving.jointName || (km ? "ដៃគូ" : "Partner")).trim().split(/\s+/)[0] : (km ? "ខ្ញុំ" : "Me");
+  const usual = Number(partner ? saving.partnerContribution : saving.monthlyContribution) || 0;
+  input.checked = false;
+  Modal.open({ title: km ? `${who} ដាក់ប៉ុន្មាន?` : `How much did ${partner ? who : "I"} put in?`, submitText: km ? "ដាក់ចូល" : "Add", fields: [
+    { name: "depositAmount", label: `${km ? "ចំនួន" : "Amount"} (${saving.currency || appData.profile.currency || "USD"})`, type: "number", value: usual || "", required: true }
+  ], onSubmit(data) {
+    const amount = Number(data.depositAmount || 0);
+    if (amount > 0) applySavingsDeposit(saving, input, amount);
+  } });
+  const field = document.querySelector("#modalRoot #depositAmount");
+  if (!field) return;
+  field.setAttribute("inputmode", "decimal");
+  field.setAttribute("step", "any");
+  const chips = [...new Set([usual, 10, 25, 50, 100].filter(value => value > 0))].sort((x, y) => x - y);
+  const row = document.createElement("div");
+  row.className = "sv-amount-chips";
+  row.innerHTML = chips.map(value => `<button type="button" class="${value === usual ? "on" : ""}" data-amount="${value}">${escapeHtml(String(money(value, saving.currency)).replace(/<[^>]*>/g, ""))}</button>`).join("");
+  row.addEventListener("click", event => {
+    const chip = event.target.closest("[data-amount]");
+    if (!chip) return;
+    field.value = chip.dataset.amount;
+    row.querySelectorAll("button").forEach(button => button.classList.toggle("on", button === chip));
+  });
+  (field.closest(".field") || field.parentElement).appendChild(row);
+  field.addEventListener("input", () => row.querySelectorAll("button").forEach(button => button.classList.toggle("on", Number(button.dataset.amount) === Number(field.value))));
+  setTimeout(() => { field.focus(); field.select?.(); }, 60);
+}
+
+function applySavingsDeposit(saving, input, amount) {
+  const monthKey = input.dataset.savingsMonth || getSavingsContributionMonth();
+  const contributions = Array.isArray(saving.contributions) ? saving.contributions.slice() : [];
+  const index = contributions.findIndex(entry => entry && entry.month === monthKey);
+  const entry = index >= 0 ? contributions[index] : null;
+  const partner = input.dataset.savingsWho === "partner";
+  if (partner ? entry?.partnerPaid : entry?.paid) return;
+  const next = partner
+    ? { ...(entry || { month: monthKey, amount: Number(saving.monthlyContribution || 0), paid: false }), partnerPaid: true, partnerAmount: amount }
+    : { ...(entry || {}), month: monthKey, amount, paid: true };
+  if (index >= 0) contributions[index] = next; else contributions.unshift(next);
+  saving.contributions = contributions;
+  saving.currentAmount = Number(saving.currentAmount || 0) + amount;
+  Store.save();
+  Toast.show(t("savingsAdded"));
+  App.render();
+}
+
 function toggleSavingsContribution(input) {
   const saving = appData.savings.find(item => item.id === input.dataset.savingsContribution);
   if (!saving) return;
+  if (input.checked && input.dataset.savingsJoint) {
+    const current = getSavingsContribution(saving, input.dataset.savingsMonth || getSavingsContributionMonth());
+    if (!(input.dataset.savingsWho === "partner" ? current?.partnerPaid : current?.paid)) return askSavingsDepositAmount(input, saving);
+  }
 
   const monthKey = input.dataset.savingsMonth || getSavingsContributionMonth();
   const contributionAmount = Number(saving.monthlyContribution || 0);
   const contributions = Array.isArray(saving.contributions) ? saving.contributions.slice() : [];
   const existingIndex = contributions.findIndex(entry => entry && entry.month === monthKey);
   const wasPaid = existingIndex >= 0 ? Boolean(contributions[existingIndex].paid) : false;
+
+  // joint account: the partner's deposit lives on the same month entry (partnerPaid / partnerAmount)
+  if (input.dataset.savingsWho === "partner") {
+    const partnerAmount = Number(saving.partnerContribution || 0);
+    const entry = existingIndex >= 0 ? contributions[existingIndex] : null;
+    const partnerWasPaid = Boolean(entry && entry.partnerPaid);
+    if (input.checked && !partnerWasPaid) {
+      if (entry) contributions[existingIndex] = { ...entry, partnerPaid: true, partnerAmount };
+      else contributions.unshift({ month: monthKey, amount: contributionAmount, paid: false, partnerPaid: true, partnerAmount });
+      saving.currentAmount = Number(saving.currentAmount || 0) + partnerAmount;
+    } else if (!input.checked && partnerWasPaid) {
+      const previous = Number(entry.partnerAmount || partnerAmount);
+      if (entry.paid) contributions[existingIndex] = { ...entry, partnerPaid: false, partnerAmount: 0 };
+      else contributions.splice(existingIndex, 1);
+      saving.currentAmount = Math.max(0, Number(saving.currentAmount || 0) - previous);
+    }
+    saving.contributions = contributions;
+    Store.save();
+    Toast.show(input.checked ? t("savingsAdded") : t("savingsRemoved"));
+    App.render();
+    return;
+  }
 
   if (input.checked && !wasPaid) {
     if (existingIndex >= 0) {
@@ -1414,7 +1491,8 @@ function toggleSavingsContribution(input) {
   } else if (!input.checked && wasPaid) {
     if (existingIndex >= 0) {
       const previousAmount = Number(contributions[existingIndex].amount || contributionAmount);
-      contributions.splice(existingIndex, 1);
+      if (contributions[existingIndex].partnerPaid) contributions[existingIndex] = { ...contributions[existingIndex], paid: false };
+      else contributions.splice(existingIndex, 1);
       saving.currentAmount = Math.max(0, Number(saving.currentAmount || 0) - previousAmount);
     }
   }
@@ -1487,17 +1565,39 @@ function openExpenseModal(item) {
   ], onSubmit(data) { const record = { ...data, amount: Number(data.amount || 0), currency: data.currency || appData.profile.currency || "USD" }; item ? Store.edit("expenses", item.id, record) : Store.add("expenses", record); Toast.show(item ? t("expenseSaved") : t("expenseAdded")); } });
 }
 
+// joint account (6 Nov 2026): pick a partner from family; each person has their own monthly amount
+function savingsJointFields(item) {
+  const km = languageCode() === "km";
+  const people = (appData.family || []).filter(member => member && member.id && member.relationship !== "Me");
+  if (!people.length && !item?.jointWith) return [];
+  const ids = people.map(member => member.id);
+  if (item?.jointWith && !ids.includes(item.jointWith)) { ids.push(item.jointWith); people.push({ id: item.jointWith, name: item.jointName || "?" }); }
+  return [
+    { name: "jointWith", label: km ? "👫 គណនីរួម · ដៃគូ" : "👫 Joint account · partner", type: "select", options: ["", ...ids], optionLabels: [km ? "គ្មាន (ខ្ញុំម្នាក់)" : "None (just me)", ...people.map(member => member.name || "?")], value: item?.jointWith || "" },
+    { name: "partnerContribution", label: km ? "ដៃគូដាក់ /ខែ" : "Partner puts in / month", type: "number", value: item?.partnerContribution || 0 }
+  ];
+}
+
+function savingsJointRecord(data) {
+  if (!("jointWith" in data)) return {};
+  const member = (appData.family || []).find(person => person.id === data.jointWith);
+  return data.jointWith
+    ? { jointWith: data.jointWith, jointName: member?.name || data.jointName || "", partnerContribution: Number(data.partnerContribution || 0) }
+    : { jointWith: "", partnerContribution: Number(data.partnerContribution || 0) };
+}
+
 function openSavingsModal(item) {
   Modal.open({ title: item ? t("editSavings") : t("addSavings"), submitText: item ? t("saveSavings") : t("addSavings"), fields: [
     { name: "name", label: t("savingsName"), value: item?.name, required: true },
     { name: "targetAmount", label: t("targetAmount"), type: "number", value: item?.targetAmount, required: true },
     { name: "currentAmount", label: t("currentAmount"), type: "number", value: item?.currentAmount || 0, required: true },
-    { name: "reserveAmount", label: languageCode() === "km" ? "ប្រាក់រក្សាទុក (មិនយកមកប្រើ)" : "Protected reserve (keep aside)", type: "number", value: item?.reserveAmount || 0 },
+    { name: "reserveAmount", label: languageCode() === "km" ? "ប្រាក់បម្រុង" : "Protected reserve (keep aside)", type: "number", value: item?.reserveAmount || 0 },
     { name: "monthlyContribution", label: t("monthlyContribution"), type: "number", value: item?.monthlyContribution || 0 },
+    ...savingsJointFields(item),
     { name: "currency", label: t("currency"), type: "select", options: ["USD", "KHR"], value: item?.currency || appData.profile.currency || "USD" },
     { name: "deadline", label: t("deadline"), type: "date", value: item?.deadline },
     { name: "notes", label: t("notes"), type: "textarea", value: item?.notes }
-  ], onSubmit(data) { const record = { ...data, targetAmount: Number(data.targetAmount || 0), currentAmount: Number(data.currentAmount || 0), reserveAmount: Number(data.reserveAmount || 0), monthlyContribution: Number(data.monthlyContribution || 0), currency: data.currency || appData.profile.currency || "USD" }; item ? Store.edit("savings", item.id, record) : Store.add("savings", record); Toast.show(item ? t("savingsSaved") : t("savingsAdded")); } });
+  ], onSubmit(data) { const record = { ...data, targetAmount: Number(data.targetAmount || 0), currentAmount: Number(data.currentAmount || 0), reserveAmount: Number(data.reserveAmount || 0), monthlyContribution: Number(data.monthlyContribution || 0), currency: data.currency || appData.profile.currency || "USD", ...savingsJointRecord(data) }; item ? Store.edit("savings", item.id, record) : Store.add("savings", record); Toast.show(item ? t("savingsSaved") : t("savingsAdded")); } });
 }
 
 function openSavingsUseModal(saving, preset = "") {
@@ -1507,15 +1607,15 @@ function openSavingsUseModal(saving, preset = "") {
   const isKm = languageCode() === "km";
   const L = (km, en) => isKm ? km : en;
   const useOptions = ["spend", "gold", "investment"];
-  Modal.open({ title: L("ប្រើប្រាក់សន្សំ", "Use savings"), submitText: L("បញ្ជាក់ការប្រើប្រាស់", "Confirm use"), fields: [
-    { name: "useType", label: L("ប្រើសម្រាប់", "Use for"), type: "select", options: useOptions, optionLabels: [L("ចំណាយ", "Spending"), L("ទិញមាស 24K", "Buy 24K gold"), L("វិនិយោគ ឬប្រើផ្សេងទៀត", "Other investment or use")], value: preset === "gold" ? "gold" : "spend" },
+  Modal.open({ title: L("ប្រើប្រាក់សន្សំ", "Use savings"), submitText: L("បញ្ជាក់", "Confirm use"), fields: [
+    { name: "useType", label: L("ប្រើសម្រាប់", "Use for"), type: "select", options: useOptions, optionLabels: [L("ចំណាយ", "Spending"), L("ទិញមាស 24K", "Buy 24K gold"), L("វិនិយោគ / ផ្សេងៗ", "Other investment or use")], value: preset === "gold" ? "gold" : "spend" },
     { name: "amount", label: `${L("ចំនួនទឹកប្រាក់", "Amount")} · ${money(available, saving.currency)}`, type: "number", value: available, required: true },
-    { name: "fees", label: L("ថ្លៃសេវាទិញមាស (ស្រេចចិត្ត)", "Purchase fees (optional)"), type: "number", value: "0" },
+    { name: "fees", label: L("ថ្លៃសេវា", "Purchase fees (optional)"), type: "number", value: "0" },
     { name: "category", label: t("category"), type: "select", options: expenseCategories, value: "Shopping" },
-    { name: "goldChi", label: L("ចំនួនជី", "Gold quantity"), type: "select", options: ["1", "2", "custom"], optionLabels: [L("១ ជី · 3.75 ក្រាម", "1 Chi / ជី · 3.75 g"), L("២ ជី · 7.50 ក្រាម", "2 Chi / ជី · 7.50 g"), L("កំណត់ទម្ងន់ផ្ទាល់ខ្លួន", "Custom weight")], value: "1" },
-    { name: "goldWeightGrams", label: L("ទម្ងន់មាស (ក្រាម) · ស្រេចចិត្ត", "Gold weight (grams) · optional"), type: "number", value: "" },
+    { name: "goldChi", label: L("ចំនួនជី", "Gold quantity"), type: "select", options: ["1", "2", "custom"], optionLabels: [L("១ ជី · 3.75 ក្រាម", "1 Chi / ជី · 3.75 g"), L("២ ជី · 7.50 ក្រាម", "2 Chi / ជី · 7.50 g"), L("ទម្ងន់ផ្សេង", "Custom weight")], value: "1" },
+    { name: "goldWeightGrams", label: L("ទម្ងន់ (ក្រាម)", "Gold weight (grams) · optional"), type: "number", value: "" },
     { name: "goldPurity", label: L("កម្រិតមាស", "Gold purity"), type: "select", options: ["24K", "22K", "18K"], value: "24K" },
-    { name: "note", label: L("កំណត់ចំណាំ / ឈ្មោះហាង", "Note / shop"), value: "" }
+    { name: "note", label: L("ចំណាំ / ហាង", "Note / shop"), value: "" }
   ], onSubmit(data) {
     const amount = Number(data.amount);
     const currentSaving = appData.savings.find(item => item.id === saving.id);
@@ -1552,7 +1652,7 @@ function openSavingsUseModal(saving, preset = "") {
       appData.expenses.push({ id: id("expense"), createdAt: timestamp, description: transaction.note || L("ចំណាយពីប្រាក់សន្សំ", "Savings spending"), amount, currency: transaction.currency, category: transaction.category, date, method: L("ប្រាក់សន្សំ", "Savings"), notes: `${saving.name || t("savings")}${transaction.note ? ` · ${transaction.note}` : ""}`, savingsTransactionId: transaction.id });
     }
     if (!Store.save()) { restoreData(previous); return; }
-    Toast.show(isGold ? L("បានកត់ត្រាការទិញមាស", "Gold purchase recorded") : data.useType === "investment" ? L("បានកត់ត្រាការប្រើប្រាក់សន្សំ", "Savings use recorded") : L("បានកត់ត្រាចំណាយ", "Spending recorded"));
+    Toast.show(isGold ? L("បានកត់ត្រាការទិញមាស", "Gold purchase recorded") : data.useType === "investment" ? L("បានកត់ត្រា ✓", "Savings use recorded") : L("បានកត់ត្រាចំណាយ", "Spending recorded"));
     App.render();
     {
       const monthSummary = savingsUseMonthSummary(date.slice(0, 7));
@@ -1562,7 +1662,7 @@ function openSavingsUseModal(saving, preset = "") {
       if (typeof NotifyPrefs === "undefined" || NotifyPrefs.allows(appData.profile, alertKind, "app")) showSavingsUseAppAlert(alert, transaction.id);
       if (typeof NotifyPrefs === "undefined" || NotifyPrefs.allows(appData.profile, alertKind, "telegram")) sendSavingsUseTelegramAlert(transaction, currentSaving, monthSummary).catch(error => {
         console.warn("MYLIFE could not send the savings-use Telegram alert.", error);
-        Toast.show(L("បានរក្សាទុកក្នុង app ប៉ុន្តែផ្ញើ Telegram មិនបានទេ", "Saved in the app, but Telegram alert couldn't be sent"), "warning");
+        Toast.show(L("រក្សាទុករួច · Telegram មិនបាន", "Saved in the app, but Telegram alert couldn't be sent"), "warning");
       });
     }
   } });
@@ -1583,7 +1683,7 @@ function openSavingsUseModal(saving, preset = "") {
   const purityField = form?.querySelector('[name="goldPurity"]')?.closest(".field");
   const estimateHint = document.createElement("small");
   estimateHint.className = "sv-gold-estimate-hint";
-  estimateHint.textContent = L("ប៉ាន់ស្មានតាមមាស 24K Spot; កែចំនួនឱ្យត្រូវតាមបង្កាន់ដៃហាង។", "Estimated from 24K gold spot; adjust the amount to match the shop receipt.");
+  estimateHint.textContent = L("តម្លៃប៉ាន់ស្មាន · កែតាមបង្កាន់ដៃ", "Estimated from 24K gold spot; adjust the amount to match the shop receipt.");
   amount?.closest(".field")?.append(estimateHint);
   const setGoldWeight = () => {
     if (grams && chi && chi.value !== "custom") grams.value = String(Number(chi.value || 1) * 3.75);
@@ -1609,7 +1709,7 @@ function openSavingsUseModal(saving, preset = "") {
     if (weightField) weightField.hidden = !gold || chi?.value !== "custom";
     if (purityField) purityField.hidden = !gold;
     if (feesField) feesField.hidden = !gold;
-    if (noteLabel) noteLabel.textContent = type?.value === "investment" ? L("វិនិយោគ / ប្រើសម្រាប់អ្វី", "Investment / what was it for") : L("កំណត់ចំណាំ / ឈ្មោះហាង", "Note / shop");
+    if (noteLabel) noteLabel.textContent = type?.value === "investment" ? L("ប្រើសម្រាប់", "Investment / what was it for") : L("ចំណាំ / ហាង", "Note / shop");
     if (gold && chi?.value !== "custom") setGoldWeight();
     suggestGoldAmount();
   };
@@ -1703,7 +1803,7 @@ function openGoldSaleModal() {
     { name: "goldChi", label: L("ចំនួនជីដែលលក់ (ជី)", "Amount sold (Chi / ជី)"), type: "number", value: "1", required: true },
     { name: "amount", label: L("ប្រាក់លក់", "Sale proceeds"), type: "number", value: "", required: true },
     { name: "fees", label: L("ថ្លៃសេវាលក់ (ស្រេចចិត្ត)", "Selling fees (optional)"), type: "number", value: "0" },
-    { name: "note", label: L("កំណត់ចំណាំ / ឈ្មោះហាង", "Note / shop"), value: "" }
+    { name: "note", label: L("ចំណាំ / ហាង", "Note / shop"), value: "" }
   ], onSubmit(data) {
     const saving = (appData.savings || []).find(item => item.id === data.savingId);
     if (!saving) return;

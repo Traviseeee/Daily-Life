@@ -336,3 +336,29 @@ html body .fv2-page .financial-content .financial-report-table-wrap { border: 0 
 #modalForm .field[hidden] { display: none !important; }
 @media (prefers-reduced-motion: reduce) { .sv-market-refresh.is-loading { animation: none; } }
 @media (max-width: 420px) { .sv-market-alert-form { grid-template-columns: 1fr 1fr; } }
+
+/* joint savings account (6 Nov 2026): two deposit buttons (me · partner), split bar, who-saved line */
+.sv-actions:has(.sv-pay) { display: grid; grid-template-columns: 1fr 1fr auto; }
+.sv-pay > span { display: flex; align-items: center; justify-content: center; gap: 6px; min-width: 0; white-space: nowrap; }
+.sv-pay { font-size: .8rem !important; font-weight: 500 !important; padding: 0 6px !important; }
+.sv-pay.is-pt:not(.is-done) { background: linear-gradient(135deg, #ff9fb6, #ff6f91); box-shadow: 0 8px 18px rgba(255, 111, 145, .22); }
+.sv-av { display: grid; place-items: center; width: 22px; height: 22px; flex: 0 0 auto; overflow: hidden; border-radius: 50%; font-size: .66rem; font-style: normal; font-weight: 700; color: #fff; background: rgba(255, 255, 255, .28); }
+.sv-av img { width: 100%; height: 100%; object-fit: cover; }
+.sv-pay.is-done .sv-av { background: var(--fv-green, #1f9d74); }
+.sv-bar.sv-bar-joint { display: flex; }
+.sv-bar.sv-bar-joint i { flex: 0 0 auto; border-radius: 0; background: #7c6cf0; }
+.sv-bar.sv-bar-joint i.is-pt { background: #ff8fab; }
+.sv-who { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 8px 2px 0; font-size: .74rem; font-weight: 400; color: var(--fv-ink2, #6a6f8c); }
+.sv-who span { display: inline-flex; align-items: center; gap: 5px; }
+.sv-who i { width: 8px; height: 8px; border-radius: 50%; background: #7c6cf0; }
+.sv-who i.is-pt { background: #ff8fab; }
+.sv-who b { font-weight: 500; color: var(--fv-ink, #14183a); }
+html:root:not([data-theme="light"]) .sv-who b { color: #fff; }
+.sv-hist > div.sv-hist-joint { align-items: center; gap: 8px; }
+.sv-chips { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px; }
+.sv-chips i { padding: 2px 8px; border-radius: 99px; font-size: .7rem; font-style: normal; color: var(--fv-ink2, #6a6f8c); background: rgba(127, 127, 127, .1); }
+.sv-chips i.ok { color: var(--fv-green, #1f9d74); background: var(--fv-green-bg, #e3f6ee); }
+.sv-amount-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.sv-amount-chips button { padding: 6px 12px; border: 0; border-radius: 99px; font: inherit; font-size: .8rem; font-weight: 500; color: #504ab9; background: #efebff; cursor: pointer; }
+.sv-amount-chips button.on { color: #fff; background: linear-gradient(135deg, #8b7cf6, #6b5ce7); }
+html:root:not([data-theme="light"]) .sv-amount-chips button:not(.on) { color: #c9bdff; background: rgba(182, 168, 255, .16); }
