@@ -387,6 +387,8 @@ const Login = {
     const modal = document.getElementById("loginModal");
     if (modal) modal.remove();
     document.getElementById("modalRoot")?.classList.remove("open");
+    // signed in → Nimo says hello (once a day; the login tap already unlocked audio)
+    if (this.authenticated && typeof Sound !== "undefined") setTimeout(() => Sound.intro(), 400);
   },
 
   async logout() {

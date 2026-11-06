@@ -11,7 +11,7 @@ const Sound = {
   enabled: true,
   unlocked: false,
   last: { at: 0, priority: -1 },
-  PRIORITY: { tap: 0, nav: 0, pop: 1, toggleOn: 1, toggleOff: 1, open: 1, close: 1, success: 2, warning: 2, coin: 3, delete: 3, error: 3, notify: 3, celebrate: 4 },
+  PRIORITY: { tap: 0, nav: 0, pop: 1, toggleOn: 1, toggleOff: 1, open: 1, close: 1, success: 2, warning: 2, coin: 3, delete: 3, error: 3, notify: 3, celebrate: 4, introA: 4, introB: 4, introC: 4 },
   HAPTIC: { success: 12, coin: [10, 40, 10], warning: [20, 60, 20], error: [40, 50, 40], delete: 18, celebrate: [12, 40, 12, 40, 30], notify: [30, 80, 30] },
   ensureContext() {
     const AudioCtor = window.AudioContext || window.webkitAudioContext;
@@ -110,6 +110,28 @@ const Sound = {
     warning: (s, c) => { s.tone(c, { freq: 620, to: 1040, dur: 0.14, gain: 0.045 }); s.tone(c, { at: 0.14, freq: 1040, to: 760, dur: 0.22, gain: 0.04 }); },
     error: (s, c) => { s.tone(c, { freq: 560, to: 420, dur: 0.14, gain: 0.05 }); s.tone(c, { at: 0.14, freq: 420, to: 300, dur: 0.24, gain: 0.045 }); },
     notify: (s, c) => { s.tone(c, { freq: 784, to: 800, dur: 0.13, gain: 0.06 }); s.tone(c, { at: 0.12, freq: 988, to: 1000, dur: 0.13, gain: 0.06 }); s.tone(c, { at: 0.24, freq: 1175, to: 1200, dur: 0.26, gain: 0.06 }); s.tone(c, { at: 0.36, freq: 2350, to: 2400, dur: 0.2, gain: 0.02, type: "triangle" }); },
+    // Nimo intro (6 Nov): A hello (evening) · B waking up (morning) · C hop-in (afternoon)
+    introA: (s, c) => {
+      [523, 659, 784, 1046].forEach((f, i) => s.tone(c, { at: i * 0.09, freq: f, to: f * 1.01, dur: 0.2, gain: 0.055 }));
+      s.tone(c, { at: 0.42, freq: 700, to: 1150, dur: 0.16, gain: 0.06 }); s.tone(c, { at: 0.57, freq: 1150, to: 820, dur: 0.3, gain: 0.055 });
+      [2350, 2794, 3136, 3520].forEach((f, i) => s.tone(c, { at: 0.7 + i * 0.07, freq: f, to: f * 1.02, dur: 0.18, gain: 0.018, type: "triangle" }));
+    },
+    introB: (s, c) => {
+      s.tone(c, { freq: 900, to: 420, dur: 0.5, gain: 0.045, attack: 0.06 });
+      const t = c.currentTime + 0.45, o = c.createOscillator(), g = c.createGain(), l = c.createOscillator(), lg = c.createGain();
+      o.type = "triangle"; o.frequency.setValueAtTime(180, t); o.frequency.linearRampToValueAtTime(230, t + 0.55);
+      l.frequency.value = 24; lg.gain.value = 30; l.connect(lg); lg.connect(o.frequency);
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.05, t + 0.08); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.55);
+      o.connect(g); g.connect(s.master); o.start(t); l.start(t); o.stop(t + 0.57); l.stop(t + 0.57);
+      s.tone(c, { at: 1.0, freq: 880, to: 1500, dur: 0.14, gain: 0.06 }); s.tone(c, { at: 1.13, freq: 1500, to: 1250, dur: 0.16, gain: 0.05 });
+      s.tone(c, { at: 1.22, freq: 2794, to: 2850, dur: 0.2, gain: 0.016, type: "triangle" });
+    },
+    introC: (s, c) => {
+      s.tone(c, { freq: 260, to: 820, dur: 0.15, gain: 0.07 }); s.noise(c, { dur: 0.05, gain: 0.012, from: 900, to: 300 });
+      s.tone(c, { at: 0.2, freq: 330, to: 1000, dur: 0.15, gain: 0.07 }); s.noise(c, { at: 0.2, dur: 0.05, gain: 0.012, from: 900, to: 300 });
+      s.tone(c, { at: 0.42, freq: 650, to: 1100, dur: 0.15, gain: 0.062 }); s.tone(c, { at: 0.56, freq: 1100, to: 800, dur: 0.26, gain: 0.055 });
+      [1568, 2093].forEach((f, i) => { s.tone(c, { at: 0.86 + i * 0.12, freq: f, dur: 0.5, gain: 0.035, attack: 0.004 }); s.tone(c, { at: 0.86 + i * 0.12, freq: f * 2.76, dur: 0.3, gain: 0.008, type: "triangle", attack: 0.004 }); });
+    },
     celebrate: (s, c) => { [523, 659, 784, 1046].forEach((f, i) => s.tone(c, { at: i * 0.08, freq: f, to: f * 1.02, dur: 0.2, gain: 0.05 })); [2350, 2794, 3136].forEach((f, i) => s.tone(c, { at: 0.34 + i * 0.07, freq: f, to: f * 1.02, dur: 0.16, gain: 0.016, type: "triangle" })); }
   },
   play(type = "tap", { force = false } = {}) {
@@ -148,17 +170,29 @@ const Sound = {
       go();
     }).catch(() => {});
   },
+  // Nimo's hello: once a day, on the first touch after opening (iPhone needs a touch before any sound)
+  introKey: "mylife:nimo-intro",
+  intro({ force = false } = {}) {
+    if (window.appData?.profile?.soundEnabled === false && !force) return;
+    if (!window.appData?.profile?.name || document.getElementById("loginModal")) return;
+    const today = new Date().toDateString();
+    try { if (!force && localStorage.getItem(this.introKey) === today) return; localStorage.setItem(this.introKey, today); } catch (error) { if (this.introDone && !force) return; }
+    this.introDone = true;
+    const hour = new Date().getHours();
+    const type = hour >= 5 && hour < 11 ? "introB" : hour >= 11 && hour < 17 ? "introC" : "introA";
+    setTimeout(() => this.play(type, { force }), 120);
+  },
   // Settings preview: plays a few sounds in a row
   preview() {
     this.unlock();
-    ["nomiHello", "tap", "pop", "toggleOn", "success", "coin", "notify", "celebrate"].forEach((name, i) => setTimeout(() => this.play(name, { force: true }), i * 560));
+    ["introA", "tap", "pop", "toggleOn", "success", "coin", "notify", "celebrate"].forEach((name, i) => setTimeout(() => this.play(name, { force: true }), i * 560));
   }
 };
 
 window.Sound = Sound;
 // every touch keeps audio alive (phones suspend it in the background) and plays a waiting sound
 ["pointerdown", "keydown", "touchstart"].forEach(eventName => {
-  window.addEventListener(eventName, () => Sound.unlock(), { passive: true, capture: true });
+  window.addEventListener(eventName, () => { Sound.unlock(); if (!Sound.introDone) Sound.intro(); }, { passive: true, capture: true });
 });
 
 const Toast = {
