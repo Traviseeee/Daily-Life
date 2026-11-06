@@ -1,20 +1,17 @@
 /* iPhone safe areas (6 Nov 2026). The app runs edge to edge (viewport-fit=cover,
    status bar "black-translucent"), so anything at the very top sat under the clock /
    notch, and tall edit windows could not be scrolled back to their ✕.
-   1. A solid strip behind the status bar (no see-through blur over the app).
+   1. (removed: status-bar strip — the default look is kept)
    2. Pop-up windows (#modalRoot) scroll inside themselves, start below the notch,
       and keep their title + ✕ pinned at the top while you scroll.
    3. Bottom sheets never grow under the status bar.
    Loaded last. --sat / --sab let tests fake the iPhone values. */
-:root { --sat: env(safe-area-inset-top, 0px); --sab: env(safe-area-inset-bottom, 0px); --sb-strip: #7a6cf0; }
-html:root:not([data-theme="light"]) { --sb-strip: #1d1842; }
+:root { --sat: env(safe-area-inset-top, 0px); --sab: env(safe-area-inset-bottom, 0px); }
 
-/* 1. status bar strip (height 0 on phones/browsers without a notch area) */
-body::after { content: ""; position: fixed; top: 0; left: 0; right: 0; z-index: 99990; height: var(--sat); background: var(--sb-strip); pointer-events: none; }
 
 @media (max-width: 900px) {
   /* 2. pop-up windows */
-  html:root body #modalRoot.modal-root.open { place-items: start center; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+  html:root body #modalRoot.modal-root.open:not(.welcome-poster-modal) { place-items: start center; place-items: safe center; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
     padding: calc(var(--sat) + 10px) 10px calc(var(--sab) + 10px) !important; }
   html:root body #modalRoot#modalRoot .modal:not(.fv4-sheet):not(.modal-setup) { max-height: none !important; height: auto !important; overflow: visible !important; margin: 0 auto; }
   /* the title row (.between / .ev-head / …) is always the first child: pin it with its ✕ */
@@ -30,4 +27,9 @@ body::after { content: ""; position: fixed; top: 0; left: 0; right: 0; z-index: 
   .mp-panel, .ab-sheet { max-height: calc(100dvh - var(--sat) - 12px) !important; }
   .fg-sheet .fg-panel { max-height: calc(100dvh - var(--sat) - 12px) !important; overflow-y: auto; }
   .nms-sheet { max-height: calc(100dvh - var(--sat) - 12px) !important; }
+}
+
+/* welcome poster: a small card, keep it in the middle (inside the safe area) */
+@media (max-width: 900px) {
+  html:root body #modalRoot.modal-root.open.welcome-poster-modal { place-items: center; padding: calc(var(--sat) + 12px) 12px calc(var(--sab) + 12px); }
 }
