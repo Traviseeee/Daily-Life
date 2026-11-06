@@ -1064,7 +1064,7 @@ function wrapFinanceCanvasText(context, value, maxWidth, font) {
 
 async function createMonthlyFinanceReportCanvas(report) {
   if (document.fonts?.ready) await document.fonts.ready;
-  const fontStack = '"Noto Sans Khmer","Khmer OS System","Leelawadee UI",Calibri,Arial,sans-serif';
+  const fontStack = '"Kantumruy Pro","Khmer OS System","Leelawadee UI",Calibri,Arial,sans-serif';
   const regularFont = `500 16px ${fontStack}`;
   const boldFont = `700 16px ${fontStack}`;
   const width = 1240;
