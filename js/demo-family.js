@@ -15,11 +15,14 @@
   if (location.hostname === "127.0.0.1") { location.replace(`${location.protocol}//localhost:${location.port}${location.pathname}?demo=family${location.hash}`); return; }
   sessionStorage.setItem("demo:on", "family");
 
+  const PEOPLE_KEYS_OK = key => ["tra", "lychee", "sophy"].includes(key);
   const PEOPLE = {
     tra: { id: "11111111-1111-1111-1111-111111111111", name: "Tra", email: "tra@demo" },
     lychee: { id: "22222222-2222-2222-2222-222222222222", name: "Lychee", email: "lychee@demo" },
     sophy: { id: "33333333-3333-3333-3333-333333333333", name: "Sophy", email: "sophy@demo" }
   };
+  // ?who=lychee opens the demo as that person (ready-made links below)
+  if (PEOPLE_KEYS_OK(params.get("who"))) sessionStorage.setItem("demo:who", params.get("who"));
   const who = PEOPLE[sessionStorage.getItem("demo:who")] ? sessionStorage.getItem("demo:who") : "tra";
   const me = PEOPLE[who];
   const DATA_KEY = "mylife:user-data:v1";
@@ -57,6 +60,19 @@
   });
   let db;
   try { db = JSON.parse(localStorage.getItem(DB_KEY) || "null") || fresh(); } catch (error) { db = fresh(); }
+  // two ready-made links, so the demo works straight from a URL:
+  //   ?demo=family&who=lychee&join=LYCHEE  (for Lychee, 30 days, joins at once)
+  //   ?demo=family&who=sophy&join=FAMILY   (family link, Tra approves)
+  const READY = [
+    { code: "LYCHEE", role: "member", permissions: { memories: true, calendar: true, shopping: true }, days: 30, max_uses: 1, label: "Lychee", member_card_id: "card-ly", needs_approval: false },
+    { code: "FAMILY", role: "viewer", permissions: { memories: true, calendar: true }, days: null, max_uses: 10, label: "Link គ្រួសារ", member_card_id: null, needs_approval: true }
+  ];
+  READY.forEach(r => {
+    if (db.family_invites.some(i => i.code === r.code)) return;
+    db.family_invites.push({ token: `demo-${r.code.toLowerCase()}-${"0".repeat(40)}`, code: r.code, family_id: "fam-demo", role: r.role, permissions: r.permissions,
+      created_by: "11111111-1111-1111-1111-111111111111", created_at: new Date().toISOString(), expires_at: r.days ? new Date(Date.now() + r.days * 864e5).toISOString() : null,
+      max_uses: r.max_uses, use_count: 0, label: r.label, member_card_id: r.member_card_id, needs_approval: r.needs_approval, used_by: null, used_at: null, cancelled_at: null });
+  });
   const keep = () => { try { localStorage.setItem(DB_KEY, JSON.stringify(db)); } catch (error) { /* ignore */ } };
   keep();
   const ok = data => Promise.resolve({ data, error: null });

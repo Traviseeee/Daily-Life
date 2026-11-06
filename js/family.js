@@ -4,6 +4,8 @@ function renderFamily() {
   const familyEvents = appData.calendarEvents.filter(event => event.category === "Family");
   const hasFamily = appData.family.length > 0;
 
+  // new member: no cards yet but already in a family group → the v4 page with the group's people
+  if (!hasFamily && typeof FamilyV2 !== "undefined" && FamilyV2.canShowGroup && FamilyV2.canShowGroup()) return FamilyV2.render();
   if (!hasFamily) {
     return `
       <section class="page family-empty-page">

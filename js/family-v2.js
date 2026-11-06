@@ -35,7 +35,7 @@ const FamilyV2 = (() => {
   const first = name => String(name || "").split(/\s+/)[0];
   const relLabel = member => (km() ? REL_KM[member.relationship] || member.relationship || "" : member.relationship || "");
   const dayMonth = iso => { const d = dateOf(iso); return km() ? `${d.getDate()} ${KM_M[d.getMonth()]}` : d.toLocaleDateString("en-US", { month: "short", day: "numeric" }); };
-  const coverOf = member => COVERS[Math.max(0, appData.family.indexOf(member)) % COVERS.length];
+  const coverOf = member => COVERS[Math.max(0, fam().indexOf(member)) % COVERS.length];
   const face = member => (member.photo ? `<img src="${escapeAttr(member.photo)}" alt="">` : `<span>${escapeHtml(initials(member.name || "?"))}</span>`);
   const groupState = () => (typeof FamilyGroup !== "undefined" ? FamilyGroup.state : null);
   const isGroupAdmin = () => { const s = groupState(); return Boolean(s?.family && s.members?.some(m => m.user_id === s.me && m.role === "admin")); };
@@ -46,7 +46,7 @@ const FamilyV2 = (() => {
   function dateItems() {
     const items = [];
     const seenPairs = new Set();
-    appData.family.forEach(member => {
+    fam().forEach(member => {
       if (member.birthday) {
         const next = nextBirthdayDate(member.birthday);
         if (next) {
@@ -80,8 +80,8 @@ const FamilyV2 = (() => {
   }
 
   function hero() {
-    const me = appData.family.find(member => member.relationship === "Me");
-    const others = appData.family.filter(member => member !== me);
+    const me = fam().find(member => member.relationship === "Me");
+    const others = fam().filter(member => member !== me);
     const s = groupState();
     const groupName = s?.family?.name;
     const soon = localDateInput(new Date(Date.now() + 14 * 86400000));
@@ -98,8 +98,8 @@ const FamilyV2 = (() => {
     };
     return `<header class="fv-hero">
       <div class="fv-title">
-        <div><h1>${escapeHtml(t("family"))}</h1><p>${escapeHtml([groupName || L("គ្រួសារខ្ញុំ", "My family"), L(`${appData.family.length} នាក់`, `${appData.family.length} people`), isGroupAdmin() ? L("អ្នកគ្រប់គ្រង", "Admin") : ""].filter(Boolean).join(" · "))}</p></div>
-        <button class="fv-invite" type="button" data-fv-invite>${Icons.plus()}<span>${escapeHtml(L("អញ្ជើញ", "Invite"))}</span></button>
+        <div><h1>${escapeHtml(t("family"))}</h1><p>${escapeHtml([groupName || L("គ្រួសារខ្ញុំ", "My family"), L(`${fam().length} នាក់`, `${fam().length} people`), isGroupAdmin() ? L("អ្នកគ្រប់គ្រង", "Admin") : ""].filter(Boolean).join(" · "))}</p></div>
+        ${s?.family && !isGroupAdmin() ? "" : `<button class="fv-invite" type="button" data-fv-invite>${Icons.plus()}<span>${escapeHtml(L("អញ្ជើញ", "Invite"))}</span></button>`}
       </div>
       ${lav() ? (() => { const [say, mood] = nomiLine(); return `<div class="fv-talk">${nomi(mood, "fv-nomi")}<span class="fv-say" data-nomi-say>${escapeHtml(say)}</span></div>`; })() : ""}
       <nav class="fv-avs" aria-label="${escapeAttr(t("family"))}">
@@ -112,9 +112,9 @@ const FamilyV2 = (() => {
 
   // the first couple with a start date: days together, the next 1000-day mark
   function loveCard() {
-    const member = appData.family.find(item => item.relatedMemberId && item.anniversaryDate && appData.family.some(other => other.id === item.relatedMemberId));
+    const member = fam().find(item => item.relatedMemberId && item.anniversaryDate && fam().some(other => other.id === item.relatedMemberId));
     if (!member) return "";
-    const other = appData.family.find(item => item.id === member.relatedMemberId);
+    const other = fam().find(item => item.id === member.relatedMemberId);
     const days = daysSinceDate(member.anniversaryDate);
     const next = Math.ceil(Math.max(days, 1) / 1000) * 1000 === days ? days + 1000 : Math.ceil(Math.max(days, 1) / 1000) * 1000;
     const progress = Math.min(100, Math.max(2, ((days - (next - 1000)) / 1000) * 100));
@@ -167,7 +167,7 @@ const FamilyV2 = (() => {
     }
     const items = [];
     const seenPairs = new Set();
-    appData.family.forEach(member => {
+    fam().forEach(member => {
       if (member.birthday) {
         const next = nextBirthdayDate(member.birthday);
         if (next) {
@@ -206,7 +206,7 @@ const FamilyV2 = (() => {
   }
 
   function memberCard(member) {
-    const related = appData.family.find(item => item.id === member.relatedMemberId);
+    const related = fam().find(item => item.id === member.relatedMemberId);
     const tel = member.phone ? String(member.phone).replace(/[^\d+]/g, "") : "";
     const sign = member.zodiacSign || "";
     const mood = member.characterMood ? (km() ? ({ Happy: "សប្បាយ", Calm: "ស្ងប់", Cheerful: "រីករាយ", Funny: "កំប្លែង", Caring: "យកចិត្តទុកដាក់", Quiet: "ស្ងៀម", Creative: "ច្នៃប្រឌិត", Energetic: "ស្វាហាប់", Sensitive: "រសើប", Serious: "ម៉ឺងម៉ាត់", Adventurous: "ចូលចិត្តផ្សងព្រេង" }[member.characterMood] || member.characterMood) : member.characterMood) : "";
@@ -295,7 +295,7 @@ const FamilyV2 = (() => {
   }
   // "Stay close": everyone except me, one row each
   function closeCard() {
-    const list = appData.family.filter(member => member.relationship !== "Me");
+    const list = fam().filter(member => member.relationship !== "Me");
     if (!list.length) return "";
     return `<section class="fv4-card fv4-close">
       ${head("heart", "#1f9d74", L("នៅជិតគ្នា", "Stay close"), `<button class="fv4-more" type="button" data-action="add-family">＋ ${escapeHtml(L("បន្ថែម", "Add"))}</button>`)}
@@ -355,7 +355,27 @@ const FamilyV2 = (() => {
     root.querySelectorAll("[data-close]").forEach(button => button.addEventListener("click", () => Modal.close()));
   }
 
+  // a new member with no family cards of their own (6 Nov): show the family group's
+  // accounts instead (from their profiles), read-only; tapping someone opens their profile
+  let virtual = false, virtualList = [];
+  function accountPeople() {
+    const s = groupState();
+    if (!s || s.status !== "ready") return [];
+    return (s.members || []).map(m => {
+      const p = s.profiles?.[m.user_id] || {};
+      return { id: `acct-${m.user_id}`, userId: m.user_id, virtual: true, name: p.display_name || m.display_name || "", photo: p.photo || "",
+        birthday: p.birthday || "", phone: p.phone || "", relationship: m.user_id === s.me ? "Me" : "Other" };
+    });
+  }
+  function fam() { return virtual ? virtualList : appData.family; }
+  function canShowGroup() {
+    const s = groupState();
+    return lav() && !appData.family.length && s?.status === "ready" && (s.members || []).length > 1;
+  }
+
   function render() {
+    virtual = canShowGroup();
+    virtualList = virtual ? accountPeople() : [];
     if (lav()) requestAnimationFrame(countUp);
     return `<section class="page family-page fam2${lav() ? " is-lav" : ""}">
       ${hero()}
@@ -384,6 +404,8 @@ const FamilyV2 = (() => {
   }
 
   document.addEventListener("click", event => {
+    const acct = event.target.closest('[data-fv-sheet^="acct-"], [data-fv-edit^="acct-"]');
+    if (acct) { event.preventDefault(); location.hash = `#profile/${(acct.dataset.fvSheet || acct.dataset.fvEdit).slice(5)}`; return; }
     const sheet = event.target.closest("[data-fv-sheet]");
     if (sheet) { event.preventDefault(); openSheet(sheet.dataset.fvSheet); return; }
     if (event.target.closest("[data-fv-profile]") && typeof Modal !== "undefined") { Modal.close(); return; }
@@ -414,5 +436,5 @@ const FamilyV2 = (() => {
     else if (typeof openFamilyModal === "function") openFamilyModal();
   });
 
-  return { render };
+  return { render, canShowGroup };
 })();

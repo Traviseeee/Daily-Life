@@ -133,10 +133,9 @@ const FamilyGroup = (() => {
     if (member.user_id === state.me) return appData.profile?.name || L("អ្នក", "You");
     return L("សមាជិក", "Member");
   }
-  function familyDisplayName() {
+  function familyDisplayName() { // the full name ("គ្រួសារ Tra"), not just "Tra" (6 Nov)
     const raw = String(state.family?.name || "").trim();
-    const clean = raw.replace(/^(?:គ្រួសារ|family)(?:\s+|[-–:]\s*)/i, "").trim();
-    return clean || L("មិនទាន់ដាក់ឈ្មោះ", "Unnamed group");
+    return raw || L("មិនទាន់ដាក់ឈ្មោះ", "Unnamed group");
   }
   const initials = name => String(name || "?").trim().split(/\s+/).map(part => Array.from(part)[0] || "").join("").slice(0, 2).toUpperCase() || "?";
   const TONES = ["#d9ff7b", "#ffc7e1", "#bfe0ff", "#ffd28a", "#c9b8ff", "#9df0d2"];
@@ -257,6 +256,8 @@ const FamilyGroup = (() => {
     paint();
     try { await load(force); } catch (error) { state.status = "error"; state.error = error.message; }
     paint();
+    // a new member's empty Family page can now show the group's people (js/family-v2.js)
+    if (document.querySelector(".family-empty-page") && typeof FamilyV2 !== "undefined" && FamilyV2.canShowGroup?.() && typeof App !== "undefined" && App.route === "family") App.render();
   }
   // called after the Family page renders
   function mount() { paint(); refresh(true); }
