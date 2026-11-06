@@ -89,3 +89,19 @@
 }
 
 @media (prefers-reduced-motion: reduce) { .profile-account-card { animation: none; } }
+
+/* one profile: shortcuts to the family profile and app settings (no duplicate fields) */
+.profile-links { display: grid; gap: 8px; margin-top: 14px; }
+.profile-link {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  padding: 11px 14px; border-radius: 14px; text-align: left; text-decoration: none;
+  border: 1px solid color-mix(in srgb, var(--primary, #7a6cf0) 22%, transparent);
+  background: color-mix(in srgb, var(--primary, #7a6cf0) 8%, transparent);
+  color: inherit; font: inherit; cursor: pointer; font-size: 18px;
+}
+.profile-link span { flex: 1; display: grid; gap: 2px; }
+.profile-link b { font-size: 14px; font-weight: 700; }
+.profile-link small { font-size: 12px; opacity: .7; }
+.profile-link:active { transform: scale(.99); }
+#modalRoot .modal .profile-link { color: #2a2350; }
+html:root:not([data-theme="light"]) #modalRoot .modal .profile-link { color: #f1eeff; background: rgba(155, 140, 255, .14); border-color: rgba(155, 140, 255, .32); }

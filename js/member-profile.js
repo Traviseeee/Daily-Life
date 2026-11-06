@@ -174,6 +174,11 @@ const MemberProfile = (() => {
       const fid = FG()?.state?.family?.id;
       if (fid) await client().from("family_members").update({ display_name: values.display_name }).eq("family_id", fid).eq("user_id", uid);
     }
+    // …and the app profile, so there is one name + photo everywhere
+    const local = {};
+    if (values.display_name) local.name = values.display_name;
+    if (values.photo) local.photo = values.photo;
+    if (Object.keys(local).length && typeof Store !== "undefined") Store.updateProfile(local);
     await FG()?.load(true);
   }
 

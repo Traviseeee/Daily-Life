@@ -376,20 +376,14 @@ function openProfileModal() {
     submitText: t("save"),
     fields: [
       { name: "name", label: t("name"), value: appData.profile.name, required: true },
-      { name: "photo", label: t("profilePhoto"), type: "file", value: appData.profile.photo },
-      { name: "currency", label: t("currency"), type: "select", options: ["USD", "KHR", "EUR", "GBP", "AUD", "CAD", "JPY"], value: appData.profile.currency || "USD" },
-      { name: "language", label: t("language"), type: "select", options: ["English", "Khmer"], value: appData.profile.language || "English" },
-      { name: "dateFormat", label: t("dateFormat"), type: "select", options: ["MMM d, yyyy", "dd/MM/yyyy", "MM/dd/yyyy", "yyyy-MM-dd"], value: appData.profile.dateFormat || "MMM d, yyyy" },
-      { name: "clockFormat", label: t("clockFormat"), type: "select", options: ["12-hour", "24-hour"], value: appData.profile.clockFormat || "12-hour" },
-      { name: "soundEnabled", label: t("soundEnabled"), type: "checkbox", value: appData.profile.soundEnabled !== false },
-      { name: "notificationsEnabled", label: t("notificationsEnabled"), type: "checkbox", value: appData.profile.notificationsEnabled !== false }
+      { name: "photo", label: t("profilePhoto"), type: "file", value: appData.profile.photo }
     ],
     onSubmit(data) {
       Store.updateProfile(data);
       Toast.show(t("profileSaved"), "success");
+      syncFamilyProfileBasics(data);
     }
   });
-
   const modalForm = document.getElementById("modalForm");
   if (!modalForm || modalForm.dataset.profileEnhanced === "true") return;
   modalForm.dataset.profileEnhanced = "true";
@@ -473,8 +467,34 @@ function openProfileModal() {
     head.textContent = label;
     wrap.parentElement.insertBefore(head, wrap);
   };
-  group("currency", L("App settings", "ការកំណត់ App"));
-  group("soundEnabled", L("Sound & alerts", "សំឡេង និងការជូនដំណឹង"));
+  // one profile for everything: family profile + app settings live one tap away (no duplicate fields here)
+  const links = document.createElement("div");
+  links.className = "profile-links";
+  const fgState = typeof FamilyGroup !== "undefined" ? FamilyGroup.state : null;
+  const inFamily = Boolean(fgState?.me && fgState?.family && typeof MemberProfile !== "undefined");
+  links.innerHTML = `
+    ${inFamily ? `<button type="button" class="profile-link" data-profile-family>👪 <span><b>${escapeHtml(L("Family profile", "Profile គ្រួសារ"))}</b><small>${escapeHtml(L("Cover, about me, birthday, Telegram", "Cover អំពីខ្ញុំ ថ្ងៃកំណើត Telegram"))}</small></span>›</button>` : ""}
+    <a class="profile-link" href="#settings" data-profile-settings>⚙️ <span><b>${escapeHtml(L("App settings", "ការកំណត់ App"))}</b><small>${escapeHtml(L("Language, currency, clock, alerts", "ភាសា រូបិយប័ណ្ណ ម៉ោង ការជូនដំណឹង"))}</small></span>›</a>`;
+  const actions = modalForm.querySelector(":scope > [type=submit], :scope > .between:last-child");
+  if (actions) actions.before(links); else modalForm.appendChild(links);
+  links.querySelector("[data-profile-family]")?.addEventListener("click", () => { Modal.close(); MemberProfile.openEdit(); });
+  links.querySelector("[data-profile-settings]")?.addEventListener("click", () => Modal.close());
+}
+
+// keep the family profile's name/photo the same as the app profile (only my own row, only these two fields)
+function syncFamilyProfileBasics(data) {
+  try {
+    const fg = typeof FamilyGroup !== "undefined" ? FamilyGroup : null;
+    const uid = fg?.state?.me;
+    const client = window.supabaseClient;
+    if (!uid || !fg?.state?.family || !client?.from) return;
+    const patch = {};
+    if (data.name) patch.display_name = String(data.name).trim().slice(0, 40);
+    if (data.photo) patch.photo = data.photo;
+    if (!Object.keys(patch).length) return;
+    Promise.resolve(client.from("member_profiles").update({ ...patch, updated_at: new Date().toISOString() }).eq("user_id", uid))
+      .then(() => fg.load?.(true)).catch(() => {});
+  } catch (error) { /* family sync is best-effort */ }
 }
 
 function firstRecord(collection) {
@@ -752,7 +772,7 @@ function bindSettings() {
     Store.updateProfile({ quickActions });
     Toast.show(t("preferenceSaved"));
   }));
-  bindSettingsAction("edit-profile", openEditUserDataModal);
+  bindSettingsAction("edit-profile", openProfileModal);
   bindSettingsAction("upload-welcome-poster", () => document.getElementById("welcomePosterSettingsInput")?.click());
   bindSettingsAction("remove-welcome-poster", () => App.removeWelcomePoster());
   document.getElementById("welcomePosterSettingsInput")?.addEventListener("change", async event => {
