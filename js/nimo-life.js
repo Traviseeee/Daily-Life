@@ -18,16 +18,16 @@ const NimoLife = (() => {
   // original Nomi (same shape, size and colours) — only the gold / galaxy skins recolour it.
   const ROAD = [
     { lv: 1, mood: "happy", km: "Nimo តូច", en: "Baby Nimo" },
-    { lv: 2, mood: "cheer", km: "មុខ រីករាយ", en: "Cheer face" },
-    { lv: 3, mood: "sleepy", km: "មុខ ងងុយ & រំភើប", en: "Sleepy & excited" },
-    { lv: 4, mood: "proud", km: "មោទនភាព + Sticker", en: "Proud + stickers" },
+    { lv: 2, mood: "cheer", km: "មុខរីករាយ", en: "Cheer face" },
+    { lv: 3, mood: "sleepy", km: "មុខងងុយ និងរំភើប", en: "Sleepy & excited" },
+    { lv: 4, mood: "proud", km: "មោទនភាព និងស្ទីគ័រ", en: "Proud + stickers" },
     { lv: 5, mood: "cheer", item: "party", km: "ឈុតពិធីបុណ្យ 🎉", en: "Party outfit 🎉", outfit: true },
     { lv: 6, mood: "happy", item: "glasses", km: "វ៉ែនតា", en: "Glasses" },
     { lv: 7, mood: "wink", item: "scarf", km: "កន្សែងក", en: "Scarf" },
     { lv: 8, mood: "proud", item: "gold", km: "ស្បែកមាស", en: "Golden skin" },
-    { lv: 9, mood: "happy", item: "shades", km: "Cool 😎", en: "Cool 😎" },
+    { lv: 9, mood: "happy", item: "shades", km: "វ៉ែនតាខ្មៅ 😎", en: "Cool 😎" },
     { lv: 10, mood: "proud", item: "royal", km: "ឈុតស្ដេច 👑", en: "Royal outfit 👑", outfit: true },
-    { lv: 15, mood: "wink", item: "wizard", km: "ឈុតគ្រូមន្ត 🪄", en: "Wizard outfit 🪄", outfit: true },
+    { lv: 15, mood: "wink", item: "wizard", km: "ឈុតអ្នកមន្តអាគម 🪄", en: "Wizard outfit 🪄", outfit: true },
     { lv: 20, mood: "love", item: "galaxy", km: "ឈុតកាឡាក់ស៊ី 🌌", en: "Galaxy outfit 🌌", outfit: true }
   ];
   const SLOTS = { party: ["head"], glasses: ["eyes"], scarf: ["neck"], gold: ["skin"], shades: ["eyes"], royal: ["head", "neck"], wizard: ["head", "neck"], galaxy: ["skin", "head"] };
@@ -135,7 +135,7 @@ const NimoLife = (() => {
       <section class="nmc" data-nmc-open role="button" tabindex="0" aria-label="${escapeAttr(L("បើក Nimo", "Open Nimo"))}">
         <span class="nmc-av" style="--p:${pct}"><span class="nmc-nomi" data-nomi data-mood="${mood}" role="button" tabindex="0" aria-label="Nomi">${nomi}</span><b class="nmc-lv">Lv ${level}</b></span>
         <span class="nmc-mid"><b>Nimo · ${escapeHtml(L(`កម្រិត ${level}`, `Level ${level}`))}</b><span class="nmc-bar"><i style="width:${pct}%"></i></span><small>${xp} / ${to} XP · ${escapeHtml(L(`ទៀត ${Math.max(0, to - xp)}`, `${Math.max(0, to - xp)} to go`))}</small></span>
-        <span class="nmc-fire${streak ? "" : " is-off"}" title="${escapeAttr(L(`ថ្ងៃជាប់គ្នាវែងបំផុត ${state.longestStreak || 0} · ខែជាប់គ្នា = បង់កម្ចី / វិក្កយបត្រ / ដាក់សន្សំ`, `Longest ${state.longestStreak || 0} days · money months = loan, bill or savings paid`))}"><span class="nmc-fire-top"><svg class="nmc-flame" viewBox="0 0 32 40" aria-hidden="true"><path class="f-out" d="M16 2c2 6 9 9 9 19a9 9 0 0 1-18 0c0-4 2-7 4-8 0 3 1.5 5 3.5 5-1-5 0-11 1.5-16z" fill="#ff7a45"/><path class="f-mid" d="M16 15c1 3 5 5 5 10a5 5 0 0 1-10 0c0-2.5 1.2-4 2.5-4.6.2 1.8 1 2.8 2.3 2.8-.5-3 .2-6 .2-8.2z" fill="#ffb347"/><path class="f-in" d="M16 26c.6 1.6 2.6 2.6 2.6 5a2.6 2.6 0 0 1-5.2 0c0-1.6 1.4-2.8 2.6-5z" fill="#ffe08a"/></svg><b>${streak}</b></span><small>${escapeHtml(L("ថ្ងៃជាប់", "day streak"))}</small></span>
+        <span class="nmc-fire${streak ? "" : " is-off"}" title="${escapeAttr(L(`ថ្ងៃជាប់គ្នាច្រើនបំផុត ${state.longestStreak || 0} ថ្ងៃ`, `Longest ${state.longestStreak || 0} days · money months = loan, bill or savings paid`))}"><span class="nmc-fire-top"><svg class="nmc-flame" viewBox="0 0 32 40" aria-hidden="true"><path class="f-out" d="M16 2c2 6 9 9 9 19a9 9 0 0 1-18 0c0-4 2-7 4-8 0 3 1.5 5 3.5 5-1-5 0-11 1.5-16z" fill="#ff7a45"/><path class="f-mid" d="M16 15c1 3 5 5 5 10a5 5 0 0 1-10 0c0-2.5 1.2-4 2.5-4.6.2 1.8 1 2.8 2.3 2.8-.5-3 .2-6 .2-8.2z" fill="#ffb347"/><path class="f-in" d="M16 26c.6 1.6 2.6 2.6 2.6 5a2.6 2.6 0 0 1-5.2 0c0-1.6 1.4-2.8 2.6-5z" fill="#ffe08a"/></svg><b>${streak}</b></span><small>${escapeHtml(L("ថ្ងៃជាប់", "day streak"))}</small></span>
       </section>
     </div>`;
   }
@@ -166,6 +166,38 @@ const NimoLife = (() => {
     if (typeof Sound !== "undefined") { try { Sound.play("nomiHello"); } catch (error) { /* no sound */ } }
   }
 
+  // streak card (6 Nov): big flame + days, last 7 days as dots, next goal; money months beside it
+  const DAY_GOALS = [3, 7, 14, 30, 60, 100, 180, 365];
+  const MONTH_GOALS = [3, 6, 12];
+  function streakHtml() {
+    const days = Number(state.streak || 0), best = Number(state.longestStreak || 0), months = Number(state.monthStreak || 0);
+    const kmDays = ["អា", "ច", "អ", "ពុ", "ព្រ", "សុ", "ស"], enDays = ["S", "M", "T", "W", "T", "F", "S"];
+    const now = new Date();
+    const dots = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(now); d.setDate(now.getDate() - (6 - i));
+      const on = 6 - i < days;
+      return `<span class="nst-d${on ? " is-on" : ""}${i === 6 ? " is-today" : ""}"><i>${on ? "🔥" : ""}</i><small>${(km() ? kmDays : enDays)[d.getDay()]}</small></span>`;
+    }).join("");
+    const nextDay = DAY_GOALS.find(goal => goal > days);
+    const prevDay = [...DAY_GOALS].reverse().find(goal => goal <= days) || 0;
+    const dayPct = nextDay ? Math.round((days - prevDay) / (nextDay - prevDay) * 100) : 100;
+    const nextMonth = MONTH_GOALS.find(goal => goal > months);
+    const say = days === 0 ? L("ចាប់ផ្តើមថ្ងៃនេះ ហើយបន្តរៀងរាល់ថ្ងៃ", "Start today and keep going")
+      : nextDay ? L(`ទៀត ${nextDay - days} ថ្ងៃ ដល់ ${nextDay} ថ្ងៃ`, `${nextDay - days} more to ${nextDay} days`) : L("អស្ចារ្យ! ពេញមួយឆ្នាំ", "Amazing! A full year");
+    return `<div class="nst">
+      <div class="nst-main${days ? "" : " is-off"}">
+        <div class="nst-top"><span class="nst-fire">🔥</span><span class="nst-num"><b>${days}</b><small>${escapeHtml(L("ថ្ងៃជាប់គ្នា", days === 1 ? "day in a row" : "days in a row"))}</small></span><span class="nst-best">${escapeHtml(L(`ល្អបំផុត ${best} ថ្ងៃ`, `Best ${best} days`))}</span></div>
+        <div class="nst-week">${dots}</div>
+        <div class="nst-goal"><span class="nst-bar"><i style="width:${Math.max(4, dayPct)}%"></i></span><small>${escapeHtml(say)}</small></div>
+      </div>
+      <div class="nst-side">
+        <span class="nst-coin">🪙</span>
+        <b>${months}</b><small>${escapeHtml(L("ខែជាប់គ្នា", months === 1 ? "month in a row" : "months in a row"))}</small>
+        <em>${escapeHtml(nextMonth ? L(`ទៀត ${nextMonth - months} ខែ`, `${nextMonth - months} mo to go`) : L("ពេញមួយឆ្នាំ ✓", "Full year ✓"))}</em>
+      </div>
+    </div>`;
+  }
+
   // ---------- the Nimo sheet (tap the home row) ----------
   let preview = null;
   function sheetHtml() {
@@ -180,16 +212,16 @@ const NimoLife = (() => {
     const bigMood = pv ? pv.mood : done.length >= 4 ? "proud" : "happy";
     const row = (on, ic, title, sub, xpText, go) => `<${go && !on ? `button type="button" data-hv2-go="${go}" data-nms-close` : "div"} class="nms-row${on ? " is-on" : ""}"><span class="nms-ck${ic.gold ? " is-gold" : ""}${on ? " is-on" : ""}">${ic.t}</span><span class="nms-t">${escapeHtml(title)}${sub ? `<small>${escapeHtml(sub)}</small>` : ""}</span><em>${xpText}</em></${go && !on ? "button" : "div"}>`;
     const today = [
-      row(done.includes("checkin"), { t: done.includes("checkin") ? "✓" : "○" }, L("Check-in (បើក app)", "Check-in (open the app)"), "", "+1"),
-      row(done.includes("expense"), { t: done.includes("expense") ? "✓" : "○" }, L("កត់ចំណាយ", "Record an expense"), "", "+1", "money/expenses"),
-      row(done.includes("summary"), { t: done.includes("summary") ? "✓" : "○" }, L("មើលសង្ខេបលុយ", "Review today's money"), L("Money → សង្ខេប", "Money → Overview"), "+2", "money/overview"),
-      row(done.includes("savings"), { t: done.includes("savings") ? "✓" : "○" }, L("ពិនិត្យសន្សំ", "Check savings"), L("Money → សន្សំ", "Money → Savings"), "+1", "money/savings")
+      row(done.includes("checkin"), { t: done.includes("checkin") ? "✓" : "○" }, L("បើកមើល app ថ្ងៃនេះ", "Open the app today"), "", "+1"),
+      row(done.includes("expense"), { t: done.includes("expense") ? "✓" : "○" }, L("កត់ត្រាចំណាយ", "Record an expense"), "", "+1", "money/expenses"),
+      row(done.includes("summary"), { t: done.includes("summary") ? "✓" : "○" }, L("ពិនិត្យលុយថ្ងៃនេះ", "Review today's money"), L("ហិរញ្ញវត្ថុ › សង្ខេប", "Money › Overview"), "+2", "money/overview"),
+      row(done.includes("savings"), { t: done.includes("savings") ? "✓" : "○" }, L("ពិនិត្យប្រាក់សន្សំ", "Check savings"), L("ហិរញ្ញវត្ថុ › សន្សំ", "Money › Savings"), "+1", "money/savings")
     ].join("");
     const icon = { loan: "🏦", bill: "🧾", save: "🐷" };
     const name = text => String(text || "").replace(/^.*· /, "");
     const what = { loan: L("បង់កម្ចី", "Loan paid"), bill: L("បង់វិក្កយបត្រ", "Bill paid"), save: L("ដាក់សន្សំ", "Saved") };
     const month = (state.month || []).map(item => row(true, { t: icon[item.activity] || "✓", gold: true }, `${what[item.activity] || ""} · ${name(item.text)}`, "", `+${item.xp}`)).join("")
-      || `<p class="nms-empty">${escapeHtml(L("ខែនេះមិនទាន់មាន · បង់កម្ចី / វិក្កយបត្រ ឬដាក់សន្សំ ដើម្បីយក XP", "Nothing yet this month · pay a loan or bill, or save, to earn XP"))}</p>`;
+      || `<p class="nms-empty">${escapeHtml(L("ខែនេះមិនទាន់មានទេ។ បង់កម្ចី បង់វិក្កយបត្រ ឬដាក់សន្សំ ដើម្បីទទួល XP។", "Nothing yet this month · pay a loan or bill, or save, to earn XP"))}</p>`;
     const tiles = ROAD.map(r => {
       const got = r.lv <= level, worn = r.item && look.includes(r.item);
       return `<button type="button" class="nms-lvl${got ? " is-got" : " is-lock"}${r.lv === level ? " is-now" : ""}${preview === r.lv ? " is-sel" : ""}${r.outfit ? " is-outfit" : ""}" data-nms-lv="${r.lv}">${nomiSvg(r.mood, r.item ? [r.item] : [])}<b>Lv ${r.lv}${worn ? " ✓" : ""}</b><small>${escapeHtml(L(r.km, r.en))}</small></button>`;
@@ -207,26 +239,23 @@ const NimoLife = (() => {
           <div class="nms-big"><span class="nms-stage" data-nomi data-mood="${bigMood}">${nomiSvg(bigMood, bigLook)}</span>
             <h3>Nimo · ${escapeHtml(L(`កម្រិត ${level}`, `Level ${level}`))}</h3>
             <span class="nms-bar"><i style="width:${pct}%"></i></span>
-            <small>${xp} / ${to} XP · ${escapeHtml(L(`ទៀត ${Math.max(0, to - xp)} → កម្រិត ${level + 1}`, `${Math.max(0, to - xp)} to level ${level + 1}`))}</small>
+            <small>${xp} / ${to} XP · ${escapeHtml(L(`ត្រូវការ ${Math.max(0, to - xp)} XP ទៀត ដើម្បីដល់កម្រិត ${level + 1}`, `${Math.max(0, to - xp)} to level ${level + 1}`))}</small>
             ${tag}</div>
-          <div class="nms-two">
-            <div class="nms-st"><span class="is-fire">🔥</span><div><b>${Number(state.streak || 0)} ${escapeHtml(L("ថ្ងៃ", "days"))}</b><small>${escapeHtml(L(`វែងបំផុត ${state.longestStreak || 0} · 3 ថ្ងៃ = +3`, `Best ${state.longestStreak || 0} · 3 days = +3`))}</small></div></div>
-            <div class="nms-st"><span class="is-gold">🪙</span><div><b>${Number(state.monthStreak || 0)} ${escapeHtml(L("ខែ", "mo"))}</b><small>${escapeHtml(L("បង់/សន្សំជាប់ · 3 ខែ = +10", "Paid/saved in a row · 3 mo = +10"))}</small></div></div>
-          </div>
-          <h4>${escapeHtml(L("ថ្ងៃនេះ", "Today"))}<span>${escapeHtml(L("+3 បើធ្វើគ្រប់ 4", "+3 when all 4 are done"))}</span></h4>
+          ${streakHtml()}
+          <h4>${escapeHtml(L("ថ្ងៃនេះ", "Today"))}<span>${escapeHtml(L("ធ្វើគ្រប់ 4 ទទួល +3 បន្ថែម", "+3 bonus when all 4 are done"))}</span></h4>
           <div class="nms-box">${today}</div>
-          <h4>${escapeHtml(L("ខែនេះ · លុយពិត", "This month · real money"))}<span>${escapeHtml(L("server ពិនិត្យ", "checked by the server"))}</span></h4>
+          <h4>${escapeHtml(L("ការបង់ និងការសន្សំខែនេះ", "Paid & saved this month"))}<span>${escapeHtml(L("រាប់ដោយស្វ័យប្រវត្តិ", "Counted automatically"))}</span></h4>
           <div class="nms-box">${month}</div>
-          <h4>${escapeHtml(L("កម្រិត & ឈុត", "Levels & outfits"))}<span>${escapeHtml(L("ចុចមើល · ពាក់", "Tap to preview · wear"))}</span></h4>
+          <h4>${escapeHtml(L("កម្រិត និងសម្លៀកបំពាក់", "Levels & outfits"))}<span>${escapeHtml(L("ចុចដើម្បីមើល ឬពាក់", "Tap to preview or wear"))}</span></h4>
           <div class="nms-road">${tiles}</div>
-          <h4>${escapeHtml(L("របៀបយក XP", "How to earn XP"))}</h4>
+          <h4>${escapeHtml(L("របៀបទទួល XP", "How to earn XP"))}</h4>
           <div class="nms-box">
-            ${row(false, { t: "💰" }, L("សន្សំដល់ $50 · $150 · $300 · $500 · $1k · $2.5k · $5k · $10k", "Savings reach $50 · $150 · $300 · $500 · $1k · $2.5k · $5k · $10k"), L("ម្ដងគត់ក្នុងមួយកម្រិត · មាសរាប់ផង", "Once each · gold counts too"), "+1…50")}
-            ${row(false, { t: "🔥" }, L("ថ្ងៃជាប់ 3 · 7 · 14 · 30 · 60 · 100 · 180 · 365", "Days in a row 3 · 7 · 14 · 30 · 60 · 100 · 180 · 365"), "", "+3…150")}
-            ${row(false, { t: "🪙" }, L("ខែជាប់ 3 · 6 · 12", "Money months in a row 3 · 6 · 12"), "", "+10…40")}
+            ${row(false, { t: "💰" }, L("ប្រាក់សន្សំដល់ $50, $150, $300, $500, $1k … $10k", "Savings reach $50, $150, $300, $500, $1k … $10k"), L("ទទួលម្តងក្នុងមួយកម្រិត · គិតបញ្ចូលមាសផង", "Once per step · gold counts too"), "+1…50")}
+            ${row(false, { t: "🔥" }, L("បើក app ជាប់គ្នា 3, 7, 14, 30 … 365 ថ្ងៃ", "Open the app 3, 7, 14, 30 … 365 days in a row"), L("មិនរំលងថ្ងៃណាមួយ", "Without missing a day"), "+3…150")}
+            ${row(false, { t: "🪙" }, L("បង់ ឬសន្សំជាប់គ្នា 3, 6, 12 ខែ", "Pay or save 3, 6, 12 months in a row"), L("យ៉ាងហោចណាស់ម្តងក្នុងមួយខែ", "At least once each month"), "+10…40")}
           </div>
-          <button type="button" class="nms-try" data-nms-try>✨ ${escapeHtml(L("សាក popup ឡើងកម្រិត", "Try the level-up popup"))}</button>
-          <p class="nms-note">${escapeHtml(L("Nimo មិនដែលបន្ទោសពេលចាយលុយ · XP មិនបាត់ · របស់ដែលបើករួច ជារបស់អ្នកជារៀងរហូត", "Nimo never scolds spending · XP never disappears · unlocked items are yours forever"))}</p>
+          <button type="button" class="nms-try" data-nms-try>✨ ${escapeHtml(L("មើលគំរូពេលឡើងកម្រិត", "Preview the level-up"))}</button>
+          <p class="nms-note">${escapeHtml(L("Nimo មិនដែលបន្ទោសពេលអ្នកចាយលុយទេ។ XP មិនបាត់ទេ ហើយរបស់ដែលទទួលបានហើយ ជារបស់អ្នករហូត។", "Nimo never scolds spending · XP never disappears · unlocked items are yours forever"))}</p>
         </div></div></div>`;
   }
   function openSheet() {

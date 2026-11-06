@@ -145,3 +145,49 @@ html:root body .hv2 .hv2-body.hv4 > * { position: relative; z-index: 1; }
 html:root body .hv2 .hv4-me .hv2-mood-btn.is-on { background: none !important; }
 html:root body .hv2 .hv4-me .hv2-mood-btn.is-on span { background: #e4ddff !important; box-shadow: none !important; }
 html:root:not([data-theme="light"]) body .hv2 .hv4-me .hv2-mood-btn.is-on span { background: rgba(182, 168, 255, .3) !important; }
+
+/* Nimo sheet · streak card (6 Nov): flame + days, 7-day dots, next goal; money months beside */
+.nms .nst { display: grid; grid-template-columns: 1fr 96px; gap: 8px; margin-top: 12px; }
+.nst-main { min-width: 0; padding: 14px 14px 12px; border-radius: 22px; color: #3a1d0b; background: linear-gradient(150deg, #fff4e6, #ffe2cf); }
+.nst-main.is-off { filter: saturate(.3); }
+.nst-top { display: flex; align-items: center; gap: 10px; }
+.nst-fire { display: grid; place-items: center; width: 46px; height: 46px; flex: 0 0 auto; border-radius: 16px; font-size: 1.6rem; background: rgba(255, 255, 255, .7); animation: nstFlame 1.6s ease-in-out infinite; transform-origin: 50% 90%; }
+.nst-main.is-off .nst-fire { animation: none; }
+.nst-num { display: grid; flex: 1; min-width: 0; line-height: 1.1; }
+.nst-num b { font: 700 1.9rem "Kantumruy Pro", Inter, sans-serif; color: #e2541e; }
+.nst-num small { font-size: .76rem; font-weight: 500; color: #8a4a26; }
+.nst-best { align-self: flex-start; padding: 3px 9px; border-radius: 99px; font-size: .68rem; font-weight: 500; color: #a0522a; background: rgba(255, 255, 255, .7); white-space: nowrap; }
+.nst-week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: 12px; }
+.nst-d { display: grid; justify-items: center; gap: 3px; }
+.nst-d i { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; font-size: .8rem; font-style: normal; background: rgba(255, 255, 255, .65); border: 1.5px dashed rgba(226, 84, 30, .25); }
+.nst-d.is-on i { border: 0; background: linear-gradient(135deg, #ffb347, #ff7a45); box-shadow: 0 4px 10px rgba(255, 122, 69, .3); }
+.nst-d.is-today i { outline: 2px solid #ff7a45; outline-offset: 2px; }
+.nst-d small { font-size: .62rem; font-weight: 500; color: #a0522a; }
+.nst-goal { display: grid; gap: 5px; margin-top: 12px; }
+.nst-bar { height: 8px; border-radius: 9px; overflow: hidden; background: rgba(255, 255, 255, .75); }
+.nst-bar i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #ffb347, #ff7a45); }
+.nst-goal small { font-size: .74rem; font-weight: 500; color: #8a4a26; }
+.nst-side { display: grid; align-content: center; justify-items: center; gap: 2px; padding: 12px 8px; border-radius: 22px; text-align: center; color: #5a3d00; background: linear-gradient(160deg, #fff8e1, #ffeab0); }
+.nst-coin { font-size: 1.5rem; line-height: 1; }
+.nst-side b { font: 700 1.6rem "Kantumruy Pro", Inter, sans-serif; color: #b07800; line-height: 1.15; }
+.nst-side small { font-size: .7rem; font-weight: 500; line-height: 1.3; }
+.nst-side em { margin-top: 6px; padding: 3px 8px; border-radius: 99px; font-size: .64rem; font-style: normal; font-weight: 500; background: rgba(255, 255, 255, .7); }
+@keyframes nstFlame { 0%, 100% { transform: scale(1) rotate(0); } 50% { transform: scale(1.08) rotate(-3deg); } }
+@media (prefers-reduced-motion: reduce) { .nst-fire { animation: none; } }
+html:root:not([data-theme="light"]) .nst-main { color: #ffe7d6; background: linear-gradient(150deg, rgba(255, 152, 107, .2), rgba(255, 122, 69, .12)); }
+html:root:not([data-theme="light"]) .nst-num b { color: #ffab7a; }
+html:root:not([data-theme="light"]) :is(.nst-num small, .nst-goal small, .nst-d small, .nst-best) { color: #ffcfb0; }
+html:root:not([data-theme="light"]) :is(.nst-fire, .nst-best, .nst-d i, .nst-bar, .nst-side em) { background: rgba(255, 255, 255, .08); }
+html:root:not([data-theme="light"]) .nst-d.is-on i { background: linear-gradient(135deg, #ffb347, #ff7a45); }
+html:root:not([data-theme="light"]) .nst-side { color: #ffe9b0; background: linear-gradient(160deg, rgba(245, 196, 90, .2), rgba(245, 196, 90, .1)); }
+html:root:not([data-theme="light"]) .nst-side b { color: #ffd98a; }
+
+/* XP chips + clearer rows in the Nimo sheet */
+html:root .nms .nms-row { font-size: .84rem; font-weight: 500; }
+html:root .nms .nms-t small { margin-top: 1px; font-size: .7rem; font-weight: 400; }
+html:root .nms .nms-row em { padding: 3px 9px; border-radius: 99px; font: 600 .72rem Inter, sans-serif; color: #6b5ce7; background: #efebff; }
+html:root .nms .nms-row.is-on em { color: #1f9d63; background: #e8f8ef; }
+html:root .nms h4 { font-size: .9rem; font-weight: 700; }
+html:root .nms h4 span { font-size: .7rem; font-weight: 400; }
+html:root:not([data-theme="light"]) .nms .nms-row em { color: #c9bdff; background: rgba(182, 168, 255, .16); }
+html:root:not([data-theme="light"]) .nms .nms-row.is-on em { color: #5fe0a0; background: rgba(95, 224, 160, .14); }
