@@ -64,7 +64,8 @@ const HomeV2 = (() => {
     const now = new Date();
     const daysLeft = Math.max(1, new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate() - now.getDate() + 1);
     const spentToday = d ? (appData.expenses || []).filter(item => item.date === d.todayIso).reduce((t, item) => t + toProfileCurrency(item.amount, item.currency), 0) : 0;
-    if (m && (m.left < 0 || (spentToday > 0 && spentToday > Math.max(0, m.left + spentToday) / daysLeft))) return "worry";
+    // no salary / income yet this month: any spending would look like "too much" — Nimo stays calm (7 Nov)
+    if (m && m.income > 0 && (m.left < 0 || (spentToday > 0 && spentToday > Math.max(0, m.left + spentToday) / daysLeft))) return "worry";
     if (d && d.focus.length && d.focus.every(item => item.done)) return "love";
     // the rest follows the clock in Phnom Penh (js/nimo-day.js, 7 Nov)
     if (typeof NimoDay !== "undefined") return NimoDay.moodNow();
@@ -86,6 +87,7 @@ const HomeV2 = (() => {
     return h >= 21 || h < 5 ? "sleepy" : "calm";
   }
   function moneyMood(m, spentToday, perDay) {
+    if (!(m.income > 0)) return spentToday === 0 ? "proud" : "calm";
     if (m.left < 0 || (perDay > 0 && spentToday > perDay)) return "worry";
     if (spentToday === 0) return "proud";
     if (perDay > 0 && spentToday <= perDay / 2) return "happy";
@@ -214,7 +216,7 @@ const HomeV2 = (() => {
       <nav class="hv2-week" aria-label="${escapeAttr(L("សប្តាហ៍នេះ", "This week"))}">${week.map(date => {
         const key = iso(date);
         const on = key === d.todayIso;
-        return `<a class="hv2-day${on ? " is-today" : ""}${lav() && key < d.todayIso && checked.has(key) ? " is-ok" : ""}" href="#calendar"${on ? ' aria-current="date"' : ""}><small>${escapeHtml(dayLabel(date))}</small><b>${date.getDate()}</b><i class="${dates.has(key) ? "has" : ""}"></i></a>`;
+        return `<a class="hv2-day${on ? " is-today" : ""}${lav() && key < d.todayIso && checked.has(key) ? " is-ok" : ""}" href="#calendar/day/${key}"${on ? ' aria-current="date"' : ""}><small>${escapeHtml(dayLabel(date))}</small><b>${date.getDate()}</b><i class="${dates.has(key) ? "has" : ""}"></i></a>`;
       }).join("")}</nav>
       ${todayItems.length ? "" : ""}
     </header>`;
@@ -336,7 +338,7 @@ const HomeV2 = (() => {
           ${sc.nomi ? `<span class="hv2-soft-buddy" data-nomi data-mood="${mood}" data-awaiting-income="${awaitingIncome}" role="button" tabindex="0" aria-label="Nomi">${roleBuddy("money", mood)}</span>` : ""}
           <div class="hv2-soft-summary">
             <a class="hv2-soft-amt money-value${hide}" href="#money">${escapeHtml(plainMoney(available))}</a>
-            <span class="hv2-soft-pill">${escapeHtml(L(`ចាយរួច ${pct}% នៃ ${plainMoney(m.income)} · នៅ ${daysLeft} ថ្ងៃ`, `${pct}% of ${plainMoney(m.income)} spent · ${daysLeft} days left`))}</span>
+            <span class="hv2-soft-pill">${escapeHtml((awaitingIncome ? L(`ចាយរួច ${plainMoney(m.expenses)} · នៅ ${daysLeft} ថ្ងៃ`, `${plainMoney(m.expenses)} spent · ${daysLeft} days left`) : null) || L(`ចាយរួច ${pct}% នៃ ${plainMoney(m.income)} · នៅ ${daysLeft} ថ្ងៃ`, `${pct}% of ${plainMoney(m.income)} spent · ${daysLeft} days left`))}</span>
           </div>
         </div>
         ${sc.track ? track : ""}
@@ -358,7 +360,7 @@ const HomeV2 = (() => {
           ${sc.nomi ? `<span class="hv2-soft-buddy" data-nomi data-mood="${mood}" data-awaiting-income="${awaitingIncome}" role="button" tabindex="0" aria-label="Nomi">${roleBuddy("money", mood)}${sc.talk ? `<span class="hv2-say hv2-soft-say" data-nomi-say>${escapeHtml(L(...(awaitingIncome ? MONEY_WAITING : MONEY_SAY[mood] || MONEY_SAY.happy)))}</span>` : ""}</span>` : ""}
           <div class="hv2-soft-summary">
             <a class="hv2-soft-amt money-value${hide}" href="#money">${escapeHtml(plainMoney(available))}</a>
-            <span class="hv2-soft-pill">${escapeHtml(L(`ចាយរួច ${pct}% · ${daysLeft} ថ្ងៃទៀត`, `${pct}% spent · ${daysLeft} days left`))}</span>
+            <span class="hv2-soft-pill">${escapeHtml((awaitingIncome ? L(`ចាយរួច ${plainMoney(m.expenses)} · ${daysLeft} ថ្ងៃទៀត`, `${plainMoney(m.expenses)} spent · ${daysLeft} days left`) : L(`ចាយរួច ${pct}% · ${daysLeft} ថ្ងៃទៀត`, `${pct}% spent · ${daysLeft} days left`)))}</span>
             ${awaitingIncome && !(sc.nomi && sc.talk) ? `<span class="hv2-soft-income-note">${escapeHtml(L("មិនទាន់ទទួលប្រាក់ខែ ឬចំណូល freelance ទេ", "No salary or freelance income received yet"))}</span>` : ""}
           </div>
         </div>

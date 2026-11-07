@@ -472,3 +472,42 @@ html:root body:not(#gl) .sv2 .sv-seg button { min-height: 34px; display: inline-
 html:root body:not(#gl) #app .hv2 .hv4-status { min-height: 30px; display: inline-flex; align-items: center; }
 html:root[data-theme="light"] body:not(#gl) #app .hv2-soft .hv2-soft-t span { color: #6f6890 !important; -webkit-text-fill-color: #6f6890 !important; }
 html:root[data-theme="light"] body:not(#gl) #app .hv2-soft .hv2-soft-t small { color: #5d5680 !important; -webkit-text-fill-color: #5d5680 !important; }
+
+/* ===================== 7 Nov walk-through fixes ===================== */
+/* focus ring: lavender, not the old sky blue (inputs, chat box, expense amount) */
+/* the old sky theme painted blue rings on these; same rings, lavender */
+html:root body:not(#gl) :focus-visible { outline-color: #8b7cf6 !important; }
+html:root body:not(#gl) :is(#modalRoot .modal input:not([type=checkbox]):not([type=radio]):not([type=range]), #modalRoot .modal textarea, #modalRoot .modal select, .field input, .field select, .field textarea, .search-wrap input, .mlc-input input, .daily-reflection-input, .al-reset-field input, #loginModal .login-field input, .fc-inp):focus {
+  outline: none !important; border-color: #8b7cf6 !important; box-shadow: 0 0 0 3px rgba(139, 124, 246, .24) !important;
+}
+html:root body:not(#gl) :is(.mf-search, .memory-search-field, .memory-filter-select, #modalRoot .bill-modal .xp-amount-card):focus-within { border-color: #8b7cf6 !important; box-shadow: 0 0 0 3px rgba(139, 124, 246, .22) !important; }
+html:root body:not(#gl) :is(.fg-switch input:focus-visible + span, .nfc-chip:has(input:focus-visible), .money-smart-tab:focus-visible, .money-smart-bill-state:focus-visible) { outline-color: #8b7cf6 !important; }
+/* the amount box inside the purple amount field: no second box */
+html:root body:not(#gl) #modalRoot#modalRoot .modal.event-modal.expense-modal .xp-amount-card input.xp-amount.xp-amount { background: transparent !important; border: 0 !important; box-shadow: none !important; outline: none !important; }
+html:root body:not(#gl) #modalRoot#modalRoot .expense-modal .xp-amount-card:focus-within { border-color: #8b7cf6 !important; box-shadow: 0 0 0 4px rgba(139, 124, 246, .2) !important; }
+/* chat room: glass header */
+html:root[data-theme="light"] body:not(#gl) .fc-room .fc-rhead {
+  background: linear-gradient(135deg, rgba(255, 255, 255, .9), rgba(255, 255, 255, .6)), rgba(246, 244, 255, .7) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(160%); backdrop-filter: blur(18px) saturate(160%);
+  border-bottom: 1px solid rgba(139, 124, 246, .18) !important;
+}
+html:root:not([data-theme="light"]) body:not(#gl) .fc-room .fc-rhead {
+  background: linear-gradient(135deg, rgba(255, 255, 255, .1), rgba(255, 255, 255, .03)), rgba(36, 30, 78, .8) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(160%); backdrop-filter: blur(18px) saturate(160%);
+}
+/* memories: the photo picker in lavender (was green) */
+html:root body:not(#gl) #modalRoot .mf-drop { background: rgba(139, 124, 246, .08) !important; border-color: rgba(139, 124, 246, .45) !important; color: #504ab9; }
+html:root:not([data-theme="light"]) body:not(#gl) #modalRoot .mf-drop { background: rgba(182, 168, 255, .1) !important; border-color: rgba(182, 168, 255, .4) !important; color: #d9d0ff; }
+/* goals: covers without a photo and the selected filter in lavender (were orange / sky blue) */
+html:root body:not(#gl) #app .gv-cover { --gv-c1: #b6a8ff !important; --gv-c2: #6a58e0 !important; background: linear-gradient(135deg, #b6a8ff, #6a58e0) !important; }
+html:root body:not(#gl) #app .gv-chip.on { color: #fff !important; background: linear-gradient(140deg, #9f8cff, #6a58e0) !important; box-shadow: 0 6px 14px -6px rgba(91, 79, 214, .5) !important; }
+/* bell sheet: one glass sheet (the lower part was plain grey / white) */
+html:root[data-theme="light"] body:not(#gl) .nc-root .nc-panel {
+  background: linear-gradient(135deg, rgba(255, 255, 255, .95) 0%, rgba(255, 255, 255, .55) 22%, rgba(255, 255, 255, 0) 50%), rgba(248, 245, 255, .82) !important;
+  -webkit-backdrop-filter: blur(26px) saturate(170%); backdrop-filter: blur(26px) saturate(170%);
+}
+html:root:not([data-theme="light"]) body:not(#gl) .nc-root .nc-panel {
+  background: linear-gradient(135deg, rgba(255, 255, 255, .12) 0%, rgba(255, 255, 255, 0) 45%), rgba(36, 30, 78, .82) !important;
+  -webkit-backdrop-filter: blur(26px) saturate(160%); backdrop-filter: blur(26px) saturate(160%);
+}
+html:root body:not(#gl) .nc-root .nc-footer { background: transparent !important; border-top: 1px solid rgba(139, 124, 246, .15) !important; }

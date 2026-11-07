@@ -1602,7 +1602,7 @@ function openSavingsModal(item) {
     { name: "currency", label: t("currency"), type: "select", options: ["USD", "KHR"], value: item?.currency || appData.profile.currency || "USD" },
     { name: "deadline", label: t("deadline"), type: "date", value: item?.deadline },
     { name: "notes", label: t("notes"), type: "textarea", value: item?.notes }
-  ], onSubmit(data) { const record = { ...data, targetAmount: Number(data.targetAmount || 0), currentAmount: Number(data.currentAmount || 0), reserveAmount: Number(data.reserveAmount || 0), monthlyContribution: Number(data.monthlyContribution || 0), currency: data.currency || appData.profile.currency || "USD", ...savingsJointRecord(data) }; item ? Store.edit("savings", item.id, record) : Store.add("savings", record); Toast.show(item ? t("savingsSaved") : t("savingsAdded")); } });
+  ], onSubmit(data) { const record = { ...data, targetAmount: Number(data.targetAmount || 0), currentAmount: Number(data.currentAmount || 0), reserveAmount: Number(data.reserveAmount || 0), monthlyContribution: Number(data.monthlyContribution || 0), currency: data.currency || appData.profile.currency || "USD", ...savingsJointRecord(data) }; item ? Store.edit("savings", item.id, record) : Store.add("savings", record); Toast.show(item ? t("savingsSaved") : t("savingsCreated")); } });
 }
 
 function openSavingsUseModal(saving, preset = "") {
