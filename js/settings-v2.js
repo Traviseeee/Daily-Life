@@ -72,33 +72,33 @@ const SettingsV2 = (() => {
           <label class="sv-q"><small>${escapeHtml(L("ឯកជនភាព", "Privacy"))}</small><span class="sv-q-sw"><b>👁 ${escapeHtml(L("លាក់លុយ", "Hide money"))}</b>${toggle('data-preference="moneyHidden"', p.moneyHidden)}</span></label>
         </div>
 
-        <div class="sv-lbl">${escapeHtml(L("ទូទៅ", "General"))}</div>
         <div class="sv-grp">
+          <div class="sv-lbl">${escapeHtml(L("ទូទៅ", "General"))}</div>
           ${row({ href: "#settings/appearance", icon: "🌐", tone: "blue", title: L("ភាសា & ម៉ោង", "Language & clock"), sub: `${L("ភាសា", "Language")} · ${p.clockFormat || "12-hour"} · ${L("ទម្រង់ថ្ងៃ", "date format")}`, value: p.language === "Khmer" ? "ខ្មែរ" : "English" })}
           ${row({ href: "#settings/appearance", icon: "🎨", tone: "violet", title: L("សំឡេង & ញ័រ", "Sound & vibration"), sub: L("សំឡេងចុច · ញ័រ · រូបស្វាគមន៍", "Tap sounds · vibration · welcome photo") })}
           ${row({ href: "#settings/appearance", icon: "⚡", tone: "grey", title: L("សកម្មភាពរហ័ស", "Quick actions"), sub: L("ប៊ូតុង + · Footer", "+ button · footer"), value: String(quickCount) })}
         </div>
 
-        <div class="sv-lbl">${escapeHtml(L("លុយ", "Money"))}</div>
         <div class="sv-grp">
+          <div class="sv-lbl">${escapeHtml(L("លុយ", "Money"))}</div>
           ${row({ href: "#settings/money", icon: "💵", tone: "green", title: L("រូបិយប័ណ្ណ & ថវិកា", "Currency & budgets"), sub: `${p.currency || "USD"} · ${L("ថវិកាតាមប្រភេទ", "budgets by category")}`, value: p.currency || "USD" })}
           ${row({ icon: "💬", tone: "amber", title: L("សួរ \"បានទទួល/បង់ហើយឬនៅ?\"", "Ask \"received / paid yet?\""), sub: L("ពេលដល់ថ្ងៃ", "On the due day"), end: toggle('data-preference="moneyAsk"', p.moneyAsk !== false) })}
         </div>
 
-        <div class="sv-lbl">${escapeHtml(L("ការជូនដំណឹង", "Notifications"))}</div>
         <div class="sv-grp">
+          <div class="sv-lbl">${escapeHtml(L("ការជូនដំណឹង", "Notifications"))}</div>
           <button type="button" class="sv-row" data-nfc-open><span class="sv-ic is-amber" aria-hidden="true">🔔</span><span class="sv-tx"><b>${escapeHtml(L("ការជូនដំណឹង", "Notifications"))}</b><small>${escapeHtml(notifySub)}</small></span>${badge(notifyOn ? L("បើក", "On") : L("បិទ", "Off"), notifyOn ? "ok" : "warn")}${chev}</button>
           ${row({ href: "#settings/notifications", icon: "✈️", tone: "cyan", title: "Telegram bot", sub: L("@Daily2Life_Bot · ពាក្យបញ្ជា", "@Daily2Life_Bot · commands") })}
           ${row({ href: "#settings/notifications", icon: "📱", tone: "blue", title: L("ជូនដំណឹងលើអេក្រង់ចាក់សោ", "Lock-screen alerts"), sub: L("ទោះបិទ app ក៏ដោយ", "Even when the app is closed"), end: badge(pushOk ? L("រួចរាល់", "Ready") : L("ត្រូវរៀបចំ", "Set up"), pushOk ? "ok" : "warn") })}
         </div>
 
-        ${typeof AiAssist !== "undefined" ? `<div class="sv-lbl">AI</div>
-        <div class="sv-grp">
+        ${typeof AiAssist !== "undefined" ? `<div class="sv-grp">
+          <div class="sv-lbl">AI</div>
           ${row({ href: "#settings/ai", icon: "✨", tone: "violet", title: "AI · Gemini", sub: "MYLIFE Chat · Telegram bot", end: badge(aiOn ? L("បើក", "On") : ai.apiKey ? L("បិទ", "Off") : L("គ្មាន key", "No key"), aiOn ? "ok" : "warn") })}
         </div>` : ""}
 
-        <div class="sv-lbl">${escapeHtml(L("ទិន្នន័យ & សុវត្ថិភាព", "Data & security"))}</div>
         <div class="sv-grp">
+          <div class="sv-lbl">${escapeHtml(L("ទិន្នន័យ & សុវត្ថិភាព", "Data & security"))}</div>
           ${row({ href: "#settings/data", icon: "☁️", tone: "blue", title: "Backup & Sync", sub: L("Cloud · ប្រចាំសប្តាហ៍ · ក្នុងឧបករណ៍", "Cloud · weekly · on this device"), end: badge(pending ? L("រង់ចាំ", "Pending") : L("Sync រួច", "Synced"), pending ? "warn" : "ok") })}
           ${row({ href: "#settings/data", icon: "📤", tone: "green", title: L("នាំចេញ / នាំចូល", "Export / import"), sub: "JSON · Excel" })}
           ${typeof AppLock !== "undefined" ? row({ icon: "🔒", tone: "grey", title: L("ចាក់សោដោយ PIN", "Lock with a PIN"), sub: L("សួរ PIN ពេលបើក app", "Ask for a PIN when MYLIFE opens"), end: toggle("data-applock-toggle", lockOn) }) : ""}

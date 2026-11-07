@@ -64,6 +64,9 @@ button.sv-chip, a.sv-chip { cursor: pointer; }
 
 /* grouped rows */
 .sv-lbl { margin: 4px 8px 6px; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.02em; color: var(--sv-ink2); }
+/* the group title sits inside its card (7 Nov 2026) */
+.sv-grp > .sv-lbl { margin: 0; padding: 12px 2px 4px; font-size: 0.74rem; font-weight: 800; letter-spacing: 0.03em; text-transform: uppercase; }
+.sv-grp > .sv-lbl + .sv-row { border-top: 0 !important; }
 .sv-grp { margin-bottom: 14px; padding: 2px 14px; border-radius: 24px; background: var(--sv-card); box-shadow: var(--sv-shadow); }
 .sv-row { display: flex; align-items: center; gap: 12px; width: 100%; padding: 11px 0; border: 0; background: none; text-align: left; cursor: pointer; }
 .sv-row + .sv-row { border-top: 1px solid var(--sv-line); }

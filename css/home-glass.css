@@ -1,0 +1,437 @@
+/* Glass (7 Nov 2026), light mode only, every page: a slowly turning purple and white gradient behind
+   see-through glass cards and buttons, a corner shine, and a soft light sweep on the Home money card,
+   the small Home buttons and the bottom nav. Dark mode gets only the turning background (Aurora purple). Loaded last. */
+html[data-theme="light"] body {
+  --gl-card: rgba(255, 255, 255, .52);
+  --gl-card-strong: rgba(255, 255, 255, .66);
+  --gl-btn: rgba(255, 255, 255, .42);
+  --gl-edge: rgba(255, 255, 255, .78);
+  --gl-line: rgba(122, 108, 240, .14);
+  --gl-shadow: 0 10px 30px -12px rgba(91, 79, 214, .28);
+  --gl-hi: inset 0 1px 0 rgba(255, 255, 255, .9), inset 0 -1px 0 rgba(122, 108, 240, .06);
+  --gl-blur: blur(18px) saturate(170%);
+  background:
+    radial-gradient(50% 22% at 100% 4%, rgba(196, 180, 255, .30), transparent 70%),
+    radial-gradient(70% 45% at 0% 30%, rgba(178, 160, 255, .45), transparent 70%),
+    radial-gradient(70% 50% at 100% 70%, rgba(190, 168, 255, .55), transparent 70%),
+    radial-gradient(60% 40% at 0% 100%, rgba(255, 255, 255, .5), transparent 70%),
+    linear-gradient(180deg, #8573ea 0%, #9585f0 12%, #ad9ff7 22%, #d6ccff 34%, #ece6ff 50%, #f5f0ff 74%, #efeaff 100%) !important;
+  background-attachment: fixed !important;
+}
+
+/* the purple hero stays exactly as today (white text); the glass page starts under it */
+html[data-theme="light"] body .app-main { background: transparent !important; }
+
+/* cards: frosted, a little see-through */
+html[data-theme="light"] body #app :is(.hv2-card, .hv2-soft, .hv2-week, .hv4-card) {
+  background: var(--gl-card) !important;
+  border: 1px solid var(--gl-edge) !important;
+  box-shadow: var(--gl-shadow), var(--gl-hi) !important;
+  -webkit-backdrop-filter: var(--gl-blur); backdrop-filter: var(--gl-blur);
+}
+html[data-theme="light"] body #app .hv2-soft { background: var(--gl-card-strong) !important; }
+html[data-theme="light"] body #app .hv2-tl-row + .hv2-tl-row { border-top-color: var(--gl-line) !important; }
+html[data-theme="light"] body #app :is(.hv2-mt, .hv4-m3) { border-color: var(--gl-line) !important; }
+
+/* glass buttons: top bar, chips, quick actions, moods, bottom bar */
+html[data-theme="light"] body :is(#app .hv2-bell, #app .hv2-menu, #app .hv2-wx, #app .hv4-more, #app .hv4-chev, #app .hv4-edit, #app .hv2-mood-btn > span, #app .hv2-q > i:not(.hv2-q-a)) {
+  background: var(--gl-btn) !important;
+  border: 1px solid var(--gl-edge) !important;
+  box-shadow: 0 6px 16px -8px rgba(91, 79, 214, .35), var(--gl-hi) !important;
+  -webkit-backdrop-filter: var(--gl-blur); backdrop-filter: var(--gl-blur);
+}
+html[data-theme="light"] body #app .hv2-q > i.hv2-q-a {
+  background: linear-gradient(140deg, rgba(139, 124, 246, .92), rgba(91, 79, 214, .88)) !important;
+  border: 1px solid rgba(255, 255, 255, .55) !important;
+  box-shadow: 0 10px 22px -8px rgba(91, 79, 214, .55), inset 0 1px 0 rgba(255, 255, 255, .45) !important;
+}
+html[data-theme="light"] body #app :is(.hv4-status, .hv2-soft-pill, .hv2-say) {
+  background: rgba(255, 255, 255, .5) !important;
+  border: 1px solid var(--gl-edge) !important;
+  -webkit-backdrop-filter: var(--gl-blur); backdrop-filter: var(--gl-blur);
+}
+html[data-theme="light"] body #app .hv2-day.is-today,
+html[data-theme="light"] body #app .hv2-day[aria-current] {
+  background: linear-gradient(160deg, rgba(139, 124, 246, .9), rgba(91, 79, 214, .9)) !important;
+  box-shadow: 0 8px 18px -8px rgba(91, 79, 214, .6), inset 0 1px 0 rgba(255, 255, 255, .4) !important;
+}
+html[data-theme="light"] body #mobileNav {
+  background: rgba(255, 255, 255, .5) !important;
+  border: 1px solid var(--gl-edge) !important;
+  box-shadow: 0 16px 34px -14px rgba(91, 79, 214, .45), var(--gl-hi) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(180%); backdrop-filter: blur(22px) saturate(180%);
+}
+html[data-theme="light"] body .quick-action-dock > button,
+html[data-theme="light"] body .quick-action-dock > a {
+  background: linear-gradient(140deg, rgba(139, 124, 246, .85), rgba(91, 79, 214, .85)) !important;
+  border: 1px solid rgba(255, 255, 255, .55) !important;
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+}
+
+/* the writing box: one soft glass field */
+html[data-theme="light"] body #app .hv2-ask .reflection-textarea {
+  background: rgba(255, 255, 255, .45) !important;
+  border: 1px solid var(--gl-edge) !important;
+  box-shadow: var(--gl-hi) !important;
+}
+
+/* ---------- light on the glass (v3): corner shine, bright top edge, a slow light swipe ---------- */
+html[data-theme="light"] body {
+  --gl-corner: linear-gradient(135deg, rgba(255, 255, 255, .95) 0%, rgba(255, 255, 255, .45) 20%, rgba(255, 255, 255, .08) 46%, rgba(255, 255, 255, 0) 60%);
+  --gl-swipe: linear-gradient(105deg, rgba(255, 255, 255, 0) 42%, rgba(255, 255, 255, .55) 50%, rgba(255, 255, 255, 0) 58%);
+  --gl-edge-hi: inset 0 1.5px 0 rgba(255, 255, 255, .95), inset 1.5px 0 0 rgba(255, 255, 255, .55), inset 0 -1px 0 rgba(122, 108, 240, .08);
+}
+html[data-theme="light"] body #app :is(.hv2-card, .hv2-soft, .hv2-week, .hv4-card) {
+  background-image: var(--gl-corner), linear-gradient(var(--gl-card), var(--gl-card)) !important; background-color: transparent !important;
+  background-size: 100% 100%, 100% 100% !important;
+  background-repeat: no-repeat !important;
+  background-position: 0 0, 0 0;
+  box-shadow: var(--gl-edge-hi) !important; /* no drop shadow, just the glass edge */
+}
+html[data-theme="light"] body #app .hv2-soft {
+  background-image: var(--gl-corner), linear-gradient(var(--gl-card-strong), var(--gl-card-strong)) !important; background-color: transparent !important;
+  background-size: 100% 100%, 100% 100% !important; background-repeat: no-repeat !important;
+  animation-delay: 1.2s;
+}
+html[data-theme="light"] body :is(#app .hv2-bell, #app .hv2-menu, #app .hv2-wx, #app .hv4-more, #app .hv4-chev, #app .hv4-edit, #app .hv2-mood-btn > span, #app .hv2-q > i:not(.hv2-q-a)) {
+  background-image: var(--gl-corner), linear-gradient(var(--gl-btn), var(--gl-btn)) !important; background-color: transparent !important;
+  background-size: 100% 100%, 100% 100% !important; background-repeat: no-repeat !important;
+  background-position: 0 0, 0 0;
+  box-shadow: 0 6px 16px -8px rgba(91, 79, 214, .35), var(--gl-edge-hi) !important;
+}
+html[data-theme="light"] body #app .hv2-q > i.hv2-q-a,
+html[data-theme="light"] body #app .hv2-day.is-today,
+html[data-theme="light"] body #app .hv2-day[aria-current] {
+  background-image: linear-gradient(135deg, rgba(255, 255, 255, .45) 0%, rgba(255, 255, 255, 0) 38%), linear-gradient(140deg, rgba(139, 124, 246, .95), rgba(91, 79, 214, .92)) !important; background-color: transparent !important;
+  background-size: 100% 100%, 100% 100% !important; background-repeat: no-repeat !important;
+  background-position: 0 0, 0 0;
+}
+html[data-theme="light"] body #mobileNav {
+  background: var(--gl-corner), rgba(255, 255, 255, .55) !important;
+  box-shadow: 0 16px 34px -14px rgba(91, 79, 214, .45), var(--gl-edge-hi) !important;
+}
+/* Nomi's speech bubble on the purple: whiter glass so the words read clearly */
+html[data-theme="light"] body #app .hv2-hero .hv2-say {
+  background: var(--gl-corner), rgba(255, 255, 255, .82) !important;
+  border: 1px solid rgba(255, 255, 255, .95) !important;
+  box-shadow: 0 8px 20px -10px rgba(40, 30, 120, .45), var(--gl-edge-hi) !important;
+  color: #2a2350 !important;
+}
+html[data-theme="light"] body #app .hv2-soft { background-position: 0 0, 0 0; }
+@keyframes glSwipe { 0%, 70% { background-position: 0 0, 0 0; } 100% { background-position: -60% 0, 0 0, 0 0; } }
+@media (prefers-reduced-motion: reduce) { html body #app * { animation-name: none !important; } }
+
+/* ---------- v4: a living background + livelier light ---------- */
+/* soft colour clouds drift slowly behind everything (one GPU layer, no repaint of the page) */
+html[data-theme="light"] body::after {
+  content: ""; position: fixed; inset: -25%; z-index: -1; pointer-events: none;
+  background:
+    radial-gradient(28% 22% at 22% 30%, rgba(178, 160, 255, .5), transparent 70%),
+    radial-gradient(30% 24% at 78% 42%, rgba(255, 255, 255, .55), transparent 70%),
+    radial-gradient(34% 26% at 40% 72%, rgba(186, 160, 255, .55), transparent 70%),
+    radial-gradient(26% 20% at 80% 82%, rgba(160, 140, 250, .35), transparent 70%);
+  animation: glDrift 26s ease-in-out infinite alternate;
+  will-change: transform;
+}
+html[data-theme="light"] body { --gl-swipe: linear-gradient(105deg, rgba(255, 255, 255, 0) 40%, rgba(255, 255, 255, .75) 50%, rgba(255, 255, 255, 0) 60%); }
+/* the bottom bar gets the light too */
+html[data-theme="light"] body #mobileNav {
+  background-image: var(--gl-corner), linear-gradient(rgba(255, 255, 255, .55), rgba(255, 255, 255, .55)) !important; background-color: transparent !important;
+  background-size: 100% 100%, 100% 100% !important; background-repeat: no-repeat !important;
+}
+@keyframes glDrift {
+  0% { transform: translate3d(0, 0, 0) rotate(0deg) scale(1); }
+  50% { transform: translate3d(6%, -4%, 0) rotate(8deg) scale(1.08); }
+  100% { transform: translate3d(-6%, 5%, 0) rotate(-6deg) scale(1.04); }
+}
+@media (prefers-reduced-motion: reduce) { html[data-theme="light"] body::after { animation: none; } }
+
+/* ---------- the live light swipe: a light band slides over each card / button (its own layer) ---------- */
+html[data-theme="light"] body :is(#app .hv2-soft-wrap, #app .hv2-bell, #app .hv2-menu, #app .hv2-wx, #app .hv2-q > i, #app .hv2-mood-btn > span, #app .hv4-more, #app .hv4-chev, #mobileNav)::after {
+  content: ""; position: absolute; inset: 0; z-index: 3; pointer-events: none; border-radius: inherit;
+  background: linear-gradient(105deg, rgba(255, 255, 255, 0) 38%, rgba(255, 255, 255, .7) 50%, rgba(255, 255, 255, 0) 62%) no-repeat;
+  background-size: 260% 100%; background-position: 160% 0;
+  animation: glSweep 6s ease-in-out infinite;
+}
+html[data-theme="light"] body :is(#app .hv2-wx, #app .hv2-q > i, #app .hv2-mood-btn > span, #app .hv4-more, #app .hv4-chev) { position: relative; }
+html[data-theme="light"] body #app .hv2-soft-wrap { position: relative; border-radius: 26px; }
+html[data-theme="light"] body #app .hv2-soft-wrap::after { inset: 0 0 12px 0; }
+/* buttons a little quicker, everyone on their own beat */
+html[data-theme="light"] body :is(#app .hv2-bell, #app .hv2-menu, #app .hv2-wx, #app .hv2-q > i, #app .hv2-mood-btn > span, #app .hv4-more, #app .hv4-chev)::after { animation-duration: 4.5s; }
+html[data-theme="light"] body #app .hv2-menu::after { animation-delay: .4s; }
+html[data-theme="light"] body #app .hv2-bell::after { animation-delay: .8s; }
+html[data-theme="light"] body #app .hv2-soft-wrap::after { animation-delay: 1s; }
+html[data-theme="light"] body #app .hv2-q:nth-child(2) > i::after, html[data-theme="light"] body #app .hv2-mood-btn:nth-child(2) > span::after { animation-delay: .35s; }
+html[data-theme="light"] body #app .hv2-q:nth-child(3) > i::after, html[data-theme="light"] body #app .hv2-mood-btn:nth-child(3) > span::after { animation-delay: .7s; }
+html[data-theme="light"] body #app .hv2-q:nth-child(4) > i::after, html[data-theme="light"] body #app .hv2-mood-btn:nth-child(4) > span::after { animation-delay: 1.05s; }
+html[data-theme="light"] body #app .hv2-mood-btn:nth-child(5) > span::after { animation-delay: 1.4s; }
+html[data-theme="light"] body #mobileNav::after { animation-delay: 1.5s; }
+@keyframes glSweep { 0%, 62% { background-position: 160% 0; } 100% { background-position: -60% 0; } }
+@media (prefers-reduced-motion: reduce) { html body *::after { animation: none !important; } }
+
+/* ---------- v5: the gradient itself turns slowly ---------- */
+/* a large soft gradient sheet rotates behind the glass; colour clouds ride on it. Transform only = cheap. */
+html[data-theme="light"] body::after {
+  inset: -70%;
+  background:
+    radial-gradient(18% 14% at 38% 40%, rgba(255, 255, 255, .55), transparent 70%),
+    radial-gradient(22% 16% at 64% 62%, rgba(190, 172, 255, .45), transparent 70%),
+    linear-gradient(0deg, #c3b3ff 0%, #e6dcff 20%, #faf8ff 36%, #d6c9ff 52%, #b9a6ff 66%, #f4f0ff 82%, #c3b3ff 100%);
+  animation: glTurn 48s linear infinite;
+}
+@keyframes glTurn { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { html body::after { animation: none; } }
+
+/* ---------- v6: the same glass on every page (light) ---------- */
+/* pages paint their own solid background; let the turning gradient show through */
+html:root[data-theme="light"] body:not(#gl) :is(.app-main, .launcher-page.page) { background: transparent !important; }
+/* each page's cards: frosted, corner shine, glass edge, no drop shadow */
+html:root[data-theme="light"] body:not(#gl) #app :is(
+  .lv-search, .lv3-money, .lv-grid, .lv-ups,
+  .ab-section, .fv2-section, .fv2-two-card, .qx-card, .ev-card,
+  .cv2-seg, .cv2-card,
+  .fv-avs, .fv4-card, .glass-card, .fg-card,
+  .mf-scope, .mf-views, .gv-card,
+  .sv-prof, .sv-q, .sv-grp,
+  .nfc-group, .nfc-tabs,
+  .fc-row, .fc-tip,
+  .mp-card, .mp-info, .mp-admin,
+  .smart-help-card, .tp-week, .tp-card, .tp-principles) {
+  background-image: var(--gl-corner), linear-gradient(var(--gl-card), var(--gl-card)) !important; background-color: transparent !important;
+  background-size: 100% 100%, 100% 100% !important; background-repeat: no-repeat !important; background-position: 0 0, 0 0 !important;
+  border: 1px solid var(--gl-edge) !important;
+  box-shadow: var(--gl-edge-hi) !important;
+  -webkit-backdrop-filter: var(--gl-blur); backdrop-filter: var(--gl-blur);
+}
+/* the body paints its own solid colour on most pages, which hides the turning gradient (z-index -1):
+   clear it and give the page colour to <html> instead */
+html:root[data-theme="light"]:has(body:not(#gl)) { background: #e9e1ff !important; }
+html:root[data-theme="light"] body:not(#gl) { background: transparent !important; }
+/* the soft colour band at the top of some pages ends in a hard line on the moving background: fade it out */
+html:root[data-theme="light"] body:not(#gl) #app > .page::before {
+  -webkit-mask-image: linear-gradient(#000 55%, transparent); mask-image: linear-gradient(#000 55%, transparent);
+}
+
+/* ---------- v7: pop-ups are glass too (not the welcome poster) ---------- */
+html:root[data-theme="light"] body #modalRoot#modalRoot:not(.welcome-poster-modal) .modal.modal {
+  background: linear-gradient(135deg, rgba(255, 255, 255, .95) 0%, rgba(255, 255, 255, .55) 22%, rgba(255, 255, 255, 0) 50%), rgba(250, 248, 255, .78) !important;
+  border: 1px solid rgba(255, 255, 255, .85) !important;
+  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, .95), 0 -10px 40px -20px rgba(80, 74, 185, .35) !important;
+  -webkit-backdrop-filter: blur(26px) saturate(170%); backdrop-filter: blur(26px) saturate(170%);
+}
+
+/* ---------- dark mode: background only (option B · Aurora purple), cards unchanged ---------- */
+html:root:not([data-theme="light"]):has(body:not(#gl)) { background: #14102a !important; }
+html:root:not([data-theme="light"]) body:not(#gl) { background: transparent !important; }
+html:root:not([data-theme="light"]) body:not(#gl) :is(.app-main, .launcher-page.page) { background: transparent !important; }
+html:root:not([data-theme="light"]) body::after {
+  content: ""; position: fixed; inset: -70%; z-index: -1; pointer-events: none; will-change: transform;
+  background:
+    radial-gradient(16% 12% at 36% 38%, rgba(255, 255, 255, .16), transparent 70%),
+    radial-gradient(24% 18% at 62% 60%, rgba(159, 140, 255, .55), transparent 70%),
+    radial-gradient(20% 16% at 30% 70%, rgba(106, 88, 224, .5), transparent 70%),
+    linear-gradient(0deg, #14102a 0%, #3b2d8f 18%, #6a58e0 30%, #2a2166 44%, #120f26 60%, #4b3bb0 78%, #14102a 100%);
+  animation: glTurn 48s linear infinite;
+}
+html:root:not([data-theme="light"]) body:not(#gl) #app > .page::before {
+  -webkit-mask-image: linear-gradient(#000 55%, transparent); mask-image: linear-gradient(#000 55%, transparent);
+}
+@media (prefers-reduced-motion: reduce) { html:root:not([data-theme="light"]) body::after { animation: none; } }
+
+/* ---------- v8: the welcome pop-up is glass too (light) ---------- */
+html:root[data-theme="light"] body:not(#gl) .modal-root.welcome-poster-modal { background: rgba(80, 66, 180, .28) !important; }
+html:root[data-theme="light"] body:not(#gl) .welcome-poster-card.wp2 {
+  --wp-soft: rgba(255, 255, 255, .55);
+  --wp-empty: linear-gradient(160deg, rgba(196, 180, 255, .55), rgba(255, 255, 255, .25));
+  background: linear-gradient(135deg, rgba(255, 255, 255, .95) 0%, rgba(255, 255, 255, .5) 22%, rgba(255, 255, 255, 0) 50%), rgba(248, 245, 255, .8) !important;
+  border: 1px solid rgba(255, 255, 255, .85) !important;
+  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, .95), 0 30px 60px -20px rgba(60, 46, 160, .45) !important;
+  -webkit-backdrop-filter: blur(26px) saturate(170%); backdrop-filter: blur(26px) saturate(170%);
+}
+html:root[data-theme="light"] body:not(#gl) .welcome-poster-card.wp2 :is(.wp2-x, .wp2-cam) {
+  background: rgba(255, 255, 255, .6) !important; border: 1px solid rgba(255, 255, 255, .9) !important;
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+}
+html:root[data-theme="light"] body:not(#gl) .welcome-poster-card.wp2 .wp2-free { border: 1px solid rgba(255, 255, 255, .8); }
+/* dark: the same welcome glass in deep purple */
+html:root:not([data-theme="light"]) body:not(#gl) .modal-root.welcome-poster-modal { background: rgba(10, 6, 30, .45) !important; }
+html:root:not([data-theme="light"]) body:not(#gl) .welcome-poster-card.wp2 {
+  --wp-soft: rgba(255, 255, 255, .09);
+  --wp-empty: linear-gradient(160deg, rgba(159, 140, 255, .35), rgba(46, 41, 86, .15));
+  background: linear-gradient(135deg, rgba(255, 255, 255, .16) 0%, rgba(255, 255, 255, .05) 24%, rgba(255, 255, 255, 0) 50%), rgba(40, 34, 84, .7) !important;
+  border: 1px solid rgba(182, 168, 255, .28) !important;
+  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, .14), 0 30px 60px -20px rgba(0, 0, 0, .6) !important;
+  -webkit-backdrop-filter: blur(26px) saturate(160%); backdrop-filter: blur(26px) saturate(160%);
+}
+html:root:not([data-theme="light"]) body:not(#gl) .welcome-poster-card.wp2 :is(.wp2-x, .wp2-cam) {
+  color: #f4f2ff !important; background: rgba(255, 255, 255, .12) !important; border: 1px solid rgba(255, 255, 255, .18) !important;
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+}
+html:root:not([data-theme="light"]) body:not(#gl) .welcome-poster-card.wp2 .wp2-free { border: 1px solid rgba(255, 255, 255, .1); }
+
+/* ---------- v9: dark mode gets the same glass (deep purple glass on the Aurora background) ---------- */
+html:root:not([data-theme="light"]) body:not(#gl) {
+  --gl-card: rgba(38, 32, 82, .55);
+  --gl-card-strong: rgba(38, 32, 82, .66);
+  --gl-btn: rgba(255, 255, 255, .09);
+  --gl-edge: rgba(182, 168, 255, .24);
+  --gl-line: rgba(182, 168, 255, .14);
+  --gl-blur: blur(18px) saturate(160%);
+  --gl-corner: linear-gradient(135deg, rgba(255, 255, 255, .17) 0%, rgba(255, 255, 255, .06) 20%, rgba(255, 255, 255, 0) 46%);
+  --gl-edge-hi: inset 0 1.5px 0 rgba(255, 255, 255, .14), inset 1.5px 0 0 rgba(255, 255, 255, .06), inset 0 -1px 0 rgba(0, 0, 0, .18);
+}
+/* cards: Home + every page */
+html:root:not([data-theme="light"]) body:not(#gl) #app :is(
+  .hv2-card, .hv2-week, .hv4-card,
+  .lv-search, .lv3-money, .lv-grid, .lv-ups,
+  .ab-section, .fv2-section, .fv2-two-card, .qx-card, .ev-card,
+  .cv2-seg, .cv2-card,
+  .fv-avs, .fv4-card, .glass-card, .fg-card,
+  .mf-scope, .mf-views, .gv-card,
+  .sv-prof, .sv-q, .sv-grp,
+  .nfc-group, .nfc-tabs,
+  .fc-row, .fc-tip,
+  .mp-card, .mp-info, .mp-admin,
+  .smart-help-card, .tp-week, .tp-card, .tp-principles) {
+  background-image: var(--gl-corner), linear-gradient(var(--gl-card), var(--gl-card)) !important; background-color: transparent !important;
+  background-size: 100% 100%, 100% 100% !important; background-repeat: no-repeat !important; background-position: 0 0, 0 0 !important;
+  border: 1px solid var(--gl-edge) !important;
+  box-shadow: var(--gl-edge-hi) !important;
+  -webkit-backdrop-filter: var(--gl-blur); backdrop-filter: var(--gl-blur);
+}
+html:root:not([data-theme="light"]) body:not(#gl) #app .hv2-soft {
+  background-image: var(--gl-corner), linear-gradient(var(--gl-card-strong), var(--gl-card-strong)) !important; background-color: transparent !important;
+  background-size: 100% 100%, 100% 100% !important; background-repeat: no-repeat !important;
+  border: 1px solid var(--gl-edge) !important; box-shadow: var(--gl-edge-hi) !important;
+  -webkit-backdrop-filter: var(--gl-blur); backdrop-filter: var(--gl-blur);
+}
+html:root:not([data-theme="light"]) body:not(#gl) #app .hv2-tl-row + .hv2-tl-row { border-top-color: var(--gl-line) !important; }
+html:root:not([data-theme="light"]) body:not(#gl) #app :is(.hv2-mt, .hv4-m3) { border-color: var(--gl-line) !important; }
+/* buttons */
+html:root:not([data-theme="light"]) body:not(#gl) :is(#app .hv2-bell, #app .hv2-menu, #app .hv2-wx, #app .hv4-more, #app .hv4-chev, #app .hv4-edit, #app .hv2-mood-btn > span, #app .hv2-q > i:not(.hv2-q-a)) {
+  background-image: var(--gl-corner), linear-gradient(var(--gl-btn), var(--gl-btn)) !important; background-color: transparent !important;
+  background-size: 100% 100%, 100% 100% !important; background-repeat: no-repeat !important; background-position: 0 0, 0 0;
+  border: 1px solid var(--gl-edge) !important;
+  box-shadow: 0 6px 16px -8px rgba(0, 0, 0, .45), var(--gl-edge-hi) !important;
+  -webkit-backdrop-filter: var(--gl-blur); backdrop-filter: var(--gl-blur);
+}
+html:root:not([data-theme="light"]) body:not(#gl) #app :is(.hv4-status, .hv2-soft-pill) {
+  background: rgba(255, 255, 255, .08) !important; border: 1px solid var(--gl-edge) !important;
+}
+html:root:not([data-theme="light"]) body:not(#gl) #app .hv2-q > i.hv2-q-a,
+html:root:not([data-theme="light"]) body:not(#gl) #app .hv2-day.is-today,
+html:root:not([data-theme="light"]) body:not(#gl) #app .hv2-day[aria-current] {
+  background-image: linear-gradient(135deg, rgba(255, 255, 255, .3) 0%, rgba(255, 255, 255, 0) 38%), linear-gradient(140deg, rgba(139, 124, 246, .95), rgba(91, 79, 214, .92)) !important; background-color: transparent !important;
+  background-size: 100% 100%, 100% 100% !important; background-repeat: no-repeat !important;
+}
+/* bottom bar */
+html:root:not([data-theme="light"]) body:not(#gl) #mobileNav {
+  background-image: var(--gl-corner), linear-gradient(rgba(30, 25, 66, .55), rgba(30, 25, 66, .55)) !important; background-color: transparent !important;
+  background-size: 100% 100%, 100% 100% !important; background-repeat: no-repeat !important;
+  border: 1px solid var(--gl-edge) !important;
+  box-shadow: 0 16px 34px -14px rgba(0, 0, 0, .6), var(--gl-edge-hi) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(170%); backdrop-filter: blur(22px) saturate(170%);
+}
+/* live light sweep: same places as light, softer */
+html:root:not([data-theme="light"]) body:not(#gl) :is(#app .hv2-soft-wrap, #app .hv2-bell, #app .hv2-menu, #app .hv2-wx, #app .hv2-q > i, #app .hv2-mood-btn > span, #app .hv4-more, #app .hv4-chev, #mobileNav)::after {
+  content: ""; position: absolute; inset: 0; z-index: 3; pointer-events: none; border-radius: inherit;
+  background: linear-gradient(105deg, rgba(255, 255, 255, 0) 38%, rgba(255, 255, 255, .22) 50%, rgba(255, 255, 255, 0) 62%) no-repeat;
+  background-size: 260% 100%; background-position: 160% 0;
+  animation: glSweep 6s ease-in-out infinite;
+}
+html:root:not([data-theme="light"]) body:not(#gl) :is(#app .hv2-wx, #app .hv2-q > i, #app .hv2-mood-btn > span, #app .hv4-more, #app .hv4-chev) { position: relative; }
+html:root:not([data-theme="light"]) body:not(#gl) #app .hv2-soft-wrap { position: relative; border-radius: 26px; }
+html:root:not([data-theme="light"]) body:not(#gl) #app .hv2-soft-wrap::after { inset: 0 0 12px 0; animation-delay: 1s; }
+html:root:not([data-theme="light"]) body:not(#gl) :is(#app .hv2-bell, #app .hv2-menu, #app .hv2-wx, #app .hv2-q > i, #app .hv2-mood-btn > span, #app .hv4-more, #app .hv4-chev)::after { animation-duration: 4.5s; }
+html:root:not([data-theme="light"]) body:not(#gl) #app .hv2-menu::after { animation-delay: .4s; }
+html:root:not([data-theme="light"]) body:not(#gl) #app .hv2-bell::after { animation-delay: .8s; }
+html:root:not([data-theme="light"]) body:not(#gl) #mobileNav::after { animation-delay: 1.5s; }
+@media (prefers-reduced-motion: reduce) { html:root:not([data-theme="light"]) body *::after { animation: none !important; } }
+/* pop-ups */
+html:root:not([data-theme="light"]) body #modalRoot#modalRoot:not(.welcome-poster-modal) .modal.modal {
+  background: linear-gradient(135deg, rgba(255, 255, 255, .14) 0%, rgba(255, 255, 255, .04) 22%, rgba(255, 255, 255, 0) 50%), rgba(36, 30, 78, .78) !important;
+  border: 1px solid var(--gl-edge) !important;
+  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, .14), 0 -10px 40px -20px rgba(0, 0, 0, .6) !important;
+  -webkit-backdrop-filter: blur(26px) saturate(160%); backdrop-filter: blur(26px) saturate(160%);
+}
+/* dark: the money card was white with dark ink; on dark glass the words turn light */
+html:root:not([data-theme="light"]) body:not(#gl) #app .hv2-soft { color: #f4f2ff !important; }
+html:root:not([data-theme="light"]) body:not(#gl) #app .hv2-soft :is(.hv2-soft-amt, .hv2-soft-bud .money-value, .money-value:not(.hv2-soft-t .money-value)) { color: #f4f2ff !important; -webkit-text-fill-color: #f4f2ff !important; }
+html:root:not([data-theme="light"]) body:not(#gl) #app .hv2-soft span:not(.hv2-say):not(.hv2-soft-pill) { color: #f4f2ff; }
+html:root:not([data-theme="light"]) body:not(#gl) #app .hv2-soft :is(.hv2-soft-pill, .hv2-soft-month, .hv2-soft-edit) { color: #d9d0ff !important; background-color: rgba(255, 255, 255, .1) !important; }
+html:root:not([data-theme="light"]) body:not(#gl) #app .hv2-q span { color: #f4f2ff !important; }
+
+/* ---------- settings: the status chips under the profile, as small glass pills (both themes) ---------- */
+html:root body:not(#gl) .sv2 .sv-hero .sv-chips { gap: 6px; }
+html:root body:not(#gl) .sv2 .sv-hero .sv-chip {
+  display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 11px 0 10px;
+  font-family: inherit !important; font-size: .72rem !important; font-weight: 700 !important; line-height: 1 !important; letter-spacing: 0; white-space: nowrap;
+  border-radius: 999px; text-decoration: none;
+  -webkit-backdrop-filter: blur(14px) saturate(160%); backdrop-filter: blur(14px) saturate(160%);
+}
+html:root[data-theme="light"] body:not(#gl) .sv2 .sv-hero .sv-chip {
+  color: #3a3170 !important;
+  background: linear-gradient(135deg, rgba(255, 255, 255, .9), rgba(255, 255, 255, .55)) !important;
+  border: 1px solid rgba(255, 255, 255, .9) !important;
+  box-shadow: inset 0 1px 0 #fff, 0 6px 14px -8px rgba(60, 46, 160, .45) !important;
+}
+html:root:not([data-theme="light"]) body:not(#gl) .sv2 .sv-hero .sv-chip {
+  color: #f4f2ff !important;
+  background: linear-gradient(135deg, rgba(255, 255, 255, .16), rgba(255, 255, 255, .06)) !important;
+  border: 1px solid rgba(182, 168, 255, .3) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .14) !important;
+}
+/* status: a small coloured dot after the text (green ok, amber needs attention) */
+html:root body:not(#gl) .sv2 .sv-hero .sv-chip:is(.is-ok, .is-warn)::after { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #2fb489; box-shadow: 0 0 0 2px rgba(47, 180, 137, .22); }
+html:root body:not(#gl) .sv2 .sv-hero .sv-chip.is-warn::after { background: #f0a03a; box-shadow: 0 0 0 2px rgba(240, 160, 58, .25); }
+/* group titles inside the glass cards */
+html:root[data-theme="light"] body:not(#gl) .sv2 .sv-grp > .sv-lbl { color: #6a58e0 !important; }
+html:root:not([data-theme="light"]) body:not(#gl) .sv2 .sv-grp > .sv-lbl { color: #c9bdff !important; }
+
+/* ---------- About (settings/about) + Tips: glass cards and lavender instead of the old amber / lime ---------- */
+html:root body:not(#gl) #app :is(.settings-about-story, .settings-release-item, .tp-tip) {
+  background-image: var(--gl-corner), linear-gradient(var(--gl-card), var(--gl-card)) !important; background-color: transparent !important;
+  background-size: 100% 100%, 100% 100% !important; background-repeat: no-repeat !important; background-position: 0 0, 0 0 !important;
+  border: 1px solid var(--gl-edge) !important;
+  box-shadow: var(--gl-edge-hi) !important;
+  -webkit-backdrop-filter: var(--gl-blur); backdrop-filter: var(--gl-blur);
+}
+html:root body:not(#gl) #app .settings-about-story .ni-replay { background: rgba(255, 255, 255, .35) !important; border: 1px solid var(--gl-edge) !important; box-shadow: none !important; }
+html:root:not([data-theme="light"]) body:not(#gl) #app .settings-about-story .ni-replay { background: rgba(255, 255, 255, .06) !important; }
+html:root[data-theme="light"] body:not(#gl) #app :is(.settings-about-brand, .settings-about-story .settings-about-tagline) { color: #6a58e0 !important; }
+html:root:not([data-theme="light"]) body:not(#gl) #app :is(.settings-about-brand, .settings-about-story .settings-about-tagline) { color: #c9bdff !important; }
+html:root body:not(#gl) #app .settings-about-version { color: #6a58e0 !important; background: rgba(139, 124, 246, .12) !important; border-color: rgba(139, 124, 246, .25) !important; }
+html:root:not([data-theme="light"]) body:not(#gl) #app .settings-about-version { color: #d9d0ff !important; }
+
+/* Tips: today's tip card in lavender (was lime green) */
+html:root body:not(#gl) #app .tp-hero {
+  color: #fff !important;
+  background: radial-gradient(circle at 92% 8%, rgba(255, 255, 255, .35), transparent 42%), linear-gradient(140deg, #9f8cff 0%, #7b68ee 52%, #5847c9 100%) !important;
+  border: 1px solid rgba(255, 255, 255, .45) !important;
+  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, .45), 0 16px 34px -18px rgba(60, 46, 160, .6) !important;
+}
+html:root:not([data-theme="light"]) body:not(#gl) #app .tp-hero {
+  background: radial-gradient(circle at 92% 8%, rgba(255, 255, 255, .2), transparent 42%), linear-gradient(140deg, #7b68ee 0%, #5847c9 55%, #3b2d8f 100%) !important;
+  border-color: rgba(182, 168, 255, .35) !important;
+}
+html:root body:not(#gl) #app .tp-hero::after { border-color: rgba(255, 255, 255, .16) !important; }
+html:root body:not(#gl) #app .tp-hero :is(h2, .tp-steps li) { color: #fff !important; -webkit-text-fill-color: #fff; }
+html:root body:not(#gl) #app .tp-hero > p { color: rgba(255, 255, 255, .88) !important; }
+html:root body:not(#gl) #app .tp-hero .tp-pill { color: #fff !important; background: rgba(255, 255, 255, .2) !important; border: 1px solid rgba(255, 255, 255, .3); }
+html:root body:not(#gl) #app .tp-hero .tp-pill-soft { color: #504ab9 !important; background: rgba(255, 255, 255, .88) !important; }
+html:root body:not(#gl) #app .tp-hero .tp-steps svg { color: #fff !important; background: rgba(255, 255, 255, .25) !important; }
+html:root body:not(#gl) #app .tp-hero .tp-btn { color: #fff !important; background: rgba(255, 255, 255, .18) !important; border: 1px solid rgba(255, 255, 255, .35) !important; box-shadow: none !important; }
+html:root body:not(#gl) #app .tp-hero .tp-btn-main { color: #504ab9 !important; background: #fff !important; border-color: #fff !important; }
+html:root body:not(#gl) #app .tp-hero .tp-btn.is-done { color: #fff !important; background: rgba(47, 180, 137, .9) !important; border-color: transparent !important; }
+/* the week ring: purple instead of lime */
+html:root[data-theme="light"] body:not(#gl) #app .tp-ring { background: radial-gradient(closest-side, rgba(255, 255, 255, .85) 76%, transparent 77% 100%), conic-gradient(#7b68ee calc(var(--p) * 1%), rgba(123, 104, 238, .16) 0) !important; }
+html:root:not([data-theme="light"]) body:not(#gl) #app .tp-ring { background: radial-gradient(closest-side, #2a2260 76%, transparent 77% 100%), conic-gradient(#b6a8ff calc(var(--p) * 1%), rgba(182, 168, 255, .16) 0) !important; }
+/* Tips: the main buttons and the selected filter in purple (were dark green + lime) */
+html:root body:not(#gl) #app .tp-page :is(.tp-btn-main, .tp-chip.active):not(.tp-hero .tp-btn-main) {
+  color: #fff !important; border-color: transparent !important;
+  background: linear-gradient(140deg, #9f8cff, #6a58e0) !important;
+}
+html:root body:not(#gl) #app .tp-page .tp-chip:not(.active) {
+  background: var(--gl-card) !important; border: 1px solid var(--gl-edge) !important;
+  -webkit-backdrop-filter: var(--gl-blur); backdrop-filter: var(--gl-blur);
+}
