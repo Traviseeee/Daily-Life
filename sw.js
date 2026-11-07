@@ -1,4 +1,4 @@
-const CACHE_NAME = "mylife-pwa-cc60f627";
+const CACHE_NAME = "mylife-pwa-9fe428f2";
 // red number on the Home Screen icon: the app saves its bell count here and a
 // push that arrives while the app is closed adds 1 to it
 const BADGE_CACHE = "mylife-badge";
@@ -72,13 +72,13 @@ const APP_SHELL = [
   "./css/kantumruy-medium.css",
   "./assets/fonts/kantumruy-pro-khmer-400-normal.woff2",
   "./assets/fonts/kantumruy-pro-khmer-500-normal.woff2",
-  "./assets/fonts/kantumruy-pro-khmer-700-normal.woff2",
+  "./assets/fonts/kantumruy-pro-khmer-600-normal.woff2",
   "./assets/fonts/kantumruy-pro-latin-400-normal.woff2",
   "./assets/fonts/kantumruy-pro-latin-500-normal.woff2",
-  "./assets/fonts/kantumruy-pro-latin-700-normal.woff2",
+  "./assets/fonts/kantumruy-pro-latin-600-normal.woff2",
   "./assets/fonts/kantumruy-pro-latin-ext-400-normal.woff2",
   "./assets/fonts/kantumruy-pro-latin-ext-500-normal.woff2",
-  "./assets/fonts/kantumruy-pro-latin-ext-700-normal.woff2",
+  "./assets/fonts/kantumruy-pro-latin-ext-600-normal.woff2",
   "./css/theme-polish.css",
   "./js/components/icons.js",
   "./js/components/toast.js",

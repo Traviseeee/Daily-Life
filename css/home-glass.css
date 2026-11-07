@@ -435,3 +435,35 @@ html:root body:not(#gl) #app .tp-page .tp-chip:not(.active) {
   background: var(--gl-card) !important; border: 1px solid var(--gl-edge) !important;
   -webkit-backdrop-filter: var(--gl-blur); backdrop-filter: var(--gl-blur);
 }
+
+/* ===================== 7 Nov audit fixes ===================== */
+/* 1 · light: white titles always sit on purple — a soft purple glow at the top of every page
+   (scrolls with the page), so the turning white band can never wash them out */
+html:root[data-theme="light"] body:not(#gl) .app-main.app-main.app-main {
+  background: linear-gradient(180deg, rgba(104, 86, 222, .9) 0, rgba(120, 102, 232, .74) 150px, rgba(140, 122, 242, .42) 280px, rgba(160, 144, 248, 0) 420px) no-repeat !important;
+}
+/* 4 · the old header colour bands end in a hard line on the moving background: the glow above replaces them */
+html:root[data-theme="light"] body:not(#gl) #app > .page::before { display: none !important; }
+/* 2 · dark Money: the three small stat boxes and the summary pill in glass with light text */
+html:root:not([data-theme="light"]) body:not(#gl) #app .hv2-soft .hv2-soft-t {
+  background: rgba(255, 255, 255, .07) !important; border: 1px solid rgba(182, 168, 255, .2) !important; color: #f4f2ff !important;
+}
+html:root:not([data-theme="light"]) body:not(#gl) #app .hv2-soft .hv2-soft-t :is(b, span, small, .money-value) { color: #f4f2ff !important; -webkit-text-fill-color: #f4f2ff !important; }
+html:root:not([data-theme="light"]) body:not(#gl) #app .hv2-soft .hv2-soft-t small { color: #bdb7e6 !important; -webkit-text-fill-color: #bdb7e6 !important; }
+html:root:not([data-theme="light"]) body:not(#gl) #app .hv2-soft :is(.hv2-soft-pill, .hv2-soft-pill *) { color: #e4ddff !important; -webkit-text-fill-color: #e4ddff !important; }
+/* 3 · one "+" per page: pages with their own add button hide the floating quick-action "+" */
+body:has(#app :is(.goals-page, .cv2, .family-page, .mf-page)) .quick-action-dock:not(.is-open) { display: none !important; }
+/* 5 · bigger tap targets (same look, more room to press) */
+html:root body:not(#gl) #app .hv2 .hv4-edit { width: 34px !important; height: 34px !important; }
+html:root body:not(#gl) #app :is(.hv2 .hv4-more, .fam2 .fv4-more) { min-height: 32px; }
+html:root body:not(#gl) #app .fv2-page .fv2-period-chip { min-height: 32px; display: inline-flex; align-items: center; }
+html:root body:not(#gl) #app .hv2-soft .hv2-soft-edit { min-height: 32px; display: inline-flex; align-items: center; }
+html:root body:not(#gl) #app .qx-compact .qx-more { min-height: 32px; padding: 0 8px; display: inline-flex; align-items: center; }
+html:root body:not(#gl) #app :is(.lv-sec a, .lv-link) { min-height: 32px; display: inline-flex; align-items: center; padding: 0 4px; }
+html:root body:not(#gl) #app .mp-back { min-height: 36px; display: inline-flex; align-items: center; }
+/* 6 · the page itself gets focus after a page change (for screen readers); its blue ring showed as a line */
+#app:focus, #app:focus-visible { outline: none !important; }
+/* 7 · settings chips: one row in both themes (slides sideways if the screen is very narrow) */
+html:root body:not(#gl) .sv2 .sv-hero .sv-chips { flex-wrap: nowrap !important; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+html:root body:not(#gl) .sv2 .sv-hero .sv-chips::-webkit-scrollbar { display: none; }
+html:root body:not(#gl) .sv2 .sv-hero .sv-chip { flex: 0 0 auto; }
