@@ -467,3 +467,8 @@ html:root body:not(#gl) #app .mp-back { min-height: 36px; display: inline-flex; 
 html:root body:not(#gl) .sv2 .sv-hero .sv-chips { flex-wrap: nowrap !important; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
 html:root body:not(#gl) .sv2 .sv-hero .sv-chips::-webkit-scrollbar { display: none; }
 html:root body:not(#gl) .sv2 .sv-hero .sv-chip { flex: 0 0 auto; }
+/* audit leftovers: bigger theme switch + Home status chip, darker grey hints in the Money stat boxes (light) */
+html:root body:not(#gl) .sv2 .sv-seg button { min-height: 34px; display: inline-flex; align-items: center; justify-content: center; }
+html:root body:not(#gl) #app .hv2 .hv4-status { min-height: 30px; display: inline-flex; align-items: center; }
+html:root[data-theme="light"] body:not(#gl) #app .hv2-soft .hv2-soft-t span { color: #6f6890 !important; -webkit-text-fill-color: #6f6890 !important; }
+html:root[data-theme="light"] body:not(#gl) #app .hv2-soft .hv2-soft-t small { color: #5d5680 !important; -webkit-text-fill-color: #5d5680 !important; }
