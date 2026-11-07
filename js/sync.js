@@ -22,6 +22,8 @@ const SYNC_NOTICE_KEY = "mylife:sync-notice-shown";
 const DELETIONS_FIELD = "deletions";
 const TOMBSTONE_TTL_MS = 365 * 24 * 60 * 60 * 1000;
 const SYNC_RETRY_INTERVAL_MS = 30000;
+// Tombstone buckets for lists nested inside records: bucket -> [parent collection, field].
+const SYNC_NESTED_LISTS = { savingTransactions: ["savings", "transactions"] };
 
 const syncReadJson = (key, fallback) => {
   try {
@@ -206,6 +208,18 @@ const SyncState = {
       const deleted = deletions[collection] || {};
       const kept = list.filter(item => !item?.id || !deleted[item.id]);
       if (kept.length !== list.length) data[collection] = kept;
+    });
+    // Lists that live inside a record (a saving's own transactions). The cloud merge
+    // unions these too, so a removed entry came straight back without this.
+    Object.entries(SYNC_NESTED_LISTS).forEach(([collection, [parent, field]]) => {
+      const deleted = deletions[collection];
+      if (!deleted || !Array.isArray(data[parent])) return;
+      data[parent].forEach(record => {
+        const list = record && record[field];
+        if (!Array.isArray(list)) return;
+        const kept = list.filter(item => !item?.id || !deleted[item.id]);
+        if (kept.length !== list.length) record[field] = kept;
+      });
     });
     return data;
   },

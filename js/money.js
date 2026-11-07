@@ -1787,6 +1787,9 @@ function removeGoldPurchase(savingId, transactionId) {
       const refund = Math.max(0, Number(transaction.totalDebit ?? (Number(transaction.amount || 0) + Number(transaction.fees || 0))));
       saving.currentAmount = Number(saving.currentAmount || 0) + refund;
       saving.transactions = saving.transactions.filter(entry => entry.id !== transactionId);
+      // remember the removal so a sync with an older cloud copy can't bring it (or the old balance) back
+      SyncState.record(appData, "savingTransactions", transactionId);
+      saving.updatedAt = new Date().toISOString();
       if (!Store.save()) { restoreData(previous); return; }
       Toast.show(L("បានលុបការទិញ ហើយសងប្រាក់ទៅសន្សំវិញ", "Purchase removed and savings refunded"));
       App.render();
