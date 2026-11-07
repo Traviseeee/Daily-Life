@@ -511,3 +511,96 @@ html:root:not([data-theme="light"]) body:not(#gl) .nc-root .nc-panel {
   -webkit-backdrop-filter: blur(26px) saturate(160%); backdrop-filter: blur(26px) saturate(160%);
 }
 html:root body:not(#gl) .nc-root .nc-footer { background: transparent !important; border-top: 1px solid rgba(139, 124, 246, .15) !important; }
+/* Money: the "ទាំងអស់ ›" links in section heads get room to press */
+html:root body:not(#gl) #app .fv2-section-head > a { min-height: 32px; display: inline-flex; align-items: center; padding: 0 4px; }
+
+/* ===================== bell panel v2 (7 Nov 2026) — js/notification-center.js ===================== */
+html:root body:not(#gl) .nc-panel.nc-v2 {
+  --ncv-ink: #1a2347; --ncv-sub: #6f6890; --ncv-card: rgba(255, 255, 255, .62); --ncv-edge: rgba(255, 255, 255, .9);
+  --ncv-line: rgba(139, 124, 246, .16); --ncv-soft: rgba(139, 124, 246, .1); --ncv-acc: #6a58e0;
+  color: var(--ncv-ink) !important;
+}
+html:root:not([data-theme="light"]) body:not(#gl) .nc-panel.nc-v2 {
+  --ncv-ink: #f4f2ff; --ncv-sub: #bdb7e6; --ncv-card: rgba(255, 255, 255, .07); --ncv-edge: rgba(182, 168, 255, .24);
+  --ncv-line: rgba(182, 168, 255, .14); --ncv-soft: rgba(182, 168, 255, .12); --ncv-acc: #c9bdff;
+}
+html:root body:not(#gl) .nc-v2::before { display: none !important; }
+/* small header: title + "N new", settings, close */
+html:root body:not(#gl) .nc-v2 .nc-header { display: flex !important; align-items: center !important; gap: 8px !important; padding: 16px 14px 10px 18px !important; background: transparent !important; color: var(--ncv-ink) !important; }
+html:root body:not(#gl) .nc-v2 .nc-header h2 { flex: 1; display: flex; align-items: center; gap: 8px; margin: 0; font-size: 1.25rem; font-weight: 600; color: var(--ncv-ink) !important; white-space: nowrap; }
+html:root body:not(#gl) .nc-v2 .nc-new-count { font-size: .72rem; font-weight: 600; color: #fff; padding: 2px 9px; border-radius: 99px; background: linear-gradient(140deg, #9f8cff, #6a58e0); }
+html:root body:not(#gl) .nc-v2 .nc-head-btn { flex: none; width: 38px; height: 38px; display: grid; place-items: center; padding: 0; border-radius: 13px; color: var(--ncv-ink) !important; background: var(--ncv-card) !important; border: 1px solid var(--ncv-edge) !important; box-shadow: none !important; }
+html:root body:not(#gl) .nc-v2 .nc-head-btn svg { width: 18px; height: 18px; stroke: currentColor !important; }
+html:root body:not(#gl) .nc-v2 .nc-scroll { padding: 2px 12px 12px !important; border-top: 0 !important; }
+/* three summary boxes (tap = filter) */
+html:root body:not(#gl) .nc-v2 .nc-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 0 0 10px; }
+html:root body:not(#gl) .nc-v2 .nc-stat { display: grid; gap: 1px; padding: 11px 6px; border-radius: 18px; text-align: center; font: inherit; color: var(--ncv-ink); background: var(--ncv-card); border: 1px solid var(--ncv-edge); cursor: pointer; }
+html:root body:not(#gl) .nc-v2 .nc-stat b { font-size: 1.15rem; font-weight: 600; line-height: 1.3; white-space: nowrap; }
+html:root body:not(#gl) .nc-v2 .nc-stat small { font-size: .7rem; color: var(--ncv-sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html:root body:not(#gl) .nc-v2 .nc-stat.is-hl { color: #fff; background: linear-gradient(140deg, #9f8cff, #6a58e0); border-color: transparent; }
+html:root body:not(#gl) .nc-v2 .nc-stat.is-hl small { color: rgba(255, 255, 255, .88); }
+html:root body:not(#gl) .nc-v2 .nc-stat.active:not(.is-hl) { border-color: #8b7cf6; box-shadow: 0 0 0 2px rgba(139, 124, 246, .25); }
+/* tabs */
+html:root body:not(#gl) .nc-v2 .nc-filters { display: flex !important; gap: 6px !important; margin: 0 0 10px !important; padding: 0 !important; overflow-x: auto; scrollbar-width: none; border: 0 !important; background: transparent !important; }
+html:root body:not(#gl) .nc-v2 .nc-filter { flex: 0 0 auto; min-height: 32px; padding: 0 12px !important; border-radius: 99px !important; font-size: .8rem !important; font-weight: 600 !important; color: var(--ncv-sub) !important; background: var(--ncv-card) !important; border: 1px solid var(--ncv-edge) !important; box-shadow: none !important; }
+html:root body:not(#gl) .nc-v2 .nc-filter span { margin-left: 5px; color: inherit !important; background: transparent !important; opacity: .8; }
+html:root body:not(#gl) .nc-v2 .nc-filter.active { color: #fff !important; background: linear-gradient(140deg, #9f8cff, #6a58e0) !important; border-color: transparent !important; }
+/* Nimo's note */
+html:root body:not(#gl) .nc-v2 .nc-calm { display: flex; align-items: center; gap: 12px; margin: 0 0 12px; padding: 12px 14px; border-radius: 22px; background: linear-gradient(120deg, rgba(159, 140, 255, .26), rgba(255, 255, 255, .2)); border: 1px solid var(--ncv-edge); }
+html:root:not([data-theme="light"]) body:not(#gl) .nc-v2 .nc-calm { background: linear-gradient(120deg, rgba(159, 140, 255, .22), rgba(255, 255, 255, .04)); }
+html:root body:not(#gl) .nc-v2 .nc-calm .nc-nomi { width: 58px; height: 56px; flex: none; }
+html:root body:not(#gl) .nc-v2 .nc-calm-copy b { display: block; font-size: .95rem; font-weight: 600; }
+html:root body:not(#gl) .nc-v2 .nc-calm-copy small { display: block; font-size: .76rem; color: var(--ncv-sub); line-height: 1.5; }
+/* groups: one glass look for every list */
+html:root body:not(#gl) .nc-v2 .nc-group { margin: 0 0 12px !important; }
+html:root body:not(#gl) .nc-v2 .nc-group h3 { display: flex; align-items: center; gap: 6px; margin: 4px 4px 8px !important; font-size: .8rem !important; font-weight: 600 !important; color: var(--ncv-sub) !important; }
+html:root body:not(#gl) .nc-v2 .nc-group h3 > span { padding: 1px 8px; border-radius: 99px; font-size: .7rem; color: var(--ncv-acc) !important; background: var(--ncv-soft) !important; }
+html:root body:not(#gl) .nc-v2 .nc-group h3 .nc-tg-clear { margin-left: auto; }
+html:root body:not(#gl) .nc-v2 :is(.nc-list, .nc-next, .nc-gold-month-total, .nc-gold-list, .df-list) {
+  background: linear-gradient(135deg, rgba(255, 255, 255, .5), rgba(255, 255, 255, 0) 45%), var(--ncv-card) !important;
+  border: 1px solid var(--ncv-edge) !important; border-radius: 20px !important; box-shadow: none !important;
+}
+html:root:not([data-theme="light"]) body:not(#gl) .nc-v2 :is(.nc-list, .nc-next, .nc-gold-month-total, .nc-gold-list, .df-list) { background: linear-gradient(135deg, rgba(255, 255, 255, .1), rgba(255, 255, 255, 0) 45%), var(--ncv-card) !important; }
+html:root body:not(#gl) .nc-v2 .nc-item + .nc-item, html:root body:not(#gl) .nc-v2 .nc-gold-row + .nc-gold-row { border-top: 1px solid var(--ncv-line) !important; }
+html:root body:not(#gl) .nc-v2 :is(.nc-icon, .nc-tg-icon, .nc-gold-coin) { background: var(--ncv-soft) !important; }
+html:root body:not(#gl) .nc-v2 :is(.nc-copy strong, .nc-tg-title, .nc-gold-copy strong) { color: var(--ncv-ink) !important; }
+html:root body:not(#gl) .nc-v2 :is(.nc-meta, .nc-relative, .nc-tg-cat, .nc-gold-copy small) { color: var(--ncv-sub) !important; }
+html:root body:not(#gl) .nc-v2 :is(.nc-tg-amount, .nc-gold-row > b) { color: var(--ncv-acc) !important; }
+html:root body:not(#gl) .nc-v2 .nc-dot { width: 8px; height: 8px; flex: none; border-radius: 50%; background: #8b7cf6; box-shadow: 0 0 0 3px rgba(139, 124, 246, .2); }
+html:root body:not(#gl) .nc-v2 .nc-day { margin: 8px 6px 6px; font-size: .7rem; font-weight: 600; letter-spacing: .04em; color: var(--ncv-sub); }
+html:root body:not(#gl) .nc-v2 .nc-day:first-of-type { margin-top: 0; }
+html:root body:not(#gl) .nc-v2 .nc-gold-month-total { margin-bottom: 8px; }
+html:root body:not(#gl) .nc-v2 .nc-gold-open { color: var(--ncv-acc) !important; }
+/* "done" folded away */
+html:root body:not(#gl) .nc-v2 .nc-done-fold { margin: 0 0 6px; border-radius: 20px; background: var(--ncv-card); border: 1px solid var(--ncv-edge); }
+html:root body:not(#gl) .nc-v2 .nc-done-fold > summary { display: flex; align-items: center; gap: 6px; min-height: 46px; padding: 0 14px; list-style: none; cursor: pointer; font-size: .85rem; font-weight: 600; color: var(--ncv-ink); }
+html:root body:not(#gl) .nc-v2 .nc-done-fold > summary::-webkit-details-marker { display: none; }
+html:root body:not(#gl) .nc-v2 .nc-done-fold > summary span { margin-left: auto; padding: 1px 8px; border-radius: 99px; font-size: .7rem; color: var(--ncv-acc); background: var(--ncv-soft); }
+html:root body:not(#gl) .nc-v2 .nc-done-fold > summary::after { content: "›"; color: var(--ncv-sub); transition: transform .2s; }
+html:root body:not(#gl) .nc-v2 .nc-done-fold[open] > summary::after { transform: rotate(90deg); }
+html:root body:not(#gl) .nc-v2 .nc-done-fold .df-bell { margin: 0 8px 8px !important; }
+html:root body:not(#gl) .nc-v2 .nc-done-fold .df-bell > h3 { display: none !important; }
+html:root body:not(#gl) .nc-v2 .nc-footer .nc-link { color: var(--ncv-acc) !important; background: transparent !important; border: 0 !important; }
+html:root body:not(#gl) .nc-v2 .nc-gold-activity { padding: 0 !important; border: 0 !important; background: transparent !important; box-shadow: none !important; }
+html:root body:not(#gl) .nc-v2 .nc-gold-month-total { padding: 12px 14px !important; }
+html:root body:not(#gl) .nc-v2 .nc-item.is-new { box-shadow: none !important; border-left: 0 !important; }
+html:root body:not(#gl) .nc-v2 .nc-head-btn:focus:not(:focus-visible) { outline: none !important; box-shadow: none !important; }
+/* phone: the bell panel drops from the top (like iPhone's Notification Center), drag the bar up to close */
+html:root body:not(#gl) .nc-v2 .nc-grab { display: none; }
+@media (max-width: 720px) {
+  html:root body:not(#gl) .nc-root .nc-panel.nc-v2 {
+    top: 0 !important; bottom: auto !important; left: 0 !important; right: 0 !important; width: 100% !important;
+    max-height: 88vh !important; max-height: 88dvh !important;
+    padding-top: env(safe-area-inset-top) !important; padding-bottom: 0 !important;
+    border-radius: 0 0 30px 30px !important; border-top: 0 !important; border-bottom: 1px solid var(--ncv-edge) !important;
+    transform-origin: top center !important;
+    animation: ncDrop 300ms cubic-bezier(.16, 1, .3, 1) both !important;
+    box-shadow: 0 24px 50px -20px rgba(30, 20, 100, .5) !important;
+  }
+  html:root body:not(#gl) .nc-v2 .nc-header { padding-top: 12px !important; }
+  html:root body:not(#gl) .nc-v2 .nc-grab { display: grid; place-items: center; height: 22px; flex: none; touch-action: none; cursor: grab; }
+  html:root body:not(#gl) .nc-v2 .nc-grab i { width: 40px; height: 5px; border-radius: 99px; background: rgba(139, 124, 246, .45); }
+  html:root body:not(#gl) .nc-v2 .nc-footer { padding-bottom: 0 !important; }
+}
+@keyframes ncDrop { from { transform: translateY(-100%); } to { transform: none; } }
+@media (prefers-reduced-motion: reduce) { html:root body:not(#gl) .nc-root .nc-panel.nc-v2 { animation: none !important; } }

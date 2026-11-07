@@ -23,7 +23,7 @@ const PullRefresh = (() => {
     // inside something that scrolls on its own and isn't at its top
     for (let node = target; node && node !== document.body; node = node.parentElement) {
       if (node.scrollTop > 0) return true;
-      if (node.matches?.("input, textarea, select, [contenteditable], .mobile-nav, .ptr-ignore")) return true;
+      if (node.matches?.("input, textarea, select, [contenteditable], .mobile-nav, .ptr-ignore, .topbar, .hv2-head")) return true;
     }
     return false;
   }

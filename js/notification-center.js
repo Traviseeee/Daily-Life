@@ -287,30 +287,34 @@ const NotificationCenter = (() => {
     return L(`${Math.round(hours / 24)} ថ្ងៃមុន`, `${Math.round(hours / 24)}d ago`);
   }
 
+  function dayBucket(at) {
+    const start = new Date(); start.setHours(0, 0, 0, 0);
+    if (at >= start.getTime()) return "today";
+    if (at >= start.getTime() - 86400000) return "yesterday";
+    return "earlier";
+  }
+
+  function telegramRowHtml(entry) {
+    const part = typeof TelegramArrivals.parts === "function" ? TelegramArrivals.parts(entry.item) : null;
+    const dot = entry.read ? "" : `<i class="nc-dot" aria-label="${escapeAttr(L("ថ្មី", "New"))}"></i>`;
+    if (!part) return `<li class="nc-item nc-kind-telegram ${entry.read ? "" : "is-new"}"><button class="nc-item-main" type="button" data-nc-tg-open="${escapeAttr(entry.url)}">${dot}<span class="nc-icon nc-tg-icon">${entry.collection === "bills" ? "🧾" : entry.collection === "calendarEvents" ? "📅" : entry.collection === "income" ? "💰" : "💸"}</span>
+      <span class="nc-copy"><strong>${entry.text}</strong><span class="nc-meta"><span class="nc-relative">Telegram · ${escapeHtml(agoLabel(entry.at))}</span></span></span>
+      <span class="nc-chevron">${icon.chevron()}</span></button></li>`;
+    return `<li class="nc-item nc-kind-telegram ${entry.read ? "" : "is-new"}"><button class="nc-item-main" type="button" data-nc-tg-open="${escapeAttr(entry.url)}">${dot}<span class="nc-icon nc-tg-icon nc-tg-${part.tone}">${part.icon}</span>
+      <span class="nc-copy"><strong class="nc-tg-title">${part.title}</strong><span class="nc-meta"><span class="nc-tg-cat">Telegram · ${part.sub}</span><span class="nc-relative">${escapeHtml(agoLabel(entry.at))}</span></span></span>
+      ${part.amount ? `<span class="nc-tg-amount is-${part.tone}">${part.amount}</span>` : `<span class="nc-chevron">${icon.chevron()}</span>`}</button></li>`;
+  }
+
+  // Telegram arrivals, newest first, under "today / yesterday / earlier" (7 Nov 2026)
   function telegramHtml() {
     const list = typeof TelegramArrivals !== "undefined" ? TelegramArrivals.feed().slice(0, 8) : [];
     if (!list.length) return "";
+    const names = { today: L("ថ្ងៃនេះ", "Today"), yesterday: L("ម្សិលមិញ", "Yesterday"), earlier: L("មុននេះ", "Earlier") };
+    const days = ["today", "yesterday", "earlier"].map(day => [day, list.filter(entry => dayBucket(entry.at) === day)]).filter(([, items]) => items.length);
     return `
       <section class="nc-group nc-telegram" data-nc-group="telegram">
-        <h3>📲 ${L("បានបន្ថែមពី Telegram", "Added from Telegram")}<span>${list.length}</span><button class="nc-link nc-tg-clear" type="button" data-nc-tg-clear>${L("សម្អាត", "Clear")}</button></h3>
-        <ul class="nc-list">${list.map(entry => `
-          <li class="nc-item nc-kind-telegram ${entry.read ? "" : "is-new"}">
-            <button class="nc-item-main" type="button" data-nc-tg-open="${escapeAttr(entry.url)}">
-              ${(() => {
-                const part = typeof TelegramArrivals.parts === "function" ? TelegramArrivals.parts(entry.item) : null;
-                if (!part) return `<span class="nc-icon nc-tg-icon">${entry.collection === "bills" ? "🧾" : entry.collection === "calendarEvents" ? "📅" : entry.collection === "income" ? "💰" : "💸"}</span>
-              <span class="nc-copy"><strong>${entry.text}</strong><span class="nc-meta"><span class="nc-relative">${escapeHtml(agoLabel(entry.at))}</span>${entry.read ? "" : `<span class="nc-tg-new">${L("ថ្មី", "New")}</span>`}</span></span>
-              <span class="nc-chevron">${icon.chevron()}</span>`;
-                return `<span class="nc-icon nc-tg-icon nc-tg-${part.tone}">${part.icon}</span>
-              <span class="nc-copy">
-                <strong class="nc-tg-title">${part.title}</strong>
-                <span class="nc-meta"><span class="nc-tg-cat">${part.sub}</span><span class="nc-relative">${escapeHtml(agoLabel(entry.at))}</span>${entry.read ? "" : `<span class="nc-tg-new">${L("ថ្មី", "New")}</span>`}</span>
-              </span>
-              ${part.amount ? `<span class="nc-tg-amount is-${part.tone}">${part.amount}</span>` : `<span class="nc-chevron">${icon.chevron()}</span>`}`;
-              })()}
-            </button>
-          </li>`).join("")}
-        </ul>
+        <h3>📲 ${L("បានកត់ពី Telegram", "Added from Telegram")}<span>${list.length}</span><button class="nc-link nc-tg-clear" type="button" data-nc-tg-clear>${L("សម្អាត", "Clear")}</button></h3>
+        ${days.map(([day, items]) => `<p class="nc-day">${names[day]}</p><ul class="nc-list">${items.map(telegramRowHtml).join("")}</ul>`).join("")}
       </section>
     `;
   }
@@ -353,12 +357,28 @@ const NotificationCenter = (() => {
           ? `${chi.toLocaleString("en-US", { maximumFractionDigits: 2 })} ជី · ${entry.goldPurity || "24K"}`
           : entry.type === "spend" ? [entry.category ? optionLabel(entry.category) : L("ចំណាយ", "Spending"), entry.note || ""].filter(Boolean).join(" · ") : entry.note || L("ប្រើផ្សេងៗ", "Other use");
         const txIcon = entry.type === "gold" ? "🪙" : entry.type === "spend" ? "💸" : "📈";
-        return `<div class="nc-gold-row"><span class="nc-gold-coin">${txIcon}</span><span class="nc-gold-copy"><strong>${escapeHtml(entry.savingName)}</strong><small>${escapeHtml(entry.date || "")} · ${escapeHtml(detail)}</small></span><b>−${money(Number(entry.amount || 0), entry.currency || "USD")}</b></div>`;
+        const what = entry.type === "gold" ? `${L("ទិញមាស", "Gold")} ${detail}` : detail;
+        return `<div class="nc-gold-row"><span class="nc-gold-coin">${txIcon}</span><span class="nc-gold-copy"><strong>${escapeHtml(what)}</strong><small>${escapeHtml(entry.savingName)} · ${escapeHtml(entry.date || "")}</small></span><b>−${money(Number(entry.amount || 0), entry.currency || "USD")}</b></div>`;
       }).join("")}</div>
       <a class="nc-gold-open" href="#money/savings">${L("បើកគណនីសន្សំ", "Open savings")} ›</a>
     </section>`;
   }
 
+  function savingsMonthStats() {
+    if (typeof NotifyPrefs !== "undefined" && !NotifyPrefs.allows(appData.profile, "savings-use", "app")) return { count: 0, chi: 0 };
+    const month = localDateInput().slice(0, 7);
+    let count = 0;
+    let chi = 0;
+    (appData.savings || []).forEach(saving => (Array.isArray(saving.transactions) ? saving.transactions : []).forEach(entry => {
+      if (!["gold", "spend", "investment"].includes(entry.type) || !String(entry.date || "").startsWith(month)) return;
+      count += 1;
+      if (entry.type === "gold") chi += Math.max(0, Number(entry.goldWeightGrams || 0)) / 3.75;
+    }));
+    return { count, chi };
+  }
+
+  // Bell panel v2 (7 Nov 2026): small header, three summary boxes, tabs, Nimo's note,
+  // then what's coming up, Telegram by day, savings use, and "done" folded away.
   function panelHtml() {
     const now = new Date();
     const enabled = appData.profile?.notificationsEnabled !== false;
@@ -366,73 +386,98 @@ const NotificationCenter = (() => {
     const active = all.filter(isActive);
     const hiddenCount = all.length - active.length;
     const kinds = ["event", "reminder", "bill", "family"].filter(kind => active.some(entry => entry.kind === kind));
-    if (filter !== "all" && !kinds.includes(filter)) filter = "all";
+    const tgList = typeof TelegramArrivals !== "undefined" ? TelegramArrivals.feed().slice(0, 8) : [];
+    const tgNew = tgList.filter(entry => !entry.read).length;
+    const sav = savingsMonthStats();
+    const tabs = ["all", ...kinds, ...(tgList.length ? ["telegram"] : []), ...(sav.count ? ["savings"] : [])];
+    if (filter === "todo") filter = "all";
+    if (!tabs.includes(filter)) filter = "all";
+    const showUpcoming = filter === "all" || kinds.includes(filter);
     const visible = filter === "all" ? active : active.filter(entry => entry.kind === filter);
     const todayCount = active.filter(entry => entry.daysLeft === 0).length;
+    const newCount = tgNew + active.filter(entry => entry.daysLeft <= 1 && entry.group !== "earlier").length;
 
     const groups = groupMeta()
       .map(([id, title]) => [id, title, visible.filter(entry => entry.group === id)])
       .filter(([, , items]) => items.length);
+    const tabLabel = id => id === "all" ? L("ទាំងអស់", "All") : id === "telegram" ? "Telegram" : id === "savings" ? L("សន្សំ", "Savings") : kindLabel(id);
+    const tabCount = id => id === "all" ? active.length + tgList.length + sav.count : id === "telegram" ? tgList.length : id === "savings" ? sav.count : active.filter(entry => entry.kind === id).length;
+
+    const nomi = typeof HomeV2 !== "undefined" && !!HomeV2.buddy ? (() => {
+      const mood = !enabled ? "sleepy" : todayCount ? "worry" : "happy";
+      const title = !enabled ? L("ការជូនដំណឹងបិទ 💤", "Alerts are off 💤")
+        : todayCount ? L(`ថ្ងៃនេះមាន ${todayCount} រឿង`, `${todayCount} things today`)
+        : active.length ? L("ថ្ងៃនេះទំនេរ 🌿", "Today is free 🌿") : L("គ្មានអ្វីត្រូវធ្វើទេ 🌿", "All caught up 🌿");
+      const say = !enabled ? L("ខ្ញុំដេកសិន… បើកវិញនៅការកំណត់", "Nap time… turn them on in settings")
+        : todayCount ? L("កុំភ្លេចណា! ខ្ញុំនឹងរំលឹកមុនម៉ោង។", "Don't forget — I'll remind you before.")
+        : active.length ? L(`៧ ថ្ងៃខាងមុខមាន ${active.length} រឿង។ ថ្ងៃនេះសម្រាកបាន!`, `${active.length} coming up this week. Relax today!`)
+        : L("វិក្កយបត្រ និងព្រឹត្តិការណ៍ ៧ ថ្ងៃខាងមុខ នៅស្អាត។", "No bills or events in the next 7 days.");
+      return `<div class="nc-calm"><span class="nc-nomi" data-nomi data-mood="${mood}" role="button" tabindex="0" aria-label="Nomi">${HomeV2.buddy(mood)}</span><span class="nc-calm-copy"><b>${escapeHtml(title)}</b><small data-nomi-say>${escapeHtml(say)}</small></span></div>`;
+    })() : "";
+
+    const stat = (id, value, label, hl) => `<button type="button" class="nc-stat ${hl ? "is-hl" : ""} ${filter === id ? "active" : ""}" data-nc-filter="${id}"><b>${value}</b><small>${label}</small></button>`;
+    const nothing = !groups.length && !tgList.length && !sav.count;
 
     return `
       <div class="nc-backdrop" data-nc-close></div>
-      <section class="nc-panel" role="dialog" aria-modal="true" aria-labelledby="ncTitle">
+      <section class="nc-panel nc-v2" role="dialog" aria-modal="true" aria-labelledby="ncTitle">
         <header class="nc-header">
-          <div>
-            <span class="nc-eyebrow">${L("មជ្ឈមណ្ឌលជូនដំណឹង", "Notification center")}</span>
-            <h2 id="ncTitle">${L("ការជូនដំណឹង", "Notifications")}</h2>
-            <p class="nc-summary">${active.length
-              ? L(`ថ្ងៃនេះ ${todayCount} · 7 ថ្ងៃខាងមុខ ${active.length}`, `${todayCount} today · ${active.length} in the next 7 days`)
-              : L("គ្មានអ្វីត្រូវធ្វើទេ សម្រាកបាន", "You're all caught up")}</p>
-          </div>
-          ${typeof HomeV2 !== "undefined" && !!HomeV2.buddy ? (() => {
-            const tg = typeof TelegramArrivals !== "undefined" ? TelegramArrivals.feed().slice(0, 8).length : 0;
-            const mood = !enabled ? "sleepy" : todayCount ? "worry" : "happy";
-            const say = !enabled ? L("ការជូនដំណឹងបិទ… ខ្ញុំដេកសិន 💤", "Alerts are off… nap time 💤") : tg ? L(`Telegram បានបន្ថែម ${tg} ចំណាយថ្មី 📲`, `Telegram added ${tg} new expenses 📲`) : todayCount ? L(`ថ្ងៃនេះមាន ${todayCount} រឿង កុំភ្លេចណា!`, `${todayCount} things today — don't forget!`) : L("ស្ងាត់ល្អ សម្រាកបាន 🐾", "All quiet — relax 🐾");
-            return `<span class="nc-nomi" data-nomi data-mood="${mood}" role="button" tabindex="0" aria-label="Nomi">${HomeV2.buddy(mood)}</span><span class="nc-say" data-nomi-say>${escapeHtml(say)}</span>`;
-          })() : ""}
-          <button class="nc-close" type="button" data-nc-close aria-label="${escapeAttr(t("close"))}">${Icons.close()}</button>
+          <h2 id="ncTitle">${L("ការជូនដំណឹង", "Notifications")}${newCount ? `<span class="nc-new-count">${L(`${newCount} ថ្មី`, `${newCount} new`)}</span>` : ""}</h2>
+          <button class="nc-head-btn" type="button" data-nc-settings aria-label="${escapeAttr(L("ការកំណត់", "Settings"))}">${icon.settings()}</button>
+          <button class="nc-close nc-head-btn" type="button" data-nc-close aria-label="${escapeAttr(t("close"))}">${Icons.close()}</button>
         </header>
 
-        ${enabled ? "" : `
-          <div class="nc-banner">
-            <span class="nc-banner-icon">${icon.bellOff()}</span>
-            <span><strong>${L("ការជូនដំណឹងត្រូវបានបិទ", "Notifications are off")}</strong><small>${L("អ្នកនឹងមិនទទួលបាន alert ទេ", "You won't get alerts")}</small></span>
-            <button class="nc-banner-button" type="button" data-nc-settings>${L("បើក", "Turn on")}</button>
-          </div>
-        `}
-
-        ${nextUpHtml(active, now)}
-
-        ${kinds.length > 1 ? `
-          <div class="nc-filters" role="tablist" aria-label="${escapeAttr(L("ត្រងតាមប្រភេទ", "Filter by type"))}">
-            <button type="button" role="tab" class="nc-filter ${filter === "all" ? "active" : ""}" data-nc-filter="all" aria-selected="${filter === "all"}">${L("ទាំងអស់", "All")}<span>${active.length}</span></button>
-            ${kinds.map(kind => `<button type="button" role="tab" class="nc-filter nc-kind-${kind} ${filter === kind ? "active" : ""}" data-nc-filter="${kind}" aria-selected="${filter === kind}">${escapeHtml(kindLabel(kind))}<span>${active.filter(entry => entry.kind === kind).length}</span></button>`).join("")}
-          </div>
-        ` : ""}
-
         <div class="nc-scroll">
-          ${savingsUseActivityHtml()}
-          ${telegramHtml()}
-          ${groups.length ? groups.map(([id, title, items]) => `
+          ${enabled ? "" : `
+            <div class="nc-banner">
+              <span class="nc-banner-icon">${icon.bellOff()}</span>
+              <span><strong>${L("ការជូនដំណឹងត្រូវបានបិទ", "Notifications are off")}</strong><small>${L("អ្នកនឹងមិនទទួលបាន alert ទេ", "You won't get alerts")}</small></span>
+              <button class="nc-banner-button" type="button" data-nc-settings>${L("បើក", "Turn on")}</button>
+            </div>
+          `}
+
+          ${nothing ? "" : `<div class="nc-stats">
+            ${stat("all", todayCount, L("ត្រូវធ្វើថ្ងៃនេះ", "To do today"), true)}
+            ${stat("telegram", tgList.length, L("Telegram", "Telegram"))}
+            ${stat("savings", sav.chi ? `${sav.chi.toLocaleString("en-US", { maximumFractionDigits: 2 })} ជី` : sav.count, sav.chi ? L("មាសខែនេះ", "Gold this month") : L("ប្រើសន្សំ", "Savings use"))}
+          </div>`}
+
+          ${tabs.length > 2 ? `
+            <div class="nc-filters" role="tablist" aria-label="${escapeAttr(L("ត្រងតាមប្រភេទ", "Filter by type"))}">
+              ${tabs.map(id => `<button type="button" role="tab" class="nc-filter nc-kind-${id} ${filter === id ? "active" : ""}" data-nc-filter="${id}" aria-selected="${filter === id}">${escapeHtml(tabLabel(id))}<span>${tabCount(id)}</span></button>`).join("")}
+            </div>
+          ` : ""}
+
+          ${filter === "all" ? nomi : ""}
+          ${showUpcoming ? nextUpHtml(active, now) : ""}
+          ${showUpcoming ? groups.map(([id, title, items]) => `
             <section class="nc-group" data-nc-group="${id}">
               <h3>${escapeHtml(title)}<span>${items.length}</span></h3>
               <ul class="nc-list">${items.map(entry => itemHtml(entry, now)).join("")}</ul>
             </section>
-          `).join("") : `
+          `).join("") : ""}
+          ${filter === "all" || filter === "telegram" ? telegramHtml() : ""}
+          ${filter === "all" || filter === "savings" ? savingsUseActivityHtml() : ""}
+          ${nothing && !(filter === "all" && nomi) ? `
             <div class="nc-empty">
               <span class="nc-empty-icon">${Icons.bell()}</span>
               <strong>${L("គ្មានការជូនដំណឹង", "Nothing coming up")}</strong>
               <small>${L("ការរំលឹក ព្រឹត្តិការណ៍ និងវិក្កយបត្រក្នុង 7 ថ្ងៃខាងមុខនឹងបង្ហាញនៅទីនេះ", "Reminders, events and bills for the next 7 days show up here")}</small>
             </div>
-          `}
-          ${typeof DoneFeed !== "undefined" ? DoneFeed.bellHtml() : ""}
+          ` : ""}
+          ${filter === "all" && typeof DoneFeed !== "undefined" ? (() => {
+            const done = DoneFeed.bellHtml();
+            if (!done) return "";
+            const n = typeof DoneFeed.items === "function" ? DoneFeed.items(7).slice(0, 8).length : "";
+            return `<details class="nc-done-fold"><summary>✓ ${L("បានធ្វើរួច · 7 ថ្ងៃ", "Done · 7 days")}<span>${n}</span></summary>${done}</details>`;
+          })() : ""}
         </div>
 
         <footer class="nc-footer">
           ${hiddenCount ? `<button class="nc-link" type="button" data-nc-restore>${L(`បង្ហាញ ${hiddenCount} ដែលបានលាក់`, `Show ${hiddenCount} hidden`)}</button>` : "<span></span>"}
-          <button class="nc-link" type="button" data-nc-settings>${icon.settings()}${L("ការកំណត់", "Settings")}</button>
+          <button class="nc-link" type="button" data-nc-settings>${icon.settings()}${L("ការកំណត់ការជូនដំណឹង", "Notification settings")}</button>
         </footer>
+        <div class="nc-grab" data-nc-grab aria-hidden="true"><i></i></div>
       </section>
     `;
   }
@@ -448,7 +493,10 @@ const NotificationCenter = (() => {
     root.innerHTML = panelHtml();
     const nextScroll = root.querySelector(".nc-scroll");
     if (nextScroll) nextScroll.scrollTop = scroll;
+    const panel = root.querySelector(".nc-panel");
+    if (panel) panel.style.animation = "none"; // a refresh, not an opening: don't slide in again
     bind(root);
+    bindDrag(root);
     renderBadge();
   }
 
@@ -536,6 +584,59 @@ const NotificationCenter = (() => {
     }));
   }
 
+  // phone: the panel drops from the top like iPhone's Notification Center — drag it back up to close
+  function bindDrag(root) {
+    const panel = root.querySelector(".nc-panel");
+    if (!panel || !window.matchMedia?.("(max-width: 720px)").matches) return;
+    let startY = 0, dy = 0, dragging = false;
+    panel.addEventListener("touchstart", event => {
+      const fromGrab = event.target.closest("[data-nc-grab], .nc-header");
+      const scroll = panel.querySelector(".nc-scroll");
+      const atBottom = scroll && scroll.scrollTop + scroll.clientHeight >= scroll.scrollHeight - 2;
+      if (!fromGrab && !atBottom) return;
+      dragging = true; startY = event.touches[0].clientY; dy = 0;
+      panel.style.animation = "none"; // the drop-in animation would hold the position
+      panel.style.transition = "none";
+    }, { passive: true });
+    panel.addEventListener("touchmove", event => {
+      if (!dragging) return;
+      dy = Math.min(0, event.touches[0].clientY - startY);
+      if (dy < -4) panel.style.transform = `translateY(${dy}px)`;
+    }, { passive: true });
+    panel.addEventListener("touchend", () => {
+      if (!dragging) return;
+      dragging = false;
+      panel.style.transition = "transform .22s ease";
+      if (dy < -70) {
+        panel.style.transform = "translateY(-105%)";
+        setTimeout(close, 200);
+      } else {
+        panel.style.transform = "";
+      }
+    });
+  }
+
+  // phone: pull down on the page head (avatar / weather / bell row) to open the panel
+  (function bindPullOpen() {
+    let startY = 0, startX = 0, armed = false;
+    document.addEventListener("touchstart", event => {
+      armed = false;
+      if (!window.matchMedia?.("(max-width: 720px)").matches || window.scrollY > 4) return;
+      if (!event.target.closest?.(".topbar, .hv2-head") || event.target.closest("input, textarea, select")) return;
+      if (document.getElementById("notificationCenterRoot")?.classList.contains("open")) return;
+      if (document.getElementById("modalRoot")?.classList.contains("open")) return;
+      armed = true; startY = event.touches[0].clientY; startX = event.touches[0].clientX;
+    }, { passive: true });
+    document.addEventListener("touchend", event => {
+      if (!armed) return;
+      armed = false;
+      const touch = event.changedTouches[0];
+      const dy = touch.clientY - startY;
+      const dx = Math.abs(touch.clientX - startX);
+      if (dy > 60 && dx < dy * 0.6) open();
+    }, { passive: true });
+  })();
+
   function animateOut(button, done) {
     const row = button.closest(".nc-item");
     if (!row || window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
@@ -551,6 +652,7 @@ const NotificationCenter = (() => {
     root.classList.add("open");
     root.innerHTML = panelHtml();
     bind(root);
+    bindDrag(root);
     document.getElementById("bellButton")?.setAttribute("aria-expanded", "true");
     root.querySelector(".nc-close")?.focus({ preventScroll: true });
     if (typeof TelegramArrivals !== "undefined") {
