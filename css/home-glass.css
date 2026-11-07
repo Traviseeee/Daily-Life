@@ -604,3 +604,16 @@ html:root body:not(#gl) .nc-v2 .nc-grab { display: none; }
 }
 @keyframes ncDrop { from { transform: translateY(-100%); } to { transform: none; } }
 @media (prefers-reduced-motion: reduce) { html:root body:not(#gl) .nc-root .nc-panel.nc-v2 { animation: none !important; } }
+
+/* ===================== smoother scrolling on phones (7 Nov 2026) =====================
+   Blur behind every card had to be redrawn on each frame (the background turns), which made
+   scrolling lag. Cards inside the page now use a slightly thicker frosted fill without blur;
+   blur stays only on things that float on top (bottom nav, pop-ups, bell panel, chat header).
+   The turning background and the light sweeps pause while you scroll (html.is-scrolling). */
+html:root[data-theme="light"] body:not(#gl) { --gl-card: rgba(255, 255, 255, .72); --gl-card-strong: rgba(255, 255, 255, .8); --gl-btn: rgba(255, 255, 255, .6); }
+html:root:not([data-theme="light"]) body:not(#gl) { --gl-card: rgba(40, 34, 86, .72); --gl-card-strong: rgba(40, 34, 86, .8); --gl-btn: rgba(255, 255, 255, .1); }
+html:root body:not(#gl) #app *, html:root body:not(#gl) #app *::before, html:root body:not(#gl) #app *::after { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+/* light sweep: keep it on the Home money card only */
+html:root body:not(#gl) :is(#app .hv2-bell, #app .hv2-menu, #app .hv2-wx, #app .hv2-q > i, #app .hv2-mood-btn > span, #app .hv4-more, #app .hv4-chev, #mobileNav)::after { animation: none !important; opacity: 0 !important; }
+/* pause the turning background + sweep while scrolling */
+html.is-scrolling body::after, html.is-scrolling body #app *::after { animation-play-state: paused !important; }
