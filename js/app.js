@@ -321,7 +321,7 @@ const App = {
     // Daily life page removed (30 Oct 2026): reminders show on Home, old links land there too
     if (this.route === "today" || this.route === "summary" || this.route === "daily") { this.route = "home"; history.replaceState(null, "", "#home"); }
     // a mistyped / old address (plain word only, never a login token hash) shows Home: say so in the address bar too
-    const KNOWN = ["home", "launcher", "family", "goals", "money", "calendar", "memories", "tips", "settings", "notifications", "scan", "help", "profile", "chat"];
+    const KNOWN = ["home", "launcher", "family", "goals", "money", "calendar", "memories", "tips", "settings", "notifications", "scan", "help", "profile", "chat", "calc", "vehicle"];
     if (/^[a-z-]+$/.test(this.route) && !KNOWN.includes(this.route)) { this.route = "home"; history.replaceState(null, "", "#home"); }
     this.param = param;
   },
@@ -343,6 +343,7 @@ const App = {
     document.body.classList.toggle("notify-page-open", route === "notifications");
     document.body.classList.toggle("money-page-open", route === "money"); // money tabs have their own Add buttons
     document.body.classList.toggle("settings-page-open", route === "settings"); // no floating + over the settings rows
+    document.body.classList.toggle("tool-page-open", route === "calc" || route === "vehicle"); // tools have their own buttons
     document.body.classList.toggle("topbar-home", route === "home");
     if (typeof TopbarWeather !== "undefined") TopbarWeather.render();
 
@@ -366,6 +367,8 @@ const App = {
     else if (route === "settings") app.innerHTML = renderSettings();
     else if (route === "notifications" && typeof NotifyCenter !== "undefined") app.innerHTML = NotifyCenter.renderPage();
     else if (route === "scan" && typeof SmartScanPage !== "undefined") app.innerHTML = SmartScanPage.render();
+    else if (route === "calc" && typeof CalcTool !== "undefined") app.innerHTML = CalcTool.render();
+    else if (route === "vehicle" && typeof VehicleTool !== "undefined") app.innerHTML = VehicleTool.render();
     else if (route === "help") app.innerHTML = renderHelp();
     else app.innerHTML = renderHome();
 
@@ -824,6 +827,8 @@ const App = {
     if (route === "settings" && typeof bindSettings === "function") bindSettings();
     if (route === "notifications" && typeof NotifyCenter !== "undefined") NotifyCenter.bindPage();
     if (route === "scan" && typeof SmartScanPage !== "undefined") SmartScanPage.bind();
+    if (route === "calc" && typeof CalcTool !== "undefined") CalcTool.bind();
+    if (route === "vehicle" && typeof VehicleTool !== "undefined") VehicleTool.bind();
   },
   bindInteractionSounds() {
     if (this.interactionSoundBound) return;

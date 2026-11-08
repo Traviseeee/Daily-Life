@@ -10,7 +10,7 @@ const LauncherV2 = (() => {
   const KM_DAY_S = ["អាទិ", "ចន្ទ", "អង្គ", "ពុធ", "ព្រហ", "សុក្រ", "សៅរ៍"];
   const KM_M = ["មករា", "កុម្ភៈ", "មីនា", "មេសា", "ឧសភា", "មិថុនា", "កក្កដា", "សីហា", "កញ្ញា", "តុលា", "វិច្ឆិកា", "ធ្នូ"];
   // help sits inside Tips, so the grid is 12 (4 × 3)
-  const ORDER = ["today", "calendar", "money", "family", "goals", "memories", "summary", "scan", "notifications", "tips", "settings"];
+  const ORDER = ["today", "calendar", "money", "family", "goals", "memories", "summary", "calc", "vehicle", "scan", "notifications", "tips", "settings"];
 
   // Lavender (light phone, 31 Oct): Home look — Nomi talks in the hero, money ring card, SVG quick add
   const lav = () => typeof HomeV2 !== "undefined" && !!HomeV2.buddy;

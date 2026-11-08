@@ -10,6 +10,8 @@ const routes = [
 const utilityRoutes = [
   { id: "tips", label: "Tips", icon: "help" },
   { id: "scan", labelKey: "smartScan", icon: "scan" },
+  { id: "calc", labelKey: "calcTool", icon: "calculator" },
+  { id: "vehicle", labelKey: "vehicleTool", icon: "car" },
   { id: "notifications", labelKey: "notificationsEnabled", icon: "bell" },
   { id: "settings", label: "Settings", icon: "settings" },
   { id: "help", label: "Help", icon: "help" }

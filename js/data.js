@@ -80,7 +80,7 @@ const saveDataBackup = (reason, value = appData) => {
 // Every section the app knows must have the type the app expects: records are
 // arrays of objects, profile / deletions are objects. Unknown extra keys are
 // allowed (newer backups). Returns { ok, errors: ["expenses: expected a list, got null", ...] }.
-const IMPORT_RECORD_LISTS = ["family", "familyMedia", "goals", "income", "expenses", "savings", "loans", "bills", "calendarEvents", "memories", "hobbyLogs", "reminders", "moodHistory"];
+const IMPORT_RECORD_LISTS = ["family", "familyMedia", "goals", "income", "expenses", "savings", "loans", "bills", "calendarEvents", "memories", "hobbyLogs", "reminders", "moodHistory", "vehicles"];
 const importTypeName = value => (value === undefined ? "nothing" : value === null ? "null" : Array.isArray(value) ? "a list" : typeof value === "object" ? "an object" : `${typeof value} ${String(JSON.stringify(value)).slice(0, 20)}`);
 const isPlainObject = value => Boolean(value) && typeof value === "object" && !Array.isArray(value);
 
@@ -290,6 +290,7 @@ const emptyData = {
   memories: [],
   hobbyLogs: [],
   reminders: [],
+  vehicles: [],
   // Tombstones: { [collection]: { [recordId]: deletedAtIso } }. Synced with the
   // payload so a deletion survives a merge with a stale cloud copy.
   deletions: {}
