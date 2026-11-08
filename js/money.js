@@ -1543,6 +1543,7 @@ function bindCollectionActions(name, modalFn, collection = {
 }
 
 function openIncomeModal(item) {
+  if (typeof IncomeForm !== "undefined") return IncomeForm.open(item); // new form, same look as the expense form (8 Nov 2026)
   Modal.open({ title: item ? t("editIncome") : t("addIncome"), submitText: item ? t("saveIncome") : t("addIncome"), fields: [
     { name: "name", label: t("incomeName"), value: item?.name, required: true },
     { name: "amount", label: t("amount"), type: "number", value: item?.amount, required: true },
@@ -1941,25 +1942,8 @@ async function sendSavingsUseTelegramAlert(transaction, saving, summary) {
   return result;
 }
 
-function openLoanModal(item) {
-  Modal.open({ title: item ? t("editLoan") : t("addLoan"), submitText: item ? t("saveLoan") : t("addLoan"), sectioned: true, fields: [
-    { type: "heading", label: languageCode() === "km" ? "ព័ត៌មានកម្ចី" : "Loan details", description: languageCode() === "km" ? "បញ្ចូលឈ្មោះ និងចំនួនប្រាក់កម្ចី។" : "Enter the loan name and amount.", icon: Icons.money(), tone: "blue" },
-    { name: "name", label: t("loanName"), value: item?.name, required: true },
-    { name: "originalAmount", label: t("originalAmount"), type: "number", value: item?.originalAmount, required: true },
-    { name: "currency", label: t("currency"), type: "select", options: ["USD", "KHR"], value: item?.currency || appData.profile.currency || "USD" },
-    { type: "heading", label: languageCode() === "km" ? "ផែនការសងប្រាក់" : "Repayment plan", description: languageCode() === "km" ? "កំណត់ការប្រាក់ រយៈពេល និងចំនួនបង់ប្រចាំខែ។" : "Set the interest rate, term, and monthly payment.", icon: Icons.chart(), tone: "violet" },
-    { name: "interestRate", label: t("interestRate"), type: "number", value: item?.interestRate || "" },
-    { name: "durationMonths", label: t("loanDurationMonths"), type: "number", value: item?.durationMonths || "" },
-    { name: "monthlyPayment", label: t("monthlyPayment"), type: "number", value: item?.monthlyPayment || 0 },
-    { name: "paymentType", label: languageCode() === "km" ? "វិធីបង់កម្ចី" : "Repayment method", type: "select", options: ["unspecified", "cash", "bank", "qr", "other"], optionLabels: languageCode() === "km" ? ["មិនបានបញ្ជាក់", "សាច់ប្រាក់", "ផ្ទេរធនាគារ", "បង់ QR", "ផ្សេងៗ"] : ["Unspecified", "Cash", "Bank Transfer", "QR Payment", "Other"], value: item?.paymentType || "unspecified" },
-    { type: "heading", label: languageCode() === "km" ? "កាលបរិច្ឆេទ និងការរំលឹក" : "Dates & reminders", description: languageCode() === "km" ? "ជ្រើសថ្ងៃបង់លើកដំបូង និងកាលបរិច្ឆេទបញ្ចប់។" : "Choose the first payment and final due date.", icon: Icons.calendar(), tone: "blue" },
-    { name: "firstPaymentDate", label: t("firstPaymentDate"), type: "date", value: normalizeLoanPaymentDate(item?.firstPaymentDate || item?.startDate) },
-    { name: "paymentDay", label: t("paymentDay"), type: "number", value: item ? (item.paymentDay || loanPaymentDay(item)) : "" },
-    { name: "dueDate", label: t("dueDate"), type: "date", value: item?.dueDate },
-    { name: "ask", label: languageCode() === "km" ? "💸 សួរ “បានបង់ហើយឬនៅ?” ពេលដល់ថ្ងៃ" : "💸 Ask “paid yet?” on the day", type: "checkbox", value: item?.ask ?? true },
-    { type: "heading", label: languageCode() === "km" ? "កំណត់ចំណាំ" : "Notes", description: languageCode() === "km" ? "ព័ត៌មានបន្ថែមអំពីកម្ចីនេះ (ស្រេចចិត្ត)។" : "Add any extra details about this loan (optional).", icon: Icons.edit(), tone: "amber" },
-    { name: "notes", label: t("notes"), type: "textarea", value: item?.notes }
-  ], onSubmit(data) {
+// saves the loan form (old modal or the new LoanForm) — fills rate / payment / due date when left empty
+function saveLoanRecord(item, data) {
     const rawFirstPaymentDate = normalizeLoanPaymentDate(data.firstPaymentDate || data.startDate || "");
     const paymentDayValue = Number(data.paymentDay || 0) || loanPaymentDay({ firstPaymentDate: rawFirstPaymentDate });
     const firstPaymentDate = applyLoanPaymentDay(rawFirstPaymentDate, paymentDayValue);
@@ -1986,7 +1970,28 @@ function openLoanModal(item) {
     };
     item ? Store.edit("loans", item.id, record) : Store.add("loans", record);
     Toast.show(item ? t("loanSaved") : t("loanAdded"));
-  } });
+}
+
+function openLoanModal(item) {
+  if (typeof LoanForm !== "undefined") return LoanForm.open(item); // same look as the expense form (8 Nov 2026)
+  Modal.open({ title: item ? t("editLoan") : t("addLoan"), submitText: item ? t("saveLoan") : t("addLoan"), sectioned: true, fields: [
+    { type: "heading", label: languageCode() === "km" ? "ព័ត៌មានកម្ចី" : "Loan details", description: languageCode() === "km" ? "បញ្ចូលឈ្មោះ និងចំនួនប្រាក់កម្ចី។" : "Enter the loan name and amount.", icon: Icons.money(), tone: "blue" },
+    { name: "name", label: t("loanName"), value: item?.name, required: true },
+    { name: "originalAmount", label: t("originalAmount"), type: "number", value: item?.originalAmount, required: true },
+    { name: "currency", label: t("currency"), type: "select", options: ["USD", "KHR"], value: item?.currency || appData.profile.currency || "USD" },
+    { type: "heading", label: languageCode() === "km" ? "ផែនការសងប្រាក់" : "Repayment plan", description: languageCode() === "km" ? "កំណត់ការប្រាក់ រយៈពេល និងចំនួនបង់ប្រចាំខែ។" : "Set the interest rate, term, and monthly payment.", icon: Icons.chart(), tone: "violet" },
+    { name: "interestRate", label: t("interestRate"), type: "number", value: item?.interestRate || "" },
+    { name: "durationMonths", label: t("loanDurationMonths"), type: "number", value: item?.durationMonths || "" },
+    { name: "monthlyPayment", label: t("monthlyPayment"), type: "number", value: item?.monthlyPayment || 0 },
+    { name: "paymentType", label: languageCode() === "km" ? "វិធីបង់កម្ចី" : "Repayment method", type: "select", options: ["unspecified", "cash", "bank", "qr", "other"], optionLabels: languageCode() === "km" ? ["មិនបានបញ្ជាក់", "សាច់ប្រាក់", "ផ្ទេរធនាគារ", "បង់ QR", "ផ្សេងៗ"] : ["Unspecified", "Cash", "Bank Transfer", "QR Payment", "Other"], value: item?.paymentType || "unspecified" },
+    { type: "heading", label: languageCode() === "km" ? "កាលបរិច្ឆេទ និងការរំលឹក" : "Dates & reminders", description: languageCode() === "km" ? "ជ្រើសថ្ងៃបង់លើកដំបូង និងកាលបរិច្ឆេទបញ្ចប់។" : "Choose the first payment and final due date.", icon: Icons.calendar(), tone: "blue" },
+    { name: "firstPaymentDate", label: t("firstPaymentDate"), type: "date", value: normalizeLoanPaymentDate(item?.firstPaymentDate || item?.startDate) },
+    { name: "paymentDay", label: t("paymentDay"), type: "number", value: item ? (item.paymentDay || loanPaymentDay(item)) : "" },
+    { name: "dueDate", label: t("dueDate"), type: "date", value: item?.dueDate },
+    { name: "ask", label: languageCode() === "km" ? "💸 សួរ “បានបង់ហើយឬនៅ?” ពេលដល់ថ្ងៃ" : "💸 Ask “paid yet?” on the day", type: "checkbox", value: item?.ask ?? true },
+    { type: "heading", label: languageCode() === "km" ? "កំណត់ចំណាំ" : "Notes", description: languageCode() === "km" ? "ព័ត៌មានបន្ថែមអំពីកម្ចីនេះ (ស្រេចចិត្ត)។" : "Add any extra details about this loan (optional).", icon: Icons.edit(), tone: "amber" },
+    { name: "notes", label: t("notes"), type: "textarea", value: item?.notes }
+  ], onSubmit(data) { saveLoanRecord(item, data); } });
   bindLoanSmartFill();
 }
 

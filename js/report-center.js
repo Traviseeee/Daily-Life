@@ -109,13 +109,70 @@ const ReportCenter = (() => {
       <span class="rc-go" aria-hidden="true">›</span>
     </button>`;
   }
+  /* ---------- day tab: colour calendar (heatmap) of one month ---------- */
+  let heatMonth = "";
+  let selDay = "";
+  const nextMonth = month => { const [y, m] = month.split("-").map(Number); return `${m === 12 ? y + 1 : y}-${String(m === 12 ? 1 : m + 1).padStart(2, "0")}`; };
+  const daySpend = day => sumMoney((appData.expenses || []).filter(item => item.date === day), "amount");
+  function heat() {
+    const today = iso(new Date());
+    if (!heatMonth) heatMonth = today.slice(0, 7);
+    const month = heatMonth;
+    const [y, m] = month.split("-").map(Number);
+    const last = Number(monthEnd(month).slice(8));
+    if (!selDay || selDay.slice(0, 7) !== month) selDay = month === today.slice(0, 7) ? today : `${month}-${String(last).padStart(2, "0")}`;
+    const days = [];
+    for (let d = 1; d <= last; d += 1) { const key = `${month}-${String(d).padStart(2, "0")}`; days.push({ key, d, spend: key <= today ? daySpend(key) : 0, future: key > today }); }
+    const max = Math.max(0, ...days.map(day => day.spend));
+    const level = v => (!v || !max ? 0 : v / max > 0.75 ? 4 : v / max > 0.5 ? 3 : v / max > 0.25 ? 2 : 1);
+    const lead = (new Date(y, m - 1, 1).getDay() + 6) % 7; // Monday first
+    const ms = stats(periodOf("month", month));
+    const past = days.filter(day => !day.future);
+    const top = past.reduce((best, day) => (day.spend > (best?.spend || 0) ? day : best), null);
+    const zero = past.filter(day => !day.spend).length;
+    const avg = past.length ? ms.spend / past.length : 0;
+    const sel = stats(periodOf("day", selDay));
+    const wk = km() ? ["ច", "អ", "ពុ", "ព្រ", "សុ", "ស", "អា"] : ["M", "T", "W", "T", "F", "S", "S"];
+    // this month so far vs the same days of last month (a half month vs a full month always looked "down")
+    if (month === today.slice(0, 7)) {
+      const pm = prevMonth(month);
+      const upto = Math.min(Number(today.slice(8)), Number(monthEnd(pm).slice(8)));
+      const prevSpend = sumMoney((appData.expenses || []).filter(item => inRange(item, `${pm}-01`, `${pm}-${String(upto).padStart(2, "0")}`)), "amount");
+      ms.change = prevSpend ? Math.round(((ms.spend - prevSpend) / prevSpend) * 100) : null;
+    }
+    const up = ms.change !== null && ms.change > 0;
+    const chg = ms.change === null ? "" : `<span class="rc-chip ${up ? "is-up" : "is-down"}">${up ? "▲" : "▼"} ${Math.abs(ms.change)}%</span>`;
+    const dayName = key => { const [yy, mm, dd] = key.split("-").map(Number); const date = new Date(yy, mm - 1, dd); return km() ? `${KM_DAYS[date.getDay()]} ${dd} ${KM_MONTHS[mm - 1]}` : date.toLocaleDateString("en-US", { weekday: "short", day: "numeric", month: "short" }); };
+    const cells = `${"<i class=\"rc-h-x\"></i>".repeat(lead)}${days.map(day => `<button type="button" class="rc-h-d l${level(day.spend)}${day.key === today ? " is-today" : ""}${day.key === selDay ? " is-sel" : ""}" ${day.future ? "disabled" : `data-rc-day="${day.key}"`} aria-label="${escapeAttr(`${dayName(day.key)} · ${cash(day.spend)}`)}">${day.d}</button>`).join("")}`;
+    return `<div class="rc-box">
+        <div class="rc-box-h"><button type="button" class="rc-nav" data-rc-mon="-1" aria-label="${L("ខែមុន", "Previous month")}">‹</button><span>${L("ចាយ", "Spent")} <b>${money(ms.spend)}</b></span>${chg}<button type="button" class="rc-nav" data-rc-mon="1" ${month >= today.slice(0, 7) ? "disabled" : ""} aria-label="${L("ខែក្រោយ", "Next month")}">›</button></div>
+        <div class="rc-heat">
+          <div class="rc-h-wk">${wk.map(w => `<span>${w}</span>`).join("")}</div>
+          <div class="rc-h-cal">${cells}</div>
+          <div class="rc-h-scale">${L("តិច", "Less")} <i class="l0"></i><i class="l1"></i><i class="l2"></i><i class="l3"></i><i class="l4"></i> ${L("ច្រើន", "More")}</div>
+        </div>
+        <div class="rc-h-pop"><span><b>${escapeHtml(dayName(selDay))} · <em class="rc-out">-${money(sel.spend)}</em>${sel.income ? ` <em class="rc-in">+${money(sel.income)}</em>` : ""}</b><small>${sel.count} ${L("ចំណាយ", "expenses")}${sel.categories[0] ? ` · ${escapeHtml(optionLabel(sel.categories[0][0]))}` : ` · ${L("គ្មានចំណាយ 🎉", "no spending 🎉")}`}${wasSent(periodOf("day", selDay)) ? ` · <span class="rc-sent">✓ Telegram</span>` : ""}</small></span><button type="button" class="rc-h-go" data-rc-open="day:${selDay}">${L("មើល", "View")} ›</button></div>
+      </div>
+      <div class="rc-box rc-trio">
+        <div><small>${L("ថ្ងៃចាយច្រើន", "Top day")}</small><b>${top ? escapeHtml(km() ? `${KM_DAYS[new Date(`${top.key}T00:00:00`).getDay()]} ${top.d}` : dayName(top.key)) : "—"}</b></div>
+        <div><small>${L("មធ្យម/ថ្ងៃ", "Avg / day")}</small><b>${money(avg)}</b></div>
+        <div><small>${L("ថ្ងៃមិនចាយ", "No-spend days")}</small><b class="rc-in">${zero}${zero ? " 🎉" : ""}</b></div>
+      </div>
+      <div class="rc-acts">
+        <button type="button" data-rc-act="jpg"><span>⬇</span>JPG ${L("ខែ", "month")}</button>
+        <button type="button" data-rc-act="xlsx"><span>📑</span>Excel</button>
+        <button type="button" data-rc-act="tg"><span>✈️</span>Telegram</button>
+      </div>`;
+  }
   function render() {
     const tabs = [["day", L("ថ្ងៃ", "Day")], ["week", L("សប្តាហ៍", "Week")], ["month", L("ខែ", "Month")]];
-    const list = history(tab);
-    return `<article class="rc-panel" data-rc>
-      <div class="rc-head"><div><span class="rc-eyebrow">📊 ${L("មជ្ឈមណ្ឌលរបាយការណ៍", "Report Center")}</span><h2>${L("ប្រវត្តិរបាយការណ៍", "Report history")}</h2></div></div>
+    if (!heatMonth) heatMonth = iso(new Date()).slice(0, 7);
+    const [hy, hm] = heatMonth.split("-").map(Number);
+    const title = tab === "day" ? (km() ? `${KM_MONTHS[hm - 1]} ${hy}` : new Date(hy, hm - 1, 1).toLocaleDateString("en-US", { month: "long", year: "numeric" })) : L("ប្រវត្តិរបាយការណ៍", "Report history");
+    return `<article class="rc-panel rc-v3" data-rc>
+      <div class="rc-head"><div><span class="rc-eyebrow">📊 ${L("មជ្ឈមណ្ឌលរបាយការណ៍", "Report Center")}</span><h2>${escapeHtml(title)}</h2></div></div>
       <div class="rc-seg" role="tablist">${tabs.map(([id, text]) => `<button type="button" role="tab" aria-selected="${tab === id}" class="${tab === id ? "is-on" : ""}" data-rc-tab="${id}">${text}</button>`).join("")}</div>
-      <div class="rc-list">${list.map(card).join("")}</div>
+      ${tab === "day" ? heat() : `<div class="rc-list">${history(tab).map(card).join("")}</div>`}
     </article>`;
   }
 
@@ -322,6 +379,26 @@ const ReportCenter = (() => {
   document.addEventListener("click", event => {
     const tabButton = event.target.closest("[data-rc-tab]");
     if (tabButton) { tab = tabButton.dataset.rcTab; refreshList(); return; }
+    const dayButton = event.target.closest("[data-rc-day]");
+    if (dayButton) { selDay = dayButton.dataset.rcDay; refreshList(); return; }
+    const monButton = event.target.closest("[data-rc-mon]");
+    if (monButton) {
+      const today = iso(new Date()).slice(0, 7);
+      const next = Number(monButton.dataset.rcMon) < 0 ? prevMonth(heatMonth) : nextMonth(heatMonth);
+      if (next <= today) { heatMonth = next; selDay = ""; refreshList(); }
+      return;
+    }
+    const actButton = event.target.closest("[data-rc-act]");
+    if (actButton) {
+      // the month report viewer does the work (same JPG / Excel / Telegram as before)
+      const act = actButton.dataset.rcAct;
+      open(`month:${heatMonth}`).then(() => {
+        const viewer = document.querySelector(".rc-viewer");
+        if (!viewer || !current?.canvas) return;
+        viewer.querySelector(act === "jpg" ? "[data-rc-jpg]" : act === "xlsx" ? "[data-rc-xlsx]" : "[data-rc-tg]")?.click();
+      });
+      return;
+    }
     const cardButton = event.target.closest("[data-rc-open]");
     if (cardButton) open(cardButton.dataset.rcOpen);
   });

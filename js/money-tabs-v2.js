@@ -197,6 +197,113 @@ const MoneyTabsV2 = (() => {
   });
 
   /* ---------- loans ---------- */
+  // every month of the loan: past months from the schedule, then the months still to pay
+  function loanMonths(loan, schedule, remaining) {
+    const list = schedule.map(item => ({ ...item }));
+    const monthly = Number(loan.monthlyPayment || 0);
+    const first = parseAppDate(loan.firstPaymentDate || loan.startDate);
+    if (!monthly || Number.isNaN(first.getTime())) return list;
+    const unpaidPast = list.filter(item => !item.paid).length;
+    const totalMonths = Number(loan.durationMonths || 0) || (list.length + Math.max(0, Math.ceil(remaining / monthly) - unpaidPast));
+    for (let index = list.length; index < Math.min(totalMonths, 600); index += 1) {
+      list.push({ date: toDateInput(addMonths(first, index)), amount: monthly, paid: false, future: true });
+    }
+    return list;
+  }
+  function dots(months, next) {
+    const step = Math.ceil(months.length / 120);
+    let html = "";
+    for (let index = 0; index < months.length; index += step) {
+      const group = months.slice(index, index + step);
+      const cls = group.every(item => item.paid) ? "on" : group.some(item => item.date === next) ? "now" : group.some(item => !item.paid && !item.future && item.date < today()) ? "late" : "";
+      html += `<i class="${cls}"></i>`;
+    }
+    return html;
+  }
+
+  // 📋 payment schedule as a bottom sheet (same tick = same toggleLoanScheduledPayment as before)
+  let sheetTab = "all";
+  function sheetHtml(loan) {
+    const remaining = loanRemaining(loan);
+    const schedule = loanPaymentScheduleToCurrent(loan);
+    const months = loanMonths(loan, schedule, remaining);
+    const next = nextLoanPaymentDate(loan);
+    const cur = loan.currency;
+    const paidRows = months.filter(item => item.paid);
+    const late = months.filter(item => !item.paid && !item.future && item.date < today() && item.date !== next);
+    const nextRow = next && remaining > 0 ? (months.find(item => item.date === next) || { date: next, amount: Number(loan.monthlyPayment || 0) }) : null;
+    const future = months.filter(item => item.future && item.date !== next);
+    const sum = list => list.reduce((total, item) => total + Number(item.amount || 0), 0);
+    const nd = daysUntil(next);
+    const canTick = item => daysUntil(item.date) <= 1; // the tick shows from 1 day before the payment day (no paying far ahead)
+    const row = (item, kind) => {
+      const tick = kind === "paid" || kind === "late" || (kind === "next" && canTick(item));
+      const d = daysUntil(item.date);
+      const sub = kind === "paid" ? L("បានបង់", "Paid") : kind === "next" ? `${L("បង់លើកក្រោយ", "Next payment")}${d != null && d >= 0 ? ` · ${inDays(d)}` : ""}${tick ? L(" · ចុច ✓ ពេលបង់រួច", " · tick when paid") : ""}` : kind === "late" ? L(`ហួស ${-d} ថ្ងៃ · ចុច ✓ ពេលបង់រួច`, `${-d} days late · tick when paid`) : L("មិនទាន់ដល់", "Not yet due");
+      const [y, m, dd] = item.date.split("-").map(Number);
+      const tile = `<i class="lb-st"><b>${kind === "late" ? "!" : dd}</b><small>${escapeHtml(km() ? KM_M[m - 1] : new Date(y, m - 1, 1).toLocaleDateString("en-US", { month: "short" }))}</small></i>`;
+      return `<div class="lb-row is-${kind}">${tile}<span class="lb-t"><b>${escapeHtml(dayLabel(item.date, true))}</b><small>${escapeHtml(sub)}</small></span><b class="lb-amt">${money(item.amount, cur)}</b>${tick ? `<label class="lb-ck" aria-label="${escapeAttr(L("បានបង់", "Paid"))}"><input type="checkbox" data-lb-tick="${escapeAttr(loan.id)}" data-payment-date="${escapeAttr(item.date)}" ${item.paid ? "checked" : ""}><span></span></label>` : ""}</div>`;
+    };
+    const section = (title, icon, kind, list, limit, open) => {
+      if (!list.length) return "";
+      const years = [];
+      list.forEach(item => { const yr = item.date.slice(0, 4); let g = years.find(x => x.y === yr); if (!g) years.push(g = { y: yr, items: [] }); g.items.push(item); });
+      let shown = 0;
+      const inner = years.map(g => {
+        const hideYear = shown >= limit;
+        const rows = g.items.map(item => `<div class="lb-wrap${shown++ >= limit ? " lb-hide" : ""}">${row(item, kind)}</div>`).join("");
+        return `${years.length > 1 || kind !== "late" ? `<div class="lb-yr lb-wrap${hideYear ? " lb-hide" : ""}"><b>${g.y}</b><span>${g.items.length} ${escapeHtml(L("ដង", "×"))} · ${money(sum(g.items), cur)}</span></div>` : ""}${rows}`;
+      }).join("");
+      const more = list.length > limit ? `<button type="button" class="lb-more" data-lb-more>${escapeHtml(L(`មើល ${list.length - limit} ទៀត ▾`, `Show ${list.length - limit} more ▾`))}</button>` : "";
+      return `<section class="lb-sec is-${kind}"><div class="lb-h"><span>${icon} ${escapeHtml(title)}</span><em>${list.length} · ${money(sum(list), cur)}</em></div><div class="lb-box">${inner}${more}</div></section>`;
+    };
+    const show = kind => sheetTab === "all" || (sheetTab === "paid" ? kind === "paid" : kind !== "paid");
+    const ended = !nextRow && !future.length && remaining > 0;
+    const body = [
+      show("late") && late.length ? section(L("ហួសថ្ងៃ", "Late"), "⚠️", "late", late.slice().reverse(), 99) : "",
+      show("next") && nextRow ? `<section class="lb-sec is-next"><div class="lb-h"><span>📅 ${escapeHtml(L("បង់លើកក្រោយ", "Next payment"))}</span></div><div class="lb-box">${row(nextRow, "next")}</div></section>` : "",
+      show("paid") && paidRows.length ? section(L("បានបង់", "Paid"), "✅", "paid", paidRows.slice().reverse(), 3) : "",
+      show("soon") && future.length ? section(L("ខាងមុខ", "Coming up"), "🗓️", "soon", future, 3) : ""
+    ].join("") || `<p class="lb-empty">${escapeHtml(L("មិនមានអ្វីនៅទីនេះទេ", "Nothing here"))}</p>`;
+    return `<div class="modal lb-sheet" role="dialog" aria-modal="true" aria-label="${escapeAttr(t("paymentSchedule"))}">
+      <div class="lb-grab" aria-hidden="true"></div>
+      <div class="lb-top"><span><b>📋 ${escapeHtml(t("paymentSchedule"))}</b><small>${escapeHtml(loan.name || "")} · ${money(loan.monthlyPayment, cur)} / ${escapeHtml(L("ខែ", "month"))}</small></span><button type="button" class="icon-button" data-close aria-label="Close">${Icons.close()}</button></div>
+      <div class="lb-sum"><div><small>${escapeHtml(L("បានបង់", "Paid"))}</small><b>${paidRows.length} ${escapeHtml(L("ដង", "times"))}</b><span>${money(loanPaid(loan), cur)}</span></div><div><small>${escapeHtml(t("remaining"))}</small><b>${months.length - paidRows.length} ${escapeHtml(L("ដង", "times"))}</b><span>${money(remaining, cur)}</span></div></div>
+      ${ended ? `<p class="lb-warn">⚠️ ${escapeHtml(L(`រយៈពេលកម្ចីចប់ហើយ តែនៅសល់ ${money(remaining, cur)}។ សូមពិនិត្យ រយៈពេល/ថ្ងៃកំណត់ ក្នុង "កែកម្ចី"។`, `The loan term has ended but ${money(remaining, cur)} is left. Check the months / due date in Edit loan.`))}</p>` : ""}
+      <div class="lb-tabs">${[["all", L("ទាំងអស់", "All")], ["todo", L("មិនទាន់បង់", "Unpaid")], ["paid", L("បានបង់", "Paid")]].map(([key, label]) => `<button type="button" data-lb-tab="${key}" class="${sheetTab === key ? "on" : ""}">${escapeHtml(label)}</button>`).join("")}</div>
+      <div class="lb-list">${body}</div>
+    </div>`;
+  }
+  function openSheet(id) {
+    const loan = (appData.loans || []).find(item => item.id === id);
+    const root = document.getElementById("modalRoot");
+    if (!loan || !root) return;
+    const paint = () => {
+      const fresh = (appData.loans || []).find(item => item.id === id);
+      if (!fresh) return Modal.close();
+      const scroll = root.querySelector(".lb-list")?.scrollTop || 0;
+      root.innerHTML = sheetHtml(fresh);
+      const list = root.querySelector(".lb-list");
+      if (list) list.scrollTop = scroll;
+      root.querySelectorAll("[data-close]").forEach(button => button.addEventListener("click", () => Modal.close()));
+      root.querySelectorAll("[data-lb-tab]").forEach(button => button.addEventListener("click", () => { sheetTab = button.dataset.lbTab; paint(); }));
+      root.querySelectorAll("[data-lb-more]").forEach(button => button.addEventListener("click", () => {
+        button.closest(".lb-box")?.querySelectorAll(".lb-hide").forEach(el => el.classList.remove("lb-hide"));
+        button.remove();
+      }));
+      root.querySelectorAll("[data-lb-tick]").forEach(input => input.addEventListener("change", () => {
+        input.dataset.loanSchedule = input.dataset.lbTick;
+        toggleLoanScheduledPayment(input);
+        paint();
+      }));
+    };
+    sheetTab = "all";
+    if (Modal.escapeHandler) document.removeEventListener("keydown", Modal.escapeHandler);
+    Modal.escapeHandler = event => { if (event.key === "Escape") Modal.close(); };
+    document.addEventListener("keydown", Modal.escapeHandler);
+    root.className = "modal-root open";
+    paint();
+  }
   function loans() {
     const items = appData.loans || [];
     const cards = items.map(loan => {
@@ -207,23 +314,51 @@ const MoneyTabsV2 = (() => {
       const next = nextLoanPaymentDate(loan);
       const nextDays = daysUntil(next);
       const schedule = loanPaymentScheduleToCurrent(loan);
+      const paidCount = schedule.filter(item => item.paid).length;
+      const months = loanMonths(loan, schedule, remaining);
+      const left = Math.max(0, months.length - paidCount);
       const payDay = loanDisplayPaymentDay(loan);
       const interest = Math.max(0, loanPayoffAmount(loan) - Number(loan.originalAmount || 0));
-      return `<section class="mt-card mt-loan" data-mt-row>
-        <div class="mt-head"><span class="mt-ic" style="--c:#3b82f6">🏦</span><b>${escapeHtml(loan.name || t("loan"))}</b>${more("loan", loan)}</div>
-        <div class="mt-tags"><span>${escapeHtml(loan.durationMonths ? `${loan.durationMonths} ${t("months")}` : optionLabel(loan.paymentFrequency || "Monthly"))}</span><span>${escapeHtml(t("interest"))} ${loan.interestRate || 0}%</span>${payDay ? `<span>${escapeHtml(L(`បង់ថ្ងៃទី ${payDay}`, `Pays on day ${payDay}`))}</span>` : ""}</div>
-        <div class="mt-loan-progress"><div class="mt-hero">${ring(p, t("paid"))}<div><small>${escapeHtml(t("remaining"))}</small><span class="mt-big">${money(remaining, loan.currency)}</span><em>${money(paid, loan.currency)} / ${money(total, loan.currency)}</em></div></div>
-          <div class="mt-minis is-3"><div><small>${escapeHtml(t("monthlyPayment"))}</small><b>${money(loan.monthlyPayment, loan.currency)}</b></div><div><small>${escapeHtml(t("nextPaymentDate"))}</small><b>${next ? escapeHtml(dayLabel(next)) : "—"}</b></div><div><small>${escapeHtml(t("dueDate"))}</small><b>${loan.dueDate ? escapeHtml(monthLabel(loan.dueDate)) : "—"}</b></div></div>
+      const ended = loan.dueDate && loan.dueDate < today() && remaining > 0;
+      const sub = [loan.durationMonths ? `${loan.durationMonths} ${t("months")}` : L("កម្ចីប្រចាំខែ", "Monthly loan"), payDay ? L(`បង់ថ្ងៃទី ${payDay}`, `pays on day ${payDay}`) : ""].filter(Boolean).join(" · ");
+      // F · "road home": Nimo walks the paid share of the loan; next payment is a ticket with the pay button
+      const walk = Math.min(94, Math.max(6, p));
+      const [ny, nm, nd2] = (next || "").split("-").map(Number);
+      const startLabel = monthLabel(loan.firstPaymentDate || loan.startDate);
+      const nextBlock = next && remaining > 0
+        ? `<div class="mt-lf-tk"><span class="mt-lf-cal"><small>${escapeHtml(km() ? KM_M[nm - 1] : new Date(ny, nm - 1, 1).toLocaleDateString("en-US", { month: "short" }))}</small><b>${nd2}</b></span><span class="mt-lf-t"><b>${money(loan.monthlyPayment, loan.currency)}</b><small>${escapeHtml(L("បង់លើកក្រោយ", "Next payment"))}${nextDays != null && nextDays >= 0 ? ` · ${escapeHtml(inDays(nextDays))}` : ""}</small></span><button type="button" class="mt-lf-pay" data-payment-loan="${escapeAttr(loan.id)}">＋ ${escapeHtml(L("បង់", "Pay"))}</button></div>`
+        : `<div class="mt-lf-tk"><span class="mt-lf-cal is-done"><small>✓</small><b>🏠</b></span><span class="mt-lf-t"><b>${escapeHtml(remaining > 0 ? L("គ្មានថ្ងៃបង់ខាងមុខ", "No payment scheduled") : L("បង់រួចហើយ!", "Paid off!"))}</b><small>${escapeHtml(remaining > 0 ? L("ពិនិត្យរយៈពេលក្នុង “កែកម្ចី”", "Check the months in Edit loan") : L("អបអរសាទរ 🎉", "Congrats 🎉"))}</small></span><button type="button" class="mt-lf-pay" data-payment-loan="${escapeAttr(loan.id)}">＋ ${escapeHtml(L("បង់", "Pay"))}</button></div>`;
+      return `<section class="mt-card mt-loan mt-lf" data-mt-row>
+        <div class="mt-lf-top">
+          <div class="mt-head"><span class="mt-ic" style="--c:#7b68ee">🏦</span><span class="mt-lb-name"><b>${escapeHtml(loan.name || t("loan"))}</b><small>${escapeHtml(sub)}</small></span>${more("loan", loan)}</div>
+          <small class="mt-lf-k">${escapeHtml(t("remaining"))}</small>
+          <div class="mt-lf-amt">${money(remaining, loan.currency)}</div>
+          <small class="mt-lf-of">${L(`បានបង់ ${money(paid, loan.currency)} ក្នុងចំណោម ${money(total, loan.currency)}`, `Paid ${money(paid, loan.currency)} of ${money(total, loan.currency)}`)}</small>
+          <div class="mt-lf-road" aria-label="${escapeAttr(`${p}% ${t("paid")}`)}">
+            <i class="mt-lf-track"></i><i class="mt-lf-done" style="width:${p}%"></i>
+            <span class="mt-lf-cat" style="left:${walk}%"><em>🐱 ${p}%</em><i></i></span>
+            <span class="mt-lf-home">🏠</span>
+          </div>
+          <div class="mt-lf-lbl"><span>${escapeHtml(startLabel || "")}</span><span>${months.length ? escapeHtml(L(`${paidCount} / ${months.length} ខែ`, `${paidCount} / ${months.length} months`)) : ""}</span><span>${escapeHtml(L("បង់រួច", "Paid off"))}</span></div>
+          <div class="mt-lf-facts">
+            <div><small>${escapeHtml(L("ប្រចាំខែ", "Monthly"))}</small><b>${money(loan.monthlyPayment, loan.currency)}</b></div>
+            <div><small>${escapeHtml(t("interest"))}</small><b>${Number(loan.interestRate || 0)}%</b></div>
+            <div class="${ended ? "is-warn" : ""}"><small>${escapeHtml(L("បញ្ចប់", "Ends"))}</small><b>${loan.dueDate ? `${ended ? "⚠️ " : ""}${escapeHtml(monthLabel(loan.dueDate))}` : "—"}</b></div>
+          </div>
         </div>
-        <div class="mt-loan-payment">${next && remaining > 0 ? `<div class="mt-next"><span>📅</span><span><b>${escapeHtml(L("បង់លើកក្រោយ", "Next payment"))} · ${money(loan.monthlyPayment, loan.currency)}</b><small>${escapeHtml(dayLabel(next, true))}${nextDays != null && nextDays >= 0 ? ` · ${escapeHtml(inDays(nextDays))}` : ""}</small></span></div>` : ""}
-          <button type="button" class="mt-btn is-main is-wide" data-payment-loan="${escapeAttr(loan.id)}">＋ ${escapeHtml(t("makePayment"))}</button>
+        <div class="mt-lf-ticket">
+          ${nextBlock}
+          <div class="mt-lf-foot">
+            <button type="button" data-lb-info="${escapeAttr(loan.id)}" aria-expanded="false">ⓘ ${escapeHtml(L("ព័ត៌មាន", "Details"))}</button>
+            <button type="button" data-lb-sheet="${escapeAttr(loan.id)}">📋 ${escapeHtml(L("បញ្ជីបង់", "Schedule"))}${schedule.length ? ` <em>${paidCount}/${schedule.length}</em>` : ""}</button>
+          </div>
+          <div class="mt-kv mt-lb-info" hidden>
+            <div><small>${escapeHtml(t("original"))}</small><b>${money(loan.originalAmount, loan.currency)}</b></div>
+            <div><small>${escapeHtml(t("firstPaymentDate"))}</small><b>${escapeHtml(dayLabel(loan.firstPaymentDate || loan.startDate, true) || "—")}</b></div>
+            <div><small>${escapeHtml(t("totalInterest"))}</small><b>${money(interest, loan.currency)}</b></div>
+            <div><small>${escapeHtml(t("dueDate"))}</small><b>${escapeHtml(dayLabel(loan.dueDate, true) || "—")}</b></div>
+          </div>
         </div>
-        <div class="mt-loan-more"><details class="mt-acc"><summary>ⓘ ${escapeHtml(t("loanDetails"))}<span>›</span></summary><div class="mt-kv">
-          <div><small>${escapeHtml(t("original"))}</small><b>${money(loan.originalAmount, loan.currency)}</b></div>
-          <div><small>${escapeHtml(t("firstPaymentDate"))}</small><b>${escapeHtml(dayLabel(loan.firstPaymentDate || loan.startDate, true) || "—")}</b></div>
-          <div><small>${escapeHtml(t("totalInterest"))}</small><b>${money(interest, loan.currency)}</b></div>
-        </div></details>
-        ${schedule.length ? `<details class="mt-acc"><summary>📋 ${escapeHtml(t("paymentSchedule"))} · ${schedule.filter(item => item.paid).length}/${schedule.length}<span>›</span></summary><div class="mt-sched">${schedule.slice().reverse().map(item => `<label class="mt-check is-sm${item.paid ? " is-on" : ""}"><input type="checkbox" data-loan-schedule="${escapeAttr(loan.id)}" data-payment-date="${escapeAttr(item.date)}" ${item.paid ? "checked" : ""}><span class="mt-box">${Icons.check()}</span><span><b>${escapeHtml(dayLabel(item.date, true))}</b><small>${money(item.amount, loan.currency)}</small></span></label>`).join("")}</div></details>` : ""}</div>
       </section>`;
     }).join("");
     const nomiSay = L("ខ្ញុំនៅទីនេះជួយអ្នកតាមដានកម្ចី 🐾", "I’m here to help you keep loans on track 🐾");
@@ -286,6 +421,14 @@ const MoneyTabsV2 = (() => {
 
   // tap a row (not a button / link / checkbox) = edit it; close other ⋯ menus
   document.addEventListener("click", event => {
+    const sheetButton = event.target.closest(".fv2-page [data-lb-sheet]");
+    if (sheetButton) { openSheet(sheetButton.dataset.lbSheet); return; }
+    const infoButton = event.target.closest(".fv2-page [data-lb-info]");
+    if (infoButton) {
+      const panel = infoButton.closest("[data-mt-row]")?.querySelector(".mt-lb-info");
+      if (panel) { panel.hidden = !panel.hidden; infoButton.setAttribute("aria-expanded", String(!panel.hidden)); infoButton.classList.toggle("on", !panel.hidden); }
+      return;
+    }
     const open = event.target.closest(".mt-more");
     document.querySelectorAll(".mt-more[open]").forEach(menu => { if (menu !== open) menu.open = false; });
     const row = event.target.closest(".fv2-page [data-mt-row]");
@@ -293,5 +436,5 @@ const MoneyTabsV2 = (() => {
     row.querySelector(".mt-menu [data-edit-income], .mt-menu [data-edit-savings], .mt-menu [data-edit-loan], .mt-menu [data-edit-bill]")?.click();
   });
 
-  return { render };
+  return { render, openSheet };
 })();
