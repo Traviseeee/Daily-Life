@@ -1097,3 +1097,22 @@ html:root body:not(#gl) #modalRoot .vt-modal .xp-currency { font-size: .95rem; }
 body.tool-page-open .quick-action-dock { display: none !important; }
 body.tool-page-open:not(.hv2-search-open) .app-main .topbar { display: none !important; }
 body.tool-page-open .ct-hero { padding-top: max(14px, env(safe-area-inset-top)); }
+/* vehicle smart bits (8 Nov) */
+html:root body:not(#gl) .vt-learn { margin: 0; padding: 12px 14px; border: 1px dashed var(--tc-line); border-radius: 18px; font-size: .78rem; line-height: 1.6; color: var(--tc-mute); }
+html:root body:not(#gl) .vt-trio.is-inner { border: 0; border-radius: 0; }
+html:root body:not(#gl) .vt-ai { display: inline-flex; align-items: center; gap: 4px; font-size: .74rem; font-weight: 600; color: #5a48d6; }
+html:root:not([data-theme="light"]) body:not(#gl) .vt-ai { color: #c9bdff; }
+html:root body:not(#gl) #modalRoot .vt-modal .vt-kinds { align-items: center; }
+html:root body:not(#gl) #modalRoot .vt-modal .vt-parsed { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: -4px 0 4px; }
+html:root body:not(#gl) #modalRoot .vt-modal .vt-parsed[hidden] { display: none; }
+html:root body:not(#gl) #modalRoot .vt-modal .vt-parsed small { width: 100%; font-size: .74rem; font-weight: 600; color: #1f9d6a; }
+html:root body:not(#gl) #modalRoot .vt-modal .vt-parsed span { padding: 5px 10px; border: 1px solid #a7e3c6; border-radius: 99px; background: #e9f8f1; color: #1f8a5c; font-size: .76rem; font-weight: 600; }
+html:root:not([data-theme="light"]) body:not(#gl) #modalRoot .vt-modal .vt-parsed span { border-color: #2c5c4a; background: #1f3f34; color: #8fe6bf; }
+html:root:not([data-theme="light"]) body:not(#gl) #modalRoot .vt-modal .vt-parsed small { color: #7fe0b3; }
+html:root body:not(#gl) #modalRoot .vt-modal .vt-last { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: -4px 2px 6px; }
+html:root body:not(#gl) #modalRoot .vt-modal .vt-last:empty { display: none; }
+html:root body:not(#gl) #modalRoot .vt-modal .vt-use { min-height: 34px; padding: 0 12px; border: 1px solid #8b78f2; border-radius: 12px; background: transparent; color: inherit; font: inherit; font-size: .78rem; font-weight: 600; cursor: pointer; }
+html:root body:not(#gl) #modalRoot .vt-modal .vt-warn { display: grid; gap: 4px; padding: 10px 12px; border: 1px solid #f2c48d; border-radius: 14px; background: #fff3e4; color: #b25f0e; font-size: .8rem; font-weight: 600; }
+html:root:not([data-theme="light"]) body:not(#gl) #modalRoot .vt-modal .vt-warn { border-color: #7a5228; background: #3e2d1c; color: #ffbf7a; }
+html:root body:not(#gl) #modalRoot .vt-modal .vt-warn[hidden] { display: none; }
+html:root body:not(#gl) #modalRoot .vt-modal .vt-warn small { font-weight: 500; opacity: .85; }
