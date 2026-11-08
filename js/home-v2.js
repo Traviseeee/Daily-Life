@@ -339,6 +339,7 @@ const HomeV2 = (() => {
           <div class="hv2-soft-summary">
             <a class="hv2-soft-amt money-value${hide}" href="#money">${escapeHtml(plainMoney(available))}</a>
             <span class="hv2-soft-pill">${escapeHtml((awaitingIncome ? L(`ចាយរួច ${plainMoney(m.expenses)} · នៅ ${daysLeft} ថ្ងៃ`, `${plainMoney(m.expenses)} spent · ${daysLeft} days left`) : null) || L(`ចាយរួច ${pct}% នៃ ${plainMoney(m.income)} · នៅ ${daysLeft} ថ្ងៃ`, `${pct}% of ${plainMoney(m.income)} spent · ${daysLeft} days left`))}</span>
+            ${awaitingIncome ? `<button type="button" class="hv2-soft-income-btn" data-hv2-add-income>＋ ${escapeHtml(L("កត់ប្រាក់ខែ / ចំណូល", "Add salary / income"))}</button>` : ""}
           </div>
         </div>
         ${sc.track ? track : ""}
@@ -361,6 +362,7 @@ const HomeV2 = (() => {
           <div class="hv2-soft-summary">
             <a class="hv2-soft-amt money-value${hide}" href="#money">${escapeHtml(plainMoney(available))}</a>
             <span class="hv2-soft-pill">${escapeHtml((awaitingIncome ? L(`ចាយរួច ${plainMoney(m.expenses)} · ${daysLeft} ថ្ងៃទៀត`, `${plainMoney(m.expenses)} spent · ${daysLeft} days left`) : L(`ចាយរួច ${pct}% · ${daysLeft} ថ្ងៃទៀត`, `${pct}% spent · ${daysLeft} days left`)))}</span>
+            ${awaitingIncome ? `<button type="button" class="hv2-soft-income-btn" data-hv2-add-income>＋ ${escapeHtml(L("កត់ប្រាក់ខែ / ចំណូល", "Add salary / income"))}</button>` : ""}
             ${awaitingIncome && !(sc.nomi && sc.talk) ? `<span class="hv2-soft-income-note">${escapeHtml(L("មិនទាន់ទទួលប្រាក់ខែ ឬចំណូល freelance ទេ", "No salary or freelance income received yet"))}</span>` : ""}
           </div>
         </div>
@@ -774,6 +776,7 @@ const HomeV2 = (() => {
     const quickAction = event.target.closest("[data-hv2-quick]");
     if (quickAction && typeof runQuickAction === "function") runQuickAction(quickAction.dataset.hv2Quick);
     if (event.target.closest("[data-hv2-bell]")) document.getElementById("bellButton")?.click();
+    if (event.target.closest("[data-hv2-add-income]")) { if (typeof openIncomeModal === "function") openIncomeModal(); else location.hash = "#money/income"; }
     if (event.target.closest("[data-hv2-menu]")) document.getElementById("menuToggle")?.click();
     if (event.target.closest("[data-hv2-search]")) {
       // phone Home hides the app top bar; show it again for the search box

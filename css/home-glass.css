@@ -617,3 +617,10 @@ html:root body:not(#gl) #app *, html:root body:not(#gl) #app *::before, html:roo
 html:root body:not(#gl) :is(#app .hv2-bell, #app .hv2-menu, #app .hv2-wx, #app .hv2-q > i, #app .hv2-mood-btn > span, #app .hv4-more, #app .hv4-chev, #mobileNav)::after { animation: none !important; opacity: 0 !important; }
 /* pause the turning background + sweep while scrolling */
 html.is-scrolling body::after, html.is-scrolling body #app *::after { animation-play-state: paused !important; }
+/* money card while waiting for pay: one tap to add the salary / income */
+html:root body:not(#gl) #app .hv2-soft-income-btn {
+  display: inline-flex; align-items: center; justify-content: center; min-height: 36px; margin-top: 8px; padding: 0 14px;
+  border: 0; border-radius: 99px; font: inherit; font-size: .8rem; font-weight: 600; color: #fff; cursor: pointer;
+  background: linear-gradient(140deg, #9f8cff, #6a58e0); box-shadow: 0 8px 18px -10px rgba(91, 79, 214, .7);
+}
+html:root body:not(#gl) #app .hv2-soft-income-btn:active { transform: scale(.97); }

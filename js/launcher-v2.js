@@ -168,6 +168,11 @@ const LauncherV2 = (() => {
       setTimeout(() => document.getElementById("globalSearch")?.focus(), 50);
     }
     if (event.target.closest("[data-lv-ai]")) document.getElementById("smartAssistantButton")?.click();
+    // the bell opens the same notification panel as on Home (settings stay one tap away inside it)
+    if (event.target.closest(".lv-bell") && typeof NotificationCenter !== "undefined") {
+      event.preventDefault();
+      NotificationCenter.open();
+    }
   });
 
   return { render };
