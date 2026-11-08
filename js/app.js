@@ -342,6 +342,7 @@ const App = {
     document.body.classList.toggle("launcher-page-open", route === "launcher");
     document.body.classList.toggle("notify-page-open", route === "notifications");
     document.body.classList.toggle("money-page-open", route === "money"); // money tabs have their own Add buttons
+    document.body.classList.toggle("settings-page-open", route === "settings"); // no floating + over the settings rows
     document.body.classList.toggle("topbar-home", route === "home");
     if (typeof TopbarWeather !== "undefined") TopbarWeather.render();
 

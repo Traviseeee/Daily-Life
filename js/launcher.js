@@ -100,29 +100,43 @@ function renderLauncher() {
   `;
 }
 
+// Footer editor B (8 Nov 2026): big tiles with a ✕ in the corner, tap a tile → ‹ › bar to move it,
+// tools that can be added sit inside the editor with a + badge.
+let footerPicked = "";
 function renderFooterEditor() {
   const km = languageCode() === "km";
   const slots = footerRoutes();
+  const ids = slots.map(route => route.id);
+  if (!ids.includes(footerPicked)) footerPicked = "";
+  const label = route => escapeHtml(t(route.labelKey || route.id));
+  const icon = route => (Icons[LAUNCHER_ICON?.[route.id] || route.icon] || Icons[route.icon] || Icons.plus)();
+  const picked = slots.find(route => route.id === footerPicked);
+  const index = picked ? ids.indexOf(picked.id) : -1;
+  const free = launcherAllRoutes().filter(route => !ids.includes(route.id) && route.id !== "launcher");
+  const full = ids.length >= FOOTER_MAX;
   return `
-    <div class="footer-editor-head">
-      <div><strong>${km ? "Footer របស់អ្នក" : "Your footer"}</strong><small>${km ? `ចុច + លើឧបករណ៍ខាងក្រោម ដើម្បីបន្ថែម · អតិបរមា ${FOOTER_MAX}` : `Tap + on a tool below to add · up to ${FOOTER_MAX}`}</small></div>
-      <div class="footer-editor-actions">
-        <button type="button" class="footer-editor-reset" data-footer-reset>${km ? "លំនាំដើម" : "Reset"}</button>
-        <button type="button" class="footer-editor-done" data-footer-edit>${Icons.check()}${km ? "រួចរាល់" : "Done"}</button>
-      </div>
+    <div class="fe-head">
+      <span class="fe-title"><b>✏️ ${km ? "កែ Footer" : "Edit footer"}</b><small>${km ? `ចុចប្រអប់ ដើម្បីរៀប · អតិបរមា ${FOOTER_MAX}` : `Tap a tile to move it · up to ${FOOTER_MAX}`}</small></span>
+      <button type="button" class="fe-reset" data-footer-reset aria-label="${km ? "លំនាំដើម" : "Reset"}" title="${km ? "លំនាំដើម" : "Reset"}">↺</button>
+      <button type="button" class="fe-done" data-footer-edit>${Icons.check()}${km ? "រួចរាល់" : "Done"}</button>
     </div>
-    <div class="footer-slots">
-      ${slots.map((route, index) => `<div class="footer-slot">
-        <span class="footer-slot-icon">${Icons[route.icon]()}</span>
-        <b>${escapeHtml(t(route.labelKey || route.id))}</b>
-        <div class="footer-slot-tools">
-          <button type="button" data-footer-move="${route.id}" data-dir="-1" ${index === 0 ? "disabled" : ""} aria-label="${km ? "ទៅឆ្វេង" : "Move left"}">‹</button>
-          <button type="button" data-footer-remove="${route.id}" ${slots.length <= 1 ? "disabled" : ""} aria-label="${km ? "ដកចេញ" : "Remove"}">×</button>
-          <button type="button" data-footer-move="${route.id}" data-dir="1" ${index === slots.length - 1 ? "disabled" : ""} aria-label="${km ? "ទៅស្តាំ" : "Move right"}">›</button>
-        </div>
-      </div>`).join("")}
-      ${Array.from({ length: FOOTER_MAX - slots.length }, () => `<div class="footer-slot is-empty"><span>+</span></div>`).join("")}
-    </div>`;
+    <div class="fe-box">
+      <div class="fe-box-h">📌 ${km ? "Footer របស់អ្នក" : "Your footer"}<span>${ids.length} / ${FOOTER_MAX}</span></div>
+      <div class="fe-tiles">
+        ${slots.map(route => `<div class="fe-tile${route.id === footerPicked ? " is-sel" : ""}">
+          <button type="button" class="fe-pick" data-footer-pick="${route.id}" aria-pressed="${route.id === footerPicked}"><span class="fe-ic">${icon(route)}</span><b>${label(route)}</b></button>
+          ${ids.length > 1 ? `<button type="button" class="fe-x" data-footer-remove="${route.id}" aria-label="${km ? "ដកចេញ" : "Remove"} ${label(route)}">✕</button>` : ""}
+        </div>`).join("")}
+        ${Array.from({ length: FOOTER_MAX - slots.length }, () => `<div class="fe-tile is-empty" aria-hidden="true">+</div>`).join("")}
+      </div>
+      <div class="fe-mover">${picked
+        ? `<button type="button" data-footer-move="${picked.id}" data-dir="-1" ${index === 0 ? "disabled" : ""} aria-label="${km ? "ទៅឆ្វេង" : "Move left"}">‹</button><span><b>${label(picked)}</b> · ${km ? `ទី ${index + 1}` : `#${index + 1}`}</span><button type="button" data-footer-move="${picked.id}" data-dir="1" ${index === ids.length - 1 ? "disabled" : ""} aria-label="${km ? "ទៅស្តាំ" : "Move right"}">›</button>`
+        : `<small>${km ? "👆 ចុចប្រអប់ណាមួយ ដើម្បីរំកិលទៅឆ្វេង / ស្តាំ" : "👆 Tap a tile to move it left / right"}</small>`}</div>
+    </div>
+    ${free.length ? `<div class="fe-box">
+      <div class="fe-box-h">➕ ${km ? "ចុចដើម្បីបន្ថែម" : "Tap to add"}<span>${full ? (km ? "ពេញហើយ · ដក 1 ចេញសិន" : "Full · remove one first") : ""}</span></div>
+      <div class="fe-avail${full ? " is-full" : ""}">${free.map(route => `<button type="button" class="fe-av" data-footer-toggle="${route.id}"><i class="fe-plus">+</i><span class="fe-ic">${icon(route)}</span><b>${label(route)}</b></button>`).join("")}</div>
+    </div>` : ""}`;
 }
 
 function saveFooterRoutes(ids) {
@@ -149,7 +163,7 @@ function refreshFooterEditing() {
   const editor = document.querySelector("[data-footer-editor]");
   if (editor && !editor.hidden) editor.innerHTML = renderFooterEditor();
   const pinned = footerRoutes().map(route => route.id);
-  document.querySelectorAll("[data-footer-toggle]").forEach(button => {
+  document.querySelectorAll("[data-footer-toggle]:not(.fe-av)").forEach(button => {
     const on = pinned.includes(button.dataset.footerToggle);
     button.classList.toggle("active", on);
     button.setAttribute("aria-pressed", String(on));
@@ -189,6 +203,12 @@ function bindLauncher() {
     const toggleEdit = event.target.closest("[data-footer-edit]");
     if (toggleEdit) {
       setEditing(!page.classList.contains("footer-editing"));
+      return;
+    }
+    const pick = event.target.closest("[data-footer-pick]");
+    if (pick) {
+      footerPicked = footerPicked === pick.dataset.footerPick ? "" : pick.dataset.footerPick;
+      refreshFooterEditing();
       return;
     }
     const ids = footerRoutes().map(route => route.id);

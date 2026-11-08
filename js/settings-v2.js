@@ -34,20 +34,17 @@ const SettingsV2 = (() => {
     // Nomi (31 Oct): a tip about the most useful thing to check here
     const say = pending ? L("មានទិន្នន័យរង់ចាំ Sync — ចុច ☁️ ផង", "Some data waits to sync — tap ☁️") : days === null || days > 7 ? L("យូរហើយមិនបាន backup — ទៅ 💾 ផង", "No recent backup — tap 💾") : L("អ្វីៗរៀបរយហើយ! ខ្ញុំមើលឲ្យ ⚙️", "All set! I'm keeping an eye on it ⚙️");
     const nomiMood = pending || days === null || days > 7 ? "wink" : "happy";
+    const needBackup = days === null || days > 7;
     return `<header class="sv-hero">
       <div class="sv-head-row"><h1>${escapeHtml(t("settings"))}</h1>${typeof HomeV2 !== "undefined" && HomeV2.buddy ? `<span class="sv-nomi" data-nomi data-mood="${nomiMood}" role="button" tabindex="0" aria-label="Nomi">${HomeV2.buddy(nomiMood)}</span>` : ""}</div>
-      ${typeof HomeV2 !== "undefined" && HomeV2.buddy ? `<span class="sv-say" data-nomi-say>${escapeHtml(say)}</span>` : ""}
+      ${typeof HomeV2 !== "undefined" && HomeV2.buddy && !needBackup ? `<span class="sv-say" data-nomi-say>${escapeHtml(say)}</span>` : ""}
       <div class="sv-prof">
         <span class="sv-av"><span class="sv-face">${photo}</span></span>
-        <span class="sv-prof-tx"><b>${escapeHtml(p.name || L("មិនទាន់ដាក់ឈ្មោះ", "No name yet"))}</b><small>${escapeHtml(who)}</small></span>
+        <span class="sv-prof-tx"><b>${escapeHtml(p.name || L("មិនទាន់ដាក់ឈ្មោះ", "No name yet"))}</b><small>${escapeHtml(who)}</small>
+          <button type="button" class="sv-sync ${pending ? "is-warn" : "is-ok"}" data-settings-sync>● ${escapeHtml(pending ? L("រង់ចាំ Sync — ចុចដើម្បី Sync", "Waiting to sync — tap to sync") : L("Sync រួច", "Synced"))}</button></span>
         ${guest ? `<button class="sv-edit" type="button" data-action="connect-guest">${escapeHtml(L("ចូល", "Sign in"))}</button>` : `<button class="sv-edit" type="button" data-action="edit-profile">${escapeHtml(L("កែ", "Edit"))}</button>`}
       </div>
-      <div class="sv-chips">
-        <button type="button" class="sv-chip ${pending ? "is-warn" : "is-ok"}" data-settings-sync>☁️ ${escapeHtml(pending ? L("រង់ចាំ Sync", "Sync pending") : L("Sync រួច", "Synced"))}</button>
-        <span class="sv-chip">🌐 ${p.language === "Khmer" ? "ខ្មែរ" : "English"}</span>
-        <span class="sv-chip">$ ${escapeHtml(p.currency || "USD")}</span>
-        <a class="sv-chip ${days === null || days > 7 ? "is-warn" : ""}" href="#settings/data">💾 ${escapeHtml(backupText)}</a>
-      </div>
+      ${needBackup ? `<div class="sv-alert"><span class="sv-alert-ic" aria-hidden="true">💾</span><span class="sv-alert-tx"><b>${escapeHtml(days === null ? L("មិនទាន់ backup ទេ", "No backup yet") : L(`Backup ចុងក្រោយ ${days} ថ្ងៃមុន`, `Last backup ${days} days ago`))}</b><small>${escapeHtml(L("ទុកច្បាប់ចម្លង ការពារបាត់ទិន្នន័យ", "Keep a copy so nothing gets lost"))}</small></span><a class="sv-alert-btn" href="#settings/data">${escapeHtml(L("Backup ឥឡូវ", "Back up now"))}</a></div>` : ""}
     </header>`;
   }
 
@@ -64,12 +61,14 @@ const SettingsV2 = (() => {
     return `<section class="page settings-page sv2">
       ${header()}
       <div class="sv-body">
-        <div class="sv-quick">
-          <div class="sv-q"><small>${escapeHtml(L("រូបរាង", "Theme"))}</small><div class="sv-seg" role="group">
+        <div class="sv-quick sv-q4">
+          <div class="sv-q"><small><span>🎨 ${escapeHtml(L("រូបរាង", "Theme"))}</span></small><div class="sv-seg" role="group">
             <button type="button" class="${p.theme === "light" ? "on" : ""}" data-sv-theme="light" aria-pressed="${p.theme === "light"}">☀️ ${escapeHtml(L("ភ្លឺ", "Light"))}</button>
             <button type="button" class="${p.theme !== "light" ? "on" : ""}" data-sv-theme="dark" aria-pressed="${p.theme !== "light"}">🌙 ${escapeHtml(L("ងងឹត", "Dark"))}</button>
           </div></div>
-          <label class="sv-q"><small>${escapeHtml(L("ឯកជនភាព", "Privacy"))}</small><span class="sv-q-sw"><b>👁 ${escapeHtml(L("លាក់លុយ", "Hide money"))}</b>${toggle('data-preference="moneyHidden"', p.moneyHidden)}</span></label>
+          <label class="sv-q"><small><span>👁 ${escapeHtml(L("លាក់លុយ", "Hide money"))}</span>${toggle('data-preference="moneyHidden"', p.moneyHidden)}</small><b>${escapeHtml(p.moneyHidden ? L("លាក់", "Hidden") : L("បង្ហាញ", "Shown"))}</b></label>
+          <a class="sv-q" href="#settings/appearance"><small><span>🌐 ${escapeHtml(L("ភាសា", "Language"))}</span>${chev}</small><b>${p.language === "Khmer" ? "ខ្មែរ" : "English"}</b></a>
+          <a class="sv-q" href="#settings/money"><small><span>💵 ${escapeHtml(L("រូបិយប័ណ្ណ", "Currency"))}</span>${chev}</small><b>${escapeHtml(p.currency || "USD")} ${(p.currency || "USD") === "KHR" ? "៛" : "$"}</b></a>
         </div>
 
         <div class="sv-grp">
