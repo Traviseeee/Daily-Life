@@ -433,7 +433,7 @@ const FamilyGroup = (() => {
   }
   const toggle = (attrs, on, label) => `<label class="fg-switch"><input type="checkbox" ${attrs} ${on ? "checked" : ""} aria-label="${escapeAttr(label)}"><span></span></label>`;
   const permRow = (perm, on, attrs) => `<div class="fg-perm"><span class="fg-perm-icon">${perm.icon()}</span><span class="fg-perm-text"><strong>${escapeHtml(L(perm.km, perm.en))}</strong>${perm.sub ? `<small>${escapeHtml(L(...perm.sub))}</small>` : ""}</span>${toggle(`${attrs}="${perm.key}"`, on, L(perm.km, perm.en))}</div>`;
-  const LATER_NOTE = () => `<p class="fg-later">${escapeHtml(L("Calendar, ទិញឥវ៉ាន់ និងលុយ ចាប់ផ្តើមចែកនៅជំហានបន្ទាប់ — ការកំណត់នេះរក្សាទុកសិន", "Calendar, shopping and money sharing turn on in the next step — these settings are saved now"))}</p>`;
+  const LATER_NOTE = () => `<p class="fg-later">${escapeHtml(L("Calendar, លុយ, វិក្កយបត្រ និងសន្សំ៖ សមាជិកមើលបានប៉ុណ្ណោះ មិនអាចកែ · បញ្ជីទិញឥវ៉ាន់នឹងមកពេលក្រោយ", "Calendar, money, bills and savings: members can view, not edit · the shopping list comes later"))}</p>`;
 
   /* ---------- 2. member sheet ---------- */
   function openMember(userId) {
@@ -475,6 +475,7 @@ const FamilyGroup = (() => {
     node.querySelectorAll("[data-fg-perm]").forEach(input => input.addEventListener("change", async () => {
       const next = { ...(member.permissions || {}), [input.dataset.fgPerm]: input.checked };
       if (!(await save({ permissions: next }))) input.checked = !input.checked;
+      else if (typeof FamilyShare !== "undefined") FamilyShare.load(true); // share (or stop sharing) that section now
     }));
     node.querySelector("[data-fg-rename]")?.addEventListener("submit", async event => {
       event.preventDefault();

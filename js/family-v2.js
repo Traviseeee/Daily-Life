@@ -66,7 +66,7 @@ const FamilyV2 = (() => {
         items.push({ date: next, icon: "💞", kind: "anniv", tone: "love", title: L(`ខួប${years > 0 ? ` ${years} ឆ្នាំ` : ""}`, `Anniversary${years > 0 ? ` · ${years} yrs` : ""}`), short: L("ខួបអាពាហ៍", "Anniversary"), sub: dayMonth(next), attrs: `data-fam-jump="${escapeAttr(member.id)}"` });
       }
     });
-    (appData.calendarEvents || []).filter(event => event.category === "Family" && event.date >= todayIso()).forEach(event => {
+    [...(appData.calendarEvents || []), ...(typeof FamilyShare !== "undefined" ? FamilyShare.events() : [])].filter(event => event.category === "Family" && event.date >= todayIso()).forEach(event => {
       items.push({ date: event.date, icon: "📅", kind: "event", tone: "blue", title: event.title, short: event.title, sub: `${dayMonth(event.date)}${event.time ? ` · ${typeof todayClock === "function" ? todayClock(event.time) : event.time}` : ""}`, attrs: `data-edit-event="${escapeAttr(event.id)}"` });
     });
     return items.filter(item => daysUntil(item.date) >= 0).sort((a, b) => a.date.localeCompare(b.date));
@@ -192,7 +192,7 @@ const FamilyV2 = (() => {
         items.push({ date: next, icon: "💞", tone: "love", title: L(`ខួប${years > 0 ? ` ${years} ឆ្នាំ` : ""}`, `Anniversary${years > 0 ? ` · ${years} yrs` : ""}`), sub: dayMonth(next), attrs: `data-fam-jump="${escapeAttr(member.id)}"` });
       }
     });
-    (appData.calendarEvents || []).filter(event => event.category === "Family" && event.date >= todayIso()).forEach(event => {
+    [...(appData.calendarEvents || []), ...(typeof FamilyShare !== "undefined" ? FamilyShare.events() : [])].filter(event => event.category === "Family" && event.date >= todayIso()).forEach(event => {
       items.push({ date: event.date, icon: "📅", tone: "blue", title: event.title, sub: `${dayMonth(event.date)}${event.time ? ` · ${typeof todayClock === "function" ? todayClock(event.time) : event.time}` : ""}`, attrs: `data-edit-event="${escapeAttr(event.id)}"` });
     });
     const list = items.filter(item => daysUntil(item.date) >= 0).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 4);

@@ -259,6 +259,9 @@ function calendarItemsForMonth(cursor) {
     href: "#calendar"
   }));
 
+  // events the family admin shares with me (read-only, js/family-share.js)
+  if (typeof FamilyShare !== "undefined") FamilyShare.events().forEach(event => add({ ...event, source: "shared", auto: true, href: "#calendar" }));
+
   appData.bills.forEach(bill => {
     if (bill.reminder === false || !bill.due) return;
     recurringDatesInMonth(bill.due, bill.frequency || "Monthly", cursor).forEach(date => add({

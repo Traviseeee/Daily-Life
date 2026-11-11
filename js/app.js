@@ -327,6 +327,8 @@ const App = {
   },
   render() {
     this.parseRoute();
+    // family sharing: a member may look at the admin's money on these same screens (view only)
+    if (typeof FamilyShare !== "undefined") FamilyShare.apply(this.route, this.param);
     if (typeof syncLinkedGoals === "function") syncLinkedGoals();
     const app = document.getElementById("app");
     const route = this.route;
