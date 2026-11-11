@@ -104,3 +104,7 @@
 .fg-invite-row small { flex: 1; min-width: 0; font-size: 0.78rem; color: #a9c9b4; }
 .fg-mini.is-ghost { color: #ff8b9b; background: transparent; border: 1px solid rgba(251, 113, 133, 0.35); }
 .fg-mini.is-ghost[data-armed="1"] { color: #fff; background: #e0475f; }
+
+/* "Allow everything" master switch in Role & access (11 Nov) */
+.fg-perm.fg-perm-all { margin: 12px 0 4px; padding: 12px; border-radius: 18px; border: 1px solid rgba(123,104,238,.3); background: linear-gradient(135deg, rgba(123,104,238,.12), rgba(255,111,145,.1)); }
+.fg-perm.fg-perm-all .fg-perm-icon { font-size: 1.15rem; }

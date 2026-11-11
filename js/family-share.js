@@ -22,10 +22,10 @@ const FamilyShare = (() => {
   const amAdmin = () => myRow()?.role === "admin";
 
   const state = { rows: {}, owner: "", loadedAt: 0, missing: false, peeking: false, notes: [] };
-  // "Viewing Tra's" (his whole Money / Bills / Savings on my screens) is switched off for now
-  // (11 Nov, Tra): a member sees her own data + the joint account + his calendar events.
-  // Set to true to bring the view (and its bar) back; the switches then decide what it shows.
-  const PEEK = false;
+  // "Viewing Tra's": his Money / Bills / Savings on my screens, view only. Each part shows
+  // only while its switch is on for me (Role & access; "Allow everything" turns all on).
+  // With those switches off a member sees her own data + the joint account + his calendar events.
+  const PEEK = true;
   const JOINT = "fsjoint-"; // id prefix of a joint account drawn inside the partner's own list
   let stash = null;      // my own finance data while I look at the admin's
   let pubTimer = null;

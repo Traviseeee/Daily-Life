@@ -447,7 +447,7 @@ const FamilyGroup = (() => {
   }
   const toggle = (attrs, on, label) => `<label class="fg-switch"><input type="checkbox" ${attrs} ${on ? "checked" : ""} aria-label="${escapeAttr(label)}"><span></span></label>`;
   const permRow = (perm, on, attrs) => `<div class="fg-perm"><span class="fg-perm-icon">${perm.icon()}</span><span class="fg-perm-text"><strong>${escapeHtml(L(perm.km, perm.en))}</strong>${perm.sub ? `<small>${escapeHtml(L(...perm.sub))}</small>` : ""}</span>${toggle(`${attrs}="${perm.key}"`, on, L(perm.km, perm.en))}</div>`;
-  const LATER_NOTE = () => `<p class="fg-later">${escapeHtml(L("ឥឡូវចែក៖ Memories, Calendar និងគណនីសន្សំរួម · លុយ, វិក្កយបត្រ, សន្សំផ្សេង និងបញ្ជីទិញឥវ៉ាន់ នឹងបើកពេលក្រោយ", "Shared now: Memories, Calendar and joint savings accounts · money, bills, other savings and the shopping list open later"))}</p>`;
+  const LATER_NOTE = () => `<p class="fg-later">${escapeHtml(L("លុយ, វិក្កយបត្រ និងសន្សំ៖ មើលបានប៉ុណ្ណោះ មិនអាចកែ · គណនីសន្សំរួមចែកជានិច្ច · បញ្ជីទិញឥវ៉ាន់នឹងមកពេលក្រោយ", "Money, bills and savings: view only, no editing · joint savings accounts are always shared · the shopping list comes later"))}</p>`;
 
   /* ---------- 2. member sheet ---------- */
   function openMember(userId) {
@@ -464,6 +464,7 @@ const FamilyGroup = (() => {
       ${editable ? `
         <h3 class="fg-label">${escapeHtml(L("តួនាទី", "Role"))}</h3>
         <div class="fg-pills">${["member", "viewer"].map(role => `<button type="button" class="fg-pill ${member.role === role ? "is-on" : ""}" data-fg-role="${role}">${escapeHtml(L(...ROLE[role]))}<small>${escapeHtml(role === "member" ? L("post, ❤️, បញ្ចេញមតិ", "post, ❤️, comment") : L("មើល និង ❤️ ប៉ុណ្ណោះ", "view and ❤️ only"))}</small></button>`).join("")}</div>
+        <div class="fg-perm fg-perm-all"><span class="fg-perm-icon">✨</span><span class="fg-perm-text"><strong>${escapeHtml(L("អនុញ្ញាតទាំងអស់ · ដូចគ្រួសារ", "Allow everything · like family"))}</strong><small>${escapeHtml(L("ឃើញអ្វីៗដូចខ្ញុំ (មើលបានប៉ុណ្ណោះ) · បិទ = ផ្នែកឯកជនទាំងអស់បិទ", "Sees what I see (view only) · off = every private part off"))}</small></span>${toggle("data-fg-all", PERMS.every(perm => perms[perm.key]), L("អនុញ្ញាតទាំងអស់", "Allow everything"))}</div>
         <h3 class="fg-label">${escapeHtml(L("ឲ្យមើល និងប្រើ", "Can see and use"))}</h3>
         ${PERMS.filter(perm => perm.group === "shared").map(perm => permRow(perm, perms[perm.key], "data-fg-perm")).join("")}
         <h3 class="fg-label">${escapeHtml(L("ឯកជន (បិទជាស្រេច)", "Private (off by default)"))}</h3>
@@ -486,11 +487,27 @@ const FamilyGroup = (() => {
     node.querySelectorAll("[data-fg-role]").forEach(button => button.addEventListener("click", async () => {
       if (await save({ role: button.dataset.fgRole })) node.querySelectorAll("[data-fg-role]").forEach(entry => entry.classList.toggle("is-on", entry === button));
     }));
+    // what the switches say right now (the sheet is the source while it is open)
+    const current = () => Object.fromEntries([...node.querySelectorAll("[data-fg-perm]")].map(input => [input.dataset.fgPerm, input.checked]));
+    const syncAll = () => { const all = node.querySelector("[data-fg-all]"); if (all) all.checked = PERMS.every(perm => current()[perm.key]); };
     node.querySelectorAll("[data-fg-perm]").forEach(input => input.addEventListener("change", async () => {
-      const next = { ...(member.permissions || {}), [input.dataset.fgPerm]: input.checked };
+      const next = { ...(member.permissions || {}), ...current() };
       if (!(await save({ permissions: next }))) input.checked = !input.checked;
       else if (typeof FamilyShare !== "undefined") FamilyShare.load(true); // share (or stop sharing) that section now
+      syncAll();
     }));
+    // one switch for everything: on = every part; off = the private parts go off (shared ones stay as they are)
+    node.querySelector("[data-fg-all]")?.addEventListener("change", async event => {
+      const on = event.currentTarget.checked;
+      const before = current();
+      const next = { ...(member.permissions || {}), ...before };
+      PERMS.forEach(perm => { if (on) next[perm.key] = true; else if (perm.group === "private") next[perm.key] = false; });
+      if (await save({ permissions: next })) {
+        node.querySelectorAll("[data-fg-perm]").forEach(input => { input.checked = Boolean(next[input.dataset.fgPerm]); });
+        if (typeof FamilyShare !== "undefined") FamilyShare.load(true);
+      }
+      syncAll();
+    });
     node.querySelector("[data-fg-rename]")?.addEventListener("submit", async event => {
       event.preventDefault();
       const value = event.currentTarget.querySelector("input").value.trim().slice(0, 40);
