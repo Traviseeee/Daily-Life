@@ -430,6 +430,7 @@ const MemoryFeed = (() => {
     if (typeof FamilyPosts === "undefined") return;
     if (!familySig) familySig = familySignature();
     FamilyPosts.load().then(() => {
+      upgradeLegacy();
       const next = familySignature();
       if (next === familySig) return;
       familySig = next;
@@ -765,6 +766,49 @@ const MemoryFeed = (() => {
     return { blob, w: canvas.width, h: canvas.height };
   }
 
+  /* Old memories (before the feed) keep ONE photo in my private storage, which family
+   * members cannot open — so they could not be shared. Copy that photo to the family
+   * storage once (11 Nov); the original photo and the memory stay as they are. */
+  let upgrading = false;
+  async function upgradeLegacy() {
+    const family = fam();
+    if (upgrading || !family || !family.canPost() || !window.supabaseClient?.storage) return 0;
+    const list = (appData.memories || []).filter(memory => memory && memory.id && !(Array.isArray(memory.media) && memory.media.length)
+      && /^(https?:|data:image\/)/.test(memory.photo || "") && !(family.isPrivate && family.isPrivate(memory.id)));
+    if (!list.length) return 0;
+    upgrading = true;
+    let done = 0;
+    try {
+      const userId = await currentUserId();
+      if (!userId) return 0;
+      const storage = window.supabaseClient.storage.from(BUCKET);
+      const put = async (path, blob) => {
+        const { error } = await storage.upload(path, blob, { contentType: "image/jpeg", upsert: false, cacheControl: "31536000" });
+        if (error && !/exist|duplicate|409/i.test(`${error.message} ${error.statusCode || ""}`)) throw error;
+      };
+      for (const memory of list) {
+        try {
+          const source = await (await fetch(memory.photo)).blob();
+          if (!/^image\//.test(source.type)) continue;
+          const big = await compressImage(source, 1600, 0.85);
+          const small = await compressImage(source, 480, 0.75);
+          const folder = `users/${userId}/posts/${String(memory.id).replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 80) || `old-${Date.now()}`}`;
+          await put(`${folder}/1.jpg`, big.blob);
+          await put(`${folder}/1-thumb.jpg`, small.blob);
+          memory.media = [{ path: `${folder}/1.jpg`, thumb: `${folder}/1-thumb.jpg`, type: "image", w: big.w, h: big.h, size: big.blob.size, thumbSize: small.blob.size }];
+          memory.updatedAt = new Date().toISOString();
+          done += 1;
+        } catch (error) { console.warn("MYLIFE memories: old photo not copied", memory.id, error); }
+      }
+      if (done) {
+        Store.save();
+        if (family.autoShare) await family.autoShare();
+        if (document.querySelector(".mf-page")) rerender();
+      }
+    } finally { upgrading = false; }
+    return done;
+  }
+
   function videoInfo(file) {
     return new Promise((resolve, reject) => {
       const video = document.createElement("video");
@@ -972,5 +1016,5 @@ const MemoryFeed = (() => {
 
   window.addEventListener("hashchange", closeReels);
 
-  return { render, bind, openComposer, openReels, closeReels, familyTeaser, afterFamilyRender, mediaOf, BUCKET };
+  return { render, bind, openComposer, openReels, closeReels, familyTeaser, afterFamilyRender, mediaOf, upgradeLegacy, BUCKET };
 })();
