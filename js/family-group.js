@@ -109,6 +109,10 @@ const FamilyGroup = (() => {
    * writes card.userId, so nothing is deleted and "unlink" puts it back. */
   const norm = text => String(text || "").toLowerCase().replace(/[^\p{L}\p{N}]/gu, "");
   const cardOfUser = userId => (appData.family || []).find(person => person && person.userId === userId) || null;
+  // A link only counts while that account is still in the family. A card that points at
+  // someone who left (or at a wrong account) is free again, so it can be linked anew.
+  const isMember = userId => Boolean(userId) && (state.members || []).some(member => member.user_id === userId);
+  const isFree = card => !isMember(card?.userId);
   const otherCards = () => (appData.family || []).filter(person => person && person.id && person.relationship !== "Me");
   const freeMembers = () => (state.members || []).filter(member => member.user_id !== state.me && !cardOfUser(member.user_id));
   const sameName = (card, member) => { const a = norm(card?.name), b = norm(nameOf(member)); return Boolean(a && b && (a === b || (Math.min(Array.from(a).length, Array.from(b).length) >= 3 && (a.startsWith(b) || b.startsWith(a))))); };
@@ -205,7 +209,7 @@ const FamilyGroup = (() => {
   function openCardPicker(userId) {
     const member = state.members.find(item => item.user_id === userId);
     if (!member || cardOfUser(userId)) return;
-    const cards = otherCards().filter(card => !card.userId).sort((a, b) => Number(sameName(b, member)) - Number(sameName(a, member)));
+    const cards = otherCards().filter(isFree).sort((a, b) => Number(sameName(b, member)) - Number(sameName(a, member)));
     document.querySelector(".fl-sheet-wrap")?.remove();
     const face = card => card.photo ? `<img src="${escapeAttr(card.photo)}" alt="">` : escapeHtml(initials(card.name));
     document.body.insertAdjacentHTML("beforeend", `<div class="fl-sheet-wrap" role="dialog" aria-modal="true"><div class="fl-scrim" data-fl-close></div><div class="fl-sheet"><span class="fl-grab"></span>
@@ -226,7 +230,7 @@ const FamilyGroup = (() => {
     if (!isAdmin()) return "";
     const skip = appData.profile?.familyLinkSkip || [];
     for (const member of freeMembers()) {
-      const card = otherCards().find(person => !person.userId && sameName(person, member));
+      const card = otherCards().find(person => isFree(person) && sameName(person, member));
       if (!card || skip.includes(`${card.id}|${member.user_id}`)) continue;
       const face = card.photo ? `<img src="${escapeAttr(card.photo)}" alt="">` : escapeHtml(initials(card.name));
       return `<div class="fl-match"><div class="fl-match-top"><span class="fl-cat">🐱</span><span class="fl-text"><strong>${escapeHtml(L("មានម្នាក់ទើបចូលគ្រួសារ!", "Someone just joined!"))}</strong><small>${escapeHtml(L(`«${nameOf(member)}» join តាម link ធម្មតា · ឈ្មោះដូចកាតរបស់អ្នក`, `"${nameOf(member)}" joined with a plain link · same name as your card`))}</small></span></div>
@@ -247,9 +251,12 @@ const FamilyGroup = (() => {
     let changed = false;
     list.forEach(entry => {
       if (!entry.member_card_id) return;
-      const joined = (entry.uses || []).find(use => use.status === "joined");
+      // Only fill an empty link, and only with someone who is in the family now. Before
+      // (11 Nov) this ran on every load and put an old invite's account back over the
+      // link the owner had just chosen by hand, so the link "did not save".
+      const joined = (entry.uses || []).find(use => use.status === "joined" && isMember(use.user_id));
       const card = (appData.family || []).find(person => person.id === entry.member_card_id);
-      if (!joined || !card || card.userId === joined.user_id) return;
+      if (!joined || !card || isMember(card.userId)) return;
       if ((appData.family || []).some(person => person.userId === joined.user_id)) return;
       card.userId = joined.user_id;
       changed = true;
@@ -628,7 +635,7 @@ const FamilyGroup = (() => {
     if (!state.v2) { openInviteV1(); return; }
     let role = "member", days = 7, many = false, cardId = typeof presetCard === "string" ? presetCard : "";
     const perms = { ...DEFAULT_PERMS };
-    const cards = (appData.family || []).filter(person => person && person.id && person.relationship !== "Me" && !person.userId);
+    const cards = (appData.family || []).filter(person => person && person.id && person.relationship !== "Me" && isFree(person));
     const face = person => person.photo ? `<img src="${escapeAttr(person.photo)}" alt="">` : escapeHtml(initials(person.name));
     const chips = () => PERMS.map(perm => {
       const locked = perm.group === "private";
