@@ -106,12 +106,74 @@ const MemberProfile = (() => {
           </div>
         </div>
       </article>
+      ${usHtml(p)}
+      ${cardBox(p)}
       <h2 class="mp-h">${esc(L("អំពី", "About"))}</h2>
       <div class="mp-info">${about.map(([icon, label, value, key]) => `<div><span>${icon} ${esc(label)}</span><b>${esc(value)}${p.self && key && p.hidden?.[key] ? ` <i>🔒 ${esc(L("តែខ្ញុំ", "only me"))}</i>` : ""}</b></div>`).join("")}</div>
       ${!p.self && fg.isAdmin() && !fg.isOwner(p.member) ? `<button type="button" class="mp-admin" data-mp-access="${attr(p.userId)}">⚙️ ${esc(L("តួនាទី និងសិទ្ធិមើល", "Role & access"))}</button>` : ""}
       ${p.self ? `<button type="button" class="mp-admin" data-mp-access="${attr(p.userId)}">⚙️ ${esc(L("ឈ្មោះក្នុងគ្រួសារ · ចាកចេញ", "Family name · leave"))}</button>` : ""}
     </section>`;
   }
+  /* ---------- 💜 Us + 🔗 my card (11 Nov): love days, shared streak, the card I keep ---------- */
+  function usHtml(p) {
+    if (p.self) return selfStreaks();
+    const love = typeof FamilyCouple !== "undefined" && FamilyCouple.withPartner ? FamilyCouple.withPartner(p.userId) : null;
+    const duos = typeof NimoDuo !== "undefined" && NimoDuo.list ? NimoDuo.list() : null;
+    const duo = duos ? duos.find(item => item.partner === p.userId) : null;
+    const first = String(p.name || "").trim().split(/\s+/)[0] || p.name;
+    let loveHtml = "";
+    if (love?.start) {
+      const days = typeof daysSinceDate === "function" ? daysSinceDate(love.start) : Math.floor((Date.now() - Date.parse(love.start)) / 864e5);
+      const start = new Date(`${love.start}T00:00:00`), now = new Date();
+      let y = now.getFullYear() - start.getFullYear(), mo = now.getMonth() - start.getMonth();
+      if (now.getDate() < start.getDate()) mo -= 1;
+      if (mo < 0) { y -= 1; mo += 12; }
+      const ann = typeof nextAnnualDate === "function" ? nextAnnualDate(love.start) : "";
+      const annIn = ann && typeof daysUntil === "function" ? daysUntil(ann) : null;
+      loveHtml = `<button type="button" class="mp-love" ${love.cardId ? `data-mp-card="${attr(love.cardId)}"` : "data-fc-edit"}><span class="mp-love-ic">💞</span><span class="mp-love-t"><b>${days.toLocaleString("en-US")} <small>${esc(L("ថ្ងៃ", "days"))}</small></b><small>${esc(L(`បាននៅជាមួយគ្នា · ${y} ឆ្នាំ ${mo} ខែ`, `together · ${y} yrs ${mo} mo`))}</small></span>${ann ? `<span class="mp-love-ann">${esc(L(`ខួប ${dayLabel(ann).replace(/\s*\d{4}$/, "")}`, `Anniversary ${dayLabel(ann).replace(/\s*\d{4}$/, "")}`))}<br>${esc(annIn === 0 ? L("ថ្ងៃនេះ! 🎉", "today! 🎉") : L(`${annIn} ថ្ងៃទៀត`, `in ${annIn} days`))}</span>` : ""}</button>`;
+    }
+    let duoHtml = "";
+    if (duos) {
+      if (duo?.status === "active") {
+        duoHtml = `<div class="mp-duo"><span class="mp-duo-n">🔥${duo.streak}</span><span class="mp-duo-t"><b>${esc(L("Streak រួមគ្នា", "Shared streak"))}</b><small>${esc(L(`វែងបំផុត ${duo.longest} ថ្ងៃ`, `best ${duo.longest} days`))}</small></span>${duo.meToday && !duo.partnerToday ? `<button type="button" class="mp-duo-btn" data-nd-nudge="${attr(p.userId)}">💜 ${esc(L("រំលឹក", "Nudge"))}</button>` : ""}</div>
+          <div class="nd-today mp-duo-today"><span class="${duo.meToday ? "is-ok" : ""}">${duo.meToday ? "✓" : "○"} ${esc(L("ខ្ញុំ", "Me"))}</span><span class="${duo.partnerToday ? "is-ok" : ""}">${duo.partnerToday ? "✓" : "○"} ${esc(first)}${duo.partnerToday ? "" : esc(L(" រង់ចាំ…", " waiting…"))}</span></div>`;
+      } else if (duo?.status === "pending" && duo.invitedBy !== FG()?.state?.me) {
+        duoHtml = `<div class="mp-duo"><span class="mp-duo-n">🔥</span><span class="mp-duo-t"><b>${esc(L(`${first} អញ្ជើញអ្នកចូល streak រួម`, `${first} invited you to a shared streak`))}</b></span><button type="button" class="mp-duo-btn" data-nd-yes="${attr(duo.id)}">🔥 ${esc(L("ចូលរួម", "Join"))}</button></div>`;
+      } else if (duo?.status === "pending") {
+        duoHtml = `<div class="mp-duo"><span class="mp-duo-n">⏳</span><span class="mp-duo-t"><b>${esc(L("Streak រួមគ្នា", "Shared streak"))}</b><small>${esc(L(`រង់ចាំ ${first} ចូលរួម`, `waiting for ${first} to join`))}</small></span></div>`;
+      } else {
+        duoHtml = `<div class="mp-duo is-off"><span class="mp-duo-n">🔥</span><span class="mp-duo-t"><b>${esc(L("Streak រួមគ្នា", "Shared streak"))}</b><small>${esc(L("ទាំងពីរ check-in រាល់ថ្ងៃ = +1", "both check in every day = +1"))}</small></span><button type="button" class="mp-duo-btn" data-nd-invite="${attr(p.userId)}">＋ ${esc(L("អញ្ជើញ", "Invite"))}</button></div>`;
+      }
+    }
+    if (!loveHtml && !duoHtml) return "";
+    return `<h2 class="mp-h">💜 ${esc(L("ពួកយើង", "Us"))}<small>${esc(L(`មានតែអ្នក និង ${first} ឃើញ`, `only you and ${first} see this`))}</small></h2><div class="mp-us">${loveHtml}${duoHtml}</div>`;
+  }
+  function selfStreaks() {
+    const st = typeof NimoLife !== "undefined" && NimoLife.state ? NimoLife.state() : null;
+    const duos = typeof NimoDuo !== "undefined" && NimoDuo.list ? (NimoDuo.list() || []).filter(item => item.status === "active") : [];
+    if (!st && !duos.length) return "";
+    const nm = id => { const m = (FG()?.state?.members || []).find(x => x.user_id === id); return m && FG().nameOf ? String(FG().nameOf(m)).split(/\s+/)[0] : ""; };
+    return `<h2 class="mp-h">🔥 ${esc(L("Streak របស់ខ្ញុំ", "My streaks"))}</h2><div class="mp-us mp-streaks">
+      ${st ? `<div class="mp-duo"><span class="mp-duo-n">🔥${Number(st.streak || 0)}</span><span class="mp-duo-t"><b>${esc(L("ថ្ងៃជាប់ (ខ្ញុំ)", "My day streak"))}</b><small>${esc(L(`វែងបំផុត ${st.longestStreak || 0} ថ្ងៃ · Nimo កម្រិត ${st.level || 1}`, `best ${st.longestStreak || 0} days · Nimo level ${st.level || 1}`))}</small></span></div>` : ""}
+      ${duos.map(item => `<a class="mp-duo" href="#profile/${attr(item.partner)}"><span class="mp-duo-n">🔥${item.streak}</span><span class="mp-duo-t"><b>${esc(L(`រួមជាមួយ ${nm(item.partner)}`, `with ${nm(item.partner)}`))}</b><small>${esc(L(`វែងបំផុត ${item.longest} ថ្ងៃ`, `best ${item.longest} days`))}</small></span><span class="mp-go">›</span></a>`).join("")}
+    </div>`;
+  }
+  function cardBox(p) {
+    if (p.self) return "";
+    const fg = FG();
+    const card = p.card;
+    if (!card) {
+      if (!fg?.isAdmin?.() || !fg.openCardPicker) return "";
+      return `<h2 class="mp-h">🔗 ${esc(L("កាតរបស់ខ្ញុំ", "My card"))}</h2><div class="mp-us"><button type="button" class="mp-duo is-off mp-link" data-mp-linkcard="${attr(p.userId)}"><span class="mp-duo-n">🔗</span><span class="mp-duo-t"><b>${esc(L("ភ្ជាប់ទៅកាតក្នុងគ្រួសារ", "Link to a family card"))}</b><small>${esc(L("បើអ្នកបានបន្ថែមម្នាក់នេះពីមុន (ថ្ងៃកំណើត ថ្ងៃស្រលាញ់គ្នា …)", "If you added this person before (birthday, love date …)"))}</small></span><span class="mp-go">›</span></button></div>`;
+    }
+    const rows = [
+      card.birthday ? ["🎂", L("ថ្ងៃកំណើត", "Birthday"), `${dayLabel(card.birthday)}${daysToBirthday(card.birthday) !== null ? ` · ${L(`${daysToBirthday(card.birthday)} ថ្ងៃទៀត`, `in ${daysToBirthday(card.birthday)} days`)}` : ""}`] : null,
+      card.favorite ? ["⭐", L("ចូលចិត្ត", "Likes"), card.favorite] : null,
+      card.notes ? ["📝", L("កំណត់ចំណាំ", "Notes"), String(card.notes).slice(0, 80)] : null
+    ].filter(Boolean);
+    return `<h2 class="mp-h">🔗 ${esc(L("កាតរបស់ខ្ញុំ", "My card"))}<small>${esc(L("ព័ត៌មានដែលអ្នកកត់", "what you keep"))}</small></h2><div class="mp-info mp-mycard">${rows.map(([icon, label, value]) => `<div><span>${icon} ${esc(label)}</span><b>${esc(value)}</b></div>`).join("")}<button type="button" class="mp-card-edit" data-mp-card="${attr(card.id)}"><span>✎ ${esc(L(`កែកាត ${card.name}`, `Edit ${card.name}'s card`))}</span><small>🔗 ${esc(L("ភ្ជាប់ជាមួយ account នេះ", "linked to this account"))}</small></button></div>`;
+  }
+
   function fgRole(role) { const r = FG()?.ROLE?.[role]; return r ? L(r[0], r[1]) : role || ""; }
 
   function bind() {
@@ -119,6 +181,10 @@ const MemberProfile = (() => {
     if (!page) return;
     if (bind.last !== location.hash) { bind.last = location.hash; window.scrollTo({ top: 0, behavior: "instant" }); }
     page.querySelector("[data-mp-edit]")?.addEventListener("click", openEdit);
+    page.querySelectorAll("[data-mp-card]").forEach(button => button.addEventListener("click", () => { const card = (appData.family || []).find(item => item.id === button.dataset.mpCard); if (card && typeof openFamilyModal === "function") openFamilyModal(card); }));
+    page.querySelector("[data-mp-linkcard]")?.addEventListener("click", event => FG()?.openCardPicker?.(event.currentTarget.dataset.mpLinkcard));
+    if (typeof FamilyCouple !== "undefined") FamilyCouple.sync();
+    if (typeof NimoDuo !== "undefined") NimoDuo.sync();
     page.querySelector("[data-mp-access]")?.addEventListener("click", event => FG()?.openMember(event.currentTarget.dataset.mpAccess));
   }
 

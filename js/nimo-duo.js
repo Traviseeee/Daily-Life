@@ -39,7 +39,7 @@ const NimoDuo = (() => {
     // Home hero badge + Nomi line: re-render once when the shared streak changed
     const sig = JSON.stringify(list || []);
     const route = String(location.hash || "").replace("#", "").split("/")[0] || "home";
-    if (sig !== lastSig && route === "home" && typeof App !== "undefined" && !document.querySelector("#modalRoot.open, .nms")) { lastSig = sig; App.render(); }
+    if (sig !== lastSig && (route === "home" || route === "profile") && typeof App !== "undefined" && !document.querySelector("#modalRoot.open, .nms")) { lastSig = sig; App.render(); }
     else lastSig = sig;
   }
   function sync() { if (ready()) load(); }

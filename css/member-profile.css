@@ -137,3 +137,33 @@ html:root:not([data-theme="light"]) .fg-panel { color: #f4f2ff !important; backg
   body:has(#app .mp-page):not(.hv2-search-open) .app-main .topbar { display: none !important; }
   #app .mp-page { padding-top: calc(var(--sat, env(safe-area-inset-top, 0px)) + 12px); }
 }
+/* 💜 Us · 🔗 my card · my streaks (11 Nov) */
+.mp-h small { margin-left: 8px; color: #7a7698; font-size: .66rem; font-weight: 500; }
+.mp-us { display: grid; gap: 8px; padding: 10px; border: 1px solid #ebe8f4; border-radius: 22px; background: #fff; }
+.mp-love { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px; border: 0; border-radius: 18px; background: linear-gradient(160deg, #fff, #fff0f4); color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.mp-love-ic { font-size: 1.6rem; }
+.mp-love-t { display: grid; flex: 1; min-width: 0; }
+.mp-love-t b { font: 800 1.7rem/1.1 Inter, sans-serif; color: #7B68EE; }
+.mp-love-t b small { font: 600 .78rem "Kantumruy Pro", sans-serif; color: #7a7698; }
+.mp-love-t > small { font-size: .66rem; color: #7a7698; }
+.mp-love-ann { color: #ff6f91; font-size: .66rem; font-weight: 600; text-align: right; line-height: 1.5; }
+.mp-duo { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 0; border-radius: 18px; background: linear-gradient(135deg, rgba(255,122,69,.12), rgba(123,104,238,.12)); color: inherit; font: inherit; text-align: left; text-decoration: none; }
+.mp-duo.is-off { background: #f7f5fc; }
+.mp-duo-n { flex: 0 0 auto; min-width: 46px; color: #c0623a; font: 800 1.25rem/1 Inter, sans-serif; }
+.mp-duo-t { display: grid; flex: 1; min-width: 0; }
+.mp-duo-t b { font-size: .82rem; color: #1A2347; }
+.mp-duo-t small { font-size: .64rem; color: #7a7698; }
+.mp-duo-btn { flex: 0 0 auto; padding: 7px 12px; border: 0; border-radius: 99px; background: linear-gradient(135deg, #7B68EE, #504AB9); color: #fff; font: inherit; font-size: .7rem; font-weight: 600; cursor: pointer; }
+.mp-duo-today { margin: -2px 2px 2px; }
+.mp-go { color: #7B68EE; font-weight: 700; }
+.mp-link { width: 100%; cursor: pointer; }
+.mp-card-edit { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; margin-top: 4px; padding: 10px 12px; border: 1px dashed #c9bdff; border-radius: 14px; background: #f1eeff; color: #504AB9; font: inherit; font-size: .76rem; font-weight: 600; cursor: pointer; }
+.mp-card-edit small { color: #1f9d63; font-size: .62rem; }
+html:root:not([data-theme="light"]) .mp-us { background: #2e2956; border-color: rgba(182,168,255,.18); }
+html:root:not([data-theme="light"]) .mp-love { background: linear-gradient(160deg, #2e2956, #4a2f5a); }
+html:root:not([data-theme="light"]) .mp-love-t b { color: #C9BDFF; }
+html:root:not([data-theme="light"]) :is(.mp-love-t b small, .mp-love-t > small, .mp-duo-t small, .mp-h small) { color: #bdb7e6; }
+html:root:not([data-theme="light"]) .mp-duo-t b { color: #fff; }
+html:root:not([data-theme="light"]) .mp-duo.is-off { background: rgba(182,168,255,.1); }
+html:root:not([data-theme="light"]) .mp-duo-n { color: #ffc9a8; }
+html:root:not([data-theme="light"]) .mp-card-edit { background: rgba(182,168,255,.12); border-color: rgba(182,168,255,.35); color: #C9BDFF; }

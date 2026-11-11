@@ -201,6 +201,26 @@ const FamilyGroup = (() => {
     const no = event.target.closest("[data-fl-match-no]");
     if (no) { const key = no.dataset.flMatchNo; const list = [...(appData.profile?.familyLinkSkip || []), key]; if (typeof Store !== "undefined" && Store.updateProfile) Store.updateProfile({ familyLinkSkip: list }); paint(); }
   });
+  // from a member's profile: pick which of my cards is this person
+  function openCardPicker(userId) {
+    const member = state.members.find(item => item.user_id === userId);
+    if (!member || cardOfUser(userId)) return;
+    const cards = otherCards().filter(card => !card.userId).sort((a, b) => Number(sameName(b, member)) - Number(sameName(a, member)));
+    document.querySelector(".fl-sheet-wrap")?.remove();
+    const face = card => card.photo ? `<img src="${escapeAttr(card.photo)}" alt="">` : escapeHtml(initials(card.name));
+    document.body.insertAdjacentHTML("beforeend", `<div class="fl-sheet-wrap" role="dialog" aria-modal="true"><div class="fl-scrim" data-fl-close></div><div class="fl-sheet"><span class="fl-grab"></span>
+      <h3>${escapeHtml(L(`${nameOf(member)} ជាកាតណា?`, `Which card is ${nameOf(member)}?`))}</h3>
+      <p>${escapeHtml(L("កាតដែលអ្នកបានបន្ថែមពីមុន ហើយមិនទាន់ភ្ជាប់", "Cards you added before that aren't linked yet"))}</p>
+      ${cards.length ? cards.map(card => `<button type="button" class="fl-opt" data-fl-card="${escapeAttr(card.id)}"><span class="fg-avatar fl-face">${face(card)}</span><span class="fl-text"><strong>${escapeHtml(card.name || "")}</strong><small>${escapeHtml(card.relationship || "")}</small></span>${sameName(card, member) ? `<em class="fl-sug">✨ ${escapeHtml(L("ឈ្មោះដូចគ្នា", "Same name"))}</em>` : ""}</button>`).join("") : `<p>${escapeHtml(L("គ្មានកាតដែលមិនទាន់ភ្ជាប់ទេ", "No unlinked cards"))}</p>`}
+      <button type="button" class="fl-btn fl-wide" data-fl-close>${escapeHtml(L("បោះបង់", "Cancel"))}</button></div></div>`);
+    const wrap = document.querySelector(".fl-sheet-wrap");
+    requestAnimationFrame(() => wrap.classList.add("is-in"));
+    wrap.addEventListener("click", event => {
+      if (event.target.closest("[data-fl-close]")) { closeLinkSheet(); return; }
+      const pick = event.target.closest("[data-fl-card]");
+      if (pick) confirmLink((appData.family || []).find(card => card.id === pick.dataset.flCard), member);
+    });
+  }
   // ③ someone joined with a plain link and their name matches one of my cards
   function matchPrompt() {
     if (!isAdmin()) return "";
@@ -820,5 +840,5 @@ const FamilyGroup = (() => {
     if (document.readyState === "complete") setTimeout(start, 1500); else window.addEventListener("load", () => setTimeout(start, 1500));
   }
 
-  return { mount, refresh, load, state, openInvite, accountBox, openPicker, linkCard, unlinkCard, openMember, tryJoin, PERMS, DEFAULT_PERMS, ROLE, isAdmin, profileOf, nameOf, isOwner };
+  return { mount, refresh, load, state, openInvite, accountBox, openPicker, openCardPicker, linkCard, unlinkCard, openMember, tryJoin, PERMS, DEFAULT_PERMS, ROLE, isAdmin, profileOf, nameOf, isOwner };
 })();

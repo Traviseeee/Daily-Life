@@ -68,7 +68,7 @@ const FamilyCouple = (() => {
 
   function repaint() {
     const route = String(location.hash || "").replace("#", "").split("/")[0] || "home";
-    if (["family", "home"].includes(route) && typeof App !== "undefined" && !document.querySelector("#modalRoot.open")) App.render();
+    if (["family", "home", "profile"].includes(route) && typeof App !== "undefined" && !document.querySelector("#modalRoot.open")) App.render();
   }
 
   // called after every App.render
@@ -124,5 +124,12 @@ const FamilyCouple = (() => {
     if (event.target.closest("[data-fc-edit]")) { event.preventDefault(); openEdit(); }
   });
 
-  return { sync, load, virtual, rows: () => rows };
+  // for the member profile page: our date with this person (and my card to edit, if I keep one)
+  function withPartner(userId) {
+    const pair = localPair();
+    if (pair && pair.partner.userId === userId) return { start: String(pair.card.anniversaryDate || "").slice(0, 10), cardId: pair.card.id };
+    const row = (rows || []).find(item => partnerOf(item) === userId);
+    return row ? { start: row.start_date, cardId: "" } : null;
+  }
+  return { sync, load, virtual, withPartner, rows: () => rows };
 })();
