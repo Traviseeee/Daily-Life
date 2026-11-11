@@ -67,7 +67,7 @@ const FamilyV2 = (() => {
       }
     });
     [...(appData.calendarEvents || []), ...(typeof FamilyShare !== "undefined" ? FamilyShare.events() : [])].filter(event => event.category === "Family" && event.date >= todayIso()).forEach(event => {
-      items.push({ date: event.date, icon: "📅", kind: "event", tone: "blue", title: event.title, short: event.title, sub: `${dayMonth(event.date)}${event.time ? ` · ${typeof todayClock === "function" ? todayClock(event.time) : event.time}` : ""}`, attrs: `data-edit-event="${escapeAttr(event.id)}"` });
+      items.push({ date: event.date, icon: "📅", kind: "event", tone: "blue", title: event.title, short: event.title, sub: `${dayMonth(event.date)}${event.time ? ` · ${typeof todayClock === "function" ? todayClock(event.time) : event.time}` : ""}`, attrs: event.shared ? `data-shared-event="1"` : `data-edit-event="${escapeAttr(event.id)}"` });
     });
     return items.filter(item => daysUntil(item.date) >= 0).sort((a, b) => a.date.localeCompare(b.date));
   }

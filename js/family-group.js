@@ -118,6 +118,7 @@ const FamilyGroup = (() => {
   const sameName = (card, member) => { const a = norm(card?.name), b = norm(nameOf(member)); return Boolean(a && b && (a === b || (Math.min(Array.from(a).length, Array.from(b).length) >= 3 && (a.startsWith(b) || b.startsWith(a))))); };
   function linkCard(cardId, userId) {
     if (!cardId || !userId || cardOfUser(userId)) return false;
+    if (appData.profile?.familyLinkSkip) appData.profile.familyLinkSkip = appData.profile.familyLinkSkip.filter(key => key !== `${cardId}|${userId}`); // linked by hand again
     Store.edit("family", cardId, { userId });
     if (typeof Sound !== "undefined") { try { Sound.play("nomiHop"); } catch (error) { /* quiet */ } }
     Toast.show(L("🔗 បានភ្ជាប់ · ជាមនុស្សតែមួយហើយ", "🔗 Linked · one person now"));
@@ -127,6 +128,8 @@ const FamilyGroup = (() => {
   function unlinkCard(cardId) {
     const card = (appData.family || []).find(person => person.id === cardId);
     if (!card?.userId) return;
+    // unlinked by hand: remember it, so the same-name auto link does not put it back
+    if (appData.profile) appData.profile.familyLinkSkip = [...new Set([...(appData.profile.familyLinkSkip || []), `${cardId}|${card.userId}`])].slice(-100);
     Store.edit("family", cardId, { userId: "" });
     Toast.show(L("បានផ្ដាច់ · កាត និង account នៅដដែល", "Unlinked · card and account both kept"));
     paint();
@@ -259,6 +262,17 @@ const FamilyGroup = (() => {
       if (!joined || !card || isMember(card.userId)) return;
       if ((appData.family || []).some(person => person.userId === joined.user_id)) return;
       card.userId = joined.user_id;
+      changed = true;
+    });
+    // Same name, and no doubt about it (one card ↔ one person): link without asking, so a
+    // card left pointing at an old account heals itself. "Not the same" answers are kept.
+    const skip = appData.profile?.familyLinkSkip || [];
+    const people = freeMembers();
+    people.forEach(member => {
+      const cards = otherCards().filter(person => isFree(person) && sameName(person, member));
+      if (cards.length !== 1 || skip.includes(`${cards[0].id}|${member.user_id}`)) return;
+      if (people.filter(other => sameName(cards[0], other)).length !== 1) return;
+      cards[0].userId = member.user_id;
       changed = true;
     });
     if (changed) { try { Store.save(); } catch (error) { /* next save picks it up */ } }

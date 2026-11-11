@@ -59,10 +59,24 @@ const FamilyShare = (() => {
     }
     return data;
   }
+  // The "already saved" marks live on this device. Another device (phone / PC) may have
+  // emptied or never saved a copy, so once per session compare with what the server holds.
+  let reconciled = false;
+  async function reconcile(done) {
+    if (reconciled) return;
+    const { data, error } = await client().from("family_shares").select("section, data").eq("family_id", fg().family.id).eq("owner_id", fg().me);
+    if (error) return;
+    reconciled = true;
+    const filled = new Set((data || []).filter(row => row.data && Object.keys(row.data).length).map(row => row.section));
+    Object.keys(done).forEach(section => { if (!filled.has(section)) delete done[section]; }); // gone on the server: save again
+    filled.forEach(section => { if (!done[section]) done[section] = "server"; });               // there but unknown here: save or empty it
+    writePub(done);
+  }
   async function publish() {
     if (!ready() || !amAdmin() || state.missing || state.peeking) return;
     const others = fg().members.filter(member => member.user_id !== fg().me && member.role !== "admin");
     const done = readPub();
+    await reconcile(done);
     let changed = false;
     for (const section of SECTIONS) {
       const wanted = others.some(member => member.permissions?.[section]);
@@ -96,7 +110,17 @@ const FamilyShare = (() => {
   const publishSoon = (delay = 4000) => { clearTimeout(pubTimer); pubTimer = setTimeout(() => publish().catch(() => {}), delay); };
 
   /* ---------- member: read the copies ---------- */
+  // posts: copy old photos + share to the family once per session, wherever the app opens
+  let postsKicked = false;
+  function kickPosts() {
+    if (postsKicked || typeof FamilyPosts === "undefined") return;
+    postsKicked = true;
+    setTimeout(() => {
+      FamilyPosts.load().then(() => (typeof MemoryFeed !== "undefined" && MemoryFeed.upgradeLegacy ? MemoryFeed.upgradeLegacy() : 0)).catch(() => {});
+    }, 3000);
+  }
   async function load(force) {
+    if (ready()) kickPosts();
     if (!ready() || state.missing) return false;
     if (amAdmin()) { if (force || Date.now() - state.loadedAt > 15000) { state.loadedAt = Date.now(); publishSoon(1500); } return false; }
     if (!force && Date.now() - state.loadedAt < 60000) return false;
@@ -125,6 +149,15 @@ const FamilyShare = (() => {
 
   const ownerName = () => { const member = (fg()?.members || []).find(item => item.user_id === state.owner); return member ? (FamilyGroup.nameOf ? FamilyGroup.nameOf(member) : member.display_name) || L("គ្រួសារ", "Family") : L("គ្រួសារ", "Family"); };
   const has = section => Boolean(state.rows[section]);
+  function updatedText() {
+    const times = Object.values(state.rows).map(row => Date.parse(row.updated_at)).filter(Boolean);
+    if (!times.length) return "";
+    const minutes = Math.max(0, Math.round((Date.now() - Math.max(...times)) / 60000));
+    if (minutes < 2) return L("ទើបធ្វើបច្ចុប្បន្នភាព", "updated just now");
+    if (minutes < 60) return L(`ធ្វើបច្ចុប្បន្នភាព ${minutes} នាទីមុន`, `updated ${minutes} min ago`);
+    const hours = Math.round(minutes / 60);
+    return hours < 24 ? L(`ធ្វើបច្ចុប្បន្នភាព ${hours} ម៉ោងមុន`, `updated ${hours} h ago`) : L(`ធ្វើបច្ចុប្បន្នភាព ${Math.round(hours / 24)} ថ្ងៃមុន`, `updated ${Math.round(hours / 24)} d ago`);
+  }
   const canPeek = () => !amAdmin() && Boolean(state.owner) && (has("money") || has("bills") || has("savings") || has("joint"));
   const ownEmpty = () => { const src = stash || appData; return FINANCE.every(key => !(src[key] || []).length); };
   function mode() {
@@ -185,7 +218,7 @@ const FamilyShare = (() => {
     const node = document.createElement("div");
     node.className = `fs-bar${state.peeking ? " is-peek" : ""}`;
     node.innerHTML = state.peeking
-      ? `<span class="fs-bar-tx">👀 <b>${L(`កំពុងមើលរបស់ ${name}`, `Viewing ${name}'s`)}</b><small>${L("មើលបានប៉ុណ្ណោះ", "View only")}</small></span><button type="button" data-fs-mode="own">${L("របស់ខ្ញុំ", "Mine")}</button>`
+      ? `<span class="fs-bar-tx">👀 <b>${L(`កំពុងមើលរបស់ ${name}`, `Viewing ${name}'s`)}</b><small>${L("មើលបានប៉ុណ្ណោះ", "View only")} · ${updatedText()}</small></span><button type="button" data-fs-mode="own">${L("របស់ខ្ញុំ", "Mine")}</button>`
       : `<span class="fs-bar-tx">👤 <b>${L("ទិន្នន័យរបស់ខ្ញុំ", "My own data")}</b></span><button type="button" data-fs-mode="peek">👀 ${L(`មើលរបស់ ${name}`, `View ${name}'s`)}</button>`;
     node.querySelector("[data-fs-mode]").addEventListener("click", event => setMode(event.currentTarget.dataset.fsMode));
     host.prepend(node);
