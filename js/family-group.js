@@ -104,6 +104,118 @@ const FamilyGroup = (() => {
     return loading;
   }
 
+  /* ---------- link a hand-added family card ↔ a joined account (11 Nov) ----------
+   * The card stays the user's own record (birthday, love date, notes); linking only
+   * writes card.userId, so nothing is deleted and "unlink" puts it back. */
+  const norm = text => String(text || "").toLowerCase().replace(/[^\p{L}\p{N}]/gu, "");
+  const cardOfUser = userId => (appData.family || []).find(person => person && person.userId === userId) || null;
+  const otherCards = () => (appData.family || []).filter(person => person && person.id && person.relationship !== "Me");
+  const freeMembers = () => (state.members || []).filter(member => member.user_id !== state.me && !cardOfUser(member.user_id));
+  const sameName = (card, member) => { const a = norm(card?.name), b = norm(nameOf(member)); return Boolean(a && b && (a === b || a.startsWith(b) || b.startsWith(a))); };
+  function linkCard(cardId, userId) {
+    if (!cardId || !userId || cardOfUser(userId)) return false;
+    Store.edit("family", cardId, { userId });
+    if (typeof Sound !== "undefined") { try { Sound.play("nomiHop"); } catch (error) { /* quiet */ } }
+    Toast.show(L("🔗 បានភ្ជាប់ · ជាមនុស្សតែមួយហើយ", "🔗 Linked · one person now"));
+    paint();
+    return true;
+  }
+  function unlinkCard(cardId) {
+    const card = (appData.family || []).find(person => person.id === cardId);
+    if (!card?.userId) return;
+    Store.edit("family", cardId, { userId: "" });
+    Toast.show(L("បានផ្ដាច់ · កាត និង account នៅដដែល", "Unlinked · card and account both kept"));
+    paint();
+  }
+  function joinedOn(member) { const day = String(member.joined_at || member.created_at || "").slice(0, 10); return day ? (typeof formatDate === "function" ? formatDate(day) : day) : ""; }
+  // the "🔗 Account" box inside the Edit family member form (js/family-form.js)
+  function accountBox(card) {
+    if (!card?.id || card.relationship === "Me" || !state.family || !["ready"].includes(state.status)) return "";
+    const linked = card.userId ? state.members.find(member => member.user_id === card.userId) : null;
+    if (linked) return `<section class="ev-section fl-box is-on" data-fl-box="${escapeAttr(card.id)}">
+      <div class="ev-label">🔗<strong>${escapeHtml(L("Account ក្នុង app", "App account"))}</strong></div>
+      <div class="fl-row">${avatar(linked)}<span class="fl-text"><strong>${escapeHtml(nameOf(linked))} <em class="fl-badge">🔗 ${escapeHtml(L("ភ្ជាប់ហើយ", "Linked"))}</em></strong><small>${escapeHtml([joinedOn(linked) && L(`join ${joinedOn(linked)}`, `joined ${joinedOn(linked)}`), L(...ROLE[linked.role] || ROLE.member)].filter(Boolean).join(" · "))}</small></span></div>
+      <div class="fl-btns">${state.v2 ? `<button type="button" class="fl-btn" data-fl-profile="${escapeAttr(linked.user_id)}">👤 ${escapeHtml(L("មើល profile", "View profile"))}</button>` : ""}${isAdmin() ? `<button type="button" class="fl-btn" data-fl-unlink="${escapeAttr(card.id)}">${escapeHtml(L("ផ្ដាច់", "Unlink"))}</button>` : ""}</div>
+    </section>`;
+    if (!isAdmin()) return "";
+    const free = freeMembers();
+    return `<section class="ev-section fl-box" data-fl-box="${escapeAttr(card.id)}">
+      <div class="ev-label">🔗<strong>${escapeHtml(L("Account ក្នុង app", "App account"))}</strong></div>
+      <div class="fl-row"><span class="fl-q">?</span><span class="fl-text"><strong>${escapeHtml(L("មិនទាន់ភ្ជាប់ account", "Not linked to an account"))}</strong><small>${escapeHtml(L(`កាតនេះជារបស់អ្នក · ${card.name || "គាត់"} មិនទាន់ឃើញអ្វីទេ`, `This card is yours · ${card.name || "they"} can't see anything yet`))}</small></span></div>
+      <div class="fl-btns">${free.length ? `<button type="button" class="fl-btn is-primary" data-fl-pick="${escapeAttr(card.id)}">🔗 ${escapeHtml(L("ភ្ជាប់ account", "Link account"))}</button>` : ""}<button type="button" class="fl-btn${free.length ? "" : " is-primary"}" data-fl-invite="${escapeAttr(card.id)}">✉️ ${escapeHtml(L(`អញ្ជើញ ${card.name || ""}`, `Invite ${card.name || ""}`).trim())}</button></div>
+    </section>`;
+  }
+  function closeLinkSheet() { const node = document.querySelector(".fl-sheet-wrap"); if (!node) return; node.classList.remove("is-in"); setTimeout(() => node.remove(), 240); }
+  function openPicker(cardId) {
+    const card = (appData.family || []).find(person => person.id === cardId);
+    if (!card) return;
+    const free = freeMembers().sort((a, b) => Number(sameName(card, b)) - Number(sameName(card, a)));
+    const taken = (state.members || []).filter(member => member.user_id !== state.me && cardOfUser(member.user_id));
+    document.querySelector(".fl-sheet-wrap")?.remove();
+    document.body.insertAdjacentHTML("beforeend", `<div class="fl-sheet-wrap" role="dialog" aria-modal="true"><div class="fl-scrim" data-fl-close></div><div class="fl-sheet"><span class="fl-grab"></span>
+      <h3>${escapeHtml(L(`ភ្ជាប់ ${card.name} ទៅ account`, `Link ${card.name} to an account`))}</h3>
+      <p>${escapeHtml(L("សមាជិកដែល join ហើយ តែមិនទាន់មានកាត", "Members who joined but have no card yet"))}</p>
+      ${free.map(member => `<button type="button" class="fl-opt" data-fl-choose="${escapeAttr(member.user_id)}">${avatar(member)}<span class="fl-text"><strong>${escapeHtml(nameOf(member))}</strong><small>${escapeHtml([joinedOn(member) && L(`join ${joinedOn(member)}`, `joined ${joinedOn(member)}`), L(...ROLE[member.role] || ROLE.member)].filter(Boolean).join(" · "))}</small></span>${sameName(card, member) ? `<em class="fl-sug">✨ ${escapeHtml(L("ឈ្មោះដូចគ្នា", "Same name"))}</em>` : ""}</button>`).join("")}
+      ${taken.map(member => `<div class="fl-opt is-dim">${avatar(member)}<span class="fl-text"><strong>${escapeHtml(nameOf(member))}</strong><small>${escapeHtml(L(`ភ្ជាប់ជាមួយកាត «${cardOfUser(member.user_id).name}» រួចហើយ`, `Already linked to "${cardOfUser(member.user_id).name}"`))}</small></span></div>`).join("")}
+      <button type="button" class="fl-btn fl-wide" data-fl-close>${escapeHtml(L("បោះបង់", "Cancel"))}</button>
+    </div></div>`);
+    const wrap = document.querySelector(".fl-sheet-wrap");
+    requestAnimationFrame(() => wrap.classList.add("is-in"));
+    wrap.addEventListener("click", event => {
+      if (event.target.closest("[data-fl-close]")) { closeLinkSheet(); return; }
+      const choose = event.target.closest("[data-fl-choose]");
+      if (choose) confirmLink(card, state.members.find(member => member.user_id === choose.dataset.flChoose));
+    });
+  }
+  function confirmLink(card, member) {
+    if (!member) return;
+    const sheet = document.querySelector(".fl-sheet");
+    if (!sheet) return;
+    const face = card.photo ? `<img src="${escapeAttr(card.photo)}" alt="">` : escapeHtml(initials(card.name));
+    sheet.innerHTML = `<span class="fl-grab"></span><h3>${escapeHtml(L("ភ្ជាប់មែនទេ?", "Link them?"))}</h3>
+      <div class="fl-merge"><div><span class="fg-avatar fl-face">${face}</span><b>${escapeHtml(L(`កាត ${card.name}`, `${card.name} card`))}</b><small>${escapeHtml(L("របស់អ្នក", "yours"))}</small></div><span class="fl-chain">🔗</span><div>${avatar(member)}<b>${escapeHtml(nameOf(member))}</b><small>account</small></div></div>
+      <div class="fl-keep">✓ ${escapeHtml(L("ថ្ងៃកំណើត · ថ្ងៃស្រលាញ់គ្នា · កំណត់ចំណាំ រក្សាដដែល", "Birthday · love date · notes stay the same"))}<br>✓ ${escapeHtml(L("បញ្ជីគ្រួសារលែងស្ទួន · មិនលុបអ្វីទាំងអស់", "No more duplicate in the family list · nothing is deleted"))}<br>↺ ${escapeHtml(L("ផ្ដាច់វិញបានពេលក្រោយ", "You can unlink later"))}</div>
+      <div class="fl-btns"><button type="button" class="fl-btn" data-fl-back>${escapeHtml(L("ត្រឡប់", "Back"))}</button><button type="button" class="fl-btn is-primary" data-fl-yes>🔗 ${escapeHtml(L("ភ្ជាប់", "Link"))}</button></div>`;
+    sheet.querySelector("[data-fl-back]").addEventListener("click", () => openPicker(card.id));
+    sheet.querySelector("[data-fl-yes]").addEventListener("click", () => {
+      if (linkCard(card.id, member.user_id)) { closeLinkSheet(); refreshBox(card.id); }
+    });
+  }
+  function refreshBox(cardId) {
+    const box = document.querySelector(`[data-fl-box="${CSS.escape(cardId)}"]`);
+    const card = (appData.family || []).find(person => person.id === cardId);
+    if (box && card) box.outerHTML = accountBox(card);
+  }
+  // one global listener for the box (the form is re-rendered often)
+  document.addEventListener("click", event => {
+    const pick = event.target.closest("[data-fl-pick]");
+    if (pick) { event.preventDefault(); openPicker(pick.dataset.flPick); return; }
+    const unlink = event.target.closest("[data-fl-unlink]");
+    if (unlink) { event.preventDefault(); unlinkCard(unlink.dataset.flUnlink); refreshBox(unlink.dataset.flUnlink); return; }
+    const invite = event.target.closest("[data-fl-invite]");
+    if (invite) { event.preventDefault(); if (typeof Modal !== "undefined") Modal.close(); setTimeout(() => openInvite(invite.dataset.flInvite), 120); return; }
+    const profile = event.target.closest("[data-fl-profile]");
+    if (profile) { event.preventDefault(); if (typeof Modal !== "undefined") Modal.close(); location.hash = `#profile/${profile.dataset.flProfile}`; return; }
+    const yes = event.target.closest("[data-fl-match-yes]");
+    if (yes) { const [cardId, userId] = yes.dataset.flMatchYes.split("|"); linkCard(cardId, userId); return; }
+    const no = event.target.closest("[data-fl-match-no]");
+    if (no) { const key = no.dataset.flMatchNo; const list = [...(appData.profile?.familyLinkSkip || []), key]; if (typeof Store !== "undefined" && Store.updateProfile) Store.updateProfile({ familyLinkSkip: list }); paint(); }
+  });
+  // ③ someone joined with a plain link and their name matches one of my cards
+  function matchPrompt() {
+    if (!isAdmin()) return "";
+    const skip = appData.profile?.familyLinkSkip || [];
+    for (const member of freeMembers()) {
+      const card = otherCards().find(person => !person.userId && sameName(person, member));
+      if (!card || skip.includes(`${card.id}|${member.user_id}`)) continue;
+      const face = card.photo ? `<img src="${escapeAttr(card.photo)}" alt="">` : escapeHtml(initials(card.name));
+      return `<div class="fl-match"><div class="fl-match-top"><span class="fl-cat">🐱</span><span class="fl-text"><strong>${escapeHtml(L("មានម្នាក់ទើបចូលគ្រួសារ!", "Someone just joined!"))}</strong><small>${escapeHtml(L(`«${nameOf(member)}» join តាម link ធម្មតា · ឈ្មោះដូចកាតរបស់អ្នក`, `"${nameOf(member)}" joined with a plain link · same name as your card`))}</small></span></div>
+        <div class="fl-pair">${avatar(member)}<b>${escapeHtml(nameOf(member))}</b><span>=</span><span class="fg-avatar fl-face">${face}</span><b>${escapeHtml(L(`កាត ${card.name}?`, `${card.name} card?`))}</b></div>
+        <div class="fl-btns"><button type="button" class="fl-btn" data-fl-match-no="${escapeAttr(`${card.id}|${member.user_id}`)}">${escapeHtml(L("មិនមែនទេ", "No"))}</button><button type="button" class="fl-btn is-primary" data-fl-match-yes="${escapeAttr(`${card.id}|${member.user_id}`)}">🔗 ${escapeHtml(L("បាទ ភ្ជាប់", "Yes, link"))}</button></div></div>`;
+    }
+    return "";
+  }
+
   function inviteStatus(entry, now = Date.now()) {
     if (entry.cancelled_at) return "cancelled";
     if (entry.expires_at && Date.parse(entry.expires_at) < now) return "expired";
@@ -175,11 +287,12 @@ const FamilyGroup = (() => {
     const moneyTo = state.members.filter(member => member.role !== "admin" && member.permissions?.money).map(nameOf);
     return `<article class="fg-card">
       <div class="fg-head"><div><h2>${escapeHtml(familyDisplayName())}</h2><small>${escapeHtml(L(`សមាជិក ${state.members.length} នាក់`, `${state.members.length} members`))}</small></div></div>
+      ${matchPrompt()}
       <div class="fg-list">${state.members.map(member => {
         const detail = seesText(member);
         return `<button type="button" class="fg-row" data-fg-member="${escapeAttr(member.user_id)}" ${state.v2 || admin || member.user_id === state.me ? "" : "disabled"}>
         ${avatar(member)}
-        <span class="fg-row-text"><strong>${escapeHtml(nameOf(member))}${member.user_id === state.me ? ` <em>(${escapeHtml(L("អ្នក", "you"))})</em>` : ""}</strong>${detail ? `<small>${escapeHtml(detail)}</small>` : ""}</span>
+        <span class="fg-row-text"><strong>${escapeHtml(nameOf(member))}${member.user_id === state.me ? ` <em>(${escapeHtml(L("អ្នក", "you"))})</em>` : ""}${member.user_id !== state.me && cardOfUser(member.user_id) ? ` <em class="fl-badge">🔗 ${escapeHtml(L(`កាត ${cardOfUser(member.user_id).name}`, `${cardOfUser(member.user_id).name} card`))}</em>` : ""}</strong>${detail ? `<small>${escapeHtml(detail)}</small>` : ""}</span>
         ${member.role !== "admin" && member.permissions?.money ? `<span class="fg-money-on" title="${escapeAttr(L("មើលលុយបាន", "Can view money"))}">${IC.unlock()}</span>` : ""}
         ${rolePill(member.role)}
       </button>`;
@@ -490,10 +603,10 @@ const FamilyGroup = (() => {
     fillShare(node, entry);
   }
 
-  function openInvite() {
+  function openInvite(presetCard = "") {
     if (!isAdmin() || !state.family) return;
     if (!state.v2) { openInviteV1(); return; }
-    let role = "member", days = 7, many = false, cardId = "";
+    let role = "member", days = 7, many = false, cardId = typeof presetCard === "string" ? presetCard : "";
     const perms = { ...DEFAULT_PERMS };
     const cards = (appData.family || []).filter(person => person && person.id && person.relationship !== "Me" && !person.userId);
     const face = person => person.photo ? `<img src="${escapeAttr(person.photo)}" alt="">` : escapeHtml(initials(person.name));
@@ -707,5 +820,5 @@ const FamilyGroup = (() => {
     if (document.readyState === "complete") setTimeout(start, 1500); else window.addEventListener("load", () => setTimeout(start, 1500));
   }
 
-  return { mount, refresh, load, state, openInvite, openMember, tryJoin, PERMS, DEFAULT_PERMS, ROLE, isAdmin, profileOf, nameOf, isOwner };
+  return { mount, refresh, load, state, openInvite, accountBox, openPicker, linkCard, unlinkCard, openMember, tryJoin, PERMS, DEFAULT_PERMS, ROLE, isAdmin, profileOf, nameOf, isOwner };
 })();

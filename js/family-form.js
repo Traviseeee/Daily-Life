@@ -120,6 +120,7 @@ const FamilyForm = (() => {
           </div>
         </div>
         <div class="field-error" data-error="name"></div>
+        ${isEdit && typeof FamilyGroup !== "undefined" && FamilyGroup.accountBox ? FamilyGroup.accountBox(member) : ""}
 
         <section class="ev-section">
           <div class="ev-label">${Icons.heart()}<strong>${escapeHtml(t("relationship"))}</strong></div>
