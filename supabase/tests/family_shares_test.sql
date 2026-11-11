@@ -36,6 +36,15 @@ set request.jwt.claim.sub = '11111111-1111-1111-1111-111111111111';
 update public.family_members set permissions = '{"calendar":false,"savings":true,"money":true}' where user_id = '22222222-2222-2222-2222-222222222222';
 set request.jwt.claim.sub = '22222222-2222-2222-2222-222222222222';
 insert into r select count(*) = 2 and bool_and(section in ('money', 'savings')), 'switch off hides, switch on shows' from public.family_shares;
+-- joint account: only the partner on it reads it, even with the Savings switch off
+set request.jwt.claim.sub = '11111111-1111-1111-1111-111111111111';
+update public.family_members set permissions = '{"savings":false}' where user_id = '22222222-2222-2222-2222-222222222222';
+select public.family_share_put('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'joint:22222222-2222-2222-2222-222222222222', '{"savings":[{"name":"Joint"}]}') \gset
+do $$ begin perform public.family_share_put('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'joint:44444444-4444-4444-4444-444444444444', '{}'); insert into r values (false, 'joint for an outsider refused'); exception when others then insert into r values (true, 'joint for an outsider refused'); end $$;
+set request.jwt.claim.sub = '22222222-2222-2222-2222-222222222222';
+insert into r select count(*) = 1 and min(section) = 'joint:22222222-2222-2222-2222-222222222222', 'partner reads the joint account with savings off' from public.family_shares;
+set request.jwt.claim.sub = '33333333-3333-3333-3333-333333333333';
+insert into r select count(*) = 0, 'another member does not read that joint account' from public.family_shares where section like 'joint:%';
 -- admin empties a section
 set request.jwt.claim.sub = '11111111-1111-1111-1111-111111111111';
 select public.family_share_put('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'money', null) \gset

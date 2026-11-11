@@ -25,16 +25,21 @@ const FamilyAccess = (() => {
   }
   const limited = () => Boolean(access && access.role && access.role !== "admin");
   const has = perm => !limited() || Boolean(access.perms?.[perm]);
+  // a joint savings account with the admin opens the Savings tab even when "Savings" is off (js/family-share.js)
+  const joint = () => typeof FamilyShare !== "undefined" && FamilyShare.has("joint");
 
   function allows(route, param = "") {
     if (!limited()) return true;
     const rule = RULES.find(entry => entry.match(route, param));
+    if (rule && rule.perm === "savings" && route === "money" && joint()) return true;
     return !rule || has(rule.perm);
   }
   function applyBody() {
     const body = document.body;
     if (!body) return;
     ["calendar", "money", "bills", "savings", "memories"].forEach(perm => body.classList.toggle(`fa-no-${perm}`, !has(perm)));
+    body.classList.toggle("fa-no-goals", !has("savings"));
+    if (joint()) body.classList.remove("fa-no-savings"); // keep the Finance tab reachable for the joint account
     body.classList.toggle("fa-viewer", limited() && access.role === "viewer");
   }
   function lockedHtml(route) {
@@ -79,6 +84,6 @@ const FamilyAccess = (() => {
     window.addEventListener("focus", () => check());
     setInterval(() => { if (document.visibilityState === "visible") check(); }, 60000);
   }
-  return { init, allows, has, check, lockedHtml, limited, get state() { return access; } };
+  return { init, allows, has, check, lockedHtml, limited, refresh: applyBody, get state() { return access; } };
 })();
 document.addEventListener("DOMContentLoaded", () => FamilyAccess.init());

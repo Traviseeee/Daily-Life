@@ -77,6 +77,20 @@ const FamilyShare = (() => {
       if (wanted) done[section] = mark; else delete done[section];
       changed = true;
     }
+    // joint savings accounts: the partner on the account sees it even with "Savings" off
+    for (const member of others) {
+      const card = (appData.family || []).find(person => person && person.userId === member.user_id);
+      const joint = card ? (appData.savings || []).filter(saving => saving && saving.jointWith === card.id) : [];
+      const section = `joint:${member.user_id}`;
+      if (!joint.length && !done[section]) continue;
+      const data = joint.length ? slim({ savings: joint }) : {};
+      const mark = joint.length ? hash(JSON.stringify(data)) : "empty";
+      if (done[section] === mark) continue;
+      const { error } = await client().rpc("family_share_put", { p_family: fg().family.id, p_section: section, p_data: data });
+      if (error) break; // older SQL without joint sections: the rest still works
+      if (joint.length) done[section] = mark; else delete done[section];
+      changed = true;
+    }
     if (changed) writePub(done);
   }
   const publishSoon = (delay = 4000) => { clearTimeout(pubTimer); pubTimer = setTimeout(() => publish().catch(() => {}), delay); };
@@ -96,12 +110,13 @@ const FamilyShare = (() => {
       const mine = (data || []).filter(row => row.owner_id !== fg().me && admins.includes(row.owner_id) && row.data && Object.keys(row.data).length);
       const owner = mine.find(row => row.owner_id === fg().family.owner_id)?.owner_id || mine[0]?.owner_id || "";
       const rows = {};
-      mine.filter(row => row.owner_id === owner).forEach(row => { rows[row.section] = row; });
+      mine.filter(row => row.owner_id === owner).forEach(row => { rows[row.section.startsWith("joint:") ? "joint" : row.section] = row; });
       const before = JSON.stringify([state.owner, Object.keys(state.rows).map(key => state.rows[key].updated_at)]);
       state.rows = rows; state.owner = owner;
       const after = JSON.stringify([owner, Object.keys(rows).map(key => rows[key].updated_at)]);
       if (before === after) return false;
       if (state.peeking) swapIn();            // newer numbers while I am looking
+      if (typeof FamilyAccess !== "undefined" && FamilyAccess.refresh) FamilyAccess.refresh(); // a joint account opens the Savings tab
       if (typeof App !== "undefined" && App.render && !document.querySelector("#modalRoot.open, .mp-sheet, .fl-sheet-wrap, .nd-pop, .nms")) App.render();
       return true;
     })();
@@ -110,7 +125,7 @@ const FamilyShare = (() => {
 
   const ownerName = () => { const member = (fg()?.members || []).find(item => item.user_id === state.owner); return member ? (FamilyGroup.nameOf ? FamilyGroup.nameOf(member) : member.display_name) || L("គ្រួសារ", "Family") : L("គ្រួសារ", "Family"); };
   const has = section => Boolean(state.rows[section]);
-  const canPeek = () => !amAdmin() && Boolean(state.owner) && (has("money") || has("bills") || has("savings"));
+  const canPeek = () => !amAdmin() && Boolean(state.owner) && (has("money") || has("bills") || has("savings") || has("joint"));
   const ownEmpty = () => { const src = stash || appData; return FINANCE.every(key => !(src[key] || []).length); };
   function mode() {
     let saved = "";
@@ -131,7 +146,8 @@ const FamilyShare = (() => {
   /* ---------- member: the same money screens, with the admin's numbers ---------- */
   function swapIn() {
     if (!stash) { stash = { profile: appData.profile }; FINANCE.forEach(key => { stash[key] = appData[key]; }); }
-    const money = state.rows.money?.data || {}, bills = state.rows.bills?.data || {}, savings = state.rows.savings?.data || {};
+    // "Savings" off but we hold a joint account together: only that account shows
+    const money = state.rows.money?.data || {}, bills = state.rows.bills?.data || {}, savings = state.rows.savings?.data || state.rows.joint?.data || {};
     const copy = value => structuredClone(Array.isArray(value) ? value : []);
     appData.income = copy(money.income); appData.expenses = copy(money.expenses);
     appData.bills = copy(bills.bills); appData.loans = copy(bills.loans);
@@ -148,7 +164,12 @@ const FamilyShare = (() => {
   }
   const isFinance = route => route === "money" || route === "goals";
   // called at the start of every App.render
-  function apply(route) {
+  function apply(route, param) {
+    // Finance opens on the overview; when that is off for me but Savings is open, go there
+    if (route === "money" && !param && typeof FamilyAccess !== "undefined" && !FamilyAccess.allows("money", "") && FamilyAccess.allows("money", "savings")) {
+      history.replaceState(null, "", "#money/savings");
+      if (typeof App !== "undefined") { App.param = "savings"; }
+    }
     const want = isFinance(route) && ready() && canPeek() && mode() === "peek";
     if (want && !state.peeking) swapIn();
     else if (!want && state.peeking) swapOut();
