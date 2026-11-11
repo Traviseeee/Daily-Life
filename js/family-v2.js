@@ -112,9 +112,12 @@ const FamilyV2 = (() => {
 
   // the first couple with a start date: days together, the next 1000-day mark
   function loveCard() {
-    const member = fam().find(item => item.relatedMemberId && item.anniversaryDate && fam().some(other => other.id === item.relatedMemberId));
+    let member = fam().find(item => item.relatedMemberId && item.anniversaryDate && fam().some(other => other.id === item.relatedMemberId));
+    let other = member ? fam().find(item => item.id === member.relatedMemberId) : null;
+    // shared from the family group: my partner set our date (js/family-couple.js)
+    const shared = !member && typeof FamilyCouple !== "undefined" ? FamilyCouple.virtual() : null;
+    if (shared) { member = shared.member; other = shared.other; }
     if (!member) return "";
-    const other = fam().find(item => item.id === member.relatedMemberId);
     const days = daysSinceDate(member.anniversaryDate);
     const next = Math.ceil(Math.max(days, 1) / 1000) * 1000 === days ? days + 1000 : Math.ceil(Math.max(days, 1) / 1000) * 1000;
     const progress = Math.min(100, Math.max(2, ((days - (next - 1000)) / 1000) * 100));
@@ -130,7 +133,7 @@ const FamilyV2 = (() => {
       const annIso = nextAnnualDate(member.anniversaryDate);
       const annIn = daysUntil(annIso);
       const pf = m => `<span class="fv-tg-face" style="background:${coverOf(m)}">${face(m)}</span>`;
-      return `<section class="fv-tg" data-fam-jump="${escapeAttr(member.id)}">
+      return `<section class="fv-tg${shared ? " is-shared" : ""}" ${shared ? "data-fc-edit" : `data-fam-jump="${escapeAttr(member.id)}"`}>
         <div class="fv-tg-top"><span class="fv-tg-pair">${pf(member)}<i>♥</i>${pf(other)}</span><small>${escapeHtml(first(member.name))} ♥ ${escapeHtml(first(other.name))}</small></div>
         ${nomi("love", "fv-tg-nomi")}
         <small class="fv-tg-lbl">${escapeHtml(L("បាននៅជាមួយគ្នា", "Together for"))}</small>

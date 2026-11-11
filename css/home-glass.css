@@ -1165,3 +1165,7 @@ html:root:not([data-theme="light"]) :is(.fl-btn, .fl-opt, .fl-keep, .fl-pair) { 
 html:root:not([data-theme="light"]) .fl-btn.is-primary { background: linear-gradient(135deg, #7B68EE, #504AB9); }
 html:root:not([data-theme="light"]) .fl-badge { background: rgba(95,224,160,.14); color: #5fe0a0; }
 html:root:not([data-theme="light"]) .fl-sug { background: rgba(245,196,90,.14); color: #ffd98a; }
+/* shared love date sheet (11 Nov) */
+.fc-date { width: 100%; margin: 4px 0 4px; min-height: 46px; }
+.fv-tg.is-shared { cursor: pointer; }
+html:root:not([data-theme="light"]) .fc-date { background: #2e2956; color: #F4F2FF; border-color: rgba(182,168,255,.25); color-scheme: dark; }
