@@ -24,7 +24,7 @@ const FamilyPosts = (() => {
   const isAdmin = () => state.role === "admin";
 
   async function load(force = false) {
-    if (!force && state.loadedAt && Date.now() - state.loadedAt < TTL) return state;
+    if (!force && state.loadedAt && Date.now() - state.loadedAt < TTL) { autoShare(); return state; }
     if (loading) return loading;
     loading = (async () => {
       try {
@@ -61,7 +61,7 @@ const FamilyPosts = (() => {
         state.error = error?.message || String(error);
         return state;
       }
-    })().finally(() => { loading = null; emit(); });
+    })().finally(() => { loading = null; emit(); autoShare(); });
     return loading;
   }
 
@@ -138,6 +138,36 @@ const FamilyPosts = (() => {
     return saved;
   }
 
+  /* Everything I post is for the family (11 Nov) — no "share old memories" button to
+   * remember. A post stays private only when I chose "stop sharing" for it (or posted it
+   * with sharing off): those ids live in appData.profile.familyNoShare. */
+  const isPrivate = memoryId => (appData.profile?.familyNoShare || []).includes(memoryId);
+  function setPrivate(memoryId, on) {
+    if (!appData.profile || !memoryId) return;
+    const list = (appData.profile.familyNoShare || []).filter(id => id !== memoryId);
+    if (on) list.push(memoryId);
+    appData.profile.familyNoShare = list.slice(-500);
+  }
+  const tagsOf = memory => {
+    const byId = (memory.tagIds || []).map(id => (appData.family || []).find(member => member.id === id)).filter(Boolean).map(member => member.name);
+    const names = String(memory.familyMembers || "").split(",").map(item => item.trim()).filter(Boolean);
+    return [...new Set([...byId, ...names])];
+  };
+  let autoBusy = false;
+  async function autoShare() {
+    if (autoBusy || state.status !== "ready" || !canPost()) return 0;
+    const list = (appData.memories || []).filter(memory => shareable(memory) && !postBySource(memory.id) && !isPrivate(memory.id));
+    if (!list.length) return 0;
+    autoBusy = true;
+    let done = 0;
+    try {
+      for (const memory of list) {
+        try { await share(memory, tagsOf(memory)); done += 1; } catch (error) { console.warn("MYLIFE family posts: auto share stopped", error); break; }
+      }
+    } finally { autoBusy = false; }
+    return done;
+  }
+
   async function unshare(memoryId) {
     const post = postBySource(memoryId);
     if (!post) return false;
@@ -192,7 +222,7 @@ const FamilyPosts = (() => {
   function onChange(fn) { listeners.add(fn); return () => listeners.delete(fn); }
 
   return {
-    state, load, onChange, active, canSee, canPost, isAdmin, nameOf,
+    state, load, onChange, active, canSee, canPost, isAdmin, nameOf, autoShare, isPrivate, setPrivate,
     postBySource, postById, likesOf, iLike, commentsOf, othersAsMemories, shareable,
     share, unshare, remove, setLike, addComment, deleteComment, canDeleteComment
   };

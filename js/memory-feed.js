@@ -194,7 +194,7 @@ const MemoryFeed = (() => {
   function scopeHtml() {
     const family = fam();
     if (!family) return "";
-    const unshared = family.canPost() ? (appData.memories || []).filter(memory => family.shareable(memory) && !family.postBySource(memory.id)).length : 0;
+    const unshared = family.canPost() ? (appData.memories || []).filter(memory => family.shareable(memory) && !family.postBySource(memory.id) && !(family.isPrivate && family.isPrivate(memory.id))).length : 0;
     return `<div class="mf-scope" role="tablist">
         ${[["all", L("ទាំងអស់", "All")], ["mine", L("របស់ខ្ញុំ", "Mine")], ["family", `👨‍👩‍👧 ${L("គ្រួសារ", "Family")}`]].map(([id, label]) => `<button type="button" role="tab" class="mf-scope-btn ${state.scope === id ? "active" : ""}" data-mf-scope="${id}" aria-selected="${state.scope === id}">${escapeHtml(label)}</button>`).join("")}
       </div>
@@ -602,6 +602,8 @@ const MemoryFeed = (() => {
     root.querySelector("[data-mf-share]")?.addEventListener("click", async event => {
       event.currentTarget.disabled = true;
       try {
+        // remember the choice, so the automatic family share leaves this post alone (or picks it up again)
+        if (family.setPrivate) { family.setPrivate(memory.id, shared); Store.save(); }
         if (shared) { await family.unshare(memory.id); Toast.show(L("ឈប់ចែករំលែកហើយ — post នៅតែមានក្នុងរបស់អ្នក", "No longer shared — the post stays in yours")); }
         else { await family.share(memory, taggedPeople(memory)); Toast.show(L("បានចែករំលែកជាមួយគ្រួសារ 👨‍👩‍👧", "Shared with family 👨‍👩‍👧"), "success"); }
         Modal.close();
@@ -887,6 +889,7 @@ const MemoryFeed = (() => {
         return;
       }
       const shareIt = Boolean(form.elements.share?.checked);
+      const keepMine = Boolean(form.elements.share) && !shareIt; // the switch was there and I turned it off
       if (!files.length) return fileError(L("សូមជ្រើសរូប ឬវីដេអូ", "Choose photos or a video"));
       if (!window.supabaseClient?.storage) return fileError(L("ត្រូវ login ហើយ online ដើម្បី post", "Log in and go online to post"));
       const userId = await currentUserId();
@@ -931,6 +934,7 @@ const MemoryFeed = (() => {
         state.view = "feed";
         state.limit = PAGE;
         const newPost = { id: postId, kind: "post", title: "", description: caption, date, location: place, tagIds, familyMembers, tags: "", media, liked: false, comments: [] };
+        if (keepMine && fam()?.setPrivate) fam().setPrivate(postId, true); // posted with sharing off: keep it mine
         Store.add("memories", newPost);
         Modal.close();
         if (shareIt && fam()?.canPost()) {
