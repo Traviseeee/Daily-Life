@@ -447,7 +447,7 @@ const FamilyGroup = (() => {
   }
   const toggle = (attrs, on, label) => `<label class="fg-switch"><input type="checkbox" ${attrs} ${on ? "checked" : ""} aria-label="${escapeAttr(label)}"><span></span></label>`;
   const permRow = (perm, on, attrs) => `<div class="fg-perm"><span class="fg-perm-icon">${perm.icon()}</span><span class="fg-perm-text"><strong>${escapeHtml(L(perm.km, perm.en))}</strong>${perm.sub ? `<small>${escapeHtml(L(...perm.sub))}</small>` : ""}</span>${toggle(`${attrs}="${perm.key}"`, on, L(perm.km, perm.en))}</div>`;
-  const LATER_NOTE = () => `<p class="fg-later">${escapeHtml(L("Calendar, លុយ, វិក្កយបត្រ និងសន្សំ៖ សមាជិកមើលបានប៉ុណ្ណោះ មិនអាចកែ · បញ្ជីទិញឥវ៉ាន់នឹងមកពេលក្រោយ", "Calendar, money, bills and savings: members can view, not edit · the shopping list comes later"))}</p>`;
+  const LATER_NOTE = () => `<p class="fg-later">${escapeHtml(L("ឥឡូវចែក៖ Memories, Calendar និងគណនីសន្សំរួម · លុយ, វិក្កយបត្រ, សន្សំផ្សេង និងបញ្ជីទិញឥវ៉ាន់ នឹងបើកពេលក្រោយ", "Shared now: Memories, Calendar and joint savings accounts · money, bills, other savings and the shopping list open later"))}</p>`;
 
   /* ---------- 2. member sheet ---------- */
   function openMember(userId) {

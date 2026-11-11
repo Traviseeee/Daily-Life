@@ -22,6 +22,10 @@ const FamilyShare = (() => {
   const amAdmin = () => myRow()?.role === "admin";
 
   const state = { rows: {}, owner: "", loadedAt: 0, missing: false, peeking: false, notes: [] };
+  // "Viewing Tra's" (his whole Money / Bills / Savings on my screens) is switched off for now
+  // (11 Nov, Tra): a member sees her own data + the joint account + his calendar events.
+  // Set to true to bring the view (and its bar) back; the switches then decide what it shows.
+  const PEEK = false;
   const JOINT = "fsjoint-"; // id prefix of a joint account drawn inside the partner's own list
   let stash = null;      // my own finance data while I look at the admin's
   let pubTimer = null;
@@ -121,7 +125,8 @@ const FamilyShare = (() => {
     const noteIds = await applyNotes().catch(() => []);
     let changed = false;
     for (const section of SECTIONS) {
-      const wanted = others.some(member => member.permissions?.[section]);
+      // while the view is off, his money / bills / savings copies are not kept on the server at all
+      const wanted = (PEEK || section === "calendar" || section === "myEvents") && others.some(member => member.permissions?.[section]);
       if (!wanted && !done[section]) continue;                 // nothing shared, nothing to clear
       const data = wanted ? payload(section) : {};
       const text = JSON.stringify(data);
@@ -210,7 +215,7 @@ const FamilyShare = (() => {
     return hours < 24 ? L(`ធ្វើបច្ចុប្បន្នភាព ${hours} ម៉ោងមុន`, `updated ${hours} h ago`) : L(`ធ្វើបច្ចុប្បន្នភាព ${Math.round(hours / 24)} ថ្ងៃមុន`, `updated ${Math.round(hours / 24)} d ago`);
   }
   // a joint account alone needs no "view Tra's": it is drawn in my own list as mine too
-  const canPeek = () => !amAdmin() && Boolean(state.owner) && (has("money") || has("bills") || has("savings"));
+  const canPeek = () => PEEK && !amAdmin() && Boolean(state.owner) && (has("money") || has("bills") || has("savings"));
   const ownEmpty = () => { const src = stash || appData; return FINANCE.every(key => !(src[key] || []).length); };
   function mode() {
     let saved = "";
