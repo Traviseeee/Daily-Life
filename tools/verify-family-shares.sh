@@ -13,6 +13,8 @@ run -f supabase/migrations/20261111_family_shares.sql >/dev/null
 run -f supabase/migrations/20261111_family_shares.sql >/dev/null   # running twice is safe
 run -f supabase/migrations/20261111_family_shares_v2.sql >/dev/null
 run -f supabase/migrations/20261111_family_shares_v2.sql >/dev/null   # running twice is safe
+run -f supabase/migrations/20261111_joint_deposits.sql >/dev/null
+run -f supabase/migrations/20261111_joint_deposits.sql >/dev/null   # running twice is safe
 out=$(run -tA -f supabase/tests/family_shares_test.sql); echo "$out"
 fails=$(echo "$out" | tail -1 | cut -d'|' -f1)
 run -f supabase/migrations/20261111_family_shares_rollback.sql >/dev/null

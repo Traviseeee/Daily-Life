@@ -45,6 +45,24 @@ set request.jwt.claim.sub = '22222222-2222-2222-2222-222222222222';
 insert into r select count(*) = 1 and min(section) = 'joint:22222222-2222-2222-2222-222222222222', 'partner reads the joint account with savings off' from public.family_shares;
 set request.jwt.claim.sub = '33333333-3333-3333-3333-333333333333';
 insert into r select count(*) = 0, 'another member does not read that joint account' from public.family_shares where section like 'joint:%';
+-- joint deposits: the partner leaves a note, only for an account shared with her as joint
+set request.jwt.claim.sub = '11111111-1111-1111-1111-111111111111';
+select public.family_share_put('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'joint:22222222-2222-2222-2222-222222222222', '{"savings":[{"id":"sv-joint","name":"Joint"}]}') \gset
+set request.jwt.claim.sub = '22222222-2222-2222-2222-222222222222';
+select public.family_joint_deposit('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '11111111-1111-1111-1111-111111111111', 'sv-joint', '2026-11', 25, true) as first_note \gset
+select public.family_joint_deposit('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '11111111-1111-1111-1111-111111111111', 'sv-joint', '2026-11', 30, true) as second_note \gset
+insert into r select count(*) filter (where status = 'pending') = 1 and count(*) filter (where status = 'replaced') = 1 and max(amount) filter (where status = 'pending') = 30, 'newer note replaces the older pending one' from public.family_joint_actions;
+do $$ begin perform public.family_joint_deposit('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '11111111-1111-1111-1111-111111111111', 'sv-private', '2026-11', 25, true); insert into r values (false, 'note for a non-joint account refused'); exception when others then insert into r values (true, 'note for a non-joint account refused'); end $$;
+do $$ begin perform public.family_joint_deposit('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '11111111-1111-1111-1111-111111111111', 'sv-joint', '2026-11', -5, true); insert into r values (false, 'negative amount refused'); exception when others then insert into r values (true, 'negative amount refused'); end $$;
+do $$ declare n int; begin update public.family_joint_actions set amount = 9999; get diagnostics n = row_count; insert into r values (n = 0, 'partner cannot edit notes directly'); exception when others then insert into r values (true, 'partner cannot edit notes directly'); end $$;
+insert into r select public.family_joint_applied(array(select id from public.family_joint_actions)) = 0, 'partner cannot mark notes applied';
+set request.jwt.claim.sub = '33333333-3333-3333-3333-333333333333';
+insert into r select count(*) = 0, 'another member does not read the notes' from public.family_joint_actions;
+do $$ begin perform public.family_joint_deposit('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '11111111-1111-1111-1111-111111111111', 'sv-joint', '2026-11', 25, true); insert into r values (false, 'another member cannot deposit into it'); exception when others then insert into r values (true, 'another member cannot deposit into it'); end $$;
+set request.jwt.claim.sub = '11111111-1111-1111-1111-111111111111';
+insert into r select count(*) = 1, 'owner reads the pending note' from public.family_joint_actions where status = 'pending';
+insert into r select public.family_joint_applied(array(select id from public.family_joint_actions where status = 'pending')) = 1, 'owner marks it applied';
+insert into r select count(*) = 0, 'nothing pending after that' from public.family_joint_actions where status = 'pending';
 -- admin empties a section
 set request.jwt.claim.sub = '11111111-1111-1111-1111-111111111111';
 select public.family_share_put('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'money', null) \gset
