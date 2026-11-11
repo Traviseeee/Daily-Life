@@ -15,7 +15,7 @@ const FamilyCouple = (() => {
   const ready = () => Boolean(client() && fg()?.status === "ready" && fg()?.family?.id && fg()?.me);
   const me = () => fg()?.me;
   const partnerOf = row => (row.user_a === me() ? row.user_b : row.user_a);
-  const L2 = (k, e) => (typeof L === "function" ? L(k, e) : k);
+  const L2 = (k, e) => (typeof languageCode === "function" && languageCode() !== "km" ? e : k);
 
   // my couple on my own cards: one card has relatedMemberId + anniversaryDate, one of the two is me
   function localPair() {

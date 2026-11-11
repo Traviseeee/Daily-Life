@@ -593,7 +593,7 @@ const HomeV2 = (() => {
     const st = typeof NimoLife !== "undefined" && NimoLife.state ? NimoLife.state() : null;
     if (!st) return '<span class="hv4-nb" data-nimo-badge hidden></span>';
     const streak = Number(st.streak || 0);
-    return `<span class="hv4-nb" data-nimo-badge data-nmc-open role="button" tabindex="0" aria-label="${escapeAttr(L(`Nimo កម្រិត ${st.level || 1} · ${streak} ថ្ងៃជាប់`, `Nimo level ${st.level || 1} · ${streak} day streak`))}"><em class="hv4-fire${streak ? "" : " is-off"}">🔥${streak}</em><em class="hv4-lv">Lv ${Number(st.level || 1)}</em></span>`;
+    return `<span class="hv4-nb" data-nimo-badge data-nmc-open role="button" tabindex="0" aria-label="${escapeAttr(L(`Nimo កម្រិត ${st.level || 1} · ${streak} ថ្ងៃជាប់`, `Nimo level ${st.level || 1} · ${streak} day streak`))}"><em class="hv4-fire${streak ? "" : " is-off"}">🔥${streak}</em><em class="hv4-lv">Lv ${Number(st.level || 1)}</em>${typeof NimoDuo !== "undefined" ? NimoDuo.badge() : ""}</span>`;
   }
 
   // what the hero Nomi says, in turn: its own line, streak, money, weather, XP, next holiday / event
@@ -603,6 +603,8 @@ const HomeV2 = (() => {
     const streak = Number(st?.streak || 0);
     if (typeof DoneFeed !== "undefined") out.push(...DoneFeed.heroLines());
     if (streak > 0) out.push([`🔥 ${streak} ថ្ងៃជាប់! កុំឲ្យដាច់ណា`, `🔥 ${streak} day streak! Keep it going`]);
+    const duoLine = typeof NimoDuo !== "undefined" && NimoDuo.heroLine ? NimoDuo.heroLine() : null;
+    if (duoLine) out.unshift(duoLine);
     const m = d.month;
     if (m) {
       if (!(m.income > 0)) out.push(MONEY_WAITING);

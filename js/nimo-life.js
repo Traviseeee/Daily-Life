@@ -119,6 +119,7 @@ const NimoLife = (() => {
     if (route === "money" && param === "savings") award("savings");
     // real money records (loan paid, bill paid, savings deposit): the server checks them
     if (Date.now() - lastFinance > 20000) { lastFinance = Date.now(); award("finance"); }
+    if (typeof NimoDuo !== "undefined") NimoDuo.sync();
     setTimeout(maybePopup, 2500);
   }
 
@@ -138,6 +139,7 @@ const NimoLife = (() => {
         <span class="nmc-mid"><b>Nimo · ${escapeHtml(L(`កម្រិត ${level}`, `Level ${level}`))}</b><span class="nmc-bar"><i style="width:${pct}%"></i></span><small>${xp} / ${to} XP · ${escapeHtml(L(`ទៀត ${Math.max(0, to - xp)}`, `${Math.max(0, to - xp)} to go`))}</small></span>
         <span class="nmc-fire${streak ? "" : " is-off"}" title="${escapeAttr(L(`ថ្ងៃជាប់គ្នាច្រើនបំផុត ${state.longestStreak || 0} ថ្ងៃ`, `Longest ${state.longestStreak || 0} days · money months = loan, bill or savings paid`))}"><span class="nmc-fire-top"><svg class="nmc-flame" viewBox="0 0 32 40" aria-hidden="true"><path class="f-out" d="M16 2c2 6 9 9 9 19a9 9 0 0 1-18 0c0-4 2-7 4-8 0 3 1.5 5 3.5 5-1-5 0-11 1.5-16z" fill="#ff7a45"/><path class="f-mid" d="M16 15c1 3 5 5 5 10a5 5 0 0 1-10 0c0-2.5 1.2-4 2.5-4.6.2 1.8 1 2.8 2.3 2.8-.5-3 .2-6 .2-8.2z" fill="#ffb347"/><path class="f-in" d="M16 26c.6 1.6 2.6 2.6 2.6 5a2.6 2.6 0 0 1-5.2 0c0-1.6 1.4-2.8 2.6-5z" fill="#ffe08a"/></svg><b>${streak}</b></span><small>${escapeHtml(L("ថ្ងៃជាប់", "day streak"))}</small></span>
       </section>
+      ${typeof NimoDuo !== "undefined" ? NimoDuo.row() : ""}
     </div>`;
   }
 
@@ -243,6 +245,7 @@ const NimoLife = (() => {
             <small>${xp} / ${to} XP · ${escapeHtml(L(`ត្រូវការ ${Math.max(0, to - xp)} XP ទៀត ដើម្បីដល់កម្រិត ${level + 1}`, `${Math.max(0, to - xp)} to level ${level + 1}`))}</small>
             ${tag}</div>
           ${streakHtml()}
+          ${typeof NimoDuo !== "undefined" ? NimoDuo.sheetSection() : ""}
           <h4>${escapeHtml(L("ថ្ងៃនេះ", "Today"))}<span>${escapeHtml(L("ធ្វើគ្រប់ 4 ទទួល +3 បន្ថែម", "+3 bonus when all 4 are done"))}</span></h4>
           <div class="nms-box">${today}</div>
           <h4>${escapeHtml(L("ការបង់ និងការសន្សំខែនេះ", "Paid & saved this month"))}<span>${escapeHtml(L("រាប់ដោយស្វ័យប្រវត្តិ", "Counted automatically"))}</span></h4>
@@ -317,5 +320,5 @@ const NimoLife = (() => {
     try { await client()?.rpc("nimo_seen", { p_level: level }); } catch (error) { /* shows once per session anyway */ }
   });
 
-  return { card, sync, load, award, dress, open: openSheet, state: () => state };
+  return { card, sync, load, award, dress, open: openSheet, repaint: paint, repaintSheet, state: () => state };
 })();

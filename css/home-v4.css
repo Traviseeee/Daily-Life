@@ -191,3 +191,10 @@ html:root .nms h4 { font-size: .9rem; font-weight: 700; }
 html:root .nms h4 span { font-size: .7rem; font-weight: 400; }
 html:root:not([data-theme="light"]) .nms .nms-row em { color: #c9bdff; background: rgba(182, 168, 255, .16); }
 html:root:not([data-theme="light"]) .nms .nms-row.is-on em { color: #5fe0a0; background: rgba(95, 224, 160, .14); }
+/* shared streak chip (11 Nov) */
+.hv4-duo { left: -10px; top: -4px; display: inline-flex; align-items: center; gap: 3px; padding: 2px 7px 2px 2px; border-radius: 99px; font-size: .7rem; color: #e8622c; background: #fff; box-shadow: 0 4px 10px rgba(232, 98, 44, .25); }
+.hv4-duo .nd-face { width: 20px; height: 20px; border-width: 1px; font-size: .55rem; }
+.hv4-duo.is-off { filter: grayscale(1); opacity: .8; }
+.hv4-duo.is-wait { animation: hv4DuoWait 1.6s ease-in-out infinite; }
+@keyframes hv4DuoWait { 50% { box-shadow: 0 0 0 4px rgba(232, 98, 44, .25); } }
+.nd-sheet-rows { margin: 12px -12px 0; }

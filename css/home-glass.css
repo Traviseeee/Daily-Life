@@ -1169,3 +1169,43 @@ html:root:not([data-theme="light"]) .fl-sug { background: rgba(245,196,90,.14); 
 .fc-date { width: 100%; margin: 4px 0 4px; min-height: 46px; }
 .fv-tg.is-shared { cursor: pointer; }
 html:root:not([data-theme="light"]) .fc-date { background: #2e2956; color: #F4F2FF; border-color: rgba(182,168,255,.25); color-scheme: dark; }
+/* Nimo shared streak (11 Nov) */
+.nd-row { display: flex; align-items: center; gap: 10px; margin: 0 12px; padding: 8px 10px; border-radius: 16px; background: linear-gradient(135deg, rgba(255,122,69,.12), rgba(123,104,238,.12)); cursor: pointer; }
+.nd-faces { display: flex; flex: 0 0 auto; }
+.nd-face { display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; overflow: hidden; border: 2px solid #fff; background: linear-gradient(135deg, #9F8CFF, #504AB9); color: #fff; font: 700 .7rem Inter, "Kantumruy Pro", sans-serif; }
+.nd-faces .nd-face + .nd-face { margin-left: -8px; background: linear-gradient(135deg, #ffb3c7, #ff6f91); }
+.nd-face img { width: 100%; height: 100%; object-fit: cover; }
+.nd-text { display: grid; flex: 1; min-width: 0; }
+.nd-text b { font-size: .8rem; color: #1A2347; }
+.nd-text small { font-size: .62rem; color: #7a7698; }
+.nd-num { display: flex; align-items: flex-end; gap: 2px; color: #c0623a; }
+.nd-num b { font: 800 1.2rem/1 Inter, sans-serif; }
+.nd-flame { width: 18px; height: 22px; transform-origin: 50% 100%; animation: nmcFlame 1.6s ease-in-out infinite; }
+.nd-num.is-off .nd-flame { animation: none; filter: grayscale(1) opacity(.5); }
+.nd-today { display: flex; align-items: center; gap: 6px; margin: 6px 12px 12px; }
+.nd-today > span { flex: 1; padding: 4px 0; border-radius: 12px; background: #f1eeff; color: #7a7698; font-size: .64rem; font-weight: 600; text-align: center; }
+.nd-today > span.is-ok { background: #e8f8ef; color: #1f9d63; }
+.nd-nudge { flex: 0 0 auto; padding: 5px 10px; border: 0; border-radius: 99px; background: linear-gradient(135deg, #7B68EE, #504AB9); color: #fff; font: inherit; font-size: .64rem; font-weight: 600; cursor: pointer; }
+.nd-mrow .nd-face { flex: 0 0 34px; width: 34px; height: 34px; }
+.nd-go { flex: 0 0 auto; padding: 6px 12px; border: 0; border-radius: 99px; background: linear-gradient(135deg, #7B68EE, #504AB9); color: #fff; font: inherit; font-size: .7rem; font-weight: 600; cursor: pointer; }
+.nd-st { flex: 0 0 auto; font-size: .7rem; font-weight: 600; color: #7a7698; }
+.nd-st.is-on { color: #c0623a; }
+.nd-link { padding: 0; border: 0; background: none; color: #7a7698; font: inherit; font-size: .64rem; text-decoration: underline; cursor: pointer; }
+.nd-rules { text-align: left; }
+.nd-pop { position: fixed; inset: 0; z-index: 9050; display: grid; place-items: center; padding: 24px; background: rgba(26,35,71,.45); animation: nmcFade .2s ease; }
+.nd-pop.is-out { opacity: 0; transition: opacity .2s; }
+.nd-card { width: min(340px, 100%); padding: 20px 18px 16px; border-radius: 28px; text-align: center; color: #fff; background: radial-gradient(70% 80% at 50% 0%, rgba(255,214,190,.55), transparent 70%), linear-gradient(160deg, #ff8a5c, #7B68EE); animation: nmcPop .45s cubic-bezier(.2,1.4,.4,1); }
+.nd-pop.is-cele .nd-card { background: radial-gradient(70% 80% at 50% 0%, rgba(255,214,190,.5), transparent 70%), linear-gradient(160deg, #7B68EE, #504AB9); }
+.nd-big { font-size: 2.4rem; }
+.nd-n { display: block; font: 800 2.4rem/1 Inter, sans-serif; }
+.nd-card h3 { margin: 6px 0 4px; font-size: 1.05rem; }
+.nd-card p { margin: 0 0 12px; font-size: .78rem; opacity: .92; }
+.nd-btns { display: flex; gap: 8px; }
+.nd-btns button { flex: 1; padding: 11px; border: 0; border-radius: 14px; background: #fff; color: #504AB9; font: inherit; font-weight: 700; cursor: pointer; }
+.nd-btns button.is-soft { background: rgba(255,255,255,.22); color: #fff; }
+html:root:not([data-theme="light"]) .nd-face { border-color: #2e2956; }
+html:root:not([data-theme="light"]) .nd-text b { color: #fff; }
+html:root:not([data-theme="light"]) .nd-text small, html:root:not([data-theme="light"]) .nd-st, html:root:not([data-theme="light"]) .nd-link { color: #bdb7e6; }
+html:root:not([data-theme="light"]) .nd-num, html:root:not([data-theme="light"]) .nd-st.is-on { color: #ffc9a8; }
+html:root:not([data-theme="light"]) .nd-today > span { background: rgba(182,168,255,.14); color: #bdb7e6; }
+html:root:not([data-theme="light"]) .nd-today > span.is-ok { background: rgba(95,224,160,.14); color: #5fe0a0; }

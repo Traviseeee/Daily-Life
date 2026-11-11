@@ -1,4 +1,4 @@
-const CACHE_NAME = "mylife-pwa-f6e9d87a";
+const CACHE_NAME = "mylife-pwa-6a4d614f";
 // red number on the Home Screen icon: the app saves its bell count here and a
 // push that arrives while the app is closed adds 1 to it
 const BADGE_CACHE = "mylife-badge";
@@ -126,6 +126,7 @@ const APP_SHELL = [
   "./js/memory-form.js",
   "./js/memory-feed.js",
   "./js/wallet-card.js",
+  "./js/nimo-duo.js",
   "./js/nimo-life.js",
   "./js/auto-budget.js",
   "./js/done-feed.js",
