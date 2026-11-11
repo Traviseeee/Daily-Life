@@ -111,7 +111,7 @@ const FamilyGroup = (() => {
   const cardOfUser = userId => (appData.family || []).find(person => person && person.userId === userId) || null;
   const otherCards = () => (appData.family || []).filter(person => person && person.id && person.relationship !== "Me");
   const freeMembers = () => (state.members || []).filter(member => member.user_id !== state.me && !cardOfUser(member.user_id));
-  const sameName = (card, member) => { const a = norm(card?.name), b = norm(nameOf(member)); return Boolean(a && b && (a === b || a.startsWith(b) || b.startsWith(a))); };
+  const sameName = (card, member) => { const a = norm(card?.name), b = norm(nameOf(member)); return Boolean(a && b && (a === b || (Math.min(Array.from(a).length, Array.from(b).length) >= 3 && (a.startsWith(b) || b.startsWith(a))))); };
   function linkCard(cardId, userId) {
     if (!cardId || !userId || cardOfUser(userId)) return false;
     Store.edit("family", cardId, { userId });

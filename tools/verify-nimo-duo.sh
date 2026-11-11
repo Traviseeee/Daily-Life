@@ -13,7 +13,9 @@ run -f supabase/migrations/20261023_family_core.sql >/dev/null
 run -f supabase/migrations/20261105_nimo_core.sql >/dev/null
 run -f supabase/migrations/20261111_nimo_duo.sql >/dev/null
 run -f supabase/migrations/20261111_nimo_duo.sql >/dev/null   # twice is safe
-out=$(run -tA -f supabase/tests/nimo_duo_test.sql 2>&1 | grep -v '^\[' ); echo "$out" | tail -16
+run -f supabase/migrations/20261111_nimo_duo_v2.sql >/dev/null
+run -f supabase/migrations/20261111_nimo_duo_v2.sql >/dev/null
+out=$(run -tA -f supabase/tests/nimo_duo_test.sql 2>&1 | grep -v '^\[' ); echo "$out" | tail -22
 fails=$(echo "$out" | tail -1 | cut -d'|' -f1)
 run -f supabase/migrations/20261111_nimo_duo_rollback.sql >/dev/null
 left=$(run -tA -c "select count(*) from information_schema.tables where table_schema='public' and table_name='nimo_duos'")

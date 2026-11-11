@@ -118,6 +118,9 @@ const FamilyV2 = (() => {
     const shared = !member && typeof FamilyCouple !== "undefined" ? FamilyCouple.virtual() : null;
     if (shared) { member = shared.member; other = shared.other; }
     if (!member) return "";
+    // my card is not linked yet but my partner and I share one date: show the shared one
+    const sharedDay = !shared && typeof FamilyCouple !== "undefined" && FamilyCouple.sharedDate ? FamilyCouple.sharedDate() : "";
+    if (sharedDay && sharedDay !== member.anniversaryDate && [member, other].some(item => item.relationship === "Me")) member = { ...member, anniversaryDate: sharedDay };
     const days = daysSinceDate(member.anniversaryDate);
     const next = Math.ceil(Math.max(days, 1) / 1000) * 1000 === days ? days + 1000 : Math.ceil(Math.max(days, 1) / 1000) * 1000;
     const progress = Math.min(100, Math.max(2, ((days - (next - 1000)) / 1000) * 100));

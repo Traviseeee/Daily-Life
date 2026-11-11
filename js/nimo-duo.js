@@ -39,7 +39,7 @@ const NimoDuo = (() => {
     // Home hero badge + Nomi line: re-render once when the shared streak changed
     const sig = JSON.stringify(list || []);
     const route = String(location.hash || "").replace("#", "").split("/")[0] || "home";
-    if (sig !== lastSig && (route === "home" || route === "profile") && typeof App !== "undefined" && !document.querySelector("#modalRoot.open, .nms")) { lastSig = sig; App.render(); }
+    if (sig !== lastSig && (route === "home" || route === "profile") && typeof App !== "undefined" && !document.querySelector("#modalRoot.open, .nms, .mp-sheet, .fl-sheet-wrap")) { lastSig = sig; App.render(); }
     else lastSig = sig;
   }
   function sync() { if (ready()) load(); }
@@ -57,7 +57,7 @@ const NimoDuo = (() => {
         <span class="nd-text"><b>${escapeHtml(L(`ខ្ញុំ + ${partner}`, `Me + ${partner}`))}</b><small>${escapeHtml(L(`streak រួម · វែងបំផុត ${item.longest}`, `shared streak · best ${item.longest}`))}</small></span>
         <span class="nd-num${item.streak ? "" : " is-off"}">${FLAME}<b>${item.streak}</b></span>
       </div>
-      <div class="nd-today"><span class="${item.meToday ? "is-ok" : ""}">${item.meToday ? "✓" : "○"} ${escapeHtml(L("ខ្ញុំ", "Me"))}</span><span class="${item.partnerToday ? "is-ok" : ""}">${item.partnerToday ? "✓" : "○"} ${escapeHtml(partner)}${item.partnerToday ? "" : escapeHtml(L(" រង់ចាំ…", " waiting…"))}</span>${waiting ? `<button type="button" class="nd-nudge" data-nd-nudge="${escapeAttr(item.partner)}">💜 ${escapeHtml(L("រំលឹក", "Nudge"))}</button>` : ""}</div>`;
+      <div class="nd-today"><span class="${item.meToday ? "is-ok" : ""}">${item.meToday ? "✓" : "○"} ${escapeHtml(L("ខ្ញុំ", "Me"))}</span><span class="${item.partnerToday ? "is-ok" : ""}">${item.partnerToday ? "✓" : "○"} ${escapeHtml(partner)}${item.partnerToday ? "" : escapeHtml(L(" រង់ចាំ…", " waiting…"))}</span>${waiting && !nudged(item.partner) ? `<button type="button" class="nd-nudge" data-nd-nudge="${escapeAttr(item.partner)}">💜 ${escapeHtml(L("រំលឹក", "Nudge"))}</button>` : ""}</div>`;
     }).join("");
   }
 
@@ -88,7 +88,7 @@ const NimoDuo = (() => {
       let right;
       if (duo?.status === "active") right = `<span class="nd-st is-on">🔥 ${duo.streak} · <button type="button" class="nd-link" data-nd-leave="${escapeAttr(duo.id)}">${escapeHtml(L("ចាកចេញ", "Leave"))}</button></span>`;
       else if (duo?.status === "pending" && duo.invitedBy === me()) right = `<span class="nd-st">⏳ ${escapeHtml(L("រង់ចាំ", "Waiting"))}</span>`;
-      else if (duo?.status === "pending") right = `<button type="button" class="nd-go" data-nd-yes="${escapeAttr(duo.id)}">🔥 ${escapeHtml(L("ចូលរួម", "Join"))}</button>`;
+      else if (duo?.status === "pending") right = `<button type="button" class="nd-link" data-nd-no="${escapeAttr(duo.id)}">${escapeHtml(L("បដិសេធ", "Decline"))}</button><button type="button" class="nd-go" data-nd-yes="${escapeAttr(duo.id)}">🔥 ${escapeHtml(L("ចូលរួម", "Join"))}</button>`;
       else right = `<button type="button" class="nd-go" data-nd-invite="${escapeAttr(id)}">＋ ${escapeHtml(L("អញ្ជើញ", "Invite"))}</button>`;
       const sub = duo?.status === "active" ? L(`វែងបំផុត ${duo.longest} ថ្ងៃ`, `best ${duo.longest} days`) : duo?.status === "pending" && duo.invitedBy !== me() ? L("អញ្ជើញអ្នក", "invited you") : L("មិនទាន់ចូល streak", "not sharing yet");
       return `<div class="nms-row nd-mrow">${face(id)}<span class="nms-t">${escapeHtml(nameOf(id))}<small>${escapeHtml(sub)}</small></span>${right}</div>`;
@@ -107,7 +107,7 @@ const NimoDuo = (() => {
     if (invite) {
       asked.add(invite.id);
       show(`<div class="nd-big">🔥</div><h3>${escapeHtml(L(`${first(nameOf(invite.partner))} អញ្ជើញអ្នកចូល streak រួម!`, `${first(nameOf(invite.partner))} wants to share a streak!`))}</h3><p>${escapeHtml(L("Check-in រាល់ថ្ងៃទាំងពីរនាក់ ដើម្បីឲ្យភ្លើងឆេះ", "Check in every day, both of you, to keep the fire going"))}</p>
-        <div class="nd-btns"><button type="button" class="is-soft" data-nd-close>${escapeHtml(L("ពេលក្រោយ", "Later"))}</button><button type="button" data-nd-yes="${escapeAttr(invite.id)}">🔥 ${escapeHtml(L("ចូលរួម", "Join"))}</button></div>`, "is-invite");
+        <div class="nd-btns"><button type="button" class="is-soft" data-nd-close>${escapeHtml(L("ពេលក្រោយ", "Later"))}</button><button type="button" data-nd-yes="${escapeAttr(invite.id)}">🔥 ${escapeHtml(L("ចូលរួម", "Join"))}</button></div><button type="button" class="nd-decline" data-nd-no="${escapeAttr(invite.id)}">${escapeHtml(L("បដិសេធ", "No thanks"))}</button>`, "is-invite");
       return;
     }
     for (const item of active()) {
@@ -131,7 +131,17 @@ const NimoDuo = (() => {
     if (ok) Toast.show(ok);
     await load(true);
   }
+  const nudgeKey = partner => `mylife:nimo-nudge:${partner}:${typeof localDateInput === "function" ? localDateInput() : new Date().toISOString().slice(0, 10)}`;
+  function nudged(partner) { try { return Boolean(localStorage.getItem(nudgeKey(partner))); } catch (error) { return false; } }
+  async function dm(partner, text) {
+    const { data: chat, error } = await client().rpc("family_chat_open_dm", { p_family: fg().family.id, p_other: partner });
+    if (error || !chat) throw error || new Error("no chat");
+    const sent = await client().rpc("family_chat_send", { p_chat: chat, p_kind: "text", p_body: text, p_data: {} });
+    if (sent.error) throw sent.error;
+  }
   async function nudge(partner) {
+    if (nudged(partner)) { Toast.show(L("💜 បានរំលឹករួចហើយថ្ងៃនេះ", "💜 Already nudged today")); return; }
+    try { localStorage.setItem(nudgeKey(partner), "1"); } catch (error) { /* still send once */ }
     try {
       const { data: chat, error } = await client().rpc("family_chat_open_dm", { p_family: fg().family.id, p_other: partner });
       if (error || !chat) throw error || new Error("no chat");
@@ -139,20 +149,42 @@ const NimoDuo = (() => {
       const sent = await client().rpc("family_chat_send", { p_chat: chat, p_kind: "text", p_body: L(`💜 កុំភ្លេច check-in ថ្ងៃនេះណា ដើម្បីរក្សា streak រួម 🔥 ${duo?.streak || 0} ថ្ងៃ!`, `💜 Don't forget to check in today to keep our 🔥 ${duo?.streak || 0}-day streak!`), p_data: {} });
       if (sent.error) throw sent.error;
       Toast.show(L(`💜 បានរំលឹក ${first(nameOf(partner))} ក្នុងសារ`, `💜 Nudged ${first(nameOf(partner))} in chat`));
-    } catch (error) { Toast.show(L("⚠️ ផ្ញើសាររំលឹកមិនបាន", "⚠️ Couldn't send the nudge")); }
+      repaint();
+      document.querySelectorAll(`[data-nd-nudge="${CSS.escape(partner)}"]`).forEach(button => button.remove());
+    } catch (error) { try { localStorage.removeItem(nudgeKey(partner)); } catch (e) { /* ignore */ } Toast.show(L("⚠️ ផ្ញើសាររំលឹកមិនបាន", "⚠️ Couldn't send the nudge")); }
+  }
+  // small app-style question sheet (instead of the browser's confirm box)
+  function ask(title, text, yesLabel, onYes) {
+    document.querySelector(".fl-sheet-wrap")?.remove();
+    document.body.insertAdjacentHTML("beforeend", `<div class="fl-sheet-wrap nd-ask" role="dialog" aria-modal="true"><div class="fl-scrim" data-nd-ask-no></div><div class="fl-sheet"><span class="fl-grab"></span><h3>${escapeHtml(title)}</h3><p>${escapeHtml(text)}</p><div class="fl-btns"><button type="button" class="fl-btn" data-nd-ask-no>${escapeHtml(L("បោះបង់", "Cancel"))}</button><button type="button" class="fl-btn is-primary" data-nd-ask-yes>${escapeHtml(yesLabel)}</button></div></div></div>`);
+    const wrap = document.querySelector(".fl-sheet-wrap.nd-ask");
+    requestAnimationFrame(() => wrap.classList.add("is-in"));
+    const close = () => { wrap.classList.remove("is-in"); setTimeout(() => wrap.remove(), 240); };
+    wrap.addEventListener("click", event => {
+      if (event.target.closest("[data-nd-ask-yes]")) { close(); onYes(); }
+      else if (event.target.closest("[data-nd-ask-no]")) close();
+    });
   }
   document.addEventListener("click", event => {
     const t = event.target;
+    if (t.closest(".nd-ask")) return;
     const nudgeBtn = t.closest("[data-nd-nudge]");
     if (nudgeBtn) { event.stopPropagation(); event.preventDefault(); nudge(nudgeBtn.dataset.ndNudge); return; }
     const inv = t.closest("[data-nd-invite]");
-    if (inv) { call("nimo_duo_invite", { p_family: fg().family.id, p_partner: inv.dataset.ndInvite }, L(`🔥 បានអញ្ជើញ ${first(nameOf(inv.dataset.ndInvite))} · រង់ចាំនាងចូលរួម`, `🔥 Invited ${first(nameOf(inv.dataset.ndInvite))}`)); return; }
+    if (inv) {
+      const who = inv.dataset.ndInvite;
+      call("nimo_duo_invite", { p_family: fg().family.id, p_partner: who }, L(`🔥 បានអញ្ជើញ ${first(nameOf(who))} · រង់ចាំការចូលរួម`, `🔥 Invited ${first(nameOf(who))}`))
+        .then(() => { const duo = (list || []).find(item => item.partner === who); if (duo?.status === "pending") dm(who, L("🔥 ខ្ញុំអញ្ជើញអ្នកចូល streak រួមក្នុង MYLIFE! បើក Home ហើយចុច «ចូលរួម»", "🔥 I invited you to a shared streak in MYLIFE! Open Home and tap Join")).catch(() => {}); });
+      return;
+    }
+    const no = t.closest("[data-nd-no]");
+    if (no) { closePop(); call("nimo_duo_answer", { p_duo: no.dataset.ndNo, p_yes: false }, L("បានបដិសេធ", "Declined")); return; }
     const yes = t.closest("[data-nd-yes]");
     if (yes) { closePop(); call("nimo_duo_answer", { p_duo: yes.dataset.ndYes, p_yes: true }, L("🔥 ចូលរួមហើយ! Check-in រាល់ថ្ងៃទាំងពីរនាក់", "🔥 You're in! Check in every day, both of you")); return; }
     const leave = t.closest("[data-nd-leave]");
-    if (leave) { if (confirm(L("ចាកចេញពី streak រួមមែនទេ?", "Leave this shared streak?"))) call("nimo_duo_leave", { p_duo: leave.dataset.ndLeave }, L("បានចាកចេញ · streak ផ្ទាល់ខ្លួននៅដដែល", "Left · your own streak is safe")); return; }
+    if (leave) { ask(L("ចាកចេញពី streak រួមមែនទេ?", "Leave this shared streak?"), L("streak រួមនឹងបញ្ចប់ · streak ផ្ទាល់ខ្លួនរបស់អ្នកនៅដដែល · អញ្ជើញម្ដងទៀតបានពេលក្រោយ", "The shared streak ends · your own streak is safe · you can invite again later"), L("ចាកចេញ", "Leave"), () => call("nimo_duo_leave", { p_duo: leave.dataset.ndLeave }, L("បានចាកចេញ · streak ផ្ទាល់ខ្លួននៅដដែល", "Left · your own streak is safe"))); return; }
     if (t.closest("[data-nd-close]") || t.classList?.contains("nd-pop")) closePop();
   }, true);
 
-  return { sync, load, row, badge, heroLine, sheetSection, list: () => list };
+  return { sync, load, row, badge, heroLine, sheetSection, nudged, list: () => list };
 })();

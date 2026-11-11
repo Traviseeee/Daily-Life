@@ -135,10 +135,10 @@ const MemberProfile = (() => {
     let duoHtml = "";
     if (duos) {
       if (duo?.status === "active") {
-        duoHtml = `<div class="mp-duo"><span class="mp-duo-n">🔥${duo.streak}</span><span class="mp-duo-t"><b>${esc(L("Streak រួមគ្នា", "Shared streak"))}</b><small>${esc(L(`វែងបំផុត ${duo.longest} ថ្ងៃ`, `best ${duo.longest} days`))}</small></span>${duo.meToday && !duo.partnerToday ? `<button type="button" class="mp-duo-btn" data-nd-nudge="${attr(p.userId)}">💜 ${esc(L("រំលឹក", "Nudge"))}</button>` : ""}</div>
+        duoHtml = `<div class="mp-duo"><span class="mp-duo-n">🔥${duo.streak}</span><span class="mp-duo-t"><b>${esc(L("Streak រួមគ្នា", "Shared streak"))}</b><small>${esc(L(`វែងបំផុត ${duo.longest} ថ្ងៃ`, `best ${duo.longest} days`))}</small></span>${duo.meToday && !duo.partnerToday && !NimoDuo.nudged?.(p.userId) ? `<button type="button" class="mp-duo-btn" data-nd-nudge="${attr(p.userId)}">💜 ${esc(L("រំលឹក", "Nudge"))}</button>` : ""}</div>
           <div class="nd-today mp-duo-today"><span class="${duo.meToday ? "is-ok" : ""}">${duo.meToday ? "✓" : "○"} ${esc(L("ខ្ញុំ", "Me"))}</span><span class="${duo.partnerToday ? "is-ok" : ""}">${duo.partnerToday ? "✓" : "○"} ${esc(first)}${duo.partnerToday ? "" : esc(L(" រង់ចាំ…", " waiting…"))}</span></div>`;
       } else if (duo?.status === "pending" && duo.invitedBy !== FG()?.state?.me) {
-        duoHtml = `<div class="mp-duo"><span class="mp-duo-n">🔥</span><span class="mp-duo-t"><b>${esc(L(`${first} អញ្ជើញអ្នកចូល streak រួម`, `${first} invited you to a shared streak`))}</b></span><button type="button" class="mp-duo-btn" data-nd-yes="${attr(duo.id)}">🔥 ${esc(L("ចូលរួម", "Join"))}</button></div>`;
+        duoHtml = `<div class="mp-duo"><span class="mp-duo-n">🔥</span><span class="mp-duo-t"><b>${esc(L(`${first} អញ្ជើញអ្នកចូល streak រួម`, `${first} invited you to a shared streak`))}</b></span><button type="button" class="nd-link" data-nd-no="${attr(duo.id)}">${esc(L("បដិសេធ", "Decline"))}</button><button type="button" class="mp-duo-btn" data-nd-yes="${attr(duo.id)}">🔥 ${esc(L("ចូលរួម", "Join"))}</button></div>`;
       } else if (duo?.status === "pending") {
         duoHtml = `<div class="mp-duo"><span class="mp-duo-n">⏳</span><span class="mp-duo-t"><b>${esc(L("Streak រួមគ្នា", "Shared streak"))}</b><small>${esc(L(`រង់ចាំ ${first} ចូលរួម`, `waiting for ${first} to join`))}</small></span></div>`;
       } else {

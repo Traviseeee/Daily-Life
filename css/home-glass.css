@@ -1209,3 +1209,5 @@ html:root:not([data-theme="light"]) .nd-text small, html:root:not([data-theme="l
 html:root:not([data-theme="light"]) .nd-num, html:root:not([data-theme="light"]) .nd-st.is-on { color: #ffc9a8; }
 html:root:not([data-theme="light"]) .nd-today > span { background: rgba(182,168,255,.14); color: #bdb7e6; }
 html:root:not([data-theme="light"]) .nd-today > span.is-ok { background: rgba(95,224,160,.14); color: #5fe0a0; }
+.nd-decline { display: block; margin: 10px auto 0; padding: 4px 10px; border: 0; background: none; color: rgba(255,255,255,.85); font: inherit; font-size: .72rem; text-decoration: underline; cursor: pointer; }
+.nd-mrow .nd-link { margin-right: 8px; }

@@ -43,5 +43,22 @@ insert into r select (x -> 0 ->> 'streak')::int = 1, 'counts only from active_si
 select public.nimo_duo_leave((select id from public.nimo_duos limit 1));
 insert into r select jsonb_array_length(public.nimo_duo_refresh()) = 0, 'left = gone from list';
 reset role;
+-- v2: both invite each other → active at once
+set role authenticated;
+set request.jwt.claim.sub = '11111111-1111-1111-1111-111111111111';
+insert into r select (public.nimo_duo_invite('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '33333333-3333-3333-3333-333333333333')).status = 'pending', 'v2: Tra invites Sophy';
+insert into r select (public.nimo_duo_invite('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '33333333-3333-3333-3333-333333333333')).status = 'pending', 'v2: inviting twice stays pending';
+set request.jwt.claim.sub = '33333333-3333-3333-3333-333333333333';
+insert into r select (public.nimo_duo_invite('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '11111111-1111-1111-1111-111111111111')).status = 'active', 'v2: Sophy invites back = active';
+-- re-invite after it ended
+set request.jwt.claim.sub = '22222222-2222-2222-2222-222222222222';
+insert into r select (public.nimo_duo_invite('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '11111111-1111-1111-1111-111111111111')).status = 'pending', 'v2: invite again after leaving';
+reset role;
+-- Sophy leaves the family → her duo ends on the next refresh
+delete from public.family_members where user_id = '33333333-3333-3333-3333-333333333333';
+set role authenticated;
+set request.jwt.claim.sub = '11111111-1111-1111-1111-111111111111';
+insert into r select not exists (select 1 from jsonb_array_elements(public.nimo_duo_refresh()) e where e ->> 'partner' = '33333333-3333-3333-3333-333333333333'), 'v2: duo ends when a member leaves';
+reset role;
 select name, ok from r order by ok, name;
 select count(*) filter (where not ok) || '|' || count(*) from r;

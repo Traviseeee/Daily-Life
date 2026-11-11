@@ -46,33 +46,52 @@ const FamilyCouple = (() => {
   }
 
   // keep my card and the shared row the same date (newest edit wins)
+  // keep my card and the shared row on the same date. The card remembers the last
+  // date both sides agreed on (coupleSynced): if my date moved away from it, I changed
+  // it → send mine; if only the shared row moved, my partner changed it → take theirs.
+  let failedAt = 0;
+  function remember(card, date) {
+    if (card.coupleSynced === date) return;
+    card.coupleSynced = date;
+    try { Store.save(); } catch (error) { /* next save keeps it */ }
+  }
   async function reconcile() {
     const pair = localPair();
     if (!pair || busy) return;
     const row = rows.find(item => partnerOf(item) === pair.partner.userId);
     const mine = String(pair.card.anniversaryDate || "").slice(0, 10);
-    if (row && row.start_date === mine) return;
-    const rowTime = row ? Date.parse(row.updated_at || 0) : 0;
-    const cardTime = Date.parse(pair.card.updatedAt || 0) || 0;
-    if (row && row.updated_by !== me() && rowTime > cardTime) {
-      Store.edit("family", pair.card.id, { anniversaryDate: row.start_date });
+    const synced = String(pair.card.coupleSynced || "");
+    if (row && row.start_date === mine) { remember(pair.card, mine); return; }
+    const iChanged = synced ? mine !== synced : !row || row.updated_by === me();
+    if (row && !iChanged) {
+      Store.edit("family", pair.card.id, { anniversaryDate: row.start_date, coupleSynced: row.start_date });
       return;
     }
     if (!/^\d{4}-\d{2}-\d{2}$/.test(mine)) return;
     busy = true;
     try {
       const { data, error } = await client().rpc("family_couple_set", { p_family: fg().family.id, p_partner: pair.partner.userId, p_start: mine });
-      if (!error && data) rows = [...rows.filter(item => partnerOf(item) !== pair.partner.userId), data];
+      if (error || !data) { failedAt = Date.now(); return; }
+      rows = [...rows.filter(item => partnerOf(item) !== pair.partner.userId), data];
+      remember(pair.card, mine);
     } finally { busy = false; }
+  }
+  // my card's date is not what the shared row says → sync now instead of waiting a minute
+  function outOfStep() {
+    if (!rows || Date.now() - failedAt < 30000) return false;
+    const pair = localPair();
+    if (!pair) return false;
+    const row = rows.find(item => partnerOf(item) === pair.partner.userId);
+    return !row || row.start_date !== String(pair.card.anniversaryDate || "").slice(0, 10);
   }
 
   function repaint() {
     const route = String(location.hash || "").replace("#", "").split("/")[0] || "home";
-    if (["family", "home", "profile"].includes(route) && typeof App !== "undefined" && !document.querySelector("#modalRoot.open")) App.render();
+    if (["family", "home", "profile"].includes(route) && typeof App !== "undefined" && !document.querySelector("#modalRoot.open, .mp-sheet, .fl-sheet-wrap, .nd-pop, .nms")) App.render();
   }
 
   // called after every App.render
-  function sync() { if (ready()) load(); }
+  function sync() { if (ready()) load(outOfStep()); }
 
   // the love card for someone who has no couple card of their own (Lychee)
   function virtual() {
@@ -124,6 +143,11 @@ const FamilyCouple = (() => {
     if (event.target.closest("[data-fc-edit]")) { event.preventDefault(); openEdit(); }
   });
 
+  // my own couple card is not linked to my partner's account, but we share one date → show that date
+  function sharedDate() {
+    if (!rows || rows.length !== 1 || localPair()) return "";
+    return rows[0].start_date || "";
+  }
   // for the member profile page: our date with this person (and my card to edit, if I keep one)
   function withPartner(userId) {
     const pair = localPair();
@@ -131,5 +155,5 @@ const FamilyCouple = (() => {
     const row = (rows || []).find(item => partnerOf(item) === userId);
     return row ? { start: row.start_date, cardId: "" } : null;
   }
-  return { sync, load, virtual, withPartner, rows: () => rows };
+  return { sync, load, virtual, withPartner, sharedDate, rows: () => rows };
 })();
