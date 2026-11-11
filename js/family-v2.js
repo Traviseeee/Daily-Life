@@ -36,7 +36,9 @@ const FamilyV2 = (() => {
   const relLabel = member => (km() ? REL_KM[member.relationship] || member.relationship || "" : member.relationship || "");
   const dayMonth = iso => { const d = dateOf(iso); return km() ? `${d.getDate()} ${KM_M[d.getMonth()]}` : d.toLocaleDateString("en-US", { month: "short", day: "numeric" }); };
   const coverOf = member => COVERS[Math.max(0, fam().indexOf(member)) % COVERS.length];
-  const face = member => (member.photo ? `<img src="${escapeAttr(member.photo)}" alt="">` : `<span>${escapeHtml(initials(member.name || "?"))}</span>`);
+  // A card linked to a joined account shows that account's own profile photo.
+  const photoOf = member => { const linked = member?.userId && typeof FamilyGroup !== "undefined" && FamilyGroup.profileOf ? FamilyGroup.profileOf(member.userId)?.photo : ""; return linked || member?.photo || ""; };
+  const face = member => (photoOf(member) ? `<img src="${escapeAttr(photoOf(member))}" alt="">` : `<span>${escapeHtml(initials(member.name || "?"))}</span>`);
   const groupState = () => (typeof FamilyGroup !== "undefined" ? FamilyGroup.state : null);
   const isGroupAdmin = () => { const s = groupState(); return Boolean(s?.family && s.members?.some(m => m.user_id === s.me && m.role === "admin")); };
 
@@ -240,7 +242,7 @@ const FamilyV2 = (() => {
       </article>`;
     }
     return `<article class="fv-member" id="family-member-${escapeAttr(member.id || "")}">
-      <div class="fv-cover" style="background:${coverOf(member)}">${member.photo ? `<img src="${escapeAttr(member.photo)}" alt="">` : ""}
+      <div class="fv-cover" style="background:${coverOf(member)}">${photoOf(member) ? `<img src="${escapeAttr(photoOf(member))}" alt="">` : ""}
         <span class="fv-tools"><button type="button" data-edit-family="${escapeAttr(member.id)}" aria-label="${escapeAttr(L(`កែ ${member.name}`, `Edit ${member.name}`))}">${Icons.edit()}</button><button type="button" data-delete-family="${escapeAttr(member.id)}" aria-label="${escapeAttr(L(`លុប ${member.name}`, `Delete ${member.name}`))}">${Icons.trash()}</button></span>
       </div>
       <div class="fv-mrow">
