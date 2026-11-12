@@ -16,6 +16,7 @@ const { payBill } = require("../lib/bill-pay");
 const LoanPay = require("../js/loan-pay.js");
 const MoneyDue = require("../js/money-due.js");
 const VehicleDue = require("../js/vehicle-due.js");
+const InvoiceDue = require("../js/invoice-due.js");
 const { updatePayloadSafe } = require("../lib/payload-store");
 const { resolveOwner, linkOwnerIfUnknown } = require("../lib/owner");
 const { detectUtility, findUtilityBill, PROVIDERS } = require("../lib/utility-bills");
@@ -164,6 +165,10 @@ async function handleTypedAmount(message, text, redis) {
   const amount = typedAmount(text);
   if (!amount) return undefined; // something else typed: cancel and read it as usual
   const item = pending.item;
+  if (item.kind === "fuel-type") {
+    const unit = /៛|r\b|riel|khr|រៀល/i.test(text) ? "KHR" : /\$|usd/i.test(text) ? "USD" : amount >= 1000 ? "KHR" : item.currency || "USD";
+    return saveFuel(message, { userId: pending.userId, today: zonedToday(), redis }, { vehicleId: item.vehicleId, cost: amount, currency: unit }, item.currency || "USD");
+  }
   if (item.kind === "vehicle-km") {
     // 🏍️ answer to "how many km now?": save it as the odometer reading
     const kmResult = await updatePayload(pending.userId, payload => VehicleDue.setOdometer(payload, item.vehicleId, Math.round(amount), zonedToday()));
@@ -212,11 +217,14 @@ function parseFuel(text, payload) {
     out.cost = value; out.currency = cur;
     return " ";
   });
-  if (!(out.cost > 0)) return /^\s*$/.test(rest) ? { needAmount: true } : null;
   const words = rest.toLowerCase();
   const named = vehicles.find(v => String(v.name || "").toLowerCase().split(/\s+/).some(word => word.length >= 3 && words.includes(word)));
   const recent = vehicles.slice().sort((a, b) => String((b.fuel || []).slice(-1)[0]?.date || "").localeCompare(String((a.fuel || []).slice(-1)[0]?.date || "")))[0];
   out.vehicleId = (named || (vehicles.length === 1 ? vehicles[0] : recent) || vehicles[0]).id;
+  if (!(out.cost > 0)) {
+    const left = String(named?.name || "").toLowerCase().split(/\s+/).filter(Boolean).reduce((t, word) => t.split(word).join(" "), words);
+    return /^\s*$/.test(left) ? { needAmount: true, vehicleId: out.vehicleId } : null;
+  }
   return out;
 }
 async function saveFuel(message, ctx, fuel, currency) {
@@ -234,6 +242,22 @@ async function saveFuel(message, ctx, fuel, currency) {
   const sent = await reply(message, `${lines.join("\n")} 🐾`);
   await pushAdded(ctx.userId, `⛽ ${formatMoney(e.cost, e.currency)} · ${v.name || ""}`, "សាំង · ពី Telegram", "/#vehicle", "vehicle");
   return sent;
+}
+
+// ⛽ button (or "សាំង" alone): one tap on an amount logs it
+async function askFuel(message, ctx, vehicleId, currency) {
+  const v = (ctx.payload.vehicles || []).find(item => item.id === vehicleId);
+  if (!v) return reply(message, "⛽ មិនទាន់មានម៉ូតូ / ឡានក្នុង MYLIFE · Add a vehicle first", { inline_keyboard: [[{ text: "📱 បើក MYLIFE · Open", url: appLink({ url: "/#vehicle" }) }]] });
+  const amounts = currency === "KHR" ? [8000, 12000, 20000, 40000] : [2, 3, 5, 10];
+  const buttons = [];
+  for (const cost of amounts) {
+    const token = await saveAction(ctx.redis, { userId: ctx.userId, item: { kind: "fuel-quick", vehicleId, cost, currency, url: "/#vehicle" } });
+    buttons.push({ text: `⛽ ${formatMoney(cost, currency)}`, callback_data: `fq|${token}` });
+  }
+  const other = await saveAction(ctx.redis, { userId: ctx.userId, item: { kind: "fuel-type", vehicleId, currency, url: "/#vehicle" } });
+  const stats = VehicleDue.fuelStats(v, zonedToday(), currency);
+  const others = (ctx.payload.vehicles || []).length > 1 ? `\n<i>ម៉ូតូផ្សេង? វាយ ឧ. សាំង 3 ${escapeHtml(String((ctx.payload.vehicles.find(item => item.id !== vehicleId) || {}).name || "").split(/\s+/).pop())}</i>` : "";
+  return reply(message, `⛽ <b>${escapeHtml(v.name || "")}</b> · ចាក់ប៉ុន្មាន?\n<i>ខែនេះ ${formatMoney(stats.spent, currency)}${stats.kmL ? ` · ${Math.round(stats.kmL * 10) / 10} km/L` : ""}</i>${others}`, { inline_keyboard: [buttons.slice(0, 2), buttons.slice(2, 4), [{ text: "✏️ ចំនួនផ្សេង · Other", callback_data: `ftype|${other}` }]] });
 }
 
 // "next oil change ≈ 9 Jan or 26,850 km" after a km answer / ✓ Done
@@ -493,20 +517,20 @@ function moneyKeyboard(token, saved, mode = "main") {
 // persistent buttons under the chat box
 // Telegram keeps showing the last keyboard the bot sent. Bump this when the
 // keyboard changes: the next time someone uses the bot, it sends the new one once.
-const KEYBOARD_VERSION = "2026-10-22";
+const KEYBOARD_VERSION = "2026-11-12";
 async function refreshKeyboard(message, redis) {
   try {
     const key = `mylife:tg:kb:${message.chat.id}`;
     if ((await redis.get(key)) === KEYBOARD_VERSION) return;
     await redis.set(key, KEYBOARD_VERSION);
-    await tgCall("sendMessage", { chat_id: message.chat.id, text: "⌨️ <b>ប៊ូតុងខាងក្រោមថ្មី</b> · មាន 🤖 សួរ AI ហើយ", parse_mode: "HTML", disable_notification: true, reply_markup: REPLY_KEYBOARD });
+    await tgCall("sendMessage", { chat_id: message.chat.id, text: "⌨️ <b>ប៊ូតុងខាងក្រោមថ្មី</b> · មាន ⛽ សាំង ហើយ", parse_mode: "HTML", disable_notification: true, reply_markup: REPLY_KEYBOARD });
   } catch (error) {
     console.warn("MYLIFE keyboard refresh failed.", error.message);
   }
 }
 
 const REPLY_KEYBOARD = {
-  keyboard: [[{ text: "☀️ ថ្ងៃនេះ" }, { text: "🧾 វិក្កយបត្រ" }, { text: "🤖 សួរ AI" }], [{ text: "🌙 កត់ចំណាយ" }, { text: "📊 របាយការណ៍" }, { text: "☰ ម៉ឺនុយ" }]],
+  keyboard: [[{ text: "☀️ ថ្ងៃនេះ" }, { text: "🧾 វិក្កយបត្រ" }, { text: "⛽ សាំង" }], [{ text: "🌙 កត់ចំណាយ" }, { text: "📊 របាយការណ៍" }, { text: "🤖 សួរ AI" }, { text: "☰ ម៉ឺនុយ" }]],
   resize_keyboard: true,
   is_persistent: true,
   input_field_placeholder: "coffee 2 · ស្អែក 9 ព្រឹក ជួបម៉ាក់"
@@ -1090,7 +1114,7 @@ async function handleMessage(message, redis) {
   const currency = payload.profile?.currency || "USD";
   // ⛽ "សាំង 3" / "ចាក់សាំង 12000៛ 24100km" → the vehicle's fuel log (+ one Transport expense), 12 Nov
   const fuel = parseFuel(text, payload);
-  if (fuel?.needAmount) return reply(message, "⛽ វាយតម្លៃផង ឧ. <code>សាំង 3</code> ឬ <code>សាំង 12000៛ 24100km</code>\n<i>Add the amount, e.g. fuel 3</i>");
+  if (fuel?.needAmount) { await refreshKeyboard(message, redis); return askFuel(message, { userId, payload, redis }, fuel.vehicleId, currency); }
   if (fuel) return saveFuel(message, { userId, today, redis }, fuel, currency);
   // forwarded ABA Pay request ("Hi, NAME has requested you to pay $1.91 …"): one expense, name + amount only
   const payRequest = parsePayRequest(text);
@@ -1317,6 +1341,28 @@ module.exports = async (req, res) => {
         await tgCall("sendMessage", { chat_id: chatId, text: `${label}${saved?.entry?.expenseId ? " · ធ្វើដំណើរ" : ""}\n${await vehicleNextLine(action.userId, item.vehicleId)} 🐾`, parse_mode: "HTML", reply_to_message_id: query.message.message_id }).catch(() => {});
         await pushAdded(action.userId, `${VehicleDue.EMOJI[item.service] || "🔧"} បានកត់ ${VehicleDue.name(item.service)}`, "ពី Telegram · បានកត់ក្នុង MYLIFE", "/#vehicle", "vehicle");
       }
+      return res.status(200).json({ ok: true });
+    }
+    if (item.kind === "fuel-quick" && verb === "fq") {
+      await answer(`⛽ ${formatMoney(item.cost, item.currency)}`);
+      await tgCall("editMessageReplyMarkup", { chat_id: chatId, message_id: query.message.message_id, reply_markup: { inline_keyboard: [[{ text: `✅ ⛽ ${formatMoney(item.cost, item.currency)}`, callback_data: "noop" }]] } }).catch(() => {});
+      await saveFuel({ chat: { id: chatId }, message_id: query.message.message_id }, { userId: action.userId, today: zonedToday(), redis }, { vehicleId: item.vehicleId, cost: item.cost, currency: item.currency }, item.currency);
+      return res.status(200).json({ ok: true });
+    }
+    if (item.kind === "fuel-type" && verb === "ftype") {
+      await redis.set(amountKey(chatId), JSON.stringify({ userId: action.userId, item }), { ex: 900 });
+      await answer("✏️ វាយតម្លៃ");
+      await tgCall("sendMessage", { chat_id: chatId, text: `✏️ វាយតម្លៃសាំង ឧ. <code>${item.currency === "KHR" ? "15000" : "4"}</code>\n<i>Type the amount</i>`, parse_mode: "HTML", reply_markup: { force_reply: true, input_field_placeholder: item.currency === "KHR" ? "15000" : "4" } }).catch(() => {});
+      return res.status(200).json({ ok: true });
+    }
+    if (item.kind === "invoice" && verb === "ipaid") {
+      let saved = null;
+      const result = await updatePayload(action.userId, payload => { saved = InvoiceDue.markPaid(payload, item.invoiceId, { today: zonedToday(), makeId: recordId, via: "Telegram" }); return saved.result; });
+      const amount = saved?.income ? formatMoney(saved.income.amount, saved.income.currency) : "";
+      const label = result === "updated" ? `✅ បានបង់ ${amount} · ចំណូល` : result === "already" ? "✅ បានបង់រួចហើយ" : "⚠️ រកមិនឃើញក្នុង MYLIFE · Not found";
+      await answer(label);
+      await tgCall("editMessageReplyMarkup", { chat_id: chatId, message_id: query.message.message_id, reply_markup: { inline_keyboard: [[{ text: label, callback_data: "noop" }], [{ text: "📱 បើក MYLIFE · Open", url: appLink(item) }]] } }).catch(() => {});
+      if (result === "updated") await pushAdded(action.userId, `🧾 ${saved.invoice.client || ""} បានបង់ ${amount}`, "ពី Telegram · កត់ជាចំណូល", "/#invoice", "invoice");
       return res.status(200).json({ ok: true });
     }
     if (item.kind === "vehicle-km" && verb === "kmok") {

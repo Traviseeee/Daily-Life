@@ -971,12 +971,33 @@ function exportExcelData() {
       <head><meta charset="utf-8"><style>table{border-collapse:collapse;margin-bottom:24px}td,th{border:1px solid #999;padding:6px 8px}th{background:#d9ff8c}</style></head>
       <body>
         <h1>MYLIFE Export ${backupDate()}</h1>
-        ${sections.map(section => excelTable(section, section === "profile" ? [(({ aiSettings, ...rest }) => rest)(appData.profile)] : appData[section])).join("")}
+        ${sections.map(section => excelTable(section, section === "profile" ? [(({ aiSettings, invoiceBrand, ...rest }) => rest)(appData.profile)] : appData[section])).join("")}
+        ${excelExtraTables()}
       </body>
     </html>
   `;
   downloadFile(`mylife-excel-${backupDate()}.xls`, "application/vnd.ms-excel", html);
   Toast.show(t("excelExported"));
+}
+
+// invoices + vehicles (12 Nov): flat, readable rows instead of nested JSON cells
+function excelExtraTables() {
+  const invoices = (appData.invoices || []).map(inv => ({
+    number: inv.number, client: inv.client, date: inv.date, due: inv.due, currency: inv.currency || "USD",
+    total: (inv.items || []).reduce((t, item) => t + Number(item.qty || 0) * Number(item.price || 0), 0),
+    status: inv.status, paidAt: String(inv.paidAt || "").slice(0, 10),
+    items: (inv.items || []).map(item => `${item.desc} × ${item.qty} @ ${item.price}`).join("; "), note: inv.note || ""
+  }));
+  const vehicles = appData.vehicles || [];
+  const services = vehicles.flatMap(v => (v.log || []).map(item => ({ vehicle: v.name, date: item.date, service: item.title || item.service, km: item.km ?? "", cost: item.cost ?? "", currency: item.currency || "USD", shop: item.shop || "" })));
+  const fuel = vehicles.flatMap(v => (v.fuel || []).map(item => ({ vehicle: v.name, date: item.date, cost: item.cost, currency: item.currency || "USD", liters: item.liters ?? "", km: item.km ?? "", kmGuessed: item.kmGuessed ? "yes" : "" })));
+  const list = vehicles.map(v => ({ name: v.name, kind: v.kind, plate: v.plate || "", year: v.year || "", odometer: v.odometer || "" }));
+  return [
+    invoices.length ? excelTable("invoices", invoices) : "",
+    list.length ? excelTable("vehicles", list) : "",
+    services.length ? excelTable("vehicle service log", services) : "",
+    fuel.length ? excelTable("vehicle fuel", fuel) : ""
+  ].join("");
 }
 
 function excelTable(title, rows = []) {

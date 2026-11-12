@@ -29,6 +29,7 @@ const NotifyCenter = (() => {
     calendar: () => Icons.calendar(),
     family: () => Icons.cake(),
     vehicle: () => (Icons.car ? Icons.car() : Icons.calendar()),
+    invoice: () => Icons.bill(),
     reports: () => Icons.chart(),
     backup: () => svg('<path d="M7 18a4.5 4.5 0 0 1-.6-9A6 6 0 0 1 18 8.5a4 4 0 0 1-.5 9.5"/><path d="M12 12v8M9 15l3-3 3 3"/>'),
     chevron: () => svg('<path d="m6 9 6 6 6-6"/>'),
@@ -48,6 +49,7 @@ const NotifyCenter = (() => {
     calendar: { km: "ប្រតិទិន & ការរំលឹក", en: "Calendar & reminders", dkm: "ព្រឹត្តិការណ៍ និងការរំលឹក", den: "Events and reminders", href: "#calendar" },
     family: { km: "គ្រួសារ", en: "Family", dkm: "ថ្ងៃកំណើត និងខួប", den: "Birthdays and anniversaries", href: "#family" },
     vehicle: { km: "ម៉ូតូ / ឡាន", en: "Vehicle care", dkm: "ប្តូរប្រេង · កង់ · អាគុយ · ពន្ធ", den: "Oil · tires · battery · tax", href: "#vehicle" },
+    invoice: { km: "Invoice", en: "Invoices", dkm: "ភ្ញៀវមិនទាន់បង់ · ថ្ងៃផុតកំណត់", den: "Unpaid · due dates", href: "#invoice" },
     reports: { km: "របាយការណ៍", en: "Reports", dkm: "សង្ខេបព្រឹក, របាយការណ៍សប្តាហ៍ & ខែ", den: "Morning digest, weekly & monthly reports", href: "#money/reports" },
     backup: { km: "Backup", en: "Backup", dkm: "ផ្ញើឯកសារបម្រុងទុកទៅ Telegram រៀងរាល់សប្តាហ៍", den: "Weekly JSON file to Telegram", href: "#settings" }
   };
@@ -87,7 +89,7 @@ const NotifyCenter = (() => {
 
   const toggle = (attrs, on, label) => `<label class="nfc-switch" aria-label="${escapeAttr(label)}"><input type="checkbox" ${attrs} ${on ? "checked" : ""}><span></span></label>`;
   const tile = (name, tone) => `<span class="nfc-tile nfc-tone-${tone}">${ICON[name]()}</span>`;
-  const TONE = { bills: "amber", expenses: "rose", loans: "blue", savings: "green", "savings-use": "amber", "investment-purchase": "teal", "investment-value": "violet", "gold-price": "amber", calendar: "violet", family: "pink", vehicle: "amber", reports: "teal", backup: "slate" };
+  const TONE = { bills: "amber", expenses: "rose", loans: "blue", savings: "green", "savings-use": "amber", "investment-purchase": "teal", "investment-value": "violet", "gold-price": "amber", calendar: "violet", family: "pink", vehicle: "amber", invoice: "teal", reports: "teal", backup: "slate" };
 
   function summary() {
     const p = prefs();
@@ -100,7 +102,7 @@ const NotifyCenter = (() => {
   /* ---------- page ---------- */
   // tabs keep the page short: money tools · dated things · reports & backup
   const TABS = [
-    { id: "money", km: "ហិរញ្ញវត្ថុ", en: "Money", tools: ["bills", "expenses", "loans", "savings", "savings-use", "investment-purchase", "investment-value", "gold-price"] },
+    { id: "money", km: "ហិរញ្ញវត្ថុ", en: "Money", tools: ["bills", "expenses", "loans", "savings", "savings-use", "investment-purchase", "investment-value", "gold-price", "invoice"] },
     { id: "days", km: "ថ្ងៃសំខាន់", en: "Dates", tools: ["calendar", "family", "vehicle"] },
     { id: "reports", km: "របាយការណ៍", en: "Reports", tools: ["reports", "backup"] }
   ];
@@ -487,6 +489,12 @@ const NotifyCenter = (() => {
         ${flagRow("vehicleRepeat", L("រំលឹកម្តងទៀតរៀងរាល់ 3 ថ្ងៃ", "Again every 3 days"), L("ទាល់តែចុច ✓ ធ្វើរួច", "Until you tap ✓ Done"))}
         ${flagRow("vehicleKmAsk", L("សួរ km រៀងរាល់អាទិត្យ", "Ask the km every Sunday"), L("ឆ្លើយក្នុង Telegram → ទាយថ្ងៃកាន់តែត្រូវ", "Answer in Telegram → better predictions"), "vehicleKmTime", "20:00")}
       </div>${note(L("ទាយថ្ងៃពី km/ថ្ងៃ ដែល app រៀនពីការកែ km។ ចុច ✓ ធ្វើរួច ក្នុង Telegram = កត់ការថែទាំ + ចំណាយ (តម្លៃលើកមុន)។", "Dates come from your km a day. ✓ Done in Telegram logs the service + the expense (last price)."))}`;
+    }
+    if (tool === "invoice") {
+      return `<div class="nfc-subgroup">
+        ${flagRow("invoiceDue", L("រំលឹកនៅថ្ងៃផុតកំណត់", "On the due day"), L("ម៉ោងសម្រាប់ទាំងអស់", "Time for all"), "invoiceTime", "09:00")}
+        ${flagRow("invoiceRepeat", L("រំលឹកម្តងទៀតរៀងរាល់ 3 ថ្ងៃ", "Again every 3 days"), L("ទាល់តែចុច ✅ ភ្ញៀវបានបង់", "Until you tap ✅ Client paid"))}
+      </div>${note(L("ចុច ✅ ភ្ញៀវបានបង់ ក្នុង Telegram = invoice បានបង់ + កត់ជាចំណូល Freelance។", "✅ Client paid in Telegram marks it paid and adds the income (Freelance)."))}`;
     }
     if (tool === "backup") {
       return `<div class="nfc-subgroup">${flagRow("telegramBackup", L("បម្រុងទុកទៅ Telegram", "Backup to Telegram"), L("រៀងរាល់សប្តាហ៍ (ឯកសារ JSON)", "Weekly JSON file"))}</div>

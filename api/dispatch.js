@@ -13,6 +13,7 @@ const { frequentExpenses, unusualToday, convert } = require("../lib/money-insigh
 const { payBill } = require("../lib/bill-pay");
 const MoneyDue = require("../js/money-due.js");
 const VehicleDue = require("../js/vehicle-due.js");
+const InvoiceDue = require("../js/invoice-due.js");
 const { updatePayloadSafe } = require("../lib/payload-store");
 const NotifyPrefs = require("../lib/notify-prefs");
 const { resolveOwner } = require("../lib/owner");
@@ -489,6 +490,29 @@ function notificationItems(payload) {
         });
       });
     }
+  }
+
+  // 🧾 unpaid invoices (12 Nov): on the due day, then every 3 days until "✅ Client paid"
+  {
+    const ip = payload.profile || {};
+    const iTime = /^\d{1,2}:\d{2}$/.test(String(ip.invoiceTime || "")) ? ip.invoiceTime : "09:00";
+    InvoiceDue.alerts(payload.invoices, today, { repeat: ip.invoiceRepeat !== false }).forEach(a => {
+      if (a.stage === "due" && ip.invoiceDue === false) return;
+      const inv = a.invoice;
+      const amount = moneyLabel(inv.currency || "USD", a.amount);
+      add({
+        kind: "invoice",
+        id: `${inv.id}-${a.stage}-${today}`,
+        invoiceId: inv.id,
+        title: a.stage === "due" ? `🧾 ${inv.client} ត្រូវបង់ ${amount} ថ្ងៃនេះ` : `⚠️ ${inv.client} នៅមិនទាន់បង់ ${amount}`,
+        body: [`${inv.number}${a.stage === "late" ? ` · ហួស ${-a.gap} ថ្ងៃ` : ""}`, "ផ្ញើ invoice ម្ដងទៀត ឬចុច ✅ ពេលភ្ញៀវបង់"].join("\n"),
+        date: today,
+        time: iTime,
+        hasTime: true,
+        doneLabel: `✅ ភ្ញៀវបានបង់ ${amount}`,
+        url: "/#invoice"
+      });
+    });
   }
 
   // salary / income day: "did you get it?" with ✅ Received (js/money-due.js, same rule as the app pop-up)

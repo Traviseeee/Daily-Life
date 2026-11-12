@@ -15,7 +15,7 @@
  * The older switches (budgetAlerts, morningDigest, per-bill "reminder", ...) still apply.
  */
 (function (root) {
-  const TOOLS = ["bills", "expenses", "loans", "savings", "savings-use", "investment-purchase", "investment-value", "gold-price", "calendar", "family", "vehicle", "reports", "backup"];
+  const TOOLS = ["bills", "expenses", "loans", "savings", "savings-use", "investment-purchase", "investment-value", "gold-price", "calendar", "family", "vehicle", "invoice", "reports", "backup"];
 
   // alert kind (server items, app items, bell types) → tool
   const TOOL_OF = {
@@ -27,7 +27,8 @@
     birthday: "family", anniversary: "family", "family-birthday": "family", "family-anniversary": "family",
     digest: "reports", weekly: "reports", "weekly-image": "reports", "monthly-image": "reports", report: "reports",
     "backup-file": "backup",
-    vehicle: "vehicle", "vehicle-km": "vehicle"
+    vehicle: "vehicle", "vehicle-km": "vehicle",
+    invoice: "invoice"
   };
 
   const BILL_STAGES = [3, 2, 1, 0];
