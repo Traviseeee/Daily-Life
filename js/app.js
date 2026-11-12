@@ -345,7 +345,7 @@ const App = {
     document.body.classList.toggle("notify-page-open", route === "notifications");
     document.body.classList.toggle("money-page-open", route === "money"); // money tabs have their own Add buttons
     document.body.classList.toggle("settings-page-open", route === "settings"); // no floating + over the settings rows
-    document.body.classList.toggle("tool-page-open", route === "calc" || route === "vehicle"); // tools have their own buttons
+    document.body.classList.toggle("tool-page-open", route === "calc" || route === "vehicle" || route === "help" || route === "tips"); // tools have their own buttons; Help and Tips show no top bar either (12 Nov)
     document.body.classList.toggle("topbar-home", route === "home");
     if (typeof TopbarWeather !== "undefined") TopbarWeather.render();
 
