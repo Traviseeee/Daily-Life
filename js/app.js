@@ -384,7 +384,7 @@ const App = {
     this.scheduleDueReminderAlerts();
     // (home suggestion toast removed — the mood / reflection / focus cards are on Home already)
     this.renderNotificationBadge();
-    if (typeof HelpGuide !== "undefined") { try { HelpGuide.mount(route); } catch (error) { console.warn("MYLIFE help button skipped.", error); } }
+    if (typeof HelpGuide !== "undefined") { try { HelpGuide.mount(route); HelpGuide.mountBack(route); } catch (error) { console.warn("MYLIFE help button skipped.", error); } }
     if (typeof FamilyCouple !== "undefined" && (route === "family" || route === "home")) { try { FamilyCouple.sync(); } catch (error) { console.warn("MYLIFE couple date skipped.", error); } }
     if (typeof NimoLife !== "undefined") { try { NimoLife.sync(route, this.param); } catch (error) { console.warn("MYLIFE Nimo XP skipped.", error); } }
     app.focus({ preventScroll: true });

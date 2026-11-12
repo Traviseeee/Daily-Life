@@ -54,3 +54,9 @@ html[data-theme="dark"] .hg-sheet{background:#2e2956}
 .hg-sheet .hg-x{border:0;background:var(--hg-soft);color:var(--hg-ink);width:32px;height:32px;border-radius:50%;font-size:1.1rem;cursor:pointer}
 .hg-tip{display:flex;gap:8px;background:var(--hg-soft);border-radius:14px;padding:10px 12px;font-size:.82rem;line-height:1.5}
 .hg-go{justify-self:start;border:0;border-radius:99px;padding:10px 16px;background:var(--hg-lav);color:#fff;font:inherit;font-weight:700;font-size:.84rem;text-decoration:none;cursor:pointer}
+/* back arrow on Help and Tips (no top bar there) */
+.hg-backrow{margin:0 0 10px}
+.hg-backbtn{display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(255,255,255,.55);background:rgba(255,255,255,.7);color:#504ab9;border-radius:99px;padding:8px 14px 8px 10px;font:inherit;font-weight:700;font-size:.84rem;cursor:pointer;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.hg-backbtn span{font-size:1.3rem;line-height:1;margin-top:-2px}
+.hg-backbtn:focus-visible{outline:2px solid #7b68ee;outline-offset:2px}
+html[data-theme="dark"] .hg-backbtn{background:rgba(46,41,86,.75);border-color:rgba(182,168,255,.3);color:#c9bdff}

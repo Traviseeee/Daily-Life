@@ -90,6 +90,17 @@ const HelpGuide = (() => {
     heading.appendChild(button);
   }
 
+  // Help and Tips have no top bar, so they get their own back arrow
+  function mountBack(route) {
+    if (route !== "help" && route !== "tips") return;
+    const page = document.querySelector("#app > .page, #app > section");
+    if (!page || page.querySelector(".hg-backbtn")) return;
+    const wrap = document.createElement("div");
+    wrap.className = "hg hg-backrow";
+    wrap.innerHTML = `<button class="hg-backbtn" type="button" data-hg-back aria-label="${esc(L("ត្រឡប់ក្រោយ", "Back"))}"><span aria-hidden="true">‹</span>${esc(L("ត្រឡប់ក្រោយ", "Back"))}</button>`;
+    page.prepend(wrap);
+  }
+
   function closeSheet() { document.querySelector(".hg-back")?.remove(); }
   function openSheet(area) {
     const entry = AREAS_FN()[area]; if (!entry) return;
@@ -107,6 +118,7 @@ const HelpGuide = (() => {
   }
 
   document.addEventListener("click", event => {
+    if (event.target.closest("[data-hg-back]")) { event.preventDefault(); if (history.length > 1) history.back(); else location.hash = "#launcher"; return; }
     const q = event.target.closest(".hg-q");
     if (q) { event.preventDefault(); event.stopPropagation(); openSheet(q.dataset.hgArea); return; }
     if (event.target.closest("[data-hg-close]") || event.target.classList?.contains("hg-back")) { closeSheet(); return; }
@@ -116,5 +128,5 @@ const HelpGuide = (() => {
   document.addEventListener("input", event => { if (event.target.id === "hgSearch") filter(); });
   document.addEventListener("keydown", event => { if (event.key === "Escape") closeSheet(); });
 
-  return { page, banner, mount, openSheet };
+  return { page, banner, mount, mountBack, openSheet };
 })();
