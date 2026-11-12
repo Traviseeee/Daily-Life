@@ -198,3 +198,19 @@ html:root:not([data-theme="light"]) .nms .nms-row.is-on em { color: #5fe0a0; bac
 .hv4-duo.is-wait { animation: hv4DuoWait 1.6s ease-in-out infinite; }
 @keyframes hv4DuoWait { 50% { box-shadow: 0 0 0 4px rgba(232, 98, 44, .25); } }
 .nd-sheet-rows { margin: 12px -12px 0; }
+
+/* ---------- 📌 due soon (12 Nov · draft 4B) ---------- */
+.hv4-due-list { overflow: hidden; border: 1px solid var(--h4-line); border-radius: 18px; }
+.hv4-due-row { display: flex; align-items: center; gap: 12px; padding: 11px 12px; }
+.hv4-due-row + .hv4-due-row { border-top: 1px solid var(--h4-line); }
+.hv4-due-ic { display: grid; place-items: center; width: 38px; height: 38px; flex: none; border-radius: 12px; font-size: 18px; background: #efebff; }
+.hv4-due-ic.is-amber { background: #fff3e3; }
+.hv4-due-ic.is-red { background: #ffe8ec; }
+html:root:not([data-theme="light"]) .hv4-due-ic { background: rgba(182, 168, 255, .16); }
+html:root:not([data-theme="light"]) .hv4-due-ic.is-amber { background: #3e2d1c; }
+html:root:not([data-theme="light"]) .hv4-due-ic.is-red { background: #4a2532; }
+.hv4-due-tx { flex: 1; display: grid; min-width: 0; }
+.hv4-due-tx b { overflow: hidden; font-size: .88rem; font-weight: 600; color: var(--h4-ink); white-space: nowrap; text-overflow: ellipsis; }
+.hv4-due-tx small { font-size: .72rem; color: var(--h4-sub); }
+.hv4-due-go { display: grid; place-items: center; width: 40px; height: 40px; flex: none; border: 0; border-radius: 12px; background: var(--h4-chip); color: var(--h4-a); font: inherit; font-size: 1.1rem; font-weight: 600; cursor: pointer; }
+.hv4-due-go.is-done { background: linear-gradient(140deg, #8b78f2, #5a48d6); color: #fff; box-shadow: 0 4px 12px rgba(106, 88, 224, .28); }

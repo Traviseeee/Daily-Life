@@ -879,7 +879,7 @@ const MemoryFeed = (() => {
           <label><span>📍 ${escapeHtml(L("ទីកន្លែង", "Place"))}</span><input type="text" name="place" maxlength="80" value="${escapeAttr(editing ? memory.location || "" : "")}" placeholder="${escapeAttr(L("ឧ. កែប", "e.g. Kep"))}"></label>
         </div>
         ${people.length ? `<div class="mf-tag-pick"><span>👥 ${escapeHtml(L("មនុស្សក្នុងរូប", "People in it"))}</span><div>${people.map(member => `<button type="button" class="mf-tag-chip ${selected.has(member.id) ? "active" : ""}" data-mf-tag="${escapeAttr(member.id)}">${avatar(member, "mf-face-xs")}${escapeHtml(member.name)}</button>`).join("")}</div></div>` : ""}
-        ${!editing && fam()?.canPost() ? `<label class="mf-share-row"><span>👨‍👩‍👧 <strong>${escapeHtml(L("ចែករំលែកជាមួយគ្រួសារ", "Share with family"))}</strong><small>${escapeHtml(L("សមាជិកដែលមានសិទ្ធិ Memories នឹងឃើញ", "Members allowed to see Memories will see it"))}</small></span><input type="checkbox" name="share" checked></label>` : ""}
+        ${!editing && fam()?.canPost() ? `<label class="mf-share-row"><span>👨‍👩‍👧 <strong>${escapeHtml(L("ចែករំលែកជាមួយគ្រួសារ", "Share with family"))}</strong><small>${escapeHtml(L("សមាជិកដែលមានសិទ្ធិ Memories នឹងឃើញ", "Members allowed to see Memories will see it"))}</small></span><input type="checkbox" name="share" ${fam()?.shareNew && !fam().shareNew() ? "" : "checked"}></label>` : ""}
         <div class="mf-progress" data-mf-progress hidden><i></i><span></span></div>
         <div class="ev-foot">
           <button class="button ghost-button" type="button" data-close>${t("cancel")}</button>

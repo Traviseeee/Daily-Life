@@ -678,6 +678,57 @@ const HomeV2 = (() => {
     </section>`;
   }
 
+  // 📌 "Due soon" (12 Nov · draft 4B): vehicle care · loans · bills · unpaid invoices, max 3 rows, hidden when empty
+  function dueSoonItems(todayIso) {
+    const out = [];
+    const gapOf = iso => Math.round((new Date(`${iso}T00:00:00`) - new Date(`${todayIso}T00:00:00`)) / 86400000);
+    const when = gap => gap < 0 ? L(`ហួស ${-gap} ថ្ងៃ`, `${-gap} day${gap < -1 ? "s" : ""} late`) : gap === 0 ? L("ថ្ងៃនេះ", "today") : gap === 1 ? L("ស្អែក", "tomorrow") : L(`${gap} ថ្ងៃទៀត`, `in ${gap} days`);
+    if (typeof VehicleDue !== "undefined") (appData.vehicles || []).forEach(v => (v.services || []).forEach(svc => {
+      const st = VehicleDue.status(v, svc, todayIso);
+      if (!st.dueDate) return;
+      const gap = st.p >= 1 ? Math.min(0, VehicleDue.daysBetween(todayIso, st.dueDate)) : VehicleDue.daysBetween(todayIso, st.dueDate);
+      if (gap > 3) return;
+      const last = VehicleDue.last(v, svc.key);
+      out.push({ gap, ic: VehicleDue.EMOJI[svc.key] || "🔧", tone: gap <= 0 ? "amber" : "violet", title: `${VehicleDue.name(svc.key, km())} · ${v.name}`, sub: [when(gap), last && Number(last.cost) ? L(`លើកមុន ${plainMoney(toProfileCurrency(last.cost, last.currency || "USD"))}`, `last ${plainMoney(toProfileCurrency(last.cost, last.currency || "USD"))}`) : ""].filter(Boolean).join(" · "), act: `data-hv4-vdone="${escapeAttr(`${v.id}|${svc.key}`)}"`, done: true });
+    }));
+    if (typeof nextLoanPaymentDate === "function") (appData.loans || []).forEach(loan => {
+      const next = nextLoanPaymentDate(loan);
+      if (!next || !Number(loan.monthlyPayment)) return;
+      const gap = gapOf(next);
+      if (gap < 0 || gap > 3) return;
+      out.push({ gap, ic: "💳", tone: "violet", title: L(`បង់កម្ចី ${plainMoney(toProfileCurrency(loan.monthlyPayment, loan.currency))}`, `Loan ${plainMoney(toProfileCurrency(loan.monthlyPayment, loan.currency))}`), sub: [when(gap), loan.name].filter(Boolean).join(" · "), act: 'data-hv2-go="#money/loans"' });
+    });
+    getUpcomingNotifications(3, 20).filter(item => item.kind === "bill").forEach(item => {
+      const gap = gapOf(item.date);
+      out.push({ gap, ic: "🧾", tone: "violet", title: item.title, sub: when(gap), act: 'data-hv2-go="#money/bills"' });
+    });
+    if (typeof InvoiceTool !== "undefined") InvoiceTool.dueSoon(3).forEach(inv => {
+      const gap = gapOf(inv.due);
+      out.push({ gap, ic: "📨", tone: gap < 0 ? "red" : "violet", title: L(`${inv.client} ត្រូវបង់ ${plainMoney(toProfileCurrency(inv.amount, inv.currency))}`, `${inv.client} owes ${plainMoney(toProfileCurrency(inv.amount, inv.currency))}`), sub: `${inv.number} · ${when(gap)}`, act: `data-hv4-inv="${escapeAttr(inv.id)}"` });
+    });
+    return out.sort((a, b) => a.gap - b.gap);
+  }
+  function dueSoonCard(d) {
+    const items = dueSoonItems(d.todayIso);
+    if (!items.length) return "";
+    return `<section class="hv2-card hv4-card hv4-due">
+      ${cardHead("cal", "amber", L("ត្រូវធ្វើឆាប់ៗ", "Due soon"), `<a class="hv4-more" href="#notifications">${escapeHtml(items.length > 3 ? L(`ទាំងអស់ ${items.length}`, `All ${items.length}`) : L("កណ្ដឹង", "Bell"))} ›</a>`)}
+      <div class="hv4-due-list">${items.slice(0, 3).map(item => `<div class="hv4-due-row"><span class="hv4-due-ic is-${item.tone}" aria-hidden="true">${item.ic}</span><span class="hv4-due-tx"><b>${escapeHtml(item.title)}</b><small>${escapeHtml(item.sub)}</small></span><button type="button" class="hv4-due-go${item.done ? " is-done" : ""}" ${item.act} aria-label="${escapeAttr(item.done ? L("ធ្វើរួច", "Done") : L("បើក", "Open"))}">${item.done ? "✓" : "›"}</button></div>`).join("")}</div>
+    </section>`;
+  }
+  // ✓ on a vehicle row → the prefilled log form; an invoice row → its preview
+  document.addEventListener("click", event => {
+    const vdone = event.target.closest?.("[data-hv4-vdone]");
+    if (vdone) {
+      const [vehicleId, key] = vdone.dataset.hv4Vdone.split("|");
+      location.hash = "#vehicle";
+      setTimeout(() => { if (typeof VehicleTool !== "undefined") VehicleTool.openLog(vehicleId, key); }, 260);
+      return;
+    }
+    const inv = event.target.closest?.("[data-hv4-inv]");
+    if (inv) { const id = inv.dataset.hv4Inv; location.hash = "#invoice"; setTimeout(() => { if (typeof InvoiceTool !== "undefined") InvoiceTool.preview(id); }, 260); }
+  });
+
   // "Me today": mood (Nomi faces) + a small "write a little" that opens the reflection box
   function meCard(d) {
     const current = appData.mood?.date === d.todayIso ? appData.mood.value : "";
@@ -708,6 +759,7 @@ const HomeV2 = (() => {
         ${alerts(d)}
         ${typeof DoneFeed !== "undefined" ? DoneFeed.tickerHtml() : ""}
         ${typeof AutoBudget !== "undefined" ? AutoBudget.offerHtml() : ""}
+        ${dueSoonCard(d)}
         ${homeMoney(d)}
         ${todayCard(d)}
         ${meCard(d)}

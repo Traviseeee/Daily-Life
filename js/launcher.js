@@ -7,11 +7,11 @@ const LAUNCHER_GROUPS = [
   { id: "more", km: "ផ្សេងៗ", en: "More", routes: ["notifications", "settings", "tips", "help"] }
 ];
 const LAUNCHER_ICON = { tips: "heart", help: "help" };
-const LAUNCHER_ORDER = ["today", "calendar", "money", "family", "goals", "memories", "summary", "calc", "vehicle", "scan", "notifications", "settings", "tips", "help"];
+const LAUNCHER_ORDER = ["today", "calendar", "money", "family", "goals", "memories", "summary", "calc", "vehicle", "invoice", "scan", "notifications", "settings", "tips", "help"];
 const LAUNCHER_COLORS = {
   today: ["#ffd25e", "#ff9f2e"], calendar: ["#ff7a9c", "#e8436b"], money: ["#ffb35c", "#f07a1a"], family: ["#b28cff", "#7c4dff"],
   goals: ["#62c3ff", "#2f7ff0"], memories: ["#4fe0c8", "#13a89e"], daily: ["#9ef06a", "#3fb84a"], summary: ["#7ee6a8", "#1fa767"],
-  scan: ["#5fd3f3", "#1f8fd6"], calc: ["#a594ff", "#6a58e0"], vehicle: ["#ffb36b", "#e8742a"], notifications: ["#ff7a6b", "#e8433a"], settings: ["#a5b1c2", "#5f6b7d"], tips: ["#ff9ad1", "#e0559e"], help: ["#8fb6ff", "#4f6fe0"]
+  scan: ["#5fd3f3", "#1f8fd6"], calc: ["#a594ff", "#6a58e0"], vehicle: ["#ffb36b", "#e8742a"], invoice: ["#7fd6c2", "#1f9d8a"], notifications: ["#ff7a6b", "#e8433a"], settings: ["#a5b1c2", "#5f6b7d"], tips: ["#ff9ad1", "#e0559e"], help: ["#8fb6ff", "#4f6fe0"]
 };
 const FOOTER_MAX = 5;
 
@@ -31,6 +31,7 @@ function launcherBadge(routeId) {
     }
     if (routeId === "calc") { let r = 4100; try { r = Number(localStorage.getItem("mylife:calc-rate")) || 4100; } catch (error) { /* ignore */ } return { text: `$1 = ៛${r.toLocaleString("en-US")}`, tone: "muted" }; }
     if (routeId === "vehicle" && typeof VehicleTool !== "undefined") return VehicleTool.badge();
+    if (routeId === "invoice" && typeof InvoiceTool !== "undefined") return InvoiceTool.badge();
     if (routeId === "today") {
       const n = getUpcomingNotifications(0, Infinity).length;
       return n ? { text: km ? `${n} រឿងថ្ងៃនេះ` : `${n} today`, tone: "lime" } : { text: km ? "ទំនេរ" : "Free day", tone: "muted" };
@@ -452,6 +453,7 @@ function launcherDescription(routeId) {
     scan: "ស្កេនបង្កាន់ដៃ វិក្កយបត្រ និង slip",
     calc: "បញ្ចុះតម្លៃ ចែកលុយ និងប្តូរ $ ↔ ៛",
     vehicle: "រំលឹកប្តូរប្រេង និងកត់ការថែទាំម៉ូតូ / ឡាន",
+    invoice: "ចេញ invoice ជា PDF / រូបភាព · បង់ → ចំណូល",
     settings: "កំណត់តាមចំណូលចិត្តរបស់អ្នក",
     help: "របៀបប្រើ MYLIFE"
   } : {
@@ -469,6 +471,7 @@ function launcherDescription(routeId) {
     scan: "Scan receipts, bills and slips",
     calc: "Discounts, splitting a bill and $ ↔ ៛",
     vehicle: "Oil-change reminders and a service log",
+    invoice: "Invoices as PDF / image · paid → income",
     settings: "Make MYLIFE yours",
     help: "How to use MYLIFE"
   };

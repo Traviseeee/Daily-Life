@@ -154,9 +154,11 @@ const FamilyPosts = (() => {
     const names = String(memory.familyMembers || "").split(",").map(item => item.trim()).filter(Boolean);
     return [...new Set([...byId, ...names])];
   };
+  // one switch for all new memories (Settings → Data & security, 12 Nov audit); default on
+  const shareNew = () => appData.profile?.familyShareMemories !== false;
   let autoBusy = false;
   async function autoShare() {
-    if (autoBusy || state.status !== "ready" || !canPost()) return 0;
+    if (autoBusy || state.status !== "ready" || !canPost() || !shareNew()) return 0;
     const list = (appData.memories || []).filter(memory => shareable(memory) && !postBySource(memory.id) && !isPrivate(memory.id));
     if (!list.length) return 0;
     autoBusy = true;
@@ -220,11 +222,25 @@ const FamilyPosts = (() => {
 
   const canDeleteComment = (comment, post) => comment.user_id === state.me || post?.author_id === state.me || isAdmin();
 
+  const mySharedCount = () => state.posts.filter(post => post.author_id === state.me).length;
+
   function onChange(fn) { listeners.add(fn); return () => listeners.delete(fn); }
 
   return {
-    state, load, onChange, active, canSee, canPost, isAdmin, nameOf, autoShare, isPrivate, setPrivate,
+    state, load, onChange, active, canSee, canPost, isAdmin, nameOf, autoShare, isPrivate, setPrivate, shareNew,
     postBySource, postById, likesOf, iLike, commentsOf, othersAsMemories, shareable,
-    share, unshare, remove, setLike, addComment, deleteComment, canDeleteComment
+    share, unshare, remove, mySharedCount, setLike, addComment, deleteComment, canDeleteComment
   };
 })();
+
+// Settings switch: share new memories with the family (no data is deleted when it is off)
+document.addEventListener("change", event => {
+  const box = event.target.closest?.("[data-memshare-toggle]");
+  if (!box || typeof Store === "undefined") return;
+  Store.updateProfile({ familyShareMemories: box.checked });
+  const kh = typeof languageCode !== "function" || languageCode() === "km";
+  if (typeof Toast !== "undefined") Toast.show(box.checked
+    ? (kh ? "📸 អនុស្សាវរីយ៍ថ្មីនឹងចែកជាមួយគ្រួសារ" : "📸 New memories will be shared with family")
+    : (kh ? "🔒 អនុស្សាវរីយ៍ថ្មីមើលឃើញតែអ្នក" : "🔒 New memories stay just yours"));
+  if (box.checked) FamilyPosts.autoShare();
+});

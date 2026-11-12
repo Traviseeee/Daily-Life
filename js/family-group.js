@@ -228,6 +228,36 @@ const FamilyGroup = (() => {
       if (pick) confirmLink((appData.family || []).find(card => card.id === pick.dataset.flCard), member);
     });
   }
+  // pop-up ask for a same-name match (once per match per session); "No" is remembered
+  const asked = new Set();
+  function askSameName() {
+    if (!isAdmin() || document.querySelector(".fl-sheet-wrap")) return;
+    const skip = appData.profile?.familyLinkSkip || [];
+    for (const member of freeMembers()) {
+      const card = otherCards().find(person => isFree(person) && sameName(person, member));
+      const key = card ? `${card.id}|${member.user_id}` : "";
+      if (!card || skip.includes(key) || asked.has(key)) continue;
+      asked.add(key);
+      const face = card.photo ? `<img src="${escapeAttr(card.photo)}" alt="">` : escapeHtml(initials(card.name));
+      document.body.insertAdjacentHTML("beforeend", `<div class="fl-sheet-wrap" role="dialog" aria-modal="true"><div class="fl-scrim" data-fl-close></div><div class="fl-sheet"><span class="fl-grab"></span>
+        <h3>🔗 ${escapeHtml(L("ភ្ជាប់កាតនេះមែនទេ?", "Link this card?"))}</h3>
+        <p>${escapeHtml(L("ឈ្មោះដូចគ្នា តែខ្ញុំមិនភ្ជាប់ដោយខ្លួនឯងទេ", "Same name — but I won't link it on my own"))}</p>
+        <div class="fl-merge"><div><span class="fg-avatar fl-face">${face}</span><b>${escapeHtml(card.name || "")}</b><small>${escapeHtml(L("កាតគ្រួសារ", "family card"))}</small></div><span class="fl-chain">⇄</span><div>${avatar(member)}<b>${escapeHtml(nameOf(member))}</b><small>${escapeHtml(joinedOn(member) ? L(`គណនីថ្មី · ${joinedOn(member)}`, `new account · ${joinedOn(member)}`) : L("គណនីថ្មី", "new account"))}</small></div></div>
+        <div class="fl-keep">${escapeHtml(L("ពេលភ្ជាប់ គាត់ឃើញព័ត៌មានដែលអ្នកចែកជាមួយកាតនេះ", "Once linked, they see what you share with this card"))}</div>
+        <div class="fl-btns"><button type="button" class="fl-btn" data-fl-ask-no>${escapeHtml(L("មិនមែនទេ", "Not them"))}</button><button type="button" class="fl-btn is-primary" data-fl-ask-yes>✓ ${escapeHtml(L("ភ្ជាប់", "Link"))}</button></div></div></div>`);
+      const wrap = document.querySelector(".fl-sheet-wrap");
+      requestAnimationFrame(() => wrap.classList.add("is-in"));
+      wrap.addEventListener("click", event => {
+        if (event.target.closest("[data-fl-close]")) { closeLinkSheet(); return; }
+        if (event.target.closest("[data-fl-ask-yes]")) { linkCard(card.id, member.user_id); closeLinkSheet(); return; }
+        if (event.target.closest("[data-fl-ask-no]")) {
+          if (typeof Store !== "undefined" && Store.updateProfile) Store.updateProfile({ familyLinkSkip: [...new Set([...(appData.profile?.familyLinkSkip || []), key])].slice(-100) });
+          closeLinkSheet(); paint();
+        }
+      });
+      return;
+    }
+  }
   // ③ someone joined with a plain link and their name matches one of my cards
   function matchPrompt() {
     if (!isAdmin()) return "";
@@ -264,17 +294,9 @@ const FamilyGroup = (() => {
       card.userId = joined.user_id;
       changed = true;
     });
-    // Same name, and no doubt about it (one card ↔ one person): link without asking, so a
-    // card left pointing at an old account heals itself. "Not the same" answers are kept.
-    const skip = appData.profile?.familyLinkSkip || [];
-    const people = freeMembers();
-    people.forEach(member => {
-      const cards = otherCards().filter(person => isFree(person) && sameName(person, member));
-      if (cards.length !== 1 || skip.includes(`${cards[0].id}|${member.user_id}`)) return;
-      if (people.filter(other => sameName(cards[0], other)).length !== 1) return;
-      cards[0].userId = member.user_id;
-      changed = true;
-    });
+    // Same name: never link on its own any more (12 Nov audit) — ask once with a sheet;
+    // the "Someone just joined" card on the family page keeps asking until answered.
+    setTimeout(askSameName, 700);
     if (changed) { try { Store.save(); } catch (error) { /* next save picks it up */ } }
   }
   const profileOf = userId => state.profiles?.[userId] || null;

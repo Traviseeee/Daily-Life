@@ -12,6 +12,7 @@ const utilityRoutes = [
   { id: "scan", labelKey: "smartScan", icon: "scan" },
   { id: "calc", labelKey: "calcTool", icon: "calculator" },
   { id: "vehicle", labelKey: "vehicleTool", icon: "car" },
+  { id: "invoice", labelKey: "invoiceTool", icon: "bill" },
   { id: "notifications", labelKey: "notificationsEnabled", icon: "bell" },
   { id: "settings", label: "Settings", icon: "settings" },
   { id: "help", label: "Help", icon: "help" }

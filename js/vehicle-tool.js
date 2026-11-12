@@ -92,6 +92,110 @@ const VehicleTool = (() => {
     const list2 = (v.log || []).filter(item => item.service === key && Number(item.cost) > 0).map(item => convertCurrency(Number(item.cost), item.currency || "USD", currency)).sort((a, b) => a - b);
     return list2.length ? list2[Math.floor(list2.length / 2)] : null;
   }
+  /* ---------- fuel (12 Nov · draft 2A): v.fuel = [{ id, date, cost, currency, liters, km, expenseId }] ---------- */
+  const FUEL_PRICE = { USD: 1.25, KHR: 5000 }; // per litre, until the first fill-up teaches the real price
+  const fuelList = v => (Array.isArray(v.fuel) ? v.fuel : []).slice().sort((a, b) => String(a.date).localeCompare(String(b.date)) || Number(a.km || 0) - Number(b.km || 0));
+  function fuelPrice(v, currency) {
+    const last = fuelList(v).reverse().find(item => Number(item.liters) > 0 && Number(item.cost) > 0);
+    if (last) return convertCurrency(Number(last.cost) / Number(last.liters), last.currency || "USD", currency);
+    return FUEL_PRICE[currency] || convertCurrency(FUEL_PRICE.USD, "USD", currency);
+  }
+  // km a litre and cost per 100 km, from fill-ups that have a km reading (the last fill is still in the tank)
+  function fuelStats(v) {
+    const withKm = fuelList(v).filter(item => Number(item.km) > 0);
+    const month = today().slice(0, 7);
+    const spent = fuelList(v).filter(item => String(item.date).startsWith(month)).reduce((t, item) => t + toProfileCurrency(Number(item.cost || 0), item.currency || "USD"), 0);
+    if (withKm.length < 2) return { spent, kmL: null, per100: null };
+    const first = withKm[0], last = withKm[withKm.length - 1];
+    const span = Number(last.km) - Number(first.km);
+    const used = withKm.slice(0, -1);
+    const liters = used.reduce((t, item) => t + Number(item.liters || 0), 0);
+    const cost = used.reduce((t, item) => t + toProfileCurrency(Number(item.cost || 0), item.currency || "USD"), 0);
+    if (span <= 0) return { spent, kmL: null, per100: null };
+    return { spent, kmL: liters > 0 ? span / liters : null, per100: cost > 0 ? cost / span * 100 : null };
+  }
+  function fuelBox(v) {
+    const st = fuelStats(v);
+    const fills = fuelList(v).reverse();
+    const monthName = km() ? KM_M[Number(today().slice(5, 7)) - 1] : new Date().toLocaleDateString("en-US", { month: "long" });
+    return `<div class="vt-box vt-fuel">
+      <div class="vt-box-h">⛽ ${L("សាំងខែនេះ", "Fuel this month")}<span>${escapeHtml(monthName)}</span></div>
+      <div class="vt-trio is-inner"><div><small>${L("ចំណាយ", "Spent")}</small><b>${cash(st.spent)}</b></div><div><small>km / ${L("លីត្រ", "litre")}</small><b>${st.kmL ? (Math.round(st.kmL * 10) / 10).toLocaleString("en-US") : "—"}</b></div><div><small>/ 100 km</small><b>${st.per100 ? cash(st.per100) : "—"}</b></div></div>
+      ${fills.length ? `<div class="vt-fuel-last"><span>⛽ ${escapeHtml(cash(fills[0].cost, fills[0].currency || "USD"))}${Number(fills[0].liters) ? ` · ${Math.round(Number(fills[0].liters) * 10) / 10} L` : ""}</span><small>${escapeHtml(dayLabel(fills[0].date))}${fills[0].km ? ` · ${n0(fills[0].km)} km` : ""}</small></div>` : `<p class="vt-fuel-hint">${L("ចុច ⛽ ពេលចាក់សាំង — km/លីត្រ បង្ហាញពីលើកទី 2", "Tap ⛽ when you fill up — km/litre shows from the 2nd time")}</p>`}
+      <button type="button" class="vt-fuel-btn" data-vt-fuel="${escapeAttr(v.id)}">⛽ ${L("ចាក់សាំង", "Fill up")}</button>
+    </div>`;
+  }
+  function fuelForm(v) {
+    const cur = appData.profile.currency || "USD";
+    const est = estimateKm(v) || Number(v.odometer || 0);
+    const quick = cur === "KHR" ? [8000, 12000, 20000, 40000] : [2, 3, 5, 10];
+    let litersTouched = false;
+    const { form, root } = openShell(`<form class="modal glass-card event-modal expense-modal loan-modal vt-modal" id="modalForm" novalidate>
+      ${head("⛽", L(`ចាក់សាំង · ${v.name || ""}`, `Fill up · ${v.name || ""}`))}
+      <div class="ev-row vt-fuel-q">${quick.map(n => `<button type="button" class="ev-chip" data-vt-fq="${n}">${escapeHtml(cash(n, cur))}</button>`).join("")}</div>
+      <div class="xp-amount-card">
+        <button type="button" class="xp-currency" data-xp-currency="${escapeAttr(cur)}">${cur === "KHR" ? "៛" : "$"}</button>
+        <input class="xp-amount" name="cost" type="number" min="0" step="any" inputmode="decimal" placeholder="0" aria-label="${escapeAttr(L("តម្លៃ", "Amount"))}">
+        <span class="xp-currency-name" data-xp-currency-name>${escapeHtml(cur)}</span>
+      </div>
+      <section class="ev-section"><div class="lf-grid">
+        ${box("liters", L("លីត្រ (គណនាឲ្យ)", "Litres (worked out)"), "", 'type="number" step="any" min="0" inputmode="decimal"')}
+        ${box("km", L("km ពេលនេះ", "km now"), "", `type="number" inputmode="numeric" min="0" placeholder="${escapeAttr(String(est || ""))}"`)}
+      </div>
+      <small class="vt-hint vt-ai" data-vt-fprice></small></section>
+      <div class="vt-warn" data-vt-warn hidden></div>
+      <section class="ev-section if-switches"><label class="if-switch"><span><b>${L("កត់ជាចំណាយផង", "Also log as an expense")}</b><small>${L("ប្រភេទ ធ្វើដំណើរ", "Category: Transport")}</small></span><input type="checkbox" name="expense" checked><i aria-hidden="true"></i></label></section>
+      ${foot(L("កត់", "Log"))}
+    </form>`, form => {
+      const cost = Number(form.elements.cost.value || 0);
+      if (!(cost > 0)) { form.elements.cost.focus(); return; }
+      const currency = root.querySelector("[data-xp-currency]").dataset.xpCurrency || cur;
+      const liters = Number(form.elements.liters.value || 0) || Math.round(cost / fuelPrice(v, currency) * 10) / 10;
+      const typed = form.elements.km.value !== "";
+      const atKm = typed ? Number(form.elements.km.value) : est || null;
+      const fresh = list().find(item => item.id === v.id);
+      if (!fresh) return Modal.close();
+      const warn = root.querySelector("[data-vt-warn]");
+      if (typed && atKm < Number(fresh.odometer || 0) && !form.dataset.sure) {
+        form.dataset.sure = "1"; warn.hidden = false;
+        warn.textContent = L(`⚠️ ${n0(atKm)} km តិចជាងលើកមុន (${n0(fresh.odometer)}) — ចុចកត់ម្តងទៀត បើត្រឹមត្រូវ`, `⚠️ ${n0(atKm)} km is less than before (${n0(fresh.odometer)}) — tap Log again if that's right`);
+        return;
+      }
+      const date = today();
+      const entry = { id: `fuel-${Date.now().toString(36)}`, date, cost, currency, liters, km: atKm, kmGuessed: !typed };
+      if (form.elements.expense.checked) {
+        Store.add("expenses", { description: `⛽ ${fresh.name} · ${L("សាំង", "Fuel")}`, amount: cost, currency, category: "Transport", date, notes: `${liters} L` });
+        entry.expenseId = appData.expenses[appData.expenses.length - 1]?.id || "";
+      }
+      const changes = { fuel: [...(Array.isArray(fresh.fuel) ? fresh.fuel : []), entry].slice(-200) };
+      if (typed && atKm > 0) { changes.odometer = Math.max(Number(fresh.odometer || 0), atKm); changes.odoLog = odoEntry(fresh, atKm, date); }
+      Store.edit("vehicles", fresh.id, changes);
+      Toast.show(L(`⛽ បានកត់ ${cash(cost, currency)} · ≈ ${liters} L`, `⛽ Logged ${cash(cost, currency)} · ≈ ${liters} L`), "success");
+      Modal.close();
+    });
+    const curNow = () => root.querySelector("[data-xp-currency]").dataset.xpCurrency || cur;
+    const update = () => {
+      const price = fuelPrice(v, curNow());
+      root.querySelector("[data-vt-fprice]").textContent = `✨ ${L(`តម្លៃ ≈ ${cash(price, curNow())}/លីត្រ (ពីលើកមុន)`, `price ≈ ${cash(price, curNow())}/litre (from last time)`)}`;
+      const cost = Number(form.elements.cost.value || 0);
+      if (!litersTouched) form.elements.liters.value = cost > 0 ? Math.round(cost / price * 10) / 10 : "";
+    };
+    root.querySelectorAll("[data-vt-fq]").forEach(chip => chip.addEventListener("click", () => {
+      form.elements.cost.value = chip.dataset.vtFq;
+      root.querySelectorAll("[data-vt-fq]").forEach(c => c.classList.toggle("active", c === chip));
+      update();
+    }));
+    root.querySelector("[data-xp-currency]").addEventListener("click", event => {
+      const next = event.currentTarget.dataset.xpCurrency === "KHR" ? "USD" : "KHR";
+      event.currentTarget.dataset.xpCurrency = next; event.currentTarget.textContent = next === "KHR" ? "៛" : "$";
+      root.querySelector("[data-xp-currency-name]").textContent = next; update();
+    });
+    form.elements.cost.addEventListener("input", () => { root.querySelectorAll("[data-vt-fq]").forEach(c => c.classList.remove("active")); update(); });
+    form.elements.liters.addEventListener("input", () => { litersTouched = form.elements.liters.value !== ""; });
+    form.elements.km.addEventListener("input", () => { form.dataset.sure = ""; root.querySelector("[data-vt-warn]").hidden = true; });
+    update();
+    setTimeout(() => form.elements.cost.focus(), 60);
+  }
   function inDays(n) { return n <= 0 ? L("ថ្ងៃនេះ", "today") : n === 1 ? L("ស្អែក", "tomorrow") : L(`${n} ថ្ងៃ`, `${n} days`); }
 
   function picked() {
@@ -154,6 +258,7 @@ const VehicleTool = (() => {
           ${pill(st.tone)}
         </button>`).join("")}
       </div>
+      ${fuelBox(v)}
       ${(() => {
         const rate = kmPerDay(v);
         if (!rate) return `<p class="vt-learn">🧠 ${L("កែ km ម្តងម្កាល (ឧ. រៀងរាល់សប្តាហ៍) — app នឹងរៀនថាអ្នកជិះប៉ុន្មាន km/ថ្ងៃ ហើយទាយថ្ងៃប្តូរប្រេងឱ្យ", "Update the km now and then (e.g. weekly) — the app learns your km a day and predicts the oil-change date")}</p>`;
@@ -433,6 +538,7 @@ const VehicleTool = (() => {
       if (b("[data-vt-add]")) { vehicleForm(null); return; }
       if (b("[data-vt-edit]")) { vehicleForm(find(b("[data-vt-edit]").dataset.vtEdit)); return; }
       if (b("[data-vt-odo]")) { const v = find(b("[data-vt-odo]").dataset.vtOdo); if (v) odoForm(v); return; }
+      if (b("[data-vt-fuel]")) { const v = find(b("[data-vt-fuel]").dataset.vtFuel); if (v) fuelForm(v); return; }
       if (b("[data-vt-log]")) { const el = b("[data-vt-log]"); const v = find(el.dataset.vtLog); if (v) logForm(v, el.dataset.vtSvc); return; }
       if (b("[data-vt-del]")) {
         const v = find(b("[data-vt-del]").dataset.vtDel);
