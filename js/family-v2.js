@@ -45,6 +45,13 @@ const FamilyV2 = (() => {
   // Lavender (light, 31 Oct): Nomi in the hero, a big "days together" counter card, small date cards, compact members
   const lav = () => typeof HomeV2 !== "undefined" && !!HomeV2.buddy;
   const nomi = (mood, cls) => `<span class="${cls}" data-nomi data-mood="${mood}" role="button" tabindex="0" aria-label="Nomi">${HomeV2.role ? HomeV2.role("family", mood) : HomeV2.buddy(mood)}</span>`;
+  // a family event called birthday / anniversary looks like the real ones: 🎂 / 💞 in the love tone (12 Nov)
+  function eventLook(event) {
+    const title = String(event?.title || "");
+    if (/ខួបកំណើត|ថ្ងៃកំណើត|birthday|bday|b-day/i.test(title)) return { icon: "🎂", tone: "love" };
+    if (/ខួប|anniversary/i.test(title)) return { icon: "💞", tone: "love" };
+    return { icon: "📅", tone: "blue" };
+  }
   function dateItems() {
     const items = [];
     const seenPairs = new Set();
@@ -67,7 +74,7 @@ const FamilyV2 = (() => {
       }
     });
     [...(appData.calendarEvents || []), ...(typeof FamilyShare !== "undefined" ? FamilyShare.events() : [])].filter(event => event.category === "Family" && event.date >= todayIso()).forEach(event => {
-      items.push({ date: event.date, icon: "📅", kind: "event", tone: "blue", title: event.title, short: event.title, sub: `${dayMonth(event.date)}${event.time ? ` · ${typeof todayClock === "function" ? todayClock(event.time) : event.time}` : ""}`, attrs: event.shared ? `data-shared-event="1"` : `data-edit-event="${escapeAttr(event.id)}"` });
+      items.push({ date: event.date, ...eventLook(event), kind: "event", title: event.title, short: event.title, sub: `${dayMonth(event.date)}${event.time ? ` · ${typeof todayClock === "function" ? todayClock(event.time) : event.time}` : ""}`, attrs: event.shared ? `data-shared-event="1"` : `data-edit-event="${escapeAttr(event.id)}"` });
     });
     return items.filter(item => daysUntil(item.date) >= 0).sort((a, b) => a.date.localeCompare(b.date));
   }
@@ -193,7 +200,7 @@ const FamilyV2 = (() => {
       }
     });
     [...(appData.calendarEvents || []), ...(typeof FamilyShare !== "undefined" ? FamilyShare.events() : [])].filter(event => event.category === "Family" && event.date >= todayIso()).forEach(event => {
-      items.push({ date: event.date, icon: "📅", tone: "blue", title: event.title, sub: `${dayMonth(event.date)}${event.time ? ` · ${typeof todayClock === "function" ? todayClock(event.time) : event.time}` : ""}`, attrs: `data-edit-event="${escapeAttr(event.id)}"` });
+      items.push({ date: event.date, ...eventLook(event), title: event.title, sub: `${dayMonth(event.date)}${event.time ? ` · ${typeof todayClock === "function" ? todayClock(event.time) : event.time}` : ""}`, attrs: `data-edit-event="${escapeAttr(event.id)}"` });
     });
     const list = items.filter(item => daysUntil(item.date) >= 0).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 4);
     const rows = list.map(item => {
