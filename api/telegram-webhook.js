@@ -190,6 +190,52 @@ async function handleTypedAmount(message, text, redis) {
   return sent;
 }
 
+/* ---- ⛽ fuel typed in the chat (12 Nov) ---- */
+const FUEL_RE = /^\s*(?:⛽\s*)?(?:ចាក់\s*)?(?:ប្រេងសាំង|សាំង|fuel|gas|petrol)(?=[\s\d$៛]|$)/i;
+function parseFuel(text, payload) {
+  const line = String(text || "").trim();
+  if (/\n/.test(line) || !FUEL_RE.test(line)) return null;
+  const vehicles = Array.isArray(payload?.vehicles) ? payload.vehicles : [];
+  if (!vehicles.length) return null;
+  let rest = line.replace(FUEL_RE, " ");
+  const out = {};
+  rest = rest.replace(/(\d[\d,]*)\s*(?:km|គម)/i, (m, n) => { out.km = Number(n.replace(/,/g, "")); return " "; });
+  rest = rest.replace(/(\d+(?:\.\d+)?)\s*(?:l|lit(?:re|er)s?|លីត្រ)(?![a-z])/i, (m, n) => { out.liters = Number(n); return " "; });
+  rest = rest.replace(/(?:\$\s*(\d[\d,]*(?:\.\d+)?))|(\d[\d,]*(?:\.\d+)?)\s*(\$|usd|៛|r|riel|khr|រៀល|k)?(?![\d])/i, (m, a, b, unit) => {
+    let value = Number(String(a || b).replace(/,/g, ""));
+    let cur = a ? "USD" : "";
+    const u = String(unit || "").toLowerCase();
+    if (u === "k") { value *= 1000; cur = "KHR"; }
+    else if (/៛|r|riel|khr|រៀល/.test(u)) cur = "KHR";
+    else if (/\$|usd/.test(u)) cur = "USD";
+    if (!cur) cur = value >= 1000 ? "KHR" : "USD";
+    out.cost = value; out.currency = cur;
+    return " ";
+  });
+  if (!(out.cost > 0)) return /^\s*$/.test(rest) ? { needAmount: true } : null;
+  const words = rest.toLowerCase();
+  const named = vehicles.find(v => String(v.name || "").toLowerCase().split(/\s+/).some(word => word.length >= 3 && words.includes(word)));
+  const recent = vehicles.slice().sort((a, b) => String((b.fuel || []).slice(-1)[0]?.date || "").localeCompare(String((a.fuel || []).slice(-1)[0]?.date || "")))[0];
+  out.vehicleId = (named || (vehicles.length === 1 ? vehicles[0] : recent) || vehicles[0]).id;
+  return out;
+}
+async function saveFuel(message, ctx, fuel, currency) {
+  let saved = null;
+  const result = await updatePayload(ctx.userId, payload => { saved = VehicleDue.logFuel(payload, fuel.vehicleId, { ...fuel, today: ctx.today, makeId: recordId, via: "Telegram" }); return saved.result; });
+  if (result !== "updated" || !saved?.entry) return reply(message, "⚠️ មិនអាចកត់សាំងបាន · Couldn't log fuel");
+  const v = saved.vehicle;
+  const e = saved.entry;
+  const stats = VehicleDue.fuelStats(v, ctx.today, currency);
+  const lines = [
+    `⛽ បានកត់ <b>${formatMoney(e.cost, e.currency)}</b> · ${escapeHtml(v.name || "")}`,
+    `≈ ${e.liters} L${e.km ? ` · ${Number(e.km).toLocaleString("en-US")} km${e.kmGuessed ? " (ប៉ាន់)" : ""}` : ""}`,
+    `<i>ខែនេះ ${formatMoney(stats.spent, currency)}${stats.kmL ? ` · ${Math.round(stats.kmL * 10) / 10} km/L` : ""} · ធ្វើដំណើរ</i>`
+  ];
+  const sent = await reply(message, `${lines.join("\n")} 🐾`);
+  await pushAdded(ctx.userId, `⛽ ${formatMoney(e.cost, e.currency)} · ${v.name || ""}`, "សាំង · ពី Telegram", "/#vehicle", "vehicle");
+  return sent;
+}
+
 // "next oil change ≈ 9 Jan or 26,850 km" after a km answer / ✓ Done
 async function vehicleNextLine(userId, vehicleId) {
   const payload = await readPayload(userId);
@@ -219,6 +265,7 @@ const HELP_TEXT = [
   "• <code>កាហ្វេ 2.5$</code> · <code>ចាក់សាំង 20000</code> · <code>Grab 15k</code>",
   "• <code>ខោអាវ 12$ ម្សិលមិញ</code> — ថ្ងៃមុន · yesterday",
   "• ច្រើនបន្ទាត់ = ច្រើនចំណាយ · one per line",
+  "• ⛽ <code>សាំង 3</code> · <code>សាំង 12000៛ 24100km</code> — ចូលម៉ូតូ/ឡាន + km/លីត្រ",
   "• ប្រភេទជ្រើសដោយខ្លួនឯង — មើល /words",
   "",
   "💰 <b>កត់ចំណូល · Log income</b>",
@@ -1041,6 +1088,10 @@ async function handleMessage(message, redis) {
     return aiReply(message, payload, today, (s, history) => AiAssist.ask(payload, text, { today, settings: s, history }));
   }
   const currency = payload.profile?.currency || "USD";
+  // ⛽ "សាំង 3" / "ចាក់សាំង 12000៛ 24100km" → the vehicle's fuel log (+ one Transport expense), 12 Nov
+  const fuel = parseFuel(text, payload);
+  if (fuel?.needAmount) return reply(message, "⛽ វាយតម្លៃផង ឧ. <code>សាំង 3</code> ឬ <code>សាំង 12000៛ 24100km</code>\n<i>Add the amount, e.g. fuel 3</i>");
+  if (fuel) return saveFuel(message, { userId, today, redis }, fuel, currency);
   // forwarded ABA Pay request ("Hi, NAME has requested you to pay $1.91 …"): one expense, name + amount only
   const payRequest = parsePayRequest(text);
   if (payRequest) return saveMoneyEntries(message, { userId, payload, today, redis }, [{ ...payRequest, paymentType: "bank", method: "ABA Pay" }], []);

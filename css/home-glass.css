@@ -1320,3 +1320,22 @@ html:root body:not(#gl) #modalRoot .iv-view .vt-more .is-danger { color: #d9485f
 }
 html:root body .iv-paper .iv-logo { color: var(--iv-c) !important; }
 html:root body .iv-paper, html:root body .iv-paper .iv-meta b, html:root body .iv-paper td { color: #1c1838; }
+/* vehicle page · draft A (12 Nov): actions in the purple card, unlogged chips, "this month" box */
+html:root body:not(#gl) .vt-car.vt-car2 { display: grid; gap: 14px; }
+html:root body:not(#gl) .vt-car-top { display: flex; align-items: center; gap: 14px; min-width: 0; }
+html:root body:not(#gl) .vt-plate { justify-self: start; padding: 0; border: 0; background: none; color: #fff; font: inherit; font-size: .76rem; opacity: .85; cursor: pointer; text-decoration: underline dotted; text-underline-offset: 3px; }
+html:root body:not(#gl) .vt-acts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+html:root body:not(#gl) .vt-acts button { display: grid; justify-items: center; gap: 3px; min-height: 64px; padding: 8px 4px; border: 0; border-radius: 16px; background: rgba(255,255,255,.18); color: #fff; font: inherit; font-size: .78rem; font-weight: 600; cursor: pointer; }
+html:root body:not(#gl) .vt-acts button i { font-style: normal; font-size: 20px; line-height: 1.1; }
+html:root body:not(#gl) .vt-acts button.is-hot { background: #fff; color: #5a48d6; box-shadow: 0 6px 16px rgba(40,20,120,.22); }
+html:root body:not(#gl) .vt-acts button:active { transform: scale(.97); }
+html:root body:not(#gl) .vt-svc-e.is-late { background: #ffe8ec; }
+html:root body:not(#gl) .vt-svc-e.is-soon { background: #fff3e4; }
+html:root:not([data-theme="light"]) body:not(#gl) .vt-svc-e.is-late { background: #4a2532; }
+html:root:not([data-theme="light"]) body:not(#gl) .vt-svc-e.is-soon { background: #3e2d1c; }
+html:root body:not(#gl) .vt-unlogged { display: flex; align-items: center; gap: 10px; padding: 11px 14px; border-top: 1px dashed var(--tc-line); color: var(--tc-pri); font-size: .8rem; font-weight: 600; }
+html:root body:not(#gl) .vt-unlogged.is-only { border-top: 0; }
+html:root body:not(#gl) .vt-unlogged > span:first-child { flex: 1; min-width: 0; }
+html:root body:not(#gl) .vt-unlogged-chips { display: flex; gap: 6px; }
+html:root body:not(#gl) .vt-unlogged-chips button { display: grid; place-items: center; width: 38px; height: 38px; border: 1px solid var(--tc-line); border-radius: 12px; background: var(--tc-soft); font-size: 17px; cursor: pointer; }
+html:root body:not(#gl) .vt-month .vt-trio b.is-soft { font-size: .76rem; font-weight: 500; color: var(--tc-mute); }

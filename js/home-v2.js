@@ -434,8 +434,10 @@ const HomeV2 = (() => {
 
   function quick() {
     const item = (attrs, icon, tone, label) => `<button type="button" class="hv2-q" ${attrs}><i class="hv2-q-${tone}">${icon}</i><span>${escapeHtml(label)}</span></button>`;
-    return `<div class="hv2-quick">
+    const fuel = Array.isArray(appData.vehicles) && appData.vehicles.length && typeof VehicleTool !== "undefined";
+    return `<div class="hv2-quick${fuel ? " is-5" : ""}">
       ${item('data-action="add-expense"', IC.plus(), "a", L("កត់ចំណាយ", "Expense"))}
+      ${fuel ? item("data-hv2-fuel", '<b class="hv2-q-emoji" aria-hidden="true">⛽</b>', "e", L("ចាក់សាំង", "Fuel")) : ""}
       ${item('data-hv2-go="#scan"', IC.scan(), "b", L("ស្កេន", "Scan"))}
       ${item('data-action="add-event"', IC.cal(), "c", L("ព្រឹត្តិការណ៍", "Event"))}
       ${item('data-hv2-quick="add-memory"', IC.photo(), "d", L("រូបថត", "Photo"))}
@@ -723,6 +725,11 @@ const HomeV2 = (() => {
       const [vehicleId, key] = vdone.dataset.hv4Vdone.split("|");
       location.hash = "#vehicle";
       setTimeout(() => { if (typeof VehicleTool !== "undefined") VehicleTool.openLog(vehicleId, key); }, 260);
+      return;
+    }
+    if (event.target.closest?.("[data-hv2-fuel]")) {
+      location.hash = "#vehicle";
+      setTimeout(() => { if (typeof VehicleTool !== "undefined") VehicleTool.openFuel(); }, 260);
       return;
     }
     const inv = event.target.closest?.("[data-hv4-inv]");

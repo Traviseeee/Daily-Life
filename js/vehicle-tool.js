@@ -102,7 +102,7 @@ const VehicleTool = (() => {
   }
   // km a litre and cost per 100 km, from fill-ups that have a km reading (the last fill is still in the tank)
   function fuelStats(v) {
-    const withKm = fuelList(v).filter(item => Number(item.km) > 0);
+    const withKm = fuelList(v).filter(item => Number(item.km) > 0 && !item.kmGuessed); // a guessed km would skew km/L
     const month = today().slice(0, 7);
     const spent = fuelList(v).filter(item => String(item.date).startsWith(month)).reduce((t, item) => t + toProfileCurrency(Number(item.cost || 0), item.currency || "USD"), 0);
     if (withKm.length < 2) return { spent, kmL: null, per100: null };
@@ -113,17 +113,6 @@ const VehicleTool = (() => {
     const cost = used.reduce((t, item) => t + toProfileCurrency(Number(item.cost || 0), item.currency || "USD"), 0);
     if (span <= 0) return { spent, kmL: null, per100: null };
     return { spent, kmL: liters > 0 ? span / liters : null, per100: cost > 0 ? cost / span * 100 : null };
-  }
-  function fuelBox(v) {
-    const st = fuelStats(v);
-    const fills = fuelList(v).reverse();
-    const monthName = km() ? KM_M[Number(today().slice(5, 7)) - 1] : new Date().toLocaleDateString("en-US", { month: "long" });
-    return `<div class="vt-box vt-fuel">
-      <div class="vt-box-h">⛽ ${L("សាំងខែនេះ", "Fuel this month")}<span>${escapeHtml(monthName)}</span></div>
-      <div class="vt-trio is-inner"><div><small>${L("ចំណាយ", "Spent")}</small><b>${cash(st.spent)}</b></div><div><small>km / ${L("លីត្រ", "litre")}</small><b>${st.kmL ? (Math.round(st.kmL * 10) / 10).toLocaleString("en-US") : "—"}</b></div><div><small>/ 100 km</small><b>${st.per100 ? cash(st.per100) : "—"}</b></div></div>
-      ${fills.length ? `<div class="vt-fuel-last"><span>⛽ ${escapeHtml(cash(fills[0].cost, fills[0].currency || "USD"))}${Number(fills[0].liters) ? ` · ${Math.round(Number(fills[0].liters) * 10) / 10} L` : ""}</span><small>${escapeHtml(dayLabel(fills[0].date))}${fills[0].km ? ` · ${n0(fills[0].km)} km` : ""}</small></div>` : `<p class="vt-fuel-hint">${L("ចុច ⛽ ពេលចាក់សាំង — km/លីត្រ បង្ហាញពីលើកទី 2", "Tap ⛽ when you fill up — km/litre shows from the 2nd time")}</p>`}
-      <button type="button" class="vt-fuel-btn" data-vt-fuel="${escapeAttr(v.id)}">⛽ ${L("ចាក់សាំង", "Fill up")}</button>
-    </div>`;
   }
   function fuelForm(v) {
     const cur = appData.profile.currency || "USD";
@@ -246,40 +235,49 @@ const VehicleTool = (() => {
     const logs = (v.log || []).slice().sort((a, b) => String(b.date).localeCompare(String(a.date)));
     const yearLogs = logs.filter(item => String(item.date).startsWith(year));
     const spent = yearLogs.reduce((t, item) => t + toProfileCurrency(Number(item.cost || 0), item.currency || "USD"), 0);
+    const logged = svcs.filter(x => x.st.p != null);
+    const unlogged = svcs.filter(x => x.st.p == null);
+    const late = logged.filter(x => x.st.tone === "late").length;
+    const soon = logged.filter(x => x.st.tone === "soon").length;
+    const month = today().slice(0, 7);
+    const fuel = fuelStats(v);
+    const svcMonth = logs.filter(item => String(item.date).startsWith(month)).reduce((t, item) => t + toProfileCurrency(Number(item.cost || 0), item.currency || "USD"), 0);
+    const fills = fuelList(v).reverse();
+    const monthName = km() ? KM_M[Number(month.slice(5, 7)) - 1] : new Date().toLocaleDateString("en-US", { month: "long" });
+    const rate = kmPerDay(v);
+    // draft A (12 Nov): the three actions live in the purple card; unlogged services are one chip row;
+    // fuel + service cost share one "this month" box
     return `
-      <div class="vt-car"><span class="vt-em" aria-hidden="true">${v.kind === "car" ? "🚗" : "🏍️"}</span><span class="vt-car-tx"><b>${escapeHtml(v.name || L("យានយន្ត", "Vehicle"))}</b><small>${escapeHtml([v.plate, v.year].filter(Boolean).join(" · ") || L("មិនទាន់មានស្លាកលេខ", "No plate yet"))}</small></span>
-        <button type="button" class="vt-odo" data-vt-odo="${escapeAttr(v.id)}"><b>${n0(v.odometer)}</b><small>${kmPerDay(v) && estimateKm(v) > Number(v.odometer || 0) + 20 ? L(`≈ ${n0(estimateKm(v))} ឥឡូវ · កែ`, `≈ ${n0(estimateKm(v))} now · edit`) : `km · ${L("កែ", "edit")}`}</small></button></div>
-      ${worst ? `<div class="vt-alert"><span class="vt-alert-ic" aria-hidden="true">${EMOJI[worst.svc.key] || "🔧"}</span><span class="vt-alert-tx"><b>${escapeHtml(L(`ដល់ពេល${names[worst.svc.key] || worst.svc.label}ហើយ`, `${names[worst.svc.key] || worst.svc.label} is due`))}</b><small>${escapeHtml(worst.st.text)}${worst.svc.lastDate ? ` · ${L("ចុងក្រោយ", "last")} ${dayLabel(worst.svc.lastDate)}` : ""}</small></span><button type="button" class="vt-done" data-vt-log="${escapeAttr(v.id)}" data-vt-svc="${escapeAttr(worst.svc.key)}">✓ ${L("ធ្វើរួច", "Done")}</button></div>` : ""}
+      <div class="vt-car vt-car2">
+        <div class="vt-car-top"><span class="vt-em" aria-hidden="true">${v.kind === "car" ? "🚗" : "🏍️"}</span><span class="vt-car-tx"><b>${escapeHtml(v.name || L("យានយន្ត", "Vehicle"))}</b>${v.plate || v.year ? `<small>${escapeHtml([v.plate, v.year].filter(Boolean).join(" · "))}</small>` : `<button type="button" class="vt-plate" data-vt-edit="${escapeAttr(v.id)}">＋ ${L("ដាក់ស្លាកលេខ", "Add plate")}</button>`}</span>
+        <button type="button" class="vt-odo" data-vt-odo="${escapeAttr(v.id)}"><b>${n0(v.odometer)}</b><small>${rate && estimateKm(v) > Number(v.odometer || 0) + 20 ? L(`≈ ${n0(estimateKm(v))} ឥឡូវ`, `≈ ${n0(estimateKm(v))} now`) : `km · ${L("កែ", "edit")}`}</small></button></div>
+        <div class="vt-acts">
+          <button type="button" class="is-hot" data-vt-fuel="${escapeAttr(v.id)}"><i aria-hidden="true">⛽</i>${L("ចាក់សាំង", "Fill up")}</button>
+          <button type="button" data-vt-log="${escapeAttr(v.id)}"><i aria-hidden="true">🔧</i>${L("កត់ថែទាំ", "Log service")}</button>
+          <button type="button" data-vt-odo="${escapeAttr(v.id)}"><i aria-hidden="true">🧭</i>${L("កែ km", "Update km")}</button>
+        </div>
+      </div>
+      ${worst ? `<div class="vt-alert"><span class="vt-alert-ic" aria-hidden="true">${EMOJI[worst.svc.key] || "🔧"}</span><span class="vt-alert-tx"><b>${escapeHtml(L(`ដល់ពេល${names[worst.svc.key] || worst.svc.label}ហើយ`, `${names[worst.svc.key] || worst.svc.label} is due`))}</b><small>${escapeHtml(worst.st.text)}${worst.svc.lastDate ? ` · ${L("លើកមុន", "last")} ${dayLabel(worst.svc.lastDate)}` : ""}</small></span><button type="button" class="vt-done" data-vt-log="${escapeAttr(v.id)}" data-vt-svc="${escapeAttr(worst.svc.key)}">✓ ${L("ធ្វើរួច", "Done")}</button></div>` : ""}
       <div class="vt-box">
-        <div class="vt-box-h">🔧 ${L("ការថែទាំ", "Service")}<span>${svcs.length} ${L("មុខ", "items")}</span></div>
-        ${svcs.map(({ svc, st }) => `<button type="button" class="vt-svc" data-vt-log="${escapeAttr(v.id)}" data-vt-svc="${escapeAttr(svc.key)}">
-          <span class="vt-svc-e" aria-hidden="true">${EMOJI[svc.key] || "🔧"}</span>
-          <span class="vt-svc-n"><b>${escapeHtml(names[svc.key] || svc.label || "")}</b><span class="vt-bar"><i class="is-${st.tone}" style="width:${st.p == null ? 0 : Math.min(100, Math.round(st.p * 100))}%"></i></span><small>${escapeHtml(st.text)}</small></span>
+        <div class="vt-box-h">🔧 ${L("ការថែទាំ", "Service")}<span>${late ? L(`${late} ហួស`, `${late} due`) : soon ? L(`${soon} ជិតដល់`, `${soon} soon`) : logged.length ? L("ល្អទាំងអស់ ✓", "All good ✓") : ""}</span></div>
+        ${logged.map(({ svc, st }) => `<button type="button" class="vt-svc" data-vt-log="${escapeAttr(v.id)}" data-vt-svc="${escapeAttr(svc.key)}">
+          <span class="vt-svc-e is-${st.tone}" aria-hidden="true">${EMOJI[svc.key] || "🔧"}</span>
+          <span class="vt-svc-n"><b>${escapeHtml(names[svc.key] || svc.label || "")}</b><span class="vt-bar"><i class="is-${st.tone}" style="width:${Math.min(100, Math.round(st.p * 100))}%"></i></span><small>${escapeHtml(st.text)}</small></span>
           ${pill(st.tone)}
         </button>`).join("")}
+        ${unlogged.length ? `<div class="vt-unlogged${logged.length ? "" : " is-only"}"><span>＋ ${L("កំណត់ពេលដែលធ្វើចុងក្រោយ", "Set when it was last done")}</span><span class="vt-unlogged-chips">${unlogged.map(({ svc }) => `<button type="button" data-vt-log="${escapeAttr(v.id)}" data-vt-svc="${escapeAttr(svc.key)}" title="${escapeAttr(names[svc.key] || "")}" aria-label="${escapeAttr(names[svc.key] || "")}">${EMOJI[svc.key] || "🔧"}</button>`).join("")}</span></div>` : ""}
       </div>
-      ${fuelBox(v)}
-      ${(() => {
-        const rate = kmPerDay(v);
-        if (!rate) return `<p class="vt-learn">🧠 ${L("កែ km ម្តងម្កាល (ឧ. រៀងរាល់សប្តាហ៍) — app នឹងរៀនថាអ្នកជិះប៉ុន្មាន km/ថ្ងៃ ហើយទាយថ្ងៃប្តូរប្រេងឱ្យ", "Update the km now and then (e.g. weekly) — the app learns your km a day and predicts the oil-change date")}</p>`;
-        const pts = points(v);
-        const span = pts.length > 1 ? pts[pts.length - 1].km - pts[0].km : 0;
-        const allCost = (v.log || []).reduce((t, item) => t + toProfileCurrency(Number(item.cost || 0), item.currency || "USD"), 0);
-        const dayOfYear = daysBetween(`${year}-01-01`, today()) + 1;
-        const projected = dayOfYear > 30 && yearLogs.length >= 2 ? spent / dayOfYear * 365 : null;
-        return `<div class="vt-box"><div class="vt-box-h">🧠 ${L("ការទាយ", "Predictions")}<span>${L(`ពី ${pts.length} ដង km`, `from ${pts.length} readings`)}</span></div>
-          <div class="vt-trio is-inner"><div><small>${L("ជិះជាមធ្យម", "Average")}</small><b>${n0(Math.round(rate))} km/${L("ថ្ងៃ", "day")}</b></div><div><small>${L("ចំណាយ/km", "Cost / km")}</small><b>${span > 0 && allCost > 0 ? cash(allCost / span) : "—"}</b></div><div><small>${L("ទាយឆ្នាំនេះ", "This year ≈")}</small><b>${projected ? `~${cash(projected)}` : "—"}</b></div></div></div>`;
-      })()}
-      <div class="vt-box vt-trio">
-        <div><small>${L("ចំណាយឆ្នាំនេះ", "Spent this year")}</small><b>${cash(spent)}</b></div>
-        <div><small>${L("ដងថែទាំ", "Services")}</small><b>${yearLogs.length}</b></div>
-        <div><small>${L("ចុងក្រោយ", "Last")}</small><b>${logs[0] ? escapeHtml(dayLabel(logs[0].date)) : "—"}</b></div>
+      <div class="vt-box vt-month">
+        <div class="vt-box-h">📅 ${L("ខែនេះ", "This month")}<span>${escapeHtml(monthName)}</span></div>
+        <div class="vt-trio is-inner"><div><small>⛽ ${L("សាំង", "Fuel")}</small><b>${cash(fuel.spent)}</b></div><div><small>🔧 ${L("ថែទាំ", "Service")}</small><b>${cash(svcMonth)}</b></div><div><small>km / ${L("លីត្រ", "litre")}</small>${fuel.kmL ? `<b>${(Math.round(fuel.kmL * 10) / 10).toLocaleString("en-US")}</b>` : `<b class="is-soft">${L("ចាក់ ២ ដង", "after 2 fills")}</b>`}</div></div>
+        ${fills.length ? `<div class="vt-fuel-last"><span>⛽ ${escapeHtml(cash(fills[0].cost, fills[0].currency || "USD"))}${Number(fills[0].liters) ? ` · ${Math.round(Number(fills[0].liters) * 10) / 10} L` : ""}${fuel.per100 ? ` · ${escapeHtml(cash(fuel.per100))}/100km` : ""}</span><small>${escapeHtml(dayLabel(fills[0].date))}${fills[0].km ? ` · ${n0(fills[0].km)} km` : ""}</small></div>` : ""}
+        ${rate ? `<div class="vt-fuel-last"><span>🧠 ${L(`ជិះ ${n0(Math.round(rate))} km/ថ្ងៃ`, `${n0(Math.round(rate))} km a day`)}</span><small>${L(`ឆ្នាំនេះ ${cash(spent)} · ${yearLogs.length} ដង`, `this year ${cash(spent)} · ${yearLogs.length} services`)}</small></div>`
+          : `<p class="vt-fuel-hint">🧠 ${L("កែ km ម្តងម្កាល ឬដាក់ km ពេលចាក់សាំង — app នឹងទាយថ្ងៃប្តូរប្រេងឲ្យ", "Update the km now and then, or add it when you fill up — the app predicts the oil-change day")}</p>`}
       </div>
       ${logs.length ? `<div class="vt-box">
         <div class="vt-box-h">📒 ${L("ប្រវត្តិ", "History")}<span>${logs.length}</span></div>
         ${logs.slice(0, 5).map(item => { const [, m, d] = String(item.date).split("-").map(Number); return `<div class="vt-tl"><span class="vt-cal"><small>${escapeHtml(km() ? KM_M[m - 1] : new Date(2000, m - 1, 1).toLocaleDateString("en-US", { month: "short" }))}</small><b>${d}</b></span><span class="vt-tl-n"><b>${EMOJI[item.service] || "🔧"} ${escapeHtml(item.title || names[item.service] || "")}</b><small>${[item.km ? `${n0(item.km)} km` : "", item.shop || ""].filter(Boolean).map(escapeHtml).join(" · ")}</small></span>${Number(item.cost) ? `<em>-${cash(item.cost, item.currency || "USD")}</em>` : ""}</div>`; }).join("")}
       </div>` : ""}
-      <button type="button" class="vt-main" data-vt-log="${escapeAttr(v.id)}">＋ ${L("កត់ការថែទាំ", "Log a service")}</button>
       <div class="vt-more"><button type="button" data-vt-edit="${escapeAttr(v.id)}">✏️ ${L("កែយានយន្ត", "Edit vehicle")}</button><button type="button" class="is-danger" data-vt-del="${escapeAttr(v.id)}">🗑 ${L("ដកចេញ", "Remove")}</button></div>`;
   }
 
@@ -556,7 +554,9 @@ const VehicleTool = (() => {
     return { text: `${worst.p >= 1 ? "⚠️" : "⏰"} ${names[worst.key]}`, tone: worst.p >= 1 ? "red" : "amber" };
   }
 
+  // ⛽ from the Home quick row: the vehicle on screen (or the only one)
+  function openFuel(vehicleId) { const v = (vehicleId && list().find(item => item.id === vehicleId)) || picked(); if (v) fuelForm(v); }
   function openLog(vehicleId, key) { const v = list().find(item => item.id === vehicleId); if (v) logForm(v, key); }
 
-  return { render, bind, badge, status, openLog };
+  return { render, bind, badge, status, openLog, openFuel };
 })();

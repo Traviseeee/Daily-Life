@@ -135,6 +135,48 @@
     return "updated";
   }
 
+  /* ⛽ fuel (12 Nov): the same record the app's fill-up form writes (js/vehicle-tool.js) */
+  const RATE = 4100;
+  const conv = (value, from, to) => (from === to ? value : from === "KHR" ? value / RATE : value * RATE);
+  const FUEL_PRICE = { USD: 1.25, KHR: 5000 };
+  const fuelList = v => (Array.isArray(v.fuel) ? v.fuel : []).slice().sort((a, b) => String(a.date).localeCompare(String(b.date)) || Number(a.km || 0) - Number(b.km || 0));
+  function fuelPrice(v, currency) {
+    const lastFill = fuelList(v).reverse().find(item => Number(item.liters) > 0 && Number(item.cost) > 0);
+    return lastFill ? conv(Number(lastFill.cost) / Number(lastFill.liters), lastFill.currency || "USD", currency) : FUEL_PRICE[currency] || FUEL_PRICE.USD;
+  }
+  // this month's spend (in `currency`) and km a litre
+  function fuelStats(v, today, currency = "USD") {
+    const list = fuelList(v);
+    const spent = list.filter(item => String(item.date).startsWith(String(today).slice(0, 7))).reduce((t, item) => t + conv(Number(item.cost || 0), item.currency || "USD", currency), 0);
+    const withKm = list.filter(item => Number(item.km) > 0 && !item.kmGuessed); // a guessed km would skew km/L
+    if (withKm.length < 2) return { spent, kmL: null };
+    const span = Number(withKm[withKm.length - 1].km) - Number(withKm[0].km);
+    const liters = withKm.slice(0, -1).reduce((t, item) => t + Number(item.liters || 0), 0);
+    return { spent, kmL: span > 0 && liters > 0 ? span / liters : null };
+  }
+  function logFuel(payload, vehicleId, o = {}) {
+    const v = (payload.vehicles || []).find(item => item.id === vehicleId);
+    if (!v) return { result: "missing" };
+    const cost = Number(o.cost || 0);
+    if (!(cost > 0)) return { result: "missing" };
+    const currency = o.currency || (payload.profile || {}).currency || "USD";
+    const liters = Number(o.liters || 0) || Math.round(cost / fuelPrice(v, currency) * 10) / 10;
+    const typed = o.km != null && Number(o.km) > 0;
+    const km = typed ? Number(o.km) : estimateKm(v, o.today) || null;
+    const now = new Date().toISOString();
+    const entry = { id: o.makeId ? o.makeId("fuel") : `fuel-${Date.now().toString(36)}`, date: o.today, cost, currency, liters, km, kmGuessed: !typed, via: o.via || "Telegram" };
+    if (o.expense !== false) {
+      payload.expenses = Array.isArray(payload.expenses) ? payload.expenses : [];
+      const expense = { id: o.makeId ? o.makeId("expenses") : `exp-${Date.now().toString(36)}`, description: `⛽ ${v.name} · សាំង`, amount: cost, currency, category: "Transport", date: o.today, notes: `${liters} L`, source: "telegram", createdAt: now, updatedAt: now };
+      payload.expenses.push(expense);
+      entry.expenseId = expense.id;
+    }
+    v.fuel = [...(Array.isArray(v.fuel) ? v.fuel : []), entry].slice(-200);
+    if (typed) { v.odometer = Math.max(Number(v.odometer || 0), km); v.odoLog = odoEntry(v, km, o.today); }
+    v.updatedAt = now;
+    return { result: "updated", vehicle: v, entry };
+  }
+
   const KM_M = ["មករា", "កុម្ភៈ", "មីនា", "មេសា", "ឧសភា", "មិថុនា", "កក្កដា", "សីហា", "កញ្ញា", "តុលា", "វិច្ឆិកា", "ធ្នូ"];
   // "2027-01-12" → "12 មករា 2027" (year only when not this year)
   function kmDate(iso, today) {
@@ -143,7 +185,7 @@
     return `${d} ${KM_M[m - 1]}${today && String(today).slice(0, 4) === String(y) ? "" : ` ${y}`}`;
   }
 
-  const api = { kmDate, NAMES, EMOJI, name, points, kmPerDay, estimateKm, status, alerts, last, logService, setOdometer, addDays, daysBetween };
+  const api = { fuelPrice, fuelStats, logFuel, kmDate, NAMES, EMOJI, name, points, kmPerDay, estimateKm, status, alerts, last, logService, setOdometer, addDays, daysBetween };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.VehicleDue = api;
 })(typeof window !== "undefined" ? window : globalThis);

@@ -214,3 +214,11 @@ html:root:not([data-theme="light"]) .hv4-due-ic.is-red { background: #4a2532; }
 .hv4-due-tx small { font-size: .72rem; color: var(--h4-sub); }
 .hv4-due-go { display: grid; place-items: center; width: 40px; height: 40px; flex: none; border: 0; border-radius: 12px; background: var(--h4-chip); color: var(--h4-a); font: inherit; font-size: 1.1rem; font-weight: 600; cursor: pointer; }
 .hv4-due-go.is-done { background: linear-gradient(140deg, #8b78f2, #5a48d6); color: #fff; box-shadow: 0 4px 12px rgba(106, 88, 224, .28); }
+/* ⛽ fuel in the quick row (12 Nov): 5 across when a vehicle exists */
+html:root body .hv2 .hv4 .hv2-quick.is-5 { grid-template-columns: repeat(5, minmax(0, 1fr)) !important; gap: 2px !important; }
+html:root body .hv2 .hv4 .hv2-quick.is-5 .hv2-q i { width: 48px !important; height: 48px !important; border-radius: 16px !important; }
+html:root body .hv2 .hv4 .hv2-quick.is-5 .hv2-q span { font-size: .72rem; white-space: nowrap; }
+html:root .hv2 .hv4 .hv2-q i.hv2-q-e { background: #fff3e3 !important; }
+html:root:not([data-theme="light"]) .hv2 .hv4 .hv2-q i.hv2-q-e { background: #3e2d1c !important; }
+.hv2-q-emoji { font-size: 21px; font-weight: 400; line-height: 1; }
+html:root[data-theme="light"] .hv2:not(:has(.hv4)) .hv2-quick.is-5 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
