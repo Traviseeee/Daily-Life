@@ -79,12 +79,13 @@ const MoneyV2 = (() => {
       }
     }
     // current month: same ticket card as Home (31 Oct); other periods keep the summary hero below
-    if (range.kind === "month" && moneyPeriodRange({ kind: "month", anchor: range.anchor }).isCurrent && typeof WalletCard !== "undefined") {
+    const lavCard = typeof HomeV2 !== "undefined" && HomeV2.softArticle && HomeV2.lav && HomeV2.lav();
+    if (range.kind === "month" && typeof WalletCard !== "undefined" && (lavCard || moneyPeriodRange({ kind: "month", anchor: range.anchor }).isCurrent)) {
       const chip = `<button type="button" class="fv2-period-chip wc-tk-period" data-fv2-period aria-expanded="${periodOpen}">${escapeHtml(range.label)} ▾</button>`;
       // light phone (31 Oct): the same white card as Home, period chip on top
       if (typeof HomeV2 !== "undefined" && HomeV2.softArticle && HomeV2.lav && HomeV2.lav()) {
         const monthControl = `<button type="button" class="hv2-soft-month fv2-period-chip wc-tk-period" data-fv2-period aria-expanded="${periodOpen}"><span aria-hidden="true">${Icons.calendar()}</span>${escapeHtml(range.label)} ▾</button>`;
-        return `<section class="hv2-money wc-wrap fv2-soft">${HomeV2.softArticle(today, { ...m, left, income, expenses: spent }, "", monthControl)}</section>`;
+        return `<section class="hv2-money wc-wrap fv2-soft">${HomeV2.softArticle(today, { ...m, left, income, expenses: spent }, "", monthControl, { month: range.month })}</section>`;
       }
       return WalletCard.render({ ...m, left, income, expenses: spent }, today)
         .replace(/<div class="wc-mini">[\s\S]*?<\/div>\s*<\/section>/, "</section>")

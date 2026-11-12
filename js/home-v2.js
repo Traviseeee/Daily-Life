@@ -307,20 +307,27 @@ const HomeV2 = (() => {
   function softArticle(todayIso, m, top = "", periodControl = "", opts = {}) {
     const conf = appData.profile?.walletCard || {};
     const hide = conf.hide ? " is-hidden" : "";
-    const now = new Date();
+    // any month, same card (12 Nov): opts.month = "YYYY-MM"; this month shows "today", past months a full
+    // bar, future months an empty one
+    const nowYm = String(todayIso).slice(0, 7);
+    const ym = /^\d{4}-\d{2}$/.test(opts.month || "") ? opts.month : nowYm;
+    const isNow = ym === nowYm;
+    const isPast = ym < nowYm;
+    const now = isNow ? new Date() : new Date(Number(ym.slice(0, 4)), Number(ym.slice(5, 7)) - 1, 1);
     const dim = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-    const day = now.getDate();
-    const daysLeft = Math.max(1, dim - day + 1);
+    const day = isNow ? now.getDate() : isPast ? dim + 1 : 0;
+    const daysLeft = isNow ? Math.max(1, dim - day + 1) : isPast ? 0 : dim;
     const awaitingIncome = !(m.income > 0);
     const available = awaitingIncome ? 0 : m.left;
     const monthName = km() ? KM_MONTHS[now.getMonth()] : now.toLocaleDateString("en-US", { month: "long" });
     const spentToday = (appData.expenses || []).filter(item => item.date === todayIso).reduce((t, item) => t + toProfileCurrency(item.amount, item.currency), 0);
-    const perDay = Math.max(0, available) / daysLeft;
+    const perDay = isPast ? m.expenses / dim : Math.max(0, available) / daysLeft;
     const pct = m.income > 0 ? Math.round((m.expenses / m.income) * 100) : 0;
     const marks = [1, 8, 15, 22, dim];
     const at = n => `${((n - 1) / Math.max(1, dim - 1)) * 100}%`;
-    const track = `<div class="hv2-mt"><div class="hv2-mt-lab">${marks.filter(n => Math.abs(n - day) > 3).map(n => `<span style="left:${at(n)}">${n}</span>`).join("")}<span class="is-now" style="left:${at(day)}">${escapeHtml(L("ថ្ងៃនេះ", "Today"))}</span></div>
-      <div class="hv2-mt-bar"><i style="width:${at(day)}"></i>${marks.filter(n => n < day && Math.abs(n - day) > 3).map(n => `<b style="left:${at(n)}">✓</b>`).join("")}<b class="is-now" style="left:${at(day)}">✓</b></div></div>`;
+    const nowMark = isNow ? `<span class="is-now" style="left:${at(day)}">${escapeHtml(L("ថ្ងៃនេះ", "Today"))}</span>` : "";
+    const track = `<div class="hv2-mt"><div class="hv2-mt-lab">${marks.filter(n => !isNow || Math.abs(n - day) > 3).map(n => `<span style="left:${at(n)}">${n}</span>`).join("")}${nowMark}</div>
+      <div class="hv2-mt-bar"><i style="width:${isNow ? at(day) : isPast ? "100%" : "0%"}"></i>${marks.filter(n => n < day && (!isNow || Math.abs(n - day) > 3)).map(n => `<b style="left:${at(n)}">✓</b>`).join("")}${isNow ? `<b class="is-now" style="left:${at(day)}">✓</b>` : ""}</div></div>`;
     // card settings from "Design my card" (walletCard.soft): tint + glow, Nomi, talk, month line
     const sc = typeof WalletCard !== "undefined" && WalletCard.softConf ? WalletCard.softConf() : { tint: "white", nomi: true, talk: true, track: true };
     const tint = typeof WalletCard !== "undefined" && WalletCard.tintOf ? WalletCard.tintOf(sc.tint) : ["white", "#ffffff", "#ffe1d2"];
@@ -361,9 +368,9 @@ const HomeV2 = (() => {
           ${sc.nomi ? `<span class="hv2-soft-buddy" data-nomi data-mood="${mood}" data-awaiting-income="${awaitingIncome}" role="button" tabindex="0" aria-label="Nomi">${roleBuddy("money", mood)}${sc.talk ? `<span class="hv2-say hv2-soft-say" data-nomi-say>${escapeHtml(L(...(awaitingIncome ? MONEY_WAITING : MONEY_SAY[mood] || MONEY_SAY.happy)))}</span>` : ""}</span>` : ""}
           <div class="hv2-soft-summary">
             <a class="hv2-soft-amt money-value${hide}" href="#money">${escapeHtml(plainMoney(available))}</a>
-            <span class="hv2-soft-pill">${escapeHtml((awaitingIncome ? L(`ចាយរួច ${plainMoney(m.expenses)} · ${daysLeft} ថ្ងៃទៀត`, `${plainMoney(m.expenses)} spent · ${daysLeft} days left`) : L(`ចាយរួច ${pct}% · ${daysLeft} ថ្ងៃទៀត`, `${pct}% spent · ${daysLeft} days left`)))}</span>
-            ${awaitingIncome ? `<button type="button" class="hv2-soft-income-btn" data-hv2-add-income>＋ ${escapeHtml(L("កត់ប្រាក់ខែ / ចំណូល", "Add salary / income"))}</button>` : ""}
-            ${awaitingIncome && !(sc.nomi && sc.talk) ? `<span class="hv2-soft-income-note">${escapeHtml(L("មិនទាន់ទទួលប្រាក់ខែ ឬចំណូល freelance ទេ", "No salary or freelance income received yet"))}</span>` : ""}
+            <span class="hv2-soft-pill">${escapeHtml((awaitingIncome ? (isPast ? L(`ចាយរួច ${plainMoney(m.expenses)} · ខែបានបញ្ចប់`, `${plainMoney(m.expenses)} spent · month ended`) : L(`ចាយរួច ${plainMoney(m.expenses)} · ${daysLeft} ថ្ងៃទៀត`, `${plainMoney(m.expenses)} spent · ${daysLeft} days left`)) : (isPast ? L(`ចាយរួច ${pct}% · ខែបានបញ្ចប់`, `${pct}% spent · month ended`) : L(`ចាយរួច ${pct}% · ${daysLeft} ថ្ងៃទៀត`, `${pct}% spent · ${daysLeft} days left`))))}</span>
+            ${awaitingIncome && isNow ? `<button type="button" class="hv2-soft-income-btn" data-hv2-add-income>＋ ${escapeHtml(L("កត់ប្រាក់ខែ / ចំណូល", "Add salary / income"))}</button>` : ""}
+            ${awaitingIncome && isNow && !(sc.nomi && sc.talk) ? `<span class="hv2-soft-income-note">${escapeHtml(L("មិនទាន់ទទួលប្រាក់ខែ ឬចំណូល freelance ទេ", "No salary or freelance income received yet"))}</span>` : ""}
           </div>
         </div>
         ${sc.track ? track : ""}
@@ -371,8 +378,8 @@ const HomeV2 = (() => {
           <div class="hv2-soft-bud"><span>${escapeHtml(L("ថវិកាខែនេះ", "Budget this month"))} <b class="money-value${hide}">${escapeHtml(plainMoney(m.income))}</b></span><button type="button" class="hv2-soft-edit" data-wc-edit>✎ ${escapeHtml(L("កែកាត", "Edit card"))}</button></div>
           <div class="hv2-soft-a3">
             <div class="hv2-soft-t is-spent"><em aria-hidden="true">↑</em><small>${escapeHtml(L("ចាយរួច", "Spent"))}</small><b class="money-value${hide}">${escapeHtml(plainMoney(m.expenses))}</b><span>${escapeHtml(L(`${pct}% នៃថវិកា`, `${pct}% of budget`))}</span></div>
-            <div class="hv2-soft-t is-today"><em aria-hidden="true">☀️</em><small>${escapeHtml(L("ថ្ងៃនេះ", "Today"))}</small><b class="money-value${hide}">${escapeHtml(plainMoney(spentToday))}</b><span>${escapeHtml(spentToday === 0 ? L("មិនទាន់ចាយ 👍", "Nothing yet 👍") : spentToday > perDay ? L("លើសកម្រិតហើយ", "Over the daily limit") : L("ក្នុងកម្រិត", "Within the limit"))}</span></div>
-            <div class="hv2-soft-t is-day"><em aria-hidden="true">✓</em><small>${escapeHtml(L("ចាយបាន/ថ្ងៃ", "Per day"))}</small><b class="money-value${hide}">${escapeHtml(plainMoney(perDay))}</b><span>${escapeHtml(L(`${daysLeft} ថ្ងៃទៀត`, `${daysLeft} days left`))}</span></div>
+            ${isNow ? `<div class="hv2-soft-t is-today"><em aria-hidden="true">☀️</em><small>${escapeHtml(L("ថ្ងៃនេះ", "Today"))}</small><b class="money-value${hide}">${escapeHtml(plainMoney(spentToday))}</b><span>${escapeHtml(spentToday === 0 ? L("មិនទាន់ចាយ 👍", "Nothing yet 👍") : spentToday > perDay ? L("លើសកម្រិតហើយ", "Over the daily limit") : L("ក្នុងកម្រិត", "Within the limit"))}</span></div>` : `<div class="hv2-soft-t is-today"><em aria-hidden="true">💰</em><small>${escapeHtml(L("ចំណូល", "Income"))}</small><b class="money-value${hide}">${escapeHtml(plainMoney(m.income))}</b><span>${escapeHtml(m.income > 0 ? L("ក្នុងខែនេះ", "This month") : L("មិនទាន់មាន", "None yet"))}</span></div>`}
+            <div class="hv2-soft-t is-day"><em aria-hidden="true">✓</em><small>${escapeHtml(isPast ? L("ចាយជាមធ្យម/ថ្ងៃ", "Avg / day") : L("ចាយបាន/ថ្ងៃ", "Per day"))}</small><b class="money-value${hide}">${escapeHtml(plainMoney(perDay))}</b><span>${escapeHtml(isPast ? L(`${dim} ថ្ងៃ`, `${dim} days`) : L(`${daysLeft} ថ្ងៃទៀត`, `${daysLeft} days left`))}</span></div>
           </div>
         </div>
       </article>`;
