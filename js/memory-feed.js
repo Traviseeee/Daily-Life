@@ -53,6 +53,18 @@ const MemoryFeed = (() => {
     return list.sort((a, b) => sortKey(b).localeCompare(sortKey(a)));
   }
 
+  // family accounts with no card of mine (e.g. Lychee has no "Chin Chetra" card): offered as tags too (12 Nov)
+  function accountPeople() {
+    if (typeof FamilyGroup === "undefined" || !fam()) return [];
+    const cards = appData.family || [];
+    const norm = value => String(value || "").trim().toLowerCase();
+    return (FamilyGroup.state.members || []).map(member => {
+      const name = FamilyGroup.nameOf ? FamilyGroup.nameOf(member) : member.display_name;
+      return { id: `u:${member.user_id}`, userId: member.user_id, name, photo: FamilyGroup.profileOf?.(member.user_id)?.photo || (member.user_id === FamilyGroup.state.me ? appData.profile?.photo : "") || "" };
+    }).filter(person => person.name && !cards.some(card => card.userId === person.userId || norm(card.name) === norm(person.name)));
+  }
+  const tagPeople = () => [...(appData.family || []).filter(member => member.name), ...accountPeople()];
+
   function personMatch(memory, member) {
     if (Array.isArray(memory.tagIds) && memory.tagIds.includes(member.id)) return true;
     const names = String(memory.familyMembers || "").toLowerCase().split(",").map(item => item.trim()).filter(Boolean);
@@ -241,14 +253,14 @@ const MemoryFeed = (() => {
   }
 
   function taggedPeople(memory) {
-    const byId = (memory.tagIds || []).map(id => (appData.family || []).find(member => member.id === id)).filter(Boolean).map(member => member.name);
+    const byId = (memory.tagIds || []).map(id => tagPeople().find(member => member.id === id)).filter(Boolean).map(member => member.name);
     const names = String(memory.familyMembers || "").split(",").map(item => item.trim()).filter(Boolean);
     return [...new Set([...byId, ...names])];
   }
 
   function postHtml(memory) {
     const media = mediaOf(memory);
-    const me = memory.family ? { name: memory.authorName } : { name: appData.profile?.name || L("ខ្ញុំ", "Me"), photo: appData.profile?.photo };
+    const me = memory.family ? { name: memory.authorName, photo: memory.authorPhoto || (appData.family || []).find(card => card.userId && card.userId === memory.authorId)?.photo || "" } : { name: appData.profile?.name || L("ខ្ញុំ", "Me"), photo: appData.profile?.photo };
     const tags = taggedPeople(memory);
     const fpId = fpIdOf(memory);
     const comments = allComments(memory);
@@ -847,7 +859,7 @@ const MemoryFeed = (() => {
 
   function openComposer(memory) {
     const editing = Boolean(memory);
-    const people = (appData.family || []).filter(member => member.name);
+    const people = tagPeople();
     const selected = new Set(editing ? (memory.tagIds || people.filter(member => personMatch(memory, member)).map(member => member.id)) : (state.person ? [state.person] : []));
     let files = [];
     const root = openSheet(`${sheetHead(editing ? L("កែ post", "Edit post") : L("Post ថ្មី", "New post"))}
@@ -923,7 +935,7 @@ const MemoryFeed = (() => {
       const date = form.elements.date.value || localDateInput();
       const place = form.elements.place.value.trim();
       const tagIds = [...selected];
-      const familyMembers = tagIds.map(id => (appData.family || []).find(member => member.id === id)?.name).filter(Boolean).join(", ");
+      const familyMembers = tagIds.map(id => tagPeople().find(member => member.id === id)?.name).filter(Boolean).join(", ");
       if (editing) {
         Store.edit("memories", memory.id, { description: caption, date, location: place, tagIds, familyMembers });
         // shared? keep the family copy the same

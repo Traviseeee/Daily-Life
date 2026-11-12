@@ -90,6 +90,7 @@ const FamilyPosts = (() => {
       familyPostId: post.id,
       authorId: post.author_id,
       authorName: nameOf(post.author_id),
+      authorPhoto: (typeof FamilyGroup !== "undefined" && FamilyGroup.profileOf ? FamilyGroup.profileOf(post.author_id)?.photo : "") || "",
       title: "",
       description: post.caption || "",
       location: post.place || "",
