@@ -392,7 +392,22 @@ const FamilyV2 = (() => {
         birthday: p.birthday || "", phone: p.phone || "", relationship: m.user_id === s.me ? "Me" : "Other" };
     });
   }
-  function fam() { return virtual ? virtualList : appData.family; }
+  // A card linked to a joined account fills an empty phone / birthday / Telegram from that account's profile
+  // (what they share with the family; 12 Nov). View only: the card itself is never changed or saved.
+  const enriched = new Map();
+  function withProfile(card) {
+    const p = card?.userId && typeof FamilyGroup !== "undefined" && FamilyGroup.profileOf ? FamilyGroup.profileOf(card.userId) : null;
+    if (!p || (card.phone && card.birthday)) return card;
+    const phone = card.phone || p.phone || "", birthday = card.birthday || p.birthday || "";
+    if (phone === (card.phone || "") && birthday === (card.birthday || "")) return card;
+    const key = `${phone}|${birthday}`;
+    const hit = enriched.get(card);
+    if (hit && hit.key === key) return hit.copy;
+    const copy = { ...card, phone, birthday };
+    enriched.set(card, { key, copy });
+    return copy;
+  }
+  function fam() { return virtual ? virtualList : (appData.family || []).map(withProfile); }
   function canShowGroup() {
     const s = groupState();
     return lav() && !appData.family.length && s?.status === "ready" && (s.members || []).length > 1;
