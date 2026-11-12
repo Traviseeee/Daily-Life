@@ -23,6 +23,7 @@ const NotificationCenter = (() => {
     event: () => Icons.calendar(),
     bill: () => Icons.bill(),
     family: () => Icons.heart(),
+    vehicle: () => (Icons.car ? Icons.car() : Icons.calendar()),
     reminder: () => svg('<path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/>'),
     clock: () => svg('<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>'),
     snooze: () => svg('<circle cx="12" cy="13" r="7.5"/><path d="M12 9.5V13l2 1.5M5 4 2.5 6.5M19 4l2.5 2.5"/>'),
@@ -37,7 +38,8 @@ const NotificationCenter = (() => {
     event: L("ព្រឹត្តិការណ៍", "Event"),
     reminder: L("ការរំលឹក", "Reminder"),
     bill: L("វិក្កយបត្រ", "Bill"),
-    family: L("គ្រួសារ", "Family")
+    family: L("គ្រួសារ", "Family"),
+    vehicle: L("ម៉ូតូ/ឡាន", "Vehicle")
   })[kind] || L("ព្រឹត្តិការណ៍", "Event");
 
   /* ---------- per-device hidden / snoozed state ---------- */
@@ -96,7 +98,7 @@ const NotificationCenter = (() => {
     const record = sourceRecord(item) || {};
     const time = /^\d{1,2}:\d{2}/.test(String(record.time || "")) ? String(record.time).slice(0, 5).padStart(5, "0") : "";
     const at = new Date(`${item.date}T${time || "23:59"}:00`);
-    const kind = item.type === "bill" ? "bill" : item.source === "family" ? "family" : item.type === "reminder" ? "reminder" : "event";
+    const kind = item.type === "vehicle" ? "vehicle" : item.type === "bill" ? "bill" : item.source === "family" ? "family" : item.type === "reminder" ? "reminder" : "event";
     let group = "week";
     if (item.daysLeft === 0) {
       if (time && at < now) group = "earlier";
@@ -124,10 +126,30 @@ const NotificationCenter = (() => {
     const now = new Date();
     const dismissed = readMap(DISMISS_KEY);
     const snoozed = readMap(SNOOZE_KEY);
-    return getUpcomingNotifications(7, 60)
+    return [...getUpcomingNotifications(7, 60), ...vehicleItems()]
       .filter(item => typeof NotifyPrefs === "undefined" || NotifyPrefs.allows(appData.profile, item.type, "app"))
       .map(item => enrich(item, now, dismissed, snoozed))
       .sort((left, right) => left.at - right.at);
+  }
+
+  // 🏍️ services due within a week, or overdue (shown today until logged) — 12 Nov
+  function vehicleItems() {
+    if (typeof VehicleDue === "undefined" || !Array.isArray(appData.vehicles)) return [];
+    const today = localDateInput();
+    const out = [];
+    appData.vehicles.forEach(v => (v.services || []).forEach(svc => {
+      const st = VehicleDue.status(v, svc, today);
+      if (!st.dueDate) return;
+      const gap = VehicleDue.daysBetween(today, st.dueDate);
+      if (gap > 7) return;
+      const late = gap < 0 || st.p >= 1;
+      out.push({
+        id: `${v.id}|${svc.key}`, type: "vehicle", kind: "vehicle", vehicleId: v.id, service: svc.key,
+        title: `${VehicleDue.EMOJI[svc.key] || "🔧"} ${late ? L(`ដល់ពេល${VehicleDue.name(svc.key)}`, `${VehicleDue.name(svc.key, false)} due`) : VehicleDue.name(svc.key, isKm())} · ${v.name}`,
+        date: late ? today : st.dueDate, daysLeft: late ? 0 : gap, time: ""
+      });
+    }));
+    return out;
   }
 
   const isActive = entry => !entry.dismissed && !entry.snoozedUntil;
@@ -255,6 +277,7 @@ const NotificationCenter = (() => {
           <span class="nc-chevron">${icon.chevron()}</span>
         </button>
         <span class="nc-actions">
+          ${entry.kind === "vehicle" ? `<button class="nc-action is-done" type="button" data-nc-vdone="${escapeAttr(itemKey(entry))}" title="${escapeAttr(L("ធ្វើរួច", "Done"))}" aria-label="${escapeAttr(L("ធ្វើរួច", "Done"))}">${icon.check()}</button>` : ""}
           ${entry.kind === "reminder" ? `<button class="nc-action is-done" type="button" data-nc-done="${escapeAttr(itemKey(entry))}" title="${escapeAttr(L("ធ្វើរួច", "Mark done"))}" aria-label="${escapeAttr(L("ធ្វើរួច", "Mark done"))}">${icon.check()}</button>` : ""}
           ${canSnooze ? `<button class="nc-action" type="button" data-nc-snooze="${escapeAttr(itemKey(entry))}" title="${escapeAttr(L("ពន្យារ 1 ម៉ោង", "Snooze 1 hour"))}" aria-label="${escapeAttr(L("ពន្យារ 1 ម៉ោង", "Snooze 1 hour"))}">${icon.snooze()}</button>` : ""}
           <button class="nc-action" type="button" data-nc-hide="${escapeAttr(itemKey(entry))}" title="${escapeAttr(L("លាក់សម្រាប់ថ្ងៃនេះ", "Hide for today"))}" aria-label="${escapeAttr(L("លាក់", "Hide"))}">${icon.hide()}</button>
@@ -385,7 +408,7 @@ const NotificationCenter = (() => {
     const all = collect();
     const active = all.filter(isActive);
     const hiddenCount = all.length - active.length;
-    const kinds = ["event", "reminder", "bill", "family"].filter(kind => active.some(entry => entry.kind === kind));
+    const kinds = ["event", "reminder", "bill", "family", "vehicle"].filter(kind => active.some(entry => entry.kind === kind));
     const tgList = typeof TelegramArrivals !== "undefined" ? TelegramArrivals.feed().slice(0, 8) : [];
     const tgNew = tgList.filter(entry => !entry.read).length;
     const sav = savingsMonthStats();
@@ -506,6 +529,10 @@ const NotificationCenter = (() => {
       location.hash = "#family";
       return;
     }
+    if (entry.kind === "vehicle") {
+      location.hash = "#vehicle";
+      return;
+    }
     if (entry.kind === "bill") {
       location.hash = "#money/bills";
       return;
@@ -547,6 +574,15 @@ const NotificationCenter = (() => {
       setState(SNOOZE_KEY, entry, Date.now() + SNOOZE_MS);
       Toast.show(L(`ពន្យារ "${entry.title}" 1 ម៉ោង`, `Snoozed "${entry.title}" for 1 hour`), "success", { duration: 2200 });
       animateOut(button, rerender);
+    }));
+
+    // 🏍️ ✓ → the "log a service" form, already filled (guessed km, last price)
+    root.querySelectorAll("[data-nc-vdone]").forEach(button => button.addEventListener("click", () => {
+      const entry = findEntry(button.dataset.ncVdone);
+      if (!entry || entry.kind !== "vehicle") return;
+      close();
+      if (location.hash !== "#vehicle") location.hash = "#vehicle";
+      setTimeout(() => { if (typeof VehicleTool !== "undefined" && VehicleTool.openLog) VehicleTool.openLog(entry.vehicleId, entry.service); }, 250);
     }));
 
     root.querySelectorAll("[data-nc-done]").forEach(button => button.addEventListener("click", () => {

@@ -450,5 +450,7 @@ const VehicleTool = (() => {
     return { text: `${worst.p >= 1 ? "⚠️" : "⏰"} ${names[worst.key]}`, tone: worst.p >= 1 ? "red" : "amber" };
   }
 
-  return { render, bind, badge, status };
+  function openLog(vehicleId, key) { const v = list().find(item => item.id === vehicleId); if (v) logForm(v, key); }
+
+  return { render, bind, badge, status, openLog };
 })();

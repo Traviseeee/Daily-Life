@@ -12,6 +12,7 @@ const { budgetAlerts, weeklyReport, CATEGORY_KM } = require("../lib/money-report
 const { frequentExpenses, unusualToday, convert } = require("../lib/money-insights");
 const { payBill } = require("../lib/bill-pay");
 const MoneyDue = require("../js/money-due.js");
+const VehicleDue = require("../js/vehicle-due.js");
 const { updatePayloadSafe } = require("../lib/payload-store");
 const NotifyPrefs = require("../lib/notify-prefs");
 const { resolveOwner } = require("../lib/owner");
@@ -437,6 +438,58 @@ function notificationItems(payload) {
         url: "/#money/loans"
       }, stagesOf("loans"));
     });
+
+  // 🏍️ vehicle care (12 Nov): 3 days before, on the day, then every 3 days until it is logged
+  {
+    const vp = payload.profile || {};
+    const vTime = /^\d{1,2}:\d{2}$/.test(String(vp.vehicleTime || "")) ? vp.vehicleTime : "08:00";
+    VehicleDue.alerts(payload.vehicles, today, { soon: vp.vehicleSoon !== false, repeat: vp.vehicleRepeat !== false }).forEach(a => {
+      const v = a.vehicle;
+      const svcName = VehicleDue.name(a.svc.key);
+      const prev = VehicleDue.last(v, a.svc.key);
+      const cycle = `${a.svc.lastDate || "x"}-${a.svc.lastKm || "x"}`;
+      const head = a.stage === "soon" ? `⏰ ជិតដល់ពេល${svcName}` : a.stage === "due" ? `${VehicleDue.EMOJI[a.svc.key] || "🔧"} ដល់ពេល${svcName}ហើយ!` : `⚠️ នៅមិនទាន់${svcName}`;
+      const lines = [
+        `${v.kind === "car" ? "🚗" : "🏍️"} ${v.name}${v.plate ? ` (${v.plate})` : ""}${a.est ? ` · ≈ ${Number(a.est).toLocaleString("en-US")} km` : ""}`,
+        a.kmLeft != null && Math.round(a.kmLeft) !== 0 ? (a.kmLeft > 0 ? `នៅ ~${Math.round(a.kmLeft).toLocaleString("en-US")} km` : `ហួស ${Math.round(-a.kmLeft).toLocaleString("en-US")} km`) : "",
+        a.stage === "soon" ? `ប្រហែល ${VehicleDue.kmDate(a.dueDate, today)} (3 ថ្ងៃទៀត)` : a.stage === "again" ? `ហួស ${-a.gap} ថ្ងៃ` : "",
+        prev && Number(prev.cost) ? `លើកមុន ${moneyLabel(prev.currency || "USD", prev.cost)}${prev.shop ? ` · ${prev.shop}` : ""}` : ""
+      ].filter(Boolean);
+      add({
+        kind: "vehicle",
+        id: `${v.id}-${a.svc.key}-${a.stage}-${a.stage === "soon" ? cycle : today}`,
+        vehicleId: v.id,
+        service: a.svc.key,
+        title: `${head} · ${v.name}`,
+        body: lines.join("\n"),
+        date: today,
+        time: vTime,
+        hasTime: true,
+        // the soon note only informs; ✓ Done comes with the due / again ones
+        doneLabel: a.stage === "soon" ? "" : `✅ ធ្វើរួច${prev && Number(prev.cost) ? ` ${moneyLabel(prev.currency || "USD", prev.cost)}` : ""}`,
+        url: "/#vehicle"
+      });
+    });
+    // Sunday evening: "how many km now?" (one per vehicle)
+    const [vy, vm, vd] = today.split("-").map(Number);
+    if (vp.vehicleKmAsk !== false && new Date(Date.UTC(vy, vm - 1, vd)).getUTCDay() === 0) {
+      (Array.isArray(payload.vehicles) ? payload.vehicles : []).forEach(v => {
+        const est = VehicleDue.estimateKm(v, today);
+        add({
+          kind: "vehicle-km",
+          id: `${v.id}-km-${today}`,
+          vehicleId: v.id,
+          title: `${v.kind === "car" ? "🚗" : "🏍️"} ${v.name} — សប្តាហ៍នេះជិះបានប៉ុន្មាន km ហើយ?`,
+          body: est ? `ទាយ ≈ ${est.toLocaleString("en-US")} km · ចុច ✓ បើត្រូវ ឬ ✏️ វាយលេខ` : "ចុច ✏️ ហើយវាយលេខ km",
+          estKm: est || 0,
+          date: today,
+          time: /^\d{1,2}:\d{2}$/.test(String(vp.vehicleKmTime || "")) ? vp.vehicleKmTime : "20:00",
+          hasTime: true,
+          url: "/#vehicle"
+        });
+      });
+    }
+  }
 
   // salary / income day: "did you get it?" with ✅ Received (js/money-due.js, same rule as the app pop-up)
   (Array.isArray(payload.income) ? payload.income : [])

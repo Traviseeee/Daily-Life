@@ -15,6 +15,7 @@ const { digestItem, eveningItem } = require("./dispatch");
 const { payBill } = require("../lib/bill-pay");
 const LoanPay = require("../js/loan-pay.js");
 const MoneyDue = require("../js/money-due.js");
+const VehicleDue = require("../js/vehicle-due.js");
 const { updatePayloadSafe } = require("../lib/payload-store");
 const { resolveOwner, linkOwnerIfUnknown } = require("../lib/owner");
 const { detectUtility, findUtilityBill, PROVIDERS } = require("../lib/utility-bills");
@@ -163,6 +164,13 @@ async function handleTypedAmount(message, text, redis) {
   const amount = typedAmount(text);
   if (!amount) return undefined; // something else typed: cancel and read it as usual
   const item = pending.item;
+  if (item.kind === "vehicle-km") {
+    // 🏍️ answer to "how many km now?": save it as the odometer reading
+    const kmResult = await updatePayload(pending.userId, payload => VehicleDue.setOdometer(payload, item.vehicleId, Math.round(amount), zonedToday()));
+    const kmText = kmResult === "updated" ? `✅ រក្សាទុក ${Math.round(amount).toLocaleString("en-US")} km` : "⚠️ រកមិនឃើញក្នុង MYLIFE · Not found";
+    if (pending.messageId) await tgCall("editMessageReplyMarkup", { chat_id: message.chat.id, message_id: pending.messageId, reply_markup: { inline_keyboard: [[{ text: kmText, callback_data: "noop" }], [{ text: "📱 បើក MYLIFE · Open", url: appLink(item) }]] } }).catch(() => {});
+    return reply(message, `${kmText}${kmResult === "updated" ? `\n<b>${escapeHtml(item.title || "").split(" — ")[0]}</b> · ${await vehicleNextLine(pending.userId, item.vehicleId)}` : ""}`);
+  }
   const result = await updatePayload(pending.userId, payload => applyDone(payload, item, { amount }));
   const shown = formatMoney(amount, item.currency || "USD");
   const status = result === "missing" ? "⚠️ រកមិនឃើញក្នុង MYLIFE · Not found"
@@ -180,6 +188,17 @@ async function handleTypedAmount(message, text, redis) {
     await pushAdded(pending.userId, `✅ បានបង់ · ${item.title || "Bill"}`, `${shown} · ពី Telegram`, "/#money/bills", "bill");
   }
   return sent;
+}
+
+// "next oil change ≈ 9 Jan or 26,850 km" after a km answer / ✓ Done
+async function vehicleNextLine(userId, vehicleId) {
+  const payload = await readPayload(userId);
+  const v = (payload?.vehicles || []).find(item => item.id === vehicleId);
+  if (!v) return "";
+  const today = zonedToday();
+  const next = (v.services || []).map(svc => ({ svc, st: VehicleDue.status(v, svc, today) })).filter(x => x.st.dueDate).sort((a, b) => a.st.dueDate.localeCompare(b.st.dueDate))[0];
+  if (!next) return "បានកត់ក្នុង MYLIFE";
+  return `${VehicleDue.EMOJI[next.svc.key] || "🔧"} ${VehicleDue.name(next.svc.key)}បន្ទាប់ ≈ <b>${VehicleDue.kmDate(next.st.dueDate, today)}</b>${next.st.kmLeft != null ? ` · នៅ ${Math.max(0, Math.round(next.st.kmLeft)).toLocaleString("en-US")} km` : ""}`;
 }
 
 const LABEL_PAID = { bill: "✅ បង់តាមចំនួនដើម · Paid as set", income: "✅ ទទួលតាមចំនួនដើម · As set" };
@@ -1234,6 +1253,34 @@ module.exports = async (req, res) => {
     }
     let status;
     let toast;
+
+    // 🏍️ vehicle care buttons (12 Nov)
+    if (item.kind === "vehicle" && verb === "vdone") {
+      const today = zonedToday();
+      let saved = null;
+      const result = await updatePayload(action.userId, payload => { saved = VehicleDue.logService(payload, item.vehicleId, item.service, { today, makeId: recordId, via: "Telegram" }); return saved.result; });
+      const label = result === "updated" ? `✅ បានកត់ ${VehicleDue.name(item.service)}${saved?.entry?.cost ? ` ${formatMoney(saved.entry.cost, saved.entry.currency)}` : ""}` : result === "already" ? "✅ បានកត់រួចហើយថ្ងៃនេះ" : "⚠️ រកមិនឃើញក្នុង MYLIFE · Not found";
+      await answer(label);
+      await tgCall("editMessageReplyMarkup", { chat_id: chatId, message_id: query.message.message_id, reply_markup: { inline_keyboard: [[{ text: label, callback_data: "noop" }], [{ text: "📱 បើក MYLIFE · Open", url: appLink(item) }]] } }).catch(() => {});
+      if (result === "updated") {
+        await tgCall("sendMessage", { chat_id: chatId, text: `${label}${saved?.entry?.expenseId ? " · ធ្វើដំណើរ" : ""}\n${await vehicleNextLine(action.userId, item.vehicleId)} 🐾`, parse_mode: "HTML", reply_to_message_id: query.message.message_id }).catch(() => {});
+        await pushAdded(action.userId, `${VehicleDue.EMOJI[item.service] || "🔧"} បានកត់ ${VehicleDue.name(item.service)}`, "ពី Telegram · បានកត់ក្នុង MYLIFE", "/#vehicle", "vehicle");
+      }
+      return res.status(200).json({ ok: true });
+    }
+    if (item.kind === "vehicle-km" && verb === "kmok") {
+      const result = await updatePayload(action.userId, payload => VehicleDue.setOdometer(payload, item.vehicleId, item.estKm, zonedToday()));
+      const label = result === "updated" ? `✅ រក្សាទុក ${Number(item.estKm).toLocaleString("en-US")} km` : "⚠️ រកមិនឃើញក្នុង MYLIFE · Not found";
+      await answer(label);
+      await tgCall("editMessageReplyMarkup", { chat_id: chatId, message_id: query.message.message_id, reply_markup: { inline_keyboard: [[{ text: label, callback_data: "noop" }], [{ text: "📱 បើក MYLIFE · Open", url: appLink(item) }]] } }).catch(() => {});
+      return res.status(200).json({ ok: true });
+    }
+    if (item.kind === "vehicle-km" && verb === "kmtype") {
+      await redis.set(amountKey(chatId), JSON.stringify({ userId: action.userId, item, messageId: query.message?.message_id }), { ex: 900 });
+      await answer("✏️ វាយ km");
+      await tgCall("sendMessage", { chat_id: chatId, text: `✏️ វាយលេខ km ឥឡូវ ឧ. <code>${Number(item.estKm || 24120).toLocaleString("en-US").replace(/,/g, "")}</code>\n<i>Type the km on the odometer</i>`, parse_mode: "HTML", reply_markup: { force_reply: true, input_field_placeholder: "24120" } }).catch(() => {});
+      return res.status(200).json({ ok: true });
+    }
 
     if (verb === "s10" || verb === "s60" || verb === "tomorrow") {
       let fireAt = Date.now() + (verb === "s10" ? 10 : 60) * 60000;
