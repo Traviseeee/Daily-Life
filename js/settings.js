@@ -1027,6 +1027,15 @@ function renderHelp() {
     { icon: Icons.database(), title: t("backupAndRestore"), description: t("helpBackup"), tone: "backup" }
   ];
 
+  const legacyBody = () => `
+      <div class="help-grid">
+        ${helpSteps.map(step => `<article class="help-card ${step.tone}"><span class="help-card-icon">${step.icon}</span><h2>${step.title}</h2><p>${step.description}</p></article>`).join("")}
+      </div>
+      <div class="ni-replay"><span class="ni-replay-copy"><strong>${L("Nomi អាចណែនាំអ្នកបាន", "Meet your guide, Nomi")}</strong><small>${L("មើលការណែនាំខ្លីៗអំពីចំណុចសំខាន់ៗក្នុងកម្មវិធី។", "Take a short tour of the main parts of MYLIFE.")}</small></span><button type="button" data-nomi-intro-open>${L("មើលការណែនាំ", "Show introduction")}</button></div>
+      ${renderSmartHelp()}`;
+  // new guide (js/help-guide.js): topics with sample UI first; the older cards and Smart Help sit folded below
+  if (typeof HelpGuide !== "undefined") return HelpGuide.page(location.hash.replace("#", "").split("?")[0].split("/")[1] || "", legacyBody());
+
   return `
     <section class="page help-page">
       <div class="page-header">

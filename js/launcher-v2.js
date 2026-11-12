@@ -142,6 +142,7 @@ const LauncherV2 = (() => {
     if (lav()) return `<section class="launcher-page page lv2 is-lav">
       ${hero()}
       <div class="lv-body">
+        ${typeof HelpGuide !== "undefined" ? HelpGuide.banner() : ""}
         ${moneyRing()}
         <section class="footer-editor" data-footer-editor hidden></section>
         ${quickAdd()}
@@ -152,6 +153,7 @@ const LauncherV2 = (() => {
     return `<section class="launcher-page page lv2">
       ${hero()}
       <div class="lv-body">
+        ${typeof HelpGuide !== "undefined" ? HelpGuide.banner() : ""}
         ${widgets()}
         <section class="footer-editor" data-footer-editor hidden></section>
         ${quickAdd()}
