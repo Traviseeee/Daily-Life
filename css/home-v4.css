@@ -250,3 +250,22 @@ html:root[data-theme="light"] .hv2:not(:has(.hv4)) .hv2-quick.is-5 { grid-templa
 html:root:not([data-theme="light"]) .hs-dots button { background: rgba(182, 168, 255, .3); }
 html:root:not([data-theme="light"]) .hs-dots button.is-on { background: #b6a8ff; }
 @media (prefers-reduced-motion: reduce) { .hs-dots button { transition: none; } }
+
+/* ---------- Home slider info cards (13 Nov): same size as the photo cards, no photo ---------- */
+.hs-info { position: relative; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; border-radius: 26px; padding: 16px; box-shadow: var(--h4-sh, 0 10px 26px rgba(70,50,170,.13)); color: #fff; text-decoration: none; min-height: 100%; }
+.hs-info .hs-top { position: static; justify-content: flex-start; }
+.hs-mid { display: grid; gap: 8px; align-content: center; flex: 1; padding: 14px 0; }
+.hs-big { font: 800 3rem/1 Inter, "Kantumruy Pro", sans-serif; letter-spacing: -.02em; }
+.hs-big small { margin-left: 6px; font-size: 1rem; font-weight: 600; letter-spacing: 0; }
+.hs-sub { font-size: .9rem; line-height: 1.5; opacity: .94; }
+.hs-bar { display: block; height: 9px; overflow: hidden; border-radius: 99px; background: rgba(255,255,255,.28); }
+.hs-bar i { display: block; height: 100%; border-radius: 99px; background: #fff; }
+.hs-go2 { align-self: flex-start; padding: 8px 15px; border-radius: 99px; background: #fff; color: #5a48d6; font-size: .8rem; font-weight: 800; }
+.hs-tone-car { background: linear-gradient(150deg, #6c7bff, #3b3a9e); }
+.hs-tone-inv { background: linear-gradient(150deg, #f2b84b, #e0703a); }
+.hs-tone-love { background: linear-gradient(150deg, #ff8fb1, #9f6bff); }
+.hs-tone-bd { background: linear-gradient(150deg, #ffb07a, #ff6f91); }
+.hs-tone-joint { background: linear-gradient(150deg, #4fd1a5, #3a8fd9); }
+.hs-tone-goal { background: linear-gradient(150deg, #9f8cff, #6c5ce7); }
+html:root body .hs-info, html:root body .hs-info .hs-big, html:root body .hs-info .hs-sub { color: #fff; }
+html:root body .hs-info .hs-go2 { color: #5a48d6; }

@@ -50,6 +50,61 @@ const HomeSlider = (() => {
     return out;
   }
 
+  // cards that are not photos (13 Nov): each shows only when it has something real to say
+  const today = () => localDateInput();
+  function infoCards() {
+    const list = [];
+    const facts = typeof FamilyV2 !== "undefined" && FamilyV2.sliderFacts ? FamilyV2.sliderFacts() : {};
+    const t = today();
+    // 🚗 the service closest to (or past) its due date
+    if (typeof VehicleDue !== "undefined") {
+      let best = null;
+      (appData.vehicles || []).forEach(v => (v.services || []).forEach(svc => {
+        const st = VehicleDue.status(v, svc, t);
+        if (st.p == null || !st.dueDate) return;
+        const gap = VehicleDue.daysBetween(t, st.dueDate);
+        if (gap <= 14 && (!best || gap < best.gap)) best = { v, svc, gap };
+      }));
+      if (best) {
+        const late = best.gap < 0, n = Math.abs(best.gap);
+        list.push({ key: "car", weight: late ? 100 : best.gap <= 3 ? 90 : 40, tone: "car", label: `🚗 ${late ? L("ហួសកំណត់", "Overdue") : L("ឡាន", "Vehicle")}`, big: String(n), unit: late ? L("ថ្ងៃហួស", "days late") : L("ថ្ងៃទៀត", "days left"), sub: `${VehicleDue.name(best.svc.key, true)} · ${best.v.name || ""}`.trim(), href: "#vehicle", go: `⛽ ${L("កត់", "Log")} ›` });
+      }
+    }
+    // 🧾 unpaid invoices
+    if (typeof InvoiceDue !== "undefined") {
+      const open = (appData.invoices || []).filter(inv => inv && inv.status !== "paid" && InvoiceDue.total(inv) > 0);
+      if (open.length) {
+        const late = open.filter(inv => /^\d{4}-\d{2}-\d{2}$/.test(inv.due || "") && inv.due < t);
+        const sum = open.reduce((total, inv) => total + InvoiceDue.total(inv), 0);
+        list.push({ key: "inv", weight: late.length ? 95 : 35, tone: "inv", label: `🧾 ${L("វិក្កយបត្រ", "Invoices")}`, big: String(typeof money === "function" ? money(sum, open[0].currency || "USD") : sum).replace(/<[^>]*>/g, ""), unit: "", sub: L(`មិនទាន់បង់ ${open.length}${late.length ? ` · ហួសកំណត់ ${late.length}` : ""}`, `${open.length} unpaid${late.length ? ` · ${late.length} overdue` : ""}`), href: "#invoice", go: `${L("មើល", "View")} ›` });
+      }
+    }
+    // 💗 close to a 1,000-day mark
+    if (facts.love) list.push({ key: "love", weight: facts.love.left <= 30 ? 85 : 30, tone: "love", label: `💗 ${L("ថ្ងៃរួមគ្នា", "Together")}`, big: String(facts.love.days), unit: L("ថ្ងៃ", "days"), sub: facts.love.names, bar: facts.love.progress, sub2: `🎉 ${L(`${facts.love.left} ថ្ងៃទៀតដល់ ${facts.love.next.toLocaleString()}`, `${facts.love.left} days to ${facts.love.next.toLocaleString()}`)}`, href: "#family", go: `${L("មើលគ្រួសារ", "Family")} ›` });
+    // 🎂 the next family date
+    if (facts.date && facts.date.days <= 30) list.push({ key: "date", weight: facts.date.days <= 7 ? 88 : 45, tone: "bd", label: `${facts.date.icon} ${L("ជិតមកដល់", "Coming up")}`, big: String(facts.date.days), unit: L("ថ្ងៃទៀត", "days"), sub: `${facts.date.title} · ${facts.date.sub}`, href: "#calendar", go: `${L("មើលប្រតិទិន", "Calendar")} ›` });
+    // 🏦 joint savings account
+    const joint = (appData.savings || []).find(item => item && item.jointWith && Number(item.targetAmount || 0) > 0);
+    if (joint) {
+      const p = Math.min(100, Math.round((Number(joint.currentAmount || 0) / Number(joint.targetAmount)) * 100));
+      list.push({ key: "joint", weight: 50, tone: "joint", label: `🏦 ${L("សន្សំរួម", "Joint savings")}`, big: `${p}%`, unit: "", sub: joint.name || "", bar: p, href: "#money/savings", go: `${L("មើលគណនី", "Open")} ›` });
+    }
+    // 🎯 the goal closest to done
+    const goal = (appData.goals || []).filter(g => g && Number(g.targetAmount || 0) > 0 && Number(g.currentAmount || 0) < Number(g.targetAmount)).sort((a, b) => Number(b.currentAmount || 0) / Number(b.targetAmount) - Number(a.currentAmount || 0) / Number(a.targetAmount))[0];
+    if (goal) {
+      const p = Math.round((Number(goal.currentAmount || 0) / Number(goal.targetAmount)) * 100);
+      list.push({ key: "goal", weight: 20, tone: "goal", label: `🎯 ${L("គោលដៅ", "Goal")}`, big: `${p}%`, unit: "", sub: goal.name || goal.title || "", bar: p, href: "#goals", go: `${L("មើលគោលដៅ", "Goals")} ›` });
+    }
+    return list.sort((a, b) => b.weight - a.weight).slice(0, 3);
+  }
+  function infoHtml(card) {
+    return `<a class="hs-slide hs-info hs-tone-${card.tone}" href="${card.href}" data-hs-kind="${card.key}">
+      <span class="hs-top"><span class="hs-lab">${escapeHtml(card.label)}</span></span>
+      <span class="hs-mid"><b class="hs-big">${escapeHtml(card.big)}${card.unit ? `<small>${escapeHtml(card.unit)}</small>` : ""}</b><span class="hs-sub">${escapeHtml(card.sub || "")}</span>${card.bar != null ? `<span class="hs-bar"><i style="width:${card.bar}%"></i></span>` : ""}${card.sub2 ? `<span class="hs-sub">${escapeHtml(card.sub2)}</span>` : ""}</span>
+      <span class="hs-go2">${escapeHtml(card.go)}</span>
+    </a>`;
+  }
+
   function slideHtml({ memory, kind }) {
     const count = (feed()?.mediaOf(memory) || []).length;
     const label = kind === "family" ? `📸 ${L("គ្រួសារ", "Family")}` : kind === "past" ? `🕰️ ${L(`ថ្ងៃនេះ ${Number(localDateInput().slice(0, 4)) - Number(String(memory.date).slice(0, 4))} ឆ្នាំមុន`, `${Number(localDateInput().slice(0, 4)) - Number(String(memory.date).slice(0, 4))} yr ago today`)}` : `💜 ${L("អនុស្សាវរីយ៍ខ្ញុំ", "My memory")}`;
@@ -73,11 +128,16 @@ const HomeSlider = (() => {
 
   // wrap the untouched money card; nothing changes when there is no photo
   function wrap(moneyHtml) {
-    const list = slides();
-    if (!list.length || !moneyHtml) return moneyHtml;
-    const n = list.length + 1;
+    const photos = slides();
+    let info = [];
+    try { info = infoCards(); } catch (error) { info = []; }
+    // urgent info cards (vehicle overdue, 1,000-day mark…) go right after the money card, the rest after the photos
+    const urgent = info.filter(card => card.weight >= 85), calm = info.filter(card => card.weight < 85);
+    const parts = [...urgent.map(infoHtml), ...photos.map(slideHtml), ...calm.map(infoHtml)].slice(0, 5);
+    if (!parts.length || !moneyHtml) return moneyHtml;
+    const n = parts.length + 1;
     return `<div class="hs-wrap" data-hs>
-      <div class="hs-track" data-hs-track><div class="hs-slide hs-money">${moneyHtml}</div>${list.map(slideHtml).join("")}</div>
+      <div class="hs-track" data-hs-track><div class="hs-slide hs-money">${moneyHtml}</div>${parts.join("")}</div>
       <div class="hs-dots" role="tablist" aria-label="${escapeAttr(L("កាត", "Cards"))}">${Array.from({ length: n }, (_, i) => `<button type="button" class="${i ? "" : "is-on"}" data-hs-dot="${i}" aria-label="${i + 1} / ${n}"></button>`).join("")}</div>
     </div>`;
   }

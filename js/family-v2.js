@@ -483,5 +483,25 @@ const FamilyV2 = (() => {
     else if (typeof openFamilyModal === "function") openFamilyModal();
   });
 
-  return { render, canShowGroup };
+  // facts for the Home slider cards (13 Nov): days together and the next family date
+  function sliderFacts() {
+    const out = {};
+    try {
+      let member = fam().find(item => item.relatedMemberId && item.anniversaryDate && fam().some(other => other.id === item.relatedMemberId));
+      let other = member ? fam().find(item => item.id === member.relatedMemberId) : null;
+      const shared = !member && typeof FamilyCouple !== "undefined" ? FamilyCouple.virtual() : null;
+      if (shared) { member = shared.member; other = shared.other; }
+      const sharedDay = !shared && typeof FamilyCouple !== "undefined" && FamilyCouple.sharedDate ? FamilyCouple.sharedDate() : "";
+      if (member && sharedDay && sharedDay !== member.anniversaryDate && [member, other].some(item => item?.relationship === "Me")) member = { ...member, anniversaryDate: sharedDay };
+      if (member?.anniversaryDate && other) {
+        const days = daysSinceDate(member.anniversaryDate);
+        const next = Math.ceil(Math.max(days, 1) / 1000) * 1000 === days ? days + 1000 : Math.ceil(Math.max(days, 1) / 1000) * 1000;
+        out.love = { days, left: next - days, next, progress: Math.min(100, Math.max(2, ((days - (next - 1000)) / 1000) * 100)), names: `${first(member.name)} ♥ ${first(other.name)}` };
+      }
+      const item = dateItems()[0];
+      if (item) out.date = { title: item.title || item.short, icon: item.icon || "📅", days: daysUntil(item.date), sub: dayMonth(item.date) };
+    } catch (error) { /* slider simply skips these cards */ }
+    return out;
+  }
+  return { render, canShowGroup, sliderFacts };
 })();
