@@ -445,14 +445,26 @@ const HomeV2 = (() => {
   }
 
   function schedule(d) {
-    const all = (d.agenda.allItems || d.agenda.items || []).filter(item => !item.overdue);
+    // a holiday of several days (same name, consecutive dates) = one row with a range
+    const merged = [];
+    (d.agenda.allItems || d.agenda.items || []).filter(item => !item.overdue).forEach(item => {
+      const last = merged[merged.length - 1];
+      if (item.kind === "holiday" && last && last.kind === "holiday" && last.title === item.title) {
+        const next = new Date(`${last.dateEnd || last.date}T00:00:00`); next.setDate(next.getDate() + 1);
+        if (localDateInput(next) === item.date) { last.dateEnd = item.date; return; }
+      }
+      merged.push({ ...item });
+    });
+    const all = merged;
     const todays = all.filter(item => item.date === d.todayIso);
     const list = (todays.length ? todays : all).slice(0, 4);
     const heading = todays.length ? L("កាលវិភាគថ្ងៃនេះ", "Today's schedule") : L("ខាងមុខ", "Coming up");
     const rows = list.map(item => {
       const kind = kindOf(item);
       const [kmTag, enTag, tone] = TAG[kind];
-      const time = item.date === d.todayIso ? (clock(item.time) || L("ពេញថ្ងៃ", "All day")) : (() => { const date = new Date(`${item.date}T00:00:00`); return `${date.getDate()} ${km() ? KM_MONTHS[date.getMonth()] : date.toLocaleDateString("en-US", { month: "short" })}`; })();
+      const monthOf = date => (km() ? KM_MONTHS[date.getMonth()] : date.toLocaleDateString("en-US", { month: "short" }));
+      const time = item.dateEnd ? (() => { const a = new Date(`${item.date}T00:00:00`), b = new Date(`${item.dateEnd}T00:00:00`); return a.getMonth() === b.getMonth() ? `${a.getDate()}–${b.getDate()} ${monthOf(b)}` : `${a.getDate()} ${monthOf(a)} – ${b.getDate()} ${monthOf(b)}`; })()
+        : item.date === d.todayIso ? (clock(item.time) || L("ពេញថ្ងៃ", "All day")) : (() => { const date = new Date(`${item.date}T00:00:00`); return `${date.getDate()} ${monthOf(date)}`; })();
       const sub = item.amount ? plainMoney(item.amount, item.currency) : (item.categoryLabel || "");
       const ic = { bill: "🧾", family: "👨‍👩‍👧", reminder: "🔔", holiday: "🎉", event: "📅" }[kind] || "📅";
       if (lav()) {
