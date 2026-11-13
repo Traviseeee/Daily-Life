@@ -816,6 +816,7 @@ const App = {
   bindPage(route) {
     if (route === "launcher" && typeof bindLauncher === "function") bindLauncher();
     if (route === "home" && typeof bindHome === "function") bindHome();
+    if (route === "home" && typeof HomeSlider !== "undefined") HomeSlider.bind();
     if (route === "summary" && typeof bindHomeActions === "function") bindHomeActions({ bindProfile: false });
     if (route === "family" && typeof bindFamily === "function") bindFamily();
     if (route === "profile" && typeof MemberProfile !== "undefined") MemberProfile.bind();

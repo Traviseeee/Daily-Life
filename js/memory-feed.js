@@ -1028,5 +1028,5 @@ const MemoryFeed = (() => {
 
   window.addEventListener("hashchange", closeReels);
 
-  return { render, bind, openComposer, openReels, closeReels, familyTeaser, afterFamilyRender, mediaOf, upgradeLegacy, BUCKET };
+  return { render, bind, openComposer, openReels, closeReels, familyTeaser, afterFamilyRender, mediaOf, upgradeLegacy, BUCKET, resolveIn: resolveAll };
 })();

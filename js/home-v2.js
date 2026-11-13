@@ -659,7 +659,8 @@ const HomeV2 = (() => {
     const due = d.due;
     const dueNames = due.slice(0, 2).map(item => item.title).join(" · ");
     const dueHtml = due.length ? `<button type="button" class="hv2-wait" data-ma-home><span class="hv2-count">${due.length}</span><b>${escapeHtml(L(`${dueNames} រង់ចាំឆ្លើយ`, `${dueNames} waiting`))}</b><span class="hv2-pill">${escapeHtml(L("ឆ្លើយ", "Answer"))}</span></button>` : "";
-    return `<section class="hv2-money wc-wrap hv2-soft-wrap hv4-money">${html}${dueHtml}</section>`;
+    const card = `<section class="hv2-money wc-wrap hv2-soft-wrap hv4-money">${html}${dueHtml}</section>`;
+    return typeof HomeSlider !== "undefined" ? HomeSlider.wrap(card) : card;
   }
 
   // "Today" card: focus (tap to open the ticks) · weather · today's / coming events
