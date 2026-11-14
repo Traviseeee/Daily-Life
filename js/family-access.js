@@ -37,7 +37,7 @@ const FamilyAccess = (() => {
   function applyBody() {
     const body = document.body;
     if (!body) return;
-    ["calendar", "money", "bills", "savings", "memories"].forEach(perm => body.classList.toggle(`fa-no-${perm}`, !has(perm)));
+    ["calendar", "money", "bills", "savings", "memories", "gold"].forEach(perm => body.classList.toggle(`fa-no-${perm}`, !has(perm)));
     body.classList.toggle("fa-no-goals", !has("savings"));
     if (joint()) body.classList.remove("fa-no-savings"); // keep the Finance tab reachable for the joint account
     body.classList.toggle("fa-viewer", limited() && access.role === "viewer");

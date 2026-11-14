@@ -378,6 +378,18 @@ html[data-theme="dark"] .hs-jar-body { background: rgba(255,255,255,.06); box-sh
 /* goal card: rocket sky */
 .hs-sky { flex: none; overflow: visible; filter: drop-shadow(0 8px 16px rgba(70,50,170,.22)); }
 .hs-side-big { font-size: 1.35rem !important; color: var(--in-acc); }
+/* goal rocket card: fill the card instead of floating small in the middle */
+.hs-tone-goal .hs-jarbox { gap: clamp(14px, 5vw, 24px); min-height: 0; }
+.hs-tone-goal .hs-sky { width: clamp(128px, 46%, 172px); height: auto; aspect-ratio: 140 / 196; }
+.hs-tone-goal .hs-side { gap: 14px; }
+.hs-tone-goal .hs-jarbox { position: relative; z-index: 1; }
+.hs-tone-goal .hs-deco { z-index: 0; opacity: .5; }
+.hs-tone-goal .hs-side small { font-size: .84rem; }
+.hs-tone-goal .hs-side b { font-size: 1.05rem; }
+.hs-tone-goal .hs-side .hs-side-big { font-size: 1.9rem !important; line-height: 1.05; }
+.hs-tone-goal.hs-jointb .hs-sub { font-size: .84rem; }
+.hs-tone-goal.hs-jointb .hs-go2 { min-height: 44px; font-size: .84rem; padding: 0 18px; }
+
 @media (prefers-reduced-motion: no-preference) {
   .hs-flame { animation: hs-flame .35s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: 50% 0; }
   .hs-rk-bob { animation: hs-bob 2.4s ease-in-out infinite; }

@@ -20,7 +20,8 @@ const FamilyGroup = (() => {
     copy: () => svg('<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/>'),
     send: () => svg('<path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>'),
     userPlus: () => svg('<circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 14 0"/><path d="M19 8v6M16 11h6"/>'),
-    back: () => svg('<path d="m15 18-6-6 6-6"/>')
+    back: () => svg('<path d="m15 18-6-6 6-6"/>'),
+    coin: () => svg('<circle cx="12" cy="12" r="9"/><path d="M15 9.5h-4.2a1.6 1.6 0 0 0 0 3.2h2.4a1.6 1.6 0 0 1 0 3.2H9M12 6.8V9m0 6v2.2"/>')
   };
   const icon = name => (Icons[name] ? Icons[name]() : "");
 
@@ -32,7 +33,8 @@ const FamilyGroup = (() => {
     { key: "myEvents", group: "private", km: "ព្រឹត្តិការណ៍ផ្ទាល់ខ្លួនខ្ញុំ", en: "My own events", short: ["ព្រឹត្តិការណ៍ខ្ញុំ", "My events"], icon: () => icon("calendar") },
     { key: "money", group: "private", km: "លុយ និងចំណាយ", en: "Money & spending", sub: ["មើលបានប៉ុណ្ណោះ មិនអាចកែ", "View only, can't edit"], short: ["លុយ", "Money"], icon: () => icon("wallet") },
     { key: "bills", group: "private", km: "វិក្កយបត្រ និងកម្ចី", en: "Bills & loans", sub: ["មើលបានប៉ុណ្ណោះ", "View only"], short: ["វិក្កយបត្រ", "Bills"], icon: () => icon("bill") },
-    { key: "savings", group: "private", km: "គោលដៅសន្សំ", en: "Savings goals", sub: ["មើលបានប៉ុណ្ណោះ", "View only"], short: ["សន្សំ", "Savings"], icon: () => icon("target") }
+    { key: "savings", group: "private", km: "គោលដៅសន្សំ", en: "Savings goals", sub: ["មើលបានប៉ុណ្ណោះ", "View only"], short: ["សន្សំ", "Savings"], icon: () => icon("target") },
+    { key: "gold", group: "private", km: "មាសសន្សំ", en: "Gold saving", sub: ["ទិញ និងកត់មាសបាន", "Can buy and record gold"], short: ["មាស", "Gold"], icon: IC.coin }
   ];
   const DEFAULT_PERMS = { memories: true, calendar: true, shopping: true };
   const ROLE = { admin: ["អ្នកគ្រប់គ្រង", "Admin"], member: ["សមាជិក", "Member"], viewer: ["អ្នកមើល", "Viewer"] };

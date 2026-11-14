@@ -1612,9 +1612,11 @@ function openSavingsUseModal(saving, preset = "") {
   const available = Math.max(0, startingBalance - reserve);
   const isKm = languageCode() === "km";
   const L = (km, en) => isKm ? km : en;
-  const useOptions = ["spend", "gold", "investment"];
+  // a member may only buy gold when the admin turned "Gold saving" on for her (Family → member)
+  const goldOk = typeof FamilyAccess === "undefined" || FamilyAccess.has("gold");
+  const useOptions = goldOk ? ["spend", "gold", "investment"] : ["spend", "investment"];
   Modal.open({ title: L("ប្រើប្រាក់សន្សំ", "Use savings"), submitText: L("បញ្ជាក់", "Confirm use"), fields: [
-    { name: "useType", label: L("ប្រើសម្រាប់", "Use for"), type: "select", options: useOptions, optionLabels: [L("ចំណាយ", "Spending"), L("ទិញមាស 24K", "Buy 24K gold"), L("វិនិយោគ / ផ្សេងៗ", "Other investment or use")], value: preset === "gold" ? "gold" : "spend" },
+    { name: "useType", label: L("ប្រើសម្រាប់", "Use for"), type: "select", options: useOptions, optionLabels: goldOk ? [L("ចំណាយ", "Spending"), L("ទិញមាស 24K", "Buy 24K gold"), L("វិនិយោគ / ផ្សេងៗ", "Other investment or use")] : [L("ចំណាយ", "Spending"), L("វិនិយោគ / ផ្សេងៗ", "Other investment or use")], value: preset === "gold" && goldOk ? "gold" : "spend" },
     { name: "amount", label: `${L("ចំនួនទឹកប្រាក់", "Amount")} · ${money(available, saving.currency)}`, type: "number", value: available, required: true },
     { name: "fees", label: L("ថ្លៃសេវា", "Purchase fees (optional)"), type: "number", value: "0" },
     { name: "category", label: t("category"), type: "select", options: expenseCategories, value: "Shopping" },
