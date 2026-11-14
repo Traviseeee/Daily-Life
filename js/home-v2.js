@@ -441,7 +441,7 @@ const HomeV2 = (() => {
       ${item('data-hv2-go="#scan"', IC.scan(), "b", L("ស្កេន", "Scan"))}
       ${item('data-action="add-event"', IC.cal(), "c", L("ព្រឹត្តិការណ៍", "Event"))}
       ${item('data-hv2-quick="add-memory"', IC.photo(), "d", L("រូបថត", "Photo"))}
-    </div>`;
+    </div>${typeof SmartSpend !== "undefined" ? SmartSpend.card() : ""}`;
   }
 
   function schedule(d) {

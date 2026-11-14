@@ -290,6 +290,7 @@ const MoneyV2 = (() => {
       ${renderMoneyPeriodBar(range).replace("<strong>ខែ", "<strong>")}
       ${hero(stats, range)}
       ${typeof AccountBalances !== "undefined" ? AccountBalances.render() : ""}
+      ${typeof SmartSpend !== "undefined" ? SmartSpend.section() : ""}
       ${miniGrid(stats, range, waiting)}
       ${waitingList(waiting)}
       ${categories(range)}
