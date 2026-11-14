@@ -378,15 +378,17 @@ html[data-theme="dark"] .hs-jar-body { background: rgba(255,255,255,.06); box-sh
 /* goal card: rocket sky */
 .hs-sky { flex: none; overflow: visible; filter: drop-shadow(0 8px 16px rgba(70,50,170,.22)); }
 .hs-side-big { font-size: 1.35rem !important; color: var(--in-acc); }
-/* goal rocket card: fill the card instead of floating small in the middle */
-.hs-tone-goal .hs-jarbox { gap: clamp(14px, 5vw, 24px); min-height: 0; }
-.hs-tone-goal .hs-sky { width: clamp(128px, 46%, 172px); height: auto; aspect-ratio: 140 / 196; }
-.hs-tone-goal .hs-side { gap: 14px; }
-.hs-tone-goal .hs-jarbox { position: relative; z-index: 1; }
-.hs-tone-goal .hs-deco { z-index: 0; opacity: .5; }
+/* goal rocket card (landscape): wide sky on top, all numbers below it */
+.hs-tone-goal .hs-jarbox { flex-direction: column; align-items: stretch; justify-content: center; gap: 14px; min-height: 0; position: relative; z-index: 1; }
+.hs-tone-goal .hs-sky { width: 100%; flex: none; height: auto; aspect-ratio: 300 / 150; border-radius: 26px; }
+.hs-tone-goal .hs-sky text { font-weight: 700; }
+/* stats grid: one rounded panel, hairlines between cells */
+.hs-tone-goal .hs-side { grid-template-columns: 1fr 1fr; gap: 1px; width: 100%; border-radius: 18px; overflow: hidden; background: rgba(124,108,240,.28); border: 1px solid rgba(124,108,240,.28); }
+.hs-tone-goal .hs-side > span { background: rgba(255,255,255,.78); padding: 10px 14px; display: flex; flex-direction: column; justify-content: center; min-width: 0; }
 .hs-tone-goal .hs-side small { font-size: .84rem; }
-.hs-tone-goal .hs-side b { font-size: 1.05rem; }
-.hs-tone-goal .hs-side .hs-side-big { font-size: 1.9rem !important; line-height: 1.05; }
+.hs-tone-goal .hs-side b { font-size: 1.1rem; }
+.hs-tone-goal .hs-side .hs-side-big { font-size: 1.5rem !important; line-height: 1.05; }
+.hs-tone-goal .hs-deco { z-index: 0; opacity: .5; }
 .hs-tone-goal.hs-jointb .hs-sub { font-size: .84rem; }
 .hs-tone-goal.hs-jointb .hs-go2 { min-height: 44px; font-size: .84rem; padding: 0 18px; }
 
