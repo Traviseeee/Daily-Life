@@ -201,7 +201,7 @@ const InvoiceTool = (() => {
       if (b("[data-iv-paid]")) { markPaid(inv.id); Modal.close(); return; }
       if (b("[data-iv-edit]")) { Modal.close(); setTimeout(() => invoiceForm(inv), 160); return; }
       if (b("[data-iv-copy]")) { Modal.close(); setTimeout(() => invoiceForm({ client: inv.client, clientNote: inv.clientNote, currency: inv.currency, items: inv.items, note: inv.note }), 160); return; }
-      if (b("[data-iv-del]") && window.confirm(L(`លុប ${inv.number}? (ចំណូលដែលបានកត់ នៅដដែល)`, `Delete ${inv.number}? (any income it added stays)`))) { Store.delete("invoices", inv.id); Modal.close(); }
+      if (b("[data-iv-del]")) { Modal.close(); setTimeout(() => Modal.confirm({ title: L("លុប invoice?", "Delete invoice?"), message: L(`លុប ${inv.number}? (ចំណូលដែលបានកត់ នៅដដែល)`, `Delete ${inv.number}? (any income it added stays)`), confirmText: L("លុប", "Delete"), onConfirm: () => { Store.delete("invoices", inv.id); } }), 160); return; }
     });
   }
 

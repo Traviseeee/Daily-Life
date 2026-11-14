@@ -540,7 +540,7 @@ const VehicleTool = (() => {
       if (b("[data-vt-log]")) { const el = b("[data-vt-log]"); const v = find(el.dataset.vtLog); if (v) logForm(v, el.dataset.vtSvc); return; }
       if (b("[data-vt-del]")) {
         const v = find(b("[data-vt-del]").dataset.vtDel);
-        if (v && window.confirm(L(`ដក "${v.name}" ចេញ? ប្រវត្តិថែទាំរបស់វានឹងបាត់ (ចំណាយដែលបានកត់ នៅដដែល)`, `Remove "${v.name}"? Its service log goes too (logged expenses stay).`))) Store.delete("vehicles", v.id);
+        if (v) Modal.confirm({ title: L("ដកចេញ?", "Remove?"), message: L(`ដក "${v.name}" ចេញ? ប្រវត្តិថែទាំរបស់វានឹងបាត់ (ចំណាយដែលបានកត់ នៅដដែល)`, `Remove "${v.name}"? Its service log goes too (logged expenses stay).`), confirmText: L("ដកចេញ", "Remove"), onConfirm: () => { Store.delete("vehicles", v.id); } });
       }
     });
   }
