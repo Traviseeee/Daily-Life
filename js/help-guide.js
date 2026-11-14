@@ -56,6 +56,7 @@ const HelpGuide = (() => {
         <h1 class="page-title page-title-with-icon"><span class="page-title-icon">${typeof Icons !== "undefined" && Icons.help ? Icons.help() : "?"}</span>${L("ជំនួយ", "Help")}</h1>
         <p class="page-subtitle">${L("របៀបប្រើ MYLIFE ជាជំហានខ្លីៗ", "How MYLIFE works, in short steps")}</p>
       </div></div>
+      <button class="hg-tour" type="button" data-nomi-intro-open><i aria-hidden="true">🐱</i><span><b>${esc(L("ដំណើរទស្សនកិច្ចជាមួយ Nomi", "Take the tour with Nomi"))}</b><small>${esc(L("ដើរមើលអេក្រង់ពិត រួមទាំងសាកល្បងសន្សំ · ១ នាទី", "A walk through the real screens, with a savings demo · 1 min"))}</small></span><em aria-hidden="true">›</em></button>
       <input class="hg-search" type="search" id="hgSearch" placeholder="${esc(L("ស្វែងរក៖ ឧ. អញ្ជើញ, សន្សំរួម", "Search: e.g. invite, joint"))}" autocomplete="off">
       <div class="hg-chips" id="hgChips">${GROUPS.map(([id, kh, en], index) => `<button class="hg-chip${index ? "" : " on"}" type="button" data-hg-f="${id}">${esc(L(kh, en))}</button>`).join("")}</div>
       <div class="hg-list" id="hgList">${topics.map((topic, index) => topicHtml(topic, want ? topic.id === want || topic.area === want : index === 0)).join("")}<p class="hg-empty" id="hgEmpty" hidden>${esc(L("រកមិនឃើញ ព្យាយាមពាក្យផ្សេង", "Nothing found. Try another word."))}</p></div>
@@ -83,11 +84,23 @@ const HelpGuide = (() => {
   function mount(route) {
     if (!AREAS_FN()[route]) return;
     const heading = document.querySelector("#app h1");
-    if (!heading || heading.querySelector(".hg-q")) return;
-    const button = document.createElement("button");
-    button.type = "button"; button.className = "hg-q"; button.dataset.hgArea = route; button.textContent = "?";
-    button.setAttribute("aria-label", L("ជំនួយផ្នែកនេះ", "Help for this page"));
-    heading.appendChild(button);
+    if (!heading || heading.querySelector(".hg-q, .hg-demo")) return;
+    // pages with a guided demo get one "!" chip (the demo replaces the "?" sheet; the Help page keeps every topic);
+    // pages without a demo keep the "?" help sheet
+    const hasDemo = typeof AppTour !== "undefined" && AppTour.has(route);
+    if (!hasDemo) {
+      const button = document.createElement("button");
+      button.type = "button"; button.className = "hg-q"; button.dataset.hgArea = route; button.textContent = "?";
+      button.setAttribute("aria-label", L("ជំនួយផ្នែកនេះ", "Help for this page"));
+      heading.appendChild(button);
+    }
+    if (hasDemo) {
+      const demoBtn = document.createElement("button");
+      demoBtn.type = "button"; demoBtn.className = "hg-demo"; demoBtn.dataset.atSection = route;
+      demoBtn.textContent = "!";
+      demoBtn.setAttribute("aria-label", L("សាកល្បងមើលផ្នែកនេះ", "Guided demo of this page")); demoBtn.title = L("សាកល្បងមើល", "Demo");
+      heading.appendChild(demoBtn);
+    }
   }
 
   // Help and Tips have no top bar, so they get their own back arrow

@@ -60,3 +60,17 @@ html[data-theme="dark"] .hg-sheet{background:#2e2956}
 .hg-backbtn span{font-size:1.3rem;line-height:1;margin-top:-2px}
 .hg-backbtn:focus-visible{outline:2px solid #7b68ee;outline-offset:2px}
 html[data-theme="dark"] .hg-backbtn{background:rgba(46,41,86,.75);border-color:rgba(182,168,255,.3);color:#c9bdff}
+
+.hg-tour{display:flex;gap:12px;align-items:center;width:100%;min-height:44px;margin:0 0 12px;padding:12px;border:1px solid var(--hg-line,#e5e1f2);border-radius:22px;background:linear-gradient(135deg,#7b68ee,#a493f5);color:#fff;text-align:left;font:inherit;cursor:pointer}
+.hg-tour i{flex:none;width:46px;height:46px;border-radius:16px;background:rgba(255,255,255,.22);display:grid;place-items:center;font-size:1.5rem;font-style:normal}
+.hg-tour b{display:block;font-size:.95rem}.hg-tour small{display:block;color:rgba(255,255,255,.88);font-size:.76rem;line-height:1.4}
+.hg-tour em{margin-left:auto;font-style:normal;font-weight:800;font-size:1.3rem}
+.hg-tour:focus-visible{outline:2px solid #fff;outline-offset:2px}
+
+/* page-title chips: "?" = help topics, "!" = guided demo. Colour follows the heading, so they read on the purple header and on light pages */
+html:root body:not(#gl) #app :is(.hg-q, .hg-demo) { position: relative; display: inline-grid; place-items: center; vertical-align: middle; width: 28px; height: 28px; min-width: 0 !important; min-height: 0 !important; margin: 0 0 0 8px; padding: 0; border-radius: 50%; color: inherit; font: 800 .86rem/1 Inter, sans-serif; cursor: pointer;
+  background: color-mix(in srgb, currentColor 16%, transparent); border: 1.5px solid color-mix(in srgb, currentColor 45%, transparent); transition: background .18s, transform .18s; }
+html:root body:not(#gl) #app :is(.hg-q, .hg-demo)::before { content: ""; position: absolute; inset: -8px; }
+html:root body:not(#gl) #app :is(.hg-q, .hg-demo):hover { background: color-mix(in srgb, currentColor 28%, transparent); }
+html:root body:not(#gl) #app :is(.hg-q, .hg-demo):active { transform: scale(.92); }
+.hg-q:focus-visible, .hg-demo:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }

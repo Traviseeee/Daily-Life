@@ -50,6 +50,7 @@ const NomiIntro = (() => {
   }
 
   function open() {
+    if (typeof AppTour !== "undefined") { AppTour.start(); return; } // the real spotlight tour replaces the text slides
     if (shown) return;
     const root = document.getElementById("modalRoot");
     if (!root) return;
@@ -97,6 +98,7 @@ const NomiIntro = (() => {
   }
 
   function init() {
+    if (typeof AppTour !== "undefined") AppTour.init();
     document.addEventListener("click", event => {
       if (event.target.closest("[data-nomi-intro-open]")) { event.preventDefault(); open(); return; }
       if (event.target.closest("[data-ni-close], [data-ni-skip]")) { finish(); return; }
@@ -129,5 +131,5 @@ const NomiIntro = (() => {
     });
   }
 
-  return { init, open, startAfterLogin, isOpen: () => shown };
+  return { init, open, startAfterLogin, isOpen: () => shown || (typeof AppTour !== "undefined" && AppTour.isOpen()) };
 })();

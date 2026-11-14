@@ -1,0 +1,46 @@
+/* AppTour (first-run spotlight tour). Card is always light so it reads on every theme. */
+#atLayer { position: fixed; inset: 0; z-index: 10020; }
+#atLayer .at-shade { position: absolute; inset: 0; background: transparent; }
+#atLayer.is-center .at-shade { background: rgba(26, 22, 48, .62); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+#atLayer .at-hole { position: absolute; border-radius: 22px; pointer-events: none; box-shadow: 0 0 0 9999px rgba(26, 22, 48, .62), 0 0 0 3px #fff, 0 0 26px 6px rgba(160, 140, 255, .85); transition: top .32s cubic-bezier(.2,.8,.2,1), left .32s cubic-bezier(.2,.8,.2,1), width .32s cubic-bezier(.2,.8,.2,1), height .32s cubic-bezier(.2,.8,.2,1); animation: at-pulse 2s ease-in-out infinite; }
+#atLayer .at-hole[hidden] { display: none; }
+#atLayer .at-card { position: absolute; left: max(12px, env(safe-area-inset-left)); right: max(12px, env(safe-area-inset-right)); max-width: 440px; margin: 0 auto; padding: 18px 20px 16px; border-radius: 26px; border: 1px solid rgba(255,255,255,.8); color: #252342; background: linear-gradient(160deg, #fff 10%, #f6f3ff 100%); box-shadow: 0 24px 70px rgba(28, 21, 75, .38); outline: none; animation: at-rise .3s cubic-bezier(.2,.8,.2,1) both; }
+#atLayer.is-center .at-card { top: 50%; transform: translateY(-50%); text-align: center; }
+#atLayer.is-center .at-mascot { margin: 0 auto 4px; width: 104px; height: 104px; }
+#atLayer.is-center .at-actions { flex-direction: row; }
+#atLayer.is-busy .at-card { opacity: .0; }
+.at-mascot { display: block; float: left; width: 56px; height: 56px; margin: 0 12px 4px 0; animation: at-bob 3s ease-in-out infinite; }
+.at-mascot .hv2-buddy { width: 100%; height: 100%; }
+.at-step { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: #6c668a; font-size: .68rem; font-weight: 800; letter-spacing: .12em; min-height: 24px; }
+.at-step b { padding: 4px 9px; border-radius: 99px; color: #6554ba; background: #ebe7ff; letter-spacing: .03em; }
+.at-card h2 { margin: 6px 0 0; color: #292447; font-size: 1.14rem; font-weight: 800; line-height: 1.3; }
+.at-card > p { margin: 6px 0 0; color: #5b5775; font-size: .92rem; line-height: 1.6; clear: both; }
+.at-dots { display: flex; justify-content: center; gap: 6px; margin: 12px 0 10px; }
+.at-dots i { width: 6px; height: 6px; border-radius: 99px; background: #d8d4e8; transition: width .2s, background .2s; }
+.at-dots i.is-on { width: 20px; background: #7c6cf0; }
+.at-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.at-nav { display: flex; gap: 8px; }
+.at-skip, .at-back, .at-next, .at-demo-add { min-height: 44px; border: 0; border-radius: 14px; font: inherit; font-weight: 750; cursor: pointer; }
+.at-skip { padding: 0 12px; color: #7a7592; background: transparent; }
+.at-back { padding: 0 16px; color: #5a4fb0; background: #efecff; }
+.at-next { padding: 0 20px; color: #fff; background: linear-gradient(135deg, #8b7cf6, #6c5ce0); box-shadow: 0 8px 18px rgba(108, 92, 224, .32); }
+.at-demo { margin: 12px 0 0; padding: 10px 12px; border-radius: 18px; background: #fff; border: 1px solid #e6e0ff; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.at-demo-row { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.at-jar { width: 46px; height: 56px; flex: none; }
+.at-water { transition: y .5s ease, height .5s ease; }
+.at-demo-amt { display: flex; flex-direction: column; min-width: 0; }
+.at-demo-amt b { font-size: 1.35rem; color: #1f1b3a; line-height: 1.1; }
+.at-demo-amt span { color: #7a7592; font-size: .8rem; }
+.at-demo-tag { margin-top: 3px; font-style: normal; font-size: .7rem; font-weight: 750; color: #1f8f69; background: #e3f7ee; padding: 2px 8px; border-radius: 99px; width: fit-content; }
+.at-demo-add { padding: 0 16px; color: #fff; background: #25a37a; }
+.at-demo-add:disabled { background: #b9e3d3; color: #3b7a62; cursor: default; }
+.at-demo.is-bump .at-jar { animation: at-pop .45s ease; }
+.at-demo.is-full .at-jar { animation: at-pop .6s ease 2; }
+body.at-open { overflow: hidden; }
+@keyframes at-rise { from { opacity: 0; transform: translateY(14px) scale(.98); } to { opacity: 1; transform: none; } }
+#atLayer.is-center .at-card { animation-name: at-rise-c; }
+@keyframes at-rise-c { from { opacity: 0; transform: translateY(-46%) scale(.98); } to { opacity: 1; transform: translateY(-50%); } }
+@keyframes at-pulse { 50% { box-shadow: 0 0 0 9999px rgba(26, 22, 48, .62), 0 0 0 3px #fff, 0 0 36px 10px rgba(160, 140, 255, .95); } }
+@keyframes at-bob { 50% { transform: translateY(-3px); } }
+@keyframes at-pop { 40% { transform: scale(1.18) rotate(-4deg); } }
+@media (prefers-reduced-motion: reduce) { #atLayer *, #atLayer .at-hole { animation: none !important; transition: none !important; } }
