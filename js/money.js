@@ -1613,7 +1613,7 @@ function openSavingsUseModal(saving, preset = "") {
   const isKm = languageCode() === "km";
   const L = (km, en) => isKm ? km : en;
   // a member may only buy gold when the admin turned "Gold saving" on for her (Family → member)
-  const goldOk = typeof FamilyAccess === "undefined" || FamilyAccess.has("gold");
+  const goldOk = true; // gold buying is open to every member (no permission switch)
   const useOptions = goldOk ? ["spend", "gold", "investment"] : ["spend", "investment"];
   Modal.open({ title: L("ប្រើប្រាក់សន្សំ", "Use savings"), submitText: L("បញ្ជាក់", "Confirm use"), fields: [
     { name: "useType", label: L("ប្រើសម្រាប់", "Use for"), type: "select", options: useOptions, optionLabels: goldOk ? [L("ចំណាយ", "Spending"), L("ទិញមាស 24K", "Buy 24K gold"), L("វិនិយោគ / ផ្សេងៗ", "Other investment or use")] : [L("ចំណាយ", "Spending"), L("វិនិយោគ / ផ្សេងៗ", "Other investment or use")], value: preset === "gold" && goldOk ? "gold" : "spend" },

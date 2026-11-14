@@ -139,8 +139,6 @@ body.fa-no-calendar a[href^="#calendar"], body.fa-no-calendar [data-route="calen
 body.fa-no-money a[href^="#summary"], body.fa-no-money [data-route="summary"],
 body.fa-no-money.fa-no-bills.fa-no-savings a[href="#money"], body.fa-no-money.fa-no-bills.fa-no-savings [data-route="money"],
 body.fa-no-goals a[href^="#goals"], body.fa-no-goals [data-route="goals"] { display: none !important; }
-/* "Gold saving" off for this member: no gold card, no buy / sell buttons */
-body.fa-no-gold .sv-gold-portfolio, body.fa-no-gold [data-buy-gold], body.fa-no-gold [data-sell-gold] { display: none !important; }
 html:root:root body.fa-no-calendar #mobileNav.mobile-nav .nav-item[data-route="calendar"],
 html:root:root body.fa-no-money #mobileNav.mobile-nav .nav-item[data-route="summary"],
 html:root:root body.fa-no-money.fa-no-bills.fa-no-savings #mobileNav.mobile-nav .nav-item[data-route="money"],

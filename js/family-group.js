@@ -33,8 +33,7 @@ const FamilyGroup = (() => {
     { key: "myEvents", group: "private", km: "ព្រឹត្តិការណ៍ផ្ទាល់ខ្លួនខ្ញុំ", en: "My own events", short: ["ព្រឹត្តិការណ៍ខ្ញុំ", "My events"], icon: () => icon("calendar") },
     { key: "money", group: "private", km: "លុយ និងចំណាយ", en: "Money & spending", sub: ["មើលបានប៉ុណ្ណោះ មិនអាចកែ", "View only, can't edit"], short: ["លុយ", "Money"], icon: () => icon("wallet") },
     { key: "bills", group: "private", km: "វិក្កយបត្រ និងកម្ចី", en: "Bills & loans", sub: ["មើលបានប៉ុណ្ណោះ", "View only"], short: ["វិក្កយបត្រ", "Bills"], icon: () => icon("bill") },
-    { key: "savings", group: "private", km: "គោលដៅសន្សំ", en: "Savings goals", sub: ["មើលបានប៉ុណ្ណោះ", "View only"], short: ["សន្សំ", "Savings"], icon: () => icon("target") },
-    { key: "gold", group: "private", km: "មាសសន្សំ", en: "Gold saving", sub: ["ទិញ និងកត់មាសបាន", "Can buy and record gold"], short: ["មាស", "Gold"], icon: IC.coin }
+    { key: "savings", group: "private", km: "គោលដៅសន្សំ", en: "Savings goals", sub: ["មើលបានប៉ុណ្ណោះ", "View only"], short: ["សន្សំ", "Savings"], icon: () => icon("target") }
   ];
   const DEFAULT_PERMS = { memories: true, calendar: true, shopping: true };
   const ROLE = { admin: ["អ្នកគ្រប់គ្រង", "Admin"], member: ["សមាជិក", "Member"], viewer: ["អ្នកមើល", "Viewer"] };
