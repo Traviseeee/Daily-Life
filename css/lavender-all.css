@@ -1722,3 +1722,70 @@ html:root:not([data-theme="light"]) body:has(#app .fv2-page) .fv2-quick-card {
   @keyframes nmcFlameIn { from { transform: scale(.9, .92); } to { transform: scale(1.06, 1.1); } }
   @media (prefers-reduced-motion: reduce) { .nmc-fire .nmc-flame, .nmc-flame .f-mid, .nmc-flame .f-in { animation: none; } }
 }
+
+/* Savings page cards, big art / small text (14 Nov) */
+@media all {
+  .sv-total .sv-trow { display: flex; align-items: center; gap: 12px; position: relative; }
+  .sv-total .sv-tmain { min-width: 0; }
+  .sv-art { flex: none; display: block; overflow: visible; }
+  .sv-card.sv-has-art .mt-head .mt-ic { display: none; }
+  .sv-artrow { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .sv-artrow .sv-amt { flex: 1; min-width: 0; }
+  .svg-hero .svg-nomi { flex-basis: 68px; width: 68px; height: 64px; }
+  .svg-hero .svg-main strong.is-worth, .svg-hero .svg-main strong.is-worth * { font-size: 1.9rem; font-weight: 800; }
+  .svg-hero .svg-main .svg-chi { color: #7a7698; font-weight: 700; }
+  html:root:not([data-theme="light"]) .svg-hero .svg-main .svg-chi { color: #e6dcc4; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .sv-art { animation: sv-bob 3s ease-in-out infinite; }
+}
+@keyframes sv-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+
+/* Savings account cards: art left spans title + amount, nothing else crowds it (14 Nov) */
+@media all {
+  .sv-card.sv-has-art { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 12px; row-gap: 8px; align-items: center; }
+  .sv-card.sv-has-art > * { grid-column: 1 / -1; min-width: 0; }
+  .sv-card.sv-has-art > .sv-artrow { display: contents; }
+  .sv-card.sv-has-art > .sv-artrow > .sv-art { grid-column: 1; grid-row: 1 / span 2; align-self: center; }
+  .sv-card.sv-has-art > .mt-head { grid-column: 2; grid-row: 1; align-self: end; }
+  .sv-card.sv-has-art > .sv-artrow > .sv-amt { grid-column: 2; grid-row: 2; align-self: start; }
+  .sv-card.sv-has-art .sv-amt b { font-size: 1.5rem; }
+  .sv-card.sv-has-art .sv-who, .sv-card.sv-has-art .sv-tip { margin: 0 2px; }
+}
+@media all { .sv-card.sv-has-art .mt-head .sv-title small { white-space: normal; overflow: visible; } }
+
+/* savings info boxes (14 Nov): deadline / monthly / gold, or me / partner saved */
+@media all {
+  .sv-info { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; margin-top: 8px; }
+  .sv-info > div { display: grid; gap: 1px; min-width: 0; padding: 8px 10px; border-radius: 12px; background: rgba(224,72,143,.08); }
+  .sv-info.is-joint > div { background: rgba(31,157,115,.09); }
+  .sv-info.is-joint > div:first-child { box-shadow: inset 3px 0 0 #7b68ee; }
+  .sv-info.is-joint > div:nth-child(2) { box-shadow: inset 3px 0 0 #ff9ec6; }
+  .sv-info small { color: var(--fv-ink2, #7a7698); font-size: .68rem; font-weight: 600; }
+  .sv-info b { font-size: .85rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+  html:root:not([data-theme="light"]) .sv-info > div { background: rgba(255,255,255,.07); }
+}
+
+/* tinted savings cards: pink for a goal, green for a joint account (14 Nov) */
+@media all {
+  .sv-card.sv-has-art { row-gap: 2px; }
+  .sv-card.sv-has-art > * { margin-block: 0; }
+  .sv-card.sv-has-art > .sv-bar, .sv-card.sv-has-art > .sv-info, .sv-card.sv-has-art > .sv-tip, .sv-card.sv-has-art > .sv-actions { margin-top: 8px; }
+  .sv-card.sv-has-art:not(.is-joint) .sv-bar { background: rgba(224,72,143,.16); }
+  .sv-card.sv-has-art:not(.is-joint) .sv-bar i { background: linear-gradient(90deg, #ff9ec6, #e0488f); }
+  .sv-card.sv-has-art.is-joint .sv-bar { background: rgba(31,157,115,.16); }
+}
+
+/* savings art motion: water rises on load, wave on top, coins float, a coin drops in (14 Nov) */
+@media (prefers-reduced-motion: no-preference) {
+  .sv-fill { animation: sv-rise 1.3s cubic-bezier(.2,.8,.2,1) both; }
+  .sv-wave { animation: sv-wave 2.4s linear infinite; }
+  .sv-cn { animation: sv-cbob 2.6s ease-in-out infinite; }
+  .sv-cn.c1 { animation-delay: -.9s; }
+  .sv-cn.c2 { animation-delay: -1.7s; }
+  .sv-drop { animation: sv-drop 2.8s ease-in infinite; }
+}
+@keyframes sv-rise { from { transform: translateY(46px); } to { transform: translateY(0); } }
+@keyframes sv-wave { to { transform: translateX(40px); } }
+@keyframes sv-cbob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+@keyframes sv-drop { 0% { transform: translateY(-6px); opacity: 0; } 18% { opacity: 1; } 70% { transform: translateY(10px); opacity: 1; } 100% { transform: translateY(14px); opacity: 0; } }
