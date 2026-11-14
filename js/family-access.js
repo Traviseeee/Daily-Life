@@ -8,10 +8,9 @@ const FamilyAccess = (() => {
   const KEY = "mylife:family-access";
   // section → permission it needs
   const RULES = [
-    { perm: "calendar", match: route => route === "calendar" },
-    { perm: "bills", match: (route, param) => route === "money" && ["bills", "loans"].includes(param) },
-    { perm: "savings", match: (route, param) => route === "goals" || (route === "money" && param === "savings") },
-    { perm: "money", match: (route, param) => route === "summary" || route === "reports" || (route === "money" && !["bills", "loans", "savings"].includes(param)) }
+    { perm: "calendar", match: route => route === "calendar" }
+    // Money / Bills / Savings / Goals are NOT locked any more: a member always uses her OWN money pages in full.
+    // Those three switches now only decide whether she may peek at the admin's numbers (js/family-share.js).
   ];
   const km = () => (typeof languageCode === "function" ? languageCode() : "km") === "km";
   let access = read();
@@ -37,9 +36,7 @@ const FamilyAccess = (() => {
   function applyBody() {
     const body = document.body;
     if (!body) return;
-    ["calendar", "money", "bills", "savings", "memories"].forEach(perm => body.classList.toggle(`fa-no-${perm}`, !has(perm)));
-    body.classList.toggle("fa-no-goals", !has("savings"));
-    if (joint()) body.classList.remove("fa-no-savings"); // keep the Finance tab reachable for the joint account
+    ["calendar", "memories"].forEach(perm => body.classList.toggle(`fa-no-${perm}`, !has(perm)));
     body.classList.toggle("fa-viewer", limited() && access.role === "viewer");
   }
   function lockedHtml(route) {
