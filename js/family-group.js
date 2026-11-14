@@ -31,9 +31,9 @@ const FamilyGroup = (() => {
     { key: "calendar", group: "shared", km: "Calendar គ្រួសារ", en: "Family calendar", short: ["Calendar", "Calendar"], icon: () => icon("calendar") },
     { key: "shopping", group: "shared", km: "បញ្ជីទិញឥវ៉ាន់", en: "Shopping list", short: ["ទិញឥវ៉ាន់", "Shopping"], icon: IC.cart },
     { key: "myEvents", group: "private", km: "ព្រឹត្តិការណ៍ផ្ទាល់ខ្លួនខ្ញុំ", en: "My own events", short: ["ព្រឹត្តិការណ៍ខ្ញុំ", "My events"], icon: () => icon("calendar") },
-    { key: "money", group: "private", km: "លុយ និងចំណាយ", en: "Money & spending", sub: ["មើលបានប៉ុណ្ណោះ មិនអាចកែ", "View only, can't edit"], short: ["លុយ", "Money"], icon: () => icon("wallet") },
-    { key: "bills", group: "private", km: "វិក្កយបត្រ និងកម្ចី", en: "Bills & loans", sub: ["មើលបានប៉ុណ្ណោះ", "View only"], short: ["វិក្កយបត្រ", "Bills"], icon: () => icon("bill") },
-    { key: "savings", group: "private", km: "គោលដៅសន្សំ", en: "Savings goals", sub: ["មើលបានប៉ុណ្ណោះ", "View only"], short: ["សន្សំ", "Savings"], icon: () => icon("target") }
+    { key: "money", group: "private", peek: true, km: "លុយ និងចំណាយ", en: "Money & spending", sub: ["មើលបានប៉ុណ្ណោះ មិនអាចកែ", "View only, can't edit"], short: ["លុយ", "Money"], icon: () => icon("wallet") },
+    { key: "bills", group: "private", peek: true, km: "វិក្កយបត្រ និងកម្ចី", en: "Bills & loans", sub: ["មើលបានប៉ុណ្ណោះ", "View only"], short: ["វិក្កយបត្រ", "Bills"], icon: () => icon("bill") },
+    { key: "savings", group: "private", peek: true, km: "គោលដៅសន្សំ", en: "Savings goals", sub: ["មើលបានប៉ុណ្ណោះ", "View only"], short: ["សន្សំ", "Savings"], icon: () => icon("target") }
   ];
   const DEFAULT_PERMS = { memories: true, calendar: true, shopping: true };
   const ROLE = { admin: ["អ្នកគ្រប់គ្រង", "Admin"], member: ["សមាជិក", "Member"], viewer: ["អ្នកមើល", "Viewer"] };
@@ -487,11 +487,13 @@ const FamilyGroup = (() => {
       ${editable ? `
         <h3 class="fg-label">${escapeHtml(L("តួនាទី", "Role"))}</h3>
         <div class="fg-pills">${["member", "viewer"].map(role => `<button type="button" class="fg-pill ${member.role === role ? "is-on" : ""}" data-fg-role="${role}">${escapeHtml(L(...ROLE[role]))}<small>${escapeHtml(role === "member" ? L("post, ❤️, បញ្ចេញមតិ", "post, ❤️, comment") : L("មើល និង ❤️ ប៉ុណ្ណោះ", "view and ❤️ only"))}</small></button>`).join("")}</div>
-        <div class="fg-perm fg-perm-all"><span class="fg-perm-icon">✨</span><span class="fg-perm-text"><strong>${escapeHtml(L("អនុញ្ញាតទាំងអស់ · ដូចគ្រួសារ", "Allow everything · like family"))}</strong><small>${escapeHtml(L("ឃើញអ្វីៗដូចខ្ញុំ (មើលបានប៉ុណ្ណោះ) · បិទ = ផ្នែកឯកជនទាំងអស់បិទ", "Sees what I see (view only) · off = every private part off"))}</small></span>${toggle("data-fg-all", PERMS.every(perm => perms[perm.key]), L("អនុញ្ញាតទាំងអស់", "Allow everything"))}</div>
+        <div class="fg-perm fg-perm-all"><span class="fg-perm-icon">✨</span><span class="fg-perm-text"><strong>${escapeHtml(L("អនុញ្ញាតទាំងអស់ · ដូចគ្រួសារ", "Allow everything · like family"))}</strong><small>${escapeHtml(L("គ្រប់ផ្នែក លើកលែងលេខលុយរបស់ខ្ញុំ (ដាច់ដោយឡែកខាងក្រោម) · បិទ = ផ្នែកឯកជនទាំងអស់បិទ", "Every part except my money numbers (separate below) · off = every private part off"))}</small></span>${toggle("data-fg-all", PERMS.filter(perm => !perm.peek).every(perm => perms[perm.key]), L("អនុញ្ញាតទាំងអស់", "Allow everything"))}</div>
         <h3 class="fg-label">${escapeHtml(L("ឲ្យមើល និងប្រើ", "Can see and use"))}</h3>
         ${PERMS.filter(perm => perm.group === "shared").map(perm => permRow(perm, perms[perm.key], "data-fg-perm")).join("")}
         <h3 class="fg-label">${escapeHtml(L("ឯកជន (បិទជាស្រេច)", "Private (off by default)"))}</h3>
-        ${PERMS.filter(perm => perm.group === "private").map(perm => permRow(perm, perms[perm.key], "data-fg-perm")).join("")}
+        ${PERMS.filter(perm => perm.group === "private" && !perm.peek).map(perm => permRow(perm, perms[perm.key], "data-fg-perm")).join("")}
+        <h3 class="fg-label">${escapeHtml(L("មើលលេខរបស់ខ្ញុំ (មើលបានប៉ុណ្ណោះ)", "See MY numbers (view only)"))}</h3>
+        ${PERMS.filter(perm => perm.peek).map(perm => permRow(perm, perms[perm.key], "data-fg-perm")).join("")}
         ${LATER_NOTE()}
         <button type="button" class="fg-danger" data-fg-remove>${escapeHtml(L("ដកចេញពីគ្រួសារ", "Remove from family"))}</button>` : ""}
       ${self && !isOwner(member) ? `<button type="button" class="fg-danger" data-fg-leave>${escapeHtml(L("ចាកចេញពីគ្រួសារ", "Leave this family"))}</button>` : ""}
@@ -512,7 +514,7 @@ const FamilyGroup = (() => {
     }));
     // what the switches say right now (the sheet is the source while it is open)
     const current = () => Object.fromEntries([...node.querySelectorAll("[data-fg-perm]")].map(input => [input.dataset.fgPerm, input.checked]));
-    const syncAll = () => { const all = node.querySelector("[data-fg-all]"); if (all) all.checked = PERMS.every(perm => current()[perm.key]); };
+    const syncAll = () => { const all = node.querySelector("[data-fg-all]"); if (all) all.checked = PERMS.filter(perm => !perm.peek).every(perm => current()[perm.key]); };
     node.querySelectorAll("[data-fg-perm]").forEach(input => input.addEventListener("change", async () => {
       const next = { ...(member.permissions || {}), ...current() };
       if (!(await save({ permissions: next }))) input.checked = !input.checked;
@@ -524,7 +526,7 @@ const FamilyGroup = (() => {
       const on = event.currentTarget.checked;
       const before = current();
       const next = { ...(member.permissions || {}), ...before };
-      PERMS.forEach(perm => { if (on) next[perm.key] = true; else if (perm.group === "private") next[perm.key] = false; });
+      PERMS.forEach(perm => { if (on) { if (!perm.peek) next[perm.key] = true; } else if (perm.group === "private") next[perm.key] = false; }); // "everything" never opens my money numbers: that has its own 3 switches below
       if (await save({ permissions: next })) {
         node.querySelectorAll("[data-fg-perm]").forEach(input => { input.checked = Boolean(next[input.dataset.fgPerm]); });
         if (typeof FamilyShare !== "undefined") FamilyShare.load(true);
