@@ -64,3 +64,12 @@ html[data-theme="dark"] .ss{--ss-card:#2e2956;--ss-ink:#f4f2ff;--ss-sub:#bdb7e6;
 .ss-sbtn svg{flex:none}
 .ss-sbtn:active,.ss-wide:active{transform:scale(.98)}
 @media (prefers-reduced-motion:reduce){.ss-sbtn:active,.ss-wide:active{transform:none}}
+
+/* daily spend is the hero, today + month are the small pair under it */
+.ss-total strong em{font-style:normal;font-size:.95rem;font-weight:700;color:var(--ss-sub);margin-left:4px}
+.ss-total strong{font-size:2.1rem}
+.ss-two{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--ss-line);border-radius:16px;background:var(--ss-soft)}
+.ss-two>div{display:grid;gap:2px;padding:10px 14px;min-width:0}
+.ss-two>div+div{border-left:1px solid var(--ss-line)}
+.ss-two small{color:var(--ss-sub);font-size:.75rem}
+.ss-two b{font-size:1rem;font-weight:800;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}

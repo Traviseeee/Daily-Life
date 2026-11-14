@@ -134,6 +134,8 @@ const SmartSpend = (() => {
     });
   }
 
+  const todayTotal = () => (appData.expenses || []).filter(e => e.date === iso(new Date())).reduce((t, e) => t + amt(e), 0);
+
   function monthSummary() {
     const ym = iso(new Date()).slice(0, 7);
     const list = (appData.expenses || []).filter(e => String(e.date).startsWith(ym));
@@ -162,8 +164,9 @@ const SmartSpend = (() => {
     const pct = s.total ? Math.round((s.real / s.total) * 100) : 100;
     const bar = [["real", s.real], ["est", s.est], ["miss", s.miss]].filter(p => p[1] > 0).map(p => `<i class="ss-b-${p[0]}" style="width:${(p[1] / s.total) * 100}%"></i>`).join("");
     const pill = (cls, text) => `<span class="ss-pill"><i class="ss-b-${cls}"></i>${escapeHtml(text)}</span>`;
-    return `<section class="fv2-section ss ss-sec"><div class="ss-top"><span class="ss-cat" aria-hidden="true">${nomi}</span><span class="ss-tx"><b>${escapeHtml(L("ចំណាយប្រចាំថ្ងៃឆ្លាត", "Smart daily spending"))}</b><small>${escapeHtml(L(`ធម្មតា ${money(daily())}/ថ្ងៃ${auto() ? " · មធ្យម 7 ថ្ងៃ" : ""}`, `Usual ${money(daily())}/day${auto() ? " · 7-day average" : ""}`))}</small></span></div>
-      <div class="ss-total"><small>${escapeHtml(L("ចំណាយខែនេះ", "Spent this month"))}</small><strong>${escapeHtml(money(s.total))}</strong></div>
+    return `<section class="fv2-section ss ss-sec"><div class="ss-top"><span class="ss-cat" aria-hidden="true">${nomi}</span><span class="ss-tx"><b>${escapeHtml(L("ចំណាយប្រចាំថ្ងៃឆ្លាត", "Smart daily spending"))}</b><small>${escapeHtml(L(`ប៉ាន់ស្មានថ្ងៃភ្លេចកត់ · ${cfg().pay === "cash" ? "សាច់ប្រាក់" : "ABA"}`, `Estimates forgotten days · ${cfg().pay === "cash" ? "cash" : "ABA"}`))}</small></span></div>
+      <div class="ss-total"><small>${escapeHtml(auto() ? L("ចំណាយប្រចាំថ្ងៃ · មធ្យម 7 ថ្ងៃចុងក្រោយ", "Daily spend · 7-day average") : L("ចំណាយប្រចាំថ្ងៃ · កំណត់ដោយខ្លួនឯង", "Daily spend · set by you"))}</small><strong>${escapeHtml(money(daily()))}<em>${escapeHtml(L("/ថ្ងៃ", "/day"))}</em></strong></div>
+      <div class="ss-two"><div><small>${escapeHtml(L("ថ្ងៃនេះ", "Today"))}</small><b>${escapeHtml(money(todayTotal()))}</b></div><div><small>${escapeHtml(L("ខែនេះ", "This month"))}</small><b>${escapeHtml(money(s.total))}</b></div></div>
       <div class="ss-bar">${bar}</div>
       <div class="ss-pills">${pill("real", L(`កត់ពិត ${pct}%`, `Logged ${pct}%`))}${s.est > 0 ? pill("est", L(`ប៉ាន់ស្មាន ${money(s.est)}`, `Estimated ${money(s.est)}`)) : ""}${s.miss > 0 ? pill("miss", L(`មិនបានកត់ ${money(s.miss)}`, `Unlogged ${money(s.miss)}`)) : ""}</div>
       <button type="button" class="ss-go ss-wide" data-ss="recon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10l9-6 9 6"/><path d="M5 10v8M9.5 10v8M14.5 10v8M19 10v8"/><path d="M3 21h18"/></svg><span>${escapeHtml(L("ផ្ទៀងផ្ទាត់ ABA ចុងខែ", "Match ABA (month end)"))}</span></button>
