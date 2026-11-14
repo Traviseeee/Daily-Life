@@ -230,6 +230,8 @@ html:root[data-theme="light"] .hv2:not(:has(.hv4)) .hv2-quick.is-5 { grid-templa
 .hs-slide { flex: 0 0 100%; min-width: 0; scroll-snap-align: center; scroll-snap-stop: always; }
 .hs-money > .hv4-money { height: 100%; }
 .hs-photo { position: relative; display: block; overflow: hidden; border-radius: 26px; background: linear-gradient(150deg, #b6a8ff, #6a58e0); box-shadow: var(--h4-sh, 0 10px 26px rgba(70,50,170,.13)); color: #fff; text-decoration: none; -webkit-tap-highlight-color: transparent; }
+/* .hv2 a { color: inherit } (home-v2) was beating .hs-photo and turned the photo-card text navy */
+.hv2 .hs-photo, .hv2 a.hs-photo { color: #fff; }
 .hs-photo > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .hs-photo.is-missing > img { display: none; }
 .hs-shade { position: absolute; inset: auto 0 0 0; height: 62%; background: linear-gradient(180deg, transparent, rgba(16, 10, 40, .8)); pointer-events: none; }
