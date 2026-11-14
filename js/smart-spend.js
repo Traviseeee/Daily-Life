@@ -145,6 +145,24 @@ const SmartSpend = (() => {
     return { real, est, miss, total: real + est + miss };
   }
 
+
+  // Home slider slide (same template as the other info cards): usual per day, today / month / usual, one-tap chips
+  function slide() {
+    if (!on()) return "";
+    fill();
+    const d = daily(), t = todayEntry(), s = monthSummary();
+    const stats = `<span class="hs-stats"><span><small>${escapeHtml(L("ថ្ងៃនេះ", "Today"))}</small><b>${escapeHtml(money(todayTotal()))}</b></span><span><small>${escapeHtml(L("ខែនេះ", "This month"))}</small><b>${escapeHtml(money(s.total))}</b></span><span><small>${escapeHtml(L("កត់ពិត", "Logged"))}</small><b>${s.total ? Math.round((s.real / s.total) * 100) : 100}%</b></span></span>`;
+    const nomi = (() => { try { return HomeV2.role("money", "happy"); } catch (error) { return ""; } })();
+    const act = t
+      ? `<span class="hs-done"><b>${escapeHtml(L(`ថ្ងៃនេះកត់ ${money(t.amount)} ✓`, `Today logged ${money(t.amount)} ✓`))}</b><button type="button" class="hs-chip" data-ss="edit-today">${escapeHtml(L("កែ", "Edit"))}</button></span>`
+      : `<span class="hs-chips"><button type="button" class="hs-chip is-main" data-ss="pick" data-v="${d}">${escapeHtml(L("ធម្មតា", "Usual"))} ${escapeHtml(money(d))}</button><button type="button" class="hs-chip" data-ss="pick" data-v="0">${escapeHtml(L("មិនបានចាយ", "None"))}</button><button type="button" class="hs-chip" data-ss="custom">${escapeHtml(L("ផ្សេង", "Other"))}</button></span>`;
+    return `<div class="hs-slide hs-info hs-tone-spend" data-hs-kind="spend">
+      <span class="hs-deco" aria-hidden="true"><i>🪙</i><i>✨</i><i>💸</i></span><span class="hs-top"><span class="hs-lab">💸 ${escapeHtml(L("ចំណាយប្រចាំថ្ងៃ", "Daily spend"))}</span></span>
+      <span class="hs-row"><span class="hs-main"><b class="hs-big">${escapeHtml(money(d))}<small>${escapeHtml(L("/ថ្ងៃ", "/day"))}</small></b><span class="hs-sub">${escapeHtml(auto() ? L("មធ្យម 7 ថ្ងៃចុងក្រោយ", "7-day average") : L("កំណត់ដោយខ្លួនឯង", "Set by you"))}</span></span><span class="hs-nomi" aria-hidden="true">${nomi}</span></span>
+      ${stats}${act}
+    </div>`;
+  }
+
   function card() {
     if (!on()) return "";
     fill();
@@ -185,5 +203,5 @@ const SmartSpend = (() => {
     else if (act === "recon") reconcile();
   });
 
-  return { card, section, fill, suggest, monthSummary };
+  return { card, slide, section, fill, suggest, monthSummary };
 })();

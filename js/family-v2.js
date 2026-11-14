@@ -496,7 +496,7 @@ const FamilyV2 = (() => {
       if (member?.anniversaryDate && other) {
         const days = daysSinceDate(member.anniversaryDate);
         const next = Math.ceil(Math.max(days, 1) / 1000) * 1000 === days ? days + 1000 : Math.ceil(Math.max(days, 1) / 1000) * 1000;
-        out.love = { days, left: next - days, next, progress: Math.min(100, Math.max(2, ((days - (next - 1000)) / 1000) * 100)), names: `${first(member.name)} ♥ ${first(other.name)}` };
+        out.love = { days, left: next - days, next, progress: Math.min(100, Math.max(2, ((days - (next - 1000)) / 1000) * 100)), names: `${first(member.name)} ♥ ${first(other.name)}`, faces: [member, other].map(m => ({ photo: photoOf(m) || "", name: first(m.name) })) };
       }
       const item = dateItems()[0];
       if (item) out.date = { title: item.title || item.short, icon: item.icon || "📅", days: daysUntil(item.date), sub: dayMonth(item.date) };
