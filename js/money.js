@@ -1636,7 +1636,7 @@ function openSavingsUseModal(saving, preset = "") {
     const liveAvailable = Math.max(0, liveBalance - liveReserve);
     const fees = data.useType === "gold" ? Math.max(0, Number(data.fees || 0)) : 0;
     if (!Number.isFinite(amount) || amount <= 0 || !Number.isFinite(fees) || amount + fees > liveAvailable) {
-      Toast.show(L(`អាចប្រើបានត្រឹម ${money(liveAvailable, saving.currency)}`, `You can use up to ${money(liveAvailable, saving.currency)}`));
+      { const plainLive = String(money(liveAvailable, saving.currency)).replace(/<[^>]*>/g, ""); Toast.show(L(`អាចប្រើបានត្រឹម ${plainLive}`, `You can use up to ${plainLive}`)); }
       return;
     }
     const totalDebit = amount + fees;
@@ -1756,7 +1756,10 @@ function openSavingsUseModal(saving, preset = "") {
       event.preventDefault();
       event.stopImmediatePropagation();
       const error = form.querySelector('[data-error="amount"]');
-      if (error) error.textContent = L(`ចំនួនត្រូវនៅចន្លោះ 0 និង ${money(available, saving.currency)}`, `Enter an amount from 0 to ${money(available, saving.currency)}`);
+      const plain = String(money(available, saving.currency)).replace(/<[^>]*>/g, ""); // money() returns markup: show text only
+      if (error) error.textContent = available <= 0
+        ? L("គណនីនេះគ្មានប្រាក់សម្រាប់ប្រើទេ · សូមដាក់ប្រាក់ចូលសិន (＋ ដាក់)", "This account has no money to use yet · add a deposit first (＋)")
+        : L(`ចំនួនត្រូវនៅចន្លោះ 0 និង ${plain}`, `Enter an amount from 0 to ${plain}`);
       amount?.focus();
     }
   }, true);
