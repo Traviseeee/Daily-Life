@@ -339,3 +339,63 @@ html[data-theme="dark"] .hs-face { border-color: #2e2956; }
 .hs-lovea .hs-bar { height: 6px; }
 @media (prefers-reduced-motion: no-preference) { .hs-pics em { animation: hs-beat2 1.6s ease-in-out infinite; } }
 @keyframes hs-beat2 { 0%, 100% { transform: translate(-50%,-50%) scale(1); } 40% { transform: translate(-50%,-50%) scale(1.18); } }
+
+/* joint savings card: jar that fills */
+.hs-jointb { gap: 10px; padding: 14px; }
+.hs-jarbox { display: flex; align-items: center; justify-content: center; gap: 18px; flex: 1; min-height: 190px; }
+.hs-jar { position: relative; flex: none; width: 112px; height: 188px; }
+.hs-jar-lid { position: absolute; left: 14px; right: 14px; top: 0; height: 12px; border-radius: 8px 8px 3px 3px; background: color-mix(in srgb, var(--in-acc) 55%, #fff); z-index: 2; }
+.hs-jar-body { position: absolute; left: 0; right: 0; top: 10px; bottom: 0; border: 3px solid color-mix(in srgb, var(--in-acc) 50%, transparent); border-radius: 22px 22px 34px 34px; overflow: hidden; background: color-mix(in srgb, var(--in-acc) 7%, rgba(255,255,255,.6)); box-shadow: inset 8px 0 14px rgba(255,255,255,.55); }
+.hs-water { position: absolute; left: 0; right: 0; bottom: 0; height: var(--lv); background: linear-gradient(180deg, color-mix(in srgb, var(--in-acc) 65%, #fff), var(--in-acc)); }
+.hs-water::before { content: ""; position: absolute; left: 0; right: 0; top: -8px; height: 9px; background: radial-gradient(circle at 9px 9px, color-mix(in srgb, var(--in-acc) 65%, #fff) 8px, transparent 9px) repeat-x; background-size: 18px 9px; }
+.hs-tick { position: absolute; left: 0; right: 0; height: 0; border-top: 1.5px dashed color-mix(in srgb, var(--in-acc) 45%, transparent); }
+.hs-tick em { position: absolute; right: 5px; top: -15px; font-style: normal; font-size: .62rem; color: var(--in-sub); }
+.hs-tick.on { border-top-color: rgba(255,255,255,.7); }
+.hs-tick.on em { color: #fff; }
+.hs-jar-pct { position: absolute; left: 0; right: 0; top: 14px; text-align: center; font-size: .95rem; font-weight: 800; color: var(--in-ink); }
+.hs-coin { position: absolute; font-size: 1.05rem; left: 44px; top: -8px; opacity: 0; z-index: 3; }
+.hs-coin.c2 { left: 60px; font-size: .9rem; }
+.hs-side { display: grid; gap: 10px; min-width: 0; }
+.hs-side > span { display: grid; gap: 1px; min-width: 0; }
+.hs-side small { color: var(--in-sub); font-size: .72rem; }
+.hs-side b { font-size: .85rem; font-weight: 800; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.hs-jointb .hs-lrow { align-items: center; }
+.hs-jointb .hs-sub { font-size: .74rem; }
+.hs-jointb .hs-go2 { min-height: 38px; font-size: .74rem; padding: 0 14px; }
+html[data-theme="dark"] .hs-jar-body { background: rgba(255,255,255,.06); box-shadow: inset 8px 0 14px rgba(255,255,255,.08); }
+@media (prefers-reduced-motion: no-preference) {
+  .hs-water { animation: hs-rise-water 1.4s cubic-bezier(.2,.8,.2,1) both; }
+  .hs-water::before { animation: hs-wave 2.4s linear infinite; }
+  .hs-coin { animation: hs-drop 3.6s ease-in infinite; }
+  .hs-coin.c2 { animation-delay: 1.8s; }
+}
+@keyframes hs-rise-water { from { height: 0; } to { height: var(--lv); } }
+@keyframes hs-wave { to { background-position-x: 18px; } }
+@keyframes hs-drop { 0% { opacity: 0; transform: translateY(-4px); } 15% { opacity: 1; } 70% { opacity: 1; transform: translateY(100px); } 100% { opacity: 0; transform: translateY(112px) scale(.7); } }
+
+/* goal card: rocket sky */
+.hs-sky { flex: none; overflow: visible; filter: drop-shadow(0 8px 16px rgba(70,50,170,.22)); }
+.hs-side-big { font-size: 1.35rem !important; color: var(--in-acc); }
+@media (prefers-reduced-motion: no-preference) {
+  .hs-flame { animation: hs-flame .35s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: 50% 0; }
+  .hs-rk-bob { animation: hs-bob 2.4s ease-in-out infinite; }
+  .hs-cloud { animation: hs-cloud 9s linear infinite; }
+  .hs-tw { animation: hs-tw 2.2s ease-in-out infinite; }
+}
+@keyframes hs-flame { from { transform: scaleY(.8); } to { transform: scaleY(1.25); } }
+@keyframes hs-cloud { from { transform: translateX(-40px); } to { transform: translateX(150px); } }
+@keyframes hs-tw { 0%, 100% { opacity: .25; } 50% { opacity: 1; } }
+
+/* daily spend slide (J1): wallet + big number */
+.hs-spendj .hs-row { justify-content: flex-start; gap: 12px; }
+.hs-wallet { flex: none; overflow: visible; filter: drop-shadow(0 8px 14px rgba(70,50,170,.2)); }
+.hs-spendj .hs-main { gap: 2px; }
+.hs-spendj .hs-big { font-size: 2.1rem; }
+.hs-spendj .hs-chips { margin-top: auto; }
+@media (prefers-reduced-motion: no-preference) {
+  .hs-wob { animation: hs-wob 3s ease-in-out infinite; transform-origin: 50% 100%; transform-box: fill-box; }
+  .hs-coinfall { animation: hs-fall 2.8s ease-in infinite; }
+  .hs-coinfall.c2 { animation-delay: 1.4s; }
+}
+@keyframes hs-wob { 0%, 100% { transform: rotate(-2deg); } 50% { transform: rotate(2deg); } }
+@keyframes hs-fall { 0% { transform: translateY(-34px); opacity: 0; } 20% { opacity: 1; } 70% { transform: translateY(22px); opacity: 1; } 100% { transform: translateY(26px); opacity: 0; } }

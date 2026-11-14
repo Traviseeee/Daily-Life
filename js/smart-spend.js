@@ -146,19 +146,20 @@ const SmartSpend = (() => {
   }
 
 
-  // Home slider slide (same template as the other info cards): usual per day, today / month / usual, one-tap chips
+  // Home slider slide (J1, 14 Nov): small wallet + big daily number, 3 stats, one-tap chips
+  const WALLET = `<svg class="hs-wallet" width="132" height="150" viewBox="0 0 150 170" aria-hidden="true"><defs><linearGradient id="hs-wl" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#a48fff"/><stop offset="1" stop-color="#6c5ce7"/></linearGradient><linearGradient id="hs-cn" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#f0a530"/><stop offset=".5" stop-color="#ffe08a"/><stop offset="1" stop-color="#f0a530"/></linearGradient></defs><ellipse cx="75" cy="160" rx="54" ry="8" fill="#7b68ee" opacity=".16"/><g class="hs-coinfall"><ellipse cx="64" cy="30" rx="15" ry="15" fill="url(#hs-cn)" stroke="#e0951f" stroke-width="2"/><text x="64" y="36" font-size="16" text-anchor="middle" fill="#a8680f" font-weight="800">$</text></g><g class="hs-coinfall c2"><ellipse cx="96" cy="26" rx="12" ry="12" fill="url(#hs-cn)" stroke="#e0951f" stroke-width="2"/><text x="96" y="31" font-size="13" text-anchor="middle" fill="#a8680f" font-weight="800">$</text></g><g class="hs-wob"><rect x="18" y="62" width="114" height="88" rx="22" fill="url(#hs-wl)"/><path d="M18 84H132" stroke="#fff" stroke-opacity=".25" stroke-width="2"/><rect x="88" y="94" width="52" height="34" rx="14" fill="#5b49d6"/><circle cx="106" cy="111" r="6" fill="#ffe08a"/><path d="M34 62 Q75 38 116 62" fill="none" stroke="#c9bdff" stroke-width="6" stroke-linecap="round"/><path d="M30 76 q-4 30 2 56" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="5" stroke-linecap="round"/></g></svg>`;
   function slide() {
     if (!on()) return "";
     fill();
     const d = daily(), t = todayEntry(), s = monthSummary();
-    const stats = `<span class="hs-stats"><span><small>${escapeHtml(L("ថ្ងៃនេះ", "Today"))}</small><b>${escapeHtml(money(todayTotal()))}</b></span><span><small>${escapeHtml(L("ខែនេះ", "This month"))}</small><b>${escapeHtml(money(s.total))}</b></span><span><small>${escapeHtml(L("កត់ពិត", "Logged"))}</small><b>${s.total ? Math.round((s.real / s.total) * 100) : 100}%</b></span></span>`;
-    const nomi = (() => { try { return HomeV2.role("money", "happy"); } catch (error) { return ""; } })();
+    const stat = (k, v) => `<span><small>${escapeHtml(k)}</small><b>${escapeHtml(v)}</b></span>`;
+    const stats = `<span class="hs-stats">${stat(L("ថ្ងៃនេះ", "Today"), money(todayTotal()))}${stat(L("ខែនេះ", "This month"), money(s.total))}${stat(L("កត់ពិត", "Logged"), `${s.total ? Math.round((s.real / s.total) * 100) : 100}%`)}</span>`;
     const act = t
       ? `<span class="hs-done"><b>${escapeHtml(L(`ថ្ងៃនេះកត់ ${money(t.amount)} ✓`, `Today logged ${money(t.amount)} ✓`))}</b><button type="button" class="hs-chip" data-ss="edit-today">${escapeHtml(L("កែ", "Edit"))}</button></span>`
       : `<span class="hs-chips"><button type="button" class="hs-chip is-main" data-ss="pick" data-v="${d}">${escapeHtml(L("ធម្មតា", "Usual"))} ${escapeHtml(money(d))}</button><button type="button" class="hs-chip" data-ss="pick" data-v="0">${escapeHtml(L("មិនបានចាយ", "None"))}</button><button type="button" class="hs-chip" data-ss="custom">${escapeHtml(L("ផ្សេង", "Other"))}</button></span>`;
-    return `<div class="hs-slide hs-info hs-tone-spend" data-hs-kind="spend">
+    return `<div class="hs-slide hs-info hs-tone-spend hs-spendj" data-hs-kind="spend">
       <span class="hs-deco" aria-hidden="true"><i>🪙</i><i>✨</i><i>💸</i></span><span class="hs-top"><span class="hs-lab">💸 ${escapeHtml(L("ចំណាយប្រចាំថ្ងៃ", "Daily spend"))}</span></span>
-      <span class="hs-row"><span class="hs-main"><b class="hs-big">${escapeHtml(money(d))}<small>${escapeHtml(L("/ថ្ងៃ", "/day"))}</small></b><span class="hs-sub">${escapeHtml(auto() ? L("មធ្យម 7 ថ្ងៃចុងក្រោយ", "7-day average") : L("កំណត់ដោយខ្លួនឯង", "Set by you"))}</span></span><span class="hs-nomi" aria-hidden="true">${nomi}</span></span>
+      <span class="hs-row">${WALLET}<span class="hs-main"><span class="hs-sub">${escapeHtml(auto() ? L("មធ្យម 7 ថ្ងៃចុងក្រោយ", "7-day average") : L("កំណត់ដោយខ្លួនឯង", "Set by you"))}</span><b class="hs-big">${escapeHtml(money(d))}<small>${escapeHtml(L("/ថ្ងៃ", "/day"))}</small></b></span></span>
       ${stats}${act}
     </div>`;
   }

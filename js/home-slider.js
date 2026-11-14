@@ -87,13 +87,13 @@ const HomeSlider = (() => {
     const joint = (appData.savings || []).find(item => item && item.jointWith && Number(item.targetAmount || 0) > 0);
     if (joint) {
       const p = Math.min(100, Math.round((Number(joint.currentAmount || 0) / Number(joint.targetAmount)) * 100));
-      list.push({ key: "joint", weight: 50, tone: "joint", label: `🏦 ${L("សន្សំរួម", "Joint savings")}`, big: `${p}%`, unit: "", sub: joint.name || "", bar: p, stats: [[L("មាន", "Saved"), fmt(joint.currentAmount)], [L("គោលដៅ", "Target"), fmt(joint.targetAmount)], [L("ខ្វះ", "Left"), fmt(Math.max(0, Number(joint.targetAmount) - Number(joint.currentAmount || 0)))]], href: "#money/savings", go: `${L("មើលគណនី", "Open")} ›` });
+      list.push({ key: "joint", weight: 50, tone: "joint", label: `🏦 ${L("សន្សំរួម", "Joint savings")}`, big: `${p}%`, unit: "", sub: joint.name || "", bar: p, jar: { p, cur: Number(joint.currentAmount || 0), tgt: Number(joint.targetAmount) }, stats: [[L("មាន", "Saved"), fmt(joint.currentAmount)], [L("គោលដៅ", "Target"), fmt(joint.targetAmount)], [L("ខ្វះ", "Left"), fmt(Math.max(0, Number(joint.targetAmount) - Number(joint.currentAmount || 0)))]], href: "#money/savings", go: `${L("មើលគណនី", "Open")} ›` });
     }
     // 🎯 the goal closest to done
     const goal = (appData.goals || []).filter(g => g && Number(g.targetAmount || 0) > 0 && Number(g.currentAmount || 0) < Number(g.targetAmount)).sort((a, b) => Number(b.currentAmount || 0) / Number(b.targetAmount) - Number(a.currentAmount || 0) / Number(a.targetAmount))[0];
     if (goal) {
       const p = Math.round((Number(goal.currentAmount || 0) / Number(goal.targetAmount)) * 100);
-      list.push({ key: "goal", weight: 20, tone: "goal", label: `🎯 ${L("គោលដៅ", "Goal")}`, big: `${p}%`, unit: "", sub: goal.name || goal.title || "", bar: p, stats: [[L("មាន", "Saved"), fmt(goal.currentAmount)], [L("គោលដៅ", "Target"), fmt(goal.targetAmount)], [L("ខ្វះ", "Left"), fmt(Math.max(0, Number(goal.targetAmount) - Number(goal.currentAmount || 0)))]], href: "#goals", go: `${L("មើលគោលដៅ", "Goals")} ›` });
+      list.push({ key: "goal", weight: 20, tone: "goal", label: `🎯 ${L("គោលដៅ", "Goal")}`, big: `${p}%`, unit: "", sub: goal.name || goal.title || "", bar: p, goalInfo: { p, cur: Number(goal.currentAmount || 0), tgt: Number(goal.targetAmount) }, stats: [[L("មាន", "Saved"), fmt(goal.currentAmount)], [L("គោលដៅ", "Target"), fmt(goal.targetAmount)], [L("ខ្វះ", "Left"), fmt(Math.max(0, Number(goal.targetAmount) - Number(goal.currentAmount || 0)))]], href: "#goals", go: `${L("មើលគោលដៅ", "Goals")} ›` });
     }
     return list.sort((a, b) => b.weight - a.weight).slice(0, 3);
   }
@@ -114,7 +114,37 @@ const HomeSlider = (() => {
       ${card.bar != null ? `<span class="hs-bar"><i style="width:${Math.max(0, Math.min(100, card.bar))}%"></i></span>` : ""}
     </a>`;
   }
+  // joint savings (B + polish, 14 Nov): a jar that fills with coins, milestone ticks, small text
+  function jointHtml(card) {
+    const { p, cur, tgt } = card.jar;
+    const next = [25, 50, 75, 100].find(step => step > p) || 100;
+    const need = Math.max(0, (tgt * next) / 100 - cur);
+    const ticks = [25, 50, 75].map(step => `<span class="hs-tick${p >= step ? " on" : ""}" style="bottom:${step}%"><em>${step}</em></span>`).join("");
+    return `<a class="hs-slide hs-info hs-tone-joint hs-jointb" href="${card.href}" data-hs-kind="${card.key}">
+      ${deco(card.key)}<span class="hs-top"><span class="hs-lab">${escapeHtml(card.label)}</span></span>
+      <span class="hs-jarbox">
+        <span class="hs-jar" aria-hidden="true"><span class="hs-jar-lid"></span><span class="hs-jar-body"><span class="hs-water" style="--lv:${Math.max(4, Math.min(100, p))}%"></span>${ticks}<b class="hs-jar-pct">${p}%</b></span><span class="hs-coin c1">🪙</span><span class="hs-coin c2">🪙</span></span>
+        <span class="hs-side"><span><small>${escapeHtml(L("គណនី", "Account"))}</small><b>${escapeHtml(card.sub || "")}</b></span><span><small>${escapeHtml(L("មាន", "Saved"))}</small><b>${escapeHtml(fmt(cur))}</b></span><span><small>${escapeHtml(L("ខ្វះ", "Left"))}</small><b>${escapeHtml(fmt(Math.max(0, tgt - cur)))}</b></span><span><small>${escapeHtml(L(`ដល់ ${next}%`, `To ${next}%`))}</small><b>${escapeHtml(fmt(need))}</b></span></span>
+      </span>
+      <span class="hs-lrow"><span class="hs-sub">${escapeHtml(L(`គោលដៅ ${fmt(tgt)}`, `Target ${fmt(tgt)}`))}</span><span class="hs-go2">${escapeHtml(card.go)}</span></span>
+    </a>`;
+  }
+  // goal (H, 14 Nov): a rocket climbing a night sky toward the flag; same layout as the jar
+  function goalHtml(card) {
+    const { p, cur, tgt } = card.goalInfo;
+    const ty = Math.max(24, Math.min(150, 180 - 1.6 * p));
+    const rocket = `<svg class="hs-sky" width="140" height="196" viewBox="0 0 140 196" aria-hidden="true"><defs><linearGradient id="hs-sky-g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a2f8f"/><stop offset=".6" stop-color="#7b68ee"/><stop offset="1" stop-color="#ffc9dd"/></linearGradient><clipPath id="hs-sky-c"><rect width="140" height="196" rx="30"/></clipPath></defs><rect width="140" height="196" rx="30" fill="url(#hs-sky-g)"/><g clip-path="url(#hs-sky-c)"><circle cx="106" cy="30" r="13" fill="#fff6d6"/><circle cx="111" cy="26" r="11" fill="#4a3ea6" opacity=".55"/><g fill="#fff"><circle class="hs-tw" cx="24" cy="26" r="1.6"/><circle class="hs-tw" cx="60" cy="14" r="1.3" style="animation-delay:.6s"/><circle class="hs-tw" cx="40" cy="58" r="1.4" style="animation-delay:1.2s"/><circle class="hs-tw" cx="88" cy="64" r="1.2" style="animation-delay:.3s"/></g><g class="hs-cloud"><ellipse cx="20" cy="158" rx="22" ry="8" fill="#fff" opacity=".8"/><ellipse cx="34" cy="154" rx="14" ry="8" fill="#fff" opacity=".8"/></g><g stroke="#fff" stroke-opacity=".55" stroke-dasharray="3 4"><path d="M10 148H130"/><path d="M10 112H130"/><path d="M10 76H130"/></g><g font-size="9" fill="#fff" opacity=".85"><text x="112" y="146">25</text><text x="112" y="110">50</text><text x="112" y="74">75</text></g><text x="8" y="30" font-size="15">🚩</text><g class="hs-rk-bob"><g transform="translate(70 ${ty})"><g class="hs-flame"><path d="M-6 28 Q0 54 6 28Z" fill="#ffb74a"/><path d="M-3 28 Q0 44 3 28Z" fill="#fff1a8"/></g><path d="M0 -26 C14 -10 14 14 8 28 H-8 C-14 14 -14 -10 0 -26Z" fill="#fff"/><path d="M-8 28 L-17 38 L-6 22Z M8 28 L17 38 L6 22Z" fill="#ff6f91"/><circle cx="0" cy="-4" r="6" fill="#7b68ee"/><circle cx="-1.5" cy="-5.5" r="2" fill="#fff" opacity=".7"/></g></g></g></svg>`;
+    return `<a class="hs-slide hs-info hs-tone-goal hs-jointb" href="${card.href}" data-hs-kind="${card.key}">
+      ${deco(card.key)}<span class="hs-top"><span class="hs-lab">${escapeHtml(card.label)}</span></span>
+      <span class="hs-jarbox">${rocket}
+        <span class="hs-side"><span><small>${escapeHtml(L("គោលដៅ", "Goal"))}</small><b>${escapeHtml(card.sub || "")}</b></span><span><small>${escapeHtml(L("បានដល់", "Reached"))}</small><b class="hs-side-big">${p}%</b></span><span><small>${escapeHtml(L("មាន", "Saved"))}</small><b>${escapeHtml(fmt(cur))}</b></span><span><small>${escapeHtml(L("ខ្វះ", "Left"))}</small><b>${escapeHtml(fmt(Math.max(0, tgt - cur)))}</b></span></span>
+      </span>
+      <span class="hs-lrow"><span class="hs-sub">${escapeHtml(p >= 75 ? L("ជិតដល់ទង់ហើយ 🚩", "Almost at the flag 🚩") : L("បន្តទៅមុខ 🚀", "Keep going 🚀"))}</span><span class="hs-go2">${escapeHtml(card.go)}</span></span>
+    </a>`;
+  }
   function infoHtml(card) {
+    if (card.key === "goal" && card.goalInfo) return goalHtml(card);
+    if (card.key === "joint" && card.jar) return jointHtml(card);
     if (card.key === "love" && card.faces && card.faces.length) return loveHtml(card);
     const stats = (card.stats || []).slice(0, 3);
     return `<a class="hs-slide hs-info hs-tone-${card.tone}" href="${card.href}" data-hs-kind="${card.key}">
