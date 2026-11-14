@@ -1328,7 +1328,10 @@ function bindMoney() {
   document.querySelectorAll("[data-buy-gold]").forEach(button => button.addEventListener("click", () => {
     const list = appData.savings || [];
     const saving = list.find(item => item.id === button.dataset.buyGold) || list.find(item => Number(item.currentAmount || 0) > Number(item.reserveAmount || 0)) || list[0];
-    if (saving) openSavingsUseModal(saving, "gold");
+    if (saving) { openSavingsUseModal(saving, "gold"); return; }
+    // a member whose only account is the admin's joint account has nothing of her own to buy gold from
+    const km = languageCode() === "km";
+    Toast.show(km ? "ត្រូវមានគណនីសន្សំរបស់ខ្លួនឯងសិន · ចុច ＋ បន្ថែម ក្នុងគណនីសន្សំ រួចដាក់ប្រាក់ ទើបទិញមាសបាន" : "Add your own savings account first (＋ Add), put money in it, then buy gold from it");
   }));
   document.querySelectorAll("[data-remove-gold-purchase]").forEach(button => button.addEventListener("click", () => removeGoldPurchase(button.dataset.savingId, button.dataset.removeGoldPurchase)));
   document.querySelectorAll("[data-sv-market-refresh]").forEach(button => button.addEventListener("click", async () => {
