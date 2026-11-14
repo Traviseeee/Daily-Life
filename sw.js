@@ -292,6 +292,19 @@ async function fromCacheThenRefresh(event, request, key = request) {
   return (await refresh) || (await caches.match(key)) || Response.error();
 }
 
+async function shellNetworkFirst(event, request, key) {
+  const cache = await caches.open(CACHE_NAME);
+  const network = fetch(request).then(response => {
+    if (response && response.ok) cache.put(key, response.clone());
+    return response;
+  });
+  event.waitUntil(network.catch(() => null)); // keep refreshing the cached copy even if we answered from it
+  const cached = await cache.match(key);
+  if (!cached) return network.catch(() => Response.error());
+  const slow = new Promise(resolve => setTimeout(() => resolve(cached), 2500));
+  return Promise.race([network.catch(() => cached), slow]);
+}
+
 async function cacheFirst(request) {
   const cached = await caches.match(request);
   if (cached) return cached;
@@ -316,9 +329,11 @@ self.addEventListener("fetch", event => {
     event.respondWith(fetch(request, { cache: "no-store" }));
     return;
   }
-  // the page itself (any ?r= / #hash) → one cached copy of the app shell
+  // the page itself (any ?r= / #hash) → one cached copy of the app shell.
+  // Fresh page first (so a new deploy shows its new screens at once instead of one refresh later);
+  // if the network is slow (> 2.5 s) or offline, the cached copy opens instead.
   if (request.mode === "navigate") {
-    event.respondWith(fromCacheThenRefresh(event, request, SHELL_KEY));
+    event.respondWith(shellNetworkFirst(event, request, SHELL_KEY));
     return;
   }
   // versioned files (?v=) never change under the same URL
