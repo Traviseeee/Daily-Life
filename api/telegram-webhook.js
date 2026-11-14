@@ -60,8 +60,17 @@ function applyDone(payload, item, opts = {}) {
     return "updated";
   }
   if (item.kind === "undo") {
-    const targets = Array.isArray(item.entries) && item.entries.length ? item.entries : [{ collection: item.collection, id: item.id }];
+    const targets = Array.isArray(item.entries) && item.entries.length ? item.entries : item.id ? [{ collection: item.collection, id: item.id }] : [];
     let removed = 0;
+    // ⛽ fuel log lives inside the vehicle (v.fuel), next to its Transport expense
+    if (item.fuel && item.fuel.id) {
+      const vehicle = (payload.vehicles || []).find(entry => entry.id === item.fuel.vehicleId);
+      if (vehicle && Array.isArray(vehicle.fuel) && vehicle.fuel.some(entry => entry.id === item.fuel.id)) {
+        vehicle.fuel = vehicle.fuel.filter(entry => entry.id !== item.fuel.id);
+        vehicle.updatedAt = new Date().toISOString();
+        removed += 1;
+      }
+    }
     targets.forEach(({ collection, id: targetId }) => {
       const list = payload[collection];
       if (!Array.isArray(list) || !list.some(entry => entry.id === targetId)) return;
@@ -239,7 +248,10 @@ async function saveFuel(message, ctx, fuel, currency) {
     `≈ ${e.liters} L${e.km ? ` · ${Number(e.km).toLocaleString("en-US")} km${e.kmGuessed ? " (ប៉ាន់)" : ""}` : ""}`,
     `<i>ខែនេះ ${formatMoney(stats.spent, currency)}${stats.kmL ? ` · ${Math.round(stats.kmL * 10) / 10} km/L` : ""} · ធ្វើដំណើរ</i>`
   ];
-  const sent = await reply(message, `${lines.join("\n")} 🐾`);
+  // ↩️ undo removes the fuel log and its expense (typo like "សាំង 30" can be reverted from the chat)
+  const undoToken = ctx.redis ? await saveAction(ctx.redis, { userId: ctx.userId, item: { kind: "undo", collection: "expenses", id: e.expenseId || "", entries: e.expenseId ? [{ collection: "expenses", id: e.expenseId }] : [], fuel: { vehicleId: v.id, id: e.id }, url: "/#vehicle" } }).catch(() => "") : "";
+  const undoRow = undoToken ? { inline_keyboard: [[{ text: "↩️ លុបវិញ · Undo", callback_data: `undo|${undoToken}` }, { text: "📱 Open", url: appLink({ url: "/#vehicle" }) }]] } : undefined;
+  const sent = await reply(message, `${lines.join("\n")} 🐾`, undoRow);
   await pushAdded(ctx.userId, `⛽ ${formatMoney(e.cost, e.currency)} · ${v.name || ""}`, "សាំង · ពី Telegram", "/#vehicle", "vehicle");
   return sent;
 }

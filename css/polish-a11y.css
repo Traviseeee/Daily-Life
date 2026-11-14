@@ -1,0 +1,49 @@
+/* polish-a11y (14 Nov audit P2/P4): bigger tap targets, readable text, 320px Savings, visible focus, calmer motion.
+   Loaded last on purpose; every rule only raises a size or removes motion — no colours, no layout moves. */
+
+/* ---------- 1 · tap targets: at least 44px tall ---------- */
+html:root body:not(#gl) :is(
+  .financial-shortcut, .hv2-soft-income-btn, .svg-market, .svg-btn, .mt-add, .nfc-tab, .hv4-status,
+  .hv4-more, .hv4-edit, .hg-backbtn, .lv-search-go, .lv-scan-pill, .lv-link, .cv2-nb, .cv2-free-add,
+  .mf-scope-btn, .mf-view, .sv-edit, .sv-logout, .sv-clear, .mp-back, .mp-edit, .fv4-more, .fv4-addrow,
+  .fg-link-open, .fg-mini, .hv2-soft-month, .hv2-soft-edit, .ab-edit, .fv2-answer, .qx-more,
+  .tp-btn, .tp-chip, .hg-chip, .ct-chip, .hg-q, .fv-invite, .fc-open, .ct-back, .hv2-bell, .hv2-ask-go,
+  .qx-add, .icon-button, .lv-link, .hv2-day, .mf-view, .mt-add, .hv2-soft-edit, .hv2-soft-month, details > summary
+) { min-height: 44px !important; }
+
+html:root body:not(#gl) :is(.hv4-edit, .cv2-nb, .fv4-act, .ct-cur, .qx-currency, .hg-q, .lv-search-btn) { min-width: 44px !important; min-height: 44px !important; }
+html:root body:not(#gl) :is(.ct-back, .hv2-bell, .hv2-ask-go, .qx-add, .icon-button, .tp-btn-icon) { min-width: 44px !important; min-height: 44px !important; }
+
+/* inline "more" links keep their text size, only the hit area grows */
+html:root body:not(#gl) :is(.hv4-more, .fv4-more, .qx-more) { display: inline-flex; align-items: center; justify-content: center; }
+
+/* ---------- 2 · text: nothing under 12px (avatar initials / SVG art excluded) ---------- */
+html:root body:not(#gl) #app :is(
+  small, .hv2-mt-lab span, .hv2-mt-bar b, .cv2-wd span, .lv-q span, .hv2-soft-t span, .fv2-two-card span,
+  .hv2-soft-label span, .svg-market span, .hg-ex em, .lv-sc em, .ct-seg button, .lv3-next,
+  .hv2-soft-pill, .hv2-say, .is-now, .is-weekend, .app-icon-label, .sv-lbl, .sv-ver, .sv-badge,
+  .mp-rel, .fg-code-mini, .fg-st, .ab-note, .tp-eyebrow, .tp-cost, .tp-tip-cat, .hg-pill, .hg-btn, .sv-status, .sv-pav
+) { font-size: max(12px, 0.75rem) !important; }
+html:root body:not(#gl) #app :is(.fv-av small, .hv2-tl-ic i) { font-size: inherit !important; }
+
+/* ---------- 3 · Savings cards on small phones (≤ 360px): title wraps instead of "Joint Ac…" ---------- */
+@media (max-width: 360px) {
+  html:root body .sv-card .mt-head { flex-wrap: wrap; row-gap: 4px; }
+  html:root body .sv-card .mt-head .sv-title { flex: 1 1 45%; }
+  html:root body .sv-card .mt-head .sv-title b { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; }
+}
+
+/* ---------- 4 · keyboard focus: always visible ---------- */
+html:root body :is(button, a[href], summary, [role="button"], input, select, textarea):focus-visible {
+  outline: 2px solid #7c6cf0; outline-offset: 2px;
+}
+
+/* ---------- 5 · reduced motion: stop looping / entrance animation for everyone who asks ---------- */
+@media (prefers-reduced-motion: reduce) {
+  html:root body *, html:root body *::before, html:root body *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: 0s !important;
+    scroll-behavior: auto !important;
+  }
+}
