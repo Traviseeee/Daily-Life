@@ -503,3 +503,52 @@ html:root body .mt-loan.mt-lf .svx-txt { color: var(--sc-ink); }
 html:root body .mt-loan.mt-lf .svx-txt small { background: var(--sc-pill); color: var(--sc-pillink); }
 html:root body .mt-loan.mt-lf .svx-bar { background: var(--sc-track); }
 html:root body .mt-loan.mt-lf .svx-bar i { background: var(--sc-fill); }
+/* total card — option B (white, filling pig, minimal) */
+html:root body .svx-b { gap: 14px; }
+.svx-bbody { display: grid; grid-template-columns: minmax(96px, 130px) 1fr; gap: 14px; align-items: center; min-width: 0; }
+.svx-bpig { width: 100%; height: auto; display: block; }
+.svx-btxt { display: grid; gap: 6px; min-width: 0; }
+.svx-btxt .svx-big { font-size: clamp(1.5rem, 8vw, 2.1rem); font-weight: 900; line-height: 1.05; color: var(--svx-ink); overflow-wrap: anywhere; }
+html:root body .svx-btxt .money-value { color: inherit !important; -webkit-text-fill-color: currentColor; }
+.svx-of { color: var(--svx-sub); font-size: .95rem; font-weight: 600; }
+.svx-dots { display: flex; gap: 6px; margin-top: 2px; }
+.svx-dots i { flex: 1; height: 6px; border-radius: 99px; background: rgba(123,104,238,.16); }
+.svx-dots i.on { background: #1f9d73; }
+.svx-brow { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.svx-mo { display: flex; align-items: center; gap: 8px; min-width: 0; color: var(--svx-sub); font-size: .9rem; }
+.svx-mo b { color: var(--svx-ink); }
+.svx-dot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: #1f9d73; }
+.svx-dot.is-todo { background: #e0951f; }
+html:root body .svx-b .svx-top { margin: 0; }
+
+/* ===== Savings account card — option C (white, outline pig, plain facts) ===== */
+html:root body .sv-card .svc-body { display: grid; grid-template-columns: minmax(92px, 118px) minmax(0, 1fr); gap: 14px; align-items: center; margin: 4px 0 0; }
+html:root body .sv-card .svc-body.is-joint { grid-template-columns: minmax(64px, 84px) minmax(0, 1fr); }
+html:root body .sv-card .svc-art svg { width: 100%; height: auto; display: block; animation: none; }
+html:root body .sv-card .svc-txt { display: grid; gap: 6px; min-width: 0; }
+html:root body .sv-card .svc-big { font-size: clamp(1.5rem, 8vw, 2rem); font-weight: 900; line-height: 1.05; color: var(--svx-ink, #1a2347); }
+html:root body .sv-card .svc-txt > small { font-size: .92rem; font-weight: 600; color: var(--svx-sub, #6f6b92); }
+html:root body .sv-card .svc-txt .sv-bar { margin: 0; height: 8px; }
+html:root body .sv-card .sv-info.svc-facts { display: flex; flex-wrap: wrap; gap: 4px 14px; padding: 0; background: none; border: 0; margin: 10px 0 0; }
+html:root body .sv-card .sv-info.svc-facts > div { display: inline-flex; gap: 5px; align-items: baseline; padding: 0; background: none; box-shadow: none; border: 0; border-radius: 0; font-size: .88rem; color: var(--svx-sub, #6f6b92); }
+html:root body .sv-card .sv-info.svc-facts > div small { font-size: inherit; color: inherit; }
+html:root body .sv-card .sv-info.svc-facts > div b { font-size: inherit; color: var(--svx-ink, #1a2347); }
+html:root body .sv-card .sv-info.svc-facts.is-joint { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+html:root body .sv-card .svc-p { display: flex !important; align-items: center; gap: 8px; min-width: 0; }
+html:root body .sv-card .svc-dot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: #ff7fb0; }
+html:root body .sv-card .svc-dot.is-pt { background: #ffd23f; }
+@media (max-width: 380px) { html:root body .sv-card .sv-info.svc-facts.is-joint { grid-template-columns: 1fr; } }
+html:root body .sv-card > .mt-head { padding-left: 0; padding-right: 0; }
+html:root body .sv-card .sv-actions .sv-save { background: transparent; border: 1px solid rgba(123,104,238,.28); box-shadow: none; }
+html:root body .sv-card .sv-actions .sv-save.is-done { border-color: transparent; color: #12703f; background: transparent; }
+html:root body .sv-card .sv-actions .sv-save.is-pt:not(.is-done) { background: transparent; }
+html:root body .sv-card > .mt-head .mt-ic { display: none; }
+html:root body .sv-card > .mt-head { margin-left: -12px; }
+html:root body .sv-card .sv-actions .sv-save.is-pt:not(.is-done) { border: 1px solid rgba(224,160,42,.45); }
+
+/* Joint card — 2-column grid: person info above their own button, Use spans full width */
+html:root body .sv-card.is-joint .sv-info.svc-facts.is-joint { grid-template-columns: 1fr 1fr; gap: 10px; }
+html:root body .sv-card.is-joint .sv-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+html:root body .sv-card.is-joint .sv-actions .sv-save { width: 100%; min-width: 0; justify-content: center; }
+html:root body .sv-card.is-joint .sv-actions .sv-use-btn { grid-column: 1 / -1; width: 100%; }
+html:root body .sv-card.is-joint .svc-p span { min-width: 0; overflow-wrap: anywhere; }
