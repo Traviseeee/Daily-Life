@@ -24,7 +24,7 @@ html:root body:not(#gl) #app :is(
   .hv2-soft-pill, .hv2-say, .is-now, .is-weekend, .app-icon-label, .sv-lbl, .sv-ver, .sv-badge,
   .mp-rel, .fg-code-mini, .fg-st, .ab-note, .tp-eyebrow, .tp-cost, .tp-tip-cat, .hg-pill, .hg-btn, .sv-status, .sv-pav
 ) { font-size: max(12px, 0.75rem) !important; }
-html:root body:not(#gl) #app :is(.fv-av small, .hv2-tl-ic i) { font-size: inherit !important; }
+html:root body:not(#gl) #app :is(.hv2-tl-ic i) { font-size: inherit !important; }
 
 /* ---------- 3 · Savings cards on small phones (≤ 360px): title wraps instead of "Joint Ac…" ---------- */
 @media (max-width: 360px) {
@@ -47,3 +47,12 @@ html:root body :is(button, a[href], summary, [role="button"], input, select, tex
     scroll-behavior: auto !important;
   }
 }
+
+/* ---------- 6 · review fixes (15 Nov): contrast on the light theme ---------- */
+/* bottom menu: icons of the other tabs 3.1:1 -> 6:1 */
+html:root[data-theme="light"] body:not(#gl) #mobileNav.mobile-nav .nav-item:not(.active) { color: #5c5784 !important; }
+/* calendar: days already gone 2.0:1 -> 4.7:1 (still lighter than the days to come); weekends 2.3:1 -> 5:1 */
+html:root[data-theme="light"] body:not(#gl) .cv2 .cv2-c.is-past:not(.is-today):not(.is-holiday) { color: #5b6580 !important; }
+html:root[data-theme="light"] body:not(#gl) .cv2 .cv2-c.is-weekend:not(.is-past):not(.is-today):not(.is-holiday) { color: #a63461 !important; }
+/* family strip: the birthday line under each avatar was inheriting the button's 15px; now 12px, darker */
+html:root[data-theme="light"] body:not(#gl) #app .fv-av small { color: #b0304f; line-height: 1.3; }
