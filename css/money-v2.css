@@ -266,3 +266,33 @@ html body .fv2 .fv2-two-card strong { font-size: 1.25rem !important; font-weight
 html body .fv2 .fv2-two-card small { font-size: 0.76rem !important; }
 html body .fv2 .qx-compact .qx-currency { width: 34px !important; min-width: 0 !important; height: 42px !important; padding: 0 !important; border: 0 !important; border-radius: 0 !important; color: var(--fv-acc-ink) !important; background: transparent !important; box-shadow: none !important; }
 html body .fv2 .fv2-two-card strong .money-value, html body .fv2 .fv2-t3-item b .money-value { font-size: inherit !important; font-weight: inherit !important; color: inherit !important; }
+
+/* ===== Overview — clean & align pass (matches the new white Savings cards) ===== */
+/* white cards, one border + shadow */
+html:root body:not(#gl) #app .fv2 :is(.ab-section, .fv2-card, .ss-sec, .fv2-two-card, .qx-card) { background: #fff; border: 1px solid rgba(123,104,238,.16); box-shadow: 0 10px 26px rgba(70,50,170,.10); backdrop-filter: none; -webkit-backdrop-filter: none; }
+html:root:not([data-theme="light"]) body:not(#gl) #app .fv2 :is(.ab-section, .fv2-card, .ss-sec, .fv2-two-card, .qx-card) { background: #241f4f; border-color: rgba(190,180,255,.18); box-shadow: 0 10px 26px rgba(0,0,0,.35); }
+/* mini tiles: money inside the caption keeps the caption's size and baseline */
+html:root body:not(#gl) #app .fv2 .fv2-two-card span .money-value, html:root body:not(#gl) #app .fv2 .fv2-two-card span .money-value * { font-size: inherit !important; font-weight: 700 !important; line-height: inherit; vertical-align: baseline; color: inherit !important; }
+html:root body:not(#gl) #app .fv2 .fv2-two-card { gap: 4px; padding: 14px 16px; }
+/* Balances header: mascot before the title, Edit matches the other pill buttons */
+html:root body:not(#gl) #app .fv2 .ab-title { flex: 1 1 auto; }
+html:root body:not(#gl) #app .fv2 .ab-title .ab-nomi { order: -1; flex: none; width: 44px; height: 44px; }
+html:root body:not(#gl) #app .fv2 .ab-title .ab-nomi :is(svg, img) { width: 100%; height: 100%; }
+html:root body:not(#gl) #app .fv2 .ab-edit { min-height: 44px; padding: 0 14px; font-size: .85rem; font-weight: 700; background: transparent; border: 1px solid rgba(123,104,238,.3); }
+html:root body:not(#gl) #app .fv2 .ab-edit span { font-size: inherit; }
+/* Smart spending button uses the app's button weight */
+html:root body:not(#gl) #app .fv2 .ss-go { font-weight: 800; font-size: .92rem; min-height: 46px; border-radius: 14px; }
+/* Quick expense: "Details" is a text link, no blue block */
+html:root body:not(#gl) #app .fv2 .qx-compact .qx-more { min-height: 44px; padding: 0 4px; border: 0 !important; background: none !important; color: #5b49d6 !important; font-weight: 800; box-shadow: none; }
+html:root:not([data-theme="light"]) body:not(#gl) #app .fv2 .qx-compact .qx-more { color: #cfc7ff !important; }
+html:root body:not(#gl) #app .fv2 .qx-compact .qx-foot { margin: 4px 0 0; padding: 0 4px; background: none; box-shadow: none; border: 0; }
+html:root body:not(#gl) #app .fv2 :is(.fv2-section, .ab-section, .ss-sec, .fv2-two-card, .qx-card) { background: #fff !important; border: 1px solid rgba(123,104,238,.16); box-shadow: 0 10px 26px rgba(70,50,170,.10); backdrop-filter: none; -webkit-backdrop-filter: none; }
+html:root:not([data-theme="light"]) body:not(#gl) #app .fv2 :is(.fv2-section, .ab-section, .ss-sec, .fv2-two-card, .qx-card) { background: #241f4f !important; border-color: rgba(190,180,255,.18); box-shadow: 0 10px 26px rgba(0,0,0,.35); }
+html:root body:not(#gl) #app .fv2 .fv2-section > .fv2-card { background: none; border: 0; box-shadow: none; }
+html:root body:not(#gl) #app .fv2 .fv2-two-card > span .money-value { display: inline !important; }
+html:root:not([data-theme="light"]) body:not(#gl) #app .fv2 .fv2-section > .fv2-card { background: none !important; border: 0 !important; box-shadow: none !important; padding: 0; }
+html:root:not([data-theme="light"]) body:not(#gl) #app .fv2 .fv2-section .qx-card { background: rgba(255,255,255,.04) !important; border-color: rgba(190,180,255,.14); box-shadow: none; }
+/* Quick expense: one surface only (no box inside a box) */
+html:root body:not(#gl) #app .fv2 .fv2-section .qx-card, html:root:not([data-theme="light"]) body:not(#gl) #app .fv2 .fv2-section .qx-card { background: none !important; border: 0 !important; box-shadow: none !important; padding: 0; }
+html:root body:not(#gl) #app .fv2 .fv2-section .qx-card .qx-form { background: none !important; border: 0 !important; box-shadow: none !important; padding: 4px 0 0; }
+html:root body:not(#gl) #app .fv2 .fv2-quick-card { background: none !important; border: 0 !important; box-shadow: none !important; padding: 0; }
