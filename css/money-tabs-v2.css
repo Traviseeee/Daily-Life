@@ -564,3 +564,74 @@ html:root body .svx-gold .svc-txt .svg-gain.is-down { color: #b3203a; }
 html:root body .svx-gold .svc-txt .svg-gain.is-up { color: #12703f; }
 html:root body .svx-gold .svg-btn:not(.is-primary) { background: transparent; border: 1px solid rgba(123,104,238,.3); box-shadow: none; }
 html:root body .svx-gold .svg-market { background: transparent; border: 0; box-shadow: none; padding-left: 0; padding-right: 0; }
+
+/* Labeled stat grid — each value sits under its own small label, cells divided by hairlines */
+html:root body .sv-card .sv-info.svc-facts:not(.is-joint), html:root body .svx-gold .sv-info.svc-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: 0; margin: 12px 0 0; padding: 10px 0; border-top: 1px solid var(--svx-line, rgba(123,104,238,.16)); border-bottom: 1px solid var(--svx-line, rgba(123,104,238,.16)); }
+html:root body .sv-card .sv-info.svc-facts:not(.is-joint) > div, html:root body .svx-gold .sv-info.svc-facts > div { display: grid; gap: 2px; align-items: start; padding: 0 10px; border-left: 1px solid var(--svx-line, rgba(123,104,238,.16)); min-width: 0; }
+html:root body .sv-card .sv-info.svc-facts:not(.is-joint) > div:first-child, html:root body .svx-gold .sv-info.svc-facts > div:first-child { border-left: 0; padding-left: 0; }
+html:root body .sv-card .sv-info.svc-facts > div small, html:root body .svx-gold .sv-info.svc-facts > div small { font-size: .76rem; font-weight: 700; color: var(--svx-sub, #6f6b92); }
+html:root body .sv-card .sv-info.svc-facts > div b, html:root body .svx-gold .sv-info.svc-facts > div b { font-size: .98rem; font-weight: 800; }
+html:root body .svx-gold .svc-facts b.is-down { color: #b3203a; }
+html:root body .svx-gold .svc-facts b.is-up { color: #12703f; }
+html:root body .svx-gold .svc-cap { font-size: .76rem; font-weight: 700; color: var(--svx-sub, #6f6b92); }
+/* joint people: label (dot+name) / amount / monthly */
+html:root body .sv-card .sv-info.svc-facts.is-joint { margin: 12px 0 8px; gap: 0; border-top: 1px solid var(--svx-line, rgba(123,104,238,.16)); padding-top: 10px; }
+html:root body .sv-card .svc-p { display: grid !important; gap: 2px; align-items: start; padding: 0 10px; border-left: 1px solid var(--svx-line, rgba(123,104,238,.16)); }
+html:root body .sv-card .svc-p:first-child { border-left: 0; padding-left: 0; }
+html:root body .sv-card .svc-p small { display: flex; align-items: center; gap: 6px; font-size: .76rem; font-weight: 700; color: var(--svx-sub, #6f6b92); }
+html:root body .sv-card .svc-p b { font-size: 1.05rem; font-weight: 800; color: var(--svx-ink, #1a2347); }
+html:root body .sv-card .svc-p em { font-style: normal; font-size: .8rem; color: var(--svx-sub, #6f6b92); }
+html:root body .svx-gold .sv-info.svc-facts > div { background: none !important; border-radius: 0; box-shadow: none; }
+html:root body .svx-gold .sv-info.svc-facts > div + div { border-left: 1px solid var(--svx-line, rgba(123,104,238,.16)); }
+
+/* Joint card — option G: one table row per person */
+html:root body .sv-card .sv-info.svc-facts.is-joint { display: grid; grid-template-columns: 1fr; gap: 0; margin: 12px 0 10px; padding: 0; border-top: 1px solid var(--svx-line, rgba(123,104,238,.16)); border-bottom: 0; }
+html:root body .sv-card .svj-row { display: grid; grid-template-columns: 30px minmax(0, 1fr) auto auto; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--svx-line, rgba(123,104,238,.16)); }
+html:root body .sv-card .svj-row .sv-pav { width: 30px; height: 30px; font-size: .78rem; font-weight: 800; background: #8b79f5; color: #fff; }
+html:root body .sv-card .svj-row .sv-pav.is-pt { background: #e0a02a; }
+html:root body .sv-card .svj-nm { display: grid; min-width: 0; }
+html:root body .sv-card .svj-nm b { font-size: .95rem; color: var(--svx-ink, #1a2347); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+html:root body .sv-card .svj-nm small { font-size: .78rem; color: var(--svx-sub, #6f6b92); }
+html:root body .sv-card .svj-amt { font-weight: 800; font-size: 1.02rem; color: var(--svx-ink, #1a2347); }
+html:root body .sv-card .svj-ck { min-width: 76px; min-height: 44px; display: inline-grid; place-items: center; padding: 0 12px; border-radius: 999px; background: transparent; border: 1px solid rgba(123,104,238,.35); color: #5b49d6; font-weight: 700; cursor: pointer; }
+html:root body .sv-card .svj-ck.is-pt:not(.is-done) { border-color: rgba(224,160,42,.5); }
+html:root body .sv-card .svj-ck.is-done { border-color: transparent; color: #12703f; }
+html:root body .sv-card .svj-ck input { position: absolute; opacity: 0; pointer-events: none; }
+html:root body .sv-card.is-joint .sv-actions { display: block; }
+html:root body .sv-card.is-joint .sv-actions .sv-use-btn { width: 100%; }
+html:root body .sv-card.is-joint .sv-info.svc-facts.is-joint { grid-template-columns: 1fr; gap: 0; }
+html:root body .sv-card.is-joint .svj-row .svj-ck { width: auto; }
+html:root body .sv-card .svj-row .svj-ck { width: 84px !important; flex: none; box-shadow: none !important; justify-self: end; }
+html:root body .sv-card .svj-row .svj-amt { justify-self: end; }
+html:root body .sv-card .sv-info.svc-facts.is-joint > .svj-row { display: grid !important; grid-template-columns: 30px minmax(0, 1fr) auto auto; width: 100%; padding: 8px 0; border-left: 0; font-size: inherit; }
+
+/* Joint card — boxed grid: one bordered table, cells divided by lines */
+html:root body .sv-card .sv-info.svc-facts.is-joint { border: 1px solid var(--svx-line, rgba(123,104,238,.28)); border-radius: 16px; overflow: hidden; margin: 14px 0 12px; }
+html:root body .sv-card .sv-info.svc-facts.is-joint > .svj-row { grid-template-columns: minmax(0, 1fr) 84px 92px; gap: 0; padding: 0; align-items: stretch; min-height: 56px; border-bottom: 1px solid var(--svx-line, rgba(123,104,238,.28)); }
+html:root body .sv-card .sv-info.svc-facts.is-joint > .svj-row:last-child { border-bottom: 0; }
+/* avatar + name share the first column */
+html:root body .sv-card .svj-row .sv-pav { grid-column: 1; grid-row: 1; align-self: center; margin-left: 12px; }
+html:root body .sv-card .svj-row .svj-nm { grid-column: 1; grid-row: 1; align-self: center; padding: 8px 8px 8px 54px; }
+html:root body .sv-card .svj-row .svj-amt { grid-column: 2; grid-row: 1; justify-self: stretch !important; display: grid; place-items: center; border-left: 1px solid var(--svx-line, rgba(123,104,238,.28)); font-size: 1rem; }
+html:root body .sv-card .svj-row .svj-ck { grid-column: 3; grid-row: 1; width: auto !important; min-width: 0; min-height: 0; border: 0 !important; border-left: 1px solid var(--svx-line, rgba(123,104,238,.28)) !important; border-radius: 0 !important; background: transparent; }
+html:root body .sv-card .svj-row .svj-ck.is-done { background: rgba(31,157,115,.08); }
+html:root body .sv-card .svj-row .svj-ck:not(.is-done) { font-size: 1.2rem; }
+
+/* theme vars for account cards (not .svx-card) so text follows light/dark */
+html:root body .sv-card { --svx-ink: #1a2347; --svx-sub: #6f6b92; --svx-line: rgba(123,104,238,.28); }
+html:root:not([data-theme="light"]) body .sv-card { --svx-ink: #ece9ff; --svx-sub: #b4afdc; --svx-line: rgba(190,180,255,.3); }
+html:root:not([data-theme="light"]) body .sv-card .svj-row .sv-pav { color: #fff; }
+html:root body .sv-card .sv-info.svc-facts.is-joint > .svj-row { grid-template-columns: minmax(0, 1fr) 76px 104px; }
+html:root body .sv-card .svj-row .svj-ck > span { font-size: .98rem; font-weight: 800; white-space: nowrap; }
+html:root body .sv-card .svj-row .svj-ck:not(.is-done) { font-size: .98rem; background: rgba(123,104,238,.08); color: #5b49d6; }
+html:root body .sv-card .svj-row .svj-ck.is-pt:not(.is-done) { background: rgba(255,210,63,.18); color: #8a5a00; }
+html:root:not([data-theme="light"]) body .sv-card .svj-row .svj-ck:not(.is-done) { color: #cfc7ff; }
+html:root:not([data-theme="light"]) body .sv-card .svj-row .svj-ck.is-pt:not(.is-done) { color: #ffd88a; }
+html:root body .sv-card .svj-row .svj-ck { justify-self: stretch; width: 100% !important; }
+
+/* account card header: name left, status + ⋯ pushed to the right */
+html:root body .sv-card > .mt-head { display: flex; align-items: center; gap: 8px; margin-left: 0; margin-right: 0; }
+html:root body .sv-card > .mt-head .sv-title { flex: 1 1 auto; min-width: 0; }
+html:root body .sv-card > .mt-head .sv-status { flex: none; margin-left: auto; }
+html:root body .sv-card > .mt-head > details, html:root body .sv-card > .mt-head .mt-more { flex: none; margin-left: 0; margin-right: -8px; }
+html:root body .sv-card > .mt-head { margin-left: -12px; }
