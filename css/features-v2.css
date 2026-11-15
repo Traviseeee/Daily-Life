@@ -218,3 +218,67 @@ html body .ev-chip.is-on { color: var(--ft-on); background: var(--ft-grad); }
 .rc-v-actions { flex-wrap: wrap; }
 html body .rc-v-btn { min-width: 30%; }
 html body .rc-list { max-height: none; }
+
+/* ===== Expenses tab — clean & align pass (white cards, purple controls, one filter row) ===== */
+html:root body:not(#gl) #app .ev .ev-card { background: #fff !important; border: 1px solid rgba(123,104,238,.16) !important; border-radius: 26px !important; box-shadow: 0 10px 26px rgba(70,50,170,.10) !important; backdrop-filter: none !important; }
+html:root:not([data-theme="light"]) body:not(#gl) #app .ev .ev-card { background: #241f4f !important; border-color: rgba(190,180,255,.18) !important; box-shadow: 0 10px 26px rgba(0,0,0,.35) !important; }
+/* top card: one grid — head / total / bar / filters / promo */
+html:root body:not(#gl) #app .ev .ev-top { display: grid !important; grid-template-columns: minmax(0, 1fr) auto; gap: 10px 10px; padding: 16px !important; align-items: center; }
+html:root body:not(#gl) #app .ev .ev-top > * { grid-column: 1 / -1; margin: 0 !important; min-width: 0; }
+html:root body:not(#gl) #app .ev .ev-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; order: 1; }
+html:root body:not(#gl) #app .ev .ev-cap { order: 2; font-size: .8rem; font-weight: 700; color: #6f6b92; margin-bottom: -8px !important; }
+html:root body:not(#gl) #app .ev .ev-big { order: 3; font-size: clamp(1.9rem, 9vw, 2.3rem) !important; font-weight: 900; line-height: 1.05; }
+html:root body:not(#gl) #app .ev .ev-sub { order: 4; font-size: .86rem; color: #6f6b92; margin-top: -4px !important; }
+html:root body:not(#gl) #app .ev .ev-stack { order: 5; height: 8px !important; border-radius: 99px; overflow: hidden; }
+html:root body:not(#gl) #app .ev .ev-top > label.ev-month { order: 6; grid-column: 1; display: flex; align-items: center; padding-top: 12px; border-top: 1px solid rgba(123,104,238,.16); }
+html:root body:not(#gl) #app .ev .ev-top > label.ev-month > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+html:root body:not(#gl) #app .ev .ev-top > .xb-all { order: 7; grid-column: 2; padding-top: 12px; border-top: 1px solid rgba(123,104,238,.16); }
+html:root body:not(#gl) #app .ev .ev-top > .xb-all[open] { grid-column: 1 / -1; order: 8; border-top: 0; padding-top: 0; }
+html:root body:not(#gl) #app .ev .ev-top > .ab-open-btn { order: 9; }
+/* controls: purple, pill, same height */
+html:root body:not(#gl) #app .ev .ev-month select { min-height: 44px; border-radius: 999px !important; border: 1px solid rgba(123,104,238,.3) !important; background-color: transparent !important; color: #1a2347; font-weight: 700; font-size: .88rem; padding: 0 34px 0 14px; box-shadow: none !important; max-width: 100%; }
+html:root body:not(#gl) #app .ev .ev-head .ev-month select { border-color: transparent !important; background-color: #f4f0ff !important; color: #5b49d6; }
+html:root body:not(#gl) #app .ev .ev-add { min-height: 44px; padding: 0 18px; border-radius: 999px; border: 0; background: linear-gradient(135deg, #8b79f5, #5b49d6) !important; color: #fff !important; font-weight: 800; font-size: .9rem; box-shadow: none !important; }
+html:root body:not(#gl) #app .ev .xb-all > summary { min-height: 44px; display: inline-flex; align-items: center; gap: 6px; padding: 0 14px; border-radius: 999px; border: 1px solid rgba(123,104,238,.3); background: transparent !important; color: #5b49d6 !important; font-weight: 700; font-size: .88rem; white-space: nowrap; }
+html:root body:not(#gl) #app .ev .ab-open-btn { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 8px 14px !important; border-radius: 16px !important; border: 1px dashed #8b79f5 !important; background: transparent !important; color: #1a2347 !important; box-shadow: none !important; text-align: left; }
+html:root body:not(#gl) #app .ev .ab-open-btn b { font-size: .88rem; color: #5b49d6 !important; }
+html:root body:not(#gl) #app .ev .ab-open-btn small { font-size: .76rem; color: #6f6b92 !important; display: block; }
+html:root body:not(#gl) #app .ev .ab-open-btn::after { content: "›"; margin-left: auto; color: #5b49d6; font-weight: 800; }
+/* segmented */
+html:root body:not(#gl) #app .ev .ev-seg { background: #fff !important; border: 1px solid rgba(123,104,238,.16); border-radius: 999px; padding: 4px; box-shadow: none !important; }
+html:root body:not(#gl) #app .ev .ev-seg button { min-height: 40px; border-radius: 999px; font-weight: 700; color: #6f6b92 !important; background: transparent !important; box-shadow: none !important; }
+html:root body:not(#gl) #app .ev .ev-seg button.is-on { background: #ede8ff !important; color: #5b49d6 !important; }
+/* list */
+html:root body:not(#gl) #app .ev .ev-cats { padding: 4px 16px !important; }
+/* dark */
+html:root:not([data-theme="light"]) body:not(#gl) #app .ev :is(.ev-cap, .ev-sub, .ab-open-btn small) { color: #b4afdc !important; }
+html:root:not([data-theme="light"]) body:not(#gl) #app .ev .ev-month select { color: #ece9ff; border-color: rgba(190,180,255,.3) !important; }
+html:root:not([data-theme="light"]) body:not(#gl) #app .ev .ev-head .ev-month select { background-color: #2d2761 !important; color: #cfc7ff; }
+html:root:not([data-theme="light"]) body:not(#gl) #app .ev :is(.xb-all > summary, .ab-open-btn b) { color: #cfc7ff !important; border-color: rgba(190,180,255,.3); }
+html:root:not([data-theme="light"]) body:not(#gl) #app .ev .ab-open-btn { color: #ece9ff !important; }
+html:root:not([data-theme="light"]) body:not(#gl) #app .ev .ev-seg { background: #241f4f !important; border-color: rgba(190,180,255,.18); }
+html:root:not([data-theme="light"]) body:not(#gl) #app .ev .ev-seg button.is-on { background: #3a3370 !important; color: #ece9ff !important; }
+html:root:not([data-theme="light"]) body:not(#gl) #app .ev .ev-seg button { color: #b4afdc !important; }
+html:root body:not(#gl) #app .ev .ev-top { column-gap: 0; }
+html:root body:not(#gl) #app .ev .ev-top > .xb-all:not([open]) { padding-left: 10px; }
+/* category detail: title first, budget field under it */
+html:root body:not(#gl) #app .ev .ev-detail { display: grid !important; gap: 10px; padding: 16px !important; }
+html:root body:not(#gl) #app .ev .ev-detail > * { margin: 0 !important; min-width: 0; }
+html:root body:not(#gl) #app .ev .ev-detail .ev-head { order: 1; }
+html:root body:not(#gl) #app .ev .ev-detail .ev-sub { order: 2; margin-top: -4px !important; }
+html:root body:not(#gl) #app .ev .ev-detail .bud-input { order: 3; padding-top: 12px; border-top: 1px solid rgba(123,104,238,.16); }
+html:root body:not(#gl) #app .ev .ev-detail .bud-input input { background: #f4f0ff !important; border: 1px solid rgba(123,104,238,.2) !important; border-radius: 12px; min-height: 44px; }
+html:root:not([data-theme="light"]) body:not(#gl) #app .ev .ev-detail .bud-input input { background: #2d2761 !important; border-color: rgba(190,180,255,.2) !important; color: #ece9ff; }
+html:root body:not(#gl) #app .ev .ev-add { white-space: nowrap; flex: none; }
+html:root body:not(#gl) #app .ev .ev-head .ev-month { flex: 1 1 auto; min-width: 0; }
+html:root body:not(#gl) #app .ev .ev-head .ev-month select { width: 100%; }
+html:root body:not(#gl) #app .ev .ev-top > label.ev-month select { width: 100%; }
+html:root body:not(#gl) #app .ev .ev-chip.is-on:not([style]) { background: #5b49d6 !important; color: #fff !important; border-color: transparent !important; }
+html:root body:not(#gl) #app .ev :is(.xb-all-row, .bud-input) input { background: #f4f0ff !important; border: 1px solid rgba(123,104,238,.2) !important; }
+html:root:not([data-theme="light"]) body:not(#gl) #app .ev :is(.xb-all-row, .bud-input) input { background: #2d2761 !important; border-color: rgba(190,180,255,.2) !important; color: #ece9ff; }
+@media (max-width: 359px) {
+  html:root body:not(#gl) #app .ev .ev-top > label.ev-month { grid-column: 1 / -1; }
+  html:root body:not(#gl) #app .ev .ev-top > .xb-all:not([open]) { grid-column: 1 / -1; padding: 0; border-top: 0; }
+  html:root body:not(#gl) #app .ev .ev-add { padding: 0 14px; }
+}
+html:root body:not(#gl) #app .ev .ev-chips .ev-chip.is-on:first-child { background: #5b49d6 !important; background-image: none !important; color: #fff !important; border-color: transparent !important; box-shadow: none !important; }

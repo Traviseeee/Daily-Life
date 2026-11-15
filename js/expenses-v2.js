@@ -99,8 +99,9 @@ const ExpensesV2 = (() => {
         <button type="button" class="ev-add" data-action="add-expense">＋ ${L("ចំណាយ", "Expense")}</button>
       </div>
       <label class="ev-month"><span>${L("វិធីបង់", "Payment")}</span><select data-expense-payment>
-        ${[["all", "All Payments"], ["cash", "Cash Only"], ["bank", "Bank Only"], ["qr", "QR Payment Only"], ["other", "Other"], ["unspecified", "Unknown / Unspecified"]].map(([value, label]) => `<option value="${value}" ${state.payment === value ? "selected" : ""}>${L(value === "all" ? "ទាំងអស់" : value === "cash" ? "សាច់ប្រាក់" : value === "bank" ? "ធនាគារ" : value === "qr" ? "QR" : value === "other" ? "ផ្សេងៗ" : "មិនបានបញ្ជាក់", label)}</option>`).join("")}
+        ${[["all", "All Payments"], ["cash", "Cash Only"], ["bank", "Bank Only"], ["qr", "QR Payment Only"], ["other", "Other"], ["unspecified", "Unknown / Unspecified"]].map(([value, label]) => `<option value="${value}" ${state.payment === value ? "selected" : ""}>${L(value === "all" ? "គ្រប់វិធីបង់" : value === "cash" ? "សាច់ប្រាក់" : value === "bank" ? "ធនាគារ" : value === "qr" ? "QR" : value === "other" ? "ផ្សេងៗ" : "មិនបានបញ្ជាក់", label)}</option>`).join("")}
       </select></label>
+      <p class="ev-cap">${L("ចំណាយសរុប", "Total spent")}</p>
       <div class="ev-big">${money(total)}${budgetTotal ? ` <small>/ ${money(budgetTotal)} ${L("ថវិកា", "budget")}</small>` : ""}</div>
       <p class="ev-sub">${sub}</p>
       ${list.length ? `<div class="ev-stack">${stack}</div>` : ""}
