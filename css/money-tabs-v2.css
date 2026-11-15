@@ -362,3 +362,144 @@ html:root:not([data-theme="light"]) .sv-who b { color: #fff; }
 .sv-amount-chips button { padding: 6px 12px; border: 0; border-radius: 99px; font: inherit; font-size: .8rem; font-weight: 500; color: #504ab9; background: #efebff; cursor: pointer; }
 .sv-amount-chips button.on { color: #fff; background: linear-gradient(135deg, #8b7cf6, #6b5ce7); }
 html:root:not([data-theme="light"]) .sv-amount-chips button:not(.on) { color: #c9bdff; background: rgba(182, 168, 255, .16); }
+
+/* ---------- Savings v2 (15 Nov): landscape scene cards (total · gold · account) ---------- */
+html:root body .svx-card { --svx-bg: #fff; --svx-tile: #f4f0ff; --svx-ink: #1a2347; --svx-sub: #6f6b92; --svx-line: rgba(123,104,238,.16); position: relative; display: grid; gap: 12px; min-width: 0; padding: 16px; border-radius: 26px; background: var(--svx-bg); border: 1px solid var(--svx-line); box-shadow: 0 10px 26px rgba(70,50,170,.12); color: var(--svx-ink); overflow: hidden; }
+html:root:not([data-theme="light"]) body .svx-card { --svx-bg: #241f4f; --svx-tile: #2d2761; --svx-ink: #ece9ff; --svx-sub: #b4afdc; --svx-line: rgba(190,180,255,.18); box-shadow: 0 10px 26px rgba(0,0,0,.35); }
+html:root body .svx-card.svx-gold { background: linear-gradient(165deg, #fffdf4, #fff0c2); border-color: rgba(232,176,60,.4); }
+html:root:not([data-theme="light"]) body .svx-card.svx-gold { background: linear-gradient(165deg, #3a3320, #2a2548); border-color: rgba(255,217,138,.25); }
+.svx-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-width: 0; }
+.svx-lab { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 6px 12px; border-radius: 99px; background: color-mix(in srgb, var(--l, #7b68ee) 14%, transparent); color: var(--l, #5b49d6); font-size: .8rem; font-weight: 700; }
+html:root:not([data-theme="light"]) .svx-lab { color: #cfc6ff; }
+html:root:not([data-theme="light"]) .svx-gold .svx-lab { color: #ffd98a; }
+.svx-badge { flex: none; padding: 6px 12px; border-radius: 99px; font-size: .8rem; font-weight: 800; }
+.svx-badge.is-ok { background: #dcf7e8; color: #12703f; }
+.svx-badge.is-gold { background: rgba(245,184,46,.22); color: #9a6a00; }
+html:root:not([data-theme="light"]) .svx-badge.is-ok { background: #1d4533; color: #8be6b4; }
+html:root:not([data-theme="light"]) .svx-badge.is-gold { color: #ffd98a; }
+.svx-scene { position: relative; aspect-ratio: 300 / 96; width: 100%; max-width: 440px; margin-inline: auto; border-radius: 22px; overflow: hidden; container-type: inline-size; }
+.svx-scene .svx-art { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.svx-art-acct { background: linear-gradient(180deg, #ffd1e6, #f5a3cb); }
+.svx-art-acct::after { content: ""; position: absolute; right: -10%; top: -30%; width: 55%; aspect-ratio: 1; border-radius: 50%; background: rgba(255,255,255,.28); }
+.svx-scene.is-acct.is-joint .svx-art-acct { background: linear-gradient(180deg, #d9e4ff, #a9c0f5); }
+.svx-pig { position: absolute; left: 4%; top: 8%; bottom: 8%; width: 40%; display: grid; place-items: center; }
+.svx-pig svg { width: 100%; height: 100%; }
+.svx-txt { position: absolute; left: 49%; right: 4%; top: 0; bottom: 0; display: flex; flex-direction: column; justify-content: center; gap: 3px; min-width: 0; color: #fff; }
+.svx-scene.is-gold .svx-txt, .svx-scene.is-acct .svx-txt { color: #5a1640; }
+.svx-scene.is-gold .svx-txt { color: #5a3a00; left: 52%; }
+.svx-txt small { font-size: .8rem; font-weight: 700; opacity: .9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.svx-txt .svx-big, .svx-txt strong { font-size: clamp(1.15rem, 8.4cqw, 1.95rem); font-weight: 900; line-height: 1.1; color: inherit; overflow-wrap: anywhere; }
+.svx-txt strong span { font-size: .5em; font-weight: 800; }
+.svx-txt .money-value, .svx-txt strong .money-value { color: inherit !important; -webkit-text-fill-color: currentColor; }
+.svx-txt .svg-main { display: grid; gap: 2px; }
+.svx-txt .svg-main small, .svx-txt .svg-main strong { color: inherit; }
+.svx-txt .svg-main strong span { color: inherit; opacity: .75; }
+.svx-worth { display: block; margin: 0; text-align: left; }
+.svx-worth small { color: inherit; font-size: .8rem; opacity: .85; }
+.svx-scene .svg-gain { padding: 2px 9px; }
+.svx-bar, .svx-scene .sv-bar { display: flex; height: 8px; margin-top: 6px; border-radius: 99px; background: rgba(255,255,255,.3); overflow: hidden; }
+.svx-scene.is-acct .sv-bar { background: rgba(255,255,255,.6); }
+.svx-bar i, .svx-scene .sv-bar i { display: block; height: 100%; min-width: 4px; border-radius: 99px; background: #ffe27a; }
+.svx-scene.is-acct .sv-bar i { background: linear-gradient(90deg, #ff9ccb, #e5489a); }
+.svx-scene.is-acct .sv-bar i.is-pt { background: #ffd23f; }
+.svx-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.svx-tiles:empty { display: none; }
+.svx-tile { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 10px 12px; border-radius: 18px; background: var(--svx-tile); }
+.svx-ic { flex: none; width: 36px; height: 36px; display: grid; place-items: center; border-radius: 12px; background: color-mix(in srgb, #7b68ee 18%, transparent); font-size: 1.05rem; }
+.svx-tile em { display: grid; min-width: 0; font-style: normal; }
+.svx-tile small { color: var(--svx-sub); font-size: .8rem; }
+.svx-tile b { min-width: 0; font-size: .95rem; overflow-wrap: anywhere; }
+html:root body .svx-card .svx-tile .money-value, html:root body .svx-card .svx-sub .money-value { color: inherit !important; -webkit-text-fill-color: currentColor; }
+html:root body .svx-card .svx-sub { margin: 0; padding: 0; background: none; box-shadow: none; display: block; position: static; max-width: none; color: var(--svx-sub); font-size: .88rem; line-height: 1.4; }
+.svx-gold .svg-market, .svx-gold .svg-acts { margin: 0; }
+.svx-gold .svg-btn { min-height: 44px; }
+html:root body .svx-gold .svx-txt .svg-main strong, html:root body .svx-gold .svx-txt .svg-main strong span { color: inherit; }
+html:root body .svx-gold .svx-txt .svg-main small { color: inherit; opacity: .85; font-size: .8rem; }
+html:root body .svx-gold .svx-txt .svx-worth { display: block; margin: 0; justify-items: start; text-align: left; }
+html:root body .svx-gold .svx-txt .svx-worth small { color: inherit; }
+html:root body .svx-gold .svx-txt .svg-gain { color: #12703f; background: rgba(255,255,255,.7); }
+html:root body .svx-gold .svx-txt .svg-gain.is-down { color: #b3262f; }
+html:root body .svx-card { gap: 10px; padding: 14px; }
+.svx-tiles { max-width: 440px; width: 100%; margin-inline: auto; }
+.svx-tile { padding: 8px 10px; }
+.svx-ic { width: 32px; height: 32px; }
+@media (min-width: 900px) { html:root body .svx-card .svx-sub { text-align: center; } }
+/* minimal pass: less copy */
+.svx-tiles { grid-template-columns: 1fr; }
+html:root body .sv-card.sv-has-art .sv-tip { display: none; }
+html:root body .svx-gold .svx-sub[hidden] { display: none; }
+.svx-scene.is-total { background: linear-gradient(180deg, #6a57dd, #a08ff5); }
+.svx-scene.is-gold { background: linear-gradient(180deg, #ffe9a8, #ffc94d); }
+.svx-scene .svx-txt .svx-big, .svx-scene .svx-txt strong { font-size: clamp(1.1rem, 7cqw, 1.6rem); }
+.svx-scene .svx-txt { left: 47%; gap: 2px; }
+.svx-pig { top: 6%; bottom: 6%; width: 34%; }
+/* audit fixes (15 Nov) */
+html:root body .mt-more > summary { width: 44px; height: 44px; margin: -6px -6px -6px 0; }
+html:root body .mt-menu button { min-height: 44px; }
+html:root body .svx-scene.is-total .svx-txt small { align-self: flex-start; padding: 2px 9px; border-radius: 99px; background: rgba(30,20,100,.32); color: #fff; opacity: 1; font-weight: 700; }
+html:root body .sv-card .mt-head .sv-title b { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; white-space: normal; overflow: hidden; overflow-wrap: anywhere; }
+.svx-txt .svx-big, .svx-txt strong { max-width: 100%; }
+html:root body .svx-card.svx-empty .mt-btn { justify-self: center; min-height: 44px; }
+.svx-gold:not(:has(.svx-scene)) .svx-top { margin-bottom: 0; }
+.svx-empty .svx-txt .svx-big { font-size: clamp(1rem, 5.6cqw, 1.3rem); }
+/* joint account polish */
+.svx-pig .svx-jar { width: auto; height: 100%; max-width: 100%; display: block; overflow: hidden; }
+.svx-pig .sv-art { overflow: hidden; animation: none; }
+html:root body .sv-info.is-joint > div { background: var(--svx-tile, #f4f0ff); }
+html:root body .sv-info.is-joint > div:first-child { box-shadow: inset 3px 0 0 #ff7fb0; }
+html:root body .sv-info.is-joint > div:nth-child(2) { box-shadow: inset 3px 0 0 #ffd23f; }
+html:root body .sv-card.sv-has-art.is-joint .sv-bar { background: rgba(255,255,255,.6); }
+html:root body .sv-card.sv-has-art.is-joint .sv-bar i { background: #ff7fb0; }
+html:root body .sv-card.sv-has-art.is-joint .sv-bar i.is-pt { background: #ffd23f; }
+.svx-scene.is-acct.is-joint .svx-txt { color: #1f2a6b; }
+/* one colour for all scenes (15 Nov): brand purple */
+html:root body .svx-card.svx-gold { background: var(--svx-bg); border-color: var(--svx-line); }
+html:root:not([data-theme="light"]) body .svx-card.svx-gold { background: var(--svx-bg); border-color: var(--svx-line); }
+.svx-scene.is-gold, .svx-scene.is-acct, .svx-scene.is-acct.is-joint .svx-art-acct, .svx-art-acct { background: linear-gradient(180deg, #6a57dd, #a08ff5); }
+.svx-scene.is-gold .svx-txt, .svx-scene.is-acct .svx-txt, .svx-scene.is-acct.is-joint .svx-txt { color: #fff; }
+html:root body .svx-scene .svx-txt small { align-self: flex-start; padding: 2px 9px; border-radius: 99px; background: rgba(30,20,100,.32); color: #fff; opacity: 1; font-weight: 700; }
+html:root body .svx-gold .svx-txt .svg-main small { color: #fff; opacity: 1; }
+html:root body .svx-scene.is-acct .sv-bar { background: rgba(255,255,255,.3); }
+html:root body .svx-scene.is-acct .sv-bar i { background: #ffe27a; }
+html:root body .sv-card.sv-has-art.is-joint .sv-bar { background: rgba(255,255,255,.3); }
+html:root body .svx-gold .svx-txt .svg-gain { background: rgba(255,255,255,.9); }
+.svx-badge.is-gold { background: color-mix(in srgb, #7b68ee 14%, transparent); color: #5b49d6; }
+html:root:not([data-theme="light"]) .svx-badge.is-gold, html:root:not([data-theme="light"]) .svx-gold .svx-lab { color: #cfc6ff; }
+html:root body .sv-card.sv-has-art .sv-info > div { background: #f4f0ff; }
+html:root:not([data-theme="light"]) body .sv-card.sv-has-art .sv-info > div { background: #2d2761; }
+html:root body .svx-gold .svg-market, html:root body .svx-gold .svg-btn.is-icon { background: var(--svx-tile); color: var(--svx-ink); }
+/* white cards, light scenes (15 Nov) — replaces the purple scenes */
+html:root body .svx-card, html:root body .sv-card.sv-has-art { --sc-a: #fbfaff; --sc-b: #ece7ff; --sc-ink: #1a2347; --sc-sub: #6f6b92; --sc-pill: rgba(123,104,238,.13); --sc-pillink: #5b49d6; --sc-track: rgba(123,104,238,.16); --sc-fill: linear-gradient(90deg, #8b79f5, #5b49d6); }
+html:root:not([data-theme="light"]) body .svx-card, html:root:not([data-theme="light"]) body .sv-card.sv-has-art { --sc-a: #2f2966; --sc-b: #262055; --sc-ink: #ece9ff; --sc-sub: #b4afdc; --sc-pill: rgba(190,180,255,.16); --sc-pillink: #d8d2ff; --sc-track: rgba(190,180,255,.2); --sc-fill: linear-gradient(90deg, #a99cff, #7b68ee); }
+html:root body .svx-scene.is-total, html:root body .svx-scene.is-gold, html:root body .svx-scene.is-acct, html:root body .svx-scene.is-acct .svx-art-acct, html:root body .svx-scene.is-acct.is-joint .svx-art-acct { background: linear-gradient(180deg, var(--sc-a), var(--sc-b)); }
+.svx-art-acct::after { background: rgba(123,104,238,.07); }
+html:root body .svx-scene .svx-txt, html:root body .svx-scene.is-gold .svx-txt, html:root body .svx-scene.is-acct .svx-txt, html:root body .svx-scene.is-acct.is-joint .svx-txt { color: var(--sc-ink); }
+html:root body .svx-scene .svx-txt small, html:root body .svx-scene.is-total .svx-txt small, html:root body .svx-gold .svx-txt .svg-main small { background: var(--sc-pill); color: var(--sc-pillink); }
+html:root body .svx-bar, html:root body .svx-scene .sv-bar, html:root body .svx-scene.is-acct .sv-bar, html:root body .sv-card.sv-has-art.is-joint .sv-bar { background: var(--sc-track); }
+html:root body .svx-bar i, html:root body .svx-scene.is-acct .sv-bar i { background: var(--sc-fill); }
+html:root body .sv-card.sv-has-art.is-joint .sv-bar i { background: #ff7fb0; }
+html:root body .sv-card.sv-has-art.is-joint .sv-bar i.is-pt { background: #ffd23f; }
+html:root body .svx-gold .svx-txt .svg-gain { background: rgba(31,157,115,.14); color: #12703f; }
+html:root body .svx-gold .svx-txt .svg-gain.is-down { background: rgba(229,72,77,.12); color: #b3262f; }
+/* minimal action buttons (15 Nov) */
+html:root body .sv-card .sv-actions .sv-save, html:root body .sv-card .sv-actions .sv-pay, html:root body .sv-card .sv-actions .sv-pay.is-pt:not(.is-done) { min-height: 44px; border: 0; border-radius: 14px; background: #f1edff; color: #4b3fc4; box-shadow: none; font-weight: 700; }
+html:root body .sv-card .sv-actions .sv-save.is-done, html:root body .sv-card .sv-actions .sv-pay.is-done { background: #e7f7ef; color: #12703f; }
+html:root body .sv-card .sv-actions .sv-use-btn { min-height: 44px; border: 1px solid rgba(123,104,238,.35); border-radius: 14px; background: transparent; color: #4b3fc4; box-shadow: none; font-weight: 700; }
+html:root body .sv-card .sv-actions .sv-use-btn:disabled { opacity: .5; border-color: transparent; background: #f1edff; }
+html:root body .sv-card .sv-actions .sv-pay .sv-pav { background: rgba(123,104,238,.18); color: #4b3fc4; }
+html:root body .sv-card .sv-actions .sv-pay.is-done .sv-pav { background: rgba(31,157,116,.22); color: #12703f; }
+html:root:not([data-theme="light"]) body .sv-card .sv-actions .sv-save, html:root:not([data-theme="light"]) body .sv-card .sv-actions .sv-pay, html:root:not([data-theme="light"]) body .sv-card .sv-actions .sv-pay.is-pt:not(.is-done) { background: #2d2761; color: #d8d2ff; }
+html:root:not([data-theme="light"]) body .sv-card .sv-actions .sv-save.is-done, html:root:not([data-theme="light"]) body .sv-card .sv-actions .sv-pay.is-done { background: rgba(31,157,116,.2); color: #8be6b4; }
+html:root:not([data-theme="light"]) body .sv-card .sv-actions .sv-use-btn { color: #d8d2ff; border-color: rgba(190,180,255,.35); }
+/* shared scene card on income / loans / bills */
+.svx-badge.is-late { background: #ffe9e0; color: #b23c0e; }
+html:root body .svx-income .mt-stack, html:root body .svx-income .mt-legend { margin: 0; }
+html:root body .svx-scene.svx-loan { margin-block: 6px; }
+html:root body .mt-loan.mt-lf .mt-lf-lbl, html:root body .mt-loan.mt-lf .mt-lf-road { display: none; }
+html:root body .mt-loan.mt-lf { --sc-a: #fbfaff; --sc-b: #ece7ff; --sc-ink: #1a2347; --sc-sub: #6f6b92; --sc-pill: rgba(123,104,238,.13); --sc-pillink: #5b49d6; --sc-track: rgba(123,104,238,.16); --sc-fill: linear-gradient(90deg, #8b79f5, #5b49d6); }
+html:root:not([data-theme="light"]) body .mt-loan.mt-lf { --sc-a: #2f2966; --sc-b: #262055; --sc-ink: #ece9ff; --sc-pill: rgba(190,180,255,.16); --sc-pillink: #d8d2ff; --sc-track: rgba(190,180,255,.2); --sc-fill: linear-gradient(90deg, #a99cff, #7b68ee); }
+html:root body .mt-loan.mt-lf .svx-scene { background: linear-gradient(180deg, var(--sc-a), var(--sc-b)); }
+html:root body .mt-loan.mt-lf .svx-txt { color: var(--sc-ink); }
+html:root body .mt-loan.mt-lf .svx-txt small { background: var(--sc-pill); color: var(--sc-pillink); }
+html:root body .mt-loan.mt-lf .svx-bar { background: var(--sc-track); }
+html:root body .mt-loan.mt-lf .svx-bar i { background: var(--sc-fill); }
