@@ -296,3 +296,70 @@ html:root:not([data-theme="light"]) body:not(#gl) #app .fv2 .fv2-section .qx-car
 html:root body:not(#gl) #app .fv2 .fv2-section .qx-card, html:root:not([data-theme="light"]) body:not(#gl) #app .fv2 .fv2-section .qx-card { background: none !important; border: 0 !important; box-shadow: none !important; padding: 0; }
 html:root body:not(#gl) #app .fv2 .fv2-section .qx-card .qx-form { background: none !important; border: 0 !important; box-shadow: none !important; padding: 4px 0 0; }
 html:root body:not(#gl) #app .fv2 .fv2-quick-card { background: none !important; border: 0 !important; box-shadow: none !important; padding: 0; }
+
+/* ===== Overview restructure: 7 cards -> hero + promo row + Spending + My money ===== */
+/* hero: 3 tiles -> one divided row */
+html:root body:not(#gl) #app .fv2 .hv2-soft-a3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; border-top: 1px solid rgba(123,104,238,.18); padding-top: 12px; margin-top: 4px; }
+html:root body:not(#gl) #app .fv2 .hv2-soft-a3 .hv2-soft-t { background: none !important; border: 0 !important; border-left: 1px solid rgba(123,104,238,.18) !important; border-radius: 0 !important; box-shadow: none !important; padding: 0 12px !important; min-width: 0; }
+html:root body:not(#gl) #app .fv2 .hv2-soft-a3 .hv2-soft-t:first-child { border-left: 0 !important; padding-left: 0 !important; }
+html:root body:not(#gl) #app .fv2 .hv2-soft-a3 .hv2-soft-t > :is(i, .hv2-soft-ic, span:first-child:empty, svg):first-child { display: none; }
+/* banner */
+html:root body:not(#gl) #app .fv2 .ss-promo { display: flex !important; align-items: center; gap: 10px; padding: 8px 6px 8px 12px !important; border-radius: 18px !important; border-style: dashed !important; box-shadow: none !important; }
+html:root body:not(#gl) #app .fv2 .ss-promo .ss-top { flex: 1 1 auto; min-width: 0; margin: 0; gap: 10px; align-items: center; }
+html:root body:not(#gl) #app .fv2 .ss-promo .ss-cat { width: 36px; height: 36px; flex: none; }
+html:root body:not(#gl) #app .fv2 .ss-promo .ss-cat svg { width: 100%; height: 100%; }
+html:root body:not(#gl) #app .fv2 .ss-promo .ss-tx b { font-size: .88rem; }
+html:root body:not(#gl) #app .fv2 .ss-promo .ss-tx small { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; font-size: .76rem; }
+html:root body:not(#gl) #app .fv2 .ss-promo .ss-go { flex: 0 0 auto; width: auto; min-height: 44px; padding: 0 16px; border-radius: 999px; margin: 0; }
+html:root body:not(#gl) #app .fv2 .ss-x { flex: none; min-width: 36px; min-height: 44px; border: 0; background: none; color: #6f6b92; font-size: .95rem; cursor: pointer; }
+/* spending */
+html:root body:not(#gl) #app .fv2 .fv2-spend { display: grid; gap: 12px; padding: 16px; }
+html:root body:not(#gl) #app .fv2 .fv2-spend-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+html:root body:not(#gl) #app .fv2 .fv2-spend-head h2 { margin: 0; font-size: 1.1rem; font-weight: 800; }
+html:root body:not(#gl) #app .fv2 .fv2-spend-head a { min-height: 44px; display: inline-flex; align-items: center; font-weight: 800; }
+html:root body:not(#gl) #app .fv2 .fv2-sub { margin: 4px 0 -4px; padding-top: 12px; border-top: 1px solid rgba(123,104,238,.18); font-size: .76rem; font-weight: 800; letter-spacing: .02em; color: #6f6b92; }
+html:root:not([data-theme="light"]) body:not(#gl) #app .fv2 .fv2-sub, html:root:not([data-theme="light"]) body:not(#gl) #app .fv2 .ss-x { color: #b4afdc; border-color: rgba(190,180,255,.2); }
+html:root body:not(#gl) #app .fv2 .fv2-spend .qx-card { margin: 0; }
+html:root body:not(#gl) #app .fv2 .fv2-spend .fv2-section-body { padding: 0; margin: 0; }
+/* money list */
+html:root body:not(#gl) #app .fv2 .fv2-money .ab-grid { display: grid; grid-template-columns: 1fr; gap: 0; margin-top: 8px; }
+html:root body:not(#gl) #app .fv2 .fv2-money .ab-grid > .ab-card { display: grid; grid-template-columns: 36px minmax(0, 1fr); align-items: center; gap: 12px; min-height: 54px; padding: 8px 0 !important; background: none !important; border: 0 !important; border-top: 1px solid rgba(123,104,238,.18) !important; border-radius: 0 !important; box-shadow: none !important; grid-column: auto; }
+html:root body:not(#gl) #app .fv2 .fv2-money .ab-grid > .ab-card:first-child { border-top: 0 !important; }
+html:root body:not(#gl) #app .fv2 .fv2-money .ab-card .ab-icon { width: 36px; height: 36px; border-radius: 12px; }
+html:root body:not(#gl) #app .fv2 .fv2-money .ab-card > div { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-width: 0; }
+html:root body:not(#gl) #app .fv2 .fv2-money .ab-card small { font-size: .92rem; font-weight: 700; color: inherit; }
+html:root body:not(#gl) #app .fv2 .fv2-money .ab-card strong { font-size: 1.02rem; font-weight: 800; }
+html:root body:not(#gl) #app .fv2 .fv2-money .ab-card.is-total { border-top-width: 2px !important; }
+html:root body:not(#gl) #app .fv2 .fv2-money .ab-card.is-total strong { font-size: 1.15rem; }
+html:root body:not(#gl) #app .fv2 .fv2-money .fv2-row { display: grid !important; grid-template-columns: 36px minmax(0, 1fr) auto; grid-template-areas: "ic lab amt" "ic cap amt"; align-items: center; column-gap: 12px; row-gap: 0; min-height: 54px; padding: 8px 0 !important; background: none !important; border: 0 !important; border-top: 1px solid rgba(123,104,238,.18) !important; border-radius: 0 !important; box-shadow: none !important; }
+html:root body:not(#gl) #app .fv2 .fv2-money .fv2-row small { grid-area: lab; display: contents; font-size: .92rem !important; font-weight: 700; color: inherit; }
+html:root body:not(#gl) #app .fv2 .fv2-money .fv2-row small svg { grid-area: ic; width: 36px; height: 36px; padding: 7px; border-radius: 12px; background: rgba(123,104,238,.1); }
+html:root body:not(#gl) #app .fv2 .fv2-money .fv2-row::after { content: "›"; grid-area: lab; justify-self: start; }
+html:root body:not(#gl) #app .fv2 .fv2-money .fv2-row strong { grid-area: amt; font-size: 1.02rem !important; }
+html:root body:not(#gl) #app .fv2 .fv2-money .fv2-row > span { grid-area: cap; font-size: .76rem; align-self: start; }
+html:root body:not(#gl) #app .fv2 .fv2-money .fv2-row { position: relative; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "lab amt" "cap amt"; padding: 8px 0 8px 48px !important; }
+html:root body:not(#gl) #app .fv2 .fv2-money .fv2-row small { display: block; grid-area: lab; align-self: end; }
+html:root body:not(#gl) #app .fv2 .fv2-money .fv2-row small svg { position: absolute; left: 0; top: 50%; transform: translateY(-50%); }
+html:root body:not(#gl) #app .fv2 .fv2-money .fv2-row::after { content: none; }
+html:root body:not(#gl) #app .fv2 .fv2-money .fv2-row small::after { content: " ›"; color: #6f6b92; }
+html:root body:not(#gl) #app .fv2 .fv2-money .fv2-row strong, html:root body:not(#gl) #app .fv2 .fv2-money .fv2-row strong .money-value { font-size: 1.02rem !important; font-weight: 800 !important; }
+html:root body:not(#gl) #app .fv2 .fv2-money .fv2-row > span { white-space: normal; }
+/* tighter rows inside the merged spending card */
+html:root body:not(#gl) #app .fv2 .fv2-spend .fv2-sub-body .fv2-tx { min-height: 52px; padding-top: 6px; padding-bottom: 6px; }
+html:root body:not(#gl) #app .fv2 .fv2-spend .fv2-sub-body .fv2-recent-note { margin: 0 0 2px; }
+html:root body:not(#gl) #app .fv2 .fv2-money .ab-card small, html:root body:not(#gl) #app .fv2 .fv2-money .fv2-row small { font-size: .92rem !important; font-weight: 700 !important; }
+
+html:root body:not(#gl) #app .fv2 .fv2-sub .fv2-badge { margin-left: 6px; }
+html:root:not([data-theme="light"]) body:not(#gl) #app .fv2 :is(.hv2-soft-a3, .fv2-sub, .fv2-money .ab-grid > .ab-card, .fv2-money .fv2-row) { border-color: rgba(190,180,255,.2) !important; }
+html:root:not([data-theme="light"]) body:not(#gl) #app .fv2 .hv2-soft-a3 .hv2-soft-t { border-left-color: rgba(190,180,255,.2) !important; }
+html:root:not([data-theme="light"]) body:not(#gl) #app .fv2 .fv2-money .fv2-row small::after { color: #b4afdc; }
+/* dark: hero stats stay a plain divided row */
+html:root:not([data-theme="light"]) body:not(#gl) #app .fv2 .hv2-soft .hv2-soft-a3 .hv2-soft-t { background: none !important; border: 0 !important; border-left: 1px solid rgba(190,180,255,.2) !important; border-radius: 0 !important; box-shadow: none !important; }
+html:root:not([data-theme="light"]) body:not(#gl) #app .fv2 .hv2-soft .hv2-soft-a3 .hv2-soft-t:first-child { border-left: 0 !important; }
+/* My money: rows explain themselves, no subtitle; title never wraps */
+html:root body:not(#gl) #app .fv2 .fv2-money .ab-title p { display: none; }
+html:root body:not(#gl) #app .fv2 .fv2-money .ab-title h2 { white-space: nowrap; }
+/* quick add: amount field keeps its width on small phones */
+html:root body:not(#gl) #app .fv2 .fv2-spend .qx-compact .qx-row > :first-child { flex: 1 1 0; min-width: 0; }
+html:root body:not(#gl) #app .fv2 .fv2-spend .qx-compact .qx-row > :nth-child(2) { flex: 1 1 0; min-width: 96px; }
+@media (max-width: 359px) { html:root body:not(#gl) #app .fv2 .ss-promo .ss-tx small { display: none; } }

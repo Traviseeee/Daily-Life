@@ -180,9 +180,15 @@ const SmartSpend = (() => {
       <div class="ss-chips"><button type="button" class="ss-chip is-main" data-ss="pick" data-v="${d}"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px;margin-right:4px"><path d="M5 13l4 4L19 7"/></svg>${escapeHtml(L("ធម្មតា", "Usual"))} ${escapeHtml(money(d))}</button><button type="button" class="ss-chip" data-ss="pick" data-v="0">${escapeHtml(L("មិនបានចាយ", "None"))}</button><button type="button" class="ss-chip" data-ss="pick" data-v="${Math.round(d * 2 * 2) / 2}">${escapeHtml(L("ច្រើនជាង", "More"))} ${escapeHtml(money(Math.round(d * 2 * 2) / 2))}</button><button type="button" class="ss-chip" data-ss="custom" aria-label="${escapeAttr(L("វាយចំនួនខ្លួនឯង", "Type an amount"))}"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg></button></div></section>`;
   }
 
+  // the "turn it on" promo can be hidden for 30 days (it comes back, so the feature is never lost)
+  const PROMO_KEY = "mylife:ss-promo-snooze";
+  function promoSnoozed() { try { return Date.now() - Number(localStorage.getItem(PROMO_KEY) || 0) < 30 * 864e5; } catch (e) { return false; } }
+  function snoozePromo() { try { localStorage.setItem(PROMO_KEY, String(Date.now())); } catch (e) {} Toast.show(L("លាក់ 30 ថ្ងៃ", "Hidden for 30 days")); App.render(); }
+
   function section() {
     const nomi = typeof HomeV2 !== "undefined" && HomeV2.buddy ? HomeV2.buddy("happy") : "🐱";
-    if (!on()) return `<section class="fv2-section ss ss-sec"><div class="ss-top"><span class="ss-cat" aria-hidden="true">${nomi}</span><span class="ss-tx"><b>${escapeHtml(L("ចំណាយប្រចាំថ្ងៃឆ្លាត", "Smart daily spending"))}</b><small>${escapeHtml(L("ភ្លេចកត់ $3–5 រាល់ថ្ងៃ? app ប៉ាន់ស្មានឱ្យ ហើយចុងខែផ្ទៀងនឹង ABA", "Forget small daily spends? The app estimates them and you match ABA at month end"))}</small></span></div><button type="button" class="ss-go" data-ss="setup">${escapeHtml(L("បើកដំណើរការ", "Turn on"))}</button></section>`;
+    if (!on() && promoSnoozed()) return "";
+    if (!on()) return `<section class="fv2-section ss ss-sec ss-promo"><div class="ss-top"><span class="ss-cat" aria-hidden="true">${nomi}</span><span class="ss-tx"><b>${escapeHtml(L("ចំណាយប្រចាំថ្ងៃឆ្លាត", "Smart daily spending"))}</b><small>${escapeHtml(L("ភ្លេចកត់ $3–5 រាល់ថ្ងៃ? app ប៉ាន់ស្មានឱ្យ ហើយចុងខែផ្ទៀងនឹង ABA", "Forget small daily spends? The app estimates them and you match ABA at month end"))}</small></span></div><button type="button" class="ss-go" data-ss="setup">${escapeHtml(L("បើក", "Turn on"))}</button><button type="button" class="ss-x" data-ss="snooze" aria-label="${escapeAttr(L("លាក់ 30 ថ្ងៃ", "Hide for 30 days"))}">✕</button></section>`;
     fill();
     const s = monthSummary();
     const pct = s.total ? Math.round((s.real / s.total) * 100) : 100;
@@ -207,6 +213,7 @@ const SmartSpend = (() => {
     else if (act === "setup") setup();
     else if (act === "off") turnOff();
     else if (act === "recon") reconcile();
+    else if (act === "snooze") snoozePromo();
   });
 
   return { card, slide, section, fill, suggest, monthSummary };

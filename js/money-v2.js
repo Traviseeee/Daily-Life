@@ -120,7 +120,7 @@ const MoneyV2 = (() => {
     </a>`;
   }
 
-  function miniGrid(stats, range, waiting) {
+  function miniGrid(stats, range, waiting, asRows = false) {
     const m = moneyMonthNumbers(range.month);
     const spentItems = moneyExpensesIn(range);
     const loanPays = moneyLoanPaymentsIn(range);
@@ -138,14 +138,17 @@ const MoneyV2 = (() => {
     const loanLeft = loans.reduce((t, loan) => t + toProfileCurrency(loanRemaining(loan), loan.currency), 0);
     const monthsLeft = loans.reduce((max, loan) => Math.max(max, loan.monthlyPayment ? Math.ceil(loanRemaining(loan) / Number(loan.monthlyPayment)) : 0), 0);
     const goalsCount = (appData.savings || []).filter(item => Number(item.targetAmount) > 0).length;
-    return `<div class="fv2-two">
-      <a class="fv2-two-card" href="#money/savings"><small>🐷 ${escapeHtml(L("សន្សំ", "Savings"))}</small><strong>${money(stats.totalSavings)}</strong><span>${savedThisMonth > 0 ? `+${money(savedThisMonth)} ${escapeHtml(L("ខែនេះ", "this month"))}` : m.plannedSavings > 0 ? `${money(m.plannedSavings)} / ${escapeHtml(L("ខែ", "mo"))}` : escapeHtml(L("មិនទាន់មានគោលដៅ", "No goal yet"))}${goalsCount ? ` · ${goalsCount} ${escapeHtml(L("គោលដៅ", goalsCount === 1 ? "goal" : "goals"))}` : ""}</span></a>
-      <a class="fv2-two-card" href="#money/loans"><small>🏦 ${escapeHtml(L("កម្ចី", "Loans"))}</small><strong>${money(loanLeft)}</strong><span>${loans.length ? escapeHtml(L(`នៅ ${monthsLeft} ខែ`, `${monthsLeft} months left`)) : `✓ ${escapeHtml(L("គ្មានកម្ចី", "No loans"))}`}</span></a>
-    </div>`;
+    const rows = `
+      <a class="fv2-two-card fv2-row" href="#money/savings"><small>🐷 ${escapeHtml(L("សន្សំ", "Savings"))}</small><strong>${money(stats.totalSavings)}</strong><span>${savedThisMonth > 0 ? `+${money(savedThisMonth)} ${escapeHtml(L("ខែនេះ", "this month"))}` : m.plannedSavings > 0 ? `${money(m.plannedSavings)} / ${escapeHtml(L("ខែ", "mo"))}` : escapeHtml(L("មិនទាន់មានគោលដៅ", "No goal yet"))}${goalsCount ? ` · ${goalsCount} ${escapeHtml(L("គោលដៅ", goalsCount === 1 ? "goal" : "goals"))}` : ""}</span></a>
+      <a class="fv2-two-card fv2-row" href="#money/loans"><small>🏦 ${escapeHtml(L("កម្ចី", "Loans"))}</small><strong>${money(loanLeft)}</strong><span>${loans.length ? escapeHtml(L(`នៅ ${monthsLeft} ខែ`, `${monthsLeft} months left`)) : `✓ ${escapeHtml(L("គ្មានកម្ចី", "No loans"))}`}</span></a>
+    `;
+    return asRows ? rows : `<div class="fv2-two">${rows}</div>`;
   }
 
+  let embed = false; // true while building the merged Spending card: sections come back as sub-blocks
   function section(title, href, body, count = "") {
     const icon = href?.endsWith("/bills") ? "📅" : href?.endsWith("/expenses") ? "📊" : href?.endsWith("/savings") ? "🎯" : href?.endsWith("/loans") ? "🏦" : "📅";
+    if (embed) return `<p class="fv2-sub">${escapeHtml(title)}${count}</p><div class="fv2-section-body fv2-sub-body">${body}</div>`;
     return `<section class="fv2-section">
       <div class="fv2-card">
         <div class="fv2-section-head"><h2><span class="fv2-section-icon" aria-hidden="true">${icon}</span>${escapeHtml(title)}${count}</h2>${href ? `<a href="${href}">${escapeHtml(L("ទាំងអស់", "All"))} ›</a>` : ""}</div>
@@ -286,17 +289,21 @@ const MoneyV2 = (() => {
     const range = moneyPeriodRange();
     const waiting = typeof MoneyAsk !== "undefined" ? MoneyAsk.items() : [];
     // the Day / Week / Month / Year bar opens from the chip on the hero (still the same controls)
+    embed = true;
+    let spendParts = "";
+    try { spendParts = categories(range) + recent(); } finally { embed = false; }
     return `<div class="fv2${periodOpen ? " show-period" : ""}">
       ${renderMoneyPeriodBar(range).replace("<strong>ខែ", "<strong>")}
       ${hero(stats, range)}
-      ${typeof AccountBalances !== "undefined" ? AccountBalances.render() : ""}
       ${typeof SmartSpend !== "undefined" ? SmartSpend.section() : ""}
-      ${miniGrid(stats, range, waiting)}
       ${waitingList(waiting)}
-      ${categories(range)}
+      <section class="fv2-section fv2-spend">
+        <div class="fv2-spend-head"><h2>${escapeHtml(L("ចំណាយ", "Spending"))}</h2><a href="#money/expenses">${escapeHtml(L("ទាំងអស់", "All"))} ›</a></div>
+        ${typeof SmartMoney !== "undefined" ? SmartMoney.renderQuickExpense("qx-compact") : ""}
+        ${spendParts}
+      </section>
       ${upcoming()}
-      ${typeof SmartMoney !== "undefined" ? `<section class="fv2-section fv2-quick-section"><div class="fv2-section-head"><h2><span class="fv2-section-icon" aria-hidden="true">🍽️</span>${escapeHtml(L("កត់ចំណាយរហ័ស", "Quick expense"))}</h2></div><div class="fv2-quick-card">${SmartMoney.renderQuickExpense("qx-compact")}</div></section>` : ""}
-      ${recent()}
+      ${typeof AccountBalances !== "undefined" ? AccountBalances.render(miniGrid(stats, range, waiting, true)) : miniGrid(stats, range, waiting)}
     </div>`;
   }
 

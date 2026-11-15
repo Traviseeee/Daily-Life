@@ -37,16 +37,17 @@ const AccountBalances = (() => {
     return { start, cash, bank, total: cash + bank };
   }
 
-  function render() {
+  function render(extraRows = "") {
     const value = calculate();
     const currency = appData.profile.currency || "USD";
     const fmt = amount => formatPlainMoney(amount, currency);
     const nomi = typeof HomeV2 !== "undefined" && HomeV2.role ? HomeV2.role("money") : typeof HomeV2 !== "undefined" && HomeV2.buddy ? HomeV2.buddy("happy") : "🐱";
-    return `<section class="fv2-section ab-section">
-      <div class="ab-head"><div class="ab-title"><div><h2>${escapeHtml(L("សមតុល្យ", "Balances"))}</h2><p>${escapeHtml(L("សាច់ប្រាក់ · ធនាគារ · សរុប", "Cash · Bank · Total"))}</p></div><span class="ab-nomi" aria-hidden="true">${nomi}</span></div><button type="button" class="ab-edit" data-account-balances-edit aria-label="${escapeAttr(L("កែសមតុល្យដើម", "Edit opening balances"))}">${Icons.edit()}<span>${escapeHtml(L("កែ", "Edit"))}</span></button></div>
+    return `<section class="fv2-section ab-section${extraRows ? " fv2-money" : ""}">
+      <div class="ab-head"><div class="ab-title"><div><h2>${escapeHtml(extraRows ? L("លុយរបស់ខ្ញុំ", "My money") : L("សមតុល្យ", "Balances"))}</h2><p>${escapeHtml(extraRows ? L("សាច់ប្រាក់ · ធនាគារ · សន្សំ · កម្ចី", "Cash · Bank · Savings · Loans") : L("សាច់ប្រាក់ · ធនាគារ · សរុប", "Cash · Bank · Total"))}</p></div><span class="ab-nomi" aria-hidden="true">${nomi}</span></div><button type="button" class="ab-edit" data-account-balances-edit aria-label="${escapeAttr(L("កែសមតុល្យដើម", "Edit opening balances"))}">${Icons.edit()}<span>${escapeHtml(L("កែ", "Edit"))}</span></button></div>
       <div class="ab-grid">
         <article class="ab-card"><span class="ab-icon is-cash">${Icons.wallet()}</span><div><small>${escapeHtml(L("សាច់ប្រាក់", "Cash"))}</small><strong>${escapeHtml(fmt(value.cash))}</strong></div></article>
         <article class="ab-card"><span class="ab-icon is-bank">${Icons.bank ? Icons.bank() : Icons.wallet()}</span><div><small>${escapeHtml(L("ធនាគារ / QR", "Bank / QR"))}</small><strong>${escapeHtml(fmt(value.bank))}</strong></div></article>
+        ${extraRows}
         <article class="ab-card is-total"><span class="ab-icon is-total-icon">${Icons.chart()}</span><div><small>${escapeHtml(L("សរុបនៅសល់", "Total left"))}</small><strong>${escapeHtml(fmt(value.total))}</strong></div></article>
       </div>
       <p class="ab-note">${escapeHtml(L(`ចាប់ពី ${value.start} · មិនរាប់កំណត់ត្រាមិនបញ្ជាក់`, `Since ${value.start} · Unknown excluded`))}</p>
