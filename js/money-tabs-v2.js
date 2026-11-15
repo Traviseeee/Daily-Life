@@ -202,7 +202,7 @@ const MoneyTabsV2 = (() => {
     </section>` : "";
     const emptyHead = `<section class="svx-card svx-total svx-empty"><div class="svx-scene is-total">${SVX_TOTAL_ART}<div class="svx-txt"><b class="svx-big">${escapeHtml(L("មិនទាន់មានសន្សំ", "No savings yet"))}</b><small>${escapeHtml(L("បន្ថែមគោលដៅដំបូង", "Add your first goal"))}</small></div></div><button type="button" class="mt-btn is-main" data-action="add-savings">＋ ${escapeHtml(t("addSavings"))}</button></section>`;
     if (!items.length) return `${emptyHead}${goldPortfolio}`;
-    return `${head}${sec(L("គណនីសន្សំ", "Savings accounts"), items.length, "add-savings")}${cards}${goldPortfolio}`;
+    return `${head}<section class="svx-card sv-group">${sec(L("គណនីសន្សំ", "Savings accounts"), items.length, "add-savings")}${cards}</section>${goldPortfolio}`;
   }
   const plainMoney = value => String(money(value)).replace(/<[^>]*>/g, "");
   document.addEventListener("click", event => {

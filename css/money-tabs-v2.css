@@ -690,3 +690,21 @@ html:root:not([data-theme="light"]) body .sv-card.sv-has-art .sv-info.svc-facts 
 html:root:not([data-theme="light"]) body .svx-gold .svg-market { background: transparent; }
 html:root:not([data-theme="light"]) body .svx-gold .svc-facts b.is-down { color: #ffa6b8; }
 html:root:not([data-theme="light"]) body .svx-gold .svc-facts b.is-up { color: #8be6b4; }
+
+/* ===== Savings: all accounts live in one card, divided by hairlines ===== */
+html:root body .sv-group { display: grid; gap: 0; padding: 16px; }
+html:root body .sv-group > .mt-sec { margin: 0 0 4px; padding: 0; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+html:root body .sv-group > .sv-card { background: none !important; border: 0 !important; border-top: 1px solid var(--svx-line, rgba(123,104,238,.2)) !important; border-radius: 0 !important; box-shadow: none !important; padding: 16px 0 !important; margin: 0 !important; backdrop-filter: none !important; }
+html:root body .sv-group > .sv-card:last-child { padding-bottom: 0 !important; }
+html:root body .sv-group > .sv-card::before, html:root body .sv-group > .sv-card::after { display: none !important; }
+html:root body .sv-group > .sv-card.sv-card.sv-card { border-top: 1px solid rgba(123,104,238,.22) !important; margin-top: 12px !important; }
+html:root:not([data-theme="light"]) body .sv-group > .sv-card.sv-card.sv-card { border-top-color: rgba(190,180,255,.22) !important; }
+html:root body .sv-group > .sv-card.sv-card.sv-card { border-radius: 0 !important; border-left: 0 !important; border-right: 0 !important; border-bottom: 0 !important; background: none !important; box-shadow: none !important; }
+html:root body .sv-card .svj-row .svj-nm { overflow: hidden; }
+html:root body .sv-card .svj-row .svj-nm small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 359px) {
+  html:root body .sv-card .sv-info.svc-facts.is-joint > .svj-row { grid-template-columns: minmax(0, 1fr) 60px 82px; }
+  html:root body .sv-card .svj-row .sv-pav { width: 26px; height: 26px; margin-left: 8px; }
+  html:root body .sv-card .svj-row .svj-nm { padding-left: 42px; }
+  html:root body .sv-card .svj-row .svj-ck > span { font-size: .9rem; }
+}
