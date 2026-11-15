@@ -635,3 +635,58 @@ html:root body .sv-card > .mt-head .sv-title { flex: 1 1 auto; min-width: 0; }
 html:root body .sv-card > .mt-head .sv-status { flex: none; margin-left: auto; }
 html:root body .sv-card > .mt-head > details, html:root body .sv-card > .mt-head .mt-more { flex: none; margin-left: 0; margin-right: -8px; }
 html:root body .sv-card > .mt-head { margin-left: -12px; }
+
+/* ===== Savings page — alignment pass (one grid for every card) =====
+   art column 104px + 14px gap, so every big number starts at the same x;
+   header = name left / status right; footer = status left / action right. */
+html:root body .svx-total .svx-bbody,
+html:root body .sv-card .svc-body,
+html:root body .sv-card .svc-body.is-joint,
+html:root body .svx-gold .svc-body { display: grid; grid-template-columns: 104px minmax(0, 1fr); gap: 14px; align-items: center; margin: 0; }
+html:root body .svx-total .svx-bpig, html:root body .sv-card .svc-art svg, html:root body .svx-gold .svc-art svg { width: 104px; height: auto; display: block; }
+html:root body .sv-card .svc-body.is-joint .svc-art { display: grid; place-items: center; }
+html:root body .sv-card .svc-body.is-joint .svc-art svg { width: auto; height: 84px; }
+/* one number style */
+html:root body .svx-total .svx-big, html:root body .sv-card .svc-big, html:root body .svx-gold .svc-txt .svg-main strong { font-size: clamp(1.55rem, 7.4vw, 1.95rem); font-weight: 900; line-height: 1.05; color: var(--svx-ink, #1a2347); opacity: 1; }
+html:root body .svx-total .svx-btxt, html:root body .sv-card .svc-txt, html:root body .svx-gold .svc-txt { display: grid; gap: 6px; min-width: 0; }
+html:root body .svx-total .svx-of, html:root body .sv-card .svc-txt > small, html:root body .svx-gold .svc-cap { font-size: .86rem; font-weight: 600; color: var(--svx-sub, #6f6b92); }
+html:root body .svx-gold .svc-txt { grid-template-rows: auto auto; }
+html:root body .svx-gold .svc-cap { order: 2; }
+/* one bar style */
+html:root body .svx-total .svx-tbar, html:root body .sv-card .svc-txt .sv-bar { height: 8px; margin: 2px 0 0; border-radius: 99px; background: rgba(123,104,238,.14); overflow: hidden; display: flex; }
+html:root body .svx-total .svx-tbar i { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, #ff9ec6, #e0488f); }
+/* total: month row sits under a hairline, dots on the right */
+html:root body .svx-total .svx-brow { padding-top: 12px; border-top: 1px solid var(--svx-line, rgba(123,104,238,.16)); }
+html:root body .svx-total .svx-brow .svx-dots { flex: 0 0 auto; width: auto; margin: 0; gap: 5px; }
+html:root body .svx-total .svx-brow .svx-dots i { flex: none; width: 18px; height: 6px; }
+/* section title lines up with card content */
+html:root body .mt-sec { margin: 6px 0 0; padding: 0 0 0 16px; }
+/* card rhythm */
+html:root body .sv-card, html:root body .svx-card { padding: 16px; }
+html:root body .sv-card > .mt-head { margin: 0 0 10px -12px; min-height: 32px; }
+html:root body .sv-card .sv-info.svc-facts:not(.is-joint), html:root body .svx-gold .sv-info.svc-facts { margin: 14px 0 0; padding: 10px 0; }
+html:root body .sv-card .sv-info.svc-facts.is-joint { margin: 14px 0 0; }
+/* footer: status left, action right — same on every account card */
+html:root body .sv-card .sv-actions, html:root body .sv-card.is-joint .sv-actions { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+html:root body .sv-card .sv-actions .sv-save { flex: 1 1 auto; min-height: 46px; }
+html:root body .sv-card .sv-actions .sv-save.is-done { justify-content: flex-start; padding-left: 0; padding-right: 0; border-color: transparent; font-size: .9rem; }
+html:root body .sv-card .sv-actions .sv-save.is-done > span { justify-content: flex-start; text-align: left; }
+html:root body .sv-card .sv-jstat { flex: 1 1 auto; min-width: 0; font-size: .9rem; font-weight: 700; color: var(--svx-sub, #6f6b92); }
+html:root body .sv-card .sv-jstat.is-done { color: #12703f; }
+html:root:not([data-theme="light"]) body .sv-card .sv-jstat.is-done, html:root:not([data-theme="light"]) body .sv-card .sv-actions .sv-save.is-done { color: #8be6b4; }
+html:root body .sv-card .sv-actions .sv-use-btn, html:root body .sv-card.is-joint .sv-actions .sv-use-btn { flex: 0 0 auto; width: auto; min-width: 104px; min-height: 46px; grid-column: auto; }
+/* gold */
+html:root body .svx-badge.is-down { background: #fde4e8; color: #b3203a; }
+html:root:not([data-theme="light"]) body .svx-badge.is-down { background: #4a2330; color: #ffa6b8; }
+html:root body .svx-gold .svg-btn { min-height: 46px; }
+html:root body .svx-gold .svg-market { min-height: 44px; }
+html:root body .svx-gold .svc-txt .svg-main strong.is-worth { color: var(--svx-ink, #1a2347) !important; opacity: 1 !important; -webkit-text-fill-color: currentColor; }
+html:root body .svx-gold .svc-body { margin-bottom: -4px; }
+html:root body .svx-gold .svc-txt .svg-main strong.is-worth * { color: inherit !important; opacity: 1 !important; font-size: inherit; font-weight: inherit; }
+/* dark-mode clean-up for the new cards */
+html:root:not([data-theme="light"]) body .sv-card .sv-actions .sv-save.is-done { background: transparent; }
+html:root:not([data-theme="light"]) body .sv-card .svj-row .svj-ck.is-done { color: #8be6b4; background: rgba(139,230,180,.1); }
+html:root:not([data-theme="light"]) body .sv-card.sv-has-art .sv-info.svc-facts > div { background: none; }
+html:root:not([data-theme="light"]) body .svx-gold .svg-market { background: transparent; }
+html:root:not([data-theme="light"]) body .svx-gold .svc-facts b.is-down { color: #ffa6b8; }
+html:root:not([data-theme="light"]) body .svx-gold .svc-facts b.is-up { color: #8be6b4; }
