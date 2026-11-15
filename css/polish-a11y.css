@@ -56,3 +56,14 @@ html:root[data-theme="light"] body:not(#gl) .cv2 .cv2-c.is-past:not(.is-today):n
 html:root[data-theme="light"] body:not(#gl) .cv2 .cv2-c.is-weekend:not(.is-past):not(.is-today):not(.is-holiday) { color: #a63461 !important; }
 /* family strip: the birthday line under each avatar was inheriting the button's 15px; now 12px, darker */
 html:root[data-theme="light"] body:not(#gl) #app .fv-av small { color: #b0304f; line-height: 1.3; }
+
+/* ---------- 7 · review fixes (15 Nov): text floor 12px, touch targets 44px ---------- */
+/* every small label that rendered at 10.5-11.8px now sits at 12px */
+html:root body:not(#gl) :is(.hv4-status, .hs-lab, .hs-sub, .hs-go2, .hv4-more, .cv2-chip, .cv2-tag, .page-subtitle,
+  .hv2-soft-month, .hv2-soft-edit, .fv2-badge, .qx-more, .fv2-recent-note, .sv-sync, .gv-cat, .pace) { font-size: 12px !important; }
+/* small controls keep their look; the tappable area grows to 44px (vertical only, so neighbours are not covered) */
+html:root body:not(#gl) :is(.cv2-link, .cv2-seg a, .gv-chip, .sv-sync) { position: relative; }
+html:root body:not(#gl) :is(.cv2-link, .cv2-seg a, .gv-chip, .sv-sync)::after { content: ""; position: absolute; inset: -7px 0; }
+html:root body:not(#gl) .hv2-soft-amt::after { content: ""; position: absolute; inset: -4px 0; }
+/* rows that are only a little short are simply made 44px tall */
+html:root body:not(#gl) :is(.hv2-alert, .sv-alert-btn) { min-height: 44px; }
