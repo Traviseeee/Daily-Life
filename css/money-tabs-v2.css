@@ -552,3 +552,15 @@ html:root body .sv-card.is-joint .sv-actions { display: grid; grid-template-colu
 html:root body .sv-card.is-joint .sv-actions .sv-save { width: 100%; min-width: 0; justify-content: center; }
 html:root body .sv-card.is-joint .sv-actions .sv-use-btn { grid-column: 1 / -1; width: 100%; }
 html:root body .sv-card.is-joint .svc-p span { min-width: 0; overflow-wrap: anywhere; }
+
+/* Gold card — option E (white, outline bar, plain text, minimal buttons) */
+html:root body .svx-gold .svc-body { display: grid; grid-template-columns: minmax(100px, 128px) minmax(0, 1fr); gap: 14px; align-items: center; margin: 4px 0 0; background: none; border: 0; padding: 0; }
+html:root body .svx-gold .svc-art svg { width: 100%; height: auto; display: block; }
+html:root body .svx-gold .svc-txt { display: grid; gap: 6px; min-width: 0; }
+html:root body .svx-gold .svc-txt .svg-main strong { font-size: clamp(1.5rem, 8vw, 2rem); font-weight: 900; line-height: 1.05; color: var(--svx-ink, #1a2347); }
+html:root body .svx-gold .svc-txt .svg-chi { display: block; margin-top: 4px; padding: 0; background: none; font-size: .92rem; font-weight: 600; color: var(--svx-sub, #6f6b92); }
+html:root body .svx-gold .svc-txt .svg-gain { background: none; padding: 0; font-style: normal; font-weight: 800; font-size: .9rem; }
+html:root body .svx-gold .svc-txt .svg-gain.is-down { color: #b3203a; }
+html:root body .svx-gold .svc-txt .svg-gain.is-up { color: #12703f; }
+html:root body .svx-gold .svg-btn:not(.is-primary) { background: transparent; border: 1px solid rgba(123,104,238,.3); box-shadow: none; }
+html:root body .svx-gold .svg-market { background: transparent; border: 0; box-shadow: none; padding-left: 0; padding-right: 0; }
