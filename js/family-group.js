@@ -21,7 +21,6 @@ const FamilyGroup = (() => {
     send: () => svg('<path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>'),
     userPlus: () => svg('<circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 14 0"/><path d="M19 8v6M16 11h6"/>'),
     back: () => svg('<path d="m15 18-6-6 6-6"/>'),
-    coin: () => svg('<circle cx="12" cy="12" r="9"/><path d="M15 9.5h-4.2a1.6 1.6 0 0 0 0 3.2h2.4a1.6 1.6 0 0 1 0 3.2H9M12 6.8V9m0 6v2.2"/>')
   };
   const icon = name => (Icons[name] ? Icons[name]() : "");
 

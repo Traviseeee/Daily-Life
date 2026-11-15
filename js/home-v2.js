@@ -468,10 +468,9 @@ const HomeV2 = (() => {
       const sub = item.amount ? plainMoney(item.amount, item.currency) : (item.categoryLabel || "");
       const ic = { bill: "🧾", family: "👨‍👩‍👧", reminder: "🔔", holiday: "🎉", event: "📅" }[kind] || "📅";
       if (lav()) {
-        const sticker = roleBuddy({ holiday: "holiday", bill: "bill", family: "family" }[kind] || "calendar", kind === "holiday" ? "cheer" : "happy");
         const details = [time, sub, L(kmTag, enTag)].filter(Boolean);
         const aria = `${item.title || ""}. ${details.join(". ")}`;
-        return `<a class="hv2-tl-row hv2-calendar-item${kind === "holiday" ? " hv2-holiday" : ""} has-ticker" href="${escapeAttr(item.href || "#calendar")}" aria-label="${escapeAttr(aria)}"><span class="hv2-tl-ic is-${tone} hv2-calendar-nomi" aria-hidden="true">${sticker}<i>${ic}</i></span><span class="hv2-tl-text"><b>${escapeHtml(item.title || "")}</b><span class="hv2-rain-ticker${kind === "holiday" ? " hv2-holiday-ticker" : ""}" aria-hidden="true"><span class="hv2-rain-ticker-track"><small>${escapeHtml(details[0] || "")}</small><small>${escapeHtml(details[1] || details[0] || "")}</small><small>${escapeHtml(details[2] || details[0] || "")}</small></span></span></span></a>`;
+        return `<a class="hv2-tl-row hv2-calendar-item${kind === "holiday" ? " hv2-holiday" : ""} has-ticker" href="${escapeAttr(item.href || "#calendar")}" aria-label="${escapeAttr(aria)}"><span class="hv2-tl-ic is-${tone} hv2-row-ic" aria-hidden="true">${ic}</span><span class="hv2-tl-text"><b>${escapeHtml(item.title || "")}</b><span class="hv2-rain-ticker${kind === "holiday" ? " hv2-holiday-ticker" : ""}" aria-hidden="true"><span class="hv2-rain-ticker-track"><small>${escapeHtml(details[0] || "")}</small><small>${escapeHtml(details[1] || details[0] || "")}</small><small>${escapeHtml(details[2] || details[0] || "")}</small></span></span></span></a>`;
       }
       return `<a class="hv2-tl-row" href="${escapeAttr(item.href || "#calendar")}">${lav() ? `<span class="hv2-tl-ic is-${tone}" aria-hidden="true">${ic}</span>` : ""}<span class="hv2-tl-time">${escapeHtml(time)}</span><span class="hv2-dot is-${tone}"></span><span class="hv2-tl-text"><b>${escapeHtml(item.title || "")}</b>${sub ? `<small>${escapeHtml(sub)}</small>` : ""}</span><span class="hv2-tag is-${tone}">${escapeHtml(L(kmTag, enTag))}</span></a>`;
     }).join("");

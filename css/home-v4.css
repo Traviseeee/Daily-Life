@@ -459,7 +459,6 @@ html[data-theme="dark"] .hs-jar-body { background: rgba(255,255,255,.06); box-sh
 
 /* daily spend slide (J1): wallet + big number */
 .hs-spendj .hs-row { justify-content: flex-start; gap: 12px; }
-.hs-wallet { flex: none; overflow: visible; filter: drop-shadow(0 8px 14px rgba(70,50,170,.2)); }
 .hs-spendj .hs-main { gap: 2px; }
 .hs-spendj .hs-big { font-size: 2.1rem; }
 .hs-spendj .hs-chips { margin-top: auto; }
@@ -486,3 +485,25 @@ html[data-theme="dark"] .hs-jar-body { background: rgba(255,255,255,.06); box-sh
 }
 @keyframes hs-wob { 0%, 100% { transform: rotate(-2deg); } 50% { transform: rotate(2deg); } }
 @keyframes hs-fall { 0% { transform: translateY(-34px); opacity: 0; } 20% { opacity: 1; } 70% { transform: translateY(22px); opacity: 1; } 100% { transform: translateY(26px); opacity: 0; } }
+/* coming-up date card (15 Nov): same landscape system */
+.hs-datel { gap: 12px; padding: 16px; }
+.hs-datel .hs-scene { width: 100%; flex: none; height: auto; aspect-ratio: 300 / 140; border-radius: 26px; }
+.hs-datel .hs-scene text { font-family: Inter, "Kantumruy Pro", sans-serif; }
+.hs-datel .hs-side.hs-side2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; background: none; border: 0; border-radius: 0; overflow: visible; }
+.hs-datel .hs-side2 .hs-c { display: flex; flex-direction: row; align-items: center; justify-content: flex-start; gap: 10px; padding: 10px 12px; border-radius: 16px; background: rgba(255,255,255,.88); border: 1px solid rgba(238,111,91,.22); min-width: 0; }
+.hs-datel .hs-side2 .hs-c em { font-style: normal; display: flex; flex-direction: column; min-width: 0; }
+.hs-datel .hs-side2 small { font-size: .78rem; color: #6f5a73; font-weight: 600; }
+.hs-datel .hs-side2 b { font-size: .95rem; font-weight: 800; line-height: 1.25; color: #1a2347; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: anywhere; }
+.hs-datel .hs-side2 .hs-si { flex: none; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; }
+.hs-datel .is-when .hs-si { background: #ffe3dc; color: #e0553f; }
+.hs-datel .is-what .hs-si { background: #fff1c9; color: #c98a0a; }
+.hs-datel .hs-sub { font-size: .84rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hs-datel .hs-go2 { min-height: 44px; font-size: .84rem; padding: 0 18px; flex: none; }
+.hs-datel .hs-lrow { align-items: center; }
+
+/* Nomi shows up once in the Today list (daily focus + weather); event / bill / family rows use a plain icon (15 Nov) */
+html:root body:not(#gl) .hv2-v3 .hv2-calendar-item.has-ticker .hv2-row-ic { position: static; flex: none; }
+html:root body:not(#gl) .hv2-v3 .hv2-calendar-item.has-ticker .hv2-row-ic + .hv2-tl-text { padding-left: 0; }
+html:root body:not(#gl) .hv2-v3 .hv2-calendar-item.has-ticker .hv2-row-ic + .hv2-tl-text > b { animation-delay: .1s; }
+html:root body:not(#gl) .hv2-v3 .hv2-calendar-item.has-ticker .hv2-row-ic + .hv2-tl-text .hv2-rain-ticker { animation-delay: .3s; }
+html:root body .hv2 .hv4-today .hv2-tl-row.has-ticker .hv2-row-ic + .hv2-tl-text { padding-left: 0 !important; }

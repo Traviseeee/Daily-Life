@@ -67,8 +67,6 @@ const SettingsV2 = (() => {
             <button type="button" class="${p.theme !== "light" ? "on" : ""}" data-sv-theme="dark" aria-pressed="${p.theme !== "light"}">🌙 ${escapeHtml(L("ងងឹត", "Dark"))}</button>
           </div></div>
           <label class="sv-q"><small><span>👁 ${escapeHtml(L("លាក់លុយ", "Hide money"))}</span>${toggle('data-preference="moneyHidden"', p.moneyHidden)}</small><b>${escapeHtml(p.moneyHidden ? L("លាក់", "Hidden") : L("បង្ហាញ", "Shown"))}</b></label>
-          <a class="sv-q" href="#settings/appearance"><small><span>🌐 ${escapeHtml(L("ភាសា", "Language"))}</span>${chev}</small><b>${p.language === "Khmer" ? "ខ្មែរ" : "English"}</b></a>
-          <a class="sv-q" href="#settings/money"><small><span>💵 ${escapeHtml(L("រូបិយប័ណ្ណ", "Currency"))}</span>${chev}</small><b>${escapeHtml(p.currency || "USD")} ${(p.currency || "USD") === "KHR" ? "៛" : "$"}</b></a>
         </div>
 
         <div class="sv-grp">

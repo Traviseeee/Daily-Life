@@ -78,7 +78,8 @@ html:root[data-theme="light"] body .page.gv2 {
 .gv-btn:active, .gv-add:active { transform: scale(0.96); }
 .gv-goal.is-done .gv-cover { filter: saturate(0.8); }
 .gv-empty { display: grid; justify-items: center; gap: 8px; padding: 28px 18px; text-align: center; }
-.gv-empty span { font-size: 2.4rem; }
+.gv-empty .gv-empty-art { width: 100%; height: auto; aspect-ratio: 300 / 140; border-radius: 26px; margin-bottom: 6px; }
+.gv-empty .gv-empty-ideas { font-size: .8rem; color: var(--g-ink2); opacity: .85; }
 .gv-empty h2 { margin: 0; font-size: 1.05rem; }
 .gv-empty p { margin: 0 0 6px; font-size: 0.84rem; color: var(--g-ink2); }
 

@@ -24,13 +24,10 @@ const FamilyAccess = (() => {
   }
   const limited = () => Boolean(access && access.role && access.role !== "admin");
   const has = perm => !limited() || Boolean(access.perms?.[perm]);
-  // a joint savings account with the admin opens the Savings tab even when "Savings" is off (js/family-share.js)
-  const joint = () => typeof FamilyShare !== "undefined" && FamilyShare.has("joint");
 
   function allows(route, param = "") {
     if (!limited()) return true;
     const rule = RULES.find(entry => entry.match(route, param));
-    if (rule && rule.perm === "savings" && route === "money" && joint()) return true;
     return !rule || has(rule.perm);
   }
   function applyBody() {

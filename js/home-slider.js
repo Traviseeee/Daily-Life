@@ -82,7 +82,7 @@ const HomeSlider = (() => {
     // 💗 close to a 1,000-day mark
     if (facts.love) list.push({ key: "love", weight: facts.love.left <= 30 ? 85 : 30, tone: "love", label: `💗 ${L("ថ្ងៃរួមគ្នា", "Together")}`, big: String(facts.love.days), unit: L("ថ្ងៃ", "days"), sub: facts.love.names, bar: facts.love.progress, faces: facts.love.faces, stats: [[L("ដល់ការរំលឹក", "To the mark"), L(`${facts.love.left} ថ្ងៃ`, `${facts.love.left} days`)], [L("ថ្ងៃទី", "Day"), facts.love.next.toLocaleString()]], sub2: `🎉 ${L(`${facts.love.left} ថ្ងៃទៀតដល់ ${facts.love.next.toLocaleString()}`, `${facts.love.left} days to ${facts.love.next.toLocaleString()}`)}`, href: "#family", go: `${L("មើលគ្រួសារ", "Family")} ›` });
     // 🎂 the next family date
-    if (facts.date && facts.date.days <= 30) list.push({ key: "date", weight: facts.date.days <= 7 ? 88 : 45, tone: "bd", label: `${facts.date.icon} ${L("ជិតមកដល់", "Coming up")}`, big: String(facts.date.days), unit: L("ថ្ងៃទៀត", "days"), sub: `${facts.date.title} · ${facts.date.sub}`, href: "#calendar", go: `${L("មើលប្រតិទិន", "Calendar")} ›` });
+    if (facts.date && facts.date.days <= 30) list.push({ key: "date", weight: facts.date.days <= 7 ? 88 : 45, tone: "bd", label: `${facts.date.icon} ${L("ជិតមកដល់", "Coming up")}`, big: String(facts.date.days), unit: L("ថ្ងៃទៀត", "days"), sub: `${facts.date.title} · ${facts.date.sub}`, href: "#calendar", go: `${L("មើលប្រតិទិន", "Calendar")} ›`, dateInfo: { days: facts.date.days, icon: facts.date.icon, title: facts.date.title, sub: facts.date.sub } });
     // 🏦 joint savings account
     const joint = (appData.savings || []).find(item => item && item.jointWith && Number(item.targetAmount || 0) > 0);
     if (joint) {
@@ -182,8 +182,28 @@ const HomeSlider = (() => {
       <span class="hs-lrow"><span class="hs-sub">${escapeHtml(p >= 75 ? L("ជិតដល់ទង់ហើយ 🚩", "Almost at the flag 🚩") : p >= 25 ? L("កំពុងឡើងល្អ 🚀", "Climbing nicely 🚀") : L("ចាប់ផ្តើមហើយ 🚀", "Lift-off 🚀"))}</span><span class="hs-go2">${escapeHtml(card.go)}</span></span>
     </a>`;
   }
+  // coming-up date (15 Nov): landscape like the other cards - a sunset scene with the countdown, two icon tiles
+  function dateHtml(card) {
+    const { days, icon, title, sub } = card.dateInfo;
+    const d = Math.max(0, Math.min(30, Number(days) || 0));
+    const prog = Math.round(((30 - d) / 30) * 100);
+    const [when, ...rest] = String(sub || "").split(" · ");
+    const big = String(days);
+    const fs = big.length > 2 ? 54 : 70;
+    const scene = `<svg class="hs-sky hs-scene" viewBox="0 0 300 140" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs><linearGradient id="hs-dt-g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e8527a"/><stop offset=".6" stop-color="#ff8a6b"/><stop offset="1" stop-color="#ffd9a8"/></linearGradient><clipPath id="hs-dt-c"><rect width="300" height="140" rx="26"/></clipPath></defs><rect width="300" height="140" rx="26" fill="url(#hs-dt-g)"/><g clip-path="url(#hs-dt-c)"><circle cx="262" cy="104" r="34" fill="#fff" opacity=".18"/><circle cx="262" cy="104" r="22" fill="#fff" opacity=".18"/><ellipse cx="40" cy="148" rx="110" ry="20" fill="#fff" opacity=".25"/><g fill="#fff"><circle class="hs-tw" cx="150" cy="16" r="2"/><circle class="hs-tw" cx="206" cy="34" r="1.6" style="animation-delay:.6s"/><circle class="hs-tw" cx="26" cy="24" r="1.8" style="animation-delay:1.1s"/></g><g opacity=".9"><rect x="196" y="18" width="7" height="7" rx="1.5" fill="#ffe08a" transform="rotate(20 199 21)"/><rect x="236" y="14" width="6" height="6" rx="1.5" fill="#fff" transform="rotate(-18 239 17)"/><rect x="278" y="40" width="7" height="7" rx="1.5" fill="#ffd1e0" transform="rotate(30 281 43)"/></g></g><text x="18" y="${fs > 60 ? 84 : 76}" font-size="${fs}" font-weight="800" fill="#fff">${escapeHtml(big)}</text><text x="18" y="108" font-size="14" font-weight="700" fill="#fff" opacity=".92">${escapeHtml(L("ថ្ងៃទៀត", "days to go"))}</text><circle cx="236" cy="70" r="36" fill="#fff" opacity=".95"/><text x="236" y="84" font-size="38" text-anchor="middle">${escapeHtml(icon || "🎉")}</text><rect x="18" y="120" width="264" height="7" rx="3.5" fill="#fff" opacity=".3"/><rect x="18" y="120" width="${Math.max(7, Math.round(264 * prog / 100))}" height="7" rx="3.5" fill="#fff"/></svg>`;
+    return `<a class="hs-slide hs-info hs-tone-bd hs-datel" href="${card.href}" data-hs-kind="${card.key}">
+      ${deco(card.key)}<span class="hs-top"><span class="hs-lab">${escapeHtml(card.label)}</span></span>
+      ${scene}
+      <span class="hs-side hs-side2 hs-side3 hs-side-two">
+        <span class="hs-c is-when"><i class="hs-si" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></i><em><small>${escapeHtml(L("កាលបរិច្ឆេទ", "Date"))}</small><b>${escapeHtml(when || "")}</b></em></span>
+        <span class="hs-c is-what"><i class="hs-si" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></svg></i><em><small>${escapeHtml(rest.length ? L("ព័ត៌មាន", "Details") : L("ព្រឹត្តិការណ៍", "Event"))}</small><b>${escapeHtml(rest.length ? rest.join(" · ") : title)}</b></em></span>
+      </span>
+      <span class="hs-lrow"><span class="hs-sub">${escapeHtml(d <= 7 ? L("ជិតដល់ហើយ 🎈", "Almost here 🎈") : L("រៀបចំទុកមុន 🗓️", "Plan ahead 🗓️"))}</span><span class="hs-go2">${escapeHtml(card.go)}</span></span>
+    </a>`;
+  }
   function infoHtml(card) {
     if (card.key === "goal" && card.goalInfo) return goalHtml(card);
+    if (card.key === "date" && card.dateInfo) return dateHtml(card);
     if (card.key === "joint" && card.jar) return jointHtml(card);
     if (card.key === "love" && card.faces && card.faces.length) return loveHtml(card);
     const stats = (card.stats || []).slice(0, 3);
