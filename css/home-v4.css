@@ -445,6 +445,22 @@ html[data-theme="dark"] .hs-jar-body { background: rgba(255,255,255,.06); box-sh
 .hs-spendj .hs-main { gap: 2px; }
 .hs-spendj .hs-big { font-size: 2.1rem; }
 .hs-spendj .hs-chips { margin-top: auto; }
+'
+/* daily spend slide v2 (15 Nov): landscape scene, three icon tiles, chips */
+.hs-spendl { gap: 12px; }
+.hs-spendl .hs-scene { width: 100%; flex: none; height: auto; aspect-ratio: 300 / 140; border-radius: 26px; }
+.hs-spendl .hs-scene text { font-family: Inter, "Kantumruy Pro", sans-serif; }
+.hs-spendl .hs-top { display: flex; align-items: center; min-width: 0; }
+.hs-spendl .hs-side.hs-side3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; background: none; border: 0; border-radius: 0; overflow: visible; width: 100%; }
+.hs-spendl .hs-side3 .hs-c { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 10px; border-radius: 16px; background: rgba(255,255,255,.85); border: 1px solid rgba(124,108,240,.2); min-width: 0; }
+.hs-spendl .hs-side3 .hs-c em { font-style: normal; display: flex; flex-direction: column; min-width: 0; }
+.hs-spendl .hs-side3 small { font-size: .78rem; color: #55527a; font-weight: 600; }
+.hs-spendl .hs-side3 b { font-size: .98rem; font-weight: 800; color: #1a2347; white-space: nowrap; }
+.hs-spendl .hs-side3 .hs-si { flex: none; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; }
+.hs-side3 .is-today .hs-si { background: #e6e0ff; color: #5b49d6; }
+.hs-side3 .is-month .hs-si { background: #dff0ff; color: #2f7fd6; }
+.hs-side3 .is-real .hs-si { background: #dcf5e7; color: #1f9d5c; } .hs-side3 .is-real b { color: #17804a; }
+.hs-spendl .hs-chips { margin-top: 0; }
 @media (prefers-reduced-motion: no-preference) {
   .hs-wob { animation: hs-wob 3s ease-in-out infinite; transform-origin: 50% 100%; transform-box: fill-box; }
   .hs-coinfall { animation: hs-fall 2.8s ease-in infinite; }
