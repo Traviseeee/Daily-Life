@@ -339,6 +339,24 @@ html[data-theme="dark"] .hs-face { border-color: #2e2956; }
 .hs-lovea .hs-sub { font-size: .74rem; }
 .hs-lovea .hs-go2 { min-height: 38px; font-size: .74rem; padding: 0 14px; }
 .hs-lovea .hs-bar { height: 6px; }
+/* love card v2 (15 Nov): landscape like the goal / joint / spend cards */
+.hs-lovel { gap: 12px; padding: 16px; }
+.hs-lovel .hs-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-width: 0; }
+.hs-lovel .hs-gname { font-size: .9rem; font-weight: 800; color: var(--in-ink); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hs-lovel .hs-pics { flex: none; min-height: 0; aspect-ratio: 300 / 150; gap: 8px; }
+.hs-lovel .hs-pic { min-height: 0; height: 100%; border-radius: 22px; }
+.hs-lovel .hs-pic b { font-size: .8rem; }
+.hs-lovel .hs-side.hs-side2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.hs-lovel .hs-side2 .hs-c { display: flex; flex-direction: row; align-items: center; justify-content: flex-start; gap: 10px; padding: 10px 12px; border-radius: 16px; background: rgba(255,255,255,.88); border: 1px solid rgba(232,67,107,.2); min-width: 0; }
+.hs-lovel .hs-side2 .hs-c em { font-style: normal; display: flex; flex-direction: column; min-width: 0; }
+.hs-lovel .hs-side2 small { font-size: .78rem; color: #6f5a73; font-weight: 600; }
+.hs-lovel .hs-side2 b { font-size: 1.02rem; font-weight: 800; color: #1a2347; white-space: nowrap; }
+.hs-lovel .hs-side2 .hs-si { flex: none; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; }
+.hs-lovel .is-days .hs-si { background: #ffdfe9; color: #e8436b; } .hs-lovel .is-days b { color: #c92f57; }
+.hs-lovel .is-mark .hs-si { background: #ffe9d1; color: #c76a0a; }
+.hs-lovel .hs-bar { height: 8px; }
+.hs-lovel .hs-sub { font-size: .84rem; }
+.hs-lovel .hs-go2 { min-height: 44px; font-size: .84rem; padding: 0 18px; }
 @media (prefers-reduced-motion: no-preference) { .hs-pics em { animation: hs-beat2 1.6s ease-in-out infinite; } }
 @keyframes hs-beat2 { 0%, 100% { transform: translate(-50%,-50%) scale(1); } 40% { transform: translate(-50%,-50%) scale(1.18); } }
 

@@ -104,14 +104,21 @@ const HomeSlider = (() => {
   const DECO = { love: ["💗", "💖", "💕"], bd: ["🎈", "✨", "🎉"], joint: ["🪙", "✨", "🪙"], goal: ["⭐", "✨", "🎯"], spend: ["🪙", "✨", "💸"], car: ["✨", "🔧", "✨"], inv: ["🧾", "✨", "🪙"] };
   const deco = key => `<span class="hs-deco" aria-hidden="true">${(DECO[key] || ["✨", "✨", "✨"]).map(ch => `<i>${ch}</i>`).join("")}</span>`;
   const faces = list => (list && list.length ? `<span class="hs-faces" aria-hidden="true">${list.map(item => `<span class="hs-face">${item.photo ? `<img src="${escapeAttr(item.photo)}" alt="">` : escapeHtml(String(item.name || "?").slice(0, 1).toUpperCase())}</span>`).join("")}<em>♥</em></span>` : "");
-  // love card (A, 14 Nov): two big photos, small text under them
+  // love card (A, 14 Nov; v2, 15 Nov): landscape like the other cards - names, two photos, two icon tiles, progress to the next mark
   function loveHtml(card) {
     const pics = card.faces.map(item => `<span class="hs-pic">${item.photo ? `<img src="${escapeAttr(item.photo)}" alt="">` : `<i>${escapeHtml(String(item.name || "?").slice(0, 1).toUpperCase())}</i>`}<b>${escapeHtml(item.name || "")}</b></span>`).join("");
-    return `<a class="hs-slide hs-info hs-tone-love hs-lovea" href="${card.href}" data-hs-kind="${card.key}">
-      ${deco(card.key)}<span class="hs-top"><span class="hs-lab">${escapeHtml(card.label)}</span></span>
+    const next = card.stats && card.stats[1] ? card.stats[1][1] : "";
+    const left = card.stats && card.stats[0] ? card.stats[0][1] : "";
+    const bar = Math.max(0, Math.min(100, card.bar == null ? 0 : card.bar));
+    return `<a class="hs-slide hs-info hs-tone-love hs-lovea hs-lovel" href="${card.href}" data-hs-kind="${card.key}">
+      ${deco(card.key)}<span class="hs-top"><span class="hs-lab">${escapeHtml(card.label)}</span><span class="hs-gname">${escapeHtml(card.sub || "")}</span></span>
       <span class="hs-pics">${pics}<em aria-hidden="true">♥</em></span>
-      <span class="hs-lrow"><span class="hs-main"><b class="hs-big">${escapeHtml(card.big)}<small>${escapeHtml(L("ថ្ងៃរួមគ្នា", "days together"))}</small></b><span class="hs-sub">${escapeHtml(card.sub2 || "")}</span></span><span class="hs-go2">${escapeHtml(card.go)}</span></span>
-      ${card.bar != null ? `<span class="hs-bar"><i style="width:${Math.max(0, Math.min(100, card.bar))}%"></i></span>` : ""}
+      <span class="hs-side hs-side2">
+        <span class="hs-c is-days"><i class="hs-si" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg></i><em><small>${escapeHtml(L("ថ្ងៃរួមគ្នា", "Together"))}</small><b>${escapeHtml(card.big)} ${escapeHtml(card.unit || "")}</b></em></span>
+        <span class="hs-c is-mark"><i class="hs-si" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></svg></i><em><small>${escapeHtml(L("ថ្ងៃទី", "Day"))} ${escapeHtml(String(next))}</small><b>${escapeHtml(String(left))}</b></em></span>
+      </span>
+      <span class="hs-bar"><i style="width:${bar}%"></i></span>
+      <span class="hs-lrow"><span class="hs-sub">${escapeHtml(card.sub2 || "")}</span><span class="hs-go2">${escapeHtml(card.go)}</span></span>
     </a>`;
   }
   // joint savings (B + polish, 14 Nov): a jar that fills with coins, milestone ticks, small text
