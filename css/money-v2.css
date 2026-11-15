@@ -363,3 +363,20 @@ html:root body:not(#gl) #app .fv2 .fv2-money .ab-title h2 { white-space: nowrap;
 html:root body:not(#gl) #app .fv2 .fv2-spend .qx-compact .qx-row > :first-child { flex: 1 1 0; min-width: 0; }
 html:root body:not(#gl) #app .fv2 .fv2-spend .qx-compact .qx-row > :nth-child(2) { flex: 1 1 0; min-width: 96px; }
 @media (max-width: 359px) { html:root body:not(#gl) #app .fv2 .ss-promo .ss-tx small { display: none; } }
+
+/* ===== Smart daily spending (on): label left, value in the right corner ===== */
+html:root body:not(#gl) #app .fv2 .ss-on { display: grid; gap: 12px; padding: 16px; }
+html:root body:not(#gl) #app .fv2 .ss-on > * { margin: 0; }
+html:root body:not(#gl) #app .fv2 .ss-on .ss-top { display: flex; align-items: center; gap: 10px; }
+html:root body:not(#gl) #app .fv2 .ss-on .ss-tx { flex: 1 1 auto; min-width: 0; }
+html:root body:not(#gl) #app .fv2 .ss-on .ss-pct { flex: none; align-self: flex-start; font-size: .82rem; font-weight: 800; padding: 5px 11px; border-radius: 99px; background: #dcf7e8; color: #12703f; }
+html:root body:not(#gl) #app .fv2 .ss-on .ss-total { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding-top: 12px; border-top: 1px solid rgba(123,104,238,.18); }
+html:root body:not(#gl) #app .fv2 .ss-on .ss-total small { flex: 1 1 auto; min-width: 0; font-size: .82rem; }
+html:root body:not(#gl) #app .fv2 .ss-on .ss-total strong { flex: none; font-size: 1.7rem; line-height: 1.1; white-space: nowrap; text-align: right; }
+html:root body:not(#gl) #app .fv2 .ss-on .ss-two { display: grid; grid-template-columns: 1fr; border: 0; border-radius: 0; background: none; }
+html:root body:not(#gl) #app .fv2 .ss-on .ss-two > div { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; padding: 0; border: 0; border-top: 1px solid rgba(123,104,238,.18); }
+html:root body:not(#gl) #app .fv2 .ss-on .ss-two small { font-size: .92rem; font-weight: 700; color: inherit; }
+html:root body:not(#gl) #app .fv2 .ss-on .ss-two b { font-size: 1.02rem; text-align: right; }
+html:root body:not(#gl) #app .fv2 .ss-on .ss-pills { justify-content: space-between; }
+html:root:not([data-theme="light"]) body:not(#gl) #app .fv2 .ss-on .ss-pct { background: #1d4533; color: #8be6b4; }
+html:root:not([data-theme="light"]) body:not(#gl) #app .fv2 .ss-on :is(.ss-total, .ss-two > div) { border-color: rgba(190,180,255,.2); }
