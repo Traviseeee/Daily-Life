@@ -1596,6 +1596,7 @@ function savingsJointRecord(data) {
 }
 
 function openSavingsModal(item) {
+  if (typeof SavingsForm !== "undefined") return SavingsForm.open(item); // new form, same look as the income form (16 Nov 2026)
   Modal.open({ title: item ? t("editSavings") : t("addSavings"), submitText: item ? t("saveSavings") : t("addSavings"), fields: [
     { name: "name", label: t("savingsName"), value: item?.name, required: true },
     { name: "targetAmount", label: t("targetAmount"), type: "number", value: item?.targetAmount, required: true },
