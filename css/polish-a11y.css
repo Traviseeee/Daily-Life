@@ -67,3 +67,56 @@ html:root body:not(#gl) :is(.cv2-link, .cv2-seg a, .gv-chip, .sv-sync)::after { 
 html:root body:not(#gl) .hv2-soft-amt::after { content: ""; position: absolute; inset: -4px 0; }
 /* rows that are only a little short are simply made 44px tall */
 html:root body:not(#gl) :is(.hv2-alert, .sv-alert-btn) { min-height: 44px; }
+
+/* ===== Login look A (16 Nov 2026): Nomi on a purple sky + white sheet ===== */
+html:root body #modalRoot .login-modal.login-a { --la-fg: #1a2347; --la-mut: #6f6b92; --la-card: #fff; --la-line: rgba(123,104,238,.2); --la-inp: #f7f5ff; --la-acc: #5b49d6; --la-sky1: #8f7df7; --la-sky2: #c9bfff; padding: 0 !important; overflow: hidden auto; background: linear-gradient(170deg, var(--la-sky1) 0%, var(--la-sky2) 40%, var(--la-card) 62%) !important; border: 0 !important; color: var(--la-fg); }
+html:root:not([data-theme="light"]) body #modalRoot .login-modal.login-a { --la-fg: #ece9ff; --la-mut: #b4afdc; --la-card: #241f4f; --la-line: rgba(190,180,255,.22); --la-inp: #2d2761; --la-acc: #cfc7ff; --la-sky1: #3b2f8f; --la-sky2: #2a2366; }
+html:root body #modalRoot .login-a .login-content { padding: 0 !important; display: flex; flex-direction: column; min-height: 100%; }
+html:root body #modalRoot .login-a .login-blob { display: none !important; }
+/* sky */
+html:root body #modalRoot .login-a .login-sky { position: relative; display: grid; justify-items: center; gap: 10px; padding: 26px 22px 0; text-align: center; color: #fff; }
+html:root body #modalRoot .login-a .login-moon { position: absolute; right: -40px; top: -40px; width: 170px; height: 170px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, rgba(255,255,255,.55), rgba(255,255,255,.08) 70%); pointer-events: none; }
+html:root body #modalRoot .login-a .login-star { position: absolute; width: 4px; height: 4px; border-radius: 50%; background: #fff; opacity: .8; animation: laTw 2.8s ease-in-out infinite; pointer-events: none; }
+@keyframes laTw { 50% { opacity: .2; } }
+html:root body #modalRoot .login-a .login-brand { position: relative; display: grid !important; justify-items: center; gap: 6px; margin: 0 !important; padding: 0 !important; background: none !important; }
+html:root body #modalRoot .login-a .login-nomi { width: 118px !important; height: 118px !important; animation: laFloat 4s ease-in-out infinite; }
+html:root body #modalRoot .login-a .login-nomi svg { width: 100% !important; height: 100% !important; }
+@keyframes laFloat { 50% { transform: translateY(-6px); } }
+html:root body #modalRoot .login-a .login-brand > div { display: grid; justify-items: center; }
+html:root body #modalRoot .login-a .login-brand strong { color: #fff !important; font-size: 1.5rem; font-weight: 900; letter-spacing: .02em; }
+html:root body #modalRoot .login-a .login-brand strong em { color: #fff !important; opacity: .75; font-style: normal; }
+html:root body #modalRoot .login-a .login-brand small { color: rgba(255,255,255,.9) !important; font-size: .82rem; }
+html:root body #modalRoot .login-a .login-say { position: relative; margin: 2px 0 0 !important; max-width: 100%; padding: 9px 14px !important; border-radius: 18px !important; background: var(--la-card) !important; color: var(--la-fg) !important; border: 1px solid var(--la-line) !important; font-size: .86rem; font-weight: 700; box-shadow: 0 6px 16px rgba(70,50,170,.14) !important; }
+/* sheet */
+html:root body #modalRoot .login-a .login-glass { flex: 1; margin: 18px 0 0 !important; padding: 22px 20px calc(18px + env(safe-area-inset-bottom, 0px)) !important; border-radius: 30px 30px 0 0 !important; background: var(--la-card) !important; border: 0 !important; box-shadow: 0 -10px 30px rgba(70,50,170,.12) !important; backdrop-filter: none !important; display: grid; gap: 14px; align-content: start; animation: laUp .5s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes laUp { from { transform: translateY(40px); opacity: 0; } }
+html:root body #modalRoot .login-a .login-glass > *, html:root body #modalRoot .login-a #loginForm > * { margin-top: 0 !important; margin-bottom: 0 !important; min-width: 0; }
+html:root body #modalRoot .login-a #loginForm { display: grid; gap: 12px; }
+html:root body #modalRoot .login-a .login-header h2 { margin: 0; font-size: 1.25rem; color: var(--la-fg) !important; }
+html:root body #modalRoot .login-a .login-header p { margin: 2px 0 0; font-size: .84rem; color: var(--la-mut) !important; }
+html:root body #modalRoot .login-a .login-google-button { min-height: 52px; border-radius: 16px !important; border: 1px solid var(--la-line) !important; background: var(--la-card) !important; color: var(--la-fg) !important; font-weight: 800; box-shadow: none !important; }
+html:root body #modalRoot .login-a .login-or span { color: var(--la-mut) !important; font-size: .78rem; }
+html:root body #modalRoot .login-a .login-input-group label:not(.login-remember) { font-size: .78rem; font-weight: 700; color: var(--la-mut) !important; }
+html:root body #modalRoot .login-a .login-field { min-height: 52px; border-radius: 16px !important; border: 1px solid var(--la-line) !important; background: var(--la-inp) !important; box-shadow: none !important; }
+html:root body #modalRoot .login-a .login-field:focus-within { border-color: #8b79f5 !important; box-shadow: 0 0 0 4px rgba(139,121,245,.2) !important; }
+html:root body #modalRoot .login-a .login-field input { color: var(--la-fg) !important; background: transparent !important; }
+html:root body #modalRoot .login-a .login-remember-row { display: flex !important; align-items: center; justify-content: space-between; gap: 6px 10px; flex-wrap: wrap; min-height: 44px; }
+html:root body #modalRoot .login-a .login-remember span { color: var(--la-fg) !important; font-size: .84rem; font-weight: 600; }
+html:root body #modalRoot .login-a .login-reset-link { min-height: 44px; padding: 0 2px !important; margin: 0 !important; background: none !important; border: 0 !important; color: var(--la-acc) !important; font-weight: 800; font-size: .84rem; }
+html:root body #modalRoot .login-a .login-button { min-height: 52px; border-radius: 16px !important; background: linear-gradient(135deg, #8b79f5, #5b49d6) !important; color: #fff !important; font-weight: 800; box-shadow: 0 10px 22px rgba(91,73,214,.35) !important; }
+/* guest + family code as small links */
+html:root body #modalRoot .login-a .login-more { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 0 6px; }
+html:root body #modalRoot .login-a .login-link { width: auto !important; min-height: 44px; padding: 0 6px !important; margin: 0 !important; border: 0 !important; background: none !important; box-shadow: none !important; color: var(--la-acc) !important; font: inherit; font-weight: 800; font-size: .86rem; cursor: pointer; }
+html:root body #modalRoot .login-a .login-dot { color: var(--la-mut); }
+html:root body #modalRoot .login-a .login-code { margin: 0 !important; padding: 0 !important; border: 0 !important; background: none !important; }
+html:root body #modalRoot .login-a .login-code > summary { display: none !important; }
+html:root body #modalRoot .login-a .login-code[open] { padding: 14px !important; border-radius: 18px !important; background: var(--la-inp) !important; }
+html:root body #modalRoot .login-a .login-code-row { display: flex; gap: 8px; }
+html:root body #modalRoot .login-a #loginJoinCode { flex: 1; min-width: 0; min-height: 50px; border-radius: 14px !important; border: 1px solid var(--la-line) !important; background: var(--la-card) !important; color: var(--la-fg) !important; text-align: center; font-size: 1.15rem; font-weight: 800; letter-spacing: .3em; }
+html:root body #modalRoot .login-a #loginJoinCodeButton { min-height: 50px; border-radius: 14px !important; }
+html:root body #modalRoot .login-a .login-code small { display: block; margin-top: 8px; font-size: .74rem; color: var(--la-mut) !important; }
+html:root body #modalRoot .login-a .login-footer { margin: 0 !important; padding: 0 !important; border: 0 !important; }
+html:root body #modalRoot .login-a .login-footer p { margin: 0; text-align: center; font-size: .76rem; color: var(--la-mut) !important; }
+html:root body #modalRoot .login-a .login-mode-toggle { margin: 0 !important; }
+@media (prefers-reduced-motion: reduce) { html:root body #modalRoot .login-a :is(.login-star, .login-nomi, .login-glass) { animation: none !important; } }
+@media (max-width: 359px) { html:root body #modalRoot .login-a .login-dot { display: none; } }

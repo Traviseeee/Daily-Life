@@ -213,8 +213,46 @@ const Login = {
     const rememberRow = modal.querySelector(".login-remember-row");
     const reset = modal.querySelector("#loginResetButton");
     if (rememberRow && reset) rememberRow.appendChild(reset);
+    // Login look A (16 Nov 2026): Nomi floats on a purple sky, the form is a white sheet below it.
+    // Guest + family code become two small links; nothing is removed, only moved.
+    modal.classList.add("login-a");
+    const content = modal.querySelector(".login-content");
+    const brand = modal.querySelector(".login-brand");
+    const say = modal.querySelector(".login-say");
+    const glass = modal.querySelector(".login-glass");
+    if (content && brand && glass) {
+      const sky = document.createElement("div");
+      sky.className = "login-sky";
+      sky.innerHTML = `<span class="login-moon" aria-hidden="true"></span>${[[18, 22, 0], [32, 96, .8], [80, 150, 1.4], [9, 132, 2]].map(([x, y, d]) => `<span class="login-star" aria-hidden="true" style="left:${x}%;top:${y}px;animation-delay:${d}s"></span>`).join("")}`;
+      glass.before(sky);
+      sky.append(brand);
+      if (say) sky.append(say);
+    }
     const guest = modal.querySelector("#loginGuestButton");
-    if (guest) guest.insertAdjacentHTML("beforebegin", `<div class="login-or"><span>${L("ឬ", "or")}</span></div>`);
+    const code = modal.querySelector(".login-code");
+    if (guest && glass) {
+      const more = document.createElement("div");
+      more.className = "login-more";
+      guest.classList.add("login-link");
+      more.append(guest);
+      if (code) {
+        const toggle = document.createElement("button");
+        toggle.type = "button";
+        toggle.className = "login-link";
+        toggle.dataset.loginCodeToggle = "";
+        toggle.setAttribute("aria-expanded", String(code.open));
+        toggle.textContent = L("មានកូដគ្រួសារ?", "Have a family code?");
+        toggle.addEventListener("click", () => {
+          code.open = !code.open;
+          toggle.setAttribute("aria-expanded", String(code.open));
+          if (code.open) setTimeout(() => modal.querySelector("#loginJoinCode")?.focus(), 30);
+        });
+        more.insertAdjacentHTML("beforeend", `<span class="login-dot" aria-hidden="true">·</span>`);
+        more.append(toggle);
+      }
+      const footer = glass.querySelector(".login-footer");
+      (code || footer) ? (code || footer).before(more) : glass.append(more);
+    }
   },
 
   startGuest() {
