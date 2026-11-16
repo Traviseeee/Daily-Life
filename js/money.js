@@ -1724,7 +1724,37 @@ function openSavingsUseModal(saving, preset = "") {
     if (noteLabel) noteLabel.textContent = type?.value === "investment" ? L("ប្រើសម្រាប់", "Investment / what was it for") : L("ចំណាំ / ហាង", "Note / shop");
     if (gold && chi?.value !== "custom") setGoldWeight();
     suggestGoldAmount();
+    // a section with nothing to show is hidden too (new grouped look, 16 Nov 2026)
+    form?.querySelectorAll(".su-sec").forEach(sec => { sec.hidden = !sec.querySelector(".field:not([hidden])"); });
   };
+  // grouped look, same family as the income / savings forms: "use for" chips, big amount, then Gold and Details cards.
+  // Only the wrapping changes — every field, name and rule above stays as it was.
+  if (form && amount) {
+    form.classList.add("su-use");
+    const grid = form.querySelector(".form-grid");
+    const field = name => form.querySelector(`[name="${name}"]`)?.closest(".field");
+    const cur = saving.currency || appData.profile.currency || "USD";
+    const hero = document.createElement("div");
+    hero.className = "su-hero";
+    amount.before(hero);
+    hero.innerHTML = `<span class="su-cur" aria-hidden="true">${cur === "KHR" ? "៛" : "$"}</span><span class="su-code">${escapeHtml(cur)}</span>`;
+    hero.querySelector(".su-cur").after(amount);
+    amount.setAttribute("inputmode", "decimal");
+    amount.setAttribute("placeholder", "0");
+    const section = (cls, title, names) => {
+      const fields = names.map(field).filter(Boolean);
+      if (!fields.length || !grid) return;
+      const sec = document.createElement("section");
+      sec.className = `su-sec ${cls}`;
+      sec.innerHTML = `<div class="su-sec-h">${title}</div>`;
+      grid.append(sec);
+      fields.forEach(item => sec.append(item));
+    };
+    field("useType")?.classList.add("su-type");
+    field("amount")?.classList.add("su-amount");
+    section("is-gold", `<span aria-hidden="true">🪙</span><strong>${escapeHtml(L("មាស", "Gold"))}</strong>`, ["goldChi", "goldWeightGrams", "goldPurity", "fees"]);
+    section("is-more", `${Icons.edit()}<strong>${escapeHtml(L("ព័ត៌មានបន្ថែម", "Details"))}</strong>`, ["category", "note"]);
+  }
   type?.addEventListener("change", () => {
     if (amount) amount.value = type.value === "gold" ? "" : String(available);
     syncFields();

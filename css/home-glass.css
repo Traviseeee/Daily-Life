@@ -1353,3 +1353,28 @@ html:root body:not(#gl) #modalRoot .savings-modal .sf-field input:focus { outlin
 /* chips wrap instead of running off the card; the date box takes its own line on a phone */
 html:root body:not(#gl) #modalRoot .savings-modal .ev-row { flex-wrap: wrap; overflow: visible; }
 html:root body:not(#gl) #modalRoot .savings-modal .ev-row .ev-date { flex: 1 1 150px; min-width: 0; }
+
+/* ===== Use savings / buy gold form (16 Nov 2026) — grouped cards + big amount ===== */
+html:root body:not(#gl) #modalRoot .su-use .form-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; padding: 0 !important; background: none !important; border: 0 !important; box-shadow: none !important; }
+html:root body:not(#gl) #modalRoot .su-use .form-grid > .field, html:root body:not(#gl) #modalRoot .su-use .su-sec { margin: 0; min-width: 0; }
+html:root body:not(#gl) #modalRoot .su-use :is(.su-type, .su-sec) { padding: 14px; border-radius: 20px; background: #fff; border: 1px solid rgba(139, 124, 246, .16); box-shadow: 0 6px 18px rgba(70, 50, 170, .07); }
+html:root body:not(#gl) #modalRoot .su-use .su-sec { display: grid; gap: 12px; }
+html:root body:not(#gl) #modalRoot .su-use .su-sec[hidden] { display: none !important; }
+html:root body:not(#gl) #modalRoot .su-use .su-sec-h { display: flex; align-items: center; gap: 8px; font-size: .95rem; }
+html:root body:not(#gl) #modalRoot .su-use .su-sec-h svg { width: 18px; height: 18px; }
+html:root body:not(#gl) #modalRoot .su-use .su-sec-h strong { font-weight: 800; }
+html:root body:not(#gl) #modalRoot .su-use .su-sec .field { margin: 0; }
+html:root body:not(#gl) #modalRoot .su-use .field > label { font-size: .78rem; font-weight: 700; opacity: .75; }
+html:root body:not(#gl) #modalRoot .su-use .su-chips { flex-wrap: wrap; }
+/* big amount */
+html:root body:not(#gl) #modalRoot .su-use .su-amount > label { display: block; margin: 0 4px 6px; }
+html:root body:not(#gl) #modalRoot .su-use .su-hero { display: flex; align-items: center; gap: 12px; min-height: 72px; padding: 10px 14px 10px 10px; border-radius: 22px; background: linear-gradient(120deg, #fff, #fff8ec); border: 1px solid rgba(139, 124, 246, .22); box-shadow: 0 6px 18px rgba(70, 50, 170, .08); }
+html:root body:not(#gl) #modalRoot .su-use .su-hero:focus-within { border-color: #8b7cf6; box-shadow: 0 0 0 4px rgba(139, 124, 246, .2); }
+html:root body:not(#gl) #modalRoot .su-use .su-cur { flex: none; display: grid; place-items: center; width: 52px; height: 52px; border-radius: 16px; background: linear-gradient(140deg, #9f8cff, #6a58e0); color: #fff; font-size: 1.4rem; font-weight: 800; }
+html:root body:not(#gl) #modalRoot#modalRoot .su-use .su-hero input#amount { flex: 1 1 auto; min-width: 0; width: 100%; height: 52px; margin: 0; padding: 0; border: 0 !important; background: transparent !important; box-shadow: none !important; outline: none; font: inherit; font-size: 1.9rem; font-weight: 900; color: #1a2347; }
+html:root body:not(#gl) #modalRoot .su-use .su-code { flex: none; font-size: .78rem; font-weight: 800; color: #8a94a6; }
+html:root body:not(#gl) #modalRoot .su-use .sv-gold-estimate-hint { display: block; margin: 8px 4px 0; font-size: .78rem; opacity: .75; }
+/* dark: cards stay light like the other forms; only the text that sits on the dark sheet turns light */
+html:root:not([data-theme="light"]) body:not(#gl) #modalRoot .su-use :is(.su-type, .su-sec) { color: #1a2347; }
+html:root:not([data-theme="light"]) body:not(#gl) #modalRoot .su-use :is(.su-amount > label, .sv-gold-estimate-hint) { color: #ece9ff; opacity: .85; }
+html:root:not([data-theme="light"]) body:not(#gl) #modalRoot#modalRoot .su-use .su-amount > label, html:root:not([data-theme="light"]) body:not(#gl) #modalRoot#modalRoot .su-use .su-amount > label * { color: #ece9ff !important; opacity: 1; }
