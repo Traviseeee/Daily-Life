@@ -283,14 +283,21 @@ const BusinessPlanner = (() => {
       const s = stats(plan);
       const hs = advice(plan).score;
       const search = [plan.name, plan.desc, ...(plan.categories || []).map(catName), plan.customCat].join(" ").toLowerCase();
-      return `<a class="bp-proj" href="#business/${escapeAttr(plan.id)}" data-bp-search="${escapeAttr(search)}">
+      const archived = plan.status === "archived";
+      return `<div class="bp-projw" data-bp-search="${escapeAttr(search)}"><a class="bp-proj" href="#business/${escapeAttr(plan.id)}">
         <span class="bp-ic" aria-hidden="true">${icon(plan)}</span>
         <span class="bp-pm"><b>${escapeHtml(plan.name || L("គ្មានឈ្មោះ", "Untitled"))}</b>${plan.desc ? `<small>${escapeHtml(plan.desc)}</small>` : ""}
           <span class="bp-tags">${(plan.categories || []).slice(0, 3).map(key => `<span class="bp-pill">${escapeHtml(key === "custom" && plan.customCat ? plan.customCat : catName(key))}</span>`).join("")}${plan.status === "running" ? `<span class="bp-pill is-ok">${L("កំពុងដំណើរការ", "Running")}</span>` : ""}</span></span>
         <span class="bp-pfoot"><span class="bp-meta"><span>${L("សុខភាព", "Health")} <b class="bp-hp is-${hs >= 80 ? "ok" : hs >= 55 ? "mid" : "bad"}">${kmNum(hs)}</b> · ${L("ដំណាក់កាល", "Stage")}៖ <b>${escapeHtml(stageOf(plan, s.pct))}</b></span><b>${kmNum(s.pct)}%</b></span>
           <span class="bp-prog" aria-hidden="true"><i style="width:${s.pct}%"></i></span>
           <span class="bp-meta"><span>${L("ទុន", "Budget")} <b>${usd(s.est)}</b></span>${plan.launchDate ? `<span>${L("បើកលក់", "Opens")} <b>${escapeHtml(dayLabel(plan.launchDate))}</b></span>` : ""}<span>${escapeHtml(ago(plan.updatedAt || plan.createdAt))}</span></span></span>
-      </a>`;
+      </a>
+      <button type="button" class="bp-more" data-bp-more="${escapeAttr(plan.id)}" aria-haspopup="menu" aria-expanded="false" aria-label="${escapeAttr(L("ជម្រើសផ្សេងៗ", "More options"))}">⋯</button>
+      <div class="bp-menu" role="menu" data-bp-menu="${escapeAttr(plan.id)}" hidden>
+        <a role="menuitem" href="#business/${escapeAttr(plan.id)}" data-bp-open-set>⚙️ ${L("កែគម្រោង", "Edit plan")}</a>
+        <button type="button" role="menuitem" data-bp-archive="${escapeAttr(plan.id)}">${archived ? `📤 ${L("យកចេញពីបណ្ណសារ", "Restore")}` : `🗄️ ${L("ទុកក្នុងបណ្ណសារ", "Archive")}`}</button>
+        <button type="button" role="menuitem" class="is-bad" data-bp-del="${escapeAttr(plan.id)}">🗑️ ${L("លុប", "Delete")}</button>
+      </div></div>`;
     };
     return `<section class="page bp-page">
       ${hero("#launcher", L("ផែនការអាជីវកម្ម", "Business planner"), L("ពីគំនិត រហូតដល់បើកលក់", "From idea to opening day"))}
@@ -630,7 +637,7 @@ const BusinessPlanner = (() => {
       // search boxes filter what's on screen
       if (el.matches("[data-bp-q], [data-bp-catq]")) {
         const q = el.value.trim().toLowerCase();
-        const items = page.querySelectorAll(el.matches("[data-bp-q]") ? ".bp-proj" : ".bp-cat");
+        const items = page.querySelectorAll(el.matches("[data-bp-q]") ? ".bp-projw" : ".bp-cat");
         let hits = 0;
         items.forEach(item => { const on = !q || item.dataset.bpSearch.includes(q); item.hidden = !on; if (on) hits += 1; });
         const none = page.querySelector("[data-bp-nohit]"); if (none) none.hidden = hits > 0;
@@ -673,6 +680,32 @@ const BusinessPlanner = (() => {
     const onClick = event => {
       const b = sel => event.target.closest(sel);
       if (b("[data-bp-filter]")) { filter = b("[data-bp-filter]").dataset.bpFilter; App.render(); return; }
+      // ⋯ menu on a plan card
+      const closeMenus = () => page.querySelectorAll("[data-bp-menu]").forEach(menu => { menu.hidden = true; menu.previousElementSibling?.setAttribute("aria-expanded", "false"); });
+      if (b("[data-bp-more]")) {
+        const btn = b("[data-bp-more]");
+        const menu = page.querySelector(`[data-bp-menu="${btn.dataset.bpMore}"]`);
+        const open = menu.hidden;
+        closeMenus();
+        menu.hidden = !open; btn.setAttribute("aria-expanded", String(open));
+        if (open) menu.querySelector("[role=menuitem]")?.focus();
+        return;
+      }
+      if (b("[data-bp-open-set]")) { mod = "set"; return; }
+      if (b(".bp-proj")) { mod = "ov"; return; }
+      const byId = id => list().find(item => item.id === id);
+      if (b("[data-bp-archive]")) {
+        const target = byId(b("[data-bp-archive]").dataset.bpArchive);
+        if (target) { const back = target.status === "archived"; Store.edit("businessPlans", target.id, { status: back ? "planning" : "archived" }); if (typeof Toast !== "undefined") Toast.show(back ? L("📤 យកចេញពីបណ្ណសាររួច", "📤 Restored") : L("🗄️ ទុកក្នុងបណ្ណសាររួច", "🗄️ Archived"), "success"); }
+        return;
+      }
+      if (b("[data-bp-del]")) {
+        const target = byId(b("[data-bp-del]").dataset.bpDel);
+        closeMenus();
+        if (target) Modal.confirm({ title: L("លុបផែនការ?", "Delete plan?"), message: L(`លុប "${target.name}"? ការងារ ទុន និងលេខគណនាទាំងអស់នឹងបាត់ ហើយមិនអាចយកមកវិញបានទេ។`, `Delete "${target.name}"? Its tasks, budget and numbers will be gone for good.`), confirmText: L("លុប", "Delete"), onConfirm: () => { Modal.close(); Store.delete("businessPlans", target.id); if (typeof Toast !== "undefined") Toast.show(L("🗑️ បានលុប", "🗑️ Deleted"), "success"); } });
+        return;
+      }
+      if (!b("[data-bp-menu]")) closeMenus();
       // categories + setup
       if (b("[data-bp-cat]") && draft) {
         const key = b("[data-bp-cat]").dataset.bpCat;

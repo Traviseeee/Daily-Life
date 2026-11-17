@@ -54,7 +54,19 @@ html:root body:not(#gl) .bp-page .bp-list { display: grid; gap: 12px; }
 html:root body:not(#gl) .bp-page .bp-proj { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 12px; padding: 16px; border-radius: 24px; background: var(--bp-card); color: inherit; text-decoration: none;
   transition: transform .15s ease, box-shadow .15s ease; }
 html:root body:not(#gl) .bp-page .bp-proj:active { transform: scale(.985); }
-html:root body:not(#gl) .bp-page .bp-proj[hidden] { display: none; }
+html:root body:not(#gl) .bp-page .bp-projw { position: relative; }
+html:root body:not(#gl) .bp-page .bp-projw[hidden] { display: none; }
+html:root body:not(#gl) .bp-page .bp-projw .bp-proj { padding-right: 56px; }
+html:root body:not(#gl) .bp-page .bp-more { position: absolute; top: 10px; right: 10px; display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: 14px;
+  background: var(--bp-soft); color: var(--bp-mute); font: inherit; font-size: 1.3rem; font-weight: 700; line-height: 1; cursor: pointer; }
+html:root body:not(#gl) .bp-page .bp-more[aria-expanded="true"] { background: var(--bp-pri); color: var(--bp-card); }
+html:root body:not(#gl) .bp-page .bp-menu { position: absolute; top: 58px; right: 10px; z-index: 20; display: grid; min-width: 200px; padding: 6px; border: 1px solid var(--bp-line); border-radius: 18px;
+  background: var(--bp-card); box-shadow: 0 14px 34px rgba(40, 28, 120, .22); animation: bpIn .16s ease both; }
+html:root body:not(#gl) .bp-page .bp-menu[hidden] { display: none; }
+html:root body:not(#gl) .bp-page .bp-menu > * { display: flex; align-items: center; gap: 8px; min-height: 46px; padding: 0 12px; border: 0; border-radius: 12px; background: none; color: var(--bp-ink);
+  font: inherit; font-size: .88rem; font-weight: 600; text-align: left; text-decoration: none; cursor: pointer; }
+html:root body:not(#gl) .bp-page .bp-menu > *:hover, html:root body:not(#gl) .bp-page .bp-menu > *:focus-visible { background: var(--bp-soft); }
+html:root body:not(#gl) .bp-page .bp-menu > .is-bad { color: var(--bp-bad); }
 html:root body:not(#gl) .bp-page .bp-ic { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 16px; background: var(--bp-soft); font-size: 26px; }
 html:root body:not(#gl) .bp-page .bp-pm { display: grid; gap: 4px; min-width: 0; }
 html:root body:not(#gl) .bp-page .bp-pm > b { font-size: 1.02rem; font-weight: 600; }
